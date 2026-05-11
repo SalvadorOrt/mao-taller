@@ -1,0 +1,138 @@
+<div class="step-container" id="step_2">
+    <div class="section-header">
+        <i class="bi bi-car-front-fill text-primary"></i> 2. Confirmar Datos
+    </div>
+
+    <h6 class="text-primary mb-3">Datos del Vehículo</h6>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label-custom">Marca / Modelo</label>
+            <input type="text" id="id_vehiculo" name="vehiculo" class="form-control-apple" required>
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label-custom">Año</label>
+            <input type="number" id="id_anio" name="anio_vehiculo" class="form-control-apple">
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label-custom">Color</label>
+            
+            <input type="hidden" id="id_color" name="color" required>
+            <input type="hidden" id="id_color_hex" name="color_hex">
+
+            <div class="color-picker-mao" id="colorPickerMao" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="color-swatch" data-nombre="blanco" data-hex="#F5F5F7" style="background:#F5F5F7; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Blanco"></button>
+                <button type="button" class="color-swatch" data-nombre="negro" data-hex="#212121" style="background:#212121; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Negro"></button>
+                <button type="button" class="color-swatch" data-nombre="plata" data-hex="#BDBDBD" style="background:#BDBDBD; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Plata"></button>
+                <button type="button" class="color-swatch" data-nombre="gris" data-hex="#757575" style="background:#757575; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Gris"></button>
+                <button type="button" class="color-swatch" data-nombre="rojo" data-hex="#D32F2F" style="background:#D32F2F; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Rojo"></button>
+                <button type="button" class="color-swatch" data-nombre="vino" data-hex="#880E4F" style="background:#880E4F; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Vino"></button>
+                <button type="button" class="color-swatch" data-nombre="azul" data-hex="#1976D2" style="background:#1976D2; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Azul"></button>
+                <button type="button" class="color-swatch" data-nombre="celeste" data-hex="#03A9F4" style="background:#03A9F4; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Celeste"></button>
+                <button type="button" class="color-swatch" data-nombre="verde" data-hex="#388E3C" style="background:#388E3C; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Verde"></button>
+                <button type="button" class="color-swatch" data-nombre="amarillo" data-hex="#FBC02D" style="background:#FBC02D; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Amarillo"></button>
+            </div>
+            
+            <div class="color-selected-preview mt-2" id="colorSelectedPreview" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #86868b;">
+                <span class="color-selected-dot" id="colorSelectedDot" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #d2d2d7; background: transparent;"></span>
+                <span id="colorSelectedText">Seleccione un color</span>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label-custom">Kilometraje (KM)</label>
+            <input type="number" id="id_kilometraje" name="kilometraje" class="form-control-apple" required>
+        </div>
+        
+        <div class="col-md-6">
+            <label class="form-label-custom">Nivel Combustible</label>
+            <select id="id_combustible" name="nivel_combustible" class="form-control-apple">
+                <option value="E">Vacío (E)</option>
+                <option value="1/4">1/4</option>
+                <option value="1/2" selected>1/2</option>
+                <option value="3/4">3/4</option>
+                <option value="F">Lleno (F)</option>
+            </select>
+        </div>
+    </div>
+
+    <h6 class="text-primary mb-3 mt-4">Datos del Cliente</h6>
+    <div class="row g-3">
+        
+        <!-- 🔥 FILA 1: Cédula y Nombre (NUEVO) 🔥 -->
+        <div class="col-md-4">
+            <label class="form-label-custom">Cédula / RUC <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="id_identificacion_cliente" name="identificacion" class="form-control-apple" placeholder="Número de documento" required>
+        </div>
+        
+        <div class="col-md-8">
+            <label class="form-label-custom">Nombre Completo <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="id_nombre" name="nombre_cliente" class="form-control-apple" placeholder="Ej. Juan Pérez" required>
+        </div>
+
+        <!-- FILA 2: Correo y Dirección -->
+        <div class="col-md-4">
+            <label class="form-label-custom">Correo Electrónico</label>
+            <input type="email" id="id_email" name="email" class="form-control-apple" placeholder="ejemplo@correo.com">
+        </div>
+        
+        <div class="col-md-8">
+            <label class="form-label-custom">Dirección</label>
+            <input type="text" id="id_direccion" name="direccion" class="form-control-apple" placeholder="Ej. Av. Amazonas y Naciones Unidas">
+        </div>
+
+        <!-- FILA 3: Los 3 Teléfonos organizados perfectamente en la misma línea -->
+        <div class="col-md-4">
+            <label class="form-label-custom">Teléfono Principal <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="id_telefono" name="telefono" class="form-control-apple" placeholder="Ej. 0991234567" required>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label-custom">Teléfono Alternativo <span style="font-size: 10px; color: #86868b; font-weight: normal;">(Opcional)</span></label>
+            <input type="text" id="id_telefono_secundario" name="telefono_secundario" class="form-control-apple" placeholder="Familiar o esposa">
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label-custom">Teléfono Trabajo <span style="font-size: 10px; color: #86868b; font-weight: normal;">(Opcional)</span></label>
+            <input type="text" id="id_telefono_trabajo" name="telefono_trabajo" class="form-control-apple" placeholder="Fijo u oficina">
+        </div>
+        
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- SCRIPT PARA EL SELECTOR DE COLORES -->
+<!-- ========================================== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorSwatches = document.querySelectorAll('.color-swatch');
+        const hiddenColorInput = document.getElementById('id_color');
+        const hiddenColorHexInput = document.getElementById('id_color_hex');
+        const previewDot = document.getElementById('colorSelectedDot');
+        const previewText = document.getElementById('colorSelectedText');
+
+        colorSwatches.forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                colorSwatches.forEach(s => {
+                    s.style.transform = 'scale(1)';
+                    s.style.border = '1px solid #d2d2d7';
+                });
+
+                this.style.transform = 'scale(1.2)';
+                this.style.border = '2px solid #0071e3';
+
+                const nombreColor = this.getAttribute('data-nombre');
+                const hexColor = this.getAttribute('data-hex');
+
+                hiddenColorInput.value = nombreColor.toUpperCase();
+                hiddenColorHexInput.value = hexColor;
+
+                previewDot.style.backgroundColor = hexColor;
+                previewText.textContent = nombreColor.charAt(0).toUpperCase() + nombreColor.slice(1);
+                previewText.style.color = '#1d1d1f';
+                previewText.style.fontWeight = '600';
+            });
+        });
+    });
+</script>

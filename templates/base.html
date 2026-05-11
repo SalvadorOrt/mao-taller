@@ -1,0 +1,446 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MAO{% endblock %}</title>
+
+    <link rel="icon" href="{% static 'icono.svg' %}" sizes="32x300">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --surface: #ffffff;
+            --text: #1d1d1f;
+            --muted: #6e6e73;
+            --border: #e5e5e7;
+            --accent: #0071e3;
+            --danger: #ff3b30;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .main-wrapper {
+            min-height: 100vh;
+            padding-top: 3rem;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .content-card {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid #e5e5e7;
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            padding: 40px 32px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .logo-container {
+            width: 200px;
+            height: 160px;
+            border-radius: 24px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 22px auto;
+            box-shadow: none;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .login-subtitle {
+            font-size: 0.95rem;
+            color: #6e6e73;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .form-label-custom {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control-apple {
+            height: 52px;
+            border-radius: 16px;
+            border: 1px solid #dcdce1;
+            background-color: #fbfbfd;
+            font-size: 0.95rem;
+            padding: 0 16px;
+            color: #1d1d1f;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-control-apple:focus {
+            background-color: #ffffff;
+            border-color: #0071e3;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.10);
+            outline: none;
+        }
+
+        .form-control-apple::placeholder {
+            color: #a1a1a6;
+        }
+
+        .login-error {
+            background: #fff2f2;
+            color: #d70015;
+            border: 1px solid #ffd6d6;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.88rem;
+            margin-bottom: 18px;
+        }
+
+        .btn-login {
+            width: 100%;
+            height: 52px;
+            border-radius: 16px;
+            border: 1px solid #dcdce1;
+            background: #ffffff;
+            color: #1d1d1f;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn-login:hover {
+            border-color: #0071e3;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+        }
+
+        .btn-login:active {
+            background: #f5f5f7;
+            box-shadow: none;
+        }
+
+        .login-footer {
+            margin-top: 22px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #8e8e93;
+        }
+
+        .dashboard-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-mao-header {
+            height: 46px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .titulo-dashboard {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin: 0;
+            line-height: 1.1;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+        }
+
+        .subtitulo-dashboard {
+            font-size: 0.84rem;
+            color: #6e6e73;
+            margin: 0;
+            line-height: 1.2;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .placa-vehiculo {
+            display: block;
+            width: 100%;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            background-color: #ffffff;
+            text-align: center;
+            overflow: hidden;
+            box-shadow: none;
+        }
+
+        .placa-header {
+            background-color: #1d1d1f;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 6px 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-bottom: none;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .placa-numero {
+            color: #1d1d1f;
+            font-size: 2rem;
+            font-weight: 500;
+            padding: 14px 0 10px;
+            letter-spacing: 0.1px;
+            font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            text-shadow: none;
+        }
+
+        .placa-footer {
+            background-color: transparent;
+            color: #8e8e93;
+            font-size: 0.75rem;
+            font-weight: 400;
+            padding: 0 8px 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-top: none;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .menu-link-custom {
+            display: block;
+            padding: 12px 16px;
+            color: #1d1d1f;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+            margin-bottom: 8px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .menu-link-custom:hover {
+            background-color: #f5f5f7;
+            color: #0071e3;
+        }
+
+        .menu-link-active {
+            background-color: rgba(0, 122, 255, 0.1);
+            color: #007aff !important;
+        }
+
+        .tarjeta-click {
+            cursor: pointer;
+            max-width: 100%;
+            border: 1px solid transparent;
+        }
+
+        .tarjeta-click:hover {
+            border-color: rgba(0, 113, 227, 0.6);
+            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15), 0 6px 18px rgba(0, 0, 0, 0.05);
+        }
+
+        .footer-dashboard {
+            text-align: center;
+            padding: 28px 0 10px;
+            color: #8e8e93;
+            font-size: 0.85rem;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .logout-btn-menu {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .logout-btn-menu:hover {
+            background-color: #fff2f2;
+        }
+
+        @media (max-width: 768px) {
+            .logo-mao-header { height: 40px; }
+            .titulo-dashboard { font-size: 1.05rem; }
+            .subtitulo-dashboard { font-size: 0.78rem; }
+        }
+
+        @media (max-width: 576px) {
+            .main-wrapper { padding: 20px 14px; }
+            .login-card { padding: 30px 22px; border-radius: 24px; }
+            .login-title { font-size: 1.7rem; }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+    <div class="offcanvas offcanvas-start border-0 shadow"
+         tabindex="-1"
+         id="menuLateral"
+         aria-labelledby="menuLateralLabel"
+         style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(18px); width: 300px;">
+
+        <div class="offcanvas-header d-flex justify-content-between align-items-center"
+             style="border-bottom: 1px solid rgba(0,0,0,0.05); padding: 20px;">
+            <div>
+                <h5 class="mb-0" id="menuLateralLabel" style="font-size: 1.1rem; font-weight: 700; color: #1d1d1f;">MAO Taller</h5>
+                <p class="mb-0" style="font-size: 0.78rem; color: #6e6e73;">Sistema interno</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="offcanvas-body d-flex flex-column p-4">
+
+            {% for seccion in menu_lateral %}
+                <div class="mb-4">
+                    <p class="text-muted mb-2"
+                       style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                        {{ seccion.titulo }}
+                    </p>
+
+                    {% for item in seccion.items %}
+                        {% if item.url_name %}
+                            <a href="{% url item.url_name %}"
+                               class="menu-link-custom {% if request.resolver_match.url_name == item.url_name %}menu-link-active{% endif %}">
+                                <i class="bi {{ item.icon }} me-2"></i> {{ item.label }}
+                            </a>
+                        {% else %}
+                            <a href="{{ item.url }}"
+                               class="menu-link-custom {% if request.path == item.url %}menu-link-active{% endif %}">
+                                <i class="bi {{ item.icon }} me-2"></i> {{ item.label }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <div class="mt-auto pt-3 border-top">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Sesión iniciada</small>
+                    <strong style="color: var(--text);">{{ request.user.username }}</strong>
+                    
+                </div>
+
+                <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn-menu">
+                        <i class="bi bi-box-arrow-right me-2" style="color: var(--danger);"></i>
+                        <span style="color: var(--danger); font-weight: 600;">Cerrar sesión</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-wrapper" style="display: block !important; height: auto !important; min-height: 100vh;">
+        <div class="container-fluid px-4" style="max-width: 1400px;">
+            <div class="row mb-4 align-items-center">
+                <div class="col-lg-5 d-flex align-items-center mb-4 mb-lg-0 gap-3">
+                    <button class="btn-login px-3"
+                            type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#menuLateral"
+                            style="width: auto; min-width: 50px; height: 50px;"
+                            title="Abrir Menú">
+                        <i class="bi bi-list" style="font-size: 1.5rem; color: #1d1d1f;"></i>
+                    </button>
+
+                    <div class="dashboard-brand">
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO" class="logo-mao-header">
+                        <div>
+                            <p class="subtitulo-dashboard">{% block page_subtitle %}Sistema interno{% endblock %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7 d-flex flex-wrap justify-content-center justify-content-lg-end gap-3 align-items-center">
+                    {% if request.path == '/dashboard/' %}
+                    <div style="flex-grow: 1; max-width: 300px;">
+                        <input type="text"
+                               id="buscadorDashboard"
+                               class="form-control"
+                               placeholder="Buscar placa o modelo..."
+                               style="border-radius: 12px; padding: 10px 15px; border: 1px solid #d2d2d7;">
+                    </div>
+                    {% endif %}
+
+                    {% block header_actions %}{% endblock %}
+                </div>
+            </div>
+
+            {% block content %}{% endblock %}
+
+            <footer class="footer-dashboard">
+                MAO Taller · Sistema interno
+            </footer>
+        </div>
+    </main>
+{% else %}
+    <main class="main-wrapper">
+        <div class="container-fluid px-4" style="max-width: 700px;">
+            {% block content_noauth %}{% endblock %}
+        </div>
+    </main>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

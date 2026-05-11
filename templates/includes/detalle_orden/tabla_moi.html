@@ -1,0 +1,353 @@
+<style>
+    .moi-card, .moi-table-wrap { overflow: visible !important; }
+
+    .fila-hijas-moi td {
+        background: #fafafa;
+        border-top: 0 !important;
+        border-bottom: 1px solid #e5e5ea;
+        padding: 8px 10px 14px 10px !important;
+    }
+
+    .procedimientos-moi {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .procedimiento-item-moi {
+        display: grid;
+        grid-template-columns: 1fr 34px;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .procedimiento-item-moi input {
+        height: 30px;
+        font-size: 12px;
+        background: #fff;
+    }
+
+    .fila-hijas-moi .btn-login.small {
+        height: 28px;
+        padding: 0 12px;
+        font-size: 11px;
+    }
+
+    .badge-historico-moi {
+        background: #fff5cc;
+        color: #ff9500;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 9px;
+        border: 1px solid #ffcc00;
+        white-space: nowrap;
+    }
+</style>
+
+<div class="ot-card moi-card">
+    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
+        <span>Mano de Obra Interna</span>
+
+        {% if puede_editar and not orden.es_migrada %}
+            <button type="button" class="btn-login" onclick="abrirModalIngresoRapidoMOI()">
+                + Ingreso Rápido Mano de Obra
+            </button>
+        {% endif %}
+    </div>
+
+    <div class="ot-table-wrap moi-table-wrap">
+        <table class="ot-table" id="tablaMOI">
+            <thead>
+                <tr>
+                    <th style="width:18%;">Cód. / Referencia</th>
+                    <th style="width:42%;">Descripción</th>
+                    <th style="width:10%;">P.U.</th>
+                    <th style="width:8%;">Cantidad</th>
+                    <th style="width:10%;">Valor</th>
+                    <th style="width:12%;"></th>
+                </tr>
+            </thead>
+
+            <tbody id="cuerpoTablaMOI">
+                {% if orden.es_migrada %}
+
+                    {% for item in orden.servicios_historicos.all %}
+                        {% if item.tipo == "MO" %}
+                            <tr class="form-readonly">
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple"
+                                           value="MO"
+                                           readonly
+                                           style="text-align:center; font-weight:600; color:#86868b;">
+                                </td>
+
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple"
+                                           value="{{ item.descripcion_original }}"
+                                           readonly>
+                                </td>
+
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple pu"
+                                           value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                           readonly>
+                                </td>
+
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple cantidad"
+                                           value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                           readonly>
+                                </td>
+
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple valor"
+                                           value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                           readonly>
+                                </td>
+
+                                <td style="text-align:center;">
+                                    <span class="badge-historico-moi">HISTÓRICO</span>
+                                </td>
+                            </tr>
+
+                            {% if item.procedimientos %}
+                                <tr class="fila-hijas-moi">
+                                    <td></td>
+                                    <td colspan="5">
+                                        <div class="procedimientos-moi">
+                                            {% for proc in item.procedimientos %}
+                                                <div class="procedimiento-item-moi" style="grid-template-columns:1fr;">
+                                                    <input type="text"
+                                                           class="form-control-apple"
+                                                           value="{{ proc }}"
+                                                           readonly>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                {% else %}
+
+                    {% for item in orden.servicios_detalles.all %}
+                        {% if item.tipo_servicio == "MEC" %}
+                            {% with uid_moi=forloop.counter0 %}
+                                <tr class="fila-padre-moi">
+                                    <td class="servicio-cell">
+                                        <input type="hidden" name="moi_uid[]" value="{{ uid_moi }}">
+
+                                        <input type="hidden"
+                                               name="moi_servicio_id[]"
+                                               class="servicio-id-hidden"
+                                               value="{{ item.servicio.id|default_if_none:'' }}">
+
+                                        <div class="servicio-busqueda-wrap" style="position:relative;">
+                                            <input type="text"
+                                                   class="form-control-apple servicio-busqueda-input"
+                                                   placeholder="Buscar código o servicio..."
+                                                   autocomplete="off"
+                                                   value="{% if item.servicio %}{{ item.servicio.codigo }}{% else %}[ MANUAL ]{% endif %}"
+                                                   style="text-align:center; font-weight:600;"
+                                                   oninput="buscarServicioEnFila(this, 'moi')"
+                                                   onfocus="buscarServicioEnFila(this, 'moi')">
+
+                                            <div class="dropdown-resultados-servicios"
+                                                 style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #d2d2d7; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:1000; margin-top:4px; text-align:left;">
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <input type="hidden"
+                                               name="moi_descripcion[]"
+                                               class="descripcion-manual descripcion-moi"
+                                               value="{{ item.descripcion_servicio }}">
+
+                                        <div class="descripcion-visible-moi"
+                                             style="font-size:13px; font-weight:500; color:#1d1d1f; padding:4px 2px;">
+                                            {{ item.descripcion_servicio }}
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <input type="number"
+                                               step="0.01"
+                                               inputmode="decimal"
+                                               name="moi_pu[]"
+                                               class="form-control-apple pu"
+                                               value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                               oninput="calcularFila(this)">
+                                    </td>
+
+                                    <td>
+                                        <input type="number"
+                                               step="0.01"
+                                               inputmode="decimal"
+                                               name="moi_cantidad[]"
+                                               class="form-control-apple cantidad"
+                                               value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                               oninput="calcularFila(this)">
+                                    </td>
+
+                                    <td>
+                                        <input type="number"
+                                               step="0.01"
+                                               inputmode="decimal"
+                                               name="moi_valor[]"
+                                               class="form-control-apple valor"
+                                               value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                               readonly>
+                                    </td>
+
+                                    <td>
+                                        <div class="row-controls">
+                                            <button type="button"
+                                                    class="btn-login danger small"
+                                                    onclick="eliminarFila(this)"
+                                                    title="Quitar">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr class="fila-hijas-moi">
+                                    <td></td>
+
+                                    <td>
+                                        <div class="procedimientos-moi"
+                                             data-parent-index="{{ uid_moi }}">
+
+                                            {% if item.procedimientos_detalle.exists %}
+                                                {% for proc in item.procedimientos_detalle.all %}
+                                                    <div class="procedimiento-item-moi">
+                                                        <input type="text"
+                                                               name="moi_procedimientos_{{ uid_moi }}[]"
+                                                               class="form-control-apple"
+                                                               value="{{ proc.descripcion }}"
+                                                               placeholder="Procedimiento incluido">
+
+                                                        <button type="button"
+                                                                class="btn-login danger small"
+                                                                onclick="eliminarProcedimientoMOI(this)">
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn-login small"
+                                                onclick="agregarProcedimientoMOI(this)">
+                                            + Agregar procedimiento
+                                        </button>
+                                    </td>
+
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer-actions">
+        {% if puede_editar and not orden.es_migrada %}
+            <button type="button"
+                    class="btn-login"
+                    onclick="agregarFilaMOI(true)">
+                + Agregar mano de obra interna
+            </button>
+        {% else %}
+            <div></div>
+        {% endif %}
+
+        <div class="subtotal-box">
+            <div class="subtotal-pill">
+                Sub total M.O.I: $<span id="subtotalMOI">0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not orden.es_migrada %}
+<div id="modalIngresoRapidoMOI"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:flex-start; padding-top:10vh; backdrop-filter:blur(3px);">
+
+    <div style="background:#ffffff; padding:25px; border-radius:14px; width:420px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; margin-bottom:20px; font-size:18px; color:#1d1d1f; font-weight:600;">
+            + Ingreso Rápido Mano de Obra
+        </h3>
+
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:#1d1d1f; display:block; margin-bottom:4px; font-weight:500;">
+                Descripción:
+            </label>
+
+            <input type="text"
+                   id="irmoi_descripcion"
+                   class="form-control-apple"
+                   style="width:100%;">
+        </div>
+
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="flex:1;">
+                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
+                    Precio Unit. ($)
+                </label>
+
+                <input type="number"
+                       id="irmoi_precio"
+                       class="form-control-apple"
+                       style="width:100%;"
+                       step="0.01"
+                       value="0.00">
+            </div>
+
+            <div style="flex:1;">
+                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
+                    Cantidad
+                </label>
+
+                <input type="number"
+                       id="irmoi_cantidad"
+                       class="form-control-apple"
+                       style="width:100%;"
+                       step="1"
+                       value="1">
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button"
+                    class="btn-login"
+                    style="background:#e5e5ea; border-color:#e5e5ea; color:#1d1d1f;"
+                    onclick="cerrarModalIngresoRapidoMOI()">
+                Cancelar
+            </button>
+
+            <button type="button"
+                    class="btn-login primary"
+                    onclick="confirmarIngresoRapidoMOI()">
+                Agregar a la Orden
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}

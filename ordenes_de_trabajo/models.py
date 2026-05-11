@@ -1,0 +1,1147 @@
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.db.models import Sum
+from django.utils import timezone
+from empresa.models import EmpresaEmisora
+from decimal import Decimal, ROUND_HALF_UP
+TIPOS_TARIFA_VEHICULO = [
+        ("NO_APLICA", "No aplica"),
+        ("AUTO", "Auto"),
+        ("AUTO_3P", "Auto 3 puertas"),
+        ("AUTO_5P", "Auto 5 puertas"),
+        ("SUV_3P", "SUV 3 puertas"),
+        ("SUV_5P", "SUV 5 puertas"),
+        ("CAMIONETA_CS", "Camioneta cabina sencilla"),
+        ("CAMIONETA_DC", "Camioneta doble cabina"),
+        ("CAMIONETA_GRANDE", "Camioneta grande"),
+    ]
+GAMAS_VEHICULO = [
+        ("NO_APLICA", "No aplica"),
+        ("ECONOMICA", "Económica"),
+        ("MEDIA", "Media"),
+        ("MEDIA_ALTA", "Media alta"),
+        ("ALTA", "Alta"),
+        ("PREMIUM", "Premium"),
+        ("LUJO", "Lujo"),
+        ("COMERCIAL", "Comercial"),
+        ("DEPORTIVA", "Deportiva"),
+    ]
+# ==========================================
+# 1. SUCURSALES
+# ==========================================
+class Sucursal(models.Model):
+    
+    empresa = models.ForeignKey(
+        EmpresaEmisora, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="sucursales",
+        help_text="Empresa legal (RUC) bajo la cual factura esta sucursal."
+    )
+
+    nombre = models.CharField(max_length=100, unique=True)
+    codigo = models.CharField(max_length=20, unique=True)
+    direccion = models.CharField(max_length=255, null=True, blank=True)
+    telefono = models.CharField(max_length=50, null=True, blank=True)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Sucursal"
+        verbose_name_plural = "Sucursales"
+
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+        if self.codigo:
+            self.codigo = self.codigo.strip().upper()
+        if self.direccion:
+            self.direccion = self.direccion.strip()
+        if self.telefono:
+            self.telefono = self.telefono.strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nombre
+
+
+# ==========================================
+# 2. TÉCNICOS (Personal del Taller - No Usuarios)
+# ==========================================
+class Tecnico(models.Model):
+    nombre = models.CharField(max_length=100)
+    especialidad = models.CharField(max_length=50, blank=True, null=True)
+    sucursal = models.ForeignKey(
+        Sucursal,
+        on_delete=models.SET_NULL,
+        related_name="tecnicos",
+        null=True,
+        blank=True,
+    )
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Técnico"
+        verbose_name_plural = "Técnicos"
+
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+        if self.especialidad:
+            self.especialidad = self.especialidad.strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nombre
+
+# ==========================================
+# 3. CLIENTE
+# ==========================================
+class Cliente(models.Model):
+    TIPOS_DOC = [
+        ("C", "Cédula"),
+        ("R", "RUC"),
+        ("P", "Pasaporte"),
+    ]
+
+    tipo_documento = models.CharField(max_length=1, choices=TIPOS_DOC, default="C")
+    identificacion = models.CharField(
+        max_length=13,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="Cédula/RUC",
+    )
+    nombre_completo = models.CharField(max_length=200)
+    
+    # 🔥 APLICANDO EL CONSEJO: 3 Campos de teléfono 🔥
+    telefono = models.CharField(max_length=50, null=True, blank=True, verbose_name="Teléfono Principal")
+    telefono_secundario = models.CharField(max_length=50, null=True, blank=True, verbose_name="Teléfono Familiar/Alternativo")
+    telefono_trabajo = models.CharField(max_length=50, null=True, blank=True, verbose_name="Teléfono Fijo/Trabajo")
+    
+    email = models.EmailField(null=True, blank=True)
+    direccion = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["nombre_completo"]
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
+        indexes = [
+            models.Index(fields=["nombre_completo"]),
+        ]
+
+    def clean(self):
+        if self.identificacion:
+            self.identificacion = self.identificacion.strip().upper()
+
+            if self.tipo_documento in {"C", "R"} and not self.identificacion.isdigit():
+                raise ValidationError("La identificación debe contener solo números.")
+
+            if self.tipo_documento == "C" and len(self.identificacion) != 10:
+                raise ValidationError("La cédula debe tener 10 dígitos.")
+
+            if self.tipo_documento == "R" and len(self.identificacion) != 13:
+                raise ValidationError("El RUC debe tener 13 dígitos.")
+
+        if not self.nombre_completo or not self.nombre_completo.strip():
+            raise ValidationError("El nombre completo del cliente es obligatorio.")
+
+    def save(self, *args, **kwargs):
+        if self.identificacion:
+            self.identificacion = self.identificacion.strip().upper()
+        if self.nombre_completo:
+            self.nombre_completo = self.nombre_completo.strip()
+            
+        # Limpieza de todos los teléfonos
+        if self.telefono:
+            self.telefono = self.telefono.strip()
+        if self.telefono_secundario:
+            self.telefono_secundario = self.telefono_secundario.strip()
+        if self.telefono_trabajo:
+            self.telefono_trabajo = self.telefono_trabajo.strip()
+            
+        if self.email:
+            self.email = self.email.strip().lower()
+        if self.direccion:
+            self.direccion = self.direccion.strip()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        id_display = self.identificacion if self.identificacion else "SIN ID"
+        return f"{id_display} | {self.nombre_completo}"
+
+
+# ==========================================
+# 4. EXPEDIENTE / HISTORIAL ACUMULADO DEL VEHÍCULO
+# ==========================================
+class ExpedienteVehiculo(models.Model):
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.SET_NULL,
+        related_name="expedientes",
+        null=True,
+        blank=True,
+    )
+    cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
+
+    placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
+    vehiculo = models.CharField(max_length=150, null=True, blank=True)
+    anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    activo = models.BooleanField(default=True)
+    observacion = models.TextField(null=True, blank=True)
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+   
+    class Meta:
+        ordering = ["placa", "vehiculo", "id"]
+        verbose_name = "Expediente de vehículo"
+        verbose_name_plural = "Expedientes de vehículos"
+        indexes = [
+            models.Index(fields=["placa"]),
+            models.Index(fields=["vehiculo"]),
+            models.Index(fields=["cliente_respaldo"]),
+        ]
+
+    @property
+    def nombre_cliente_final(self):
+        if self.cliente:
+            return self.cliente.nombre_completo
+        return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
+
+    def clean(self):
+        if self.placa:
+            self.placa = self.placa.strip().upper()
+
+        if self.vehiculo:
+            self.vehiculo = self.vehiculo.strip()
+
+        if self.cliente_respaldo:
+            self.cliente_respaldo = self.cliente_respaldo.strip()
+
+        if self.observacion:
+            self.observacion = self.observacion.strip()
+
+        if self.anio_vehiculo and self.anio_vehiculo < 1900:
+            raise ValidationError("El año del vehículo no es válido.")
+
+    def save(self, *args, **kwargs):
+        if self.placa:
+            self.placa = self.placa.strip().upper()
+
+        if self.vehiculo:
+            self.vehiculo = self.vehiculo.strip()
+
+        if self.cliente_respaldo:
+            self.cliente_respaldo = self.cliente_respaldo.strip()
+
+        if self.observacion:
+            self.observacion = self.observacion.strip()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        placa = self.placa if self.placa else "SIN PLACA"
+        vehiculo = self.vehiculo if self.vehiculo else "SIN VEHÍCULO"
+        return f"{placa} | {vehiculo} | {self.nombre_cliente_final}"
+
+
+# ==========================================
+# 5. ORDEN DE TRABAJO
+# ==========================================
+class OrdenTrabajo(models.Model):
+    ESTADOS = [
+        ("ABIERTA", "En Taller / Abierta"),
+        ("CERRADA", "Entregado / Pagada"),
+        ("ANULADA", "Anulada"),
+    ]
+
+    NIVELES_COMBUSTIBLE = [
+        ("E", "Vacío"),
+        ("1/4", "1/4"),
+        ("1/2", "1/2"),
+        ("3/4", "3/4"),
+        ("F", "Lleno"),
+    ]
+
+
+    numero_orden = models.CharField(max_length=50, unique=True)
+
+    sucursal = models.ForeignKey(
+            Sucursal,
+            on_delete=models.PROTECT,
+            related_name="ordenes"
+        )
+
+    expediente = models.ForeignKey(
+        ExpedienteVehiculo,
+        on_delete=models.SET_NULL,
+        related_name="ordenes",
+        null=True,
+        blank=True,
+    )
+
+    es_migrada = models.BooleanField(default=False)
+    numero_orden_origen = models.CharField(max_length=50, null=True, blank=True)
+    archivo_origen = models.CharField(max_length=255, null=True, blank=True)
+    hoja_origen = models.CharField(max_length=50, null=True, blank=True)
+    anio_origen_migracion = models.PositiveSmallIntegerField(null=True, blank=True)
+    json_origen = models.JSONField(null=True, blank=True)
+    requiere_revision_migracion = models.BooleanField(default=False)
+    hash_migracion = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Hash del JSON importado para detectar duplicados reales.",
+    )
+    usuario_receptor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="ordenes_recibidas",
+        null=True,
+        blank=True,
+        help_text="Puede quedar vacío en OT históricas migradas.",
+    )
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.SET_NULL,
+        related_name="ordenes",
+        null=True,
+        blank=True,
+    )
+
+    cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
+
+    color = models.CharField(max_length=50, null=True, blank=True)
+    color_hex = models.CharField(max_length=7, default="#1d1d1f")
+
+    placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
+    vehiculo = models.CharField(max_length=150, null=True, blank=True)
+    anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    fecha_origen = models.DateField(null=True, blank=True)
+    kilometraje = models.PositiveIntegerField(null=True, blank=True)
+    proximo_mantenimiento_km = models.PositiveIntegerField(null=True, blank=True)
+
+    observaciones_recepcion = models.TextField(null=True, blank=True)
+    sintomas_cliente = models.TextField(null=True, blank=True)
+    observaciones_tecnicas = models.TextField(null=True, blank=True)
+
+    tipo_tarifa_vehiculo = models.CharField(
+        max_length=20,
+        choices=TIPOS_TARIFA_VEHICULO,
+        default="NO_APLICA",
+    )
+    gama_vehiculo = models.CharField(
+        max_length=20,
+        default="NO_APLICA",
+    )
+    estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
+    fecha_ingreso = models.DateTimeField(default=timezone.now)
+    total_general = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    nivel_combustible = models.CharField(max_length=10, choices=NIVELES_COMBUSTIBLE, null=True, blank=True)
+    checklist_confirmado_cliente = models.BooleanField(default=False)
+    firma_cliente = models.ImageField(
+        upload_to="ordenes/firmas/%Y/%m/", 
+        null=True, 
+        blank=True,
+        help_text="Imagen de la firma digital del cliente."
+    )
+    fecha_firma = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ["-fecha_ingreso"]
+        verbose_name = "Orden de Trabajo"
+        verbose_name_plural = "Órdenes de Trabajo"
+        indexes = [
+            models.Index(fields=["sucursal", "estado"]),
+            models.Index(fields=["placa", "fecha_ingreso"]),
+            models.Index(fields=["estado", "fecha_ingreso"]),
+            models.Index(fields=["es_migrada", "anio_origen_migracion"]),
+            models.Index(fields=["numero_orden_origen"]),
+            models.Index(fields=["fecha_origen"]),
+        ]
+
+    @property
+    def nombre_cliente_final(self):
+        if self.cliente:
+            return self.cliente.nombre_completo
+        return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
+
+    @property
+    def badge_origen(self):
+        return "MIGRADA" if self.es_migrada else "NORMAL"
+
+    def _normalizar_campos_texto(self):
+        if self.numero_orden:
+            self.numero_orden = self.numero_orden.strip().upper()
+
+        if self.numero_orden_origen:
+            self.numero_orden_origen = self.numero_orden_origen.strip().upper()
+
+        if self.placa:
+            self.placa = self.placa.strip().upper()
+
+        if self.vehiculo:
+            self.vehiculo = self.vehiculo.strip()
+
+        if self.color:
+            self.color = self.color.strip()
+
+        if self.cliente_respaldo:
+            self.cliente_respaldo = self.cliente_respaldo.strip()
+
+        if self.observaciones_recepcion:
+            self.observaciones_recepcion = self.observaciones_recepcion.strip()
+
+        if self.sintomas_cliente:
+            self.sintomas_cliente = self.sintomas_cliente.strip()
+
+        if self.observaciones_tecnicas:
+            self.observaciones_tecnicas = self.observaciones_tecnicas.strip()
+
+        if self.archivo_origen:
+            self.archivo_origen = self.archivo_origen.strip()
+
+        if self.hoja_origen:
+            self.hoja_origen = self.hoja_origen.strip()
+
+    def _calcular_color_hex(self):
+        self.color_hex = "#1d1d1f"
+
+        if not self.color:
+            return
+
+        color_lower = self.color.lower()
+        mapa_colores = {
+            "blanco": "#F5F5F7",
+            "negro": "#212121",
+            "plata": "#BDBDBD",
+            "plateado": "#BDBDBD",
+            "gris": "#757575",
+            "plomo": "#424242",
+            "rojo": "#D32F2F",
+            "vino": "#880E4F",
+            "tinto": "#880E4F",
+            "azul": "#1976D2",
+            "celeste": "#03A9F4",
+            "verde": "#388E3C",
+            "amarillo": "#FBC02D",
+            "dorado": "#CBA135",
+            "oro": "#CBA135",
+            "naranja": "#F57C00",
+            "cafe": "#5D4037",
+            "marrón": "#5D4037",
+            "marron": "#5D4037",
+            "beige": "#D7CCC8",
+            "crema": "#FFF9C4",
+        }
+
+        for clave, hex_code in mapa_colores.items():
+            if clave in color_lower:
+                self.color_hex = hex_code
+                break
+
+    def calcular_total(self):
+        servicios = self.servicios_detalles.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+        insumos = self.insumos_detalles.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+
+        servicios_historicos = self.servicios_historicos.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+        insumos_historicos = self.insumos_historicos.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+
+        nuevo_total = servicios + insumos + servicios_historicos + insumos_historicos
+
+        if self.total_general != nuevo_total:
+            self.total_general = nuevo_total
+            if self.pk:
+                OrdenTrabajo.objects.filter(pk=self.pk).update(total_general=nuevo_total)
+
+    def clean(self):
+        self._normalizar_campos_texto()
+
+        if not self.numero_orden or not self.numero_orden.strip():
+            raise ValidationError("El número de orden es obligatorio.")
+
+        if not self.sucursal_id:
+            raise ValidationError({"sucursal": "La sucursal es obligatoria."})
+
+        if not self.es_migrada:
+            if not self.placa or not self.placa.strip():
+                raise ValidationError("La placa es obligatoria para órdenes no migradas.")
+
+        if self.anio_vehiculo and self.anio_vehiculo < 1900:
+            raise ValidationError("El año del vehículo no es válido.")
+
+        if self.es_migrada and not self.numero_orden_origen:
+            raise ValidationError(
+                {"numero_orden_origen": "Las OT migradas deben guardar el número original extraído."}
+            )
+
+    def save(self, *args, **kwargs):
+        self._normalizar_campos_texto()
+        self._calcular_color_hex()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        placa = self.placa if self.placa else "SIN PLACA"
+        if self.es_migrada and self.numero_orden_origen:
+            return f"[{self.sucursal.codigo}] OT {self.numero_orden} | ORIGEN {self.numero_orden_origen} - {placa} ({self.nombre_cliente_final})"
+        return f"[{self.sucursal.codigo}] OT {self.numero_orden} - {placa} ({self.nombre_cliente_final})"
+
+
+# ==========================================
+# 6. RECEPCIÓN
+# ==========================================
+class TrabajoRecepcionCatalogo(models.Model):
+    nombre = models.CharField(max_length=150, unique=True)
+    activo = models.BooleanField(default=True)
+    orden_visual = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_visual", "nombre"]
+        verbose_name = "Trabajo sugerido de recepción"
+        verbose_name_plural = "Trabajos sugeridos de recepción"
+
+    def clean(self):
+        if not self.nombre or not self.nombre.strip():
+            raise ValidationError("El nombre del trabajo sugerido es obligatorio.")
+
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nombre
+
+
+class OrdenTrabajoSolicitado(models.Model):
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="trabajos_solicitados_items",
+        on_delete=models.CASCADE,
+    )
+    trabajo_catalogo = models.ForeignKey(
+        TrabajoRecepcionCatalogo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    descripcion_manual = models.CharField(max_length=255, null=True, blank=True)
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+        verbose_name = "Trabajo solicitado"
+        verbose_name_plural = "Trabajos solicitados"
+
+    def clean(self):
+        descripcion = (self.descripcion_manual or "").strip()
+        if not self.trabajo_catalogo and not descripcion:
+            raise ValidationError("Debe seleccionar un trabajo del catálogo o ingresar una descripción manual.")
+
+    def save(self, *args, **kwargs):
+        if self.descripcion_manual:
+            self.descripcion_manual = self.descripcion_manual.strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.trabajo_catalogo.nombre if self.trabajo_catalogo else (self.descripcion_manual or "Trabajo")
+
+
+class OrdenSintoma(models.Model):
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="sintomas_items",
+        on_delete=models.CASCADE,
+    )
+    descripcion = models.CharField(max_length=255)
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+        verbose_name = "Síntoma de cliente"
+        verbose_name_plural = "Síntomas de cliente"
+
+    def clean(self):
+        if not self.descripcion or not self.descripcion.strip():
+            raise ValidationError("La descripción del síntoma es obligatoria.")
+
+    def save(self, *args, **kwargs):
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.orden_item}. {self.descripcion}"
+
+
+# ==========================================
+# 7. CHECKLIST Y RECEPCIÓN
+# ==========================================
+class OrdenChecklistRecepcion(models.Model):
+    orden = models.OneToOneField(
+        OrdenTrabajo,
+        related_name="checklist_recepcion",
+        on_delete=models.CASCADE,
+    )
+    matricula = models.BooleanField(default=False)
+    plumas = models.BooleanField(default=False)
+    radio = models.BooleanField(default=False)
+    pantalla = models.BooleanField(default=False)
+    tuerca_seguridad = models.BooleanField(default=False)
+    encendedor_cig = models.BooleanField(default=False)
+    triangulos = models.BooleanField(default=False)
+    gata = models.BooleanField(default=False)
+    herramientas = models.BooleanField(default=False)
+    llanta_emergencia = models.BooleanField(default=False)
+    faros_lunas = models.BooleanField(default=False)
+    tapacubos = models.BooleanField(default=False)
+    antena = models.BooleanField(default=False)
+    adicionales_reportados = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Checklist de recepción"
+        verbose_name_plural = "Checklists de recepción"
+
+    def save(self, *args, **kwargs):
+        if self.adicionales_reportados:
+            self.adicionales_reportados = self.adicionales_reportados.strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Checklist OT {self.orden.numero_orden}"
+
+
+class OrdenObjetoAdicional(models.Model):
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="objetos_adicionales",
+        on_delete=models.CASCADE,
+    )
+    descripcion = models.CharField(max_length=255)
+    cantidad = models.PositiveIntegerField(default=1)
+    observacion = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Objeto adicional"
+        verbose_name_plural = "Objetos adicionales"
+
+    def clean(self):
+        if not self.descripcion or not self.descripcion.strip():
+            raise ValidationError("La descripción del objeto adicional es obligatoria.")
+        if self.cantidad <= 0:
+            raise ValidationError("La cantidad debe ser mayor que 0.")
+
+    def save(self, *args, **kwargs):
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip()
+        if self.observacion:
+            self.observacion = self.observacion.strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.descripcion} - OT {self.orden.numero_orden}"
+
+
+class FotoRecepcionVehiculo(models.Model):
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="fotos_recepcion",
+        on_delete=models.CASCADE,
+    )
+    imagen = models.ImageField(upload_to="ordenes/recepcion/")
+    tipo_foto = models.CharField(max_length=50, null=True, blank=True)
+    descripcion = models.CharField(max_length=255, null=True, blank=True)
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-fecha_subida"]
+        verbose_name = "Foto de recepción"
+        verbose_name_plural = "Fotos de recepción"
+
+    def save(self, *args, **kwargs):
+        if self.tipo_foto:
+            self.tipo_foto = self.tipo_foto.strip()
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Foto OT {self.orden.numero_orden}"
+
+
+class OrdenCroquisDanio(models.Model):
+    orden = models.OneToOneField(
+        OrdenTrabajo,
+        related_name="croquis_danio",
+        on_delete=models.CASCADE,
+    )
+    trazos = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Trazo libre dibujado sobre la plantilla del vehículo.",
+    )
+    imagen_generada = models.ImageField(
+        upload_to="ordenes/croquis/",
+        null=True,
+        blank=True,
+    )
+    observacion = models.CharField(max_length=255, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Croquis de daño"
+        verbose_name_plural = "Croquis de daños"
+
+    def save(self, *args, **kwargs):
+        if self.observacion:
+            self.observacion = self.observacion.strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Croquis OT {self.orden.numero_orden}"
+class OrdenServicioDetalle(models.Model):
+    VARIANTES_PRECIO = [
+        ("NORMAL", "Normal"),
+        ("REPINTADO", "Repintado"),
+        ("NUEVO", "Nuevo"),
+        ("TRICAPA", "Tricapa / Candys"),
+        ("ESPECIAL", "Color especial"),
+    ]
+    TIPOS_SERVICIO = [
+        ("MEC", "Mano de Obra Interna"),
+        ("EXT", "Mano de Obra Externa"),
+    ]
+
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="servicios_detalles",
+        on_delete=models.CASCADE,
+    )
+    
+    
+    servicio = models.ForeignKey(
+        "servicios.ServicioCatalogo",
+        on_delete=models.SET_NULL, 
+        related_name="ordenes_detalle",
+        null=True,
+        blank=True,
+    )
+
+    tipo_servicio = models.CharField(
+        max_length=10,
+        choices=TIPOS_SERVICIO,
+        default="MEC",
+    )
+    
+    tecnico_responsable = models.ForeignKey(
+        Tecnico,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    
+    cantidad = models.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+            default=Decimal("1.00")
+        )
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    orden_item = models.PositiveIntegerField(default=1)
+
+    tipo_tarifa_aplicada = models.CharField(
+    max_length=20,
+    default="NO_APLICA",
+)
+    
+    variante_precio_aplicada = models.CharField(
+        max_length=20,
+        choices=VARIANTES_PRECIO,
+        default="NORMAL",
+    )
+
+   
+    descripcion_servicio = models.CharField(
+        max_length=255,
+        blank=False,  
+        help_text="Descripción real que aparece en la OT. Aísla la orden del catálogo núcleo.",
+    )
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+        verbose_name = "Detalle de servicio"
+        verbose_name_plural = "Detalles de servicios"
+
+    def clean(self):
+        if self.cantidad is None or self.cantidad <= 0:
+            raise ValidationError("La cantidad del servicio debe ser mayor que 0.")
+        if self.precio_unitario is None or self.precio_unitario < 0:
+            raise ValidationError("El precio unitario del servicio no puede ser negativo.")
+        
+        if not self.descripcion_servicio and not self.servicio:
+            raise ValidationError("Debe proporcionar una descripción o seleccionar un servicio del catálogo.")
+
+    def save(self, *args, **kwargs):
+        if not self.tipo_tarifa_aplicada:
+            self.tipo_tarifa_aplicada = self.orden.tipo_tarifa_vehiculo or "NO_APLICA"
+
+        if not self.variante_precio_aplicada:
+            self.variante_precio_aplicada = "NORMAL"
+
+       
+        if self.servicio and not self.descripcion_servicio:
+            self.descripcion_servicio = self.servicio.descripcion
+
+        self.subtotal = (
+            Decimal(str(self.cantidad)) * self.precio_unitario
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.orden.calcular_total()
+
+    def delete(self, *args, **kwargs):
+        orden = self.orden
+        with transaction.atomic():
+            super().delete(*args, **kwargs)
+            orden.calcular_total()
+
+    def __str__(self):
+        return f"[{self.tipo_servicio}] {self.descripcion_servicio} - OT {self.orden.numero_orden}"
+    
+
+class OrdenInsumoDetalle(models.Model):
+    orden = models.ForeignKey(
+        "OrdenTrabajo",
+        related_name="insumos_detalles",
+        on_delete=models.CASCADE,
+    )
+
+    producto = models.ForeignKey(
+        "inventario.CodigoProducto",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+
+    descripcion_factura = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Descripción para el Cliente",
+        help_text="Lo que aparecerá impreso en la factura."
+    )
+
+    cantidad = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("1.00")
+    )
+
+    precio_unitario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False
+    )
+
+    orden_item = models.PositiveIntegerField(default=1)
+    categoria_referencia = models.ForeignKey(
+                    "inventario.Categoria",
+                    on_delete=models.SET_NULL,
+                    null=True,
+                    blank=True,
+                )
+    codigo_empaque_referencia = models.CharField(
+            max_length=100,
+            null=True,
+            blank=True,
+            verbose_name="Código de empaque referencial",
+        )
+    codigo_barras_referencia = models.CharField(
+            max_length=100,
+            null=True,
+            blank=True,
+        )
+    class Meta:
+        ordering = ["orden_item", "id"]
+        verbose_name = "Detalle de insumo"
+        verbose_name_plural = "Detalles de insumos"
+
+    def clean(self):
+        if self.cantidad is None or self.cantidad <= 0:
+            raise ValidationError("La cantidad del insumo debe ser mayor que 0.")
+
+        if self.precio_unitario is None or self.precio_unitario < 0:
+            raise ValidationError("El precio unitario del insumo no puede ser negativo.")
+
+        if not self.producto and not (self.descripcion_factura or "").strip():
+            raise ValidationError(
+                "Debe seleccionar un repuesto del inventario o escribir una descripción manual."
+            )
+    def _registrar_movimiento_stock(self, codigo_producto, cantidad, tipo, referencia):
+        from inventario.models import MovimientoStock
+
+        MovimientoStock.objects.create(
+            codigo_producto=codigo_producto,
+            sucursal=self.orden.sucursal,
+            tipo_movimiento=tipo,
+            cantidad=cantidad,
+            referencia=referencia,
+        )
+
+    def save(self, *args, **kwargs):
+        if not self.descripcion_factura and self.producto:
+            self.descripcion_factura = str(self.producto)
+
+        self.subtotal = (
+            Decimal(str(self.cantidad)) * self.precio_unitario
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        self.full_clean()
+
+        placa_ref = self.orden.placa if self.orden.placa else "SIN PLACA"
+        referencia = f"OT: {self.orden.numero_orden} | Placa: {placa_ref}"
+        es_edicion = self.pk is not None
+
+        with transaction.atomic():
+            cambio_stock = False
+            producto_anterior = None
+            cantidad_anterior = Decimal("0.00")
+
+            if es_edicion:
+                anterior = OrdenInsumoDetalle.objects.select_for_update().get(pk=self.pk)
+                producto_anterior = anterior.producto
+                cantidad_anterior = anterior.cantidad
+
+                if producto_anterior:
+                    cambio_stock = (
+                        producto_anterior.id != (self.producto.id if self.producto else None)
+                        or cantidad_anterior != self.cantidad
+                    )
+
+                    if cambio_stock:
+                        self._registrar_movimiento_stock(
+                            codigo_producto=producto_anterior,
+                            cantidad=cantidad_anterior,
+                            tipo="entrada",
+                            referencia=f"REVERSA {referencia}",
+                        )
+
+            super().save(*args, **kwargs)
+
+            if self.producto:
+                if not es_edicion or cambio_stock:
+                    self._registrar_movimiento_stock(
+                        codigo_producto=self.producto,
+                        cantidad=self.cantidad,
+                        tipo="salida",
+                        referencia=referencia,
+                    )
+
+            self.orden.calcular_total()
+
+    def delete(self, *args, **kwargs):
+        placa_ref = self.orden.placa if self.orden.placa else "SIN PLACA"
+        referencia = f"REVERSA OT: {self.orden.numero_orden} | Placa: {placa_ref}"
+
+        orden = self.orden
+        producto = self.producto
+        cantidad = self.cantidad
+
+        with transaction.atomic():
+            if producto:
+                self._registrar_movimiento_stock(
+                    codigo_producto=producto,
+                    cantidad=cantidad,
+                    tipo="entrada",
+                    referencia=referencia,
+                )
+
+            super().delete(*args, **kwargs)
+            orden.calcular_total()
+
+    def __str__(self):
+        return f"{self.descripcion_factura} (x{self.cantidad}) - OT {self.orden.numero_orden}"
+    
+class OrdenServicioProcedimientoDetalle(models.Model):
+
+    detalle_servicio = models.ForeignKey(
+        OrdenServicioDetalle,
+        on_delete=models.CASCADE,
+        related_name="procedimientos_detalle",
+    )
+
+    descripcion = models.CharField(
+        max_length=300
+    )
+
+    orden_item = models.PositiveIntegerField(
+        default=1
+    )
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+        verbose_name = "Procedimiento aplicado en OT"
+        verbose_name_plural = "Procedimientos aplicados en OT"
+
+    def clean(self):
+
+        if not self.descripcion or not self.descripcion.strip():
+            raise ValidationError(
+                "La descripción del procedimiento es obligatoria."
+            )
+
+    def save(self, *args, **kwargs):
+
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip().upper()
+
+        self.full_clean()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+
+        return (
+            f"{self.detalle_servicio.descripcion_servicio} "
+            f"- {self.descripcion}"
+        )
+
+# ==========================================
+# 9. DETALLES HISTÓRICOS MIGRADOS
+# ==========================================
+class OrdenServicioHistorico(models.Model):
+    TIPOS = [
+        ("MO", "Mano de obra"),
+        ("MOE", "Mano de obra externa"),
+    ]
+
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="servicios_historicos",
+        on_delete=models.CASCADE,
+    )
+    tipo = models.CharField(max_length=3, choices=TIPOS)
+    descripcion_original = models.TextField()
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    es_cortesia = models.BooleanField(default=False)
+    orden_item = models.PositiveIntegerField(default=1)
+    procedimientos = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Sub-procedimientos o líneas hijas del servicio histórico."
+    )
+    class Meta:
+        ordering = ["tipo", "orden_item", "id"]
+        verbose_name = "Servicio histórico migrado"
+        verbose_name_plural = "Servicios históricos migrados"
+
+    def clean(self):
+        if not self.descripcion_original or not self.descripcion_original.strip():
+            raise ValidationError("La descripción histórica es obligatoria.")
+
+        if self.cantidad is not None and self.cantidad <= 0:
+            raise ValidationError("La cantidad histórica debe ser mayor que 0.")
+
+        if self.precio_unitario is not None and self.precio_unitario < 0:
+            raise ValidationError("El precio unitario histórico no puede ser negativo.")
+
+        if self.subtotal is not None and self.subtotal < 0:
+            raise ValidationError("El subtotal histórico no puede ser negativo.")
+
+    def save(self, *args, **kwargs):
+        if self.descripcion_original:
+            self.descripcion_original = self.descripcion_original.strip()
+
+        self.full_clean()
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.orden.calcular_total()
+
+    def delete(self, *args, **kwargs):
+        orden = self.orden
+        with transaction.atomic():
+            super().delete(*args, **kwargs)
+            orden.calcular_total()
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.descripcion_original}"
+
+
+class OrdenInsumoHistorico(models.Model):
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        related_name="insumos_historicos",
+        on_delete=models.CASCADE,
+    )
+    descripcion_original = models.TextField()
+    codigo_original = models.CharField(max_length=100, null=True, blank=True)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    orden_item = models.PositiveIntegerField(default=1)
+    requiere_revision = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+        verbose_name = "Insumo histórico migrado"
+        verbose_name_plural = "Insumos históricos migrados"
+
+    def clean(self):
+        if not self.descripcion_original or not self.descripcion_original.strip():
+            raise ValidationError("La descripción histórica del insumo es obligatoria.")
+
+        if self.cantidad is not None and self.cantidad <= 0:
+            raise ValidationError("La cantidad histórica debe ser mayor que 0.")
+
+        if self.precio_unitario is not None and self.precio_unitario < 0:
+            raise ValidationError("El precio unitario histórico no puede ser negativo.")
+
+        if self.subtotal is not None and self.subtotal < 0:
+            raise ValidationError("El subtotal histórico no puede ser negativo.")
+
+    def save(self, *args, **kwargs):
+        if self.descripcion_original:
+            self.descripcion_original = self.descripcion_original.strip()
+
+        if self.codigo_original:
+            self.codigo_original = self.codigo_original.strip().upper()
+
+        self.full_clean()
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.orden.calcular_total()
+
+    def delete(self, *args, **kwargs):
+        orden = self.orden
+        with transaction.atomic():
+            super().delete(*args, **kwargs)
+            orden.calcular_total()
+
+    def __str__(self):
+        return self.descripcion_original
+    

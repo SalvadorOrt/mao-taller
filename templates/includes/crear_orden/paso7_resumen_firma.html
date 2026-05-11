@@ -1,0 +1,26 @@
+<div class="step-container" id="step_7">
+    <div class="section-header">
+        <i class="bi bi-check-circle-fill text-success"></i> 7. Confirmación y Firma
+    </div>
+    
+    <div class="bg-light rounded p-4 border mb-4 shadow-sm" id="resumen_final">
+        </div>
+
+    <div class="ot-card" style="border: 2px solid var(--apple-warning); padding: 15px; border-radius: 12px; background: #fffdf5;">
+        <label class="form-label-custom text-dark mb-3">
+            <i class="bi bi-pen"></i> FIRMA DEL CLIENTE (Opcional - Dibuje aquí)
+        </label>
+        
+        <div style="position: relative; border-radius: 12px; overflow: hidden; border: 2px solid var(--apple-border); background: #fff;">
+            <canvas id="canvasFirma" style="cursor: crosshair; touch-action: none; width: 100%; height: 180px; display: block;"></canvas>
+        </div>
+        
+        <input type="hidden" name="firma_base64" id="id_firma_base64">
+        
+        <div class="text-center mt-3">
+            <button type="button" class="btn-mao btn-mao-secondary btn-pill small" onclick="limpiarFirma()">
+                <i class="bi bi-eraser"></i> Borrar Firma
+            </button>
+        </div>
+    </div>
+</div>

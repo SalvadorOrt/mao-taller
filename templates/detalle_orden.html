@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle OT | MAO{% endblock %}
+{% block page_title %}Orden {{ orden.numero_orden }}{% endblock %}
+{% block page_subtitle %}Detalle operativo de la orden{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+
+<div class="container ot-wrapper" data-puede-editar="{{ puede_editar|yesno:'true,false' }}">
+
+    <div class="ot-card ot-header" style="margin-bottom: 15px; align-items: center; padding: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 14px; font-weight: 700; color: var(--text);">Estado de Orden:</span>
+
+            {% if orden.estado == 'ABIERTA' %}
+                <span class="ot-badge" style="background: #e5fbe4; color: #1f8939; border-color: #b7efc5;">
+                    EN TALLER / ABIERTA
+                </span>
+            {% elif orden.estado == 'CERRADA' %}
+                <span class="ot-badge" style="background: #f5f5f7; color: var(--muted); border-color: var(--border);">
+                    ENTREGADO / CERRADA
+                </span>
+            {% else %}
+                <span class="ot-badge" style="background: #ffebe9; color: var(--danger); border-color: #ffd6d6;">
+                    ANULADA
+                </span>
+            {% endif %}
+
+            {% if orden.es_migrada %}
+                <span class="ot-badge" style="background: #fff5cc; color: #d97706; border-color: #ffcc00;">
+                    MIGRADA (ETL)
+                </span>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            {% if puede_editar %}
+                <button type="button"
+                        onclick="abrirModalRecepcion()"
+                        class="btn-login"
+                        style="background: #f5f5f7; color: var(--text);">
+                    <i class="bi bi-pencil-square" style="margin-right: 5px;"></i>
+                    {% if orden.estado != 'ABIERTA' %}Corregir Datos (Admin){% else %}Editar Recepción{% endif %}
+                </button>
+            {% endif %}
+
+            {% if puede_reabrir and orden.estado != 'ABIERTA' %}
+                <button type="button"
+                        onclick="confirmarReabrir('formReabrir')"
+                        class="btn-login"
+                        style="background: #ff9500; border-color: #ff9500; color: #fff;">
+                    <i class="bi bi-unlock" style="margin-right: 5px;"></i> Reabrir Orden
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN (Fuera del formulario maestro) 🔥 -->
+    <form id="formCerrar" method="POST" action="{% url 'cerrar_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
+    <form id="formAnular" method="POST" action="{% url 'anular_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
+    <form id="formReabrir" method="POST" action="{% url 'reabrir_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
+
+    <!-- 🔥 FORMULARIO MAESTRO DE DETALLES (con novalidate) 🔥 -->
+    <form method="post" id="formDetalleOT" novalidate>
+        {% csrf_token %}
+
+        {% include 'includes/detalle_orden/info_general.html' %}
+        {% include 'includes/detalle_orden/tabla_repuestos.html' %}
+        {% include 'includes/detalle_orden/tabla_moi.html' %}
+        {% include 'includes/detalle_orden/tabla_moe.html' %}
+        {% include 'includes/detalle_orden/resumen.html' %}
+
+        <div class="sticky-actions">
+            <a href="{{ url_anterior }}"
+               class="btn-login"
+               style="background: #e5e5ea; border-color: #e5e5ea; color: var(--text);">
+                <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>
+                Volver
+            </a>
+
+            {% if puede_editar %}
+                <!-- 🔥 BOTÓN ACTUALIZADO PARA DISPARAR EL GUARDADO DIRECTO 🔥 -->
+                <button type="button" class="btn-login primary" onclick="guardarOTDirecto()">
+                    {% if orden.estado != 'ABIERTA' %}
+                        <i class="bi bi-shield-check" style="margin-right: 5px;"></i> Guardar Correcciones
+                    {% else %}
+                        Guardar detalle de OT
+                    {% endif %}
+                </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div id="productoFloatingDropdown" class="producto-floating-dropdown"></div>
+
+{% include 'includes/detalle_orden/modal_editar_recepcion.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // 🔥 1. FUNCIÓN DE GUARDADO DIRECTO (Sin preguntas tediosas) 🔥
+    function guardarOTDirecto() {
+        // 1. Mostramos pantalla de carga para que el usuario sepa que está procesando
+        Swal.fire({
+            title: 'Guardando...',
+            html: 'Sincronizando repuestos y servicios...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+        
+        // 2. CREAMOS UN FORMULARIO INVISIBLE Y BLINDADO
+        let formSeguro = document.createElement('form');
+        formSeguro.method = 'POST';
+        formSeguro.action = window.location.href;
+        formSeguro.style.display = 'none';
+        
+        // 3. Capturamos el Token de Seguridad
+        let csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        let inputCsrf = document.createElement('input');
+        inputCsrf.type = 'hidden';
+        inputCsrf.name = 'csrfmiddlewaretoken';
+        inputCsrf.value = csrf;
+        formSeguro.appendChild(inputCsrf);
+
+        // 4. EL IMÁN: Recogemos TODOS los inputs de la pantalla tengan el nombre que tengan
+        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"]';
+        let todosLosInputs = document.querySelectorAll(selectores);
+        
+        todosLosInputs.forEach(input => {
+            let clon = document.createElement('input');
+            clon.type = 'hidden';
+            clon.name = input.name;
+            clon.value = input.value;
+            formSeguro.appendChild(clon);
+        });
+
+        // 5. Capturamos las observaciones (si las tienes)
+        let observaciones = document.querySelector('textarea[name="observaciones_tecnicas"]');
+        if (observaciones) {
+            let clonObs = document.createElement('input');
+            clonObs.type = 'hidden';
+            clonObs.name = 'observaciones_tecnicas';
+            clonObs.value = observaciones.value;
+            formSeguro.appendChild(clonObs);
+        }
+
+        // 6. ¡Disparamos el formulario limpio a Python!
+        document.body.appendChild(formSeguro);
+        formSeguro.submit();
+    }
+
+    // 2. MODAL DE CONFIRMACIÓN PARA REABRIR (Este sí se queda porque es una acción delicada)
+    function confirmarReabrir(formId) {
+        Swal.fire({
+            title: '¿Reabrir Orden Histórica?',
+            text: 'Esta orden volverá a estar "ABIERTA". Usa esta opción solo si necesitas realizar cambios profundos en el detalle técnico.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff9500', 
+            cancelButtonColor: '#6e6e73',
+            confirmButtonText: 'Sí, reabrir',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+
+    // 🔥 3. CAPTURA DE MENSAJES DE DJANGO PARA MOSTRAR MODAL DE ÉXITO AL RECARGAR 🔥
+    document.addEventListener("DOMContentLoaded", function() {
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    Swal.fire({
+                        title: '¡Guardado Exitoso!',
+                        text: '{{ message }}',
+                        icon: 'success',
+                        confirmButtonColor: '#34c759',
+                        confirmButtonText: 'Entendido',
+                        timer: 2500 // Se cierra solo después de 2.5 segundos
+                    });
+                {% elif message.tags == 'error' %}
+                    Swal.fire({
+                        title: 'Error',
+                        text: '{{ message }}',
+                        icon: 'error',
+                        confirmButtonColor: '#ff3b30'
+                    });
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/detalle_orden/base.js' %}"></script>
+<script src="{% static 'js/detalle_orden/recepcion.js' %}"></script>
+<script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
+<script src="{% static 'js/detalle_orden/mano_obra.js' %}"></script>
+<script src="{% static 'js/detalle_orden/detalle_orden.js' %}"></script>
+{% endblock %}

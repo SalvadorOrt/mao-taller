@@ -1,0 +1,1067 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>OT {{ orden.numero_orden }} - MAO</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --text: #1f2937;
+            --muted: #4b5563;
+            --line: #e5e7eb;
+            --soft-2: #f1f5f9;
+            --dark: #0f172a;
+            --danger: #dc2626;
+            --border-radius: 6px;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 7mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #e2e8f0;
+            color: var(--text);
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 8.5px;
+            line-height: 1.3;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 8mm 10mm;
+            overflow: hidden;
+        }
+
+        .top-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border: none;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+        }
+
+        .top-table td {
+            border: none;
+            background: #fff;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .top-left {
+            width: 34%;
+            padding-right: 8px !important;
+        }
+
+        .top-right {
+            width: 66%;
+            text-align: right;
+            overflow: hidden;
+        }
+
+        .logo img {
+            max-width: 145px;
+            max-height: 58px;
+            object-fit: contain;
+        }
+
+        .company {
+            margin-top: 4px;
+            font-size: 7.5px;
+            line-height: 1.3;
+            color: var(--muted);
+        }
+
+        .titulo-ot {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.1;
+            width: 100%;
+            text-align: right;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .numero-ot {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 6.8px;
+            font-weight: 800;
+            color: var(--danger);
+            background: var(--soft-2);
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            padding: 3px 5px;
+            margin-top: 5px;
+            width: 100%;
+            text-align: right;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .meta-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 4px 0;
+            border: none;
+            margin-top: 6px;
+        }
+
+        .meta-table td {
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            padding: 4px;
+            text-align: center;
+            font-size: 6.8px;
+            background: #fff;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .meta-table span {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 5.8px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .section {
+            margin-bottom: 9px;
+        }
+
+        .section-title {
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            font-size: 7.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--primary);
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--primary);
+            opacity: 0.2;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            background: #ffffff;
+            padding: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .field {
+            margin-bottom: 5px;
+            min-width: 0;
+        }
+
+        .label {
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 2px;
+            font-size: 6.5px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .value {
+            min-height: 19px;
+            padding: 4px 7px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: #ffffff;
+            font-size: 8.3px;
+            font-weight: 500;
+            color: var(--dark);
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .vehicle-row {
+            display: block;
+        }
+
+        .sketch-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1000 / 158.92;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            background: #ffffff !important;
+            overflow: hidden;
+        }
+
+        .sketch-box img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .img-auto-base {
+            z-index: 1;
+            background: #ffffff;
+        }
+
+        .img-croquis-danios {
+            z-index: 2;
+            mix-blend-mode: multiply;
+        }
+
+        .fuel-box {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 7px;
+        }
+
+        .vehicle-checks {
+            margin-top: 7px;
+        }
+
+        .check-card {
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: #ffffff;
+            padding: 6px 8px;
+        }
+
+        .check-title {
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 4px;
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            border-bottom: 1px dashed var(--line);
+            padding-bottom: 3px;
+        }
+
+        .check-list {
+            list-style: none;
+        }
+
+        .check-list li {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 2px;
+            font-size: 7.8px;
+            color: var(--text);
+        }
+
+        .check-box {
+            width: 11px;
+            height: 11px;
+            border: 1.4px solid #cbd5e1;
+            border-radius: 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: 900;
+            flex: 0 0 auto;
+            background: #fff;
+        }
+
+        .check-box.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .check-box.checked::after {
+            content: "✓";
+        }
+
+        .report {
+            min-height: 36px;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            background: #ffffff;
+            padding: 7px 9px;
+            font-size: 8.3px;
+            font-weight: 500;
+            line-height: 1.35;
+            color: var(--dark);
+            overflow-wrap: anywhere;
+        }
+
+        .trabajos-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .trabajos-table thead {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .trabajos-table th {
+            font-family: 'Montserrat', sans-serif;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .trabajos-table td {
+            border-bottom: 1px solid var(--line);
+            padding: 6px 8px;
+            font-size: 8px;
+            vertical-align: middle;
+            font-weight: 400;
+            background: #ffffff;
+            overflow-wrap: anywhere;
+        }
+
+        .trabajos-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: center;
+            margin-top: 38px;
+        }
+
+        .signature {
+            position: relative;
+            width: 50%;
+            text-align: center;
+            border-top: 1.5px solid var(--dark);
+            padding-top: 8px;
+            min-height: 40px;
+        }
+
+        .signature-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 7.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--dark);
+        }
+
+        .signature-subtitle {
+            margin-top: 3px;
+            font-size: 7px;
+            color: var(--muted);
+        }
+
+        .img-firma {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-height: 55px;
+            width: auto;
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+            }
+
+            .page {
+                width: auto;
+                min-height: auto;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                overflow: hidden;
+            }
+
+            .panel,
+            .section,
+            .signatures,
+            .vehicle-row {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+
+                <div class="company">
+                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+                    {{ empresa.direccion|default:"Quito, Ecuador" }}
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="titulo-ot">Orden de Trabajo</div>
+                <div class="numero-ot">N° {{ orden.numero_orden|default:"000000" }}</div>
+
+                <table class="meta-table">
+                    <tr>
+                        <td>
+                            <span>Sucursal</span>
+                            {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+                        </td>
+                        <td>
+                            <span>Fecha impresión</span>
+                            {% now "d/m/Y H:i" %}
+                        </td>
+                        <td>
+                            <span>Estado</span>
+                            {{ orden.get_estado_display|default:"ABIERTA" }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section">
+        <div class="section-title">Cliente y vehículo</div>
+
+        <div class="panel">
+            <div class="grid-2">
+                <div>
+                    <div class="field">
+                        <div class="label">Cliente / Razón social</div>
+                        <div class="value">
+                            {{ orden.cliente.nombre_completo|upper|default:orden.cliente_respaldo|upper|default:"CLIENTE MOSTRADOR" }}
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <div class="label">RUC / C.I.</div>
+                            <div class="value">{{ orden.cliente.identificacion|default:"-" }}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Teléfono</div>
+                            <div class="value">{{ orden.cliente.telefono|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <div class="label">Placa</div>
+                            <div class="value">{{ orden.placa|upper|default:"S/P" }}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Kilometraje</div>
+                            <div class="value">{{ orden.kilometraje|default:"0" }} KM</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <div class="label">Marca / Modelo</div>
+                            <div class="value">{{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Color / Año</div>
+                            <div class="value">
+                                {{ orden.color|upper|default:"-" }} / {{ orden.anio_vehiculo|default:"-" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Estado del vehículo al ingreso</div>
+
+        <div class="panel">
+            <div class="vehicle-row">
+
+                <div class="sketch-box">
+                    <img src="{% static 'base_autos.svg' %}?v=4" class="img-auto-base" alt="Croquis vehículo">
+
+                    {% if croquis and croquis.imagen_generada %}
+                        <img src="{{ croquis.imagen_generada.url }}" class="img-croquis-danios" alt="Daños registrados">
+                    {% endif %}
+                </div>
+
+                <div class="fuel-box">
+                    <div class="field">
+                        <div class="label">Combustible</div>
+                        <div class="value">{{ orden.get_nivel_combustible_display|default:"1/2" }}</div>
+                    </div>
+
+                    <div class="field">
+                        <div class="label">Ingreso</div>
+                        <div class="value">
+                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vehicle-checks">
+                    <div class="grid-3">
+                        <div class="check-card">
+                            <div class="check-title">Exterior</div>
+                            <ul class="check-list">
+                                <li><span class="check-box {% if chk.tapacubos %}checked{% endif %}"></span> Tapacubos</li>
+                                <li><span class="check-box {% if chk.plumas %}checked{% endif %}"></span> Plumas</li>
+                                <li><span class="check-box {% if chk.antena %}checked{% endif %}"></span> Antena</li>
+                                <li><span class="check-box {% if chk.faros_lunas %}checked{% endif %}"></span> Faros</li>
+                            </ul>
+                        </div>
+
+                        <div class="check-card">
+                            <div class="check-title">Interior</div>
+                            <ul class="check-list">
+                                <li><span class="check-box {% if chk.radio %}checked{% endif %}"></span> Radio / LCD</li>
+                                <li><span class="check-box {% if chk.encendedor_cig %}checked{% endif %}"></span> Encendedor</li>
+                                <li><span class="check-box {% if chk.matricula %}checked{% endif %}"></span> Matrícula</li>
+                                <li><span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}"></span> Tuerca Seg.</li>
+                            </ul>
+                        </div>
+
+                        <div class="check-card">
+                            <div class="check-title">Baúl</div>
+                            <ul class="check-list">
+                                <li><span class="check-box {% if chk.gata %}checked{% endif %}"></span> Gata</li>
+                                <li><span class="check-box {% if chk.herramientas %}checked{% endif %}"></span> Herr.</li>
+                                <li><span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}"></span> Llanta E.</li>
+                                <li><span class="check-box {% if chk.triangulos %}checked{% endif %}"></span> Triángulos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-top: 7px; margin-bottom: 0;">
+                    <div class="label">Objetos adicionales</div>
+                    <div class="value">
+                        {% for obj in orden.ordenobjetoadicional_set.all %}
+                            {{ obj.cantidad }}x {{ obj.descripcion|upper }}{% if obj.observacion %} ({{ obj.observacion }}){% endif %}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            NINGUNO REPORTADO
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Reporte del cliente / motivo de ingreso</div>
+
+        <div class="report">
+            {% if orden.sintomas_cliente %}
+                {{ orden.sintomas_cliente|upper }}
+            {% else %}
+                {% for s in orden.sintomas_items.all %}
+                    • {{ s.descripcion|upper }}<br>
+                {% empty %}
+                    REVISIÓN TÉCNICA GENERAL / NO ESPECIFICADO
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Trabajos a realizar</div>
+
+        <table class="trabajos-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;" class="center">#</th>
+                    <th>Descripción de las Operaciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in orden.trabajos_solicitados_items.all %}
+                    <tr>
+                        <td class="center">{{ forloop.counter }}</td>
+                        <td>{{ t.descripcion_manual|upper }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% for s in orden.servicios_detalles.all %}
+                    <tr>
+                        <td class="center">-</td>
+                        <td>{{ s.servicio.descripcion|upper }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% for i in "123"|make_list %}
+                    <tr>
+                        <td style="height: 18px;"></td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="signatures">
+        <div class="signature">
+            {% if orden.firma_cliente %}
+                <img src="{{ orden.firma_cliente.url }}" class="img-firma" alt="Firma cliente">
+            {% endif %}
+
+            <div class="signature-title">Firma del cliente / responsable</div>
+            <div class="signature-subtitle">Acepto las condiciones de ingreso del vehículo.</div>
+        </div>
+    </div>
+
+</div>
+<div class="page page-back">
+
+<style>
+    .page-back {
+        page-break-before: always;
+        font-family: 'Roboto', Arial, sans-serif;
+        font-size: 6.2px;
+        color: var(--text);
+        padding: 4mm 6mm !important;
+        overflow: hidden;
+    }
+
+    .back-layout {
+        width: 100%;
+        height: 100%;
+        border-collapse: separate;
+        border-spacing: 7px 0;
+        table-layout: fixed;
+    }
+
+    .back-col {
+        width: 50%;
+        vertical-align: top;
+    }
+
+    .back-section {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        margin-bottom: 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .back-section th,
+    .back-section td {
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 2px 3px;
+        height: 12px;
+        line-height: 1.08;
+        font-size: 5.7px;
+        vertical-align: middle;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .back-section tr:last-child td {
+        border-bottom: none;
+    }
+
+    .back-section th:last-child,
+    .back-section td:last-child {
+        border-right: none;
+    }
+
+    .back-title {
+        background: var(--primary) !important;
+        color: #ffffff;
+        text-align: center;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 6.2px !important;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        height: 14px !important;
+    }
+
+    .back-head {
+        background: var(--soft-2) !important;
+        color: var(--muted);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        text-align: center;
+        font-size: 5.5px !important;
+        text-transform: uppercase;
+    }
+
+    .item-col {
+        text-align: center;
+        font-weight: 700;
+        color: var(--muted);
+        padding-left: 1px !important;
+        padding-right: 1px !important;
+    }
+
+    .cant-col {
+        text-align: center;
+    }
+
+    .small-label {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-size: 5.5px;
+    }
+
+    .line-row td {
+        height: 19px !important;
+    }
+
+    .tall-line td {
+        height: 21px !important;
+    }
+
+    .signature-cell {
+        height: 14px !important;
+    }
+
+    @media print {
+        .page-back {
+            page-break-before: always;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        .back-section,
+        .back-layout {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    }
+</style>
+
+<table class="back-layout">
+    <tr>
+        <td class="back-col">
+
+            <table class="back-section">
+                <colgroup>
+                    <col style="width:4%;">
+                    <col style="width:66%;">
+                    <col style="width:10%;">
+                    <col style="width:20%;">
+                </colgroup>
+
+                <tr><th colspan="4" class="back-title">Aditivos y lubricantes</th></tr>
+                <tr>
+                    <th class="back-head">#</th>
+                    <th class="back-head">Descripción</th>
+                    <th class="back-head">Cant.</th>
+                    <th class="back-head">Observación</th>
+                </tr>
+
+                <tr><td class="item-col">1</td><td>ACEITE MULTIGRADO MOTOR __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">2</td><td>ACEITE CAJA DE CAMBIOS __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">3</td><td>ACEITE DIFERENCIAL POSTERIOR __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">4</td><td>ACEITE DIFERENCIAL DELANTERO __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">5</td><td>ACEITE DE TRANSFER 4 X 4 __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">6</td><td>SPRAY LIMPIADOR</td><td></td><td></td></tr>
+                <tr><td class="item-col">7</td><td>ADITIVO LIMPIA PARABRISAS</td><td></td><td></td></tr>
+                <tr><td class="item-col">8</td><td>REFRIGERANTE (MARCA) __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">9</td><td>LÍQUIDO HIDRÁULICO</td><td></td><td></td></tr>
+                <tr><td class="item-col">10</td><td>LÍQUIDO DE FRENOS DOT ________</td><td></td><td></td></tr>
+                <tr><td class="item-col">11</td><td>ENJUAGADOR DE MOTOR</td><td></td><td></td></tr>
+                <tr><td class="item-col">12</td><td>GRASA</td><td></td><td></td></tr>
+                <tr><td class="item-col">13</td><td>SILICON</td><td></td><td></td></tr>
+                <tr><td class="item-col">14</td><td>GASOLINA</td><td></td><td></td></tr>
+                <tr><td class="item-col">15</td><td>SPRAY DE PINTURA</td><td></td><td></td></tr>
+                <tr><td class="item-col">16</td><td>TRATAMIENTO COMPLETO ........</td><td></td><td></td></tr>
+                <tr><td class="item-col">17</td><td>ENJUAGADOR SISTEMA REFRIGERACIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">18</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">19</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">20</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">21</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">22</td><td></td><td></td><td></td></tr>
+            </table>
+
+            <table class="back-section">
+                <colgroup>
+                    <col style="width:4%;">
+                    <col style="width:66%;">
+                    <col style="width:10%;">
+                    <col style="width:20%;">
+                </colgroup>
+
+                <tr><th colspan="4" class="back-title">Repuestos</th></tr>
+                <tr>
+                    <th class="back-head">#</th>
+                    <th class="back-head">Descripción</th>
+                    <th class="back-head">Cant.</th>
+                    <th class="back-head">Observación</th>
+                </tr>
+
+                <tr><td class="item-col">1</td><td>FILTRO DE ACEITE</td><td></td><td></td></tr>
+                <tr><td class="item-col">2</td><td>FILTRO DE COMBUSTIBLE __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">3</td><td>FILTRO DE AIRE</td><td></td><td></td></tr>
+                <tr><td class="item-col">4</td><td>FILTRO DE A/C</td><td></td><td></td></tr>
+                <tr><td class="item-col">5</td><td>BUJÍAS DE ENCENDIDO</td><td></td><td></td></tr>
+                <tr><td class="item-col">6</td><td>MICROFILTROS</td><td></td><td></td></tr>
+                <tr><td class="item-col">7</td><td>TAPÓN DE RODELA DEL CARTER</td><td></td><td></td></tr>
+                <tr><td class="item-col">8</td><td>FOCOS DE UÑA</td><td></td><td></td></tr>
+                <tr><td class="item-col">9</td><td>FOCOS DE ______ CONTACTOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">10</td><td>FOCOS __________</td><td></td><td></td></tr>
+                <tr><td class="item-col">11</td><td>RODELAS ANTISULFATANTES BATERÍA</td><td></td><td></td></tr>
+                <tr><td class="item-col">12</td><td>PLUMAS LIMPIA PARABRISAS</td><td></td><td></td></tr>
+                <tr><td class="item-col">13</td><td>JUEGO DE PASTILLAS DE FRENO</td><td></td><td></td></tr>
+                <tr><td class="item-col">14</td><td>CILINDROS DE FRENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">15</td><td>KIT DE BANDA DE DISTRIBUCIÓN / EMBRAGUE</td><td></td><td></td></tr>
+                <tr><td class="item-col">16</td><td>BANDA DE ACCESORIOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">17</td><td>TERMINAL DE DIRECCIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">18</td><td>BRAZO AXIAL DE DIRECCIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">19</td><td>RÓTULAS</td><td></td><td></td></tr>
+                <tr><td class="item-col">20</td><td>ABRAZADERAS GR. ______ MED. ______ PEQ. ______</td><td></td><td></td></tr>
+                <tr><td class="item-col">21</td><td>O'RINGS DE INYECTORES</td><td></td><td></td></tr>
+                <tr><td class="item-col">22</td><td>AMORTIGUADORES DEL ______ POST ______</td><td></td><td></td></tr>
+                <tr><td class="item-col">23</td><td>RODAMIENTOS DEL ______ POST ______</td><td></td><td></td></tr>
+                <tr><td class="item-col">24</td><td>BARRAS LINK</td><td></td><td></td></tr>
+                <tr><td class="item-col">25</td><td>CAUCHOS BARRA ESTABILIZADORA</td><td></td><td></td></tr>
+                <tr><td class="item-col">26</td><td>MANGUERA INFERIOR ______ SUPERIOR ______</td><td></td><td></td></tr>
+                <tr><td class="item-col">27</td><td>HALÓGENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">28</td><td>WAYPE</td><td></td><td></td></tr>
+                <tr><td class="item-col">29</td><td>BOMBA DE AGUA</td><td></td><td></td></tr>
+                <tr><td class="item-col">30</td><td>TERMOSTATO</td><td></td><td></td></tr>
+                <tr><td class="item-col">31</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">32</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">33</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">34</td><td></td><td></td><td></td></tr>
+            </table>
+
+            <table class="back-section">
+                <colgroup>
+                    <col style="width:70%;">
+                    <col style="width:30%;">
+                </colgroup>
+
+                <tr><th colspan="2" class="back-title">Mano de obra pintura</th></tr>
+                <tr>
+                    <td class="signature-cell"><span class="small-label">Nombre técnico:</span></td>
+                    <td class="signature-cell"><span class="small-label">Firma:</span></td>
+                </tr>
+                <tr>
+                    <td class="small-label">Descripción del trabajo</td>
+                    <td class="small-label" style="text-align:center;"># piezas</td>
+                </tr>
+                <tr class="line-row"><td></td><td></td></tr>
+                <tr class="line-row"><td></td><td></td></tr>
+                <tr class="line-row"><td></td><td></td></tr>
+                <tr class="line-row"><td></td><td></td></tr>
+                <tr class="line-row"><td></td><td></td></tr>
+                <tr class="line-row"><td></td><td></td></tr>
+                <tr>
+                    <td><span class="small-label">Total piezas pintadas</span></td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </td>
+
+        <td class="back-col">
+
+            <table class="back-section">
+                <colgroup>
+                    <col style="width:4%;">
+                    <col style="width:78%;">
+                    <col style="width:8%;">
+                    <col style="width:10%;">
+                </colgroup>
+
+                <tr><th colspan="4" class="back-title">Mano de obra mecánica</th></tr>
+                <tr>
+                    <td colspan="2" class="signature-cell"><span class="small-label">Nombre técnico:</span></td>
+                    <td colspan="2" class="signature-cell"><span class="small-label">Firma:</span></td>
+                </tr>
+                <tr>
+                    <th class="back-head">#</th>
+                    <th class="back-head">Descripción</th>
+                    <th class="back-head">Cant.</th>
+                    <th class="back-head"></th>
+                </tr>
+
+                <tr><td class="item-col">1</td><td>CAMBIO KIT BANDA DE DISTRIBUCIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">2</td><td>CAMBIO BANDA DE ACCESORIOS Y POLEAS</td><td></td><td></td></tr>
+                <tr><td class="item-col">3</td><td>ABC INTEGRAL DE MOTOR DE GASOLINA</td><td></td><td></td></tr>
+                <tr><td class="item-col">4</td><td>DESMONTAJE / MONTAJE RIEL DE INYECTORES</td><td></td><td></td></tr>
+                <tr><td class="item-col">5</td><td>LIMPIEZA ULTRASÓNICA DE INYECTORES</td><td></td><td></td></tr>
+                <tr><td class="item-col">6</td><td>CAMBIO MICROFILTROS DE INYECTORES</td><td></td><td></td></tr>
+                <tr><td class="item-col">7</td><td>LAVADA DEL CUERPO DE ACELERACIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">8</td><td>LIMPIEZA Y LUBRICACIÓN DE VÁLVULA IAC</td><td></td><td></td></tr>
+                <tr><td class="item-col">9</td><td>CAMBIO DE BUJÍAS DE ENCENDIDO</td><td></td><td></td></tr>
+                <tr><td class="item-col">10</td><td>CAMBIO DE FILTRO DE AIRE Y COMBUSTIBLE</td><td></td><td></td></tr>
+                <tr><td class="item-col">11</td><td>CAMBIO FILTRO DE COMBUSTIBLE SUMERGIBLE</td><td></td><td></td></tr>
+                <tr><td class="item-col">12</td><td>CAMBIO DE ACEITE Y FILTRO DE MOTOR</td><td></td><td></td></tr>
+                <tr><td class="item-col">13</td><td>CAMBIO EMPAQUE TAPA VÁLVULAS</td><td></td><td></td></tr>
+                <tr><td class="item-col">14</td><td>CALIBRACIÓN DE VÁLVULAS DE MOTOR</td><td></td><td></td></tr>
+                <tr><td class="item-col">15</td><td>ANÁLISIS DE GASES</td><td></td><td></td></tr>
+                <tr><td class="item-col">16</td><td>ABC INTEGRAL DE FRENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">17</td><td>CAMBIO DE LÍQUIDO DE FRENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">18</td><td>LIMPIEZA Y REGULACIÓN DE FRENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">19</td><td>CAMBIO DE PASTILLAS DE FRENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">20</td><td>CAMBIO DE ZAPATAS DE FRENOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">21</td><td>DESMONTAJE / MONTAJE CAJA DE CAMBIOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">22</td><td>CAMBIO KIT DE EMBRAGUE</td><td></td><td></td></tr>
+                <tr><td class="item-col">23</td><td>RECTIFICAR DISCOS - RECTIFICAR TAMBORES</td><td></td><td></td></tr>
+                <tr><td class="item-col">24</td><td>ABC INTEGRAL DE MOTOR DIESEL</td><td></td><td></td></tr>
+                <tr><td class="item-col">25</td><td>DIAGNÓSTICO CON ESCÁNER - GSCAN2</td><td></td><td></td></tr>
+                <tr><td class="item-col">26</td><td>CAMBIO FILTRO DE COMBUSTIBLE</td><td></td><td></td></tr>
+                <tr><td class="item-col">27</td><td>CAMBIO FILTRO DE COMBUST. / LLENADO LIQ. HID. MTTO. SISTEMA INY.</td><td></td><td></td></tr>
+                <tr><td class="item-col">28</td><td>LAVADA DE CUERPO DE ACELERACIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">29</td><td>DESMONTAJE / MONTAJE DE VÁLVULAS EGR</td><td></td><td></td></tr>
+                <tr><td class="item-col">30</td><td>LAVADO DE VÁLVULAS EGR</td><td></td><td></td></tr>
+                <tr><td class="item-col">31</td><td>LIMPIEZA DE SENSOR MAF</td><td></td><td></td></tr>
+                <tr><td class="item-col">32</td><td>LIMPIEZA Y CAMBIO DE FILTRO - VÁLVULAS DE CONTROL DE TURBO</td><td></td><td></td></tr>
+                <tr><td class="item-col">33</td><td>DIAGNÓSTICO Y CAMBIO DE BUJÍAS DE PRECALENTAMIENTO</td><td></td><td></td></tr>
+                <tr><td class="item-col">34</td><td>DESMONTAJE / MONTAJE DE INTERCOOLER</td><td></td><td></td></tr>
+                <tr><td class="item-col">35</td><td>LAVADO DEL INTERCOOLER</td><td></td><td></td></tr>
+                <tr><td class="item-col">36</td><td>REAJUSTE DE SUSPENSIÓN</td><td></td><td></td></tr>
+                <tr><td class="item-col">37</td><td>CAMBIO FILTRO DE A/C</td><td></td><td></td></tr>
+                <tr><td class="item-col">38</td><td>REVISIÓN NIVELES DE LUCES</td><td></td><td></td></tr>
+                <tr><td class="item-col">39</td><td>LUBRICAR PUERTAS Y VENTANAS</td><td></td><td></td></tr>
+                <tr><td class="item-col">40</td><td>CAMBIO ACEITE / CAJA CAMBIOS</td><td></td><td></td></tr>
+                <tr><td class="item-col">41</td><td>CAMBIO ACEITE TRANSFER 4X4</td><td></td><td></td></tr>
+                <tr><td class="item-col">42</td><td>CAMBIO ACEITE DIFERENCIAL DELANTERO</td><td></td><td></td></tr>
+                <tr><td class="item-col">43</td><td>CAMBIO ACEITE DIFERENCIAL POSTERIOR</td><td></td><td></td></tr>
+                <tr><td class="item-col">44</td><td>CAMBIO LÍQUIDO HIDRÁULICO</td><td></td><td></td></tr>
+                <tr><td class="item-col">45</td><td>CAMBIO REFRIGERANTE MOTOR</td><td></td><td></td></tr>
+                <tr><td class="item-col">46</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">47</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">48</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">49</td><td></td><td></td><td></td></tr>
+                <tr><td class="item-col">50</td><td></td><td></td><td></td></tr>
+            </table>
+
+            <table class="back-section">
+                <colgroup>
+                    <col style="width:70%;">
+                    <col style="width:30%;">
+                </colgroup>
+
+                <tr><th colspan="2" class="back-title">Mano de obra enderezada</th></tr>
+                <tr>
+                    <td class="signature-cell"><span class="small-label">Nombre técnico:</span></td>
+                    <td class="signature-cell"><span class="small-label">Firma:</span></td>
+                </tr>
+                <tr><td colspan="2" class="small-label">Descripción del trabajo</td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+                <tr>
+                    <td><span class="small-label">Tiempo empleado (horas)</span></td>
+                    <td></td>
+                </tr>
+            </table>
+
+            <table class="back-section">
+                <colgroup>
+                    <col style="width:70%;">
+                    <col style="width:30%;">
+                </colgroup>
+
+                <tr><th colspan="2" class="back-title">Mano de obra electricidad y electrónica</th></tr>
+                <tr>
+                    <td class="signature-cell"><span class="small-label">Nombre técnico:</span></td>
+                    <td class="signature-cell"><span class="small-label">Firma:</span></td>
+                </tr>
+                <tr><td colspan="2" class="small-label">Descripción del trabajo</td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+                <tr class="tall-line"><td colspan="2"></td></tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+</div>
+</div>
+<script>
+    window.onload = function() {
+        setTimeout(function() {
+            window.focus();
+            window.print();
+        }, 800);
+    };
+</script>
+
+</body>
+</html>
+

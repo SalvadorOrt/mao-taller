@@ -1,0 +1,40 @@
+{% load static %}
+<style>
+    /* Ponemos el CSS aquí arriba para que VS Code no se confunda con el código de Django */
+    .canvas-croquis-bg {
+        background-image: url('{% static "base_autos.svg" %}');
+        background-position: center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-color: transparent;
+        cursor: crosshair;
+        touch-action: none;
+        width: 100%;
+        max-width: 1000px;
+        height: 220px;
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+
+<div class="step-container" id="step_5">
+    <div class="section-header">
+        <i class="bi bi-car-front text-primary"></i> 5. Croquis de Daños
+    </div>
+    
+    <p class="text-muted small text-center mb-2">
+        <i class="bi bi-hand-index-thumb"></i> Dibuje sobre la silueta para marcar rayas, golpes o daños de carrocería.
+    </p>
+
+    <div style="position: relative; background: #4a4a4a; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.3);">
+        <canvas id="canvasCroquis" class="canvas-croquis-bg"></canvas>
+    </div>
+
+    <div class="text-center mt-3">
+        <button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="limpiarCanvas()">
+            <i class="bi bi-eraser"></i> Limpiar Dibujo
+        </button>
+    </div>
+    
+    <input type="hidden" name="imagen_croquis_base64" id="id_croquis_base64">
+</div>

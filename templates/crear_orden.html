@@ -1,0 +1,656 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Orden | MAO{% endblock %}
+
+{% block page_title %}Nueva Orden de Trabajo{% endblock %}
+{% block page_subtitle %}
+    {% if sucursal_activa %}
+        Trabajando en {{ sucursal_activa.nombre }}
+    {% else %}
+        Debe seleccionar una sucursal activa
+    {% endif %}
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'dashboard' %}" class="btn-login px-4 text-decoration-none" style="width: auto;">
+    <i class="bi bi-arrow-left me-2"></i> Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --apple-bg: #f5f5f7;
+        --apple-card: #ffffff;
+        --apple-blue: #0071e3;
+        --apple-text: #1d1d1f;
+        --apple-border: #d2d2d7;
+        --apple-muted: #86868b;
+        --apple-success: #34c759;
+        --apple-danger: #ff3b30;
+        --apple-warning: #ff9f0a;
+    }
+
+    .card-recepcion {
+        background: var(--apple-card);
+        border-radius: 20px;
+        border: 1px solid var(--apple-border);
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .info-sucursal {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: rgba(255,255,255,0.96);
+        border: 1px solid #e5e5e7;
+        border-radius: 18px;
+        padding: 16px 18px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    }
+
+    .info-sucursal-left { display: flex; align-items: center; gap: 14px; }
+    .info-sucursal-icon {
+        width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+        background: rgba(0,113,227,0.10); color: var(--apple-blue); font-size: 1.25rem; flex-shrink: 0;
+    }
+    .info-sucursal-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--apple-muted); margin-bottom: 4px; }
+    .info-sucursal-name { font-size: 1rem; font-weight: 700; color: var(--apple-text); line-height: 1.2; }
+    .info-sucursal-code { font-size: 0.86rem; color: var(--apple-muted); margin-top: 2px; }
+    .badge-sucursal-activa {
+        display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 16px; border-radius: 999px;
+        background: rgba(0,113,227,0.10); color: var(--apple-blue); font-weight: 700; border: 1px solid rgba(0,113,227,0.15); white-space: nowrap;
+    }
+    .info-sucursal-error { background: #fff2f2; border: 1px solid #ffd6d6; color: var(--apple-danger); }
+
+    .form-label-custom { font-size: 0.85rem; font-weight: 600; color: var(--apple-muted); margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control-apple { border-radius: 12px; border: 1.5px solid var(--apple-border); padding: 12px 16px; font-size: 1rem; width: 100%; transition: all 0.2s ease; background: #fff; }
+    .form-control-apple:focus { border-color: var(--apple-blue); outline: none; box-shadow: 0 0 0 4px rgba(0,113,227,0.15); }
+
+    .section-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; color: var(--apple-text); border-bottom: 2px solid #f2f2f2; padding-bottom: 10px; }
+    .check-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f2f2f2; }
+
+    .step-container { display: none; animation: fadeIn 0.4s ease-in-out; }
+    .step-container.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    .progress-indicator { display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative; }
+    .progress-indicator::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 3px; background: #e5e5e7; z-index: 1; }
+    .step-dot { width: 32px; height: 32px; border-radius: 50%; background: #e5e5e7; color: #6e6e73; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; transition: all 0.3s; }
+    .step-dot.active { background: var(--apple-blue); color: white; box-shadow: 0 0 0 4px rgba(0,113,227,0.2); }
+    .step-dot.completed { background: var(--apple-success); color: white; }
+
+    .btn-mao { width: auto; min-width: 140px; height: 48px; border-radius: 14px; border: 1px solid #dcdce1; background: #ffffff; color: #1d1d1f; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px; text-decoration: none; }
+    .btn-mao:hover { border-color: var(--apple-blue); box-shadow: 0 4px 12px rgba(0,0,0,0.10); color: #1d1d1f; }
+    .btn-mao:active { background: #f5f5f7; box-shadow: none; }
+    .btn-mao-primary { background: var(--apple-blue); border-color: var(--apple-blue); color: white; }
+    .btn-mao-primary:hover { background: #0062c4; border-color: #0062c4; color: white; }
+    .btn-mao-secondary { background: #f5f5f7; border-color: #dcdce1; color: #1d1d1f; }
+    .btn-mao-secondary:hover { background: #ebebef; border-color: #cfcfd4; color: #1d1d1f; }
+    .btn-mao-success { background: var(--apple-success); border-color: var(--apple-success); color: white; }
+    .btn-mao-success:hover { background: #28b44d; border-color: #28b44d; color: white; }
+    .btn-mao-danger-soft { background: #fff2f2; border-color: #ffd6d6; color: var(--apple-danger); }
+    .btn-mao-danger-soft:hover { background: #ffeaea; border-color: #ffbfc0; color: var(--apple-danger); }
+    .btn-mao-dark { background: #1d1d1f; border-color: #1d1d1f; color: white; }
+    .btn-mao-dark:hover { background: #2c2c2e; border-color: #2c2c2e; color: white; }
+    .btn-pill { border-radius: 999px; }
+
+    .input-group-mao { display: flex; gap: 12px; align-items: stretch; }
+    .input-group-mao .form-control-apple { flex: 1; }
+    .input-group-mao .btn-mao { flex-shrink: 0; }
+
+    .swal-mao-popup { border-radius: 24px !important; padding: 1.6rem !important; box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important; border: 1px solid #e5e5e7 !important; }
+    .swal-mao-title { color: #1d1d1f !important; font-size: 1.55rem !important; font-weight: 700 !important; }
+    .swal-mao-html { color: #6e6e73 !important; font-size: 1rem !important; line-height: 1.5 !important; }
+    .swal-mao-confirm { min-width: 150px !important; }
+    .campo-invalido { border-color: #ff3b30 !important; box-shadow: 0 0 0 4px rgba(255,59,48,0.12) !important; }
+
+    .tabla-mini { border: 1px solid #e5e5e7; border-radius: 16px; overflow: hidden; background: #fff; }
+    .tabla-mini-header, .tabla-mini-row { display: grid; gap: 12px; align-items: center; padding: 12px 14px; }
+    .tabla-mini-header { background: #f8f8fa; font-size: 0.78rem; font-weight: 700; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #ececef; }
+    .tabla-mini-row { border-bottom: 1px solid #f2f2f2; }
+    .tabla-mini-row:last-child { border-bottom: none; }
+    .tabla-2 { grid-template-columns: 70px 1fr 120px; }
+    .tabla-3 { grid-template-columns: 1fr 110px 140px 110px; }
+
+    .badge-trabajo { display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #e5e5e7; border-radius: 14px; background: #fff; cursor: pointer; transition: all 0.2s ease; font-size: 0.95rem; }
+    .badge-trabajo:hover { border-color: var(--apple-blue); box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
+    .badge-trabajo input { transform: scale(1.1); }
+    .trabajos-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .bloque-tabla { border: 1px solid #e8e8ec; border-radius: 16px; padding: 16px; background: #fcfcfd; }
+    .empty-note { color: #8e8e93; font-size: 0.92rem; padding: 10px 0; }
+
+    .color-picker-mao { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .color-swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 14px; border: 2px solid #dcdce1; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .color-swatch:hover { transform: scale(1.05); border-color: var(--apple-blue); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .color-swatch.active { border: 3px solid var(--apple-blue); box-shadow: 0 0 0 4px rgba(0,113,227,0.18); transform: scale(1.04); }
+    .color-selected-preview { min-height: 44px; border: 1px solid #e5e5e7; border-radius: 12px; background: #fbfbfd; display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: #1d1d1f; font-weight: 500; }
+    .color-selected-dot { width: 18px; height: 18px; border-radius: 50%; background: transparent; border: 1px solid #d2d2d7; display: inline-block; flex-shrink: 0; }
+
+    @media (max-width: 768px) {
+        .info-sucursal { flex-direction: column; align-items: flex-start; }
+        .input-group-mao { flex-direction: column; }
+        .btn-mao { width: 100%; }
+        .trabajos-grid { grid-template-columns: 1fr; }
+        .tabla-2, .tabla-3 { grid-template-columns: 1fr; }
+        .tabla-mini-header { display: none; }
+    }
+</style>
+
+<div class="container py-4" style="max-width: 980px;">
+
+    {% if sucursal_activa %}
+    <div class="info-sucursal">
+        <div class="info-sucursal-left">
+            <div class="info-sucursal-icon">
+                <i class="bi bi-buildings"></i>
+            </div>
+            <div>
+                <div class="info-sucursal-title">Sucursal activa</div>
+                <div class="info-sucursal-name">{{ sucursal_activa.nombre }}</div>
+                <div class="info-sucursal-code">Código: {{ sucursal_activa.codigo }}</div>
+            </div>
+        </div>
+
+        <div class="badge-sucursal-activa">
+            <i class="bi bi-check2-circle me-2"></i> OT se guardará aquí
+        </div>
+    </div>
+    {% else %}
+    <div class="info-sucursal info-sucursal-error">
+        <div class="info-sucursal-left">
+            <div class="info-sucursal-icon" style="background: rgba(255,59,48,0.12); color: var(--apple-danger);">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div>
+                <div class="info-sucursal-title" style="color: var(--apple-danger);">Sucursal no definida</div>
+                <div class="info-sucursal-name">Debe elegir una sucursal antes de crear la OT</div>
+                <div class="info-sucursal-code">Vuelva al dashboard y seleccione la sede de trabajo.</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mb-4 text-center">
+        <h2 style="font-weight: 700; color: var(--apple-text);">Nueva Orden de Trabajo</h2>
+        <p class="text-muted" id="step_title">Paso 1: Identificación</p>
+    </div>
+
+    <div class="progress-indicator d-none d-md-flex">
+        <div class="step-dot active" id="dot_1">1</div><div class="step-dot" id="dot_2">2</div>
+        <div class="step-dot" id="dot_3">3</div><div class="step-dot" id="dot_4">4</div>
+        <div class="step-dot" id="dot_5">5</div><div class="step-dot" id="dot_6">6</div>
+        <div class="step-dot" id="dot_7">7</div>
+    </div>
+
+    <form method="post" id="formNuevaOrden" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <input type="hidden" name="sucursal_id" id="id_sucursal_id" value="{% if sucursal_activa %}{{ sucursal_activa.id }}{% endif %}">
+        <input type="hidden" name="sintomas_json" id="id_sintomas_json">
+        <input type="hidden" name="trabajos_json" id="id_trabajos_json">
+        <input type="hidden" name="objetos_json" id="id_objetos_json">
+        <input type="hidden" name="tipo_tarifa_vehiculo" id="id_tipo_tarifa_vehiculo" value="NO_APLICA">
+        <input type="hidden" name="gama_vehiculo" id="id_gama_vehiculo" value="NO_APLICA">
+        <div class="card-recepcion">
+
+            {% include 'includes/crear_orden/paso1_identificacion.html' %}
+            {% include 'includes/crear_orden/paso2_datos_base.html' %}
+            {% include 'includes/crear_orden/paso3_recepcion_tec.html' %}
+            {% include 'includes/crear_orden/paso4_checklist.html' %}
+            {% include 'includes/crear_orden/paso5_croquis.html' %}
+            {% include 'includes/crear_orden/paso6_fotos.html' %}
+            {% include 'includes/crear_orden/paso7_resumen_firma.html' %}
+
+            <hr class="my-4">
+            <div class="d-flex justify-content-between flex-wrap gap-3">
+                <button type="button" class="btn-mao btn-mao-secondary btn-pill" id="btn_anterior" onclick="cambiarPaso(-1)" style="display: none;">
+                    <i class="bi bi-arrow-left"></i> Anterior
+                </button>
+
+                <button type="button" class="btn-mao btn-mao-primary btn-pill ms-auto" id="btn_siguiente" onclick="cambiarPaso(1)">
+                    Siguiente <i class="bi bi-arrow-right"></i>
+                </button>
+
+                <button type="submit" class="btn-mao btn-mao-success btn-pill ms-auto" id="btn_guardar" style="display: none;" onclick="return prepararGuardado(event)">
+                    <i class="bi bi-save2"></i> Guardar OT
+                </button>
+            </div>
+
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // ==========================================
+    // VARIABLES GLOBALES Y NAVEGACIÓN
+    // ==========================================
+    let pasoActual = 1;
+    const totalPasos = 7;
+    const titulos = [
+        "", "Paso 1: Identificación", "Paso 2: Datos del Vehículo y Cliente",
+        "Paso 3: Recepción Técnica", "Paso 4: Checklist Físico",
+        "Paso 5: Croquis de Daños", "Paso 6: Evidencia Fotográfica", "Paso 7: Confirmación Final"
+    ];
+
+    const sintomas = [];
+    const trabajos = [];
+    const objetos = [];
+
+    // ==========================================
+    // UTILIDADES DE ALERTA
+    // ==========================================
+    function mostrarAlerta({ icon = 'warning', title = 'Aviso', text = '', focusId = null }) {
+        Swal.fire({
+            icon: icon, title: title, text: text, confirmButtonText: 'Entendido', buttonsStyling: false,
+            customClass: { popup: 'swal-mao-popup', title: 'swal-mao-title', htmlContainer: 'swal-mao-html', confirmButton: 'btn-mao btn-mao-primary btn-pill swal-mao-confirm' }
+        }).then(() => {
+            if (focusId) {
+                const campo = document.getElementById(focusId);
+                if (campo) { campo.focus(); campo.classList.add('campo-invalido'); }
+            }
+        });
+    }
+
+    function limpiarErrorCampo(id) {
+        const campo = document.getElementById(id);
+        if (campo) campo.classList.remove('campo-invalido');
+    }
+
+    ['id_placa', 'id_identificacion', 'id_vehiculo', 'id_kilometraje', 'id_color', 'id_nombre', 'nuevo_sintoma', 'nuevo_trabajo_manual', 'obj_desc'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.addEventListener('input', () => limpiarErrorCampo(id)); el.addEventListener('change', () => limpiarErrorCampo(id)); }
+    });
+
+    // ==========================================
+    // SÍNTOMAS
+    // ==========================================
+    function renderSintomas() {
+        const body = document.getElementById('tabla_sintomas_body');
+        if (!sintomas.length) return body.innerHTML = `<div class="empty-note px-3">Aún no hay síntomas registrados.</div>`;
+        body.innerHTML = sintomas.map((item, index) => `<div class="tabla-mini-row tabla-2"><div><strong>${index + 1}</strong></div><div>${item.descripcion}</div><div><button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="eliminarSintoma(${index})"><i class="bi bi-trash"></i></button></div></div>`).join('');
+    }
+    function agregarSintoma() {
+        const input = document.getElementById('nuevo_sintoma'); const valor = input.value.trim();
+        if (!valor) return mostrarAlerta({ icon: 'warning', title: 'Falta el síntoma', text: 'Escriba una queja antes de agregar.', focusId: 'nuevo_sintoma' });
+        sintomas.push({ descripcion: valor }); input.value = ''; renderSintomas();
+    }
+    function eliminarSintoma(index) { sintomas.splice(index, 1); renderSintomas(); }
+
+    // ==========================================
+    // TRABAJOS
+    // ==========================================
+    function renderTrabajos() {
+        const body = document.getElementById('tabla_trabajos_body');
+        if (!trabajos.length) return body.innerHTML = `<div class="empty-note px-3">Aún no hay trabajos seleccionados.</div>`;
+        body.innerHTML = trabajos.map((item, index) => `<div class="tabla-mini-row tabla-2"><div><strong>${index + 1}</strong></div><div>${item.descripcion}</div><div><button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="eliminarTrabajo(${index})"><i class="bi bi-trash"></i></button></div></div>`).join('');
+    }
+    function agregarTrabajoSiNoExiste(texto) { if (!trabajos.some(t => t.descripcion.toLowerCase() === texto.toLowerCase())) trabajos.push({ descripcion: texto }); renderTrabajos(); }
+    function eliminarTrabajo(index) {
+        const texto = trabajos[index].descripcion; trabajos.splice(index, 1);
+        document.querySelectorAll('.trabajo-predefinido').forEach(chk => { if (chk.value === texto) chk.checked = false; }); renderTrabajos();
+    }
+    function agregarTrabajoManual() {
+        const input = document.getElementById('nuevo_trabajo_manual'); const valor = input.value.trim();
+        if (!valor) return mostrarAlerta({ icon: 'warning', title: 'Falta el trabajo', text: 'Escriba un trabajo antes de agregarlo.', focusId: 'nuevo_trabajo_manual' });
+        agregarTrabajoSiNoExiste(valor); input.value = '';
+    }
+
+    // ==========================================
+    // OBJETOS ADICIONALES
+    // ==========================================
+    function renderObjetos() {
+        const body = document.getElementById('tabla_objetos_body');
+        if (!objetos.length) return body.innerHTML = `<div class="empty-note px-3">No hay objetos adicionales registrados.</div>`;
+        body.innerHTML = objetos.map((item, index) => `<div class="tabla-mini-row tabla-3"><div>${item.descripcion}</div><div>${item.cantidad}</div><div>${item.observacion || '-'}</div><div><button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="eliminarObjeto(${index})"><i class="bi bi-trash"></i></button></div></div>`).join('');
+    }
+    function agregarObjeto() {
+        const desc = document.getElementById('obj_desc').value.trim(); const cant = document.getElementById('obj_cant').value.trim(); const obs = document.getElementById('obj_obs').value.trim();
+        if (!desc) return mostrarAlerta({ icon: 'warning', title: 'Falta la descripción', text: 'Ingrese el nombre del objeto adicional.', focusId: 'obj_desc' });
+        objetos.push({ descripcion: desc, cantidad: cant && parseInt(cant) > 0 ? parseInt(cant) : 1, observacion: obs });
+        document.getElementById('obj_desc').value = ''; document.getElementById('obj_cant').value = '1'; document.getElementById('obj_obs').value = ''; renderObjetos();
+    }
+    function eliminarObjeto(index) { objetos.splice(index, 1); renderObjetos(); }
+
+    // ==========================================
+    // NAVEGACIÓN Y VALIDACIONES
+    // ==========================================
+    function validarSucursalActiva() {
+        const sucursalId = document.getElementById('id_sucursal_id');
+        if (!sucursalId || !sucursalId.value) { mostrarAlerta({ icon: 'error', title: 'Sucursal no definida', text: 'Debe volver al dashboard y seleccionar una sucursal activa antes de crear la orden.' }); return false; }
+        return true;
+    }
+
+    function cambiarPaso(direccion) {
+        if (!validarSucursalActiva()) return;
+
+        if (direccion === 1) {
+            if (pasoActual === 1) {
+                const placaInput = document.getElementById('id_placa');
+                if (!placaInput.value.trim()) return mostrarAlerta({ icon: 'error', title: 'Falta la placa', text: 'La placa del vehículo es obligatoria para abrir la orden.', focusId: 'id_placa' });
+            }
+            if (pasoActual === 2) {
+                const vehiculo = document.getElementById('id_vehiculo'); const kilometraje = document.getElementById('id_kilometraje'); const color = document.getElementById('id_color'); const nombre = document.getElementById('id_nombre');
+                if (!vehiculo.value.trim()) return mostrarAlerta({ icon: 'warning', title: 'Falta el vehículo', text: 'Debe ingresar la marca o modelo del vehículo.', focusId: 'id_vehiculo' });
+                if (!color.value.trim()) return mostrarAlerta({ icon: 'warning', title: 'Falta el color', text: 'Debe ingresar el color del vehículo.' });
+                if (!kilometraje.value.trim()) return mostrarAlerta({ icon: 'warning', title: 'Falta el kilometraje', text: 'Debe ingresar el kilometraje actual del vehículo.', focusId: 'id_kilometraje' });
+                if (!nombre.value.trim()) return mostrarAlerta({ icon: 'warning', title: 'Falta el cliente', text: 'Debe ingresar el nombre del cliente.', focusId: 'id_nombre' });
+            }
+        }
+
+        document.getElementById(`step_${pasoActual}`).classList.remove('active'); document.getElementById(`dot_${pasoActual}`).classList.remove('active');
+        if (direccion === 1) document.getElementById(`dot_${pasoActual}`).classList.add('completed');
+        pasoActual += direccion;
+        document.getElementById(`step_${pasoActual}`).classList.add('active'); document.getElementById(`dot_${pasoActual}`).classList.add('active'); document.getElementById('step_title').innerText = titulos[pasoActual];
+        
+        document.getElementById('btn_anterior').style.display = pasoActual === 1 ? 'none' : 'inline-flex';
+
+        if (pasoActual === 1) { document.getElementById('btn_siguiente').style.display = 'inline-flex'; document.getElementById('btn_guardar').style.display = 'none'; } 
+        else if (pasoActual === totalPasos) { document.getElementById('btn_siguiente').style.display = 'none'; document.getElementById('btn_guardar').style.display = 'inline-flex'; generarResumen(); setTimeout(redimensionarCanvasFirma, 150); } 
+        else { document.getElementById('btn_siguiente').style.display = 'inline-flex'; document.getElementById('btn_guardar').style.display = 'none'; }
+
+        if (pasoActual === 5) setTimeout(redimensionarCanvas, 150);
+    }
+
+ // ==========================================
+// API FETCH
+// ==========================================
+function buscarPlaca() {
+    const placaInput = document.getElementById('id_placa');
+    const placa = placaInput.value.trim().toUpperCase();
+    const msg = document.getElementById('msg_busqueda_placa');
+
+    if (!placa) {
+        return mostrarAlerta({
+            icon: 'warning',
+            title: 'Ingrese una placa',
+            text: 'Primero escriba la placa del vehículo.',
+            focusId: 'id_placa'
+        });
+    }
+
+    placaInput.value = placa;
+
+    msg.innerHTML = `
+        <div class="alert alert-info py-2 mt-3">
+            <i class="spinner-border spinner-border-sm"></i>
+            Conectando con SRI/ANT...
+        </div>
+    `;
+
+    fetch(`/api/regcheck/?placa=${encodeURIComponent(placa)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                msg.innerHTML = `
+                    <div class="alert alert-success text-start mt-3 shadow-sm border-0">
+                        <h6 class="fw-bold mb-2">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Vehículo encontrado
+                        </h6>
+
+                        <div class="ps-3 border-start border-success border-3">
+                            <strong>Vehículo:</strong> ${data.vehiculo || 'N/A'}<br>
+                            <strong>Año:</strong> ${data.anio || 'N/A'}<br>
+                        </div>
+
+                        <button type="button"
+                                class="btn-mao btn-mao-success btn-pill mt-3 w-100"
+                                onclick="cambiarPaso(1)">
+                            Usar y continuar <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById('id_vehiculo').value =
+                    data.vehiculo || '';
+
+                document.getElementById('id_anio').value =
+                    data.anio || '';
+
+                document.getElementById('id_tipo_tarifa_vehiculo').value =
+                    data.tipo_tarifa_vehiculo || 'NO_APLICA';
+
+                document.getElementById('id_gama_vehiculo').value =
+                    data.gama_vehiculo || 'NO_APLICA';
+
+                console.log('Vehículo:', data.vehiculo);
+                console.log('Año:', data.anio);
+                console.log('Tipo tarifa vehículo:', data.tipo_tarifa_vehiculo);
+                console.log('Gama vehículo:', data.gama_vehiculo);
+
+            } else {
+                msg.innerHTML = `
+                    <div class="alert alert-warning text-start mt-3 shadow-sm border-0">
+                        <h6 class="fw-bold mb-2">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            Vehículo no encontrado
+                        </h6>
+
+                        <p class="mb-3 text-muted">
+                            Puede continuar e ingresar los datos manualmente.
+                        </p>
+
+                        <button type="button"
+                                class="btn-mao btn-mao-dark btn-pill w-100"
+                                onclick="cambiarPaso(1)">
+                            Ingresar manualmente
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById('id_tipo_tarifa_vehiculo').value = 'NO_APLICA';
+                document.getElementById('id_gama_vehiculo').value = 'NO_APLICA';
+            }
+        })
+        .catch(() => {
+            msg.innerHTML = `
+                <div class="alert alert-danger mt-3 py-2">
+                    <i class="bi bi-wifi-off"></i>
+                    Error de red. Puede ingresar los datos manualmente.
+                </div>
+            `;
+        });
+}
+    function buscarCedula() {
+    const cedula = document.getElementById('id_identificacion').value.trim();
+
+    if (!cedula) {
+        return mostrarAlerta({
+            icon: 'warning',
+            title: 'Ingrese una cédula',
+            focusId: 'id_identificacion'
+        });
+    }
+
+    const msg = document.getElementById('msg_busqueda_cedula');
+    msg.innerHTML = '<div class="alert alert-info py-2 mt-3"><i class="spinner-border spinner-border-sm"></i> Buscando...</div>';
+
+    fetch(`/api/consultar_cedula/?cedula=${cedula}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const inputCedulaPaso2 = document.getElementById('id_identificacion_cliente');
+            const inputNombre = document.getElementById('id_nombre');
+
+            // 🔥 SIEMPRE copiar la cédula al paso 2
+            inputCedulaPaso2.value = cedula;
+
+            if (data.exito) {
+
+                msg.innerHTML = `
+                    <div class="alert alert-success mt-3">
+                        <strong>Cliente encontrado:</strong><br>
+                        ${data.nombre_completo}
+                    </div>
+                `;
+
+                // Llenar datos
+                inputNombre.value = data.nombre_completo || '';
+                document.getElementById('id_telefono').value = data.telefono || '';
+                document.getElementById('id_email').value = data.email || '';
+                document.getElementById('id_direccion').value = data.direccion || '';
+
+                // 🔒 BLOQUEAR CAMPOS
+                inputNombre.readOnly = true;
+                inputCedulaPaso2.readOnly = true;
+
+            } else {
+
+                msg.innerHTML = `
+                    <div class="alert alert-warning mt-3">
+                        Cliente no encontrado. Ingrese datos manualmente.
+                    </div>
+                `;
+
+                // ✍️ LIMPIAR Y DESBLOQUEAR
+                inputNombre.value = '';
+                inputNombre.readOnly = false;
+                inputCedulaPaso2.readOnly = false;
+            }
+        })
+        .catch(() => {
+            msg.innerHTML = '<div class="alert alert-danger mt-3">Error de conexión</div>';
+        });
+}
+
+    // ==========================================
+    // CANVAS CROQUIS
+    // ==========================================
+    const canvas = document.getElementById('canvasCroquis'); const ctx = canvas.getContext('2d'); let dibujando = false;
+    function redimensionarCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            const tempCanvas = document.createElement('canvas'); const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = canvas.width; tempCanvas.height = canvas.height; tempCtx.drawImage(canvas, 0, 0);
+            canvas.width = rect.width; canvas.height = rect.height;
+            ctx.strokeStyle = '#ff3b30'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
+    }
+    window.addEventListener('resize', () => { if (pasoActual === 5) redimensionarCanvas(); if (pasoActual === 7) redimensionarCanvasFirma(); });
+    function obtenerPosicion(evt) { const rect = canvas.getBoundingClientRect(); let clientX = evt.clientX || (evt.touches && evt.touches[0].clientX); let clientY = evt.clientY || (evt.touches && evt.touches[0].clientY); return { x: clientX - rect.left, y: clientY - rect.top }; }
+    function iniciarDibujo(e) { e.preventDefault(); dibujando = true; const pos = obtenerPosicion(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
+    function dibujar(e) { if (!dibujando) return; e.preventDefault(); const pos = obtenerPosicion(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
+    canvas.addEventListener('mousedown', iniciarDibujo); canvas.addEventListener('mousemove', dibujar); window.addEventListener('mouseup', () => dibujando = false);
+    canvas.addEventListener('touchstart', iniciarDibujo, {passive: false}); canvas.addEventListener('touchmove', dibujar, {passive: false}); window.addEventListener('touchend', () => dibujando = false);
+    function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // ==========================================
+    // CANVAS FIRMA
+    // ==========================================
+    const canvasFirma = document.getElementById('canvasFirma'); const ctxFirma = canvasFirma.getContext('2d'); let dibujandoFirma = false;
+    function redimensionarCanvasFirma() {
+        const rect = canvasFirma.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            const tempCanvas = document.createElement('canvas'); const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = canvasFirma.width; tempCanvas.height = canvasFirma.height; tempCtx.drawImage(canvasFirma, 0, 0);
+            canvasFirma.width = rect.width; canvasFirma.height = rect.height;
+            ctxFirma.strokeStyle = '#000000'; ctxFirma.lineWidth = 3; ctxFirma.lineCap = 'round'; ctxFirma.lineJoin = 'round';
+            ctxFirma.drawImage(tempCanvas, 0, 0);
+        }
+    }
+    function obtenerPosicionFirma(evt) { const rect = canvasFirma.getBoundingClientRect(); let clientX = evt.clientX || (evt.touches && evt.touches[0].clientX); let clientY = evt.clientY || (evt.touches && evt.touches[0].clientY); return { x: clientX - rect.left, y: clientY - rect.top }; }
+    function iniciarFirma(e) { dibujandoFirma = true; const pos = obtenerPosicionFirma(e); ctxFirma.beginPath(); ctxFirma.moveTo(pos.x, pos.y); }
+    function firmar(e) { if (!dibujandoFirma) return; const pos = obtenerPosicionFirma(e); ctxFirma.lineTo(pos.x, pos.y); ctxFirma.stroke(); }
+    canvasFirma.addEventListener('mousedown', iniciarFirma); canvasFirma.addEventListener('mousemove', firmar); window.addEventListener('mouseup', () => dibujandoFirma = false);
+    canvasFirma.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarFirma(e); }, {passive: false}); canvasFirma.addEventListener('touchmove', (e) => { e.preventDefault(); firmar(e); }, {passive: false}); window.addEventListener('touchend', () => dibujandoFirma = false);
+    function limpiarFirma() { ctxFirma.clearRect(0, 0, canvasFirma.width, canvasFirma.height); }
+
+    // ==========================================
+    // RESUMEN Y GUARDADO
+    // ==========================================
+    function generarResumen() {
+        const sintomasHtml = sintomas.length ? `<ul>${sintomas.map(s => `<li>${s.descripcion}</li>`).join('')}</ul>` : '<p class="text-muted">Ninguno detallado</p>';
+        const trabajosHtml = trabajos.length ? `<ul>${trabajos.map(t => `<li>${t.descripcion}</li>`).join('')}</ul>` : '<p class="text-muted">No se registraron trabajos.</p>';
+        const objetosHtml = objetos.length ? `<ul>${objetos.map(o => `<li>${o.descripcion} (${o.cantidad}) ${o.observacion ? '- ' + o.observacion : ''}</li>`).join('')}</ul>` : '<p class="text-muted">No hay objetos adicionales.</p>';
+        const sucursalNombre = `{% if sucursal_activa %}{{ sucursal_activa.nombre|escapejs }}{% else %}SIN SUCURSAL{% endif %}`;
+
+        document.getElementById('resumen_final').innerHTML = `
+            <h5 class="text-primary mb-3"><i class="bi bi-file-earmark-check"></i> OT - ${document.getElementById('id_placa').value.toUpperCase()}</h5>
+            <div class="row text-dark">
+                <div class="col-md-6"><p><strong>Sucursal:</strong> ${sucursalNombre}</p><p><strong>Vehículo:</strong> ${document.getElementById('id_vehiculo').value}</p><p><strong>Color:</strong> ${document.getElementById('id_color').value} | <strong>KM:</strong> ${document.getElementById('id_kilometraje').value}</p></div>
+                <div class="col-md-6"><p><strong>Cliente:</strong> ${document.getElementById('id_nombre').value || 'Consumidor Final'}</p><p><strong>CI/RUC:</strong> ${document.getElementById('id_identificacion_cliente').value || document.getElementById('id_identificacion').value || '-'}</p><p><strong>Combustible:</strong> ${document.getElementById('id_combustible').value}</p></div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6"><h6>Síntomas y quejas</h6>${sintomasHtml}</div>
+                <div class="col-md-6"><h6>Trabajos a realizar</h6>${trabajosHtml}</div>
+            </div>
+            <hr>
+            <h6>Objetos adicionales</h6>${objetosHtml}
+            <p class="mt-3"><strong>Observaciones:</strong> ${document.getElementById('id_obs_recepcion').value || '<span class="text-muted">Sin observaciones</span>'}</p>
+            <div class="alert alert-success mt-3 py-2"><i class="bi bi-info-circle"></i> Datos validados. Listo para generar orden.</div>
+        `;
+    }
+
+    function prepararGuardado(e) {
+        // 1. Detenemos el comportamiento nativo del botón que causa el congelamiento
+        e.preventDefault(); 
+        
+        if (!validarSucursalActiva()) { 
+            return false; 
+        }
+
+        try {
+            // 2. Extraer imágenes a Base64
+            document.getElementById('id_croquis_base64').value = canvas.toDataURL('image/png');
+            document.getElementById('id_firma_base64').value = canvasFirma.toDataURL('image/png');
+            
+            // 3. Extraer Tablas a JSON
+            document.getElementById('id_sintomas_json').value = JSON.stringify(sintomas);
+            document.getElementById('id_trabajos_json').value = JSON.stringify(trabajos);
+            document.getElementById('id_objetos_json').value = JSON.stringify(objetos);
+
+            // 4. Deshabilitar botón visualmente
+            const btnGuardar = document.getElementById('btn_guardar');
+            btnGuardar.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Procesando...';
+            btnGuardar.disabled = true;
+
+            // 5. ENVIAR EL FORMULARIO A LA FUERZA (Bypass de validación oculta)
+            document.getElementById('formNuevaOrden').submit();
+            
+        } catch (error) {
+            console.error("Error al procesar los datos: ", error);
+            mostrarAlerta({
+                icon: 'error',
+                title: 'Error interno',
+                text: 'Hubo un problema al procesar los dibujos. Intente nuevamente.'
+            });
+            document.getElementById('btn_guardar').innerHTML = '<i class="bi bi-save2"></i> Guardar OT';
+            document.getElementById('btn_guardar').disabled = false;
+        }
+    }
+
+    function inicializarSelectorColor() {
+        const hiddenNombre = document.getElementById('id_color'); const hiddenHex = document.getElementById('id_color_hex');
+        const previewDot = document.getElementById('colorSelectedDot'); const previewText = document.getElementById('colorSelectedText');
+        document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', function () {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); this.classList.add('active');
+                hiddenNombre.value = this.dataset.nombre; hiddenHex.value = this.dataset.hex;
+                previewDot.style.backgroundColor = this.dataset.hex; previewText.textContent = this.dataset.nombre.charAt(0).toUpperCase() + this.dataset.nombre.slice(1);
+                hiddenNombre.classList.remove('campo-invalido');
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderSintomas(); renderTrabajos(); renderObjetos(); inicializarSelectorColor();
+        document.querySelectorAll('.trabajo-predefinido').forEach(chk => {
+            chk.addEventListener('change', function () {
+                if (this.checked) agregarTrabajoSiNoExiste(this.value);
+                else { const index = trabajos.findIndex(t => t.descripcion === this.value); if (index !== -1) { trabajos.splice(index, 1); renderTrabajos(); } }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel de Control | MAO{% endblock %}
+
+{% block header_actions %}
+<style>
+    .header-actions-mao {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .mao-combobox {
+        position: relative;
+        min-width: 260px;
+    }
+
+    .mao-combobox-input-wrap {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .mao-combobox-input {
+        min-width: 260px; 
+        width: 260px;
+        height: 44px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 14px;
+        background: #fff;
+        color: var(--text, #1d1d1f);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+        padding: 0 42px 0 14px;
+        font-size: 0.90rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .mao-combobox-input:hover:not(:disabled) {
+        border-color: rgba(0, 0, 0, 0.14);
+    }
+
+    .mao-combobox-input:focus {
+        outline: none;
+        border-color: var(--accent, #0071e3);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    }
+
+    .mao-combobox-input:disabled {
+        opacity: 1;
+        background: #f5f5f7;
+        color: #86868b; 
+        border: 1px solid transparent;
+        cursor: not-allowed;
+    }
+
+    .mao-combobox-icon {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6e6e73;
+        pointer-events: none;
+        transition: transform 0.2s ease;
+    }
+
+    .mao-combobox.open .mao-combobox-icon {
+        transform: translateY(-50%) rotate(180deg);
+    }
+
+    .mao-combobox-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 100%;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+        padding: 8px;
+        z-index: 1100;
+        display: none;
+    }
+
+    .mao-combobox.open .mao-combobox-menu {
+        display: block;
+        animation: maoDropdownFade 0.16s ease;
+    }
+
+    @keyframes maoDropdownFade {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .mao-combobox-options {
+        max-height: 220px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .mao-combobox-option {
+        width: 100%;
+        border: none;
+        background: transparent;
+        text-align: left;
+        padding: 10px 12px;
+        border-radius: 12px;
+        color: #1d1d1f;
+        font-weight: 500;
+        transition: background 0.15s ease, color 0.15s ease;
+        cursor: pointer;
+    }
+
+    .mao-combobox-option:hover {
+        background: rgba(0, 113, 227, 0.08);
+    }
+
+    .mao-combobox-option.active {
+        background: var(--accent, #0071e3);
+        color: #fff;
+    }
+</style>
+
+<div class="header-actions-mao">
+    <form method="post" action="{% url 'cambiar_sucursal_activa' %}" class="m-0" id="formSucursalActiva">
+        {% csrf_token %}
+        <input
+            type="hidden"
+            name="sucursal_id"
+            id="sucursal_id_hidden"
+            value="{% if sucursal_activa %}{{ sucursal_activa.id }}{% endif %}"
+        >
+
+        <div class="mao-combobox" id="maoComboboxSucursal">
+            <div class="mao-combobox-input-wrap" {% if not puede_cambiar_sucursal %}title="Operando en tu sucursal asignada"{% endif %}>
+                
+                <input
+                    type="text"
+                    id="maoComboboxInput"
+                    class="mao-combobox-input"
+                    value="{% if sucursal_activa %}{{ sucursal_activa.nombre|upper }}{% if not puede_cambiar_sucursal %} (TU SUCURSAL){% endif %}{% else %}SELECCIONAR SUCURSAL{% endif %}"
+                    readonly
+                    {% if not puede_cambiar_sucursal %}disabled{% endif %}
+                >
+                
+                {% if puede_cambiar_sucursal %}
+                    <i class="bi bi-chevron-down mao-combobox-icon"></i>
+                {% else %}
+                    <i class="bi bi-lock-fill mao-combobox-icon" style="opacity: 0.4;"></i>
+                {% endif %}
+            </div>
+
+            {% if puede_cambiar_sucursal %}
+            <div class="mao-combobox-menu" id="maoComboboxMenu">
+                <div class="mao-combobox-options" id="maoComboboxOptions">
+                    {% for sucursal in sucursales %}
+                    <button
+                        type="button"
+                        class="mao-combobox-option {% if sucursal_activa and sucursal.id == sucursal_activa.id %}active{% endif %}"
+                        data-id="{{ sucursal.id }}"
+                        data-name=" {{ sucursal.nombre|upper }}"
+                    >
+                        {{ sucursal.nombre|upper }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if request.user.rol == 'CAJA' or request.user.rol == 'ADMIN' %}
+    <a href="{% url 'crear_orden' %}" class="btn-login px-4 text-decoration-none" style="width: auto;">
+        <i class="bi bi-plus-lg me-2"></i> Nueva OT
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mt-4" id="contenedorTarjetas">
+    {% for vehiculo in ordenes_activas %}
+    <div class="col-md-4 col-lg-3 tarjeta-carro">
+        <div class="login-card w-100 p-3 tarjeta-click"
+             data-url="{% url 'detalle_orden' vehiculo.id %}"
+             style="cursor: pointer;">
+
+            <div class="mb-3">
+                <div class="placa-vehiculo">
+                    <!-- Pasamos la información limpia al JavaScript para que decida el color -->
+                    <div class="placa-header"
+                         data-color="{{ vehiculo.color }}"
+                         data-migrada="{{ vehiculo.es_migrada }}">
+                        {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
+                    </div>
+                    <div class="placa-numero">{{ vehiculo.placa }}</div>
+                    <div class="placa-footer">{{ vehiculo.cliente|default:"SIN CLIENTE" }}</div>
+                </div>
+            </div>
+
+            <div class="small mb-2 text-center text-muted">
+                <strong>{{ vehiculo.numero_orden }}</strong>
+                <!-- Etiqueta visual para las reabiertas migradas -->
+                {% if vehiculo.es_migrada %}
+                    <div style="margin-top: 4px;">
+                        <span style="background: #fff5cc; color: #d97706; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 9px; border: 1px solid #ffcc00;">MIGRADA</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="login-footer mt-auto pt-2"
+                 style="text-align: center; color: var(--accent); font-weight: 500; border-top: 1px solid rgba(0,0,0,0.05);">
+                <div>
+                    <i class="bi bi-tools me-1"></i>
+                    {{ vehiculo.items_count|default:"0" }} items
+                </div>
+                <div class="mt-1" style="font-size: 0.8rem; color: #6e6e73;">
+                    {{ vehiculo.estado }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% empty %}
+    <div class="col-12 mt-2">
+        <div class="login-card mx-auto text-center py-5" style="max-width: 500px;">
+            <i class="bi bi-inbox text-muted display-1 opacity-50 mb-3 d-block"></i>
+            <h2 class="login-title mt-2">Sin órdenes activas</h2>
+            <p class="login-subtitle mb-0">No hay órdenes de trabajo abiertas en este momento.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // =========================================================
+        // LÓGICA DE RECUPERACIÓN DE COLORES
+        // =========================================================
+        const mapaColores = {
+            'BLANCO': '#F5F5F7',
+            'NEGRO': '#212121',
+            'PLATA': '#BDBDBD',
+            'GRIS': '#757575',
+            'ROJO': '#D32F2F',
+            'VINO': '#880E4F',
+            'AZUL': '#1976D2',
+            'CELESTE': '#03A9F4',
+            'VERDE': '#388E3C',
+            'AMARILLO': '#FBC02D'
+        };
+
+        const headers = document.querySelectorAll('.placa-header');
+        headers.forEach(function (header) {
+            const colorName = header.dataset.color;
+            const esMigrada = header.dataset.migrada === "True";
+            
+            // 1. Color base por defecto
+            let colorFinal = esMigrada ? '#86868b' : '#1d1d1f';
+            
+            // 2. Si el color existe en el mapa, aplicamos el HEX correspondiente
+            if (colorName) {
+                const colorUpper = colorName.toUpperCase().trim();
+                if (mapaColores[colorUpper]) {
+                    colorFinal = mapaColores[colorUpper];
+                }
+            }
+            
+            header.style.backgroundColor = colorFinal;
+        });
+
+        // Lógica del buscador general de tarjetas
+        const buscador = document.getElementById('buscadorDashboard');
+        if (buscador) {
+            buscador.addEventListener('keyup', function () {
+                let textoBusqueda = this.value.toLowerCase();
+                let tarjetas = document.querySelectorAll('.tarjeta-carro');
+
+                tarjetas.forEach(function (tarjeta) {
+                    let contenido = tarjeta.textContent.toLowerCase();
+                    tarjeta.style.display = contenido.includes(textoBusqueda) ? '' : 'none';
+                });
+            });
+        }
+
+        // Redirección de las tarjetas
+        const tarjetasClick = document.querySelectorAll('.tarjeta-click');
+        tarjetasClick.forEach(function (tarjeta) {
+            tarjeta.addEventListener('click', function () {
+                const url = this.dataset.url;
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+
+        // Lógica del dropdown de sucursales
+        const combobox = document.getElementById('maoComboboxSucursal');
+        const input = document.getElementById('maoComboboxInput');
+        const options = document.querySelectorAll('.mao-combobox-option');
+        const form = document.getElementById('formSucursalActiva');
+
+        if (combobox && input && !input.disabled) {
+            input.addEventListener('click', function (e) {
+                e.stopPropagation();
+                combobox.classList.toggle('open');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!combobox.contains(e.target)) {
+                    combobox.classList.remove('open');
+                }
+            });
+
+            options.forEach(function (option) {
+                option.addEventListener('click', function () {
+                    const id = this.dataset.id;
+                    document.getElementById('sucursal_id_hidden').value = id;
+                    if (form) form.submit();
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

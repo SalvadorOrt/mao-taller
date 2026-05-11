@@ -1,0 +1,78 @@
+<div class="step-container" id="step_6">
+    <div class="section-header">
+        <i class="bi bi-camera text-primary"></i> 6. Evidencia Fotográfica
+    </div>
+    
+    <div class="mb-4">
+        <label class="form-label-custom">REGISTRO VISUAL DEL VEHÍCULO</label>
+        
+        <!-- Contenedor interactivo para fotos -->
+        <div class="ot-card" style="padding: 25px; border: 2px dashed #d2d2d7; background: #f5f5f7; border-radius: 14px; text-align: center;">
+            <i class="bi bi-images" style="font-size: 2rem; color: #86868b; display: block; margin-bottom: 10px;"></i>
+            <p style="color: #1d1d1f; font-weight: 600; margin-bottom: 15px;">Captura el estado actual del auto</p>
+            
+            <!-- Input oculto para mantener el diseño limpio -->
+            <!-- Quitamos capture="environment" para permitir elegir entre Galería o Cámara -->
+            <input type="file" 
+                   name="fotos_recepcion" 
+                   id="id_fotos" 
+                   multiple 
+                   accept="image/*" 
+                   class="d-none" 
+                   onchange="actualizarContadorFotos()">
+
+            <!-- Botones de Acción -->
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <button type="button" class="btn-mao btn-mao-primary" onclick="document.getElementById('id_fotos').click()">
+                    <i class="bi bi-plus-circle me-1"></i> Seleccionar o Tomar Fotos
+                </button>
+            </div>
+
+            <p class="text-muted small mt-3 mb-0" id="contador_fotos">
+                <i class="bi bi-info-circle"></i> Al pulsar, su celular le permitirá elegir entre la <b>Cámara</b> o su <b>Galería</b>.
+            </p>
+        </div>
+
+        <!-- Previsualización de miniaturas (Opcional pero muy recomendado) -->
+        <div id="preview_fotos" class="row g-2 mt-3"></div>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label-custom">OBSERVACIÓN DE LAS FOTOS</label>
+        <input type="text" 
+               name="descripcion_fotos" 
+               id="id_descripcion_fotos" 
+               class="form-control-apple" 
+               placeholder="Ej: Se evidencia rayón en guardafango izquierdo...">
+    </div>
+</div>
+
+<script>
+    function actualizarContadorFotos() {
+        const input = document.getElementById('id_fotos');
+        const contador = document.getElementById('contador_fotos');
+        const preview = document.getElementById('preview_fotos');
+        const files = input.files;
+        
+        if (files.length > 0) {
+            contador.innerHTML = `<b class="text-primary"><i class="bi bi-check-circle-fill"></i> ${files.length} foto(s) seleccionada(s)</b>`;
+            
+            // Generar miniaturas rápidas
+            preview.innerHTML = '';
+            Array.from(files).slice(0, 8).forEach(file => { // Mostramos max 8 miniaturas
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-3 col-md-2';
+                    col.innerHTML = `
+                        <div style="aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #d2d2d7;">
+                            <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    `;
+                    preview.appendChild(col);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+</script>

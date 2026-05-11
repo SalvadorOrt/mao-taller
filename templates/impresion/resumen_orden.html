@@ -1,0 +1,595 @@
+{% load static %}
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumen de Orden - {{ orden.numero_orden }}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --text: #1f2937;
+            --muted: #4b5563;
+            --line: #e5e7eb;
+            --soft: #f8fafc;
+            --soft-2: #f1f5f9;
+            --dark: #0f172a;
+            --danger: #dc2626;
+            --border-radius: 7px;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #e2e8f0;
+            color: var(--text);
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 8.5px;
+            line-height: 1.35;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 8mm 10mm;
+            overflow: hidden;
+        }
+
+        .top-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+        }
+
+        .top-table td {
+            border: none;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .top-left {
+            width: 38%;
+            padding-right: 8px;
+        }
+
+        .top-right {
+            width: 62%;
+            text-align: right;
+        }
+
+        .logo img {
+            max-width: 145px;
+            max-height: 58px;
+            object-fit: contain;
+        }
+
+        .company {
+            margin-top: 4px;
+            font-size: 7.3px;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .doc-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 17px;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+
+        .doc-number {
+            margin-top: 5px;
+            padding: 4px 7px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--soft-2);
+            color: var(--danger);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 8px;
+            font-weight: 800;
+            display: inline-block;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+
+        .doc-date {
+            margin-top: 5px;
+            font-size: 7.5px;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .info-grid {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 6px;
+            margin: 0 -6px 10px -6px;
+        }
+
+        .info-grid td {
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            background: #ffffff;
+            padding: 6px 7px;
+            vertical-align: top;
+        }
+
+        .label {
+            font-family: 'Montserrat', sans-serif;
+            display: block;
+            margin-bottom: 2px;
+            font-size: 6.3px;
+            font-weight: 800;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .value {
+            font-size: 8.5px;
+            font-weight: 700;
+            color: var(--dark);
+            overflow-wrap: anywhere;
+        }
+
+        .section {
+            margin-top: 10px;
+        }
+
+        .section-title {
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 5px;
+            font-size: 7.5px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: .14em;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--primary);
+            opacity: .22;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .detail-table th {
+            background: var(--primary);
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            padding: 5px 6px;
+            font-size: 6.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            text-align: left;
+        }
+
+        .detail-table td {
+            border-bottom: 1px solid var(--line);
+            padding: 5px 6px;
+            font-size: 8px;
+            background: #ffffff;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+        }
+
+        .detail-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .detail-table tbody tr:nth-child(even) td {
+            background: #fcfcfd;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 6.8px;
+            font-weight: 500;
+        }
+        
+        .procedimientos-list {
+            display: block;
+            margin-top: 3px;
+            padding-left: 8px;
+            color: var(--muted);
+            font-size: 7px;
+        }
+
+        .empty-row td {
+            color: var(--muted);
+            font-style: italic;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .totals-wrap {
+            width: 100%;
+            margin-top: 14px;
+        }
+
+        .totals-table {
+            width: 42%;
+            margin-left: auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .totals-table td {
+            padding: 7px 8px;
+            font-size: 9px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .totals-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .total-label {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            color: var(--dark);
+            text-transform: uppercase;
+        }
+
+        .total-value {
+            text-align: right;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            color: var(--danger);
+            font-size: 12px !important;
+        }
+
+        .note {
+            margin-top: 6px;
+            text-align: right;
+            font-size: 6.8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+            }
+
+            .page {
+                width: auto;
+                min-height: auto;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+
+            .section,
+            .detail-table,
+            .totals-wrap {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body onload="window.print();">
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+
+                <div class="company">
+                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+                    {{ empresa.direccion|default:"Quito, Ecuador" }}
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="doc-title">Resumen de Orden</div>
+                <div class="doc-number">OT N° {{ orden.numero_orden }}</div>
+                <div class="doc-date">
+                    Fecha ingreso: {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="info-grid">
+        <tr>
+            <td>
+                <span class="label">Cliente</span>
+                <span class="value">{{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}</span>
+            </td>
+            <td>
+                <span class="label">C.I. / RUC</span>
+                <span class="value">{{ orden.cliente.identificacion|default:"-" }}</span>
+            </td>
+            <td>
+                <span class="label">Placa</span>
+                <span class="value">{{ orden.placa|upper|default:"S/P" }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="label">Vehículo</span>
+                <span class="value">{{ orden.vehiculo|upper|default:"-" }}</span>
+            </td>
+            <td>
+                <span class="label">Año</span>
+                <span class="value">{{ orden.anio_vehiculo|default:"-" }}</span>
+            </td>
+            <td>
+                <span class="label">Kilometraje</span>
+                <span class="value">{{ orden.kilometraje|default:"0" }} km</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ============================================== -->
+    <!-- 1. REPUESTOS E INSUMOS -->
+    <!-- ============================================== -->
+    <div class="section">
+        <div class="section-title">1. Repuestos e Insumos</div>
+
+        <table class="detail-table">
+            <colgroup>
+                <col style="width: 10%;">
+                <col style="width: 60%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th class="text-center">Cant.</th>
+                    <th>Descripción</th>
+                    <th class="text-right">P.U.</th>
+                    <th class="text-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rep in repuestos %}
+                    <tr>
+                        <td class="text-center">{{ rep.cantidad|floatformat:2 }}</td>
+                        <td>{{ rep.descripcion_factura }}</td>
+                        <td class="text-right">${{ rep.precio_unitario|floatformat:2 }}</td>
+                        <td class="text-right">${{ rep.subtotal|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% for rep_hist in repuestos_historicos %}
+                    <tr>
+                        <td class="text-center">{{ rep_hist.cantidad|floatformat:2 }}</td>
+                        <td>
+                            {{ rep_hist.descripcion_original }}
+                            <span class="muted">(Migrado)</span>
+                        </td>
+                        <td class="text-right">${{ rep_hist.precio_unitario|floatformat:2 }}</td>
+                        <td class="text-right">${{ rep_hist.subtotal|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% if not repuestos and not repuestos_historicos %}
+                    <tr class="empty-row">
+                        <td colspan="4">No existen repuestos registrados.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 2. MANO DE OBRA INTERNA -->
+    <!-- ============================================== -->
+    <div class="section">
+        <div class="section-title">2. Mano de Obra Interna</div>
+
+        <table class="detail-table">
+            <colgroup>
+                <col style="width: 10%;">
+                <col style="width: 60%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th class="text-center">Cant.</th>
+                    <th>Descripción del Trabajo</th>
+                    <th class="text-right">P.U.</th>
+                    <th class="text-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for serv in servicios %}
+                    <!-- 🔥 Verifica que NO sea del catálogo EXT y NO esté marcado como EXT manual 🔥 -->
+                    {% if serv.servicio.categoria != 'EXT' and serv.tipo_servicio != 'EXT' %}
+                        <tr>
+                            <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                            <td>
+                                {{ serv.descripcion_servicio }}
+                                
+                                <!-- 🔥 Procedimientos del Catálogo 🔥 -->
+                                {% if serv.servicio.procedimientos.all %}
+                                    <div class="procedimientos-list">
+                                        {% for proc in serv.servicio.procedimientos.all %}
+                                            &bull; {{ proc.descripcion }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- 🔥 Procedimientos Extra agregados en la Orden 🔥 -->
+                                {% if serv.procedimientos_detalle.all %}
+                                    <div class="procedimientos-list">
+                                        {% for proc in serv.procedimientos_detalle.all %}
+                                            &bull; {{ proc.descripcion }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
+                            <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+
+                {% for serv_hist in servicios_historicos %}
+                    {% if serv_hist.tipo == 'MO' %}
+                        <tr>
+                            <td class="text-center">{{ serv_hist.cantidad|floatformat:1 }}</td>
+                            <td>
+                                {{ serv_hist.descripcion_original }}
+                                <span class="muted">(Migrado)</span>
+                            </td>
+                            <td class="text-right">${{ serv_hist.precio_unitario|floatformat:2 }}</td>
+                            <td class="text-right">${{ serv_hist.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 3. TRABAJOS Y SERVICIOS EXTERNOS -->
+    <!-- ============================================== -->
+    <div class="section">
+        <div class="section-title">3. Trabajos y Servicios Externos</div>
+
+        <table class="detail-table">
+            <colgroup>
+                <col style="width: 10%;">
+                <col style="width: 60%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th class="text-center">Cant.</th>
+                    <th>Descripción del Proveedor / Trabajo</th>
+                    <th class="text-right">P.U.</th>
+                    <th class="text-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for serv in servicios %}
+                    <!-- 🔥 Verifica si es catálogo EXT o si se marcó manualmente como EXT 🔥 -->
+                    {% if serv.servicio.categoria == 'EXT' or serv.tipo_servicio == 'EXT' %}
+                        <tr>
+                            <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                            <td>
+                                {{ serv.descripcion_servicio }}
+                                
+                                <!-- 🔥 Procedimientos del Catálogo 🔥 -->
+                                {% if serv.servicio.procedimientos.all %}
+                                    <div class="procedimientos-list">
+                                        {% for proc in serv.servicio.procedimientos.all %}
+                                            &bull; {{ proc.descripcion }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- 🔥 Procedimientos Extra agregados en la Orden 🔥 -->
+                                {% if serv.procedimientos_detalle.all %}
+                                    <div class="procedimientos-list">
+                                        {% for proc in serv.procedimientos_detalle.all %}
+                                            &bull; {{ proc.descripcion }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
+                            <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+
+                {% for serv_hist in servicios_historicos %}
+                    {% if serv_hist.tipo == 'MOE' %}
+                        <tr>
+                            <td class="text-center">{{ serv_hist.cantidad|floatformat:1 }}</td>
+                            <td>
+                                {{ serv_hist.descripcion_original }}
+                                <span class="muted">(Migrado)</span>
+                            </td>
+                            <td class="text-right">${{ serv_hist.precio_unitario|floatformat:2 }}</td>
+                            <td class="text-right">${{ serv_hist.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="totals-wrap">
+        <table class="totals-table">
+            <tr>
+                <td class="total-label">Total general</td>
+                <td class="total-value">${{ orden.total_general|floatformat:2 }}</td>
+            </tr>
+        </table>
+
+        <p class="note">
+            Documento informativo de resumen de orden.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>

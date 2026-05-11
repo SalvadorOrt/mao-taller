@@ -1,0 +1,102 @@
+<div class="step-container" id="step_4">
+    <div class="section-header">
+        <i class="bi bi-ui-checks text-primary"></i> 4. Checklist Físico
+    </div>
+
+    <div class="row bg-light rounded-3 p-3 border mb-4">
+        <div class="col-md-4">
+            <div class="check-item">
+                <input type="checkbox" name="matricula" id="chk_mat"> 
+                <label for="chk_mat">Matrícula</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="plumas" id="chk_plu"> 
+                <label for="chk_plu">Plumas</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="radio" id="chk_rad" checked> 
+                <label for="chk_rad">Radio</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="pantalla" id="chk_pan"> 
+                <label for="chk_pan">Pantalla</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="check-item">
+                <input type="checkbox" name="tuerca_seguridad" id="chk_tue"> 
+                <label for="chk_tue">Tuerca seguridad</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="encendedor_cig" id="chk_enc"> 
+                <label for="chk_enc">Encendedor cig.</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="triangulos" id="chk_tri"> 
+                <label for="chk_tri">Triángulos</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="gata" id="chk_gat" checked> 
+                <label for="chk_gat">Gata / Palanca</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="check-item">
+                <input type="checkbox" name="herramientas" id="chk_her" checked> 
+                <label for="chk_her">Herramientas</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="llanta_emergencia" id="chk_lla" checked> 
+                <label for="chk_lla">Llanta Emerg.</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="faros_lunas" id="chk_far"> 
+                <label for="chk_far">Faros / Lunas</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="tapacubos" id="chk_tap" checked> 
+                <label for="chk_tap">Tapacubos</label>
+            </div>
+            <div class="check-item">
+                <input type="checkbox" name="antena" id="chk_ant" checked> 
+                <label for="chk_ant">Antena</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label-custom">OBJETOS ADICIONALES REPORTADOS</label>
+
+        <div class="bloque-tabla">
+            <div class="tabla-mini">
+                <div class="tabla-mini-header tabla-3">
+                    <div>Descripción</div>
+                    <div>Cantidad</div>
+                    <div>Observación</div>
+                    <div>Acción</div>
+                </div>
+                <div id="tabla_objetos_body"></div>
+            </div>
+
+            <div class="row g-3 mt-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label-custom" style="font-size: 0.75rem;">Objeto</label>
+                    <input type="text" id="obj_desc" class="form-control-apple" placeholder="Ej: Gafas, Llaves de casa...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label-custom" style="font-size: 0.75rem;">Cant.</label>
+                    <input type="number" id="obj_cant" class="form-control-apple" min="1" value="1" placeholder="Cant.">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-custom" style="font-size: 0.75rem;">Observación</label>
+                    <input type="text" id="obj_obs" class="form-control-apple" placeholder="Ej: Rayadas">
+                </div>
+                <div class="col-md-2 pb-1">
+                    <button type="button" class="btn-mao btn-mao-primary w-100" onclick="agregarObjeto()">
+                        <i class="bi bi-plus-lg"></i> Agregar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

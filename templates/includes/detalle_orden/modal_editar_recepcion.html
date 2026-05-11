@@ -1,0 +1,492 @@
+{% load static %}
+
+<style>
+    .canvas-modal-bg {
+        background-image: url('{% static "base_autos.svg" %}');
+        background-position: center;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        background-color: #ffffff;
+    }
+
+    .modal-item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        font-size: 0.85rem;
+    }
+
+    .fotos-recepcion-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .foto-recepcion-card {
+        border: 1px solid var(--border-soft);
+        border-radius: 14px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .foto-recepcion-card img {
+        width: 100%;
+        height: 95px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .foto-recepcion-footer {
+        padding: 8px;
+        font-size: 0.72rem;
+        color: var(--muted);
+    }
+
+    .foto-delete-check {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        color: var(--danger);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .upload-fotos-box {
+        border: 1px dashed #c7c7cc;
+        background: #fbfbfd;
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+    }
+</style>
+
+<div id="modalEditarRecepcion"
+     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px;">
+
+    <div style="background: #fff; width: 100%; max-width: 900px; max-height: 95vh; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+
+        <div style="padding: 15px 25px; border-bottom: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; background: var(--head);">
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary);">
+                Editar Recepción y Daños
+            </h3>
+
+            <button type="button" onclick="cerrarModalRecepcion()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">
+                &times;
+            </button>
+        </div>
+
+        <form id="formEdicionRapida"
+              method="POST"
+              action="{% url 'editar_recepcion_orden' orden.pk %}"
+              enctype="multipart/form-data"
+              style="overflow-y: auto; padding: 25px; margin: 0;">
+
+            {% csrf_token %}
+
+            <input type="hidden" name="sintomas_json" id="modal_sintomas_json">
+            <input type="hidden" name="trabajos_json" id="modal_trabajos_json">
+            <input type="hidden" name="imagen_croquis_base64" id="modal_croquis_base64">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; background: #fbfbfd; border: 1px solid var(--border-soft); border-radius: 12px; padding: 15px;">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
+                        Kilometraje al Ingreso
+                    </span>
+                    <span style="font-size: 1.1rem; font-weight: 600; color: var(--text);">
+                        {{ orden.kilometraje|default:"-" }} km
+                    </span>
+                </div>
+
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
+                        Combustible al Ingreso
+                    </span>
+                    <span style="font-size: 1.1rem; font-weight: 600; color: var(--text);">
+                        {{ orden.get_nivel_combustible_display|default:"-" }}
+                    </span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;">
+                    <label class="info-label" style="margin: 0;">Croquis de Daños</label>
+
+                    <div style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">
+                        <span style="color: #0071e3;">■</span> Rayones nuevos
+                    </div>
+
+                    <button type="button"
+                            onclick="limpiarCanvasModal()"
+                            style="font-size: 0.75rem; color: var(--danger); background: #fff2f2; border: 1px solid #ffd6d6; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-weight: 600;">
+                        <i class="bi bi-eraser"></i> Limpiar dibujo nuevo
+                    </button>
+                </div>
+
+                <div class="canvas-modal-bg"
+                     style="position: relative; width: 100%; border: 1px solid var(--border-soft); border-radius: 12px; overflow: hidden; aspect-ratio: 1000/220;">
+
+                    {% if croquis_url %}
+                        <img id="croquisGuardadoImg"
+                             src="{{ croquis_url }}"
+                             alt="Croquis guardado"
+                             style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:fill; z-index:5; pointer-events:none;">
+                    {% endif %}
+
+                    <canvas id="canvasModalCroquis"
+                            width="1000"
+                            height="220"
+                            style="width: 100%; height: 100%; cursor: crosshair; touch-action: none; position: absolute; top: 0; left: 0; z-index: 10;">
+                    </canvas>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 25px; background: #fbfbfd; padding: 15px; border-radius: 12px; border: 1px solid var(--border-soft);">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <label class="info-label" style="margin: 0;">Fotos de recepción</label>
+                    <span style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">
+                        {{ orden.fotos_recepcion.count }} foto(s)
+                    </span>
+                </div>
+
+                {% if orden.fotos_recepcion.all %}
+                    <div class="fotos-recepcion-grid">
+                        {% for foto in orden.fotos_recepcion.all %}
+                            <div class="foto-recepcion-card">
+                                <a href="{{ foto.imagen.url }}" target="_blank">
+                                    <img src="{{ foto.imagen.url }}" alt="Foto recepción OT {{ orden.numero_orden }}">
+                                </a>
+
+                                <div class="foto-recepcion-footer">
+                                    {% if foto.descripcion %}
+                                        {{ foto.descripcion }}
+                                    {% else %}
+                                        Foto subida {{ foto.fecha_subida|date:"d/m/Y H:i" }}
+                                    {% endif %}
+
+                                    <label class="foto-delete-check">
+                                        <input type="checkbox" name="fotos_eliminar" value="{{ foto.id }}">
+                                        Eliminar
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="color: var(--muted); font-size: 0.85rem; font-style: italic; margin-top: 8px;">
+                        No hay fotos de recepción registradas.
+                    </div>
+                {% endif %}
+
+                <div class="upload-fotos-box">
+                    <label class="info-label" style="display: block; margin-bottom: 8px;">
+                        Agregar nuevas fotos
+                    </label>
+
+                    <input type="file"
+                           name="fotos_recepcion"
+                           id="modal_fotos_recepcion"
+                           class="form-control-apple"
+                           accept="image/*"
+                           multiple>
+
+                    <input type="text"
+                           name="descripcion_fotos"
+                           class="form-control-apple"
+                           placeholder="Descripción para las nuevas fotos..."
+                           style="margin-top: 10px;">
+
+                    <div id="preview_fotos_nuevas"
+                         style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: #fbfbfd; padding: 15px; border-radius: 12px; border: 1px solid var(--border-soft);">
+                    <label class="info-label" style="display: block; margin-bottom: 10px;">
+                        Quejas del Cliente
+                    </label>
+
+                    <div id="modal_lista_sintomas" style="margin-bottom: 12px; min-height: 50px;"></div>
+
+                    <div class="input-group-mao" style="display: flex; gap: 8px;">
+                        <input type="text"
+                               id="add_sintoma_txt"
+                               class="form-control-apple"
+                               placeholder="Nuevo síntoma..."
+                               onkeypress="if(event.key === 'Enter') { event.preventDefault(); modalAgregarSintoma(); }">
+
+                        <button type="button" onclick="modalAgregarSintoma()" class="btn-login primary small">+</button>
+                    </div>
+                </div>
+
+                <div style="background: #fbfbfd; padding: 15px; border-radius: 12px; border: 1px solid var(--border-soft);">
+                    <label class="info-label" style="display: block; margin-bottom: 10px;">
+                        Trabajos Solicitados
+                    </label>
+
+                    <div id="modal_lista_trabajos" style="margin-bottom: 12px; min-height: 50px;"></div>
+
+                    <div class="input-group-mao" style="display: flex; gap: 8px;">
+                        <input type="text"
+                               id="add_trabajo_txt"
+                               class="form-control-apple"
+                               placeholder="Nuevo trabajo..."
+                               onkeypress="if(event.key === 'Enter') { event.preventDefault(); modalAgregarTrabajo(); }">
+
+                        <button type="button" onclick="modalAgregarTrabajo()" class="btn-login primary small">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="info-label">Observaciones Adicionales</label>
+                <textarea name="observaciones_recepcion"
+                          class="form-control-apple"
+                          style="min-height: 80px; margin-top: 5px;">{{ orden.observaciones_recepcion }}</textarea>
+            </div>
+        </form>
+
+        <div style="padding: 15px 25px; border-top: 1px solid var(--border-soft); display: flex; justify-content: flex-end; gap: 10px; background: var(--head);">
+            <button type="button" onclick="cerrarModalRecepcion()" class="btn-login">
+                Cancelar
+            </button>
+
+            <button type="button" id="btnGuardarEdicionRapida" onclick="guardarEdicionRapida()" class="btn-login primary">
+                Guardar y Actualizar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="django_data_bridge" style="display: none;">
+    <div id="bridge_sintomas">
+        {% for s in orden.sintomas_items.all %}
+            <span>{{ s.descripcion }}</span>
+        {% endfor %}
+    </div>
+
+    <div id="bridge_trabajos">
+        {% for t in orden.trabajos_solicitados_items.all %}
+            <span>{{ t.descripcion_manual }}</span>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    let modalSintomas = Array.from(document.querySelectorAll('#bridge_sintomas span'))
+        .map(s => s.textContent.trim())
+        .filter(Boolean);
+
+    let modalTrabajos = Array.from(document.querySelectorAll('#bridge_trabajos span'))
+        .map(t => t.textContent.trim())
+        .filter(Boolean);
+
+    const canvasModal = document.getElementById('canvasModalCroquis');
+    const ctxModal = canvasModal.getContext('2d');
+    let dibujandoModal = false;
+
+    function configurarPincelModal() {
+        ctxModal.strokeStyle = '#0071e3';
+        ctxModal.lineWidth = 4;
+        ctxModal.lineCap = 'round';
+        ctxModal.lineJoin = 'round';
+    }
+
+    function abrirModalRecepcion() {
+        renderModalListas();
+        document.getElementById('modalEditarRecepcion').style.display = 'flex';
+
+        setTimeout(function () {
+            limpiarCanvasModal();
+            configurarPincelModal();
+        }, 80);
+    }
+
+    function cerrarModalRecepcion() {
+        document.getElementById('modalEditarRecepcion').style.display = 'none';
+    }
+
+    function obtenerPosicionModal(evt) {
+        const rect = canvasModal.getBoundingClientRect();
+
+        let clientX = evt.clientX || (evt.touches && evt.touches[0].clientX);
+        let clientY = evt.clientY || (evt.touches && evt.touches[0].clientY);
+
+        const scaleX = canvasModal.width / rect.width;
+        const scaleY = canvasModal.height / rect.height;
+
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+
+    canvasModal.addEventListener('mousedown', function (e) {
+        dibujandoModal = true;
+        const pos = obtenerPosicionModal(e);
+        ctxModal.beginPath();
+        ctxModal.moveTo(pos.x, pos.y);
+    });
+
+    canvasModal.addEventListener('mousemove', function (e) {
+        if (!dibujandoModal) return;
+
+        const pos = obtenerPosicionModal(e);
+        ctxModal.lineTo(pos.x, pos.y);
+        ctxModal.stroke();
+    });
+
+    window.addEventListener('mouseup', function () {
+        dibujandoModal = false;
+    });
+
+    canvasModal.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        dibujandoModal = true;
+
+        const pos = obtenerPosicionModal(e);
+        ctxModal.beginPath();
+        ctxModal.moveTo(pos.x, pos.y);
+    }, { passive: false });
+
+    canvasModal.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+
+        if (!dibujandoModal) return;
+
+        const pos = obtenerPosicionModal(e);
+        ctxModal.lineTo(pos.x, pos.y);
+        ctxModal.stroke();
+    }, { passive: false });
+
+    window.addEventListener('touchend', function () {
+        dibujandoModal = false;
+    });
+
+    function limpiarCanvasModal() {
+        ctxModal.clearRect(0, 0, canvasModal.width, canvasModal.height);
+        configurarPincelModal();
+    }
+
+    function renderModalListas() {
+        const listS = document.getElementById('modal_lista_sintomas');
+        const listT = document.getElementById('modal_lista_trabajos');
+
+        listS.innerHTML = modalSintomas.length === 0
+            ? '<div style="color:var(--muted); font-size:0.8rem; font-style:italic;">No hay síntomas registrados.</div>'
+            : modalSintomas.map((s, i) => `
+                <div class="modal-item-row">
+                    <span style="font-weight: 500;">• ${s}</span>
+                    <span onclick="modalEliminarSintoma(${i})" style="color:var(--danger); cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</span>
+                </div>
+            `).join('');
+
+        listT.innerHTML = modalTrabajos.length === 0
+            ? '<div style="color:var(--muted); font-size:0.8rem; font-style:italic;">No hay trabajos solicitados.</div>'
+            : modalTrabajos.map((t, i) => `
+                <div class="modal-item-row">
+                    <span style="font-weight: 500;">• ${t}</span>
+                    <span onclick="modalEliminarTrabajo(${i})" style="color:var(--danger); cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</span>
+                </div>
+            `).join('');
+    }
+
+    function modalAgregarSintoma() {
+        const txt = document.getElementById('add_sintoma_txt');
+        if (txt.value.trim()) {
+            modalSintomas.push(txt.value.trim());
+            txt.value = '';
+            renderModalListas();
+        }
+    }
+
+    function modalAgregarTrabajo() {
+        const txt = document.getElementById('add_trabajo_txt');
+        if (txt.value.trim()) {
+            modalTrabajos.push(txt.value.trim());
+            txt.value = '';
+            renderModalListas();
+        }
+    }
+
+    function modalEliminarSintoma(i) {
+        modalSintomas.splice(i, 1);
+        renderModalListas();
+    }
+
+    function modalEliminarTrabajo(i) {
+        modalTrabajos.splice(i, 1);
+        renderModalListas();
+    }
+
+    const inputFotosModal = document.getElementById('modal_fotos_recepcion');
+    const previewFotosNuevas = document.getElementById('preview_fotos_nuevas');
+
+    if (inputFotosModal) {
+        inputFotosModal.addEventListener('change', function () {
+            previewFotosNuevas.innerHTML = '';
+
+            Array.from(this.files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.style.width = '90px';
+                img.style.height = '70px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '10px';
+                img.style.border = '1px solid var(--border-soft)';
+                previewFotosNuevas.appendChild(img);
+            });
+        });
+    }
+
+    function guardarEdicionRapida() {
+        const btn = document.getElementById('btnGuardarEdicionRapida');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="spinner-border spinner-border-sm" style="margin-right: 5px;"></i> Actualizando...';
+
+        document.getElementById('modal_sintomas_json').value = JSON.stringify(
+            modalSintomas.map(s => ({ descripcion: s }))
+        );
+
+        document.getElementById('modal_trabajos_json').value = JSON.stringify(
+            modalTrabajos.map(t => ({ descripcion: t }))
+        );
+
+        try {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasModal.width;
+            tempCanvas.height = canvasModal.height;
+
+            const tempCtx = tempCanvas.getContext('2d');
+            const imgGuardada = document.getElementById('croquisGuardadoImg');
+
+            if (imgGuardada) {
+                tempCtx.drawImage(imgGuardada, 0, 0, tempCanvas.width, tempCanvas.height);
+            }
+
+            tempCtx.drawImage(canvasModal, 0, 0);
+
+            document.getElementById('modal_croquis_base64').value = tempCanvas.toDataURL('image/png');
+            document.getElementById('formEdicionRapida').submit();
+
+        } catch (e) {
+            console.error("ERROR AL CAPTURAR EL CANVAS:", e);
+            alert("No se pudo capturar el croquis. Intente nuevamente.");
+            btn.disabled = false;
+            btn.innerHTML = 'Guardar y Actualizar';
+        }
+    }
+</script>

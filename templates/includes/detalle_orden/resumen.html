@@ -1,0 +1,96 @@
+<div class="ot-card">
+    <div class="section-title">Resumen económico</div>
+
+    <div class="totals-grid">
+        <div class="total-box">
+            <div class="total-label">Sub total repuestos</div>
+            <div class="total-value">$<span id="resumenRep">0.00</span></div>
+        </div>
+        <div class="total-box">
+            <div class="total-label">Sub total M.O. interna</div>
+            <div class="total-value">$<span id="resumenMOI">0.00</span></div>
+        </div>
+        <div class="total-box">
+            <div class="total-label">Sub total M.O. externa</div>
+            <div class="total-value">$<span id="resumenMOE">0.00</span></div>
+        </div>
+        <div class="total-box">
+            <div class="total-label">Sub total general</div>
+            <div class="total-value">$<span id="subtotalGeneral">0.00</span></div>
+        </div>
+        <div class="total-box">
+            <div class="total-label">IVA 15%</div>
+            <div class="total-value">$<span id="ivaTotal">0.00</span></div>
+        </div>
+        <div class="total-box final">
+            <div class="total-label">Total</div>
+            <div class="total-value">$<span id="granTotal">0.00</span></div>
+        </div>
+    </div>
+</div>
+
+{% if not puede_editar %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        function sumarTablaReadOnly(idTabla) {
+            let total = 0;
+            const tabla = document.getElementById(idTabla);
+            
+            // Si por alguna razón la tabla no existe en el HTML, retornamos 0 para no romper el script
+            if (!tabla) return 0; 
+            
+            const filas = tabla.querySelectorAll('tbody tr');
+            
+            filas.forEach(fila => {
+                // Buscamos el input que tiene la clase 'valor'
+                const inputValor = fila.querySelector('input.valor');
+                if (inputValor) {
+                    // Limpiamos el valor: quitamos espacios, cambiamos comas por puntos (por si acaso)
+                    let valorLimpio = inputValor.value.replace(/\s/g, '').replace(',', '.');
+                    let numero = parseFloat(valorLimpio);
+                    
+                    if (!isNaN(numero)) {
+                        total += numero;
+                    }
+                }
+            });
+            return total;
+        }
+
+        // 1. Ejecutamos la suma de cada pestaña
+        const rep = sumarTablaReadOnly('tablaRepuestos');
+        const moi = sumarTablaReadOnly('tablaMOI');
+        const moe = sumarTablaReadOnly('tablaMOE');
+
+        // 2. Calculamos los totales
+        const subtotal = rep + moi + moe;
+        const iva = subtotal * 0.15; // IVA fijo del 15%
+        const total = subtotal + iva;
+
+        // 3. Diccionario con todos los IDs de pantalla que debemos actualizar
+        const elementosActualizar = {
+            // Panel principal (Resumen)
+            'resumenRep': rep,
+            'resumenMOI': moi,
+            'resumenMOE': moe,
+            'subtotalGeneral': subtotal,
+            'ivaTotal': iva,
+            'granTotal': total,
+            
+            // Píldoras pequeñas debajo de cada tabla (si existen)
+            'subtotalRepuestos': rep,
+            'subtotalMOI': moi,
+            'subtotalMOE': moe
+        };
+
+        // 4. Inyectamos los valores formateados a 2 decimales en el HTML
+        for (const [id, valor] of Object.entries(elementosActualizar)) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = valor.toFixed(2);
+            }
+        }
+    });
+</script>
+{% endif %}

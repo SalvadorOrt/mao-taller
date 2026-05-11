@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Personal | MAO{% endblock %}
+{% block page_title %}Gestión de Personal{% endblock %}
+{% block page_subtitle %}Administración de roles y accesos por sucursal{% endblock %}
+
+{% block content %}
+<div class="container ot-wrapper">
+
+    <style>
+        .personal-card {
+            background: #ffffff;
+            border: 1px solid #e5e5ea;
+            border-radius: 18px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .personal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            padding: 22px 26px 16px 26px;
+            border-bottom: 1px solid #f2f2f7;
+        }
+
+        .personal-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .personal-title i {
+            color: #0071e3;
+            font-size: 20px;
+        }
+
+        .personal-table-wrap {
+            padding: 0 26px 26px 26px;
+            overflow-x: auto;
+        }
+
+        .personal-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .personal-table th {
+            padding: 14px 15px;
+            text-align: left;
+            font-size: 11px;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e5e5ea;
+            white-space: nowrap;
+        }
+
+        .personal-table td {
+            padding: 16px 15px;
+            border-bottom: 1px solid #f5f5f7;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .personal-table tbody tr {
+            transition: background-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .personal-table tbody tr:hover {
+            background: #f9f9fb;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #f5f5f7, #e5e5ea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d1d1f;
+            font-weight: 700;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .user-name {
+            font-weight: 700;
+            color: #1d1d1f;
+            font-size: 14px;
+        }
+
+        .user-inactive {
+            color: #ff3b30;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .muted-text {
+            color: #86868b;
+            font-size: 13px;
+        }
+
+        .strong-text {
+            color: #1d1d1f;
+            font-weight: 500;
+        }
+
+        .rol-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 11px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .rol-admin {
+            background: #e8e8ed;
+            color: #1d1d1f;
+        }
+
+        .rol-bodega {
+            background: #e5f0fa;
+            color: #0071e3;
+        }
+
+        .rol-caja {
+            background: #f5f5f7;
+            color: #6e6e73;
+        }
+
+        .btn-edit-user {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #f5f5f7;
+            color: #0071e3;
+            border: 1px solid #e5e5ea;
+            padding: 7px 13px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .btn-edit-user:hover {
+            background: #ffffff;
+            border-color: #0071e3;
+            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.12);
+            color: #0071e3;
+        }
+
+        .empty-users {
+            text-align: center;
+            color: #86868b;
+            padding: 46px 20px;
+            font-size: 14px;
+        }
+
+        .empty-users i {
+            font-size: 34px;
+            color: #d2d2d7;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .personal-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .personal-header .btn-login {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .personal-table th,
+            .personal-table td {
+                padding: 13px 10px;
+            }
+        }
+    </style>
+
+    <div class="personal-card">
+
+        <div class="personal-header">
+            <div class="personal-title">
+                <i class="bi bi-people-fill"></i>
+                <span>Usuarios Activos</span>
+            </div>
+
+            <a href="{% url 'crear_usuario' %}" class="btn-login primary" style="text-decoration: none; padding: 9px 16px; border-radius: 10px; font-size: 13px;">
+                <i class="bi bi-person-plus-fill" style="margin-right: 5px;"></i>
+                Nuevo Usuario
+            </a>
+        </div>
+
+        <div class="personal-table-wrap">
+            <table class="personal-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre completo</th>
+                        <th>Cédula</th>
+                        <th>Rol</th>
+                        <th>Sucursal</th>
+                        <th style="text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for p in usuarios %}
+                    <tr>
+
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    {{ p.username|make_list|first|upper }}
+                                </div>
+
+                                <div class="user-info">
+                                    <span class="user-name">{{ p.username }}</span>
+
+                                    {% if not p.is_active %}
+                                        <span class="user-inactive">Inactivo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="strong-text">
+                                {% if p.first_name or p.last_name %}
+                                    {{ p.first_name }} {{ p.last_name }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="muted-text">{{ p.cedula|default:"—" }}</span>
+                        </td>
+
+                        <td>
+                            {% if p.rol == 'ADMIN' %}
+                                <span class="rol-tag rol-admin">Dueño / Admin</span>
+                            {% elif p.rol == 'BODEGA' %}
+                                <span class="rol-tag rol-bodega">Bodega</span>
+                            {% else %}
+                                <span class="rol-tag rol-caja">Caja / Recepción</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if p.sucursal %}
+                                <span class="strong-text">{{ p.sucursal.nombre }}</span>
+                            {% else %}
+                                <span class="muted-text" style="font-style: italic;">GLOBAL</span>
+                            {% endif %}
+                        </td>
+
+                        <td style="text-align: center;">
+                            <a href="{% url 'editar_usuario' p.pk %}" class="btn-edit-user">
+                                <i class="bi bi-pencil-square"></i>
+                                Editar
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-users">
+                            <i class="bi bi-people"></i>
+                            No hay usuarios registrados en el sistema.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

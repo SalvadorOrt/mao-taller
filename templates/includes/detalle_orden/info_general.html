@@ -1,0 +1,252 @@
+<style>
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+
+    <div class="ot-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border, #d2d2d7); padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+                <div style="font-size: 18px; font-weight: 800; color: var(--text, #1d1d1f);">Orden de Trabajo {{ orden.numero_orden }}</div>
+                <p style="font-size: 11px; color: var(--muted, #6e6e73); margin: 0;">Detalle operativo de la orden</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <!-- BOTÓN IMPRIMIR FICHA TÉCNICA (Uso Interno) -->
+                <button type="button" onclick="imprimirFichaDirecto()" class="btn-login" style="background: #f5f5f7; color: #1d1d1f; border-color: #d2d2d7;">
+                    <i class="bi bi-tools" style="margin-right: 4px;"></i> Imprimir Ficha
+                </button>
+
+                <!-- 🔥 NUEVO BOTÓN: RESUMEN DE ORDEN (Cliente / Proforma) 🔥 -->
+                <button type="button" onclick="imprimirResumenDirecto()" class="btn-login" style="background: #0071e3; border-color: #0071e3; color: #fff;">
+                    <i class="bi bi-receipt" style="margin-right: 4px;"></i> Resumen de Orden
+                </button>
+
+                {% if orden.estado == 'ABIERTA' %}
+                    <!-- FORMULARIO ANULAR -->
+                    <form id="form_anular_orden" method="post" action="{% url 'anular_orden' orden.id %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="button" class="btn-login" 
+                                style="background-color: #ff3b30; border-color: #ff3b30; color: #ffffff;"
+                                onclick="document.getElementById('modalConfirmarAnular').style.display='flex'">
+                            Anular
+                        </button>
+                    </form>
+
+                    <!-- FORMULARIO CERRAR -->
+                    <form id="form_cerrar_orden" method="post" action="{% url 'cerrar_orden' orden.id %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="button" class="btn-login" 
+                                style="background-color: #34c759; border-color: #34c759; color: #ffffff;"
+                                onclick="document.getElementById('modalConfirmarCerrar').style.display='flex'">
+                            Cerrar y Facturar
+                        </button>
+                    </form>
+                {% endif %}
+
+                <div style="background: #f2f2f7; border-radius: 8px; padding: 6px 12px; font-size: 11px; color: var(--text, #1d1d1f); border: 1px solid #d2d2d7; margin-left: 5px;">
+                    <span style="color: var(--muted, #6e6e73);">Estado:</span>
+                    <strong style="margin-left: 4px;">{{ orden.get_estado_display|upper }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Cliente</div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">
+                    {{ orden.nombre_cliente_final|upper }}
+                </div>
+                <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">
+                    C.I./RUC: {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
+                </div>
+            </div>
+
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Vehículo</div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">
+                    {{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}
+                </div>
+                <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">
+                    Año: {{ orden.anio_vehiculo|default:"-" }} | Color: {{ orden.color|upper|default:"-" }}
+                </div>
+            </div>
+
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Placa</div>
+                <div style="font-size: 16px; font-weight: 800; color: #0071e3;">
+                    {{ orden.placa|upper|default:"S/P" }}
+                </div>
+                <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">
+                    KM: {{ orden.kilometraje|default:"0" }}
+                </div>
+            </div>
+
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase;">Combustible</div>
+                    <div style="font-size: 11px; font-weight: 700; background: #e5e5e7; padding: 2px 6px; border-radius: 4px;">
+                        {{ orden.get_nivel_combustible_display|default:"-" }}
+                    </div>
+                </div>
+                <div style="border-top: 1px solid #e5e5e7; margin-top: 8px; padding-top: 8px;">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase;">Total General</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #1d1d1f;">
+                        $ {{ orden.total_general|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 15px; padding: 12px; background: #f5f5f7; border-left: 4px solid #0071e3; border-radius: 4px 8px 8px 4px;">
+            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 4px;">Reporte del Cliente</div>
+            <div style="font-size: 13px; font-weight: 500; color: #1d1d1f;">
+                {% if orden.sintomas_cliente %}
+                    {{ orden.sintomas_cliente|upper }}
+                {% else %}
+                    {% for s in orden.sintomas_items.all %}
+                        {{ s.descripcion|upper }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        REVISIÓN TÉCNICA GENERAL
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- MODALES NATIVOS DEL SISTEMA -->
+    <!-- ======================================================= -->
+
+    <!-- Modal para ANULAR -->
+    <div id="modalConfirmarAnular" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px;">
+        <div style="background: #fff; width: 100%; max-width: 360px; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: fadeInScale 0.2s ease-out;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #fff2f2; color: #ff3b30; display: flex; justify-content: center; align-items: center; font-size: 24px; margin: 0 auto 15px;">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 style="margin: 0 0 8px; font-size: 1.2rem; font-weight: 700; color: #1d1d1f;">¿Anular Orden?</h3>
+            <p style="font-size: 0.9rem; color: #6e6e73; margin-bottom: 24px; line-height: 1.4;">Esta acción cancelará permanentemente la orden de trabajo. No podrás deshacer este cambio.</p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="document.getElementById('modalConfirmarAnular').style.display='none'" class="btn-login" style="flex: 1; background: #f5f5f7; color: #1d1d1f; border-color: #d2d2d7;">Cancelar</button>
+                <button type="button" onclick="document.getElementById('form_anular_orden').submit();" class="btn-login" style="flex: 1; background: #ff3b30; color: #fff; border-color: #ff3b30;">Sí, Anular</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para CERRAR Y FACTURAR -->
+    <div id="modalConfirmarCerrar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px;">
+        <div style="background: #fff; width: 100%; max-width: 360px; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: fadeInScale 0.2s ease-out;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #e5fbe4; color: #34c759; display: flex; justify-content: center; align-items: center; font-size: 24px; margin: 0 auto 15px;">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <h3 style="margin: 0 0 8px; font-size: 1.2rem; font-weight: 700; color: #1d1d1f;">¿Cerrar y Facturar?</h3>
+            <p style="font-size: 0.9rem; color: #6e6e73; margin-bottom: 24px; line-height: 1.4;">El vehículo pasará a estado cerrado y estará listo para su facturación y entrega.</p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="document.getElementById('modalConfirmarCerrar').style.display='none'" class="btn-login" style="flex: 1; background: #f5f5f7; color: #1d1d1f; border-color: #d2d2d7;">Cancelar</button>
+                <button type="button" onclick="document.getElementById('form_cerrar_orden').submit();" class="btn-login" style="flex: 1; background: #34c759; color: #fff; border-color: #34c759;">Sí, Cerrar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 🔥 FUNCIÓN PARA CONFIRMACIONES ELEGANTES CON SWEETALERT2 🔥
+        function confirmarAccionNativa(accion, formId) {
+            let titulo = '';
+            let texto = '';
+            let icono = '';
+            let colorBoton = '';
+
+            if (accion === 'anular') {
+                titulo = '¿Anular Orden?';
+                texto = 'Esta acción cancelará la orden y no se podrá deshacer.';
+                icono = 'warning';
+                colorBoton = '#ff3b30';
+            } else if (accion === 'cerrar') {
+                titulo = '¿Cerrar y Facturar?';
+                texto = 'El vehículo pasará a estado cerrado y estará listo para facturación.';
+                icono = 'question';
+                colorBoton = '#34c759';
+            }
+
+            Swal.fire({
+                title: titulo,
+                text: texto,
+                icon: icono,
+                showCancelButton: true,
+                confirmButtonColor: colorBoton,
+                cancelButtonColor: '#6e6e73',
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'Cancelar',
+                customClass: { popup: 'swal-mao-popup', title: 'swal-mao-title', htmlContainer: 'swal-mao-html' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
+        }
+
+        // 🔥 IMPRESIÓN DIRECTA SIMPLE (FICHA TÉCNICA) 🔥
+        function imprimirFichaDirecto() {
+            const btn = event.currentTarget;
+            if (btn.disabled) return; 
+            
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cargando...';
+
+            var viejoIframe = document.getElementById('iframeImpresionDinamico');
+            if (viejoIframe) {
+                viejoIframe.remove();
+            }
+
+            var iframe = document.createElement('iframe');
+            iframe.id = 'iframeImpresionDinamico';
+            iframe.style.position = 'absolute';
+            iframe.style.top = '-10000px';
+            iframe.style.left = '-10000px';
+            iframe.style.width = '1000px';
+            iframe.style.height = '1000px';
+            iframe.style.border = 'none';
+
+            document.body.appendChild(iframe);
+            iframe.src = "{% url 'imprimir_tecnico' orden.id %}";
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }, 2000);
+        }
+
+        // 🔥 NUEVO: IMPRESIÓN DIRECTA DEL RESUMEN DE ORDEN 🔥
+        function imprimirResumenDirecto() {
+            const btn = event.currentTarget;
+            if (btn.disabled) return; 
+            
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando PDF...';
+
+            var viejoIframe = document.getElementById('iframeImpresionResumen');
+            if (viejoIframe) {
+                viejoIframe.remove();
+            }
+
+            var iframe = document.createElement('iframe');
+            iframe.id = 'iframeImpresionResumen';
+            iframe.style.position = 'absolute';
+            iframe.style.top = '-10000px';
+            iframe.style.left = '-10000px';
+            iframe.style.width = '1000px';
+            iframe.style.height = '1000px';
+            iframe.style.border = 'none';
+
+            document.body.appendChild(iframe);
+            iframe.src = "{% url 'imprimir_resumen' orden.id %}";
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }, 2000);
+        }
+    </script>

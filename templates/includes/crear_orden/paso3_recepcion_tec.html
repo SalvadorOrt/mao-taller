@@ -1,0 +1,73 @@
+<div class="step-container" id="step_3">
+    <div class="section-header">
+        <i class="bi bi-tools text-primary"></i> 3. Recepción Técnica
+    </div>
+
+    <div class="row g-4">
+        <!-- ========================================== -->
+        <!-- SÍNTOMAS (Se mantiene la tabla para el texto libre) -->
+        <!-- ========================================== -->
+        <div class="col-12">
+            <label class="form-label-custom text-danger">SÍNTOMAS Y QUEJAS DEL CLIENTE</label>
+
+            <div class="bloque-tabla">
+                <div class="tabla-mini">
+                    <div class="tabla-mini-header tabla-2">
+                        <div>#</div>
+                        <div>Descripción</div>
+                        <div>Acción</div>
+                    </div>
+                    <div id="tabla_sintomas_body"></div>
+                </div>
+
+                <div class="input-group-mao mt-3">
+                    <input type="text" id="nuevo_sintoma" class="form-control-apple" placeholder="Ej: Ruido al frenar, vibración, humo, etc.">
+                    <button type="button" class="btn-mao btn-mao-primary" onclick="agregarSintoma()">
+                        <i class="bi bi-plus-lg"></i> Agregar síntoma
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TRABAJOS A REALIZAR (Cero redundancia, solo Checkboxes) -->
+        <!-- ========================================== -->
+        <div class="col-12">
+            <label class="form-label-custom">TRABAJOS A REALIZAR</label>
+
+            <div class="ot-card" style="padding: 20px; border: 1px solid #e5e5ea; box-shadow: none; border-radius: 12px;">
+                <!-- Cuadrícula de trabajos predefinidos -->
+                <div class="trabajos-grid" id="grid_trabajos_realizar">
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Cambio aceite y filtro motor"> Cambio aceite y filtro motor</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Cambio aceite caja"> Cambio aceite caja</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Cambio diferencial"> Cambio diferencial</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Cambio refrigerante motor"> Cambio refrigerante motor</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Cambio líquido hidráulico"> Cambio líquido hidráulico</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Cambio kit de embrague"> Cambio kit de embrague</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="ABC de frenos"> ABC de frenos</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="ABC de motor"> ABC de motor</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Alineación y balanceo"> Alineación y balanceo</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Calibración de válvulas"> Calibración de válvulas</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Scanneo"> Scanneo</label>
+                    <label class="badge-trabajo"><input type="checkbox" class="trabajo-checkbox" value="Revisión de niveles y luces"> Revisión de niveles y luces</label>
+                </div>
+
+                <!-- Input para agregar trabajos manuales extra directamente a la cuadrícula -->
+                <div class="input-group-mao mt-4" style="border-top: 1px dashed #d2d2d7; padding-top: 20px;">
+                    <input type="text" id="nuevo_trabajo_manual" class="form-control-apple" placeholder="Otro trabajo no listado (Ej: Limpieza de inyectores)">
+                    <button type="button" class="btn-mao btn-mao-secondary" onclick="agregarTrabajoManualComoCheckbox()">
+                        <i class="bi bi-plus-lg"></i> Agregar a la lista
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- OBSERVACIONES DE RECEPCIÓN -->
+        <!-- ========================================== -->
+        <div class="col-12 mt-2">
+            <label class="form-label-custom">OBSERVACIONES DE RECEPCIÓN</label>
+            <textarea id="id_obs_recepcion" name="observaciones_recepcion" class="form-control-apple" rows="3" placeholder="Ej: Cliente deja pertenencias en la guantera, el vehículo presenta rayones previos..."></textarea>
+        </div>
+    </div>
+</div>
