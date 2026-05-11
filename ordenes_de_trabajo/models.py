@@ -96,7 +96,6 @@ class Tecnico(models.Model):
 
     def __str__(self):
         return self.nombre
-
 # ==========================================
 # 3. CLIENTE
 # ==========================================
@@ -107,7 +106,12 @@ class Cliente(models.Model):
         ("P", "Pasaporte"),
     ]
 
-    tipo_documento = models.CharField(max_length=1, choices=TIPOS_DOC, default="C")
+    tipo_documento = models.CharField(
+        max_length=1,
+        choices=TIPOS_DOC,
+        default="C"
+    )
+
     identificacion = models.CharField(
         max_length=13,
         unique=True,
@@ -115,13 +119,30 @@ class Cliente(models.Model):
         blank=True,
         verbose_name="Cédula/RUC",
     )
+
     nombre_completo = models.CharField(max_length=200)
-    
-    # 🔥 APLICANDO EL CONSEJO: 3 Campos de teléfono 🔥
-    telefono = models.CharField(max_length=50, null=True, blank=True, verbose_name="Teléfono Principal")
-    telefono_secundario = models.CharField(max_length=50, null=True, blank=True, verbose_name="Teléfono Familiar/Alternativo")
-    telefono_trabajo = models.CharField(max_length=50, null=True, blank=True, verbose_name="Teléfono Fijo/Trabajo")
-    
+
+    telefono = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono Principal"
+    )
+
+    telefono_secundario = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono Familiar/Alternativo"
+    )
+
+    telefono_trabajo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono Fijo/Trabajo"
+    )
+
     email = models.EmailField(null=True, blank=True)
     direccion = models.TextField(null=True, blank=True)
 
@@ -137,36 +158,56 @@ class Cliente(models.Model):
         if self.identificacion:
             self.identificacion = self.identificacion.strip().upper()
 
-            if self.tipo_documento in {"C", "R"} and not self.identificacion.isdigit():
-                raise ValidationError("La identificación debe contener solo números.")
+            if self.tipo_documento in {"C", "R"}:
+                if not self.identificacion.isdigit():
+                    raise ValidationError(
+                        "La identificación debe contener solo números."
+                    )
 
-            if self.tipo_documento == "C" and len(self.identificacion) != 10:
-                raise ValidationError("La cédula debe tener 10 dígitos.")
+            if self.tipo_documento == "C":
+                if len(self.identificacion) != 10:
+                    raise ValidationError(
+                        "La cédula debe tener 10 dígitos."
+                    )
 
-            if self.tipo_documento == "R" and len(self.identificacion) != 13:
-                raise ValidationError("El RUC debe tener 13 dígitos.")
+            if self.tipo_documento == "R":
+                if len(self.identificacion) != 13:
+                    raise ValidationError(
+                        "El RUC debe tener 13 dígitos."
+                    )
+
+            if self.tipo_documento == "P":
+                if len(self.identificacion) < 3:
+                    raise ValidationError(
+                        "El pasaporte no es válido."
+                    )
 
         if not self.nombre_completo or not self.nombre_completo.strip():
-            raise ValidationError("El nombre completo del cliente es obligatorio.")
+            raise ValidationError(
+                "El nombre completo del cliente es obligatorio."
+            )
 
     def save(self, *args, **kwargs):
         if self.identificacion:
             self.identificacion = self.identificacion.strip().upper()
+
         if self.nombre_completo:
-            self.nombre_completo = self.nombre_completo.strip()
-            
-        # Limpieza de todos los teléfonos
+            self.nombre_completo = self.nombre_completo.strip().upper()
+
         if self.telefono:
             self.telefono = self.telefono.strip()
+
         if self.telefono_secundario:
             self.telefono_secundario = self.telefono_secundario.strip()
+
         if self.telefono_trabajo:
             self.telefono_trabajo = self.telefono_trabajo.strip()
-            
+
         if self.email:
             self.email = self.email.strip().lower()
+
         if self.direccion:
-            self.direccion = self.direccion.strip()
+            self.direccion = self.direccion.strip().upper()
 
         self.full_clean()
         super().save(*args, **kwargs)
@@ -174,7 +215,6 @@ class Cliente(models.Model):
     def __str__(self):
         id_display = self.identificacion if self.identificacion else "SIN ID"
         return f"{id_display} | {self.nombre_completo}"
-
 
 # ==========================================
 # 4. EXPEDIENTE / HISTORIAL ACUMULADO DEL VEHÍCULO

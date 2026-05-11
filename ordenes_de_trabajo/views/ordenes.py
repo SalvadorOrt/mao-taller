@@ -202,6 +202,14 @@ def crear_orden(request):
 
 
         identificacion = request.POST.get("identificacion", "").strip()
+        if identificacion.isdigit() and len(identificacion) == 13:
+            tipo_documento = "R"
+
+        elif identificacion.isdigit() and len(identificacion) == 10:
+            tipo_documento = "C"
+
+        else:
+            tipo_documento = "P"
         nombre_cliente = request.POST.get("nombre_cliente", "").strip().upper()
         telefono = request.POST.get("telefono", "").strip()
         telefono_secundario = request.POST.get("telefono_secundario", "").strip()
@@ -261,6 +269,7 @@ def crear_orden(request):
         if identificacion:
             cliente_obj = Cliente.objects.filter(identificacion=identificacion).first()
             if cliente_obj:
+                cliente_obj.tipo_documento = tipo_documento
                 cliente_obj.nombre_completo = nombre_cliente or cliente_obj.nombre_completo
                 cliente_obj.telefono = telefono or cliente_obj.telefono
                 cliente_obj.telefono_secundario = telefono_secundario or cliente_obj.telefono_secundario
@@ -270,6 +279,7 @@ def crear_orden(request):
                 cliente_obj.save()
             else:
                 cliente_obj = Cliente.objects.create(
+                    tipo_documento=tipo_documento,
                     identificacion=identificacion, 
                     nombre_completo=nombre_cliente or "CONSUMIDOR FINAL", 
                     telefono=telefono, 
