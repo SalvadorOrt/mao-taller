@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.http import JsonResponse
-
+from .api import clasificar_vehiculo_con_ia
 # 🚀 IMPORTAMOS LOS MODELOS DE INVENTARIO NECESARIOS PARA LA "CUARENTENA"
 from inventario.models import CodigoProducto, StockSucursal, Categoria, Producto, MarcaRepuesto
 from servicios.models import ServicioCatalogo
@@ -161,8 +161,46 @@ def crear_orden(request):
         anio = parse_int(request.POST.get("anio_vehiculo"), None)
         kilometraje = parse_int(request.POST.get("kilometraje"), None)
         nivel_combustible = request.POST.get("nivel_combustible", "1/2").strip()
-        tipo_tarifa_vehiculo = request.POST.get("tipo_tarifa_vehiculo","NO_APLICA").strip().upper() or "NO_APLICA"
-        gama_vehiculo = request.POST.get("gama_vehiculo", "NO_APLICA").strip().upper() or "NO_APLICA"
+        tipo_tarifa_vehiculo = request.POST.get(
+            "tipo_tarifa_vehiculo",
+            "NO_APLICA"
+        ).strip().upper() or "NO_APLICA"
+        gama_vehiculo = request.POST.get(
+                "gama_vehiculo",
+                "NO_APLICA"
+            ).strip().upper() or "NO_APLICA"
+        # Seguridad extra: si viene vacío, inválido o raro, no rompe la OT
+        tipos_validos = {
+            "NO_APLICA",
+            "AUTO",
+            "AUTO_3P",
+            "AUTO_5P",
+            "SUV_3P",
+            "SUV_5P",
+            "CAMIONETA_CS",
+            "CAMIONETA_DC",
+            "CAMIONETA_GRANDE",
+        }
+
+        gamas_validas = {
+            "NO_APLICA",
+            "ECONOMICA",
+            "MEDIA",
+            "MEDIA_ALTA",
+            "ALTA",
+            "PREMIUM",
+            "LUJO",
+            "COMERCIAL",
+            "DEPORTIVA",
+        }
+
+        if tipo_tarifa_vehiculo not in tipos_validos:
+            tipo_tarifa_vehiculo = "NO_APLICA"
+
+        if gama_vehiculo not in gamas_validas:
+            gama_vehiculo = "NO_APLICA"
+
+
         identificacion = request.POST.get("identificacion", "").strip()
         nombre_cliente = request.POST.get("nombre_cliente", "").strip().upper()
         telefono = request.POST.get("telefono", "").strip()
@@ -171,7 +209,33 @@ def crear_orden(request):
         email = request.POST.get("email", "").strip()
         direccion = request.POST.get("direccion", "").strip()
         observaciones_recepcion = request.POST.get("observaciones_recepcion", "").strip()
+                # =====================================================
+        # IA: CLASIFICAR VEHÍCULO
+        # =====================================================
+        try:
+            clasificacion_ia = clasificar_vehiculo_con_ia(
+                marca=vehiculo.split(" ")[0] if vehiculo else "",
+                modelo=vehiculo,
+                anio=anio,
+                descripcion=vehiculo,
+            )
 
+            print("CLASIFICACIÓN IA:", clasificacion_ia)
+
+            tipo_tarifa_vehiculo = (
+                clasificacion_ia.get("tipo_tarifa_vehiculo")
+                or tipo_tarifa_vehiculo
+                or "NO_APLICA"
+            )
+
+            gama_vehiculo = (
+                clasificacion_ia.get("gama_vehiculo")
+                or gama_vehiculo
+                or "NO_APLICA"
+            )
+
+        except Exception as e:
+            print("ERROR GENERAL IA:", str(e))
         sintomas_json = cargar_json_lista(request.POST.get("sintomas_json", ""))
         trabajos_json = cargar_json_lista(request.POST.get("trabajos_json", ""))
         objetos_json = cargar_json_lista(request.POST.get("objetos_json", ""))

@@ -38,10 +38,33 @@ def limpiar_json_ia(texto):
         texto = texto[:-3].strip()
 
     return texto
-
 # =========================================================
 # IA: CLASIFICAR VEHÍCULO
 # =========================================================
+import json
+import re
+from google import genai
+
+
+def limpiar_json_ia(texto):
+    if not texto:
+        return "{}"
+
+    texto = texto.strip()
+
+    # Quitar bloques tipo ```json ... ```
+    texto = texto.replace("```json", "")
+    texto = texto.replace("```", "")
+    texto = texto.strip()
+
+    # Intentar extraer solo el JSON entre llaves
+    match = re.search(r"\{.*\}", texto, re.DOTALL)
+    if match:
+        return match.group(0).strip()
+
+    return texto
+
+
 def clasificar_vehiculo_con_ia(
     marca,
     modelo,
@@ -72,6 +95,13 @@ def clasificar_vehiculo_con_ia(
         "DEPORTIVA",
     }
 
+    resultado_fallback = {
+        "tipo_tarifa_vehiculo": "NO_APLICA",
+        "gama_vehiculo": "NO_APLICA",
+        "confianza": 0.0,
+        "motivo": "No se pudo clasificar con IA.",
+    }
+
     print("\n========== INICIO CLASIFICACIÓN IA ==========")
     print("MARCA RECIBIDA:", marca)
     print("MODELO RECIBIDO:", modelo)
@@ -79,10 +109,20 @@ def clasificar_vehiculo_con_ia(
     print("DESCRIPCIÓN RECIBIDA:", descripcion)
 
     try:
+        if not GEMINI_API_KEY:
+            print("ADVERTENCIA: GEMINI_API_KEY no configurada.")
+            resultado_fallback["motivo"] = "GEMINI_API_KEY no configurada."
+            return resultado_fallback
+
+        marca = str(marca or "").strip().upper()
+        modelo = str(modelo or "").strip().upper()
+        anio = str(anio or "").strip()
+        descripcion = str(descripcion or "").strip().upper()
+
         client = genai.Client(api_key=GEMINI_API_KEY)
 
         prompt = f"""
-Devuelve SOLO JSON válido.
+Devuelve SOLO JSON válido. No uses markdown. No expliques nada fuera del JSON.
 
 Clasifica este vehículo automotriz para un taller automotriz en Ecuador.
 
@@ -95,7 +135,6 @@ Descripción: {descripcion}
 REGLAS:
 
 tipo_tarifa_vehiculo debe ser SOLO uno de:
-
 - NO_APLICA
 - AUTO
 - AUTO_3P
@@ -107,7 +146,6 @@ tipo_tarifa_vehiculo debe ser SOLO uno de:
 - CAMIONETA_GRANDE
 
 gama_vehiculo debe ser SOLO uno de:
-
 - NO_APLICA
 - ECONOMICA
 - MEDIA
@@ -118,7 +156,18 @@ gama_vehiculo debe ser SOLO uno de:
 - COMERCIAL
 - DEPORTIVA
 
-Formato obligatorio:
+Criterio general:
+- AUTO_3P: autos compactos/hatchback/coupé de 3 puertas.
+- AUTO_5P: sedanes, hatchbacks o autos de 5 puertas.
+- SUV_3P: SUV todoterreno pequeño de 3 puertas, ejemplo Grand Vitara 3P.
+- SUV_5P: SUV/crossover familiar de 5 puertas.
+- CAMIONETA_CS: pickup cabina sencilla.
+- CAMIONETA_DC: pickup doble cabina.
+- CAMIONETA_GRANDE: pickup grande tipo F150, RAM, Silverado, Tundra.
+- COMERCIAL: vans, camiones, furgones o vehículos de trabajo.
+- NO_APLICA: si no hay información suficiente.
+
+Formato obligatorio exacto:
 
 {{
   "tipo_tarifa_vehiculo": "NO_APLICA",
@@ -135,28 +184,28 @@ Formato obligatorio:
             contents=prompt,
         )
 
-        print("\n========== RESPUESTA RAW GEMINI ==========")
-        print(response.text)
+        texto_respuesta = getattr(response, "text", "") or ""
 
-        texto = limpiar_json_ia(response.text)
+        print("\n========== RESPUESTA RAW GEMINI ==========")
+        print(texto_respuesta)
+
+        texto_limpio = limpiar_json_ia(texto_respuesta)
 
         print("\n========== TEXTO LIMPIO ==========")
-        print(texto)
+        print(texto_limpio)
 
-        data = json.loads(texto)
+        data = json.loads(texto_limpio)
 
         print("\n========== JSON PARSEADO ==========")
         print(data)
 
-        tipo_tarifa = data.get(
-            "tipo_tarifa_vehiculo",
-            "NO_APLICA"
-        )
+        tipo_tarifa = str(
+            data.get("tipo_tarifa_vehiculo") or "NO_APLICA"
+        ).strip().upper()
 
-        gama = data.get(
-            "gama_vehiculo",
-            "NO_APLICA"
-        )
+        gama = str(
+            data.get("gama_vehiculo") or "NO_APLICA"
+        ).strip().upper()
 
         if tipo_tarifa not in tipos_validos:
             print("ADVERTENCIA: tipo_tarifa inválido:", tipo_tarifa)
@@ -166,10 +215,20 @@ Formato obligatorio:
             print("ADVERTENCIA: gama inválida:", gama)
             gama = "NO_APLICA"
 
+        try:
+            confianza = float(data.get("confianza", 0.0) or 0.0)
+        except Exception:
+            confianza = 0.0
+
+        if confianza < 0:
+            confianza = 0.0
+        if confianza > 1:
+            confianza = 1.0
+
         resultado = {
             "tipo_tarifa_vehiculo": tipo_tarifa,
             "gama_vehiculo": gama,
-            "confianza": data.get("confianza", 0.0),
+            "confianza": confianza,
             "motivo": data.get("motivo"),
         }
 
@@ -182,6 +241,18 @@ Formato obligatorio:
 
         return resultado
 
+    except json.JSONDecodeError as e:
+        print("\n========== ERROR JSON IA ==========")
+        print("ERROR:", str(e))
+        print("===================================\n")
+
+        return {
+            "tipo_tarifa_vehiculo": "NO_APLICA",
+            "gama_vehiculo": "NO_APLICA",
+            "confianza": 0.0,
+            "motivo": f"Respuesta IA no era JSON válido: {str(e)}",
+        }
+
     except Exception as e:
         print("\n========== ERROR CLASIFICACIÓN IA ==========")
         print("ERROR:", str(e))
@@ -193,7 +264,6 @@ Formato obligatorio:
             "confianza": 0.0,
             "motivo": str(e),
         }
-
 
 # =========================================================
 # API: CONSULTAR PLACA
