@@ -109,7 +109,21 @@ class Command(BaseCommand):
                 pass
 
         return None
+    def fecha_valida_historica(self, fecha):
+        if not fecha:
+            return None
 
+        hoy = timezone.now().date()
+
+        # No permitir fechas futuras absurdas
+        if fecha.year > hoy.year:
+            return None
+
+        # Tus históricos empiezan 2011
+        if fecha.year < 2011:
+            return None
+
+        return fecha
     def generar_hash_json(self, data):
         contenido = json.dumps(data, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(contenido.encode("utf-8")).hexdigest()
@@ -289,7 +303,9 @@ class Command(BaseCommand):
         texto_observaciones = "\n".join(observaciones + recomendaciones)
         texto_sintomas = "\n".join(sintomas)
 
-        fecha_origen = self.to_date(cabecera.get("fecha"))
+        fecha_origen = self.fecha_valida_historica(
+    self.to_date(cabecera.get("fecha"))
+)
 
         defaults_orden = self.filtrar_campos_modelo(OrdenTrabajo, {
             "sucursal": sucursal,
