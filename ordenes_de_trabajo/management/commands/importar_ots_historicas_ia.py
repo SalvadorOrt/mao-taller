@@ -113,15 +113,17 @@ class Command(BaseCommand):
         if not fecha:
             return None
 
-        hoy = timezone.now().date()
+        hoy = timezone.localdate()
 
-        # No permitir fechas futuras absurdas
-        if fecha.year > hoy.year:
+        # No permitir fechas futuras, aunque sean del mismo año
+        if fecha > hoy:
             return None
 
         # Tus históricos empiezan 2011
         if fecha.year < 2011:
             return None
+
+        return fecha
 
         return fecha
     def generar_hash_json(self, data):
