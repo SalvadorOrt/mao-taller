@@ -63,7 +63,7 @@
         <!-- 🔥 FILA 1: Cédula y Nombre (NUEVO) 🔥 -->
         <div class="col-md-4">
             <label class="form-label-custom">Cédula / RUC <span style="color: var(--danger);">*</span></label>
-            <input type="text" id="id_identificacion_cliente" name="identificacion" class="form-control-apple" placeholder="Número de documento" required>
+            <input type="text" id="id_identificacion_cliente" name="identificacion" class="form-control-apple" placeholder="Número de documento" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
         </div>
         
         <div class="col-md-8">

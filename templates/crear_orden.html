@@ -482,7 +482,8 @@ function buscarPlaca() {
             const inputNombre = document.getElementById('id_nombre');
 
             // 🔥 SIEMPRE copiar la cédula al paso 2
-            inputCedulaPaso2.value = cedula;
+            // Código mejorado:
+            inputCedulaPaso2.value = data.identificacion || cedula;
 
             if (data.exito) {
 

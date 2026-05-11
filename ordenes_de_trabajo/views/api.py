@@ -320,31 +320,32 @@ def consultar_regcheck(request):
             "error": str(e)
         })
 
-
 # =========================================================
-# API: CONSULTAR CÉDULA
+# API: CONSULTAR CÉDULA Y RUC
 # =========================================================
 @login_required
 def consultar_cedula_api(request):
 
-    cedula = request.GET.get(
+    # Cambiamos el nombre interno de la variable a 'identificacion' por claridad, 
+    # pero seguimos recibiendo el parámetro GET "cedula" para no romper tu frontend (JavaScript).
+    identificacion = request.GET.get(
         "cedula",
         ""
     ).strip()
 
-    if not cedula or not cedula.isdigit():
-
+    # Validamos que sean solo números y que el tamaño sea exactamente 10 o 13
+    if not identificacion or not identificacion.isdigit() or len(identificacion) not in [10, 13]:
         return JsonResponse({
             "exito": False,
-            "error": "Cédula inválida"
+            "error": "Identificación inválida. Debe tener 10 o 13 dígitos."
         })
 
+    # Buscamos primero en la base de datos local
     cliente = Cliente.objects.filter(
-        identificacion=cedula
+        identificacion=identificacion
     ).first()
 
     if cliente:
-
         return JsonResponse({
             "exito": True,
             "origen": "bd",
@@ -357,7 +358,7 @@ def consultar_cedula_api(request):
 
     url = (
         "https://apiconsult.zampisoft.com/api/"
-        f"consultar?identificacion={cedula}"
+        f"consultar?identificacion={identificacion}"
         f"&token={CEDULA_API_TOKEN}"
     )
 
@@ -365,44 +366,43 @@ def consultar_cedula_api(request):
         respuesta = requests.get(url, timeout=15)
 
         if respuesta.status_code == 200:
-
             data = respuesta.json()
+
+            # --- MAGIA PARA SOPORTAR RUC Y CÉDULA ---
+            
+            # 1. Extraer nombre: Si es empresa trae 'razonSocial', si es persona trae 'nombre'
+            nombre_api = data.get("razonSocial") or data.get("nombre", "")
+
+            # 2. Extraer identificación: Si es empresa trae 'numeroRuc', si es persona trae 'cedula'
+            identificacion_api = data.get("numeroRuc") or data.get("cedula", identificacion)
+
+            # 3. Extraer dirección: Para RUCs viene dentro de una lista llamada 'establecimientos'
+            direccion_api = data.get("lugarDomicilio", "")
+            if not direccion_api and data.get("establecimientos"):
+                # Tomamos la dirección del primer establecimiento (matriz)
+                direccion_api = data.get("establecimientos")[0].get("direccionCompleta", "")
 
             return JsonResponse({
                 "exito": True,
                 "origen": "api",
-                "identificacion": data.get(
-                    "cedula",
-                    cedula
-                ),
-                "nombre_completo": data.get(
-                    "nombre",
-                    ""
-                ),
+                "identificacion": identificacion_api,
+                "nombre_completo": nombre_api,
                 "telefono": "",
                 "email": "",
-                "direccion": data.get(
-                    "lugarDomicilio",
-                    ""
-                ),
-                "genero": data.get(
-                    "genero",
-                    ""
-                ),
+                "direccion": direccion_api,
+                "genero": data.get("genero", ""),
             })
 
         return JsonResponse({
             "exito": False,
-            "error": "Error API Cédula"
+            "error": "El SRI/Registro Civil no encontró resultados o el servicio está caído."
         })
 
     except Exception as e:
         return JsonResponse({
             "exito": False,
-            "error": str(e)
+            "error": f"Error de conexión: {str(e)}"
         })
-
-
 # =========================================================
 # API: BÚSQUEDA REPUESTOS
 # =========================================================
