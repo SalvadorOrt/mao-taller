@@ -36,10 +36,15 @@ class Command(BaseCommand):
     # =====================================================
     # HELPERS GENERALES
     # =====================================================
-    def limpiar_texto(self, valor, default=None):
+    def limpiar_texto(self, valor, default=None, max_length=None):
         if valor in (None, "", "null", "None"):
             return default
         texto = str(valor).strip()
+        
+        # BLINDAJE: Cortar el texto si supera el límite de la base de datos
+        if max_length and len(texto) > max_length:
+            texto = texto[:max_length]
+            
         return texto if texto else default
 
     def normalizar_mayus(self, valor, default=None):
@@ -65,9 +70,17 @@ class Command(BaseCommand):
         try:
             texto = str(valor).replace(",", "").strip()
             numero = Decimal(texto)
+            
+            # BLINDAJE: Si el número supera los 9 millones, probablemente es un error de tipeo.
+            # Lo limitamos para que no reviente el DecimalField(max_digits=10)
+            if numero > Decimal("9999999.99"):
+                numero = Decimal("9999999.99")
+                
             return numero.quantize(Decimal("1.00"), rounding=ROUND_HALF_UP)
         except (InvalidOperation, TypeError, ValueError):
             return None
+        
+
     def decimal_no_negativo(self, valor, default=Decimal("0.00")):
         numero = self.to_decimal(valor)
         if numero is None or numero < 0:
@@ -83,7 +96,15 @@ class Command(BaseCommand):
             return None
 
         try:
-            return int(Decimal(str(valor).replace(",", "").strip()))
+            numero = int(Decimal(str(valor).replace(",", "").strip()))
+            
+            # BLINDAJE: El límite máximo de IntegerField en PostgreSQL es 2147483647
+            if numero > 2147483647:
+                return 2147483647
+            if numero < -2147483648:
+                return -2147483648
+                
+            return numero
         except Exception:
             return None
 
@@ -313,11 +334,11 @@ class Command(BaseCommand):
             "sucursal": sucursal,
             "expediente": expediente,
             "cliente": cliente,
-            "cliente_respaldo": self.limpiar_texto(cabecera.get("cliente")),
+            "cliente_respaldo": self.limpiar_texto(cabecera.get("cliente"), max_length=250),
 
             "es_migrada": True,
             "numero_orden_origen": numero_origen,
-            "archivo_origen": self.limpiar_texto(item.get("archivo")),
+            "archivo_origen": self.limpiar_texto(item.get("archivo"), max_length=250),
             "hoja_origen": hoja,
             "anio_origen_migracion": anio,
             "json_origen": item,
@@ -325,7 +346,7 @@ class Command(BaseCommand):
             "requiere_revision_migracion": item.get("requiere_revision_migracion", False),
 
             "placa": self.limpiar_placa(cabecera.get("placa")),
-            "vehiculo": self.limpiar_texto(cabecera.get("vehiculo")),
+            "vehiculo": self.limpiar_texto(cabecera.get("vehiculo"), max_length=250),
             "anio_vehiculo": self.to_int(cabecera.get("anio")),
             "fecha_origen": fecha_origen,
             "fecha_ingreso": (
