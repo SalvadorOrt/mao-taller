@@ -6,24 +6,25 @@
     <meta charset="UTF-8">
     <title>Resumen de Orden - {{ orden.numero_orden }}</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #1e3a8a;
-            --text: #1f2937;
+            --primary: #123b7a;
+            --primary-soft: #eef4ff;
+            --text: #111827;
             --muted: #4b5563;
-            --line: #e5e7eb;
+            --line: #d9dee8;
             --soft: #f8fafc;
             --soft-2: #f1f5f9;
+            --danger: #c1121f;
             --dark: #0f172a;
-            --danger: #dc2626;
-            --border-radius: 7px;
+            --radius: 9px;
         }
 
         @page {
             size: A4 portrait;
-            margin: 8mm;
+            margin: 10mm;
         }
 
         * {
@@ -33,11 +34,11 @@
         }
 
         body {
-            background: #e2e8f0;
+            background: #e5e7eb;
             color: var(--text);
-            font-family: 'Roboto', Arial, sans-serif;
-            font-size: 8.5px;
-            line-height: 1.35;
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 10.3px;
+            line-height: 1.45;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
@@ -47,7 +48,7 @@
             min-height: 297mm;
             margin: 0 auto;
             background: #ffffff;
-            padding: 8mm 10mm;
+            padding: 9mm 10mm;
             overflow: hidden;
         }
 
@@ -56,7 +57,7 @@
             table-layout: fixed;
             border-collapse: collapse;
             border-bottom: 2px solid var(--primary);
-            margin-bottom: 10px;
+            margin-bottom: 11px;
             padding-bottom: 8px;
         }
 
@@ -67,55 +68,55 @@
         }
 
         .top-left {
-            width: 38%;
-            padding-right: 8px;
+            width: 40%;
+            padding-right: 10px;
         }
 
         .top-right {
-            width: 62%;
+            width: 60%;
             text-align: right;
         }
 
         .logo img {
-            max-width: 145px;
-            max-height: 58px;
+            max-width: 150px;
+            max-height: 62px;
             object-fit: contain;
         }
 
         .company {
-            margin-top: 4px;
-            font-size: 7.3px;
+            margin-top: 5px;
+            font-size: 8.6px;
             color: var(--muted);
-            line-height: 1.35;
+            line-height: 1.45;
+            font-weight: 500;
         }
 
         .doc-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 17px;
+            font-size: 19px;
             font-weight: 900;
             color: var(--primary);
             line-height: 1.1;
             text-transform: uppercase;
+            letter-spacing: .02em;
         }
 
         .doc-number {
-            margin-top: 5px;
-            padding: 4px 7px;
+            margin-top: 6px;
+            padding: 5px 9px;
             border: 1px solid var(--line);
-            border-radius: 6px;
-            background: var(--soft-2);
+            border-radius: 999px;
+            background: var(--primary-soft);
             color: var(--danger);
-            font-family: 'Montserrat', sans-serif;
-            font-size: 8px;
-            font-weight: 800;
+            font-size: 9.5px;
+            font-weight: 900;
             display: inline-block;
             max-width: 100%;
             overflow-wrap: anywhere;
         }
 
         .doc-date {
-            margin-top: 5px;
-            font-size: 7.5px;
+            margin-top: 6px;
+            font-size: 9px;
             color: var(--muted);
             font-weight: 700;
         }
@@ -125,50 +126,49 @@
             table-layout: fixed;
             border-collapse: separate;
             border-spacing: 6px;
-            margin: 0 -6px 10px -6px;
+            margin: 0 -6px 11px -6px;
         }
 
         .info-grid td {
             border: 1px solid var(--line);
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             background: #ffffff;
-            padding: 6px 7px;
+            padding: 7px 8px;
             vertical-align: top;
         }
 
         .label {
-            font-family: 'Montserrat', sans-serif;
             display: block;
-            margin-bottom: 2px;
-            font-size: 6.3px;
+            margin-bottom: 3px;
+            font-size: 7.4px;
             font-weight: 800;
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: .08em;
+            letter-spacing: .06em;
         }
 
         .value {
-            font-size: 8.5px;
-            font-weight: 700;
+            display: block;
+            font-size: 10.2px;
+            font-weight: 800;
             color: var(--dark);
             overflow-wrap: anywhere;
         }
 
         .section {
-            margin-top: 10px;
+            margin-top: 11px;
         }
 
         .section-title {
-            font-family: 'Montserrat', sans-serif;
             display: flex;
             align-items: center;
             gap: 9px;
-            margin-bottom: 5px;
-            font-size: 7.5px;
+            margin-bottom: 6px;
+            font-size: 9px;
             font-weight: 900;
             color: var(--primary);
             text-transform: uppercase;
-            letter-spacing: .14em;
+            letter-spacing: .08em;
         }
 
         .section-title::after {
@@ -176,7 +176,7 @@
             flex: 1;
             height: 1px;
             background: var(--primary);
-            opacity: .22;
+            opacity: .24;
         }
 
         .detail-table {
@@ -185,29 +185,30 @@
             border-spacing: 0;
             table-layout: fixed;
             border: 1px solid var(--line);
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             overflow: hidden;
-            margin-bottom: 6px;
+            margin-bottom: 7px;
         }
 
         .detail-table th {
             background: var(--primary);
             color: #ffffff;
-            font-family: 'Montserrat', sans-serif;
-            padding: 5px 6px;
-            font-size: 6.5px;
-            font-weight: 800;
+            padding: 6px 7px;
+            font-size: 8px;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: .08em;
+            letter-spacing: .05em;
             text-align: left;
         }
 
         .detail-table td {
             border-bottom: 1px solid var(--line);
-            padding: 5px 6px;
-            font-size: 8px;
+            padding: 6px 7px;
+            font-size: 9.8px;
+            font-weight: 500;
             background: #ffffff;
-            vertical-align: middle;
+            vertical-align: top;
+            color: var(--text);
             overflow-wrap: anywhere;
         }
 
@@ -216,7 +217,7 @@
         }
 
         .detail-table tbody tr:nth-child(even) td {
-            background: #fcfcfd;
+            background: #fafbfc;
         }
 
         .text-right {
@@ -229,23 +230,26 @@
 
         .muted {
             color: var(--muted);
-            font-size: 6.8px;
-            font-weight: 500;
+            font-size: 8px;
+            font-weight: 600;
         }
-        
+
         .procedimientos-list {
             display: block;
-            margin-top: 3px;
-            padding-left: 8px;
+            margin-top: 4px;
+            padding-left: 9px;
             color: var(--muted);
-            font-size: 7px;
+            font-size: 8.4px;
+            line-height: 1.4;
+            font-weight: 500;
         }
 
         .empty-row td {
             color: var(--muted);
             font-style: italic;
             text-align: center;
-            padding: 8px;
+            padding: 9px;
+            font-size: 9.5px;
         }
 
         .totals-wrap {
@@ -254,47 +258,54 @@
         }
 
         .totals-table {
-            width: 42%;
+            width: 43%;
             margin-left: auto;
             border-collapse: separate;
             border-spacing: 0;
             border: 1px solid var(--line);
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             overflow: hidden;
+            background: #ffffff;
         }
 
         .totals-table td {
-            padding: 7px 8px;
-            font-size: 9px;
+            padding: 8px 9px;
+            font-size: 10.2px;
             border-bottom: 1px solid var(--line);
         }
 
         .totals-table tr:last-child td {
             border-bottom: none;
+            background: var(--primary-soft);
         }
 
         .total-label {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
+            font-weight: 900;
             color: var(--dark);
             text-transform: uppercase;
         }
 
+        .total-final-label {
+            font-size: 10.8px !important;
+            color: var(--danger);
+            font-weight: 900;
+        }
+
         .total-value {
             text-align: right;
-            font-family: 'Montserrat', sans-serif;
             font-weight: 900;
             color: var(--danger);
-            font-size: 12px !important;
+            font-size: 14px !important;
         }
 
         .note {
-            margin-top: 6px;
+            margin-top: 7px;
             text-align: right;
-            font-size: 6.8px;
+            font-size: 7.8px;
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: .04em;
+            font-weight: 600;
         }
 
         @media print {
@@ -382,9 +393,6 @@
         </tr>
     </table>
 
-    <!-- ============================================== -->
-    <!-- 1. REPUESTOS E INSUMOS -->
-    <!-- ============================================== -->
     <div class="section">
         <div class="section-title">1. Repuestos e Insumos</div>
 
@@ -434,9 +442,6 @@
         </table>
     </div>
 
-    <!-- ============================================== -->
-    <!-- 2. MANO DE OBRA INTERNA -->
-    <!-- ============================================== -->
     <div class="section">
         <div class="section-title">2. Mano de Obra Interna</div>
 
@@ -457,14 +462,12 @@
             </thead>
             <tbody>
                 {% for serv in servicios %}
-                    <!-- 🔥 Verifica que NO sea del catálogo EXT y NO esté marcado como EXT manual 🔥 -->
                     {% if serv.servicio.categoria != 'EXT' and serv.tipo_servicio != 'EXT' %}
                         <tr>
                             <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
                             <td>
                                 {{ serv.descripcion_servicio }}
-                                
-                                <!-- 🔥 Procedimientos del Catálogo 🔥 -->
+
                                 {% if serv.servicio.procedimientos.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.servicio.procedimientos.all %}
@@ -473,7 +476,6 @@
                                     </div>
                                 {% endif %}
 
-                                <!-- 🔥 Procedimientos Extra agregados en la Orden 🔥 -->
                                 {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.procedimientos_detalle.all %}
@@ -505,9 +507,6 @@
         </table>
     </div>
 
-    <!-- ============================================== -->
-    <!-- 3. TRABAJOS Y SERVICIOS EXTERNOS -->
-    <!-- ============================================== -->
     <div class="section">
         <div class="section-title">3. Trabajos y Servicios Externos</div>
 
@@ -528,14 +527,12 @@
             </thead>
             <tbody>
                 {% for serv in servicios %}
-                    <!-- 🔥 Verifica si es catálogo EXT o si se marcó manualmente como EXT 🔥 -->
                     {% if serv.servicio.categoria == 'EXT' or serv.tipo_servicio == 'EXT' %}
                         <tr>
                             <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
                             <td>
                                 {{ serv.descripcion_servicio }}
-                                
-                                <!-- 🔥 Procedimientos del Catálogo 🔥 -->
+
                                 {% if serv.servicio.procedimientos.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.servicio.procedimientos.all %}
@@ -544,7 +541,6 @@
                                     </div>
                                 {% endif %}
 
-                                <!-- 🔥 Procedimientos Extra agregados en la Orden 🔥 -->
                                 {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.procedimientos_detalle.all %}
@@ -577,42 +573,27 @@
     </div>
 
     <div class="totals-wrap">
-    <table class="totals-table">
+        <table class="totals-table">
+            <tr>
+                <td class="total-label">Subtotal</td>
+                <td class="text-right">${{ subtotal|floatformat:2 }}</td>
+            </tr>
 
-        <tr>
-            <td class="total-label">Subtotal</td>
-            <td class="text-right">
-                ${{ subtotal|floatformat:2 }}
-            </td>
-        </tr>
+            <tr>
+                <td class="total-label">IVA 15%</td>
+                <td class="text-right">${{ iva|floatformat:2 }}</td>
+            </tr>
 
-        <tr>
-            <td class="total-label">IVA 15%</td>
-            <td class="text-right">
-                ${{ iva|floatformat:2 }}
-            </td>
-        </tr>
+            <tr>
+                <td class="total-label total-final-label">Total a pagar</td>
+                <td class="total-value">${{ total_final|floatformat:2 }}</td>
+            </tr>
+        </table>
 
-        <tr>
-            <td class="total-label" style="
-                font-size: 10px;
-                color: #dc2626;
-                font-weight: 900;
-            ">
-                TOTAL A PAGAR
-            </td>
-
-            <td class="total-value">
-                ${{ total_final|floatformat:2 }}
-            </td>
-        </tr>
-
-    </table>
-
-    <p class="note">
-        Valores expresados en dólares americanos.
-    </p>
-</div>
+        <p class="note">
+            Valores expresados en dólares americanos.
+        </p>
+    </div>
 
 </div>
 
