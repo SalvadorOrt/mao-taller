@@ -381,7 +381,8 @@ class Command(BaseCommand):
         # =================================================
         # INSUMOS HISTÓRICOS
         # =================================================
-        for idx, insumo in enumerate(normalizado.get("insumos_historicos", []) or [], start=1):
+        insumos = normalizado.get("insumos_historicos", []) or []
+        for idx, insumo in enumerate(insumos, start=1):
             descripcion = self.limpiar_texto(insumo.get("descripcion_original"), max_length=240)
 
             if not descripcion:
@@ -392,7 +393,6 @@ class Command(BaseCommand):
                 "codigo_original": self.normalizar_mayus(insumo.get("codigo_original")),
                 "descripcion_original": descripcion,
                 "cantidad": self.cantidad_historica(insumo.get("cantidad")),
-                "subtotal": self.decimal_no_negativo(insumo.get("subtotal")),
                 "subtotal": self.to_decimal(insumo.get("subtotal")),
                 "orden_item": self.to_int(insumo.get("orden_item")) or idx,
                 "requiere_revision": insumo.get("requiere_revision", False),
@@ -406,8 +406,6 @@ class Command(BaseCommand):
         servicios_historicos = normalizado.get("servicios_historicos", []) or []
 
         if not servicios_historicos:
-            servicios_historicos = []
-
             for item_mo in (item.get("mano_obra", {}) or {}).get("items", []) or []:
                 servicios_historicos.append({
                     "tipo": "MO",
@@ -433,7 +431,7 @@ class Command(BaseCommand):
                 })
 
         for idx, servicio in enumerate(servicios_historicos, start=1):
-            descripcion = self.limpiar_texto(insumo.get("descripcion_original"), max_length=240)
+            descripcion = self.limpiar_texto(servicio.get("descripcion_original"), max_length=240)
 
             if not descripcion:
                 continue
@@ -483,8 +481,8 @@ class Command(BaseCommand):
                         descripcion=proc_txt,
                         orden_item=j,
                     )
+        
         orden.save()
-
         return orden, creada
     # =====================================================
     # HANDLE
