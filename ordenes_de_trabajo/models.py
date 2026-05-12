@@ -5,6 +5,9 @@ from django.db.models import Sum
 from django.utils import timezone
 from empresa.models import EmpresaEmisora
 from decimal import Decimal, ROUND_HALF_UP
+import uuid
+from django.db import models
+from django.core.exceptions import ValidationError
 TIPOS_TARIFA_VEHICULO = [
         ("NO_APLICA", "No aplica"),
         ("AUTO", "Auto"),
@@ -104,20 +107,21 @@ class Cliente(models.Model):
         ("C", "Cédula"),
         ("R", "RUC"),
         ("P", "Pasaporte"),
+        ("S", "Sin Documento"),
     ]
 
     tipo_documento = models.CharField(
         max_length=1,
         choices=TIPOS_DOC,
-        default="C"
+        default="S",
     )
 
     identificacion = models.CharField(
-        max_length=13,
+        max_length=20,
         unique=True,
         null=True,
         blank=True,
-        verbose_name="Cédula/RUC",
+        verbose_name="Identificación",
     )
 
     nombre_completo = models.CharField(max_length=200)
@@ -126,21 +130,21 @@ class Cliente(models.Model):
         max_length=50,
         null=True,
         blank=True,
-        verbose_name="Teléfono Principal"
+        verbose_name="Teléfono Principal",
     )
 
     telefono_secundario = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        verbose_name="Teléfono Familiar/Alternativo"
+        verbose_name="Teléfono Familiar/Alternativo",
     )
 
     telefono_trabajo = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        verbose_name="Teléfono Fijo/Trabajo"
+        verbose_name="Teléfono Fijo/Trabajo",
     )
 
     email = models.EmailField(null=True, blank=True)
@@ -152,44 +156,35 @@ class Cliente(models.Model):
         verbose_name_plural = "Clientes"
         indexes = [
             models.Index(fields=["nombre_completo"]),
+            models.Index(fields=["identificacion"]),
         ]
 
-    def clean(self):
+    def detectar_tipo_documento(self):
+        if not self.identificacion:
+            return "S"
+
+        valor = self.identificacion.strip().upper()
+
+        if valor.startswith("PROV-") or valor.startswith("HIST"):
+            return "S"
+
+        if valor.isdigit():
+            if len(valor) == 10:
+                return "C"
+
+            if len(valor) == 13:
+                return "R"
+
+        return "P"
+
+    def normalizar_datos(self):
         if self.identificacion:
             self.identificacion = self.identificacion.strip().upper()
+        else:
+            uuid_corto = str(uuid.uuid4())[:6].upper()
+            self.identificacion = f"PROV-{uuid_corto}"
 
-            if self.tipo_documento in {"C", "R"}:
-                if not self.identificacion.isdigit():
-                    raise ValidationError(
-                        "La identificación debe contener solo números."
-                    )
-
-            if self.tipo_documento == "C":
-                if len(self.identificacion) != 10:
-                    raise ValidationError(
-                        "La cédula debe tener 10 dígitos."
-                    )
-
-            if self.tipo_documento == "R":
-                if len(self.identificacion) != 13:
-                    raise ValidationError(
-                        "El RUC debe tener 13 dígitos."
-                    )
-
-            if self.tipo_documento == "P":
-                if len(self.identificacion) < 3:
-                    raise ValidationError(
-                        "El pasaporte no es válido."
-                    )
-
-        if not self.nombre_completo or not self.nombre_completo.strip():
-            raise ValidationError(
-                "El nombre completo del cliente es obligatorio."
-            )
-
-    def save(self, *args, **kwargs):
-        if self.identificacion:
-            self.identificacion = self.identificacion.strip().upper()
+        self.tipo_documento = self.detectar_tipo_documento()
 
         if self.nombre_completo:
             self.nombre_completo = self.nombre_completo.strip().upper()
@@ -209,13 +204,55 @@ class Cliente(models.Model):
         if self.direccion:
             self.direccion = self.direccion.strip().upper()
 
+    def clean(self):
+        self.normalizar_datos()
+
+        if not self.nombre_completo or not self.nombre_completo.strip():
+            raise ValidationError(
+                "El nombre completo del cliente es obligatorio."
+            )
+
+        if not self.identificacion:
+            raise ValidationError(
+                "No se pudo generar una identificación provisional."
+            )
+
+        es_codigo_especial = (
+            self.identificacion.startswith("PROV-")
+            or self.identificacion.startswith("HIST")
+        )
+
+        if es_codigo_especial or self.tipo_documento == "S":
+            return
+
+        if self.tipo_documento in {"C", "R"}:
+            if not self.identificacion.isdigit():
+                raise ValidationError(
+                    "La identificación debe contener solo números."
+                )
+
+        if self.tipo_documento == "C" and len(self.identificacion) != 10:
+            raise ValidationError(
+                "La cédula debe tener 10 dígitos."
+            )
+
+        if self.tipo_documento == "R" and len(self.identificacion) != 13:
+            raise ValidationError(
+                "El RUC debe tener 13 dígitos."
+            )
+
+        if self.tipo_documento == "P" and len(self.identificacion) < 3:
+            raise ValidationError(
+                "El pasaporte no es válido."
+            )
+
+    def save(self, *args, **kwargs):
+        self.normalizar_datos()
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        id_display = self.identificacion if self.identificacion else "SIN ID"
-        return f"{id_display} | {self.nombre_completo}"
-
+        return f"{self.identificacion} | {self.nombre_completo}"
 # ==========================================
 # 4. EXPEDIENTE / HISTORIAL ACUMULADO DEL VEHÍCULO
 # ==========================================

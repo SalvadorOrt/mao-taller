@@ -460,14 +460,15 @@ function buscarPlaca() {
             `;
         });
 }
-    function buscarCedula() {
+function buscarCedula() {
+    const tipoDocumento = document.getElementById('id_tipo_documento')?.value || 'C';
     const cedula = document.getElementById('id_identificacion').value.trim();
 
-    if (!cedula) {
+    if (tipoDocumento === 'S') {
         return mostrarAlerta({
-            icon: 'warning',
-            title: 'Ingrese una cédula',
-            focusId: 'id_identificacion'
+            icon: 'info',
+            title: 'Cliente sin documento',
+            text: 'No es necesario buscar cédula/RUC. Continúe llenando los datos manualmente.'
         });
     }
 
@@ -652,6 +653,42 @@ function buscarPlaca() {
                 else { const index = trabajos.findIndex(t => t.descripcion === this.value); if (index !== -1) { trabajos.splice(index, 1); renderTrabajos(); } }
             });
         });
+        const tipoDocumento = document.getElementById('id_tipo_documento');
+const identificacion = document.getElementById('id_identificacion');
+const btnBuscarCedula = document.getElementById('btn_buscar_cedula');
+const identificacionPaso2 = document.getElementById('id_identificacion_cliente');
+
+if (tipoDocumento && identificacion) {
+    tipoDocumento.addEventListener('change', function () {
+        if (this.value === 'S') {
+            identificacion.value = '';
+            identificacion.disabled = true;
+
+            if (identificacionPaso2) {
+                identificacionPaso2.value = '';
+                identificacionPaso2.readOnly = true;
+            }
+
+            if (btnBuscarCedula) {
+                btnBuscarCedula.disabled = true;
+                btnBuscarCedula.style.opacity = '0.5';
+                btnBuscarCedula.style.cursor = 'not-allowed';
+            }
+        } else {
+            identificacion.disabled = false;
+
+            if (identificacionPaso2) {
+                identificacionPaso2.readOnly = false;
+            }
+
+            if (btnBuscarCedula) {
+                btnBuscarCedula.disabled = false;
+                btnBuscarCedula.style.opacity = '1';
+                btnBuscarCedula.style.cursor = 'pointer';
+            }
+        }
+    });
+}
     });
 </script>
 {% endblock %}

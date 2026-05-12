@@ -20,16 +20,31 @@
             </div>
 
             <!-- Buscador de Cédula (Acción Secundaria) -->
-            <div class="col-md-6">
-                <label style="font-size: 12px; font-weight: 600; color: #86868b; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">CÉDULA / RUC DEL CLIENTE</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" name="identificacion" id="id_identificacion" class="form-control-apple" style="flex: 1;" placeholder="Número de documento">
-                    <button type="button" onclick="buscarCedula()" style="background: #f5f5f7; color: #1d1d1f; border: 1px solid #e5e5ea; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                        <i class="bi bi-person-bounding-box"></i> Buscar
-                    </button>
+            
+                <div class="col-md-6">
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">
+                        DOCUMENTO DEL CLIENTE
+                    </label>
+
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text"
+                            name="identificacion"
+                            id="id_identificacion"
+                            class="form-control-apple"
+                            style="flex: 1;"
+                            placeholder="Cédula, RUC, pasaporte o vacío">
+
+                        <button type="button"
+                                id="btn_buscar_cedula"
+                                onclick="buscarCedula()"
+                                style="background: #f5f5f7; color: #1d1d1f; border: 1px solid #e5e5ea; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="bi bi-person-bounding-box"></i> Buscar
+                        </button>
+                    </div>
+
+                    <div id="msg_busqueda_cedula"
+                        style="margin-top: 8px; font-size: 12px;"></div>
                 </div>
-                <div id="msg_busqueda_cedula" style="margin-top: 8px; font-size: 12px;"></div>
-            </div>
             
         </div>
     </div>

@@ -98,11 +98,11 @@ class Command(BaseCommand):
         try:
             numero = int(Decimal(str(valor).replace(",", "").strip()))
             
-            # BLINDAJE: El límite máximo de IntegerField en PostgreSQL es 2147483647
-            if numero > 2147483647:
-                return 2147483647
-            if numero < -2147483648:
-                return -2147483648
+            # BLINDAJE: Tope de kilometraje realista
+            if numero > 999999:
+                return 999999
+            if numero < 0:
+                return 0
                 
             return numero
         except Exception:
@@ -326,10 +326,8 @@ class Command(BaseCommand):
         texto_observaciones = "\n".join(observaciones + recomendaciones)
         texto_sintomas = "\n".join(sintomas)
 
-        fecha_origen = self.fecha_valida_historica(
-    self.to_date(cabecera.get("fecha"))
-)
-
+        fecha_procesada = self.to_date(cabecera.get("fecha"))
+        fecha_origen = self.fecha_valida_historica(fecha_procesada) or datetime(2011, 1, 1).date()
         defaults_orden = self.filtrar_campos_modelo(OrdenTrabajo, {
             "sucursal": sucursal,
             "expediente": expediente,
@@ -384,7 +382,7 @@ class Command(BaseCommand):
         # INSUMOS HISTÓRICOS
         # =================================================
         for idx, insumo in enumerate(normalizado.get("insumos_historicos", []) or [], start=1):
-            descripcion = self.limpiar_texto(insumo.get("descripcion_original"))
+            descripcion = self.limpiar_texto(insumo.get("descripcion_original"), max_length=240)
 
             if not descripcion:
                 continue
@@ -435,7 +433,7 @@ class Command(BaseCommand):
                 })
 
         for idx, servicio in enumerate(servicios_historicos, start=1):
-            descripcion = self.limpiar_texto(servicio.get("descripcion_original"))
+            descripcion = self.limpiar_texto(insumo.get("descripcion_original"), max_length=240)
 
             if not descripcion:
                 continue
@@ -478,7 +476,7 @@ class Command(BaseCommand):
 
             # 3) Guarda procedimientos si existen
             for j, proc in enumerate(procedimientos, start=1):
-                proc_txt = self.limpiar_texto(proc)
+                proc_txt = self.limpiar_texto(proc, max_length=240)
                 if proc_txt:
                     OrdenServicioProcedimientoDetalle.objects.create(
                         detalle_servicio=detalle,
