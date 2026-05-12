@@ -577,17 +577,53 @@
     </div>
 
     <div class="totals-wrap">
-        <table class="totals-table">
-            <tr>
-                <td class="total-label">Total general</td>
-                <td class="total-value">${{ orden.total_general|floatformat:2 }}</td>
-            </tr>
-        </table>
+    <table class="totals-table">
 
-        <p class="note">
-            Documento informativo de resumen de orden.
-        </p>
-    </div>
+        <!-- SUBTOTAL -->
+        <tr>
+            <td class="total-label">Subtotal</td>
+            <td class="text-right">
+                $
+                {{
+                    orden.total_general|add:"0"
+                    |floatformat:2
+                }}
+            </td>
+        </tr>
+
+        <!-- IVA -->
+        <tr>
+            <td class="total-label">IVA 15%</td>
+            <td class="text-right">
+                $
+                {{
+                    orden.total_general|floatformat:2
+                }}
+            </td>
+        </tr>
+
+        <!-- TOTAL FINAL -->
+        <tr>
+            <td class="total-label" style="
+                font-size: 10px;
+                color: #dc2626;
+                font-weight: 900;
+            ">
+                TOTAL A PAGAR
+            </td>
+
+            <td class="total-value">
+                $
+                {{
+                    orden.total_general
+                    |add:orden.total_general|floatformat:2
+                }}
+            </td>
+        </tr>
+
+    </table>
+
+</div>
 
 </div>
 
