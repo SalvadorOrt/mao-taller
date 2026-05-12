@@ -576,19 +576,11 @@
         </table>
     </div>
 
- <div class="totals-wrap">
+    <div class="totals-wrap">
         <table class="totals-table">
             <tr>
-                <td class="total-label" style="font-size: 8px; color: var(--muted);">Subtotal</td>
-                <td class="text-right" style="font-size: 9px;">${{ orden.subtotal|default:"0.00"|floatformat:2 }}</td>
-            </tr>
-            <tr>
-                <td class="total-label" style="font-size: 8px; color: var(--muted);">IVA 15%</td>
-                <td class="text-right" style="font-size: 9px;">${{ orden.iva|default:"0.00"|floatformat:2 }}</td>
-            </tr>
-            <tr>
                 <td class="total-label">Total general</td>
-                <td class="total-value">${{ orden.total_general|default:"0.00"|floatformat:2 }}</td>
+                <td class="total-value">${{ orden.total_general|floatformat:2 }}</td>
             </tr>
         </table>
 
