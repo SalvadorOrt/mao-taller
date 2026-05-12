@@ -28,9 +28,6 @@ def imprimir_tecnico(request, pk):
         "croquis": croquis, 
     })
 
-# ==========================================
-# IMPRESIÓN 2: RESUMEN DE ORDEN (Cliente)
-# ==========================================
 @login_required
 @xframe_options_sameorigin
 def imprimir_resumen_orden(request, pk):
@@ -39,12 +36,16 @@ def imprimir_resumen_orden(request, pk):
             "sucursal__empresa",
             "cliente",
             "expediente"
+        ).prefetch_related(
+            "insumos_detalles",
+            "servicios_detalles",
+            "insumos_historicos",
+            "servicios_historicos",
         ),
         pk=pk
     )
 
     empresa_ligada = orden.sucursal.empresa if orden.sucursal else None
-
     if not empresa_ligada:
         empresa_ligada = EmpresaEmisora.objects.filter(activo=True).first()
 
@@ -54,12 +55,35 @@ def imprimir_resumen_orden(request, pk):
     repuestos_historicos = orden.insumos_historicos.all() if orden.es_migrada else []
     servicios_historicos = orden.servicios_historicos.all() if orden.es_migrada else []
 
-    # ==========================================
-    # TOTALES ECONÓMICOS
-    # ==========================================
-    total_final = Decimal(orden.total_general or 0)
-    subtotal = total_final / Decimal("1.15")
-    iva = total_final - subtotal
+    subtotal_repuestos = sum(
+        Decimal(rep.subtotal or 0) for rep in repuestos
+    ) + sum(
+        Decimal(rep.subtotal or 0) for rep in repuestos_historicos
+    )
+
+    subtotal_moi = sum(
+        Decimal(serv.subtotal or 0)
+        for serv in servicios
+        if serv.tipo_servicio != "EXT" and getattr(serv.servicio, "categoria", None) != "EXT"
+    ) + sum(
+        Decimal(serv.subtotal or 0)
+        for serv in servicios_historicos
+        if serv.tipo == "MO"
+    )
+
+    subtotal_moe = sum(
+        Decimal(serv.subtotal or 0)
+        for serv in servicios
+        if serv.tipo_servicio == "EXT" or getattr(serv.servicio, "categoria", None) == "EXT"
+    ) + sum(
+        Decimal(serv.subtotal or 0)
+        for serv in servicios_historicos
+        if serv.tipo == "MOE"
+    )
+
+    subtotal = subtotal_repuestos + subtotal_moi + subtotal_moe
+    iva = subtotal * Decimal("0.15")
+    total_final = subtotal + iva
 
     return render(request, "impresion/resumen_orden.html", {
         "orden": orden,
@@ -69,7 +93,9 @@ def imprimir_resumen_orden(request, pk):
         "repuestos_historicos": repuestos_historicos,
         "servicios_historicos": servicios_historicos,
 
-        # Totales para el HTML
+        "subtotal_repuestos": subtotal_repuestos,
+        "subtotal_moi": subtotal_moi,
+        "subtotal_moe": subtotal_moe,
         "subtotal": subtotal,
         "iva": iva,
         "total_final": total_final,

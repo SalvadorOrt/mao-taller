@@ -15,8 +15,6 @@
             --text: #111827;
             --muted: #4b5563;
             --line: #d9dee8;
-            --soft: #f8fafc;
-            --soft-2: #f1f5f9;
             --danger: #c1121f;
             --dark: #0f172a;
             --radius: 9px;
@@ -47,7 +45,7 @@
             width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
-            background: #ffffff;
+            background: #fff;
             padding: 9mm 10mm;
             overflow: hidden;
         }
@@ -58,13 +56,12 @@
             border-collapse: collapse;
             border-bottom: 2px solid var(--primary);
             margin-bottom: 11px;
-            padding-bottom: 8px;
         }
 
         .top-table td {
             border: none;
             vertical-align: top;
-            padding: 0;
+            padding: 0 0 8px 0;
         }
 
         .top-left {
@@ -95,9 +92,7 @@
             font-size: 19px;
             font-weight: 900;
             color: var(--primary);
-            line-height: 1.1;
             text-transform: uppercase;
-            letter-spacing: .02em;
         }
 
         .doc-number {
@@ -110,8 +105,6 @@
             font-size: 9.5px;
             font-weight: 900;
             display: inline-block;
-            max-width: 100%;
-            overflow-wrap: anywhere;
         }
 
         .doc-date {
@@ -132,7 +125,7 @@
         .info-grid td {
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            background: #ffffff;
+            background: #fff;
             padding: 7px 8px;
             vertical-align: top;
         }
@@ -152,7 +145,6 @@
             font-size: 10.2px;
             font-weight: 800;
             color: var(--dark);
-            overflow-wrap: anywhere;
         }
 
         .section {
@@ -187,12 +179,12 @@
             border: 1px solid var(--line);
             border-radius: var(--radius);
             overflow: hidden;
-            margin-bottom: 7px;
+            margin-bottom: 5px;
         }
 
         .detail-table th {
             background: var(--primary);
-            color: #ffffff;
+            color: #fff;
             padding: 6px 7px;
             font-size: 8px;
             font-weight: 900;
@@ -206,7 +198,7 @@
             padding: 6px 7px;
             font-size: 9.8px;
             font-weight: 500;
-            background: #ffffff;
+            background: #fff;
             vertical-align: top;
             color: var(--text);
             overflow-wrap: anywhere;
@@ -252,6 +244,21 @@
             font-size: 9.5px;
         }
 
+        .section-subtotal {
+            width: 100%;
+            text-align: right;
+            font-size: 9.3px;
+            font-weight: 900;
+            color: var(--dark);
+            margin: 4px 0 8px 0;
+            padding-right: 2px;
+        }
+
+        .section-subtotal span {
+            color: var(--danger);
+            font-size: 10.5px;
+        }
+
         .totals-wrap {
             width: 100%;
             margin-top: 14px;
@@ -265,7 +272,7 @@
             border: 1px solid var(--line);
             border-radius: var(--radius);
             overflow: hidden;
-            background: #ffffff;
+            background: #fff;
         }
 
         .totals-table td {
@@ -310,7 +317,7 @@
 
         @media print {
             body {
-                background: #ffffff;
+                background: #fff;
             }
 
             .page {
@@ -440,6 +447,11 @@
                 {% endif %}
             </tbody>
         </table>
+
+        <div class="section-subtotal">
+            Subtotal repuestos:
+            <span>${{ subtotal_repuestos|floatformat:2 }}</span>
+        </div>
     </div>
 
     <div class="section">
@@ -505,6 +517,11 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="section-subtotal">
+            Subtotal M.O. interna:
+            <span>${{ subtotal_moi|floatformat:2 }}</span>
+        </div>
     </div>
 
     <div class="section">
@@ -570,12 +587,17 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="section-subtotal">
+            Subtotal M.O. externa:
+            <span>${{ subtotal_moe|floatformat:2 }}</span>
+        </div>
     </div>
 
     <div class="totals-wrap">
         <table class="totals-table">
             <tr>
-                <td class="total-label">Subtotal</td>
+                <td class="total-label">Subtotal general</td>
                 <td class="text-right">${{ subtotal|floatformat:2 }}</td>
             </tr>
 
@@ -590,7 +612,9 @@
             </tr>
         </table>
 
-     
+        <p class="note">
+            Valores expresados en dólares americanos.
+        </p>
     </div>
 
 </div>
