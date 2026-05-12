@@ -14,12 +14,12 @@
             <!-- Input oculto para mantener el diseño limpio -->
             <!-- Quitamos capture="environment" para permitir elegir entre Galería o Cámara -->
             <input type="file" 
-                   name="fotos_recepcion" 
-                   id="id_fotos" 
-                   multiple 
-                   accept="image/*" 
-                   class="d-none" 
-                   onchange="actualizarContadorFotos()">
+       name="fotos_recepcion" 
+       id="id_fotos" 
+       multiple 
+       accept="image/*" 
+       class="d-none" 
+       onchange="actualizarContadorFotos()">
 
             <!-- Botones de Acción -->
             <div class="d-flex justify-content-center gap-2 flex-wrap">
@@ -46,33 +46,132 @@
                placeholder="Ej: Se evidencia rayón en guardafango izquierdo...">
     </div>
 </div>
-
 <script>
+    let fotosSeleccionadas = [];
+
     function actualizarContadorFotos() {
         const input = document.getElementById('id_fotos');
         const contador = document.getElementById('contador_fotos');
         const preview = document.getElementById('preview_fotos');
-        const files = input.files;
-        
-        if (files.length > 0) {
-            contador.innerHTML = `<b class="text-primary"><i class="bi bi-check-circle-fill"></i> ${files.length} foto(s) seleccionada(s)</b>`;
-            
-            // Generar miniaturas rápidas
+
+        const nuevasFotos = Array.from(input.files);
+
+        nuevasFotos.forEach(file => {
+            const existe = fotosSeleccionadas.some(f =>
+                f.name === file.name &&
+                f.size === file.size &&
+                f.lastModified === file.lastModified
+            );
+
+            if (!existe) {
+                fotosSeleccionadas.push(file);
+            }
+        });
+
+        const dataTransfer = new DataTransfer();
+
+        fotosSeleccionadas.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        input.files = dataTransfer.files;
+
+        contador.innerHTML = `
+            <b class="text-primary">
+                <i class="bi bi-check-circle-fill"></i>
+                ${fotosSeleccionadas.length} foto(s) seleccionada(s)
+            </b>
+        `;
+
+        preview.innerHTML = '';
+
+        fotosSeleccionadas.forEach((file, index) => {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-3 col-md-2';
+
+                col.innerHTML = `
+                    <div style="position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #d2d2d7;">
+                        <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+
+                        <button type="button"
+                                onclick="eliminarFotoSeleccionada(${index})"
+                                style="position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,0.65); color: white; font-size: 14px; line-height: 1;">
+                            ×
+                        </button>
+                    </div>
+                `;
+
+                preview.appendChild(col);
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function eliminarFotoSeleccionada(index) {
+        const input = document.getElementById('id_fotos');
+
+        fotosSeleccionadas.splice(index, 1);
+
+        const dataTransfer = new DataTransfer();
+
+        fotosSeleccionadas.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        input.files = dataTransfer.files;
+
+        actualizarPreviewFotos();
+    }
+
+    function actualizarPreviewFotos() {
+        const contador = document.getElementById('contador_fotos');
+        const preview = document.getElementById('preview_fotos');
+
+        if (fotosSeleccionadas.length === 0) {
+            contador.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                Al pulsar, su celular le permitirá elegir entre la <b>Cámara</b> o su <b>Galería</b>.
+            `;
             preview.innerHTML = '';
-            Array.from(files).slice(0, 8).forEach(file => { // Mostramos max 8 miniaturas
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-3 col-md-2';
-                    col.innerHTML = `
-                        <div style="aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #d2d2d7;">
-                            <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-                        </div>
-                    `;
-                    preview.appendChild(col);
-                }
-                reader.readAsDataURL(file);
-            });
+            return;
         }
+
+        contador.innerHTML = `
+            <b class="text-primary">
+                <i class="bi bi-check-circle-fill"></i>
+                ${fotosSeleccionadas.length} foto(s) seleccionada(s)
+            </b>
+        `;
+
+        preview.innerHTML = '';
+
+        fotosSeleccionadas.forEach((file, index) => {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-3 col-md-2';
+
+                col.innerHTML = `
+                    <div style="position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #d2d2d7;">
+                        <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+
+                        <button type="button"
+                                onclick="eliminarFotoSeleccionada(${index})"
+                                style="position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,0.65); color: white; font-size: 14px; line-height: 1;">
+                            ×
+                        </button>
+                    </div>
+                `;
+
+                preview.appendChild(col);
+            };
+
+            reader.readAsDataURL(file);
+        });
     }
 </script>
