@@ -579,30 +579,20 @@
     <div class="totals-wrap">
     <table class="totals-table">
 
-        <!-- SUBTOTAL -->
         <tr>
             <td class="total-label">Subtotal</td>
             <td class="text-right">
-                $
-                {{
-                    orden.total_general|add:"0"
-                    |floatformat:2
-                }}
+                ${{ subtotal|floatformat:2 }}
             </td>
         </tr>
 
-        <!-- IVA -->
         <tr>
             <td class="total-label">IVA 15%</td>
             <td class="text-right">
-                $
-                {{
-                    orden.total_general|floatformat:2
-                }}
+                ${{ iva|floatformat:2 }}
             </td>
         </tr>
 
-        <!-- TOTAL FINAL -->
         <tr>
             <td class="total-label" style="
                 font-size: 10px;
@@ -613,16 +603,15 @@
             </td>
 
             <td class="total-value">
-                $
-                {{
-                    orden.total_general
-                    |add:orden.total_general|floatformat:2
-                }}
+                ${{ total_final|floatformat:2 }}
             </td>
         </tr>
 
     </table>
 
+    <p class="note">
+        Valores expresados en dólares americanos.
+    </p>
 </div>
 
 </div>

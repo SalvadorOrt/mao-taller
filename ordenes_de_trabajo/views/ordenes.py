@@ -576,6 +576,18 @@ def detalle_orden(request, pk):
         else ""
     )
 
+    # =====================================================
+    # TOTALES ECONÓMICOS
+    # =====================================================
+
+    subtotal = Decimal(orden.total_general or 0) / Decimal("1.15")
+    iva = Decimal(orden.total_general or 0) - subtotal
+    total_final = Decimal(orden.total_general or 0)
+
+    # =====================================================
+    # RENDER
+    # =====================================================
+
     return render(
         request,
         "detalle_orden.html",
@@ -588,6 +600,9 @@ def detalle_orden(request, pk):
             "puede_editar": puede_editar,
             "puede_reabrir": puede_reabrir,
             "url_anterior": url_anterior,
+            "subtotal": subtotal,
+            "iva": iva,
+            "total_final": total_final,
         }
     )
 # =========================================================
