@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -34,7 +34,7 @@ urlpatterns = [
 
     # 4. Botón mágico para pasar todo a la Orden oficial
     path('cotizacion/<int:pk>/aprobar/', views.aprobar_cotizacion, name='aprobar_cotizacion'),
-]
+
     # ========================
     # Impresión
     # ========================
