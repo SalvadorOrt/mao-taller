@@ -887,3 +887,141 @@ def consultar_regcheck(request):
     except requests.exceptions.RequestException as e:
         print(f"Error consultando API de Regcheck: {e}")
         return JsonResponse({"success": False, "error": "Servicio temporalmente no disponible."})
+    
+
+
+
+
+# =========================================================
+# 💡 MÓDULO DE COTIZACIONES / PROFORMAS 💡
+# =========================================================
+
+@login_required
+def crear_cotizacion(request):
+    sucursal_activa = obtener_sucursal_activa(request)
+    if not sucursal_activa: return redirect("dashboard")
+
+    if request.method == "POST":
+        placa = request.POST.get("placa", "").strip().upper()
+        vehiculo = request.POST.get("vehiculo", "").strip().upper()
+        anio = parse_int(request.POST.get("anio_vehiculo"), None)
+        
+        identificacion = request.POST.get("identificacion", "").strip()
+        nombre_cliente = request.POST.get("nombre_cliente", "").strip().upper()
+        observaciones = request.POST.get("observaciones", "").strip()
+
+        # Determinamos el tipo de documento rápido
+        tipo_documento = "C"
+        if identificacion.isdigit() and len(identificacion) == 13:
+            tipo_documento = "R"
+        elif not identificacion.isdigit():
+            tipo_documento = "P"
+
+        cliente_obj = None
+        if identificacion:
+            cliente_obj = Cliente.objects.filter(identificacion=identificacion).first()
+            if not cliente_obj:
+                cliente_obj = Cliente.objects.create(
+                    tipo_documento=tipo_documento,
+                    identificacion=identificacion, 
+                    nombre_completo=nombre_cliente or "CONSUMIDOR FINAL"
+                )
+
+        with transaction.atomic():
+            # Generamos un número de cotización temporal único (Ej. COT-2026-ABCD)
+            num_cotizacion = f"COT-{timezone.now().strftime('%y%m')}-{uuid.uuid4().hex[:4].upper()}"
+
+            nueva_cotizacion = Cotizacion.objects.create(
+                numero_cotizacion=num_cotizacion,
+                sucursal=sucursal_activa,
+                cliente=cliente_obj,
+                cliente_respaldo=nombre_cliente or None,
+                placa=placa,
+                vehiculo=vehiculo,
+                anio_vehiculo=anio,
+                observaciones=observaciones,
+                estado="PENDIENTE"
+            )
+
+        messages.success(request, f"Cotización {num_cotizacion} creada exitosamente.")
+        # Aquí redirigirás al detalle de la cotización para que agregue los repuestos
+        return redirect("dashboard") # Cambiar luego a: redirect("detalle_cotizacion", pk=nueva_cotizacion.pk)
+
+    return render(request, "crear_cotizacion.html", {"sucursal_activa": sucursal_activa})
+
+
+@login_required
+def convertir_cotizacion_a_orden(request, pk):
+    """
+    🔥 LA MAGIA: Transforma la Cotización en una Orden de Trabajo Real 🔥
+    """
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    sucursal_activa = obtener_sucursal_activa(request)
+
+    if request.method == "POST":
+        if cotizacion.estado != 'PENDIENTE':
+            messages.error(request, "Solo se pueden convertir cotizaciones en estado PENDIENTE.")
+            return redirect('dashboard') # Cambiar luego al detalle de la cotización
+
+        with transaction.atomic():
+            # 1. Buscamos o creamos el expediente del vehículo
+            expediente = obtener_o_crear_expediente(
+                cotizacion.cliente, 
+                cotizacion.cliente_respaldo, 
+                cotizacion.placa, 
+                cotizacion.vehiculo, 
+                cotizacion.anio_vehiculo
+            )
+
+            # 2. Creamos la Orden de Trabajo Oficial (sin afectar el stock aún)
+            nueva_orden = OrdenTrabajo.objects.create(
+                numero_orden=generar_numero_orden(),
+                sucursal=sucursal_activa or cotizacion.sucursal,
+                expediente=expediente,
+                usuario_receptor=request.user,
+                cliente=cotizacion.cliente,
+                cliente_respaldo=cotizacion.cliente_respaldo,
+                placa=cotizacion.placa,
+                vehiculo=cotizacion.vehiculo,
+                anio_vehiculo=cotizacion.anio_vehiculo,
+                observaciones_recepcion=f"Trabajo originado desde la Proforma: {cotizacion.numero_cotizacion}.\n{cotizacion.observaciones or ''}",
+                estado="ABIERTA",
+            )
+
+            # 3. Copiamos todos los Insumos/Repuestos (Aquí SI se descuenta el stock)
+            for insumo in cotizacion.insumos_cotizados.all():
+                OrdenInsumoDetalle.objects.create(
+                    orden=nueva_orden,
+                    producto=insumo.producto,
+                    descripcion_factura=insumo.descripcion_factura,
+                    cantidad=insumo.cantidad,
+                    precio_unitario=insumo.precio_unitario,
+                    orden_item=insumo.orden_item
+                )
+
+            # 4. Copiamos todos los Servicios (Mano de obra)
+            for servicio in cotizacion.servicios_cotizados.all():
+                OrdenServicioDetalle.objects.create(
+                    orden=nueva_orden,
+                    servicio=servicio.servicio,
+                    tipo_servicio=servicio.tipo_servicio,
+                    descripcion_servicio=servicio.descripcion_servicio,
+                    cantidad=servicio.cantidad,
+                    precio_unitario=servicio.precio_unitario,
+                    orden_item=servicio.orden_item
+                )
+
+            # 5. Marcamos la Cotización como "Aprobada" y la enlazamos a la OT
+            cotizacion.estado = 'APROBADA'
+            cotizacion.orden_generada = nueva_orden
+            cotizacion.save()
+
+            # Recalculamos los totales de la nueva orden
+            nueva_orden.calcular_total()
+
+        messages.success(request, f"¡Éxito! La cotización fue aprobada y se convirtió en la Orden de Trabajo {nueva_orden.numero_orden}.")
+        
+        # Redirigimos al mecánico directo a la nueva OT generada
+        return redirect('detalle_orden', pk=nueva_orden.pk)
+
+    return redirect('dashboard')

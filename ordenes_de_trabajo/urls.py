@@ -19,11 +19,17 @@ urlpatterns = [
     path('orden/<int:pk>/anular/', views.anular_orden, name='anular_orden'),
     path('orden/<int:pk>/reabrir/', views.reabrir_orden, name='reabrir_orden'),
     path('orden/<int:pk>/editar-recepcion/', views.editar_recepcion_orden, name='editar_recepcion_orden'),
+
+    # ========================
+    # Cotizaciones / Proformas
+    # ========================
+    path('cotizacion/nueva/', views.crear_cotizacion, name='crear_cotizacion'),
+    path('cotizacion/<int:pk>/convertir/', views.convertir_cotizacion_a_orden, name='convertir_cotizacion_a_orden'),
+
     # ========================
     # Impresión
     # ========================
     path('orden/<int:pk>/imprimir/', views.imprimir_tecnico, name='imprimir_tecnico'),
-    
     path('orden/<int:pk>/imprimir-resumen/', views.imprimir_resumen_orden, name='imprimir_resumen'),
     
     # ========================
