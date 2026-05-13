@@ -1,53 +1,129 @@
 <div class="step-container" id="step_2">
     <div class="section-header">
-        <i class="bi bi-car-front-fill text-primary"></i> 2. Confirmar Datos
+        <i class="bi bi-car-front-fill text-primary"></i>
+        2. Confirmar Datos
     </div>
 
+    <!-- ===================================== -->
+    <!-- DATOS VEHÍCULO -->
+    <!-- ===================================== -->
+
     <h6 class="text-primary mb-3">Datos del Vehículo</h6>
+
     <div class="row g-3 mb-4">
+
+        <!-- VEHÍCULO -->
         <div class="col-md-6">
             <label class="form-label-custom">Marca / Modelo</label>
-            <input type="text" id="id_vehiculo" name="vehiculo" class="form-control-apple" required>
+
+            <input type="text"
+                   id="id_vehiculo"
+                   name="vehiculo"
+                   class="form-control-apple"
+                   placeholder="Ej. CHEVROLET D-MAX 3.0 CD 4X4"
+                   maxlength="100"
+                   required
+
+                   oninput="
+                        this.value = this.value
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9ÁÉÍÓÚÑ .\\/-]/g, '');
+                   ">
         </div>
-        
+
+        <!-- AÑO -->
         <div class="col-md-3">
             <label class="form-label-custom">Año</label>
-            <input type="number" id="id_anio" name="anio_vehiculo" class="form-control-apple">
+
+            <input type="text"
+                   id="id_anio"
+                   name="anio_vehiculo"
+                   class="form-control-apple"
+                   placeholder="2020"
+                   maxlength="4"
+                   inputmode="numeric"
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+
+                        if(parseInt(this.value) > new Date().getFullYear() + 1){
+                            this.value = new Date().getFullYear();
+                        }
+                   ">
         </div>
-        
+
+        <!-- COLOR -->
         <div class="col-md-3">
             <label class="form-label-custom">Color</label>
-            
+
             <input type="hidden" id="id_color" name="color" required>
             <input type="hidden" id="id_color_hex" name="color_hex">
 
-            <div class="color-picker-mao" id="colorPickerMao" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="color-swatch" data-nombre="blanco" data-hex="#F5F5F7" style="background:#F5F5F7; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Blanco"></button>
-                <button type="button" class="color-swatch" data-nombre="negro" data-hex="#212121" style="background:#212121; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Negro"></button>
-                <button type="button" class="color-swatch" data-nombre="plata" data-hex="#BDBDBD" style="background:#BDBDBD; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Plata"></button>
-                <button type="button" class="color-swatch" data-nombre="gris" data-hex="#757575" style="background:#757575; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Gris"></button>
-                <button type="button" class="color-swatch" data-nombre="rojo" data-hex="#D32F2F" style="background:#D32F2F; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Rojo"></button>
-                <button type="button" class="color-swatch" data-nombre="vino" data-hex="#880E4F" style="background:#880E4F; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Vino"></button>
-                <button type="button" class="color-swatch" data-nombre="azul" data-hex="#1976D2" style="background:#1976D2; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Azul"></button>
-                <button type="button" class="color-swatch" data-nombre="celeste" data-hex="#03A9F4" style="background:#03A9F4; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Celeste"></button>
-                <button type="button" class="color-swatch" data-nombre="verde" data-hex="#388E3C" style="background:#388E3C; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Verde"></button>
-                <button type="button" class="color-swatch" data-nombre="amarillo" data-hex="#FBC02D" style="background:#FBC02D; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d2d2d7; cursor: pointer; transition: all 0.2s;" title="Amarillo"></button>
+            <div class="color-picker-mao"
+                 id="colorPickerMao"
+                 style="display: flex; gap: 8px; flex-wrap: wrap;">
+
+                <button type="button" class="color-swatch" data-nombre="blanco" data-hex="#F5F5F7" style="background:#F5F5F7; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="negro" data-hex="#212121" style="background:#212121; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="plata" data-hex="#BDBDBD" style="background:#BDBDBD; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="gris" data-hex="#757575" style="background:#757575; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="rojo" data-hex="#D32F2F" style="background:#D32F2F; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="vino" data-hex="#880E4F" style="background:#880E4F; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="azul" data-hex="#1976D2" style="background:#1976D2; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="celeste" data-hex="#03A9F4" style="background:#03A9F4; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="verde" data-hex="#388E3C" style="background:#388E3C; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
+
+                <button type="button" class="color-swatch" data-nombre="amarillo" data-hex="#FBC02D" style="background:#FBC02D; width:24px; height:24px; border-radius:50%; border:1px solid #d2d2d7;"></button>
             </div>
-            
-            <div class="color-selected-preview mt-2" id="colorSelectedPreview" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #86868b;">
-                <span class="color-selected-dot" id="colorSelectedDot" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #d2d2d7; background: transparent;"></span>
-                <span id="colorSelectedText">Seleccione un color</span>
+
+            <div class="color-selected-preview mt-2"
+                 id="colorSelectedPreview"
+                 style="display:flex; align-items:center; gap:8px; font-size:13px; color:#86868b;">
+
+                <span class="color-selected-dot"
+                      id="colorSelectedDot"
+                      style="display:inline-block; width:12px; height:12px; border-radius:50%; border:1px solid #d2d2d7;"></span>
+
+                <span id="colorSelectedText">
+                    Seleccione un color
+                </span>
             </div>
         </div>
 
+        <!-- KILOMETRAJE -->
         <div class="col-md-6">
             <label class="form-label-custom">Kilometraje (KM)</label>
-            <input type="number" id="id_kilometraje" name="kilometraje" class="form-control-apple" required>
+
+            <input type="text"
+                   id="id_kilometraje"
+                   name="kilometraje"
+                   class="form-control-apple"
+                   placeholder="Ej. 125000"
+                   maxlength="7"
+                   inputmode="numeric"
+                   required
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                   ">
         </div>
-        
+
+        <!-- COMBUSTIBLE -->
         <div class="col-md-6">
             <label class="form-label-custom">Nivel Combustible</label>
-            <select id="id_combustible" name="nivel_combustible" class="form-control-apple">
+
+            <select id="id_combustible"
+                    name="nivel_combustible"
+                    class="form-control-apple">
+
                 <option value="E">Vacío (E)</option>
                 <option value="1/4">1/4</option>
                 <option value="1/2" selected>1/2</option>
@@ -57,47 +133,150 @@
         </div>
     </div>
 
-    <h6 class="text-primary mb-3 mt-4">Datos del Cliente</h6>
+    <!-- ===================================== -->
+    <!-- DATOS CLIENTE -->
+    <!-- ===================================== -->
+
+    <h6 class="text-primary mb-3 mt-4">
+        Datos del Cliente
+    </h6>
+
     <div class="row g-3">
-        
-        <!-- 🔥 FILA 1: Cédula y Nombre (NUEVO) 🔥 -->
+
+        <!-- IDENTIFICACIÓN -->
         <div class="col-md-4">
-            <label class="form-label-custom">Cédula / RUC <span style="color: var(--danger);">*</span></label>
-            <input type="text" id="id_identificacion_cliente" name="identificacion" class="form-control-apple" placeholder="Número de documento" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+            <label class="form-label-custom">
+                Cédula / RUC
+                <span style="color: var(--danger);">*</span>
+            </label>
+
+            <input type="text"
+                   id="id_identificacion_cliente"
+                   name="identificacion"
+                   class="form-control-apple"
+                   placeholder="Número de documento"
+                   maxlength="13"
+                   inputmode="numeric"
+                   required
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                   ">
         </div>
-        
+
+        <!-- NOMBRE -->
         <div class="col-md-8">
-            <label class="form-label-custom">Nombre Completo <span style="color: var(--danger);">*</span></label>
-            <input type="text" id="id_nombre" name="nombre_cliente" class="form-control-apple" placeholder="Ej. Juan Pérez" required>
+            <label class="form-label-custom">
+                Nombre Completo
+                <span style="color: var(--danger);">*</span>
+            </label>
+
+            <input type="text"
+                   id="id_nombre"
+                   name="nombre_cliente"
+                   class="form-control-apple"
+                   placeholder="Ej. JUAN PÉREZ o EMPRESA XYZ"
+                   maxlength="150"
+                   required
+
+                   oninput="
+                        this.value = this.value.toUpperCase();
+                   ">
         </div>
 
-        <!-- FILA 2: Correo y Dirección -->
+        <!-- EMAIL -->
         <div class="col-md-4">
-            <label class="form-label-custom">Correo Electrónico</label>
-            <input type="email" id="id_email" name="email" class="form-control-apple" placeholder="ejemplo@correo.com">
+            <label class="form-label-custom">
+                Correo Electrónico
+            </label>
+
+            <input type="email"
+                   id="id_email"
+                   name="email"
+                   class="form-control-apple"
+                   placeholder="ejemplo@correo.com"
+
+                   oninput="
+                        this.value = this.value.toLowerCase();
+                   ">
         </div>
-        
+
+        <!-- DIRECCIÓN -->
         <div class="col-md-8">
-            <label class="form-label-custom">Dirección</label>
-            <input type="text" id="id_direccion" name="direccion" class="form-control-apple" placeholder="Ej. Av. Amazonas y Naciones Unidas">
+            <label class="form-label-custom">
+                Dirección
+            </label>
+
+            <input type="text"
+                   id="id_direccion"
+                   name="direccion"
+                   class="form-control-apple"
+                   placeholder="Ej. AV. AMAZONAS Y NACIONES UNIDAS"
+
+                   oninput="
+                        this.value = this.value.toUpperCase();
+                   ">
         </div>
 
-        <!-- FILA 3: Los 3 Teléfonos organizados perfectamente en la misma línea -->
+        <!-- TELÉFONO -->
         <div class="col-md-4">
-            <label class="form-label-custom">Teléfono Principal <span style="color: var(--danger);">*</span></label>
-            <input type="text" id="id_telefono" name="telefono" class="form-control-apple" placeholder="Ej. 0991234567" required>
+            <label class="form-label-custom">
+                Teléfono Principal
+                <span style="color: var(--danger);">*</span>
+            </label>
+
+            <input type="text"
+                   id="id_telefono"
+                   name="telefono"
+                   class="form-control-apple"
+                   placeholder="0991234567"
+                   maxlength="10"
+                   inputmode="numeric"
+                   required
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                   ">
         </div>
 
+        <!-- TELÉFONO SECUNDARIO -->
         <div class="col-md-4">
-            <label class="form-label-custom">Teléfono Alternativo <span style="font-size: 10px; color: #86868b; font-weight: normal;">(Opcional)</span></label>
-            <input type="text" id="id_telefono_secundario" name="telefono_secundario" class="form-control-apple" placeholder="Familiar o esposa">
+            <label class="form-label-custom">
+                Teléfono Alternativo
+            </label>
+
+            <input type="text"
+                   id="id_telefono_secundario"
+                   name="telefono_secundario"
+                   class="form-control-apple"
+                   placeholder="0999999999"
+                   maxlength="10"
+                   inputmode="numeric"
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                   ">
         </div>
 
+        <!-- TELÉFONO TRABAJO -->
         <div class="col-md-4">
-            <label class="form-label-custom">Teléfono Trabajo <span style="font-size: 10px; color: #86868b; font-weight: normal;">(Opcional)</span></label>
-            <input type="text" id="id_telefono_trabajo" name="telefono_trabajo" class="form-control-apple" placeholder="Fijo u oficina">
+            <label class="form-label-custom">
+                Teléfono Trabajo
+            </label>
+
+            <input type="text"
+                   id="id_telefono_trabajo"
+                   name="telefono_trabajo"
+                   class="form-control-apple"
+                   placeholder="022345678"
+                   maxlength="10"
+                   inputmode="numeric"
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                   ">
         </div>
-        
+
     </div>
 </div>
 
