@@ -1221,7 +1221,8 @@ class OrdenInsumoHistorico(models.Model):
 
     def __str__(self):
         return self.descripcion_original
-    # ==========================================
+
+# ==========================================
 # 10. COTIZACIONES / PROFORMAS (MÓDULO HÍBRIDO)
 # ==========================================
 class Cotizacion(models.Model):
@@ -1248,7 +1249,7 @@ class Cotizacion(models.Model):
     # Siempre requeridos para mantener el historial por placa.
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, related_name="cotizaciones")
     cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
-    placa = models.CharField(max_length=15, db_index=True)
+    placa = models.CharField(max_length=15, db_index=True) # <-- ESTE FUE EL CAMBIO QUE DETECTÓ DJANGO
     vehiculo = models.CharField(max_length=150, null=True, blank=True)
     anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
 
