@@ -3,9 +3,24 @@
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
     }
+    
+    /* Estilo para el botón de proforma que resalta sin ser invasivo */
+    .btn-proforma {
+        background: #ffffff;
+        color: #0071e3;
+        border: 1px solid #0071e3;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-proforma:hover {
+        background: #f5faff;
+        color: #005bb7;
+        border-color: #005bb7;
+        transform: translateY(-1px);
+    }
 </style>
 
-<div class="ot-card" style="margin-bottom: 20px;">
+<div class="ot-card" style="margin-bottom: 20px; animation: fadeInScale 0.4s ease-out;">
 
     <!-- ============================================= -->
     <!-- HEADER -->
@@ -23,20 +38,29 @@
                 font-size: 18px;
                 font-weight: 800;
                 color: var(--text, #1d1d1f);">
-
                 Orden de Trabajo {{ orden.numero_orden }}
             </div>
-
             <p style="
                 font-size: 11px;
                 color: var(--muted, #6e6e73);
                 margin: 0;">
-
                 Detalle operativo de la orden
             </p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
+
+            {% if orden.estado == 'ABIERTA' %}
+                <!-- ============================================= -->
+                <!-- NUEVO: GENERAR COTIZACIÓN/PROFORMA -->
+                <!-- ============================================= -->
+                <a href="{% url 'nueva_cotizacion_desde_ot' orden.id %}" 
+                   class="btn-login btn-proforma"
+                   style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-file-earmark-plus" style="margin-right: 4px;"></i>
+                    Nueva Proforma
+                </a>
+            {% endif %}
 
             <!-- ============================================= -->
             <!-- IMPRIMIR FICHA -->
@@ -48,7 +72,6 @@
                         background: #f5f5f7;
                         color: #1d1d1f;
                         border-color: #d2d2d7;">
-
                 <i class="bi bi-tools" style="margin-right: 4px;"></i>
                 Imprimir Ficha
             </button>
@@ -63,13 +86,11 @@
                         background: #0071e3;
                         border-color: #0071e3;
                         color: #fff;">
-
                 <i class="bi bi-receipt" style="margin-right: 4px;"></i>
                 Resumen de Orden
             </button>
 
             {% if orden.estado == 'ABIERTA' %}
-
                 <!-- ============================================= -->
                 <!-- ANULAR -->
                 <!-- ============================================= -->
@@ -77,9 +98,7 @@
                       method="post"
                       action="{% url 'anular_orden' orden.id %}"
                       style="margin: 0;">
-
                     {% csrf_token %}
-
                     <button type="button"
                             class="btn-login"
                             style="
@@ -87,7 +106,6 @@
                                 border-color: #ff3b30;
                                 color: #ffffff;"
                             onclick="confirmarAccionNativa('anular', 'form_anular_orden')">
-
                         Anular
                     </button>
                 </form>
@@ -99,9 +117,7 @@
                       method="post"
                       action="{% url 'cerrar_orden' orden.id %}"
                       style="margin: 0;">
-
                     {% csrf_token %}
-
                     <button type="button"
                             class="btn-login"
                             style="
@@ -109,11 +125,9 @@
                                 border-color: #34c759;
                                 color: #ffffff;"
                             onclick="confirmarAccionNativa('cerrar', 'form_cerrar_orden')">
-
                         Cerrar y Facturar
                     </button>
                 </form>
-
             {% endif %}
 
             <!-- ============================================= -->
@@ -127,11 +141,7 @@
                 color: var(--text, #1d1d1f);
                 border: 1px solid #d2d2d7;
                 margin-left: 5px;">
-
-                <span style="color: var(--muted, #6e6e73);">
-                    Estado:
-                </span>
-
+                <span style="color: var(--muted, #6e6e73);">Estado:</span>
                 <strong style="margin-left: 4px;">
                     {{ orden.get_estado_display|upper }}
                 </strong>
@@ -140,246 +150,49 @@
     </div>
 
     <!-- ============================================= -->
-    <!-- TARJETAS -->
+    <!-- TARJETAS DE INFORMACIÓN -->
     <!-- ============================================= -->
     <div style="
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 15px;">
 
-        <!-- ============================================= -->
         <!-- CLIENTE -->
-        <!-- ============================================= -->
-        <div style="
-            background: #fbfbfd;
-            border: 1px solid #efeff2;
-            border-radius: 12px;
-            padding: 12px;">
-
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                text-transform: uppercase;
-                margin-bottom: 5px;">
-
-                Cliente
-            </div>
-
-            <div style="
-                font-size: 14px;
-                font-weight: 600;
-                color: var(--text, #1d1d1f);">
-
-                {{ orden.nombre_cliente_final|upper }}
-            </div>
-
-            <div style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin-top: 4px;">
-
-                C.I./RUC:
-                {% if orden.cliente %}
-                    {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
-                {% else %}
-                    NO REGISTRADO
-                {% endif %}
-            </div>
-
-            <div style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin-top: 4px;">
-
-                Celular:
-                {% if orden.cliente %}
-                    {{ orden.cliente.telefono|default:"NO REGISTRADO" }}
-                {% else %}
-                    NO REGISTRADO
-                {% endif %}
-            </div>
-
-            <div style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin-top: 4px;">
-
-                Tel. secundario:
-                {% if orden.cliente %}
-                    {{ orden.cliente.telefono_secundario|default:"-" }}
-                {% else %}
-                    -
-                {% endif %}
-            </div>
-
-            <div style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin-top: 4px;">
-
-                Tel. trabajo:
-                {% if orden.cliente %}
-                    {{ orden.cliente.telefono_trabajo|default:"-" }}
-                {% else %}
-                    -
-                {% endif %}
-            </div>
+        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Cliente</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">{{ orden.nombre_cliente_final|upper }}</div>
+            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">C.I./RUC: {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}</div>
+            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">Celular: {{ orden.cliente.telefono|default:"NO REGISTRADO" }}</div>
         </div>
 
-        <!-- ============================================= -->
         <!-- VEHÍCULO -->
-        <!-- ============================================= -->
-        <div style="
-            background: #fbfbfd;
-            border: 1px solid #efeff2;
-            border-radius: 12px;
-            padding: 12px;">
-
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                text-transform: uppercase;
-                margin-bottom: 5px;">
-
-                Vehículo
-            </div>
-
-            <div style="
-                font-size: 14px;
-                font-weight: 600;
-                color: var(--text, #1d1d1f);">
-
-                {{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}
-            </div>
-
-            <div style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin-top: 4px;">
-
-                Año:
-                {{ orden.anio_vehiculo|default:"-" }}
-
-                |
-
-                Color:
-                {{ orden.color|upper|default:"-" }}
-            </div>
+        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Vehículo</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">{{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}</div>
+            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">Año: {{ orden.anio_vehiculo|default:"-" }} | Color: {{ orden.color|upper|default:"-" }}</div>
         </div>
 
-        <!-- ============================================= -->
         <!-- PLACA -->
-        <!-- ============================================= -->
-        <div style="
-            background: #fbfbfd;
-            border: 1px solid #efeff2;
-            border-radius: 12px;
-            padding: 12px;">
-
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                text-transform: uppercase;
-                margin-bottom: 5px;">
-
-                Placa
-            </div>
-
-            <div style="
-                font-size: 16px;
-                font-weight: 800;
-                color: #0071e3;
-                letter-spacing: 1px;">
-
-                {{ orden.placa|upper|default:"S/P" }}
-            </div>
-
-            <div style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin-top: 8px;
-                text-transform: uppercase;">
-
-                Kilometraje
-            </div>
-
-            <div style="
-                font-size: 15px;
-                font-weight: 800;
-                color: #1d1d1f;
-                margin-top: 2px;
-                word-break: break-word;
-                white-space: normal;">
-
-                {{ orden.kilometraje|default:"NO REGISTRADO" }}
-            </div>
+        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Placa</div>
+            <div style="font-size: 16px; font-weight: 800; color: #0071e3; letter-spacing: 1px;">{{ orden.placa|upper|default:"S/P" }}</div>
+            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 8px; text-transform: uppercase;">Kilometraje</div>
+            <div style="font-size: 15px; font-weight: 800; color: #1d1d1f; margin-top: 2px;">{{ orden.kilometraje|default:"NO REGISTRADO" }}</div>
         </div>
 
-        <!-- ============================================= -->
         <!-- COMBUSTIBLE -->
-        <!-- ============================================= -->
-        <div style="
-            background: #fbfbfd;
-            border: 1px solid #efeff2;
-            border-radius: 12px;
-            padding: 12px;">
-
-            <div style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 8px;">
-
-                <div style="
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--muted, #6e6e73);
-                    text-transform: uppercase;">
-
-                    Combustible
-                </div>
-
-                <div style="
-                    font-size: 11px;
-                    font-weight: 700;
-                    background: #e5e5e7;
-                    padding: 2px 6px;
-                    border-radius: 4px;">
-
-                    {{ orden.get_nivel_combustible_display|default:"-" }}
-                </div>
+        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase;">Combustible</div>
+                <div style="font-size: 11px; font-weight: 700; background: #e5e5e7; padding: 2px 6px; border-radius: 4px;">{{ orden.get_nivel_combustible_display|default:"-" }}</div>
             </div>
         </div>
     </div>
 
-    <!-- ============================================= -->
     <!-- REPORTE CLIENTE -->
-    <!-- ============================================= -->
-    <div style="
-        margin-top: 15px;
-        padding: 12px;
-        background: #f5f5f7;
-        border-left: 4px solid #0071e3;
-        border-radius: 4px 8px 8px 4px;">
-
-        <div style="
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--muted, #6e6e73);
-            text-transform: uppercase;
-            margin-bottom: 4px;">
-
-            Reporte del Cliente
-        </div>
-
-        <div style="
-            font-size: 13px;
-            font-weight: 500;
-            color: #1d1d1f;">
-
+    <div style="margin-top: 15px; padding: 12px; background: #f5f5f7; border-left: 4px solid #0071e3; border-radius: 4px 8px 8px 4px;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 4px;">Reporte del Cliente</div>
+        <div style="font-size: 13px; font-weight: 500; color: #1d1d1f;">
             {% if orden.sintomas_cliente %}
                 {{ orden.sintomas_cliente|upper }}
             {% else %}

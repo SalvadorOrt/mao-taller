@@ -23,9 +23,18 @@ urlpatterns = [
     # ========================
     # Cotizaciones / Proformas
     # ========================
-    path('orden/<int:pk_orden>/cotizar/', views.nueva_cotizacion_desde_ot, name='nueva_cotizacion_desde_ot'),
-    path('cotizacion/<int:pk>/aprobar/', views.aprobar_cotizacion, name='aprobar_cotizacion'),
+    # 1. Crear cotización desde el Menú Principal (Mostrador)
+    path('cotizacion/nueva/', views.crear_cotizacion, name='crear_cotizacion'),
 
+    # 2. Crear cotización vinculada a una OT (Ampliación)
+    path('orden/<int:pk_orden>/cotizar/', views.nueva_cotizacion_desde_ot, name='nueva_cotizacion_desde_ot'),
+
+    # 3. Ver y editar el detalle de los repuestos tentativos
+    path('cotizacion/<int:pk>/detalle/', views.detalle_cotizacion, name='detalle_cotizacion'),
+
+    # 4. Botón mágico para pasar todo a la Orden oficial
+    path('cotizacion/<int:pk>/aprobar/', views.aprobar_cotizacion, name='aprobar_cotizacion'),
+]
     # ========================
     # Impresión
     # ========================

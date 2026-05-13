@@ -1221,24 +1221,34 @@ class OrdenInsumoHistorico(models.Model):
 
     def __str__(self):
         return self.descripcion_original
-    
-# ==========================================
-# 10. COTIZACIONES / PROFORMAS (NUEVO MÓDULO)
+    # ==========================================
+# 10. COTIZACIONES / PROFORMAS (MÓDULO HÍBRIDO)
 # ==========================================
 class Cotizacion(models.Model):
     ESTADOS_COTIZACION = [
         ("PENDIENTE", "Pendiente / Entregada"),
-        ("APROBADA", "Aprobada (Es ahora una OT)"),
+        ("APROBADA", "Aprobada (Trasladada a OT)"),
         ("RECHAZADA", "Rechazada / Caducada"),
     ]
 
     numero_cotizacion = models.CharField(max_length=50, unique=True)
     sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT, related_name="cotizaciones")
     
-    # Datos del cliente y auto (Versión simplificada de la OT)
+    # 🔥 VÍNCULO OPCIONAL: Permite cotizar sin tener una OT abierta, o amarrarla a una existente.
+    orden = models.ForeignKey(
+        'OrdenTrabajo', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name="cotizaciones_vinculadas",
+        help_text="Si la proforma nace de una OT abierta (Ampliación de presupuesto)."
+    )
+
+    # 🚗 DATOS DEL VEHÍCULO Y CLIENTE
+    # Siempre requeridos para mantener el historial por placa.
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, related_name="cotizaciones")
     cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
-    placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
+    placa = models.CharField(max_length=15, db_index=True)
     vehiculo = models.CharField(max_length=150, null=True, blank=True)
     anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
 
@@ -1250,14 +1260,14 @@ class Cotizacion(models.Model):
     total_general = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     observaciones = models.TextField(null=True, blank=True, help_text="Notas para el cliente en la proforma")
 
-    # 🔥 LA MAGIA: Aquí se conectará la Orden de Trabajo una vez que el cliente apruebe 🔥
+    # Si la cotización era de mostrador y se aprueba, aquí se guarda la OT que nació de ella.
     orden_generada = models.OneToOneField(
         'OrdenTrabajo', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
         related_name="cotizacion_origen",
-        help_text="La OT que nació de esta cotización"
+        help_text="La OT oficial que nació de esta cotización de mostrador."
     )
 
     class Meta:
@@ -1280,6 +1290,20 @@ class Cotizacion(models.Model):
             self.total_general = nuevo_total
             if self.pk:
                 Cotizacion.objects.filter(pk=self.pk).update(total_general=nuevo_total)
+
+    def save(self, *args, **kwargs):
+        # 🔥 HERENCIA AUTOMÁTICA: Si hay una OT abierta, la cotización hereda sus datos.
+        if self.orden:
+            self.placa = self.orden.placa
+            self.vehiculo = self.orden.vehiculo
+            self.cliente = self.orden.cliente
+            self.cliente_respaldo = self.orden.cliente_respaldo
+            self.anio_vehiculo = self.orden.anio_vehiculo
+        
+        if self.placa:
+            self.placa = self.placa.strip().upper()
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"COT {self.numero_cotizacion} - {self.placa} ({self.nombre_cliente_final})"
@@ -1324,11 +1348,11 @@ class CotizacionInsumoDetalle(models.Model):
     class Meta:
         ordering = ["orden_item", "id"]
 
-    # Nota: Aquí NO hay def _registrar_movimiento_stock() porque es solo una proforma. ¡El inventario está a salvo!
-
+    # Nota: Aquí NO hay def _registrar_movimiento_stock() porque es solo una proforma tentativa.
     def save(self, *args, **kwargs):
         if not self.descripcion_factura and self.producto:
             self.descripcion_factura = str(self.producto)
+            
         self.subtotal = (Decimal(str(self.cantidad)) * self.precio_unitario).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         super().save(*args, **kwargs)
         self.cotizacion.calcular_total()
