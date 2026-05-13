@@ -29,7 +29,7 @@ from ..models import (
     ExpedienteVehiculo,
     Cotizacion,                   
     CotizacionInsumoDetalle,      
-    CotizacionServicioDetalle
+    CotizacionServicioDetalle,CotizacionProcedimientoDetalle,OrdenProcedimientoDetalle
 )
 from .utils import (
     parse_int, parse_decimal, cargar_json_lista, procesar_imagen_base64,
@@ -890,14 +890,10 @@ def consultar_regcheck(request):
     except requests.exceptions.RequestException as e:
         print(f"Error consultando API de Regcheck: {e}")
         return JsonResponse({"success": False, "error": "Servicio temporalmente no disponible."})
-    
-
+    # =========================================================
+# 💡 MÓDULO DE COTIZACIONES / PROFORMAS (COMPLETO Y ACTUALIZADO)
 # =========================================================
-# 💡 MÓDULO DE COTIZACIONES / PROFORMAS (COMPLETO)
-# =========================================================
-# =========================================================
-# 💡 MÓDULO DE COTIZACIONES / PROFORMAS
-# =========================================================
+from decimal import Decimal # Asegúrate de tener esto importado arriba en tu views.py
 
 @login_required
 def crear_cotizacion(request):
@@ -942,7 +938,8 @@ def crear_cotizacion(request):
         messages.success(request, f"Cotización {num_cotizacion} creada.")
         return redirect("detalle_cotizacion", pk=nueva_cotizacion.pk)
 
-    return render(request, "cotizaciones/crear_cotizacion.html", {"sucursal_activa": sucursal_activa})
+    # CORRECCIÓN: Ruta del template actualizada
+    return render(request, "crear_cotizacion.html", {"sucursal_activa": sucursal_activa})
 
 
 @login_required
@@ -975,10 +972,11 @@ def detalle_cotizacion(request, pk):
 
     if request.method == "POST":
         with transaction.atomic():
+            # Limpiamos todo antes de insertar lo nuevo
             cotizacion.insumos_cotizados.all().delete()
             cotizacion.servicios_cotizados.all().delete()
 
-            # Procesar Repuestos
+            # 1. PROCESAR REPUESTOS
             rep_ids = request.POST.getlist("rep_producto_id[]")
             rep_desc = request.POST.getlist("rep_descripcion[]")
             rep_pu = request.POST.getlist("rep_pu[]")
@@ -995,11 +993,63 @@ def detalle_cotizacion(request, pk):
                     orden_item=i + 1
                 )
 
+            # 2. PROCESAR MANO DE OBRA INTERNA (MOI)
+            moi_ids = request.POST.getlist("moi_servicio_id[]")
+            moi_desc = request.POST.getlist("moi_descripcion[]")
+            moi_pu = request.POST.getlist("moi_pu[]")
+            moi_cant = request.POST.getlist("moi_cantidad[]")
+            moi_uids = request.POST.getlist("moi_uid[]") # Para rastrear los procedimientos hijos
+
+            for i in range(len(moi_desc)):
+                if not moi_desc[i].strip(): continue
+                servicio_obj = CotizacionServicioDetalle.objects.create(
+                    cotizacion=cotizacion,
+                    servicio_id=moi_ids[i] if i < len(moi_ids) and moi_ids[i] else None,
+                    tipo_servicio='MEC', # MEC = Mecánica / Interna
+                    descripcion_servicio=moi_desc[i].strip().upper(),
+                    cantidad=parse_decimal(moi_cant[i] if i < len(moi_cant) else "1", Decimal("1")),
+                    precio_unitario=parse_decimal(moi_pu[i] if i < len(moi_pu) else "0", Decimal("0")),
+                    orden_item=i + 1
+                )
+                
+                # Procesar procedimientos (tareas hijas) si existen
+                if i < len(moi_uids):
+                    uid = moi_uids[i]
+                    procs = request.POST.getlist(f"moi_procedimientos_{uid}[]")
+                    for proc in procs:
+                        if proc.strip():
+                            # Asumiendo que creaste un modelo para los procedimientos de la cotización
+                            # Si no lo tienes, puedes comentar estas 3 líneas de abajo para que no de error
+                            CotizacionProcedimientoDetalle.objects.create(
+                                servicio_cotizado=servicio_obj,
+                                descripcion=proc.strip().upper()
+                            )
+
+            # 3. PROCESAR MANO DE OBRA EXTERNA (MOE)
+            moe_ids = request.POST.getlist("moe_servicio_id[]")
+            moe_desc = request.POST.getlist("moe_descripcion[]")
+            moe_pu = request.POST.getlist("moe_pu[]")
+            moe_cant = request.POST.getlist("moe_cantidad[]")
+
+            for i in range(len(moe_desc)):
+                if not moe_desc[i].strip(): continue
+                CotizacionServicioDetalle.objects.create(
+                    cotizacion=cotizacion,
+                    servicio_id=moe_ids[i] if i < len(moe_ids) and moe_ids[i] else None,
+                    tipo_servicio='EXT', # EXT = Torno, Terceros
+                    descripcion_servicio=moe_desc[i].strip().upper(),
+                    cantidad=parse_decimal(moe_cant[i] if i < len(moe_cant) else "1", Decimal("1")),
+                    precio_unitario=parse_decimal(moe_pu[i] if i < len(moe_pu) else "0", Decimal("0")),
+                    orden_item=i + 1
+                )
+
+            # Recalculamos los totales financieros de la cotización
             cotizacion.calcular_total()
-            messages.success(request, "Proforma guardada.")
+            messages.success(request, "Proforma guardada con éxito.")
             return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
-    return render(request, "cotizaciones/detalle_cotizacion.html", {
+    # CORRECCIÓN: Ruta del template actualizada
+    return render(request, "detalle_cotizacion.html", {
         "cotizacion": cotizacion,
         "categorias_inventario": categorias,
         "sucursal_activa": sucursal_activa
@@ -1009,17 +1059,15 @@ def detalle_cotizacion(request, pk):
 @login_required
 def aprobar_cotizacion(request, pk):
     """
-    Pasa los datos a la OT y activa el descuento de inventario.
+    Pasa TODOS los datos a la OT y activa el descuento de inventario.
     """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     
     if request.method == "POST":
         with transaction.atomic():
-            if not cotizacion.orden:
-                # Lógica para convertir mostrador a OT si es necesario
-                pass
-
             orden_destino = cotizacion.orden
+            
+            # 1. Copiar Repuestos a la OT
             for item in cotizacion.insumos_cotizados.all():
                 OrdenInsumoDetalle.objects.create(
                     orden=orden_destino,
@@ -1029,11 +1077,33 @@ def aprobar_cotizacion(request, pk):
                     precio_unitario=item.precio_unitario
                 )
 
+            # 2. Copiar Servicios (MOI y MOE) a la OT
+            for serv in cotizacion.servicios_cotizados.all():
+                nuevo_servicio_ot = OrdenServicioDetalle.objects.create(
+                    orden=orden_destino,
+                    servicio=serv.servicio,
+                    tipo_servicio=serv.tipo_servicio,
+                    descripcion_servicio=serv.descripcion_servicio,
+                    cantidad=serv.cantidad,
+                    precio_unitario=serv.precio_unitario
+                )
+                
+                # Copiar los procedimientos de cada servicio si existen
+                if hasattr(serv, 'procedimientos_detalle'):
+                    for proc in serv.procedimientos_detalle.all():
+                        OrdenProcedimientoDetalle.objects.create(
+                            servicio_detalle=nuevo_servicio_ot,
+                            descripcion=proc.descripcion
+                        )
+
+            # 3. Cambiar el estado de la proforma para que no se pueda volver a aprobar
             cotizacion.estado = 'APROBADA'
             cotizacion.save()
+            
+            # 4. Actualizar los totales reales de la OT
             orden_destino.calcular_total()
 
-        messages.success(request, "Items cargados a la Orden de Trabajo.")
+        messages.success(request, "Repuestos y Servicios cargados a la Orden de Trabajo.")
         return redirect('detalle_orden', pk=orden_destino.pk)
 
     return redirect('dashboard')
