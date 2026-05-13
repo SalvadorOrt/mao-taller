@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 from . import views
 
 urlpatterns = [
@@ -29,11 +29,14 @@ urlpatterns = [
     # 2. Crear cotización vinculada a una OT (Ampliación)
     path('orden/<int:pk_orden>/cotizar/', views.nueva_cotizacion_desde_ot, name='nueva_cotizacion_desde_ot'),
 
-    # 3. Ver y editar el detalle de los repuestos tentativos
+    # 3. Ver y editar el detalle (Tablas MOI, MOE y Repuestos)
     path('cotizacion/<int:pk>/detalle/', views.detalle_cotizacion, name='detalle_cotizacion'),
 
-    # 4. Botón mágico para pasar todo a la Orden oficial
+    # 4. Aprobar proforma (Pasa los datos a la OT oficial)
     path('cotizacion/<int:pk>/aprobar/', views.aprobar_cotizacion, name='aprobar_cotizacion'),
+
+    # NUEVO: 5. Impresión de Proforma (Para que el botón del HTML funcione)
+    path('cotizacion/<int:pk>/imprimir/', views.imprimir_cotizacion, name='imprimir_cotizacion'),
 
     # ========================
     # Impresión
@@ -48,10 +51,12 @@ urlpatterns = [
     path('expediente/<int:pk>/', views.detalle_expediente, name='detalle_expediente'),
 
     # ========================
-    # APIs Conexiones Externas
+    # APIs y Auxiliares
     # ========================
     path('api/regcheck/', views.consultar_regcheck, name='api_regcheck'),
     path('api/consultar_cedula/', views.consultar_cedula_api, name='api_cedula'),
+    
+    # Búsqueda de repuestos y servicios (Usados tanto en OT como en Proformas)
     path('api/buscar-repuestos/', views.api_buscar_repuestos_ot, name='api_buscar_repuestos'),
     path('api/buscar-servicios-ot/', views.api_buscar_servicios_ot, name='api_buscar_servicios_ot'),
 ]
