@@ -23,8 +23,8 @@ urlpatterns = [
     # ========================
     # Cotizaciones / Proformas
     # ========================
-    path('cotizacion/nueva/', views.crear_cotizacion, name='crear_cotizacion'),
-    path('cotizacion/<int:pk>/convertir/', views.convertir_cotizacion_a_orden, name='convertir_cotizacion_a_orden'),
+    path('orden/<int:pk_orden>/cotizar/', views.nueva_cotizacion_desde_ot, name='nueva_cotizacion_desde_ot'),
+    path('cotizacion/<int:pk>/aprobar/', views.aprobar_cotizacion, name='aprobar_cotizacion'),
 
     # ========================
     # Impresión
