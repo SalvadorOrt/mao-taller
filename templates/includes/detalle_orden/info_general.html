@@ -392,3 +392,103 @@
         </div>
     </div>
 </div>
+
+    <!-- 🔥 TUS SCRIPTS SE MANTIENEN INTACTOS 🔥 -->
+    <script>
+        function confirmarAccionNativa(accion, formId) {
+            let titulo = '';
+            let texto = '';
+            let icono = '';
+            let colorBoton = '';
+
+            if (accion === 'anular') {
+                titulo = '¿Anular Orden?';
+                texto = 'Esta acción cancelará la orden y no se podrá deshacer.';
+                icono = 'warning';
+                colorBoton = '#ff3b30';
+            } else if (accion === 'cerrar') {
+                titulo = '¿Cerrar y Facturar?';
+                texto = 'El vehículo pasará a estado cerrado y estará listo para facturación.';
+                icono = 'question';
+                colorBoton = '#34c759';
+            }
+
+            Swal.fire({
+                title: titulo,
+                text: texto,
+                icon: icono,
+                showCancelButton: true,
+                confirmButtonColor: colorBoton,
+                cancelButtonColor: '#6e6e73',
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'Cancelar',
+                customClass: { popup: 'swal-mao-popup', title: 'swal-mao-title', htmlContainer: 'swal-mao-html' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
+        }
+
+        function imprimirFichaDirecto() {
+            const btn = event.currentTarget;
+            if (btn.disabled) return; 
+            
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cargando...';
+
+            var viejoIframe = document.getElementById('iframeImpresionDinamico');
+            if (viejoIframe) {
+                viejoIframe.remove();
+            }
+
+            var iframe = document.createElement('iframe');
+            iframe.id = 'iframeImpresionDinamico';
+            iframe.style.position = 'absolute';
+            iframe.style.top = '-10000px';
+            iframe.style.left = '-10000px';
+            iframe.style.width = '1000px';
+            iframe.style.height = '1000px';
+            iframe.style.border = 'none';
+
+            document.body.appendChild(iframe);
+            iframe.src = "{% url 'imprimir_tecnico' orden.id %}";
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }, 2000);
+        }
+
+        function imprimirResumenDirecto() {
+            const btn = event.currentTarget;
+            if (btn.disabled) return; 
+            
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando PDF...';
+
+            var viejoIframe = document.getElementById('iframeImpresionResumen');
+            if (viejoIframe) {
+                viejoIframe.remove();
+            }
+
+            var iframe = document.createElement('iframe');
+            iframe.id = 'iframeImpresionResumen';
+            iframe.style.position = 'absolute';
+            iframe.style.top = '-10000px';
+            iframe.style.left = '-10000px';
+            iframe.style.width = '1000px';
+            iframe.style.height = '1000px';
+            iframe.style.border = 'none';
+
+            document.body.appendChild(iframe);
+            iframe.src = "{% url 'imprimir_resumen' orden.id %}";
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }, 2000);
+        }
+    </script>
