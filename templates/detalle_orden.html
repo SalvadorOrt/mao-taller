@@ -58,8 +58,9 @@
     </div>
 
     <!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN (Fuera del formulario maestro) 🔥 -->
-    <form id="formCerrar" method="POST" action="{% url 'cerrar_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
-    <form id="formAnular" method="POST" action="{% url 'anular_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
+<!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN (Fuera del formulario maestro) 🔥 -->
+    <form id="form_cerrar_orden" method="POST" action="{% url 'cerrar_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
+    <form id="form_anular_orden" method="POST" action="{% url 'anular_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
     <form id="formReabrir" method="POST" action="{% url 'reabrir_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
 
     <!-- 🔥 FORMULARIO MAESTRO DE DETALLES (con novalidate) 🔥 -->
