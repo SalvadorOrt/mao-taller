@@ -1222,3 +1222,118 @@ class OrdenInsumoHistorico(models.Model):
     def __str__(self):
         return self.descripcion_original
     
+# ==========================================
+# 10. COTIZACIONES / PROFORMAS (NUEVO MÓDULO)
+# ==========================================
+class Cotizacion(models.Model):
+    ESTADOS_COTIZACION = [
+        ("PENDIENTE", "Pendiente / Entregada"),
+        ("APROBADA", "Aprobada (Es ahora una OT)"),
+        ("RECHAZADA", "Rechazada / Caducada"),
+    ]
+
+    numero_cotizacion = models.CharField(max_length=50, unique=True)
+    sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT, related_name="cotizaciones")
+    
+    # Datos del cliente y auto (Versión simplificada de la OT)
+    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, related_name="cotizaciones")
+    cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
+    placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
+    vehiculo = models.CharField(max_length=150, null=True, blank=True)
+    anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    # Control de la Cotización
+    estado = models.CharField(max_length=15, choices=ESTADOS_COTIZACION, default="PENDIENTE")
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+    validez_dias = models.PositiveIntegerField(default=15, help_text="Días de validez de los precios")
+    
+    total_general = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    observaciones = models.TextField(null=True, blank=True, help_text="Notas para el cliente en la proforma")
+
+    # 🔥 LA MAGIA: Aquí se conectará la Orden de Trabajo una vez que el cliente apruebe 🔥
+    orden_generada = models.OneToOneField(
+        'OrdenTrabajo', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="cotizacion_origen",
+        help_text="La OT que nació de esta cotización"
+    )
+
+    class Meta:
+        ordering = ["-fecha_creacion"]
+        verbose_name = "Cotización"
+        verbose_name_plural = "Cotizaciones"
+
+    @property
+    def nombre_cliente_final(self):
+        if self.cliente:
+            return self.cliente.nombre_completo
+        return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
+
+    def calcular_total(self):
+        servicios = self.servicios_cotizados.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+        insumos = self.insumos_cotizados.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+        nuevo_total = servicios + insumos
+
+        if self.total_general != nuevo_total:
+            self.total_general = nuevo_total
+            if self.pk:
+                Cotizacion.objects.filter(pk=self.pk).update(total_general=nuevo_total)
+
+    def __str__(self):
+        return f"COT {self.numero_cotizacion} - {self.placa} ({self.nombre_cliente_final})"
+
+
+class CotizacionServicioDetalle(models.Model):
+    cotizacion = models.ForeignKey(Cotizacion, related_name="servicios_cotizados", on_delete=models.CASCADE)
+    servicio = models.ForeignKey("servicios.ServicioCatalogo", on_delete=models.SET_NULL, null=True, blank=True)
+    
+    tipo_servicio = models.CharField(max_length=10, choices=OrdenServicioDetalle.TIPOS_SERVICIO, default="MEC")
+    descripcion_servicio = models.CharField(max_length=255)
+    
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("1.00"))
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+
+    def save(self, *args, **kwargs):
+        self.subtotal = (Decimal(str(self.cantidad)) * self.precio_unitario).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        super().save(*args, **kwargs)
+        self.cotizacion.calcular_total()
+
+    def delete(self, *args, **kwargs):
+        cotizacion = self.cotizacion
+        super().delete(*args, **kwargs)
+        cotizacion.calcular_total()
+
+
+class CotizacionInsumoDetalle(models.Model):
+    cotizacion = models.ForeignKey(Cotizacion, related_name="insumos_cotizados", on_delete=models.CASCADE)
+    producto = models.ForeignKey("inventario.CodigoProducto", on_delete=models.PROTECT, null=True, blank=True)
+    
+    descripcion_factura = models.CharField(max_length=255, blank=True)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("1.00"))
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+
+    # Nota: Aquí NO hay def _registrar_movimiento_stock() porque es solo una proforma. ¡El inventario está a salvo!
+
+    def save(self, *args, **kwargs):
+        if not self.descripcion_factura and self.producto:
+            self.descripcion_factura = str(self.producto)
+        self.subtotal = (Decimal(str(self.cantidad)) * self.precio_unitario).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        super().save(*args, **kwargs)
+        self.cotizacion.calcular_total()
+
+    def delete(self, *args, **kwargs):
+        cotizacion = self.cotizacion
+        super().delete(*args, **kwargs)
+        cotizacion.calcular_total()
