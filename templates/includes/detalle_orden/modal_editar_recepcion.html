@@ -137,6 +137,7 @@
                     {% if croquis_url %}
                         <img id="croquisGuardadoImg"
                              src="{{ croquis_url }}"
+                             crossorigin="anonymous" 
                              alt="Croquis guardado"
                              style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:fill; z-index:5; pointer-events:none;">
                     {% endif %}
@@ -457,6 +458,23 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="spinner-border spinner-border-sm" style="margin-right: 5px;"></i> Actualizando...';
 
+        // 🔥 FIX 1: Capturar si el usuario escribió algo pero olvidó darle al botón "+"
+        const inputSintoma = document.getElementById('add_sintoma_txt');
+        if (inputSintoma && inputSintoma.value.trim() !== '') {
+            modalSintomas.push(inputSintoma.value.trim());
+            inputSintoma.value = ''; // Lo limpiamos
+        }
+
+        const inputTrabajo = document.getElementById('add_trabajo_txt');
+        if (inputTrabajo && inputTrabajo.value.trim() !== '') {
+            modalTrabajos.push(inputTrabajo.value.trim());
+            inputTrabajo.value = ''; // Lo limpiamos
+        }
+
+        // Renderizamos las listas visualmente por seguridad
+        renderModalListas();
+
+        // Ahora sí, inyectamos los datos completos a los inputs ocultos para Python
         document.getElementById('modal_sintomas_json').value = JSON.stringify(
             modalSintomas.map(s => ({ descripcion: s }))
         );
@@ -484,9 +502,10 @@
 
         } catch (e) {
             console.error("ERROR AL CAPTURAR EL CANVAS:", e);
-            alert("No se pudo capturar el croquis. Intente nuevamente.");
-            btn.disabled = false;
-            btn.innerHTML = 'Guardar y Actualizar';
+            // 🔥 FIX 2: Si el croquis falla por un bloqueo de seguridad del navegador, 
+            // mandamos el formulario igual para que no se pierdan los síntomas y trabajos.
+            document.getElementById('modal_croquis_base64').value = ""; 
+            document.getElementById('formEdicionRapida').submit();
         }
     }
 </script>
