@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle Proforma | MAO{% endblock %}
+{% block page_title %}Proforma {{ cotizacion.numero_cotizacion }}{% endblock %}
+{% block page_subtitle %}Presupuesto tentativo para el cliente{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+
+<!-- Asumimos que la cotización siempre se puede editar si está PENDIENTE -->
+<div class="container ot-wrapper" data-puede-editar="{% if cotizacion.estado == 'PENDIENTE' %}true{% else %}false{% endif %}">
+
+    <!-- CABECERA DE ESTADOS -->
+    <div class="ot-card ot-header" style="margin-bottom: 15px; align-items: center; padding: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 14px; font-weight: 700; color: var(--text);">Estado Proforma:</span>
+
+            {% if cotizacion.estado == 'PENDIENTE' %}
+                <span class="ot-badge" style="background: #e5f1fb; color: #0071e3; border-color: #b7d6f5;">
+                    EN REVISIÓN / PENDIENTE
+                </span>
+            {% elif cotizacion.estado == 'APROBADA' %}
+                <span class="ot-badge" style="background: #e5fbe4; color: #1f8939; border-color: #b7efc5;">
+                    APROBADA Y TRASLADADA
+                </span>
+            {% else %}
+                <span class="ot-badge" style="background: #ffebe9; color: var(--danger); border-color: #ffd6d6;">
+                    RECHAZADA / CADUCADA
+                </span>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <!-- Botón de Imprimir -->
+            <button type="button" class="btn-login" style="background: #f5f5f7; color: var(--text);">
+                <i class="bi bi-printer" style="margin-right: 5px;"></i> Imprimir Proforma
+            </button>
+
+            <!-- Botón de Aprobar (Solo si tiene OT vinculada y está pendiente) -->
+            {% if cotizacion.orden and cotizacion.estado == 'PENDIENTE' %}
+                <button type="button"
+                        onclick="confirmarAprobacion('formAprobar')"
+                        class="btn-login"
+                        style="background: #34c759; border-color: #34c759; color: #fff;">
+                    <i class="bi bi-check-circle" style="margin-right: 5px;"></i> Aprobar y Trasladar
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN 🔥 -->
+    <form id="formAprobar" method="POST" action="{% url 'aprobar_cotizacion' cotizacion.pk %}" style="display: none;">{% csrf_token %}</form>
+
+    <!-- 🔥 FORMULARIO MAESTRO DE DETALLES 🔥 -->
+    <form method="post" id="formDetalleOT" novalidate>
+        {% csrf_token %}
+
+        <!-- INCLUDES ADAPTADOS A LA COTIZACIÓN -->
+        {% include 'includes/cotizaciones/info_general.html' %}
+        {% include 'includes/cotizaciones/tabla_repuestos.html' %}
+        {% include 'includes/cotizaciones/tabla_moi.html' %}
+        
+        <!-- RESUMEN ECONÓMICO -->
+        <div class="ot-card" style="margin-top: 20px;">
+            <div style="text-align: right;">
+                <h3 style="font-weight: 800; color: var(--text);">Total Proforma: $ <span id="gran_total">{{ cotizacion.total_general }}</span></h3>
+            </div>
+        </div>
+
+        <!-- STICKY ACTIONS (Botones flotantes) -->
+        <div class="sticky-actions">
+            {% if cotizacion.orden %}
+                <a href="{% url 'detalle_orden' cotizacion.orden.id %}"
+                   class="btn-login"
+                   style="background: #e5e5ea; border-color: #e5e5ea; color: var(--text);">
+                    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>
+                    Volver a la OT
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}"
+                   class="btn-login"
+                   style="background: #e5e5ea; border-color: #e5e5ea; color: var(--text);">
+                    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>
+                    Volver
+                </a>
+            {% endif %}
+
+            {% if cotizacion.estado == 'PENDIENTE' %}
+                <button type="button" class="btn-login primary" onclick="guardarOTDirecto()">
+                    <i class="bi bi-save" style="margin-right: 5px;"></i> Guardar Proforma
+                </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div id="productoFloatingDropdown" class="producto-floating-dropdown"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // 🔥 1. FUNCIÓN DE GUARDADO DIRECTO (Reutilizada y perfeccionada) 🔥
+    function guardarOTDirecto() {
+        Swal.fire({
+            title: 'Guardando...',
+            html: 'Actualizando los precios de la proforma...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+        
+        let formSeguro = document.createElement('form');
+        formSeguro.method = 'POST';
+        formSeguro.action = window.location.href;
+        formSeguro.style.display = 'none';
+        
+        let csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        let inputCsrf = document.createElement('input');
+        inputCsrf.type = 'hidden';
+        inputCsrf.name = 'csrfmiddlewaretoken';
+        inputCsrf.value = csrf;
+        formSeguro.appendChild(inputCsrf);
+
+        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"]';
+        let todosLosInputs = document.querySelectorAll(selectores);
+        
+        todosLosInputs.forEach(input => {
+            let clon = document.createElement('input');
+            clon.type = 'hidden';
+            clon.name = input.name;
+            clon.value = input.value;
+            formSeguro.appendChild(clon);
+        });
+
+        let observaciones = document.querySelector('textarea[name="observaciones"]');
+        if (observaciones) {
+            let clonObs = document.createElement('input');
+            clonObs.type = 'hidden';
+            clonObs.name = 'observaciones';
+            clonObs.value = observaciones.value;
+            formSeguro.appendChild(clonObs);
+        }
+
+        document.body.appendChild(formSeguro);
+        formSeguro.submit();
+    }
+
+    // 🔥 2. MODAL DE CONFIRMACIÓN PARA APROBAR 🔥
+    function confirmarAprobacion(formId) {
+        Swal.fire({
+            title: '¿Aprobar Proforma?',
+            text: 'Los repuestos y servicios se cargarán automáticamente a la Orden de Trabajo oficial y se afectará el inventario.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#34c759', 
+            cancelButtonColor: '#6e6e73',
+            confirmButtonText: 'Sí, aprobar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+
+    // 🔥 3. CAPTURA DE MENSAJES DE DJANGO PARA MODAL DE ÉXITO 🔥
+    document.addEventListener("DOMContentLoaded", function() {
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: '{{ message }}',
+                        icon: 'success',
+                        confirmButtonColor: '#34c759',
+                        confirmButtonText: 'Entendido',
+                        timer: 2500 
+                    });
+                {% elif message.tags == 'error' %}
+                    Swal.fire({
+                        title: 'Error',
+                        text: '{{ message }}',
+                        icon: 'error',
+                        confirmButtonColor: '#ff3b30'
+                    });
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- IMPORTANTE: Usamos tus mismos scripts JS para reciclar toda la lógica -->
+<script src="{% static 'js/detalle_orden/base.js' %}"></script>
+<!-- Solo quitamos recepcion.js porque las proformas no tienen croquis ni fotos -->
+<script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
+<script src="{% static 'js/detalle_orden/mano_obra.js' %}"></script>
+<script src="{% static 'js/detalle_orden/detalle_orden.js' %}"></script>
+{% endblock %}

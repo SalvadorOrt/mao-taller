@@ -1,0 +1,125 @@
+<div class="ot-card mb-4" style="border: 1px solid #0071e3; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.1);">
+    <div class="section-title" style="color: #0071e3; border-bottom: 1px solid #e5e5ea; padding-bottom: 10px;">
+        Resumen Económico (Proforma)
+    </div>
+
+    <div class="totals-grid" style="margin-top: 15px;">
+        <div class="total-box">
+            <div class="total-label">Subtotal Repuestos</div>
+            <div class="total-value">$<span id="resumenRep">0.00</span></div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-label">Subtotal M.O. Interna</div>
+            <div class="total-value">$<span id="resumenMOI">0.00</span></div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-label">Subtotal M.O. Externa</div>
+            <div class="total-value">$<span id="resumenMOE">0.00</span></div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-label">Subtotal sin IVA</div>
+            <div class="total-value">$<span id="subtotalGeneral">0.00</span></div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-label">IVA 15%</div>
+            <div class="total-value">$<span id="ivaTotal">0.00</span></div>
+        </div>
+
+        <div class="total-box final" style="background: #f5faff; border: 1px solid #b7d6f5; border-radius: 8px; padding: 10px;">
+            <div class="total-label" style="color: #0071e3; font-weight: 800; font-size: 14px;">Total Proforma</div>
+            <div class="total-value" style="color: #0071e3; font-weight: 800; font-size: 18px;">$<span id="granTotal">0.00</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tu script de cálculos se mantiene exacto para sumar automáticamente las filas
+    document.addEventListener('DOMContentLoaded', function() {
+
+        function normalizarNumero(valor) {
+            if (!valor) return 0;
+
+            valor = String(valor)
+                .replace(/\$/g, '')
+                .replace(/\s/g, '')
+                .replace(/,/g, '.');
+
+            const numero = parseFloat(valor);
+            return isNaN(numero) ? 0 : numero;
+        }
+
+        function sumarTabla(idTabla) {
+            let total = 0;
+            const tabla = document.getElementById(idTabla);
+
+            if (!tabla) return 0;
+
+            const filas = tabla.querySelectorAll('tbody tr');
+
+            filas.forEach(fila => {
+                let valor = 0;
+
+                const inputValor = fila.querySelector('input.valor');
+
+                if (inputValor) {
+                    valor = normalizarNumero(inputValor.value);
+                } else {
+                    const celdaValor = fila.querySelector('.valor');
+                    if (celdaValor) {
+                        valor = normalizarNumero(celdaValor.textContent);
+                    }
+                }
+
+                total += valor;
+            });
+
+            return total;
+        }
+
+        function actualizarResumen() {
+            const rep = sumarTabla('tablaRepuestos');
+            const moi = sumarTabla('tablaMOI');
+            const moe = sumarTabla('tablaMOE');
+
+            const subtotal = rep + moi + moe;
+            const iva = +(subtotal * 0.15).toFixed(2);
+            const total = +(subtotal + iva).toFixed(2);
+
+            const elementosActualizar = {
+                resumenRep: rep,
+                resumenMOI: moi,
+                resumenMOE: moe,
+                subtotalGeneral: subtotal,
+                ivaTotal: iva,
+                granTotal: total,
+
+                subtotalRepuestos: rep,
+                subtotalMOI: moi,
+                subtotalMOE: moe
+            };
+
+            for (const [id, valor] of Object.entries(elementosActualizar)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = Number(valor).toFixed(2);
+                }
+            }
+            
+            // Actualiza el "Gran Total" de la cabecera sticky de la cotización
+            const granTotalHeader = document.getElementById('gran_total');
+            if(granTotalHeader) {
+                granTotalHeader.textContent = Number(total).toFixed(2);
+            }
+        }
+
+        // Ejecutar al cargar la página
+        actualizarResumen();
+
+        // Acoplar la función a tu window para que recalcularFila() la llame cuando edites un input
+        window.recalcularTotalesResumen = actualizarResumen;
+    });
+</script>
