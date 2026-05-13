@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid" style="margin-top: 20px;">
+    
+    <!-- ============================================= -->
+    <!-- CABECERA DE LA PROFORMA -->
+    <!-- ============================================= -->
+    <div class="ot-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d2d2d7; padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+                <h3 style="margin: 0; font-weight: 800; color: #1d1d1f;">Proforma {{ cotizacion.numero_cotizacion }}</h3>
+                <p style="margin: 0; font-size: 12px; color: #6e6e73;">Edición de presupuesto tentativo</p>
+            </div>
+            <div>
+                <span style="background: #f2f2f7; border: 1px solid #d2d2d7; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold;">
+                    Estado: {{ cotizacion.get_estado_display|upper }}
+                </span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 700; color: #6e6e73; text-transform: uppercase;">Cliente</div>
+                <div style="font-size: 14px; font-weight: 600;">{{ cotizacion.nombre_cliente_final|upper }}</div>
+            </div>
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 700; color: #6e6e73; text-transform: uppercase;">Vehículo</div>
+                <div style="font-size: 14px; font-weight: 600;">{{ cotizacion.vehiculo|upper|default:"S/E" }}</div>
+            </div>
+            <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 700; color: #6e6e73; text-transform: uppercase;">Placa</div>
+                <div style="font-size: 16px; font-weight: 800; color: #0071e3;">{{ cotizacion.placa|upper }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- FORMULARIO CENTRAL -->
+    <!-- ============================================= -->
+    <form method="post" id="form_orden"> <!-- Se llama form_orden para que tus JS lo reconozcan -->
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- TABLA DE REPUESTOS -->
+            <div class="col-12 mb-4">
+                <div class="ot-card">
+                    <h5 style="font-weight: 700;">Repuestos Tentativos</h5>
+                    <!-- Aquí podrías usar tu include si lo adaptamos, pero por ahora pongamos la tabla con tus IDs -->
+                    <table class="table" id="tabla_repuestos">
+                        <thead>
+                            <tr>
+                                <th>Descripción / Repuesto</th>
+                                <th style="width: 100px;">Cant.</th>
+                                <th style="width: 120px;">P. Unit ($)</th>
+                                <th style="width: 120px;">Subtotal</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_repuestos">
+                            {% for item in cotizacion.insumos_cotizados.all %}
+                            <tr>
+                                <td>
+                                    <input type="hidden" name="rep_producto_id[]" value="{{ item.producto.id|default:'' }}">
+                                    <input type="text" name="rep_descripcion[]" class="form-control desc-input" value="{{ item.descripcion_factura }}">
+                                </td>
+                                <td><input type="number" name="rep_cantidad[]" class="form-control cant-input" value="{{ item.cantidad }}" step="0.01"></td>
+                                <td><input type="number" name="rep_pu[]" class="form-control pu-input" value="{{ item.precio_unitario }}" step="0.01"></td>
+                                <td><input type="text" class="form-control subtotal-visual" value="{{ item.subtotal }}" readonly></td>
+                                <td><button type="button" class="btn btn-danger btn-sm btn-eliminar-fila"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn_add_repuesto">+ Añadir Repuesto</button>
+                </div>
+            </div>
+
+            <!-- TABLA DE MANO DE OBRA (MECÁNICA) -->
+            <div class="col-12 mb-4">
+                <div class="ot-card">
+                    <h5 style="font-weight: 700;">Mano de Obra Tentativa</h5>
+                    <table class="table" id="tabla_moi">
+                        <thead>
+                            <tr>
+                                <th>Servicio</th>
+                                <th style="width: 100px;">Cant.</th>
+                                <th style="width: 120px;">P. Unit ($)</th>
+                                <th style="width: 120px;">Subtotal</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_moi">
+                            {% for serv in cotizacion.servicios_cotizados.all %}
+                            <tr>
+                                <td><input type="text" name="moi_descripcion[]" class="form-control desc-input" value="{{ serv.descripcion_servicio }}"></td>
+                                <td><input type="number" name="moi_cantidad[]" class="form-control cant-input" value="{{ serv.cantidad }}" step="0.01"></td>
+                                <td><input type="number" name="moi_pu[]" class="form-control pu-input" value="{{ serv.precio_unitario }}" step="0.01"></td>
+                                <td><input type="text" class="form-control subtotal-visual" value="{{ serv.subtotal }}" readonly></td>
+                                <td><button type="button" class="btn btn-danger btn-sm btn-eliminar-fila"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn_add_moi">+ Añadir Servicio</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOTAL Y BOTONES -->
+        <div class="ot-card" style="margin-top: 20px; text-align: right;">
+            <h4 style="font-weight: 800; color: #1d1d1f;">Total Proforma: $ <span id="gran_total">{{ cotizacion.total_general }}</span></h4>
+            <hr>
+            <button type="submit" class="btn btn-primary" style="background: #0071e3; border: none; padding: 10px 20px;">
+                <i class="bi bi-save"></i> Guardar Proforma
+            </button>
+            
+            {% if cotizacion.orden %}
+            <a href="{% url 'detalle_orden' cotizacion.orden.id %}" class="btn btn-light" style="padding: 10px 20px; border: 1px solid #d2d2d7;">
+                Volver a la Orden
+            </a>
+            
+            <button type="submit" formaction="{% url 'aprobar_cotizacion' cotizacion.id %}" class="btn btn-success" style="padding: 10px 20px; margin-left: 10px;" onclick="return confirm('¿Aprobar proforma y cargar los repuestos al stock de la Orden de Trabajo?');">
+                <i class="bi bi-check-circle"></i> Aprobar y Trasladar
+            </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<!-- AQUÍ RECICLAMOS TUS SCRIPTS MODULARES -->
+<script src="{% static 'js/detalle_orden/base.js' %}"></script>
+<script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
+<script src="{% static 'js/detalle_orden/mano_obra.js' %}"></script>
+<script src="{% static 'js/detalle_orden/detalle_orden.js' %}"></script>
+{% endblock %}
