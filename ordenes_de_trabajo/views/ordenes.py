@@ -712,20 +712,40 @@ def editar_recepcion_orden(request, pk):
 def cerrar_orden(request, pk):
     if request.method == "POST":
         orden = get_object_or_404(OrdenTrabajo, pk=pk)
-        if puede_operar_orden_desde_sucursal_activa(request, orden) and orden.estado == 'ABIERTA':
+        
+        if not puede_operar_orden_desde_sucursal_activa(request, orden):
+            messages.error(request, "No tienes permiso para operar esta orden desde tu sucursal activa.")
+            return redirect("detalle_orden", pk=pk)
+            
+        if orden.estado == 'ABIERTA':
             orden.estado = 'CERRADA'
             orden.save()
             messages.success(request, f"La orden {orden.numero_orden} ha sido cerrada.")
+        else:
+            messages.error(request, f"No se puede cerrar la orden porque actualmente está {orden.estado}.")
+    else:
+        messages.error(request, "Método no permitido. Debe usar el botón oficial del sistema.")
+        
     return redirect("detalle_orden", pk=pk)
 
 @login_required
 def anular_orden(request, pk):
     if request.method == "POST":
         orden = get_object_or_404(OrdenTrabajo, pk=pk)
-        if puede_operar_orden_desde_sucursal_activa(request, orden) and orden.estado == 'ABIERTA':
+        
+        if not puede_operar_orden_desde_sucursal_activa(request, orden):
+            messages.error(request, "No tienes permiso para operar esta orden desde tu sucursal activa.")
+            return redirect("detalle_orden", pk=pk)
+            
+        if orden.estado == 'ABIERTA':
             orden.estado = 'ANULADA'
             orden.save()
             messages.success(request, f"La orden {orden.numero_orden} ha sido anulada.")
+        else:
+            messages.error(request, f"No se puede anular la orden porque actualmente está {orden.estado}.")
+    else:
+        messages.error(request, "Método no permitido. Debe usar el botón oficial del sistema.")
+        
     return redirect("detalle_orden", pk=pk)
 
 @login_required
@@ -733,10 +753,20 @@ def anular_orden(request, pk):
 def reabrir_orden(request, pk):
     if request.method == "POST":
         orden = get_object_or_404(OrdenTrabajo, pk=pk)
-        if puede_operar_orden_desde_sucursal_activa(request, orden) and orden.estado != 'ABIERTA':
+        
+        if not puede_operar_orden_desde_sucursal_activa(request, orden):
+            messages.error(request, "No tienes permiso para operar esta orden desde tu sucursal activa.")
+            return redirect("detalle_orden", pk=pk)
+            
+        if orden.estado != 'ABIERTA':
             orden.estado = 'ABIERTA'
             orden.save()
             messages.success(request, f"Privilegio concedido: La orden {orden.numero_orden} ha sido reabierta.")
+        else:
+            messages.error(request, "La orden ya se encuentra ABIERTA.")
+    else:
+        messages.error(request, "Método no permitido. Debe usar el botón oficial del sistema.")
+        
     return redirect("detalle_orden", pk=pk)
 
 # =========================================================
