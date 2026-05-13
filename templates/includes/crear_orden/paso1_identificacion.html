@@ -1,59 +1,182 @@
 <div class="step-container active" id="step_1">
     <div class="section-header">
-        <i class="bi bi-search" style="color: #0071e3; margin-right: 8px;"></i> 1. Identificación Inicial
+        <i class="bi bi-search" style="color: #0071e3; margin-right: 8px;"></i>
+        1. Identificación Inicial
     </div>
 
-    <!-- Contenedor blanco elegante para los buscadores -->
-    <div class="ot-card" style="padding: 25px; border: 1px solid #e5e5ea; box-shadow: none; border-radius: 12px; margin-bottom: 20px;">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="ot-card"
+         style="padding: 25px;
+                border: 1px solid #e5e5ea;
+                box-shadow: none;
+                border-radius: 12px;
+                margin-bottom: 20px;">
+
         <div class="row g-4">
-            
-            <!-- Buscador de Placa (Acción Primaria) -->
+
+            <!-- ===================================== -->
+            <!-- BUSCADOR DE PLACA -->
+            <!-- ===================================== -->
             <div class="col-md-6">
-                <label style="font-size: 12px; font-weight: 600; color: #86868b; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">PLACA DEL VEHÍCULO</label>
+
+                <label style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #86868b;
+                    display: block;
+                    margin-bottom: 8px;
+                    letter-spacing: 0.5px;">
+                    PLACA DEL VEHÍCULO
+                </label>
+
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" name="placa" id="id_placa" class="form-control-apple text-uppercase" style="font-weight: 600; flex: 1; letter-spacing: 2px;" placeholder="Ej: PBC-7984" required>
-                    <button type="button" onclick="buscarPlaca()" style="background: #0071e3; color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                        <i class="bi bi-search"></i> Buscar
+
+                    <input type="text"
+                           name="placa"
+                           id="id_placa"
+                           class="form-control-apple text-uppercase"
+                           style="
+                               font-weight: 600;
+                               flex: 1;
+                               letter-spacing: 2px;"
+                           placeholder="Ej: PBC-7984"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="characters"
+                           spellcheck="false"
+                           required
+                           onkeydown="
+                                if(event.key === 'Enter'){
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    buscarPlaca();
+                                    return false;
+                                }
+                           ">
+
+                    <button type="button"
+                            onclick="buscarPlaca()"
+                            style="
+                                background: #0071e3;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                padding: 0 20px;
+                                font-weight: 600;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: background 0.2s;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;">
+
+                        <i class="bi bi-search"></i>
+                        Buscar
                     </button>
                 </div>
-                <div id="msg_busqueda_placa" style="margin-top: 8px; font-size: 12px;"></div>
+
+                <div id="msg_busqueda_placa"
+                     style="margin-top: 8px; font-size: 12px;">
+                </div>
             </div>
 
-            <!-- Buscador de Cédula (Acción Secundaria) -->
-            
-                <div class="col-md-6">
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">
-                        DOCUMENTO DEL CLIENTE
-                    </label>
+            <!-- ===================================== -->
+            <!-- BUSCADOR DE DOCUMENTO -->
+            <!-- ===================================== -->
+            <div class="col-md-6">
 
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text"
-                            name="identificacion"
-                            id="id_identificacion"
-                            class="form-control-apple"
-                            style="flex: 1;"
-                            placeholder="Cédula, RUC, pasaporte o vacío">
+                <label style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #86868b;
+                    display: block;
+                    margin-bottom: 8px;
+                    letter-spacing: 0.5px;">
+                    DOCUMENTO DEL CLIENTE
+                </label>
 
-                        <button type="button"
-                                id="btn_buscar_cedula"
-                                onclick="buscarCedula()"
-                                style="background: #f5f5f7; color: #1d1d1f; border: 1px solid #e5e5ea; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                            <i class="bi bi-person-bounding-box"></i> Buscar
-                        </button>
-                    </div>
+                <div style="display: flex; gap: 10px;">
 
-                    <div id="msg_busqueda_cedula"
-                        style="margin-top: 8px; font-size: 12px;"></div>
+                    <input type="text"
+                           name="identificacion"
+                           id="id_identificacion"
+                           class="form-control-apple"
+                           style="flex: 1;"
+                           placeholder="Cédula, RUC, pasaporte o vacío"
+                           autocomplete="off"
+                           spellcheck="false"
+                           onkeydown="
+                                if(event.key === 'Enter'){
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    buscarCedula();
+                                    return false;
+                                }
+                           ">
+
+                    <button type="button"
+                            id="btn_buscar_cedula"
+                            onclick="buscarCedula()"
+                            style="
+                                background: #f5f5f7;
+                                color: #1d1d1f;
+                                border: 1px solid #e5e5ea;
+                                border-radius: 8px;
+                                padding: 0 20px;
+                                font-weight: 600;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: background 0.2s;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;">
+
+                        <i class="bi bi-person-bounding-box"></i>
+                        Buscar
+                    </button>
                 </div>
-            
+
+                <div id="msg_busqueda_cedula"
+                     style="margin-top: 8px; font-size: 12px;">
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Botón de omitir estilo enlace de iOS -->
+    <!-- ===================================== -->
+    <!-- CONTINUAR MANUAL -->
+    <!-- ===================================== -->
     <div class="text-center mt-4">
-        <button type="button" onclick="cambiarPaso(1)" style="background: transparent; color: #0071e3; border: none; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-            Continuar y llenar manualmente <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
+
+        <button type="button"
+                onclick="cambiarPaso(1)"
+                style="
+                    background: transparent;
+                    color: #0071e3;
+                    border: none;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;">
+
+            Continuar y llenar manualmente
+
+            <i class="bi bi-chevron-right"
+               style="font-size: 11px;"></i>
         </button>
-        <p style="font-size: 12px; color: #86868b; margin-top: 5px;">Opción de respaldo sin conexión a las APIs.</p>
+
+        <p style="
+            font-size: 12px;
+            color: #86868b;
+            margin-top: 5px;">
+
+            Opción de respaldo sin conexión a las APIs.
+        </p>
     </div>
 </div>
