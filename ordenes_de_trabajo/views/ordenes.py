@@ -893,74 +893,208 @@ def consultar_regcheck(request):
     
 
 # =========================================================
-# 💡 MÓDULO DE COTIZACIONES (AMARRADAS A LA OT) 💡
+# 💡 MÓDULO DE COTIZACIONES / PROFORMAS (COMPLETO)
 # =========================================================
-import uuid
+
+@login_required
+def crear_cotizacion(request):
+    """
+    Crea una cotización rápida desde el menú principal (Mostrador).
+    Ideal para clientes que solo consultan precios sin dejar el auto.
+    """
+    sucursal_activa = obtener_sucursal_activa(request)
+    if not sucursal_activa: 
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        placa = request.POST.get("placa", "").strip().upper()
+        vehiculo = request.POST.get("vehiculo", "").strip().upper()
+        anio = parse_int(request.POST.get("anio_vehiculo"), None)
+        identificacion = request.POST.get("identificacion", "").strip()
+        nombre_cliente = request.POST.get("nombre_cliente", "").strip().upper()
+        observaciones = request.POST.get("observaciones", "").strip()
+
+        # Determinar tipo de documento para el cliente
+        tipo_documento = "P"
+        if identificacion.isdigit():
+            if len(identificacion) == 10: tipo_documento = "C"
+            elif len(identificacion) == 13: tipo_documento = "R"
+
+        cliente_obj = None
+        if identificacion:
+            cliente_obj = Cliente.objects.filter(identificacion=identificacion).first()
+            if not cliente_obj:
+                cliente_obj = Cliente.objects.create(
+                    tipo_documento=tipo_documento,
+                    identificacion=identificacion,
+                    nombre_completo=nombre_cliente or "CONSUMIDOR FINAL"
+                )
+
+        with transaction.atomic():
+            # Generar número único (COT + AñoMes + UUID corto)
+            num_cotizacion = f"COT-{timezone.now().strftime('%y%m')}-{uuid.uuid4().hex[:4].upper()}"
+
+            nueva_cotizacion = Cotizacion.objects.create(
+                numero_cotizacion=num_cotizacion,
+                sucursal=sucursal_activa,
+                cliente=cliente_obj,
+                cliente_respaldo=nombre_cliente or None,
+                placa=placa,
+                vehiculo=vehiculo,
+                anio_vehiculo=anio,
+                observaciones=observaciones,
+                estado="PENDIENTE"
+            )
+
+        messages.success(request, f"Cotización {num_cotizacion} creada.")
+        return redirect("detalle_cotizacion", pk=nueva_cotizacion.pk)
+
+    return render(request, "cotizaciones/crear_cotizacion.html", {"sucursal_activa": sucursal_activa})
+
 
 @login_required
 def nueva_cotizacion_desde_ot(request, pk_orden):
     """
-    Crea una proforma en blanco directamente enlazada a una OT existente.
+    Crea una proforma vinculada a una OT existente (Ampliación de presupuesto).
+    Hereda automáticamente placa, cliente y vehículo.
     """
     orden = get_object_or_404(OrdenTrabajo, pk=pk_orden)
-    
-    # Genera un número único: Ej. COT-OT-24465-A1B2
     num_cotizacion = f"COT-{orden.numero_orden}-{uuid.uuid4().hex[:4].upper()}"
     
     nueva_cotizacion = Cotizacion.objects.create(
         numero_cotizacion=num_cotizacion,
-        orden=orden,
+        sucursal=orden.sucursal,
+        orden=orden, # Aquí se vincula a la OT padre
         estado="PENDIENTE"
     )
     
-    messages.success(request, f"Proforma {num_cotizacion} creada. Ahora puede agregar los repuestos tentativos.")
-    
-    # Lo mandamos a la pantalla para que llene la proforma
+    messages.success(request, f"Proforma de ampliación {num_cotizacion} generada para la OT {orden.numero_orden}.")
     return redirect('detalle_cotizacion', pk=nueva_cotizacion.pk)
+
+
+@login_required
+def detalle_cotizacion(request, pk):
+    """
+    Lienzo para agregar repuestos y servicios tentativos.
+    No afecta stock ni contabilidad real.
+    """
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    sucursal_activa = obtener_sucursal_activa(request)
+    categorias = Categoria.objects.all().order_by("nombre")
+
+    if request.method == "POST":
+        with transaction.atomic():
+            # Limpieza de items previos
+            cotizacion.insumos_cotizados.all().delete()
+            cotizacion.servicios_cotizados.all().delete()
+
+            # --- PROCESAR REPUESTOS TENTATIVOS ---
+            rep_ids = request.POST.getlist("rep_producto_id[]")
+            rep_desc = request.POST.getlist("rep_descripcion[]")
+            rep_pu = request.POST.getlist("rep_pu[]")
+            rep_cant = request.POST.getlist("rep_cantidad[]")
+
+            for i in range(len(rep_desc)):
+                desc = rep_desc[i].strip()
+                if not desc: continue
+                
+                CotizacionInsumoDetalle.objects.create(
+                    cotizacion=cotizacion,
+                    producto_id=rep_ids[i] if i < len(rep_ids) and rep_ids[i] else None,
+                    descripcion_factura=desc.upper(),
+                    cantidad=parse_decimal(rep_cant[i] if i < len(rep_cant) else "1", Decimal("1")),
+                    precio_unitario=parse_decimal(rep_pu[i] if i < len(rep_pu) else "0", Decimal("0")),
+                    orden_item=i + 1
+                )
+
+            # --- PROCESAR SERVICIOS TENTATIVOS ---
+            serv_desc = request.POST.getlist("moi_descripcion[]")
+            serv_pu = request.POST.getlist("moi_pu[]")
+            serv_cant = request.POST.getlist("moi_cantidad[]")
+
+            for i in range(len(serv_desc)):
+                desc = serv_desc[i].strip()
+                if not desc: continue
+
+                CotizacionServicioDetalle.objects.create(
+                    cotizacion=cotizacion,
+                    descripcion_servicio=desc.upper(),
+                    cantidad=parse_decimal(serv_cant[i] if i < len(serv_cant) else "1", Decimal("1")),
+                    precio_unitario=parse_decimal(serv_pu[i] if i < len(serv_pu) else "0", Decimal("0")),
+                    orden_item=i + 1
+                )
+
+            cotizacion.calcular_total()
+            messages.success(request, "Cambios guardados en la proforma.")
+            return redirect('detalle_cotizacion', pk=cotizacion.pk)
+
+    return render(request, "cotizaciones/detalle_cotizacion.html", {
+        "cotizacion": cotizacion,
+        "categorias_inventario": categorias,
+        "sucursal_activa": sucursal_activa
+    })
 
 
 @login_required
 def aprobar_cotizacion(request, pk):
     """
-    🔥 LA MAGIA: Pasa los repuestos/servicios de la Cotización a la OT oficial 🔥
+    Inyecta los datos de la proforma en la Orden de Trabajo oficial.
+    Solo aquí se dispara el descuento de stock real.
     """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
-    orden = cotizacion.orden
-
+    
     if request.method == "POST":
         if cotizacion.estado != 'PENDIENTE':
             messages.error(request, "Esta cotización ya fue procesada.")
-            return redirect('detalle_orden', pk=orden.pk)
+            return redirect('dashboard')
 
         with transaction.atomic():
-            # 1. Copiamos los repuestos tentativos a la OT (AQUÍ RECIÉN SE DESCUENTA STOCK)
-            for insumo in cotizacion.insumos_cotizados.all():
+            # Si es de mostrador y no tiene OT, crear la OT primero
+            if not cotizacion.orden:
+                expediente = obtener_o_crear_expediente(
+                    cotizacion.cliente, cotizacion.nombre_cliente_final, 
+                    cotizacion.placa, cotizacion.vehiculo, cotizacion.anio_vehiculo
+                )
+                nueva_ot = OrdenTrabajo.objects.create(
+                    numero_orden=generar_numero_orden(),
+                    sucursal=cotizacion.sucursal,
+                    expediente=expediente,
+                    usuario_receptor=request.user,
+                    cliente=cotizacion.cliente,
+                    cliente_respaldo=cotizacion.cliente_respaldo,
+                    placa=cotizacion.placa,
+                    vehiculo=cotizacion.vehiculo,
+                    anio_vehiculo=cotizacion.anio_vehiculo,
+                    estado="ABIERTA"
+                )
+                cotizacion.orden = nueva_ot
+
+            orden_destino = cotizacion.orden
+
+            # 1. Mover Insumos (Aquí se activa MovimientoStock en el save del detalle)
+            for item in cotizacion.insumos_cotizados.all():
                 OrdenInsumoDetalle.objects.create(
-                    orden=orden,
-                    producto=insumo.producto,
-                    descripcion_factura=insumo.descripcion_factura,
-                    cantidad=insumo.cantidad,
-                    precio_unitario=insumo.precio_unitario
+                    orden=orden_destino,
+                    producto=item.producto,
+                    descripcion_factura=item.descripcion_factura,
+                    cantidad=item.cantidad,
+                    precio_unitario=item.precio_unitario
                 )
 
-            # 2. Copiamos la mano de obra a la OT
-            for servicio in cotizacion.servicios_cotizados.all():
+            # 2. Mover Servicios
+            for serv in cotizacion.servicios_cotizados.all():
                 OrdenServicioDetalle.objects.create(
-                    orden=orden,
-                    servicio=servicio.servicio,
-                    tipo_servicio=servicio.tipo_servicio,
-                    descripcion_servicio=servicio.descripcion_servicio,
-                    cantidad=servicio.cantidad,
-                    precio_unitario=servicio.precio_unitario
+                    orden=orden_destino,
+                    descripcion_servicio=serv.descripcion_servicio,
+                    cantidad=serv.cantidad,
+                    precio_unitario=serv.precio_unitario
                 )
 
-            # 3. Sellamos la cotización como aprobada
             cotizacion.estado = 'APROBADA'
             cotizacion.save()
+            orden_destino.calcular_total()
 
-            # 4. Recalculamos el gran total de la OT oficial
-            orden.calcular_total()
+        messages.success(request, f"Proforma aprobada. Items cargados a la OT {orden_destino.numero_orden}.")
+        return redirect('detalle_orden', pk=orden_destino.pk)
 
-        messages.success(request, f"¡Éxito! Los repuestos fueron aprobados y trasladados a la {orden.numero_orden}.")
-        
-    return redirect('detalle_orden', pk=orden.pk)
+    return redirect('dashboard')
