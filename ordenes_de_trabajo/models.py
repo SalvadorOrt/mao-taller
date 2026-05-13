@@ -1362,3 +1362,13 @@ class CotizacionInsumoDetalle(models.Model):
         cotizacion = self.cotizacion
         super().delete(*args, **kwargs)
         cotizacion.calcular_total()
+class CotizacionProcedimientoDetalle(models.Model):
+    servicio_cotizado = models.ForeignKey(
+        CotizacionServicioDetalle, 
+        related_name='procedimientos_detalle', 
+        on_delete=models.CASCADE
+    )
+    descripcion = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.servicio_cotizado.descripcion_servicio} - {self.descripcion}"

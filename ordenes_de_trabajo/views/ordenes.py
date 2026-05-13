@@ -23,13 +23,14 @@ from ..models import (
     OrdenInsumoDetalle,
     OrdenObjetoAdicional,
     OrdenServicioDetalle,
-    OrdenServicioProcedimientoDetalle,
+    OrdenServicioProcedimientoDetalle, 
     OrdenSintoma,
     OrdenTrabajoSolicitado,
     ExpedienteVehiculo,
     Cotizacion,                   
     CotizacionInsumoDetalle,      
-    CotizacionServicioDetalle,CotizacionProcedimientoDetalle,OrdenProcedimientoDetalle
+    CotizacionServicioDetalle,
+    CotizacionProcedimientoDetalle
 )
 from .utils import (
     parse_int, parse_decimal, cargar_json_lista, procesar_imagen_base64,
@@ -1091,7 +1092,7 @@ def aprobar_cotizacion(request, pk):
                 # Copiar los procedimientos de cada servicio si existen
                 if hasattr(serv, 'procedimientos_detalle'):
                     for proc in serv.procedimientos_detalle.all():
-                        OrdenProcedimientoDetalle.objects.create(
+                        OrdenServicioProcedimientoDetalle.objects.create(
                             servicio_detalle=nuevo_servicio_ot,
                             descripcion=proc.descripcion
                         )
