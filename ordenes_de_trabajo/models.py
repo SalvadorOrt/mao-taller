@@ -1235,14 +1235,13 @@ class Cotizacion(models.Model):
     numero_cotizacion = models.CharField(max_length=50, unique=True)
     sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT, related_name="cotizaciones")
     
-    # 🔥 VÍNCULO OPCIONAL: Permite cotizar sin tener una OT abierta, o amarrarla a una existente.
-    orden = models.ForeignKey(
+    orden = models.OneToOneField( # Cambiado de ForeignKey a OneToOneField
         'OrdenTrabajo', 
         on_delete=models.CASCADE, 
         null=True, 
         blank=True, 
-        related_name="cotizaciones_vinculadas",
-        help_text="Si la proforma nace de una OT abierta (Ampliación de presupuesto)."
+        related_name="cotizacion_vinculada", # Cambiado a singular
+        help_text="Si la proforma nace de una OT abierta."
     )
 
     # 🚗 DATOS DEL VEHÍCULO Y CLIENTE

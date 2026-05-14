@@ -891,11 +891,7 @@ def consultar_regcheck(request):
     except requests.exceptions.RequestException as e:
         print(f"Error consultando API de Regcheck: {e}")
         return JsonResponse({"success": False, "error": "Servicio temporalmente no disponible."})
-# =========================================================
-# 💡 MÓDULO DE COTIZACIONES / PROFORMAS (COMPLETO Y ACTUALIZADO)
-# =========================================================
-from decimal import Decimal # Asegúrate de tener esto importado arriba en tu views.py
-
+    
 @login_required
 def crear_cotizacion(request):
     """
@@ -903,12 +899,13 @@ def crear_cotizacion(request):
     """
     sucursal_activa = obtener_sucursal_activa(request)
     if not sucursal_activa: 
+        messages.error(request, "Debe tener una sucursal activa.")
         return redirect("dashboard")
 
     if request.method == "POST":
         placa = request.POST.get("placa", "").strip().upper()
         vehiculo = request.POST.get("vehiculo", "").strip().upper()
-        anio = parse_int(request.POST.get("anio_vehiculo"), None)
+        anio = request.POST.get("anio_vehiculo")
         identificacion = request.POST.get("identificacion", "").strip()
         nombre_cliente = request.POST.get("nombre_cliente", "").strip().upper()
         observaciones = request.POST.get("observaciones", "").strip()
@@ -923,6 +920,7 @@ def crear_cotizacion(request):
                 )
 
         with transaction.atomic():
+            # Formato: COT-AñoMes-UUID
             num_cotizacion = f"COT-{timezone.now().strftime('%y%m')}-{uuid.uuid4().hex[:4].upper()}"
             nueva_cotizacion = Cotizacion.objects.create(
                 numero_cotizacion=num_cotizacion,
@@ -931,7 +929,7 @@ def crear_cotizacion(request):
                 cliente_respaldo=nombre_cliente or None,
                 placa=placa,
                 vehiculo=vehiculo,
-                anio_vehiculo=anio,
+                anio_vehiculo=int(anio) if anio and anio.isdigit() else None,
                 observaciones=observaciones,
                 estado="PENDIENTE"
             )
@@ -939,27 +937,37 @@ def crear_cotizacion(request):
         messages.success(request, f"Cotización {num_cotizacion} creada.")
         return redirect("detalle_cotizacion", pk=nueva_cotizacion.pk)
 
-    # CORRECCIÓN: Ruta del template actualizada
     return render(request, "crear_cotizacion.html", {"sucursal_activa": sucursal_activa})
 
 
 @login_required
 def nueva_cotizacion_desde_ot(request, pk_orden):
     """
-    Crea una proforma vinculada a una OT existente.
+    Lógica blindada: Busca la proforma de esta OT o crea una nueva si no existe.
+    EVITA LAS 30 PROFORMAS REPETIDAS.
     """
     orden = get_object_or_404(OrdenTrabajo, pk=pk_orden)
-    num_cotizacion = f"COT-{orden.numero_orden}-{uuid.uuid4().hex[:4].upper()}"
     
-    nueva_cotizacion = Cotizacion.objects.create(
-        numero_cotizacion=num_cotizacion,
-        sucursal=orden.sucursal,
+    # 🔥 USAMOS GET_OR_CREATE PARA EVITAR DUPLICADOS 🔥
+    cotizacion, created = Cotizacion.objects.get_or_create(
         orden=orden,
-        estado="PENDIENTE"
+        defaults={
+            'numero_cotizacion': f"PRO-{orden.numero_orden}",
+            'sucursal': orden.sucursal,
+            'cliente': orden.cliente,
+            'placa': orden.placa,
+            'vehiculo': orden.vehiculo,
+            'anio_vehiculo': orden.anio_vehiculo,
+            'estado': "PENDIENTE"
+        }
     )
     
-    messages.success(request, f"Proforma de ampliación {num_cotizacion} generada.")
-    return redirect('detalle_cotizacion', pk=nueva_cotizacion.pk)
+    if created:
+        messages.success(request, f"Proforma de ampliación generada para {orden.numero_orden}.")
+    
+    return redirect('detalle_cotizacion', pk=cotizacion.pk)
+
+
 @login_required
 def detalle_cotizacion(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
@@ -969,12 +977,11 @@ def detalle_cotizacion(request, pk):
     if request.method == "POST":
         try:
             with transaction.atomic():
+                # Limpieza de ítems actuales para reemplazo total
                 cotizacion.insumos_cotizados.all().delete()
                 cotizacion.servicios_cotizados.all().delete()
 
-                # =================================================
-                # REPUESTOS
-                # =================================================
+                # --- PROCESAMIENTO DE REPUESTOS ---
                 rep_ids = request.POST.getlist("rep_producto_id[]")
                 rep_desc = request.POST.getlist("rep_descripcion[]")
                 rep_pu = request.POST.getlist("rep_pu[]")
@@ -998,8 +1005,8 @@ def detalle_cotizacion(request, pk):
                     if not p_id and not desc: continue
 
                     cantidad = parse_cantidad(cant_str, Decimal("1.00"))
-                    if cantidad <= 0: continue
                     precio = parse_decimal(pu_str, Decimal("0.00"))
+                    if cantidad <= 0: continue
 
                     producto_id_final = int(p_id) if p_id and p_id.isdigit() else None
                     categoria_id_final = int(cat_id) if cat_id and cat_id.isdigit() else None
@@ -1017,9 +1024,7 @@ def detalle_cotizacion(request, pk):
                     )
                     repuestos_guardados += 1
 
-                # =================================================
-                # MANO DE OBRA
-                # =================================================
+                # --- PROCESAMIENTO DE MANO DE OBRA ---
                 servicios_guardados = 0
                 for prefix, tipo_bd in [("moi", "MEC"), ("moe", "EXT")]:
                     uid_list = request.POST.getlist(f"{prefix}_uid[]")
@@ -1069,9 +1074,8 @@ def detalle_cotizacion(request, pk):
                 return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
         except Exception as e:
-            # 🔥 SI HAY CUALQUIER ERROR EN BD, LO ATRAPAMOS AQUÍ Y LO MOSTRAMOS EN PANTALLA
             error_msg = f"🚨 ERROR DEL SISTEMA: {str(e)}"
-            print(traceback.format_exc()) # Esto se queda en tu consola de servidor
+            print(traceback.format_exc())
             messages.error(request, error_msg)
             return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
@@ -1081,55 +1085,60 @@ def detalle_cotizacion(request, pk):
         "sucursal_activa": sucursal_activa,
     })
 
-import traceback
+
 @login_required
 def aprobar_cotizacion(request, pk):
     """
-    Pasa TODOS los datos a la OT y activa el descuento de inventario.
+    Pasa TODOS los datos a la OT y marca como aprobada.
     """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     
-    if request.method == "POST":
-        with transaction.atomic():
-            orden_destino = cotizacion.orden
-            
-            # 1. Copiar Repuestos a la OT
-            for item in cotizacion.insumos_cotizados.all():
-                OrdenInsumoDetalle.objects.create(
-                    orden=orden_destino,
-                    producto=item.producto,
-                    descripcion_factura=item.descripcion_factura,
-                    cantidad=item.cantidad,
-                    precio_unitario=item.precio_unitario
-                )
+    if not cotizacion.orden:
+        messages.error(request, "Esta proforma no está vinculada a ninguna OT.")
+        return redirect('detalle_cotizacion', pk=pk)
 
-            # 2. Copiar Servicios (MOI y MOE) a la OT
-            for serv in cotizacion.servicios_cotizados.all():
-                nuevo_servicio_ot = OrdenServicioDetalle.objects.create(
-                    orden=orden_destino,
-                    servicio=serv.servicio,
-                    tipo_servicio=serv.tipo_servicio,
-                    descripcion_servicio=serv.descripcion_servicio,
-                    cantidad=serv.cantidad,
-                    precio_unitario=serv.precio_unitario
-                )
+    if request.method == "POST":
+        try:
+            with transaction.atomic():
+                orden_destino = cotizacion.orden
                 
-                # Copiar los procedimientos de cada servicio si existen
-                if hasattr(serv, 'procedimientos_detalle'):
+                # 1. Copiar Repuestos a la OT
+                for item in cotizacion.insumos_cotizados.all():
+                    OrdenInsumoDetalle.objects.create(
+                        orden=orden_destino,
+                        producto=item.producto,
+                        descripcion_factura=item.descripcion_factura,
+                        cantidad=item.cantidad,
+                        precio_unitario=item.precio_unitario
+                    )
+
+                # 2. Copiar Servicios
+                for serv in cotizacion.servicios_cotizados.all():
+                    nuevo_servicio_ot = OrdenServicioDetalle.objects.create(
+                        orden=orden_destino,
+                        servicio=serv.servicio,
+                        tipo_servicio=serv.tipo_servicio,
+                        descripcion_servicio=serv.descripcion_servicio,
+                        cantidad=serv.cantidad,
+                        precio_unitario=serv.precio_unitario
+                    )
+                    
                     for proc in serv.procedimientos_detalle.all():
                         OrdenServicioProcedimientoDetalle.objects.create(
                             servicio_detalle=nuevo_servicio_ot,
                             descripcion=proc.descripcion
                         )
 
-            # 3. Cambiar el estado de la proforma para que no se pueda volver a aprobar
-            cotizacion.estado = 'APROBADA'
-            cotizacion.save()
-            
-            # 4. Actualizar los totales reales de la OT
-            orden_destino.calcular_total()
+                # 3. Finalizar Proforma
+                cotizacion.estado = 'APROBADA'
+                cotizacion.save()
+                
+                orden_destino.calcular_total()
 
-        messages.success(request, "Repuestos y Servicios cargados a la Orden de Trabajo.")
-        return redirect('detalle_orden', pk=orden_destino.pk)
+            messages.success(request, "Items cargados a la Orden de Trabajo con éxito.")
+            return redirect('detalle_orden', pk=orden_destino.pk)
+        except Exception as e:
+            messages.error(request, f"Error al aprobar: {str(e)}")
+            return redirect('detalle_cotizacion', pk=pk)
 
     return redirect('dashboard')
