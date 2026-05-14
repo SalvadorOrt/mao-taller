@@ -32,11 +32,6 @@
         </div>
 
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <!-- Botón de Imprimir -->
-            <button type="button" class="btn-login" style="background: #f5f5f7; color: var(--text);">
-                <i class="bi bi-printer" style="margin-right: 5px;"></i> Imprimir Proforma
-            </button>
-
             <!-- Botón de Aprobar (Solo si tiene OT vinculada y está pendiente) -->
             {% if cotizacion.orden and cotizacion.estado == 'PENDIENTE' %}
                 <button type="button"
