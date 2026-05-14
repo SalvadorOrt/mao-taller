@@ -961,11 +961,12 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
     messages.success(request, f"Proforma de ampliación {num_cotizacion} generada.")
     return redirect('detalle_cotizacion', pk=nueva_cotizacion.pk)
 
+from django.http import HttpResponse # <-- Importación necesaria para el truco
 
 @login_required
 def detalle_cotizacion(request, pk):
     """
-    Edición de items de la proforma (Basado en la lógica exitosa de Órdenes).
+    Edición de items de la proforma (CON INTERCEPTOR DE DIAGNÓSTICO).
     """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     sucursal_activa = obtener_sucursal_activa(request)
@@ -975,6 +976,15 @@ def detalle_cotizacion(request, pk):
     categorias = Categoria.objects.all().order_by("nombre")
 
     if request.method == "POST":
+        
+        # 🔥 EL INTERCEPTOR EMPIEZA AQUÍ 🔥
+        # Esto atrapará todo lo que manda el HTML, lo mostrará en pantalla y detendrá el código.
+        datos_crudos = dict(request.POST)
+        return HttpResponse(f"<h1>Datos recibidos del formulario:</h1><pre>{datos_crudos}</pre>")
+        # 🔥 EL INTERCEPTOR TERMINA AQUÍ 🔥
+
+        # Todo este bloque de abajo no se va a ejecutar por ahora, 
+        # y está bien, eso es lo que queremos para poder leer los datos primero.
         with transaction.atomic():
             cotizacion.insumos_cotizados.all().delete()
             cotizacion.servicios_cotizados.all().delete()
@@ -987,7 +997,6 @@ def detalle_cotizacion(request, pk):
             rep_pu = request.POST.getlist("rep_pu[]")
             rep_cant = request.POST.getlist("rep_cantidad[]")
 
-            # Tomamos el número máximo de elementos enviados para no perder nada
             total_filas_rep = max(len(rep_ids), len(rep_desc), len(rep_pu), len(rep_cant))
 
             for i in range(total_filas_rep):
@@ -1005,7 +1014,6 @@ def detalle_cotizacion(request, pk):
                 
                 precio = parse_decimal(pu_str, Decimal("0.00"))
                 
-                # Manejamos el ID para asegurar que sea numérico o None
                 producto_id_final = None
                 if p_id and p_id.isdigit():
                     producto_id_final = int(p_id)
@@ -1045,7 +1053,6 @@ def detalle_cotizacion(request, pk):
                     if cantidad <= 0:
                         continue
                     
-                    # Manejamos el ID del servicio
                     servicio_id_final = None
                     if s_id and s_id.isdigit():
                         servicio_id_final = int(s_id)
@@ -1060,7 +1067,6 @@ def detalle_cotizacion(request, pk):
                         tipo_servicio=tipo_bd
                     )
 
-                    # Guardamos los procedimientos (tareas hijas)
                     procedimientos = request.POST.getlist(f"{prefix}_procedimientos_{uid}[]")
                     for j, procedimiento in enumerate(procedimientos, start=1):
                         procedimiento = procedimiento.strip()
@@ -1076,7 +1082,6 @@ def detalle_cotizacion(request, pk):
             messages.success(request, "Proforma guardada correctamente.")
             return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
-    # Render del GET
     return render(
         request,
         "detalle_cotizacion.html",
@@ -1086,7 +1091,6 @@ def detalle_cotizacion(request, pk):
             "sucursal_activa": sucursal_activa,
         }
     )
-
 @login_required
 def aprobar_cotizacion(request, pk):
     """
