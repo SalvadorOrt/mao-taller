@@ -188,7 +188,13 @@
             <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Placa</div>
             <div style="font-size: 16px; font-weight: 800; color: #0071e3; letter-spacing: 1px;">{{ orden.placa|upper|default:"S/P" }}</div>
             <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 8px; text-transform: uppercase;">Kilometraje</div>
-            <div style="font-size: 15px; font-weight: 800; color: #1d1d1f; margin-top: 2px;">{{ orden.kilometraje|default:"NO REGISTRADO" }}</div>
+            <div style="font-size: 15px; font-weight: 800; color: #1d1d1f; margin-top: 2px;">
+                {% if orden.kilometraje %}
+                    {{ orden.kilometraje|localize }} km
+                {% else %}
+                    NO REGISTRADO
+                {% endif %}
+            </div>
         </div>
 
         <!-- COMBUSTIBLE -->
