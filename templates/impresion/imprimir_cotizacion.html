@@ -309,7 +309,6 @@
         <tr>
             <td><span class="label">Vehículo</span><span class="value">{{ cotizacion.vehiculo|upper|default:"-" }}</span></td>
             <td><span class="label">Año</span><span class="value">{{ cotizacion.anio_vehiculo|default:"-" }}</span></td>
-            <td><span class="label">Validez</span><span class="value">{{ cotizacion.validez_dias }} días</span></td>
         </tr>
     </table>
 
@@ -394,7 +393,6 @@
         </table>
         <p class="note" style="margin-top: 15px; text-align: left;">
             * Precios sujetos a cambios según disponibilidad de stock.<br>
-            * Proforma válida por {{ cotizacion.validez_dias }} días.
         </p>
     </div>
 </div>
