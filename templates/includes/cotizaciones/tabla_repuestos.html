@@ -2,7 +2,6 @@
     #cuerpoTablaRepuestos {
         border-collapse: collapse;
     }
-
     .ot-table tbody tr:empty {
         display: none !important;
     }
@@ -38,9 +37,10 @@
                 <tr>
                     <td class="producto-cell">
                         <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="{{ item.producto.id|default_if_none:'' }}">
-                        <input type="hidden" name="rep_categoria_id[]" value="">
-                        <input type="hidden" name="rep_codigo_barras[]" value="">
-                        <input type="hidden" name="rep_codigo_empaque[]" value="">
+                        <!-- 🔥 AQUI FALTABAN ESTOS 3 VALORES PARA QUE AL GUARDAR DE NUEVO NO SE PIERDAN 🔥 -->
+                        <input type="hidden" name="rep_categoria_id[]" value="{{ item.categoria_referencia.id|default_if_none:'' }}">
+                        <input type="hidden" name="rep_codigo_barras[]" value="{{ item.codigo_barras_referencia|default_if_none:'' }}">
+                        <input type="hidden" name="rep_codigo_empaque[]" value="{{ item.codigo_empaque_referencia|default_if_none:'' }}">
 
                         <div class="producto-busqueda-wrap">
                             {% if item.producto %}
@@ -53,11 +53,16 @@
                                        onkeydown="manejarTeclaBusquedaProducto(event, this)"
                                        onfocus="buscarProductoEnFila(this)">
                             {% else %}
-                                <input type="text"
-                                       class="form-control-apple"
-                                       value="[ TEXTO LIBRE / MANUAL ]"
-                                       readonly
-                                       style="background-color:#f5f5f7; color:#86868b; font-size:11px; text-align:center; font-weight:bold;">
+                                <!-- 🔥 SI NO ES DE INVENTARIO, MOSTRAMOS LOS DATOS DEL INGRESO RÁPIDO 🔥 -->
+                                <div class="producto-busqueda-wrap" style="text-align:center; background-color:#f5f5f7; padding:8px; border-radius:6px; font-weight:bold; color:#86868b; font-size:11px;">
+                                    {% if item.codigo_barras_referencia %}
+                                        {{ item.codigo_barras_referencia }}
+                                    {% elif item.codigo_empaque_referencia %}
+                                        {{ item.codigo_empaque_referencia }}
+                                    {% else %}
+                                        [ TEXTO LIBRE / MANUAL ]
+                                    {% endif %}
+                                </div>
                             {% endif %}
                         </div>
                     </td>
@@ -81,7 +86,7 @@
                                step="0.01"
                                name="rep_pu[]"
                                class="form-control-apple pu"
-                               value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                               value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f'|default:'0.00' }}{% else %}0.00{% endif %}"
                                placeholder="0.00"
                                oninput="calcularFila(this)">
                     </td>
@@ -91,7 +96,7 @@
                                step="1"
                                name="rep_cantidad[]"
                                class="form-control-apple cantidad"
-                               value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                               value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f'|default:'1.00' }}{% else %}1.00{% endif %}"
                                oninput="calcularFila(this)">
                     </td>
 
@@ -100,7 +105,7 @@
                                step="0.01"
                                name="rep_valor[]"
                                class="form-control-apple valor"
-                               value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                               value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f'|default:'0.00' }}{% else %}0.00{% endif %}"
                                placeholder="0.00"
                                readonly>
                     </td>
@@ -134,7 +139,7 @@
 </div>
 
 <!-- ======================================================= -->
-<!-- MODAL INGRESO RÁPIDO (Se mantiene intacto por su JS) -->
+<!-- MODAL INGRESO RÁPIDO -->
 <!-- ======================================================= -->
 <div id="modalIngresoRapido"
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:flex-start; padding-top:10vh; backdrop-filter:blur(3px);">
