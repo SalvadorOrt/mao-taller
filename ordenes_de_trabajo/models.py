@@ -1335,7 +1335,6 @@ class CotizacionServicioDetalle(models.Model):
         super().delete(*args, **kwargs)
         cotizacion.calcular_total()
 
-
 class CotizacionInsumoDetalle(models.Model):
     cotizacion = models.ForeignKey(Cotizacion, related_name="insumos_cotizados", on_delete=models.CASCADE)
     producto = models.ForeignKey("inventario.CodigoProducto", on_delete=models.PROTECT, null=True, blank=True)
@@ -1345,6 +1344,24 @@ class CotizacionInsumoDetalle(models.Model):
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
     orden_item = models.PositiveIntegerField(default=1)
+
+    # 🔥 NUEVOS CAMPOS (El Espejo de la Orden de Trabajo para el Ingreso Rápido)
+    categoria_referencia = models.ForeignKey(
+        "inventario.Categoria",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    codigo_empaque_referencia = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+    codigo_barras_referencia = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["orden_item", "id"]
@@ -1362,6 +1379,8 @@ class CotizacionInsumoDetalle(models.Model):
         cotizacion = self.cotizacion
         super().delete(*args, **kwargs)
         cotizacion.calcular_total()
+
+
 class CotizacionProcedimientoDetalle(models.Model):
     servicio_cotizado = models.ForeignKey(
         CotizacionServicioDetalle, 
@@ -1369,6 +1388,12 @@ class CotizacionProcedimientoDetalle(models.Model):
         on_delete=models.CASCADE
     )
     descripcion = models.CharField(max_length=255)
+    
+    # 🔥 NUEVO CAMPO: Para mantener el orden de los procedimientos igual que en la OT
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
 
     def __str__(self):
         return f"{self.servicio_cotizado.descripcion_servicio} - {self.descripcion}"

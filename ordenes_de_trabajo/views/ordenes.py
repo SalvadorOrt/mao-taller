@@ -965,112 +965,127 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
 @login_required
 def detalle_cotizacion(request, pk):
     """
-    Edición de items de la proforma con limpieza de datos robusta.
+    Edición de items de la proforma (Basado en la lógica exitosa de Órdenes).
     """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     sucursal_activa = obtener_sucursal_activa(request)
+    
+    # Asumo que tu modelo se llama Categoria o CategoriaInventario. 
+    # Asegúrate de importar el modelo Categoria en la parte superior del archivo.
     categorias = Categoria.objects.all().order_by("nombre")
 
     if request.method == "POST":
-        # Función interna para limpiar números (maneja comas y vacíos)
-        def limpiar_decimal(valor, default="0.00"):
-            if not valor: return Decimal(default)
-            # Reemplaza coma por punto y quita espacios
-            valor_limpio = str(valor).replace(',', '.').strip()
-            try:
-                return Decimal(valor_limpio)
-            except:
-                return Decimal(default)
-
         with transaction.atomic():
-            # Limpiamos antes de re-insertar
             cotizacion.insumos_cotizados.all().delete()
             cotizacion.servicios_cotizados.all().delete()
 
-            # --- 1. GUARDAR REPUESTOS ---
+            # =================================================
+            # REPUESTOS
+            # =================================================
             rep_ids = request.POST.getlist("rep_producto_id[]")
             rep_desc = request.POST.getlist("rep_descripcion[]")
             rep_pu = request.POST.getlist("rep_pu[]")
             rep_cant = request.POST.getlist("rep_cantidad[]")
 
-            for i in range(len(rep_desc)):
-                if not rep_desc[i].strip(): continue
+            # Tomamos el número máximo de elementos enviados para no perder nada
+            total_filas_rep = max(len(rep_ids), len(rep_desc), len(rep_pu), len(rep_cant))
+
+            for i in range(total_filas_rep):
+                p_id = rep_ids[i].strip() if i < len(rep_ids) else ""
+                desc = rep_desc[i].strip() if i < len(rep_desc) else ""
+                pu_str = rep_pu[i].strip() if i < len(rep_pu) else ""
+                cant_str = rep_cant[i].strip() if i < len(rep_cant) else ""
+
+                if not p_id and not desc:
+                    continue
+
+                cantidad = parse_cantidad(cant_str, Decimal("1.00"))
+                if cantidad <= 0:
+                    continue
                 
-                # Validación de ID de producto (Si es "" lo hacemos None)
-                p_id = rep_ids[i] if i < len(rep_ids) and rep_ids[i].isdigit() else None
+                precio = parse_decimal(pu_str, Decimal("0.00"))
+                
+                # Manejamos el ID para asegurar que sea numérico o None
+                producto_id_final = None
+                if p_id and p_id.isdigit():
+                    producto_id_final = int(p_id)
 
                 CotizacionInsumoDetalle.objects.create(
                     cotizacion=cotizacion,
-                    producto_id=p_id,
-                    descripcion_factura=rep_desc[i].strip().upper(),
-                    cantidad=limpiar_decimal(rep_cant[i] if i < len(rep_cant) else "1", "1.00"),
-                    precio_unitario=limpiar_decimal(rep_pu[i] if i < len(rep_pu) else "0.00"),
+                    producto_id=producto_id_final,
+                    descripcion_factura=desc.upper(),
+                    cantidad=cantidad,
+                    precio_unitario=precio,
                     orden_item=i + 1
                 )
 
-            # --- 2. GUARDAR MANO DE OBRA INTERNA (MOI) ---
-            moi_ids = request.POST.getlist("moi_servicio_id[]")
-            moi_desc = request.POST.getlist("moi_descripcion[]")
-            moi_pu = request.POST.getlist("moi_pu[]")
-            moi_cant = request.POST.getlist("moi_cantidad[]")
-            moi_uids = request.POST.getlist("moi_uid[]")
+            # =================================================
+            # MANO DE OBRA INTERNA / EXTERNA
+            # =================================================
+            for prefix, tipo_bd in [("moi", "MEC"), ("moe", "EXT")]:
+                uid_list = request.POST.getlist(f"{prefix}_uid[]")
+                desc_list = request.POST.getlist(f"{prefix}_descripcion[]")
+                pu_list = request.POST.getlist(f"{prefix}_pu[]")
+                cant_list = request.POST.getlist(f"{prefix}_cantidad[]")
+                serv_ids = request.POST.getlist(f"{prefix}_servicio_id[]")
 
-            for i in range(len(moi_desc)):
-                if not moi_desc[i].strip(): continue
-                
-                s_id = moi_ids[i] if i < len(moi_ids) and moi_ids[i].isdigit() else None
-                
-                servicio_obj = CotizacionServicioDetalle.objects.create(
-                    cotizacion=cotizacion,
-                    servicio_id=s_id,
-                    tipo_servicio='MEC',
-                    descripcion_servicio=moi_desc[i].strip().upper(),
-                    cantidad=limpiar_decimal(moi_cant[i] if i < len(moi_cant) else "1", "1.00"),
-                    precio_unitario=limpiar_decimal(moi_pu[i] if i < len(moi_pu) else "0.00"),
-                    orden_item=i + 1
-                )
-                
-                # Guardar procedimientos hijos
-                if i < len(moi_uids):
-                    uid = moi_uids[i]
-                    procs = request.POST.getlist(f"moi_procedimientos_{uid}[]")
-                    for proc in procs:
-                        if proc.strip():
-                            CotizacionProcedimientoDetalle.objects.create(
-                                servicio_cotizado=servicio_obj,
-                                descripcion=proc.strip().upper()
-                            )
+                total_filas_mo = max(len(uid_list), len(desc_list), len(pu_list), len(cant_list), len(serv_ids))
 
-            # --- 3. GUARDAR MANO DE OBRA EXTERNA (MOE) ---
-            moe_ids = request.POST.getlist("moe_servicio_id[]")
-            moe_desc = request.POST.getlist("moe_descripcion[]")
-            moe_pu = request.POST.getlist("moe_pu[]")
-            moe_cant = request.POST.getlist("moe_cantidad[]")
+                for i in range(total_filas_mo):
+                    uid = (uid_list[i].strip() if i < len(uid_list) and uid_list[i].strip() else str(i))
+                    descripcion = desc_list[i].strip() if i < len(desc_list) else ""
+                    s_id = serv_ids[i].strip() if i < len(serv_ids) else ""
 
-            for i in range(len(moe_desc)):
-                if not moe_desc[i].strip(): continue
-                
-                ext_id = moe_ids[i] if i < len(moe_ids) and moe_ids[i].isdigit() else None
-                
-                CotizacionServicioDetalle.objects.create(
-                    cotizacion=cotizacion,
-                    servicio_id=ext_id,
-                    tipo_servicio='EXT',
-                    descripcion_servicio=moe_desc[i].strip().upper(),
-                    cantidad=limpiar_decimal(moe_cant[i] if i < len(moe_cant) else "1", "1.00"),
-                    precio_unitario=limpiar_decimal(moe_pu[i] if i < len(moe_pu) else "0.00"),
-                    orden_item=i + 1
-                )
+                    if not descripcion and not s_id:
+                        continue
 
-        cotizacion.calcular_total()
-        messages.success(request, "Proforma guardada correctamente.")
-        return redirect('detalle_cotizacion', pk=cotizacion.pk)
+                    precio = parse_decimal(pu_list[i] if i < len(pu_list) else "0.00", Decimal("0.00"))
+                    cantidad = parse_cantidad(cant_list[i] if i < len(cant_list) else "1.00", Decimal("1.00"))
 
-    return render(request, "detalle_cotizacion.html", {
-        "cotizacion": cotizacion,
-        "categorias_inventario": categorias,
-        "sucursal_activa": sucursal_activa
-    })
+                    if cantidad <= 0:
+                        continue
+                    
+                    # Manejamos el ID del servicio
+                    servicio_id_final = None
+                    if s_id and s_id.isdigit():
+                        servicio_id_final = int(s_id)
+
+                    detalle_servicio = CotizacionServicioDetalle.objects.create(
+                        cotizacion=cotizacion,
+                        servicio_id=servicio_id_final,
+                        descripcion_servicio=descripcion.upper(),
+                        cantidad=cantidad,
+                        precio_unitario=precio,
+                        orden_item=i + 1,
+                        tipo_servicio=tipo_bd
+                    )
+
+                    # Guardamos los procedimientos (tareas hijas)
+                    procedimientos = request.POST.getlist(f"{prefix}_procedimientos_{uid}[]")
+                    for j, procedimiento in enumerate(procedimientos, start=1):
+                        procedimiento = procedimiento.strip()
+                        if not procedimiento:
+                            continue
+
+                        CotizacionProcedimientoDetalle.objects.create(
+                            servicio_cotizado=detalle_servicio,
+                            descripcion=procedimiento.upper()
+                        )
+
+            cotizacion.calcular_total()
+            messages.success(request, "Proforma guardada correctamente.")
+            return redirect('detalle_cotizacion', pk=cotizacion.pk)
+
+    # Render del GET
+    return render(
+        request,
+        "detalle_cotizacion.html",
+        {
+            "cotizacion": cotizacion,
+            "categorias_inventario": categorias,
+            "sucursal_activa": sucursal_activa,
+        }
+    )
 
 @login_required
 def aprobar_cotizacion(request, pk):
