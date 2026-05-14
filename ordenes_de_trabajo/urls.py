@@ -23,19 +23,11 @@ urlpatterns = [
     # ========================
     # Cotizaciones / Proformas
     # ========================
-    # 1. Crear cotización desde el Menú Principal (Mostrador)
+  
     path('cotizacion/nueva/', views.crear_cotizacion, name='crear_cotizacion'),
-
-    # 2. Crear cotización vinculada a una OT (Ampliación)
     path('orden/<int:pk_orden>/cotizar/', views.nueva_cotizacion_desde_ot, name='nueva_cotizacion_desde_ot'),
-
-    # 3. Ver y editar el detalle (Tablas MOI, MOE y Repuestos)
     path('cotizacion/<int:pk>/detalle/', views.detalle_cotizacion, name='detalle_cotizacion'),
-
-    # 4. Aprobar proforma (Pasa los datos a la OT oficial)
     path('cotizacion/<int:pk>/aprobar/', views.aprobar_cotizacion, name='aprobar_cotizacion'),
-
-    # NUEVO: 5. Impresión de Proforma (Para que el botón del HTML funcione)
     path('cotizacion/<int:pk>/imprimir/', views.imprimir_cotizacion, name='imprimir_cotizacion'),
 
     # ========================
@@ -49,7 +41,6 @@ urlpatterns = [
     # ========================
     path('historial/', views.historial_vehiculos, name='historial_vehiculos'),
     path('expediente/<int:pk>/', views.detalle_expediente, name='detalle_expediente'),
-
     # ========================
     # APIs y Auxiliares
     # ========================

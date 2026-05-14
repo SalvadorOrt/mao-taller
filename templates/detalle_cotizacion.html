@@ -8,13 +8,7 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
 
-<!-- 🔥 CUADRO DE DIAGNÓSTICO (DETECTOR DE MENTIRAS) 🔥 -->
-<div style="background: #fff3cd; color: #856404; padding: 15px; border: 2px solid #ffeeba; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 16px; font-weight: bold;">
-    🔍 DIAGNÓSTICO DEL SERVIDOR:
-    <br>
-    Esta proforma tiene exactamente <span style="font-size: 24px; color: red;">{{ cotizacion.insumos_cotizados.count }}</span> repuestos guardados en la BD.
-</div>
-<!-- 🔥 FIN DEL CUADRO 🔥 -->
+
 
 <!-- Asumimos que la cotización siempre se puede editar si está PENDIENTE -->
 <div class="container ot-wrapper" data-puede-editar="{% if cotizacion.estado == 'PENDIENTE' %}true{% else %}false{% endif %}">

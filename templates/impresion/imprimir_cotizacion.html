@@ -1,0 +1,402 @@
+{% load static %}
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Proforma - {{ cotizacion.numero_cotizacion }}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #123b7a;
+            --primary-soft: #eef4ff;
+            --text: #111827;
+            --muted: #4b5563;
+            --line: #d9dee8;
+            --danger: #c1121f;
+            --dark: #0f172a;
+            --radius: 9px;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #e5e7eb;
+            color: var(--text);
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 10.3px;
+            line-height: 1.45;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 9mm 10mm;
+            overflow: hidden;
+        }
+
+        .top-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 11px;
+        }
+
+        .top-table td {
+            border: none;
+            vertical-align: top;
+            padding: 0 0 8px 0;
+        }
+
+        .top-left {
+            width: 40%;
+            padding-right: 10px;
+        }
+
+        .top-right {
+            width: 60%;
+            text-align: right;
+        }
+
+        .logo img {
+            max-width: 150px;
+            max-height: 62px;
+            object-fit: contain;
+        }
+
+        .company {
+            margin-top: 5px;
+            font-size: 8.6px;
+            color: var(--muted);
+            line-height: 1.45;
+            font-weight: 500;
+        }
+
+        .doc-title {
+            font-size: 19px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .doc-number {
+            margin-top: 6px;
+            padding: 5px 9px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--danger);
+            font-size: 9.5px;
+            font-weight: 900;
+            display: inline-block;
+        }
+
+        .doc-date {
+            margin-top: 6px;
+            font-size: 9px;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .info-grid {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 6px;
+            margin: 0 -6px 11px -6px;
+        }
+
+        .info-grid td {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #fff;
+            padding: 7px 8px;
+            vertical-align: top;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 7.4px;
+            font-weight: 800;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .value {
+            display: block;
+            font-size: 10.2px;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .section {
+            margin-top: 11px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 6px;
+            font-size: 9px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--primary);
+            opacity: .24;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .detail-table th {
+            background: var(--primary);
+            color: #fff;
+            padding: 6px 7px;
+            font-size: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            text-align: left;
+        }
+
+        .detail-table td {
+            border-bottom: 1px solid var(--line);
+            padding: 6px 7px;
+            font-size: 9.8px;
+            font-weight: 500;
+            background: #fff;
+            vertical-align: top;
+            color: var(--text);
+            overflow-wrap: anywhere;
+        }
+
+        .detail-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        .procedimientos-list {
+            display: block;
+            margin-top: 4px;
+            padding-left: 9px;
+            color: var(--muted);
+            font-size: 8.4px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .section-subtotal {
+            width: 100%;
+            text-align: right;
+            font-size: 9.3px;
+            font-weight: 900;
+            color: var(--dark);
+            margin: 4px 0 8px 0;
+            padding-right: 2px;
+        }
+
+        .section-subtotal span {
+            color: var(--danger);
+            font-size: 10.5px;
+        }
+
+        .totals-wrap {
+            width: 100%;
+            margin-top: 14px;
+        }
+
+        .totals-table {
+            width: 43%;
+            margin-left: auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .totals-table td {
+            padding: 8px 9px;
+            font-size: 10.2px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .totals-table tr:last-child td {
+            border-bottom: none;
+            background: var(--primary-soft);
+        }
+
+        .total-label { font-weight: 900; color: var(--dark); text-transform: uppercase; }
+        .total-value { text-align: right; font-weight: 900; color: var(--danger); font-size: 14px !important; }
+
+        @media print {
+            body { background: #fff; }
+            .page { width: auto; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+
+<body onload="window.print();">
+
+<div class="page">
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+                <div class="company">
+                    RUC: {{ empresa.ruc|default:"SIN RUC" }}<br>
+                    {{ empresa.direccion|default:"Quito, Ecuador" }}
+                </div>
+            </td>
+            <td class="top-right">
+                <div class="doc-title">Proforma / Cotización</div>
+                <div class="doc-number">{{ cotizacion.numero_cotizacion }}</div>
+                <div class="doc-date">Fecha: {{ cotizacion.fecha_creacion|date:"d/m/Y" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="info-grid">
+        <tr>
+            <td><span class="label">Cliente</span><span class="value">{{ cotizacion.nombre_cliente_final|upper }}</span></td>
+            <td><span class="label">Identificación</span><span class="value">{{ cotizacion.cliente.identificacion|default:"-" }}</span></td>
+            <td><span class="label">Placa</span><span class="value">{{ cotizacion.placa|upper }}</span></td>
+        </tr>
+        <tr>
+            <td><span class="label">Vehículo</span><span class="value">{{ cotizacion.vehiculo|upper|default:"-" }}</span></td>
+            <td><span class="label">Año</span><span class="value">{{ cotizacion.anio_vehiculo|default:"-" }}</span></td>
+            <td><span class="label">Validez</span><span class="value">{{ cotizacion.validez_dias }} días</span></td>
+        </tr>
+    </table>
+
+    <!-- 1. REPUESTOS -->
+    <div class="section">
+        <div class="section-title">1. Repuestos e Insumos</div>
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 10%;">Cant.</th>
+                    <th style="width: 60%;">Descripción</th>
+                    <th class="text-right" style="width: 15%;">P.U.</th>
+                    <th class="text-right" style="width: 15%;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rep in repuestos %}
+                <tr>
+                    <td class="text-center">{{ rep.cantidad|floatformat:2 }}</td>
+                    <td>{{ rep.descripcion_factura|upper }}</td>
+                    <td class="text-right">${{ rep.precio_unitario|floatformat:2 }}</td>
+                    <td class="text-right">${{ rep.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center">No se registran repuestos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 2. MANO DE OBRA -->
+    <div class="section">
+        <div class="section-title">2. Mano de Obra y Servicios</div>
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 10%;">Cant.</th>
+                    <th style="width: 60%;">Descripción del Trabajo</th>
+                    <th class="text-right" style="width: 15%;">P.U.</th>
+                    <th class="text-right" style="width: 15%;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for serv in servicios %}
+                <tr>
+                    <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                    <td>
+                        {{ serv.descripcion_servicio|upper }}
+                        {% if serv.procedimientos_detalle.all %}
+                            <div class="procedimientos-list">
+                                {% for proc in serv.procedimientos_detalle.all %}
+                                    &bull; {{ proc.descripcion|upper }}<br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
+                    <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center">No se registran servicios.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TOTALES -->
+    <div class="totals-wrap">
+        <table class="totals-table">
+            <tr>
+                <td class="total-label">Subtotal</td>
+                <td class="text-right">${{ subtotal|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td class="total-label">IVA (15%)</td>
+                <td class="text-right">${{ iva|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td class="total-label" style="color: var(--danger);">Total Proforma</td>
+                <td class="total-value">${{ total|floatformat:2 }}</td>
+            </tr>
+        </table>
+        <p class="note" style="margin-top: 15px; text-align: left;">
+            * Precios sujetos a cambios según disponibilidad de stock.<br>
+            * Proforma válida por {{ cotizacion.validez_dias }} días.
+        </p>
+    </div>
+</div>
+</body>
+</html>
