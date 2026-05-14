@@ -960,137 +960,128 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
     
     messages.success(request, f"Proforma de ampliación {num_cotizacion} generada.")
     return redirect('detalle_cotizacion', pk=nueva_cotizacion.pk)
-
-from django.http import HttpResponse # <-- Importación necesaria para el truco
-
 @login_required
 def detalle_cotizacion(request, pk):
-    """
-    Edición de items de la proforma (CON INTERCEPTOR DE DIAGNÓSTICO).
-    """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     sucursal_activa = obtener_sucursal_activa(request)
-    
-    # Asumo que tu modelo se llama Categoria o CategoriaInventario. 
-    # Asegúrate de importar el modelo Categoria en la parte superior del archivo.
     categorias = Categoria.objects.all().order_by("nombre")
 
     if request.method == "POST":
-        
-        # 🔥 EL INTERCEPTOR EMPIEZA AQUÍ 🔥
-        # Esto atrapará todo lo que manda el HTML, lo mostrará en pantalla y detendrá el código.
-        datos_crudos = dict(request.POST)
-        return HttpResponse(f"<h1>Datos recibidos del formulario:</h1><pre>{datos_crudos}</pre>")
-        # 🔥 EL INTERCEPTOR TERMINA AQUÍ 🔥
+        try:
+            with transaction.atomic():
+                cotizacion.insumos_cotizados.all().delete()
+                cotizacion.servicios_cotizados.all().delete()
 
-        # Todo este bloque de abajo no se va a ejecutar por ahora, 
-        # y está bien, eso es lo que queremos para poder leer los datos primero.
-        with transaction.atomic():
-            cotizacion.insumos_cotizados.all().delete()
-            cotizacion.servicios_cotizados.all().delete()
+                # =================================================
+                # REPUESTOS
+                # =================================================
+                rep_ids = request.POST.getlist("rep_producto_id[]")
+                rep_desc = request.POST.getlist("rep_descripcion[]")
+                rep_pu = request.POST.getlist("rep_pu[]")
+                rep_cant = request.POST.getlist("rep_cantidad[]")
+                rep_cat = request.POST.getlist("rep_categoria_id[]")
+                rep_barras = request.POST.getlist("rep_codigo_barras[]")
+                rep_empaque = request.POST.getlist("rep_codigo_empaque[]")
 
-            # =================================================
-            # REPUESTOS
-            # =================================================
-            rep_ids = request.POST.getlist("rep_producto_id[]")
-            rep_desc = request.POST.getlist("rep_descripcion[]")
-            rep_pu = request.POST.getlist("rep_pu[]")
-            rep_cant = request.POST.getlist("rep_cantidad[]")
+                total_filas_rep = max(len(rep_ids), len(rep_desc), len(rep_pu), len(rep_cant))
+                repuestos_guardados = 0
 
-            total_filas_rep = max(len(rep_ids), len(rep_desc), len(rep_pu), len(rep_cant))
+                for i in range(total_filas_rep):
+                    p_id = rep_ids[i].strip() if i < len(rep_ids) else ""
+                    desc = rep_desc[i].strip() if i < len(rep_desc) else ""
+                    pu_str = rep_pu[i].strip() if i < len(rep_pu) else ""
+                    cant_str = rep_cant[i].strip() if i < len(rep_cant) else ""
+                    cat_id = rep_cat[i].strip() if i < len(rep_cat) else ""
+                    barras = rep_barras[i].strip() if i < len(rep_barras) else ""
+                    empaque = rep_empaque[i].strip() if i < len(rep_empaque) else ""
 
-            for i in range(total_filas_rep):
-                p_id = rep_ids[i].strip() if i < len(rep_ids) else ""
-                desc = rep_desc[i].strip() if i < len(rep_desc) else ""
-                pu_str = rep_pu[i].strip() if i < len(rep_pu) else ""
-                cant_str = rep_cant[i].strip() if i < len(rep_cant) else ""
+                    if not p_id and not desc: continue
 
-                if not p_id and not desc:
-                    continue
+                    cantidad = parse_cantidad(cant_str, Decimal("1.00"))
+                    if cantidad <= 0: continue
+                    precio = parse_decimal(pu_str, Decimal("0.00"))
 
-                cantidad = parse_cantidad(cant_str, Decimal("1.00"))
-                if cantidad <= 0:
-                    continue
-                
-                precio = parse_decimal(pu_str, Decimal("0.00"))
-                
-                producto_id_final = None
-                if p_id and p_id.isdigit():
-                    producto_id_final = int(p_id)
+                    producto_id_final = int(p_id) if p_id and p_id.isdigit() else None
+                    categoria_id_final = int(cat_id) if cat_id and cat_id.isdigit() else None
 
-                CotizacionInsumoDetalle.objects.create(
-                    cotizacion=cotizacion,
-                    producto_id=producto_id_final,
-                    descripcion_factura=desc.upper(),
-                    cantidad=cantidad,
-                    precio_unitario=precio,
-                    orden_item=i + 1
-                )
-
-            # =================================================
-            # MANO DE OBRA INTERNA / EXTERNA
-            # =================================================
-            for prefix, tipo_bd in [("moi", "MEC"), ("moe", "EXT")]:
-                uid_list = request.POST.getlist(f"{prefix}_uid[]")
-                desc_list = request.POST.getlist(f"{prefix}_descripcion[]")
-                pu_list = request.POST.getlist(f"{prefix}_pu[]")
-                cant_list = request.POST.getlist(f"{prefix}_cantidad[]")
-                serv_ids = request.POST.getlist(f"{prefix}_servicio_id[]")
-
-                total_filas_mo = max(len(uid_list), len(desc_list), len(pu_list), len(cant_list), len(serv_ids))
-
-                for i in range(total_filas_mo):
-                    uid = (uid_list[i].strip() if i < len(uid_list) and uid_list[i].strip() else str(i))
-                    descripcion = desc_list[i].strip() if i < len(desc_list) else ""
-                    s_id = serv_ids[i].strip() if i < len(serv_ids) else ""
-
-                    if not descripcion and not s_id:
-                        continue
-
-                    precio = parse_decimal(pu_list[i] if i < len(pu_list) else "0.00", Decimal("0.00"))
-                    cantidad = parse_cantidad(cant_list[i] if i < len(cant_list) else "1.00", Decimal("1.00"))
-
-                    if cantidad <= 0:
-                        continue
-                    
-                    servicio_id_final = None
-                    if s_id and s_id.isdigit():
-                        servicio_id_final = int(s_id)
-
-                    detalle_servicio = CotizacionServicioDetalle.objects.create(
+                    CotizacionInsumoDetalle.objects.create(
                         cotizacion=cotizacion,
-                        servicio_id=servicio_id_final,
-                        descripcion_servicio=descripcion.upper(),
+                        producto_id=producto_id_final,
+                        descripcion_factura=desc.upper(),
                         cantidad=cantidad,
                         precio_unitario=precio,
-                        orden_item=i + 1,
-                        tipo_servicio=tipo_bd
+                        categoria_referencia_id=categoria_id_final if not producto_id_final else None,
+                        codigo_barras_referencia=barras if not producto_id_final else None,
+                        codigo_empaque_referencia=empaque if not producto_id_final else None,
+                        orden_item=i + 1
                     )
+                    repuestos_guardados += 1
 
-                    procedimientos = request.POST.getlist(f"{prefix}_procedimientos_{uid}[]")
-                    for j, procedimiento in enumerate(procedimientos, start=1):
-                        procedimiento = procedimiento.strip()
-                        if not procedimiento:
-                            continue
+                # =================================================
+                # MANO DE OBRA
+                # =================================================
+                servicios_guardados = 0
+                for prefix, tipo_bd in [("moi", "MEC"), ("moe", "EXT")]:
+                    uid_list = request.POST.getlist(f"{prefix}_uid[]")
+                    desc_list = request.POST.getlist(f"{prefix}_descripcion[]")
+                    pu_list = request.POST.getlist(f"{prefix}_pu[]")
+                    cant_list = request.POST.getlist(f"{prefix}_cantidad[]")
+                    serv_ids = request.POST.getlist(f"{prefix}_servicio_id[]")
 
-                        CotizacionProcedimientoDetalle.objects.create(
-                            servicio_cotizado=detalle_servicio,
-                            descripcion=procedimiento.upper()
+                    total_filas_mo = max(len(uid_list), len(desc_list), len(pu_list), len(cant_list), len(serv_ids))
+
+                    for i in range(total_filas_mo):
+                        uid = (uid_list[i].strip() if i < len(uid_list) and uid_list[i].strip() else str(i))
+                        descripcion = desc_list[i].strip() if i < len(desc_list) else ""
+                        s_id = serv_ids[i].strip() if i < len(serv_ids) else ""
+
+                        if not descripcion and not s_id: continue
+
+                        precio = parse_decimal(pu_list[i] if i < len(pu_list) else "0.00", Decimal("0.00"))
+                        cantidad = parse_cantidad(cant_list[i] if i < len(cant_list) else "1.00", Decimal("1.00"))
+                        if cantidad <= 0: continue
+
+                        servicio_id_final = int(s_id) if s_id and s_id.isdigit() else None
+
+                        detalle_servicio = CotizacionServicioDetalle.objects.create(
+                            cotizacion=cotizacion,
+                            servicio_id=servicio_id_final,
+                            descripcion_servicio=descripcion.upper(),
+                            cantidad=cantidad,
+                            precio_unitario=precio,
+                            orden_item=i + 1,
+                            tipo_servicio=tipo_bd
                         )
+                        servicios_guardados += 1
 
-            cotizacion.calcular_total()
-            messages.success(request, "Proforma guardada correctamente.")
+                        procedimientos = request.POST.getlist(f"{prefix}_procedimientos_{uid}[]")
+                        for j, procedimiento in enumerate(procedimientos, start=1):
+                            procedimiento = procedimiento.strip()
+                            if not procedimiento: continue
+                            CotizacionProcedimientoDetalle.objects.create(
+                                servicio_cotizado=detalle_servicio,
+                                descripcion=procedimiento.upper(),
+                                orden_item=j
+                            )
+
+                cotizacion.calcular_total()
+                messages.success(request, f"✅ Proforma guardada. ({repuestos_guardados} repuestos, {servicios_guardados} servicios).")
+                return redirect('detalle_cotizacion', pk=cotizacion.pk)
+
+        except Exception as e:
+            # 🔥 SI HAY CUALQUIER ERROR EN BD, LO ATRAPAMOS AQUÍ Y LO MOSTRAMOS EN PANTALLA
+            error_msg = f"🚨 ERROR DEL SISTEMA: {str(e)}"
+            print(traceback.format_exc()) # Esto se queda en tu consola de servidor
+            messages.error(request, error_msg)
             return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
-    return render(
-        request,
-        "detalle_cotizacion.html",
-        {
-            "cotizacion": cotizacion,
-            "categorias_inventario": categorias,
-            "sucursal_activa": sucursal_activa,
-        }
-    )
+    return render(request, "detalle_cotizacion.html", {
+        "cotizacion": cotizacion,
+        "categorias_inventario": categorias,
+        "sucursal_activa": sucursal_activa,
+    })
+
+import traceback
 @login_required
 def aprobar_cotizacion(request, pk):
     """
