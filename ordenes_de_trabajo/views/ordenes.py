@@ -891,7 +891,7 @@ def consultar_regcheck(request):
     except requests.exceptions.RequestException as e:
         print(f"Error consultando API de Regcheck: {e}")
         return JsonResponse({"success": False, "error": "Servicio temporalmente no disponible."})
-    # =========================================================
+# =========================================================
 # 💡 MÓDULO DE COTIZACIONES / PROFORMAS (COMPLETO Y ACTUALIZADO)
 # =========================================================
 from decimal import Decimal # Asegúrate de tener esto importado arriba en tu views.py
@@ -965,19 +965,29 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
 @login_required
 def detalle_cotizacion(request, pk):
     """
-    Edición de items de la proforma (Sin afectar stock).
+    Edición de items de la proforma con limpieza de datos robusta.
     """
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     sucursal_activa = obtener_sucursal_activa(request)
     categorias = Categoria.objects.all().order_by("nombre")
 
     if request.method == "POST":
+        # Función interna para limpiar números (maneja comas y vacíos)
+        def limpiar_decimal(valor, default="0.00"):
+            if not valor: return Decimal(default)
+            # Reemplaza coma por punto y quita espacios
+            valor_limpio = str(valor).replace(',', '.').strip()
+            try:
+                return Decimal(valor_limpio)
+            except:
+                return Decimal(default)
+
         with transaction.atomic():
-            # Limpiamos todo antes de insertar lo nuevo
+            # Limpiamos antes de re-insertar
             cotizacion.insumos_cotizados.all().delete()
             cotizacion.servicios_cotizados.all().delete()
 
-            # 1. PROCESAR REPUESTOS
+            # --- 1. GUARDAR REPUESTOS ---
             rep_ids = request.POST.getlist("rep_producto_id[]")
             rep_desc = request.POST.getlist("rep_descripcion[]")
             rep_pu = request.POST.getlist("rep_pu[]")
@@ -985,48 +995,53 @@ def detalle_cotizacion(request, pk):
 
             for i in range(len(rep_desc)):
                 if not rep_desc[i].strip(): continue
+                
+                # Validación de ID de producto (Si es "" lo hacemos None)
+                p_id = rep_ids[i] if i < len(rep_ids) and rep_ids[i].isdigit() else None
+
                 CotizacionInsumoDetalle.objects.create(
                     cotizacion=cotizacion,
-                    producto_id=rep_ids[i] if i < len(rep_ids) and rep_ids[i] else None,
+                    producto_id=p_id,
                     descripcion_factura=rep_desc[i].strip().upper(),
-                    cantidad=parse_decimal(rep_cant[i] if i < len(rep_cant) else "1", Decimal("1")),
-                    precio_unitario=parse_decimal(rep_pu[i] if i < len(rep_pu) else "0", Decimal("0")),
+                    cantidad=limpiar_decimal(rep_cant[i] if i < len(rep_cant) else "1", "1.00"),
+                    precio_unitario=limpiar_decimal(rep_pu[i] if i < len(rep_pu) else "0.00"),
                     orden_item=i + 1
                 )
 
-            # 2. PROCESAR MANO DE OBRA INTERNA (MOI)
+            # --- 2. GUARDAR MANO DE OBRA INTERNA (MOI) ---
             moi_ids = request.POST.getlist("moi_servicio_id[]")
             moi_desc = request.POST.getlist("moi_descripcion[]")
             moi_pu = request.POST.getlist("moi_pu[]")
             moi_cant = request.POST.getlist("moi_cantidad[]")
-            moi_uids = request.POST.getlist("moi_uid[]") # Para rastrear los procedimientos hijos
+            moi_uids = request.POST.getlist("moi_uid[]")
 
             for i in range(len(moi_desc)):
                 if not moi_desc[i].strip(): continue
+                
+                s_id = moi_ids[i] if i < len(moi_ids) and moi_ids[i].isdigit() else None
+                
                 servicio_obj = CotizacionServicioDetalle.objects.create(
                     cotizacion=cotizacion,
-                    servicio_id=moi_ids[i] if i < len(moi_ids) and moi_ids[i] else None,
-                    tipo_servicio='MEC', # MEC = Mecánica / Interna
+                    servicio_id=s_id,
+                    tipo_servicio='MEC',
                     descripcion_servicio=moi_desc[i].strip().upper(),
-                    cantidad=parse_decimal(moi_cant[i] if i < len(moi_cant) else "1", Decimal("1")),
-                    precio_unitario=parse_decimal(moi_pu[i] if i < len(moi_pu) else "0", Decimal("0")),
+                    cantidad=limpiar_decimal(moi_cant[i] if i < len(moi_cant) else "1", "1.00"),
+                    precio_unitario=limpiar_decimal(moi_pu[i] if i < len(moi_pu) else "0.00"),
                     orden_item=i + 1
                 )
                 
-                # Procesar procedimientos (tareas hijas) si existen
+                # Guardar procedimientos hijos
                 if i < len(moi_uids):
                     uid = moi_uids[i]
                     procs = request.POST.getlist(f"moi_procedimientos_{uid}[]")
                     for proc in procs:
                         if proc.strip():
-                            # Asumiendo que creaste un modelo para los procedimientos de la cotización
-                            # Si no lo tienes, puedes comentar estas 3 líneas de abajo para que no de error
                             CotizacionProcedimientoDetalle.objects.create(
                                 servicio_cotizado=servicio_obj,
                                 descripcion=proc.strip().upper()
                             )
 
-            # 3. PROCESAR MANO DE OBRA EXTERNA (MOE)
+            # --- 3. GUARDAR MANO DE OBRA EXTERNA (MOE) ---
             moe_ids = request.POST.getlist("moe_servicio_id[]")
             moe_desc = request.POST.getlist("moe_descripcion[]")
             moe_pu = request.POST.getlist("moe_pu[]")
@@ -1034,28 +1049,28 @@ def detalle_cotizacion(request, pk):
 
             for i in range(len(moe_desc)):
                 if not moe_desc[i].strip(): continue
+                
+                ext_id = moe_ids[i] if i < len(moe_ids) and moe_ids[i].isdigit() else None
+                
                 CotizacionServicioDetalle.objects.create(
                     cotizacion=cotizacion,
-                    servicio_id=moe_ids[i] if i < len(moe_ids) and moe_ids[i] else None,
-                    tipo_servicio='EXT', # EXT = Torno, Terceros
+                    servicio_id=ext_id,
+                    tipo_servicio='EXT',
                     descripcion_servicio=moe_desc[i].strip().upper(),
-                    cantidad=parse_decimal(moe_cant[i] if i < len(moe_cant) else "1", Decimal("1")),
-                    precio_unitario=parse_decimal(moe_pu[i] if i < len(moe_pu) else "0", Decimal("0")),
+                    cantidad=limpiar_decimal(moe_cant[i] if i < len(moe_cant) else "1", "1.00"),
+                    precio_unitario=limpiar_decimal(moe_pu[i] if i < len(moe_pu) else "0.00"),
                     orden_item=i + 1
                 )
 
-            # Recalculamos los totales financieros de la cotización
-            cotizacion.calcular_total()
-            messages.success(request, "Proforma guardada con éxito.")
-            return redirect('detalle_cotizacion', pk=cotizacion.pk)
+        cotizacion.calcular_total()
+        messages.success(request, "Proforma guardada correctamente.")
+        return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
-    # CORRECCIÓN: Ruta del template actualizada
     return render(request, "detalle_cotizacion.html", {
         "cotizacion": cotizacion,
         "categorias_inventario": categorias,
         "sucursal_activa": sucursal_activa
     })
-
 
 @login_required
 def aprobar_cotizacion(request, pk):
