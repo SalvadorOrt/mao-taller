@@ -7,7 +7,7 @@ from .views import ordenes
 from .views import api
 from .views import impresion
 from .views import dashboard
-from .views import ordenes
+
 urlpatterns = [
 
     # ========================
