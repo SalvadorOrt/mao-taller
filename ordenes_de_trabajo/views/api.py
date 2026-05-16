@@ -1,4 +1,9 @@
 # ordenes_de_trabajo/views/api.py
+PLACA_API_USERNAME = "SalvadorOrtega"
+CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
+
+GEMINI_API_KEY = "AIzaSyAA5PGQW2XAGoYGzjFjeo8T97fxgy44678"
+
 
 import json
 import requests
@@ -12,11 +17,6 @@ from inventario.models import CodigoProducto, StockSucursal
 from .utils import obtener_sucursal_activa
 from ..models import Cliente, ExpedienteVehiculo
 
-PLACA_API_USERNAME = "SalvadorOrtega"
-CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
-
-# 🔥 TU API KEY GEMINI
-GEMINI_API_KEY = "AIzaSyAA5PGQW2XAGoYGzjFjeo8T97fxgy44678"
 
 
 
@@ -247,7 +247,7 @@ Formato obligatorio exacto:
             "motivo": str(e),
         }
 # =========================================================
-# API: CONSULTAR PLACA CON CACHE
+# API: CONSULTAR PLACA CON CACHE (CORREGIDA)
 # =========================================================
 @login_required
 def consultar_regcheck(request):
@@ -259,19 +259,19 @@ def consultar_regcheck(request):
             "error": "Placa vacía"
         })
 
+    # 1. Buscar primero en la base de datos local
     vehiculo_local = ExpedienteVehiculo.objects.filter(placa=placa).first()
 
     if vehiculo_local:
-        cliente = vehiculo_local.cliente_actual
-
+        cliente = vehiculo_local.cliente
         return JsonResponse({
             "exito": True,
             "origen": "bd",
             "placa": placa,
             "vehiculo": vehiculo_local.vehiculo or "",
-            "anio": vehiculo_local.anio or "",
+            "anio": vehiculo_local.anio_vehiculo or "", # Corregido a anio_vehiculo según tu modelo
             "color": vehiculo_local.color or "",
-            "kilometraje": vehiculo_local.kilometraje_actual or "",
+            "kilometraje": vehiculo_local.kilometraje if hasattr(vehiculo_local, 'kilometraje') else "",
             "identificacion": cliente.identificacion if cliente else "",
             "nombre_completo": cliente.nombre_completo if cliente else "",
             "telefono": cliente.telefono if cliente else "",
@@ -281,53 +281,62 @@ def consultar_regcheck(request):
             "gama_vehiculo": getattr(vehiculo_local, "gama_vehiculo", "NO_APLICA"),
         })
 
+    # 2. Si no existe, consultar a la API de PlacaAPI.ec
     url = (
         "https://www.placaapi.ec/API/reg.asmx/"
         f"CheckEcuador?RegistrationNumber={placa}"
         f"&username={PLACA_API_USERNAME}"
     )
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+
     try:
-        respuesta = requests.get(url, timeout=15)
+        respuesta = requests.get(url, headers=headers, timeout=15)
 
         if respuesta.status_code != 200:
             return JsonResponse({
                 "exito": False,
-                "error": f"Error API: {respuesta.status_code}"
+                "error": f"Error del servidor API: {respuesta.status_code}"
             })
 
+        # Parsear el XML
         root = ET.fromstring(respuesta.content)
 
-        json_node = root.find(
-            ".//ns:vehicleJson",
-            {"ns": "http://regcheck.org.uk"}
-        )
+        # BÚSQUEDA ROBUSTA DE XML: Iterar sobre todo e ignorar namespaces
+        json_text = None
+        for elem in root.iter():
+            if elem.tag.endswith('vehicleJson'):
+                json_text = elem.text
+                break
 
-        if json_node is None or not json_node.text:
+        if not json_text:
             return JsonResponse({
                 "exito": False,
-                "error": "No se encontró información del vehículo."
+                "error": "La API no devolvió información para esta placa. Verifique que sea correcta."
             })
 
-        datos_auto = json.loads(json_node.text)
+        datos_auto = json.loads(json_text)
 
-        marca = (
-            datos_auto.get("MakeDescription", {}).get("CurrentTextValue", "")
-            or datos_auto.get("CarMake", {}).get("CurrentTextValue", "")
-        )
+        # EXTRACCIÓN DINÁMICA: Manejar si es Dict o String
+        def obtener_valor(campo_primario, campo_secundario):
+            obj = datos_auto.get(campo_primario) or datos_auto.get(campo_secundario)
+            if isinstance(obj, dict):
+                return obj.get("CurrentTextValue", "")
+            return str(obj or "")
 
+        marca = obtener_valor("MakeDescription", "CarMake")
         if marca.upper() == "VW":
             marca = "VOLKSWAGEN"
 
-        modelo = (
-            datos_auto.get("ModelDescription", {}).get("CurrentTextValue", "")
-            or datos_auto.get("CarModel", {}).get("CurrentTextValue", "")
-        )
-
+        modelo = obtener_valor("ModelDescription", "CarModel")
+        
         anio = datos_auto.get("Year", "")
         descripcion = datos_auto.get("Description", "")
         vehiculo_completo = f"{marca} {modelo}".strip()
 
+        # 3. Clasificación con Inteligencia Artificial
         clasificacion = clasificar_vehiculo_con_ia(
             marca=marca,
             modelo=modelo,
@@ -335,13 +344,14 @@ def consultar_regcheck(request):
             descripcion=descripcion,
         )
 
+        # 4. Guardar en el Expediente Vehicular (Caché local)
         expediente, creado = ExpedienteVehiculo.objects.update_or_create(
             placa=placa,
             defaults={
                 "vehiculo": vehiculo_completo.upper(),
-                "anio": int(anio) if str(anio).isdigit() else None,
-                "color": "",
-                "kilometraje_actual": None,
+                "anio_vehiculo": int(anio) if str(anio).isdigit() else None, # Corregido según tu modelo
+                "tipo_tarifa_vehiculo": clasificacion.get("tipo_tarifa_vehiculo", "NO_APLICA"),
+                "gama_vehiculo": clasificacion.get("gama_vehiculo", "NO_APLICA"),
             }
         )
 
@@ -352,7 +362,7 @@ def consultar_regcheck(request):
             "vehiculo": expediente.vehiculo or "",
             "marca": marca,
             "modelo": modelo,
-            "anio": expediente.anio or "",
+            "anio": expediente.anio_vehiculo or "",
             "descripcion": descripcion,
             "tipo_tarifa_vehiculo": clasificacion["tipo_tarifa_vehiculo"],
             "gama_vehiculo": clasificacion["gama_vehiculo"],
@@ -360,14 +370,16 @@ def consultar_regcheck(request):
             "motivo": clasificacion["motivo"],
         })
 
+    except ET.ParseError:
+        return JsonResponse({
+            "exito": False,
+            "error": "La API devolvió un formato inválido. Revisa tus credenciales de PlacaAPI."
+        })
     except Exception as e:
         return JsonResponse({
             "exito": False,
-            "error": str(e)
+            "error": f"Error interno: {str(e)}"
         })
-# =========================================================
-# API: CONSULTAR CÉDULA Y RUC
-# =========================================================
 # =========================================================
 # API: CONSULTAR CÉDULA / RUC CON CACHE
 # =========================================================
