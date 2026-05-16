@@ -258,9 +258,6 @@ from django.contrib.auth.decorators import login_required
 # =========================================================
 # API: CONSULTAR PLACA CON CACHE (CORREGIDA)
 # =========================================================
-# =========================================================
-# API: CONSULTAR PLACA CON CACHE (DEBUG ACTIVADO)
-# =========================================================
 @login_required
 def consultar_regcheck(request):
     placa = request.GET.get("placa", "").strip().upper()
@@ -342,13 +339,12 @@ def consultar_regcheck(request):
             marca=marca, modelo=modelo, anio=anio, descripcion=descripcion
         )
 
-        # 4. 🔥 CORRECCIÓN CRÍTICA: Solo guardamos los campos que ExpedienteVehiculo SÍ tiene
+        # 4. Guardamos en caché local (Solo campos válidos)
         expediente, creado = ExpedienteVehiculo.objects.update_or_create(
             placa=placa,
             defaults={
                 "vehiculo": vehiculo_completo.upper(),
                 "anio_vehiculo": int(anio) if str(anio).isdigit() else None,
-                # NO GUARDAMOS tarifa ni gama aquí porque el modelo no las soporta
             }
         )
 
@@ -368,15 +364,8 @@ def consultar_regcheck(request):
         })
 
     except Exception as e:
-        import traceback
-        error_completo = traceback.format_exc()
-        
-        # 🚨 TEMPORAL PARA PRODUCCIÓN: Mandamos el error gigante en el JSON
-        return JsonResponse({
-            "exito": False,
-            "error": f"Fallo interno: {str(e)}",
-            "detalle_debug": error_completo  # <--- MAGIA: Toda la traza del error viajará al navegador
-        })
+        # Volvemos a un mensaje genérico por seguridad
+        return JsonResponse({"exito": False, "error": "Ocurrió un error al consultar el vehículo."})
 # =========================================================
 # API: CONSULTAR CÉDULA / RUC CON CACHE
 # =========================================================
