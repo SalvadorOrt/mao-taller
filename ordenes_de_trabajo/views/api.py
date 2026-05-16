@@ -1,9 +1,4 @@
 # ordenes_de_trabajo/views/api.py
-PLACA_API_USERNAME = "SalvadorOrtega"
-CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
-
-GEMINI_API_KEY = "AIzaSyAA5PGQW2XAGoYGzjFjeo8T97fxgy44678"
-
 
 import json
 import requests
@@ -17,6 +12,11 @@ from inventario.models import CodigoProducto, StockSucursal
 from .utils import obtener_sucursal_activa
 from ..models import Cliente, ExpedienteVehiculo
 
+PLACA_API_USERNAME = "SalvadorOrtega"
+CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
+
+# 🔥 TU API KEY GEMINI
+GEMINI_API_KEY = "AIzaSyAA5PGQW2XAGoYGzjFjeo8T97fxgy44678"
 
 
 
@@ -342,8 +342,6 @@ def consultar_regcheck(request):
                 "anio": int(anio) if str(anio).isdigit() else None,
                 "color": "",
                 "kilometraje_actual": None,
-                "tipo_tarifa_vehiculo": clasificacion.get("tipo_tarifa_vehiculo", "NO_APLICA"),
-                "gama_vehiculo": clasificacion.get("gama_vehiculo", "NO_APLICA"),
             }
         )
 
