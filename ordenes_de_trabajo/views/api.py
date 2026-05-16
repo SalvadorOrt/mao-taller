@@ -249,39 +249,51 @@ Formato obligatorio exacto:
 # =========================================================
 # API: CONSULTAR PLACA CON CACHE (CORREGIDA)
 # =========================================================
+import json
+import requests
+import xml.etree.ElementTree as ET
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+# =========================================================
+# API: CONSULTAR PLACA CON CACHE (CORREGIDA)
+# =========================================================
+# =========================================================
+# API: CONSULTAR PLACA CON CACHE (DEBUG ACTIVADO)
+# =========================================================
 @login_required
 def consultar_regcheck(request):
     placa = request.GET.get("placa", "").strip().upper()
 
     if not placa:
-        return JsonResponse({
-            "exito": False,
-            "error": "Placa vacía"
-        })
+        return JsonResponse({"exito": False, "error": "Placa vacía"})
 
     # 1. Buscar primero en la base de datos local
     vehiculo_local = ExpedienteVehiculo.objects.filter(placa=placa).first()
 
     if vehiculo_local:
         cliente = vehiculo_local.cliente
+        # Buscamos la última Orden de Trabajo para sacar tarifa, gama, color y km
+        ultima_ot = vehiculo_local.ordenes.order_by('-fecha_ingreso').first()
+        
         return JsonResponse({
             "exito": True,
             "origen": "bd",
             "placa": placa,
             "vehiculo": vehiculo_local.vehiculo or "",
-            "anio": vehiculo_local.anio_vehiculo or "", # Corregido a anio_vehiculo según tu modelo
-            "color": vehiculo_local.color or "",
-            "kilometraje": vehiculo_local.kilometraje if hasattr(vehiculo_local, 'kilometraje') else "",
+            "anio": vehiculo_local.anio_vehiculo or "",
+            "color": ultima_ot.color if ultima_ot else "",
+            "kilometraje": ultima_ot.kilometraje if ultima_ot else "",
             "identificacion": cliente.identificacion if cliente else "",
             "nombre_completo": cliente.nombre_completo if cliente else "",
             "telefono": cliente.telefono if cliente else "",
             "email": cliente.email if cliente else "",
             "direccion": cliente.direccion if cliente else "",
-            "tipo_tarifa_vehiculo": getattr(vehiculo_local, "tipo_tarifa_vehiculo", "NO_APLICA"),
-            "gama_vehiculo": getattr(vehiculo_local, "gama_vehiculo", "NO_APLICA"),
+            "tipo_tarifa_vehiculo": ultima_ot.tipo_tarifa_vehiculo if ultima_ot else "NO_APLICA",
+            "gama_vehiculo": ultima_ot.gama_vehiculo if ultima_ot else "NO_APLICA",
         })
 
-    # 2. Si no existe, consultar a la API de PlacaAPI.ec
+    # 2. Consultar a la API de PlacaAPI.ec
     url = (
         "https://www.placaapi.ec/API/reg.asmx/"
         f"CheckEcuador?RegistrationNumber={placa}"
@@ -296,15 +308,10 @@ def consultar_regcheck(request):
         respuesta = requests.get(url, headers=headers, timeout=15)
 
         if respuesta.status_code != 200:
-            return JsonResponse({
-                "exito": False,
-                "error": f"Error del servidor API: {respuesta.status_code}"
-            })
+            return JsonResponse({"exito": False, "error": f"Error API: {respuesta.status_code}"})
 
-        # Parsear el XML
+        # Parsear el XML ignorando namespaces
         root = ET.fromstring(respuesta.content)
-
-        # BÚSQUEDA ROBUSTA DE XML: Iterar sobre todo e ignorar namespaces
         json_text = None
         for elem in root.iter():
             if elem.tag.endswith('vehicleJson'):
@@ -312,14 +319,10 @@ def consultar_regcheck(request):
                 break
 
         if not json_text:
-            return JsonResponse({
-                "exito": False,
-                "error": "La API no devolvió información para esta placa. Verifique que sea correcta."
-            })
+            return JsonResponse({"exito": False, "error": "Vehículo no encontrado en ANT/SRI."})
 
         datos_auto = json.loads(json_text)
 
-        # EXTRACCIÓN DINÁMICA: Manejar si es Dict o String
         def obtener_valor(campo_primario, campo_secundario):
             obj = datos_auto.get(campo_primario) or datos_auto.get(campo_secundario)
             if isinstance(obj, dict):
@@ -327,9 +330,7 @@ def consultar_regcheck(request):
             return str(obj or "")
 
         marca = obtener_valor("MakeDescription", "CarMake")
-        if marca.upper() == "VW":
-            marca = "VOLKSWAGEN"
-
+        if marca.upper() == "VW": marca = "VOLKSWAGEN"
         modelo = obtener_valor("ModelDescription", "CarModel")
         
         anio = datos_auto.get("Year", "")
@@ -338,20 +339,16 @@ def consultar_regcheck(request):
 
         # 3. Clasificación con Inteligencia Artificial
         clasificacion = clasificar_vehiculo_con_ia(
-            marca=marca,
-            modelo=modelo,
-            anio=anio,
-            descripcion=descripcion,
+            marca=marca, modelo=modelo, anio=anio, descripcion=descripcion
         )
 
-        # 4. Guardar en el Expediente Vehicular (Caché local)
+        # 4. 🔥 CORRECCIÓN CRÍTICA: Solo guardamos los campos que ExpedienteVehiculo SÍ tiene
         expediente, creado = ExpedienteVehiculo.objects.update_or_create(
             placa=placa,
             defaults={
                 "vehiculo": vehiculo_completo.upper(),
-                "anio_vehiculo": int(anio) if str(anio).isdigit() else None, # Corregido según tu modelo
-                "tipo_tarifa_vehiculo": clasificacion.get("tipo_tarifa_vehiculo", "NO_APLICA"),
-                "gama_vehiculo": clasificacion.get("gama_vehiculo", "NO_APLICA"),
+                "anio_vehiculo": int(anio) if str(anio).isdigit() else None,
+                # NO GUARDAMOS tarifa ni gama aquí porque el modelo no las soporta
             }
         )
 
@@ -370,15 +367,15 @@ def consultar_regcheck(request):
             "motivo": clasificacion["motivo"],
         })
 
-    except ET.ParseError:
-        return JsonResponse({
-            "exito": False,
-            "error": "La API devolvió un formato inválido. Revisa tus credenciales de PlacaAPI."
-        })
     except Exception as e:
+        import traceback
+        error_completo = traceback.format_exc()
+        
+        # 🚨 TEMPORAL PARA PRODUCCIÓN: Mandamos el error gigante en el JSON
         return JsonResponse({
             "exito": False,
-            "error": f"Error interno: {str(e)}"
+            "error": f"Fallo interno: {str(e)}",
+            "detalle_debug": error_completo  # <--- MAGIA: Toda la traza del error viajará al navegador
         })
 # =========================================================
 # API: CONSULTAR CÉDULA / RUC CON CACHE
