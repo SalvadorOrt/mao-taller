@@ -1,17 +1,14 @@
 import uuid
-import requests
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
-from django.core.paginator import Paginator
 from django.db.models import Q, Count
-from django.http import JsonResponse
 from .api import clasificar_vehiculo_con_ia
 # 🚀 IMPORTAMOS LOS MODELOS DE INVENTARIO NECESARIOS PARA LA "CUARENTENA"
-from inventario.models import CodigoProducto, StockSucursal, Categoria, Producto, MarcaRepuesto
+from inventario.models import CodigoProducto, Categoria
 from servicios.models import ServicioCatalogo
 from ..models import (
     Sucursal,
@@ -772,126 +769,7 @@ def reabrir_orden(request, pk):
         messages.error(request, "Método no permitido. Debe usar el botón oficial del sistema.")
         
     return redirect("detalle_orden", pk=pk)
-
-# =========================================================
-# 🔥 APIS DE CONSULTA (CACHE-ASIDE PATTERN) 🔥
-# =========================================================
-@login_required
-def consultar_cedula_api(request):
-    cedula = request.GET.get("cedula", "").strip()
-
-    if not cedula:
-        return JsonResponse({"success": False, "error": "Cédula no proporcionada"})
-
-    cliente_local = Cliente.objects.filter(identificacion=cedula).first()
-
-    if cliente_local:
-        return JsonResponse({
-            "success": True,
-            "fuente": "local",
-            "data": {
-                "nombre": cliente_local.nombre_completo,
-                "telefono": cliente_local.telefono or "",
-                "telefono_secundario": cliente_local.telefono_secundario or "",
-                "telefono_trabajo": cliente_local.telefono_trabajo or "",
-                "email": cliente_local.email or "",
-                "direccion": cliente_local.direccion or "",
-            }
-        })
-
-    token = "yKGE-7wqa-kwNp-3AvU"
-    url_api = f"https://apiconsult.zampisoft.com/api/consultar?identificacion={cedula}&token={token}"
-
-    try:
-        response = requests.get(url_api, timeout=5)
-
-        if response.status_code != 200:
-            return JsonResponse({
-                "success": False,
-                "error": "Cédula no encontrada en el proveedor."
-            })
-
-        datos_api = response.json()
-
-        return JsonResponse({
-            "success": True,
-            "fuente": "api",
-            "data": {
-                "nombre": datos_api.get("nombre", ""),
-                "telefono": "",
-                "telefono_secundario": "",
-                "telefono_trabajo": "",
-                "email": "",
-                "direccion": datos_api.get("direccion", ""),
-            }
-        })
-
-    except requests.exceptions.RequestException:
-        return JsonResponse({
-            "success": False,
-            "error": "Error de conexión con el proveedor."
-        })
-
-    except ValueError:
-        return JsonResponse({
-            "success": False,
-            "error": "Respuesta inválida del proveedor."
-        })
-@login_required
-def consultar_regcheck(request):
-    placa = request.GET.get('placa', '').strip().upper()
-    if not placa:
-        return JsonResponse({"success": False, "error": "Placa no proporcionada"})
-
-    # 1. BÚSQUEDA LOCAL
-    vehiculo_local = ExpedienteVehiculo.objects.filter(placa=placa).first()
-    
-    if vehiculo_local:
-        cliente = vehiculo_local.cliente_actual
-        
-        return JsonResponse({
-            "success": True,
-            "fuente": "local",
-            "data": {
-                "vehiculo": vehiculo_local.vehiculo,
-                "anio_vehiculo": vehiculo_local.anio,
-                "color": vehiculo_local.color,
-                "kilometraje": vehiculo_local.kilometraje_actual,
-                "identificacion": cliente.identificacion if cliente else "",
-                "nombre_cliente": cliente.nombre_completo if cliente else "",
-                "telefono": cliente.telefono if cliente else "",
-                "email": cliente.email if cliente else "",
-                "direccion": cliente.direccion if cliente else ""
-            }
-        })
-
-    # 2. CONSUMO DE API EXTERNA (Regcheck)
-    url_regcheck = f"https://api.regcheck.org.uk/api/json.aspx/CheckEcuador/{placa}"
-    
-    try:
-        response = requests.get(url_regcheck, timeout=8)
-        
-        if response.status_code == 200:
-            datos_api = response.json()
-            return JsonResponse({
-                "success": True,
-                "fuente": "api",
-                "data": {
-                    "vehiculo": datos_api.get("vehiculo", ""), 
-                    "anio_vehiculo": datos_api.get("anio", ""),
-                    "color": datos_api.get("color", ""),
-                    "kilometraje": "",
-                    "identificacion": "",
-                    "nombre_cliente": "",
-                }
-            })
-        else:
-            return JsonResponse({"success": False, "error": "Placa no encontrada en ANT/SRI."})
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error consultando API de Regcheck: {e}")
-        return JsonResponse({"success": False, "error": "Servicio temporalmente no disponible."})
-    
+   
 @login_required
 def crear_cotizacion(request):
     """

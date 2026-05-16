@@ -4,16 +4,13 @@ import json
 import requests
 import xml.etree.ElementTree as ET
 from google import genai
-
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-
 from servicios.models import ServicioCatalogo
-from ..models import Cliente
 from inventario.models import CodigoProducto, StockSucursal
 from .utils import obtener_sucursal_activa
-
+from ..models import Cliente, ExpedienteVehiculo
 
 PLACA_API_USERNAME = "SalvadorOrtega"
 CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
@@ -22,22 +19,6 @@ CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
 GEMINI_API_KEY = "AIzaSyAA5PGQW2XAGoYGzjFjeo8T97fxgy44678"
 
 
-# =========================================================
-# IA: LIMPIAR JSON
-# =========================================================
-def limpiar_json_ia(texto):
-    texto = (texto or "").strip()
-
-    if texto.startswith("```json"):
-        texto = texto[7:].strip()
-
-    elif texto.startswith("```"):
-        texto = texto[3:].strip()
-
-    if texto.endswith("```"):
-        texto = texto[:-3].strip()
-
-    return texto
 # =========================================================
 # IA: CLASIFICAR VEHÍCULO
 # =========================================================
@@ -264,19 +245,39 @@ Formato obligatorio exacto:
             "confianza": 0.0,
             "motivo": str(e),
         }
-
 # =========================================================
-# API: CONSULTAR PLACA
+# API: CONSULTAR PLACA CON CACHE
 # =========================================================
 @login_required
 def consultar_regcheck(request):
-    print("ENTRÓ A CONSULTAR_REGCHECK NUEVA")
-    placa = request.GET.get("placa","").strip().upper()
+    placa = request.GET.get("placa", "").strip().upper()
 
     if not placa:
         return JsonResponse({
             "exito": False,
             "error": "Placa vacía"
+        })
+
+    vehiculo_local = ExpedienteVehiculo.objects.filter(placa=placa).first()
+
+    if vehiculo_local:
+        cliente = vehiculo_local.cliente_actual
+
+        return JsonResponse({
+            "exito": True,
+            "origen": "bd",
+            "placa": placa,
+            "vehiculo": vehiculo_local.vehiculo or "",
+            "anio": vehiculo_local.anio or "",
+            "color": vehiculo_local.color or "",
+            "kilometraje": vehiculo_local.kilometraje_actual or "",
+            "identificacion": cliente.identificacion if cliente else "",
+            "nombre_completo": cliente.nombre_completo if cliente else "",
+            "telefono": cliente.telefono if cliente else "",
+            "email": cliente.email if cliente else "",
+            "direccion": cliente.direccion if cliente else "",
+            "tipo_tarifa_vehiculo": getattr(vehiculo_local, "tipo_tarifa_vehiculo", "NO_APLICA"),
+            "gama_vehiculo": getattr(vehiculo_local, "gama_vehiculo", "NO_APLICA"),
         })
 
     url = (
@@ -304,64 +305,28 @@ def consultar_regcheck(request):
         if json_node is None or not json_node.text:
             return JsonResponse({
                 "exito": False,
-                "error": "No vehicleJson"
+                "error": "No se encontró información del vehículo."
             })
 
         datos_auto = json.loads(json_node.text)
 
         marca = (
-            datos_auto.get(
-                "MakeDescription",
-                {}
-            ).get(
-                "CurrentTextValue",
-                ""
-            )
-            or
-            datos_auto.get(
-                "CarMake",
-                {}
-            ).get(
-                "CurrentTextValue",
-                ""
-            )
+            datos_auto.get("MakeDescription", {}).get("CurrentTextValue", "")
+            or datos_auto.get("CarMake", {}).get("CurrentTextValue", "")
         )
 
         if marca.upper() == "VW":
             marca = "VOLKSWAGEN"
 
         modelo = (
-            datos_auto.get(
-                "ModelDescription",
-                {}
-            ).get(
-                "CurrentTextValue",
-                ""
-            )
-            or
-            datos_auto.get(
-                "CarModel",
-                {}
-            ).get(
-                "CurrentTextValue",
-                ""
-            )
+            datos_auto.get("ModelDescription", {}).get("CurrentTextValue", "")
+            or datos_auto.get("CarModel", {}).get("CurrentTextValue", "")
         )
 
         anio = datos_auto.get("Year", "")
+        descripcion = datos_auto.get("Description", "")
+        vehiculo_completo = f"{marca} {modelo}".strip()
 
-        descripcion = datos_auto.get(
-            "Description",
-            ""
-        )
-
-        vehiculo_completo = (
-            f"{marca} {modelo}"
-        ).strip()
-
-        # =====================================================
-        # IA
-        # =====================================================
         clasificacion = clasificar_vehiculo_con_ia(
             marca=marca,
             modelo=modelo,
@@ -369,15 +334,25 @@ def consultar_regcheck(request):
             descripcion=descripcion,
         )
 
+        expediente, creado = ExpedienteVehiculo.objects.update_or_create(
+            placa=placa,
+            defaults={
+                "vehiculo": vehiculo_completo.upper(),
+                "anio": int(anio) if str(anio).isdigit() else None,
+                "color": "",
+                "kilometraje_actual": None,
+            }
+        )
+
         return JsonResponse({
             "exito": True,
+            "origen": "api_guardada",
             "placa": placa,
-            "vehiculo": vehiculo_completo,
+            "vehiculo": expediente.vehiculo or "",
             "marca": marca,
             "modelo": modelo,
-            "anio": anio,
+            "anio": expediente.anio or "",
             "descripcion": descripcion,
-            "chasis": datos_auto.get("VehicleIdentificationNumber", ""),
             "tipo_tarifa_vehiculo": clasificacion["tipo_tarifa_vehiculo"],
             "gama_vehiculo": clasificacion["gama_vehiculo"],
             "confianza": clasificacion["confianza"],
@@ -389,31 +364,23 @@ def consultar_regcheck(request):
             "exito": False,
             "error": str(e)
         })
-
 # =========================================================
 # API: CONSULTAR CÉDULA Y RUC
 # =========================================================
+# =========================================================
+# API: CONSULTAR CÉDULA / RUC CON CACHE
+# =========================================================
 @login_required
 def consultar_cedula_api(request):
+    identificacion = request.GET.get("cedula", "").strip()
 
-    # Cambiamos el nombre interno de la variable a 'identificacion' por claridad, 
-    # pero seguimos recibiendo el parámetro GET "cedula" para no romper tu frontend (JavaScript).
-    identificacion = request.GET.get(
-        "cedula",
-        ""
-    ).strip()
-
-    # Validamos que sean solo números y que el tamaño sea exactamente 10 o 13
     if not identificacion or not identificacion.isdigit() or len(identificacion) not in [10, 13]:
         return JsonResponse({
             "exito": False,
             "error": "Identificación inválida. Debe tener 10 o 13 dígitos."
         })
 
-    # Buscamos primero en la base de datos local
-    cliente = Cliente.objects.filter(
-        identificacion=identificacion
-    ).first()
+    cliente = Cliente.objects.filter(identificacion=identificacion).first()
 
     if cliente:
         return JsonResponse({
@@ -422,6 +389,8 @@ def consultar_cedula_api(request):
             "identificacion": cliente.identificacion,
             "nombre_completo": cliente.nombre_completo,
             "telefono": cliente.telefono or "",
+            "telefono_secundario": getattr(cliente, "telefono_secundario", "") or "",
+            "telefono_trabajo": getattr(cliente, "telefono_trabajo", "") or "",
             "email": cliente.email or "",
             "direccion": cliente.direccion or "",
         })
@@ -435,37 +404,42 @@ def consultar_cedula_api(request):
     try:
         respuesta = requests.get(url, timeout=15)
 
-        if respuesta.status_code == 200:
-            data = respuesta.json()
-
-            # --- MAGIA PARA SOPORTAR RUC Y CÉDULA ---
-            
-            # 1. Extraer nombre: Si es empresa trae 'razonSocial', si es persona trae 'nombre'
-            nombre_api = data.get("razonSocial") or data.get("nombre", "")
-
-            # 2. Extraer identificación: Si es empresa trae 'numeroRuc', si es persona trae 'cedula'
-            identificacion_api = data.get("numeroRuc") or data.get("cedula", identificacion)
-
-            # 3. Extraer dirección: Para RUCs viene dentro de una lista llamada 'establecimientos'
-            direccion_api = data.get("lugarDomicilio", "")
-            if not direccion_api and data.get("establecimientos"):
-                # Tomamos la dirección del primer establecimiento (matriz)
-                direccion_api = data.get("establecimientos")[0].get("direccionCompleta", "")
-
+        if respuesta.status_code != 200:
             return JsonResponse({
-                "exito": True,
-                "origen": "api",
-                "identificacion": identificacion_api,
-                "nombre_completo": nombre_api,
-                "telefono": "",
-                "email": "",
-                "direccion": direccion_api,
-                "genero": data.get("genero", ""),
+                "exito": False,
+                "error": "El SRI/Registro Civil no encontró resultados."
             })
 
+        data = respuesta.json()
+
+        nombre_api = data.get("razonSocial") or data.get("nombre", "")
+        identificacion_api = data.get("numeroRuc") or data.get("cedula") or identificacion
+
+        direccion_api = data.get("lugarDomicilio", "")
+        if not direccion_api and data.get("establecimientos"):
+            direccion_api = data.get("establecimientos")[0].get("direccionCompleta", "")
+
+        tipo_documento = "R" if len(identificacion_api) == 13 else "C"
+
+        cliente = Cliente.objects.create(
+            tipo_documento=tipo_documento,
+            identificacion=identificacion_api,
+            nombre_completo=(nombre_api or "CONSUMIDOR FINAL").upper(),
+            telefono="",
+            email="",
+            direccion=direccion_api or "",
+        )
+
         return JsonResponse({
-            "exito": False,
-            "error": "El SRI/Registro Civil no encontró resultados o el servicio está caído."
+            "exito": True,
+            "origen": "api_guardada",
+            "identificacion": cliente.identificacion,
+            "nombre_completo": cliente.nombre_completo,
+            "telefono": cliente.telefono or "",
+            "telefono_secundario": getattr(cliente, "telefono_secundario", "") or "",
+            "telefono_trabajo": getattr(cliente, "telefono_trabajo", "") or "",
+            "email": cliente.email or "",
+            "direccion": cliente.direccion or "",
         })
 
     except Exception as e:
