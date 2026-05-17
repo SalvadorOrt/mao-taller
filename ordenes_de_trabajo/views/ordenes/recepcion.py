@@ -17,10 +17,19 @@ from ..utils import (
 # =========================================================
 # EDITAR RECEPCIÓN DE ORDEN (MODAL RÁPIDO COMPLETO)
 # =========================================================
+# =========================================================
+# EDITAR RECEPCIÓN DE ORDEN (MODAL RÁPIDO COMPLETO)
+# =========================================================
 @login_required
 def editar_recepcion_orden(request, pk):
     import uuid
+    import requests
+    import xml.etree.ElementTree as ET
     from django.db import transaction
+    from django.conf import settings
+    
+    # IMPORTANTE: Asegúrate de importar ExpedienteVehiculo en la parte superior de tu archivo
+    from ...models import ExpedienteVehiculo 
 
     orden = get_object_or_404(OrdenTrabajo, pk=pk)
 
@@ -33,6 +42,18 @@ def editar_recepcion_orden(request, pk):
         return redirect("detalle_orden", pk=pk)
 
     if request.method == "POST":
+        # ==================================================
+        # 1. CAPTURAR NUEVOS DATOS DEL VEHÍCULO
+        # ==================================================
+        nueva_placa = request.POST.get("placa", "").strip().upper()
+        nuevo_vehiculo = request.POST.get("vehiculo", "").strip().upper()
+        nuevo_anio = request.POST.get("anio_vehiculo", "").strip()
+        nuevo_color = request.POST.get("color", "").strip().upper()
+        nuevo_km = request.POST.get("kilometraje", "").strip()
+
+        # ==================================================
+        # 2. CAPTURAR DATOS DE LA RECEPCIÓN ORIGINALES
+        # ==================================================
         orden.observaciones_recepcion = request.POST.get(
             "observaciones_recepcion",
             orden.observaciones_recepcion or ""
@@ -42,74 +63,143 @@ def editar_recepcion_orden(request, pk):
         trabajos_json = cargar_json_lista(request.POST.get("trabajos_json", ""))
         croquis_base64 = request.POST.get("imagen_croquis_base64", "").strip()
 
-        # Nuevas fotos desde el modal
         fotos_nuevas = request.FILES.getlist("fotos_recepcion")
         descripcion_fotos = request.POST.get("descripcion_fotos", "").strip()
-
-        # Fotos a eliminar desde el modal
         fotos_eliminar = request.POST.getlist("fotos_eliminar")
 
-        with transaction.atomic():
-            orden.save()
+        try:
+            with transaction.atomic():
+                
+                # ====================================================
+                # 3. MAGIA DEL VEHÍCULO (ESTRATEGIA CASCADA)
+                # ====================================================
+                if nueva_placa and nueva_placa != orden.placa:
+                    # Fase 1: Buscar en la Base de Datos Local
+                    expediente_existente = ExpedienteVehiculo.objects.filter(placa=nueva_placa).first()
 
-            # Síntomas
-            orden.sintomas_items.all().delete()
-            for idx, item in enumerate(sintomas_json, start=1):
-                desc = str(item.get("descripcion", "")).strip()
-                if desc:
-                    OrdenSintoma.objects.create(
+                    if expediente_existente:
+                        orden.expediente = expediente_existente
+                        orden.placa = nueva_placa
+                        orden.vehiculo = expediente_existente.vehiculo
+                        orden.anio_vehiculo = expediente_existente.anio_vehiculo
+                    else:
+                        # Fase 2: Consumir API de Placas (placaapi.ec)
+                        user_placa = getattr(settings, "PLACA_API_USERNAME", "SalvadorOrtega")
+                        url_placa = f"https://www.placaapi.ec/API/reg.asmx/CheckEcuador?RegistrationNumber={nueva_placa}&username={user_placa}"
+                        
+                        try:
+                            resp_placa = requests.get(url_placa, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
+                            if resp_placa.status_code == 200:
+                                root = ET.fromstring(resp_placa.content)
+                                json_text = None
+                                for elem in root.iter():
+                                    if elem.tag.endswith("vehicleJson"):
+                                        json_text = elem.text
+                                        break
+                                
+                                if json_text:
+                                    import json
+                                    datos_auto = json.loads(json_text)
+                                    marca = datos_auto.get("MakeDescription", {}).get("CurrentTextValue", "") if isinstance(datos_auto.get("MakeDescription"), dict) else str(datos_auto.get("MakeDescription", ""))
+                                    modelo = datos_auto.get("ModelDescription", {}).get("CurrentTextValue", "") if isinstance(datos_auto.get("ModelDescription"), dict) else str(datos_auto.get("ModelDescription", ""))
+                                    anio_real = datos_auto.get("Year")
+                                    
+                                    desc_real = f"{marca} {modelo}".strip().upper()
+                                    if not desc_real: desc_real = nuevo_vehiculo
+                                    
+                                    # Crear el nuevo expediente amarrado al mismo cliente que ya estaba en la OT
+                                    expediente = ExpedienteVehiculo.objects.create(
+                                        placa=nueva_placa,
+                                        vehiculo=desc_real,
+                                        anio_vehiculo=int(anio_real) if anio_real and str(anio_real).isdigit() else None,
+                                        cliente=orden.cliente
+                                    )
+                                    orden.expediente = expediente
+                                    orden.placa = nueva_placa
+                                    orden.vehiculo = desc_real
+                                    if anio_real and str(anio_real).isdigit():
+                                        orden.anio_vehiculo = int(anio_real)
+                                else:
+                                    raise ValueError("XML sin JSON")
+                            else:
+                                raise ValueError("Falla API Placas")
+                                
+                        except Exception:
+                            # Fase 3: Fallback Manual (Si no hay internet, se guarda lo que tipeó el asesor)
+                            expediente = ExpedienteVehiculo.objects.create(
+                                placa=nueva_placa,
+                                vehiculo=nuevo_vehiculo or "VEHÍCULO DESCONOCIDO",
+                                anio_vehiculo=int(nuevo_anio) if nuevo_anio.isdigit() else None,
+                                cliente=orden.cliente
+                            )
+                            orden.expediente = expediente
+                            orden.placa = nueva_placa
+                            orden.vehiculo = nuevo_vehiculo
+                            if nuevo_anio.isdigit(): orden.anio_vehiculo = int(nuevo_anio)
+
+                # Independiente de si la placa cambió o no, actualizamos KM y Color
+                if nuevo_km.isdigit():
+                    orden.kilometraje = int(nuevo_km)
+                if nuevo_color:
+                    orden.color = nuevo_color
+
+                # Guardamos la orden con los datos correctos
+                orden.save()
+
+                # ====================================================
+                # 4. GUARDAR SÍNTOMAS, CROQUIS Y FOTOS (TU CÓDIGO)
+                # ====================================================
+                # Síntomas
+                orden.sintomas_items.all().delete()
+                for idx, item in enumerate(sintomas_json, start=1):
+                    desc = str(item.get("descripcion", "")).strip()
+                    if desc:
+                        OrdenSintoma.objects.create(
+                            orden=orden,
+                            descripcion=desc,
+                            orden_item=idx
+                        )
+
+                # Trabajos solicitados
+                orden.trabajos_solicitados_items.all().delete()
+                for idx, item in enumerate(trabajos_json, start=1):
+                    desc = str(item.get("descripcion", "")).strip()
+                    if desc:
+                        OrdenTrabajoSolicitado.objects.create(
+                            orden=orden,
+                            descripcion_manual=desc,
+                            orden_item=idx
+                        )
+
+                # Croquis
+                if croquis_base64:
+                    archivo_croquis = procesar_imagen_base64(croquis_base64)
+                    if archivo_croquis:
+                        croquis_obj, _ = OrdenCroquisDanio.objects.get_or_create(orden=orden)
+                        if croquis_obj.imagen_generada:
+                            croquis_obj.imagen_generada.delete(save=False)
+                        nombre_archivo = f"croquis_upd_{orden.numero_orden}_{uuid.uuid4().hex[:8]}.png"
+                        croquis_obj.imagen_generada.save(nombre_archivo, archivo_croquis, save=True)
+
+                # Eliminar fotos marcadas
+                if fotos_eliminar:
+                    fotos_queryset = FotoRecepcionVehiculo.objects.filter(orden=orden, id__in=fotos_eliminar)
+                    for foto in fotos_queryset:
+                        if foto.imagen:
+                            foto.imagen.delete(save=False)
+                        foto.delete()
+
+                # Agregar nuevas fotos
+                for foto in fotos_nuevas:
+                    FotoRecepcionVehiculo.objects.create(
                         orden=orden,
-                        descripcion=desc,
-                        orden_item=idx
+                        imagen=foto,
+                        descripcion=descripcion_fotos
                     )
 
-            # Trabajos solicitados
-            orden.trabajos_solicitados_items.all().delete()
-            for idx, item in enumerate(trabajos_json, start=1):
-                desc = str(item.get("descripcion", "")).strip()
-                if desc:
-                    OrdenTrabajoSolicitado.objects.create(
-                        orden=orden,
-                        descripcion_manual=desc,
-                        orden_item=idx
-                    )
-
-            # Croquis
-            if croquis_base64:
-                archivo_croquis = procesar_imagen_base64(croquis_base64)
-                if archivo_croquis:
-                    croquis_obj, _ = OrdenCroquisDanio.objects.get_or_create(orden=orden)
-
-                    if croquis_obj.imagen_generada:
-                        croquis_obj.imagen_generada.delete(save=False)
-
-                    nombre_archivo = f"croquis_upd_{orden.numero_orden}_{uuid.uuid4().hex[:8]}.png"
-                    croquis_obj.imagen_generada.save(
-                        nombre_archivo,
-                        archivo_croquis,
-                        save=True
-                    )
-
-            # Eliminar fotos marcadas
-            if fotos_eliminar:
-                fotos_queryset = FotoRecepcionVehiculo.objects.filter(
-                    orden=orden,
-                    id__in=fotos_eliminar
-                )
-
-                for foto in fotos_queryset:
-                    if foto.imagen:
-                        foto.imagen.delete(save=False)
-                    foto.delete()
-
-            # Agregar nuevas fotos
-            for foto in fotos_nuevas:
-                FotoRecepcionVehiculo.objects.create(
-                    orden=orden,
-                    imagen=foto,
-                    descripcion=descripcion_fotos
-                )
-
-        messages.success(request, "Recepción, croquis y fotos actualizados con éxito.")
+            messages.success(request, "¡Recepción y datos del vehículo actualizados con éxito!")
+            
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error al guardar: {str(e)}")
 
     return redirect("detalle_orden", pk=orden.pk)
