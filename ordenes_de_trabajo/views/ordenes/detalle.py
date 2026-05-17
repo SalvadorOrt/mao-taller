@@ -1,11 +1,9 @@
-import uuid
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from django.utils import timezone
-from django.db.models import Q, Count
+from django.db.models import Q
 from inventario.models import CodigoProducto, Categoria
 from servicios.models import ServicioCatalogo
 from ...models import (
@@ -21,8 +19,6 @@ from ..utils import (
     puede_operar_orden_desde_sucursal_activa,parse_cantidad
 )
 from django.urls import reverse
-
-
 # =========================================================
 # DETALLE / EDICIÓN DE ORDEN
 # =========================================================
