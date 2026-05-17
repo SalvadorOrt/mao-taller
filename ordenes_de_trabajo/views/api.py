@@ -442,6 +442,9 @@ def consultar_cedula_api(request):
         })
 
     es_ruc = len(identificacion) == 13
+    
+    # 1. Leemos si el Frontend mandó la orden de gastar los 5 centavos
+    solicita_full = request.GET.get("full", "false").strip().lower() == "true"
 
     url = (
         "https://apiconsult.zampisoft.com/api/consultar"
@@ -449,7 +452,8 @@ def consultar_cedula_api(request):
         f"&token={CEDULA_API_TOKEN}"
     )
 
-    if not es_ruc:
+    # 2. Solo agregamos full=true si es Cédula Y la pantalla lo pidió
+    if not es_ruc and solicita_full:
         url += "&full=true"
 
     try:
@@ -505,6 +509,8 @@ def consultar_cedula_api(request):
             "exito": False,
             "error": f"Error interno al procesar la consulta: {str(e)}"
         })
+#fetch(`/api/consultar_cedula/?cedula=${cedula}`) 
+#fetch(`/api/consultar_cedula/?cedula=${cedula}&full=true`)   
 # =========================================================
 # API: BÚSQUEDA REPUESTOS
 # =========================================================
