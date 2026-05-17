@@ -99,9 +99,12 @@ class Tecnico(models.Model):
 
     def __str__(self):
         return self.nombre
-# ==========================================
-# 3. CLIENTE
-# ==========================================
+import uuid
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils.dateparse import parse_date
+
+
 class Cliente(models.Model):
     TIPOS_DOC = [
         ("C", "Cédula"),
@@ -110,11 +113,7 @@ class Cliente(models.Model):
         ("S", "Sin Documento"),
     ]
 
-    tipo_documento = models.CharField(
-        max_length=1,
-        choices=TIPOS_DOC,
-        default="S",
-    )
+    tipo_documento = models.CharField(max_length=1, choices=TIPOS_DOC, default="S")
 
     identificacion = models.CharField(
         max_length=20,
@@ -126,29 +125,60 @@ class Cliente(models.Model):
 
     nombre_completo = models.CharField(max_length=200)
 
-    telefono = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name="Teléfono Principal",
-    )
-
-    telefono_secundario = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name="Teléfono Familiar/Alternativo",
-    )
-
-    telefono_trabajo = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name="Teléfono Fijo/Trabajo",
-    )
+    telefono = models.CharField(max_length=50, null=True, blank=True)
+    telefono_secundario = models.CharField(max_length=50, null=True, blank=True)
+    telefono_trabajo = models.CharField(max_length=50, null=True, blank=True)
 
     email = models.EmailField(null=True, blank=True)
     direccion = models.TextField(null=True, blank=True)
+
+    # ==========================
+    # DATOS PERSONA / CÉDULA
+    # ==========================
+    genero = models.CharField(max_length=30, null=True, blank=True)
+    sexo = models.CharField(max_length=30, null=True, blank=True)
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    fecha_cedulacion = models.DateField(null=True, blank=True)
+    estado_civil = models.CharField(max_length=50, null=True, blank=True)
+    conyuge = models.CharField(max_length=200, null=True, blank=True)
+    nacionalidad = models.CharField(max_length=80, null=True, blank=True)
+
+    nombre_madre = models.CharField(max_length=200, null=True, blank=True)
+    nombre_padre = models.CharField(max_length=200, null=True, blank=True)
+
+    lugar_nacimiento = models.CharField(max_length=250, null=True, blank=True)
+    lugar_domicilio = models.CharField(max_length=250, null=True, blank=True)
+    calle_domicilio = models.CharField(max_length=250, null=True, blank=True)
+    numeracion_domicilio = models.CharField(max_length=80, null=True, blank=True)
+
+    instruccion = models.CharField(max_length=100, null=True, blank=True)
+    profesion = models.CharField(max_length=150, null=True, blank=True)
+    tipo_sangre = models.CharField(max_length=10, null=True, blank=True)
+
+    # ==========================
+    # LICENCIA
+    # ==========================
+    licencia_tipo = models.CharField(max_length=10, null=True, blank=True)
+    licencia_fecha_desde = models.DateField(null=True, blank=True)
+    licencia_fecha_hasta = models.DateField(null=True, blank=True)
+    licencia_puntos = models.CharField(max_length=20, null=True, blank=True)
+    licencia_restricciones = models.TextField(null=True, blank=True)
+
+    # ==========================
+    # DATOS RUC / SRI
+    # ==========================
+    razon_social = models.CharField(max_length=250, null=True, blank=True)
+    estado_contribuyente_ruc = models.CharField(max_length=80, null=True, blank=True)
+    actividad_economica_principal = models.TextField(null=True, blank=True)
+    tipo_contribuyente = models.CharField(max_length=100, null=True, blank=True)
+    regimen = models.CharField(max_length=100, null=True, blank=True)
+    obligado_llevar_contabilidad = models.CharField(max_length=10, null=True, blank=True)
+    agente_retencion = models.CharField(max_length=10, null=True, blank=True)
+    contribuyente_especial = models.CharField(max_length=10, null=True, blank=True)
+
+    representantes_legales = models.JSONField(default=list, blank=True)
+    establecimientos = models.JSONField(default=list, blank=True)
+    datos_api_originales = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["nombre_completo"]
@@ -157,6 +187,7 @@ class Cliente(models.Model):
         indexes = [
             models.Index(fields=["nombre_completo"]),
             models.Index(fields=["identificacion"]),
+            models.Index(fields=["tipo_documento"]),
         ]
 
     def detectar_tipo_documento(self):
@@ -171,7 +202,6 @@ class Cliente(models.Model):
         if valor.isdigit():
             if len(valor) == 10:
                 return "C"
-
             if len(valor) == 13:
                 return "R"
 
@@ -181,41 +211,54 @@ class Cliente(models.Model):
         if self.identificacion:
             self.identificacion = self.identificacion.strip().upper()
         else:
-            uuid_corto = str(uuid.uuid4())[:6].upper()
-            self.identificacion = f"PROV-{uuid_corto}"
+            self.identificacion = f"PROV-{str(uuid.uuid4())[:6].upper()}"
 
         self.tipo_documento = self.detectar_tipo_documento()
 
-        if self.nombre_completo:
-            self.nombre_completo = self.nombre_completo.strip().upper()
+        campos_upper = [
+            "nombre_completo",
+            "direccion",
+            "genero",
+            "sexo",
+            "estado_civil",
+            "conyuge",
+            "nacionalidad",
+            "nombre_madre",
+            "nombre_padre",
+            "lugar_nacimiento",
+            "lugar_domicilio",
+            "calle_domicilio",
+            "numeracion_domicilio",
+            "instruccion",
+            "profesion",
+            "razon_social",
+            "estado_contribuyente_ruc",
+            "actividad_economica_principal",
+            "tipo_contribuyente",
+            "regimen",
+        ]
 
-        if self.telefono:
-            self.telefono = self.telefono.strip()
+        for campo in campos_upper:
+            valor = getattr(self, campo, None)
+            if valor:
+                setattr(self, campo, str(valor).strip().upper())
 
-        if self.telefono_secundario:
-            self.telefono_secundario = self.telefono_secundario.strip()
-
-        if self.telefono_trabajo:
-            self.telefono_trabajo = self.telefono_trabajo.strip()
+        for campo in ["telefono", "telefono_secundario", "telefono_trabajo"]:
+            valor = getattr(self, campo, None)
+            if valor:
+                setattr(self, campo, str(valor).strip())
 
         if self.email:
             self.email = self.email.strip().lower()
 
-        if self.direccion:
-            self.direccion = self.direccion.strip().upper()
-
     def clean(self):
         self.normalizar_datos()
 
-        if not self.nombre_completo or not self.nombre_completo.strip():
-            raise ValidationError(
-                "El nombre completo del cliente es obligatorio."
-            )
+        if not self.nombre_completo:
+            raise ValidationError("El nombre completo del cliente es obligatorio.")
 
         if not self.identificacion:
-            raise ValidationError(
-                "No se pudo generar una identificación provisional."
-            )
+            raise ValidationError("No se pudo generar una identificación provisional.")
 
         es_codigo_especial = (
             self.identificacion.startswith("PROV-")
@@ -225,26 +268,109 @@ class Cliente(models.Model):
         if es_codigo_especial or self.tipo_documento == "S":
             return
 
-        if self.tipo_documento in {"C", "R"}:
-            if not self.identificacion.isdigit():
-                raise ValidationError(
-                    "La identificación debe contener solo números."
-                )
+        if self.tipo_documento in {"C", "R"} and not self.identificacion.isdigit():
+            raise ValidationError("La identificación debe contener solo números.")
 
         if self.tipo_documento == "C" and len(self.identificacion) != 10:
-            raise ValidationError(
-                "La cédula debe tener 10 dígitos."
-            )
+            raise ValidationError("La cédula debe tener 10 dígitos.")
 
         if self.tipo_documento == "R" and len(self.identificacion) != 13:
-            raise ValidationError(
-                "El RUC debe tener 13 dígitos."
-            )
+            raise ValidationError("El RUC debe tener 13 dígitos.")
 
         if self.tipo_documento == "P" and len(self.identificacion) < 3:
-            raise ValidationError(
-                "El pasaporte no es válido."
-            )
+            raise ValidationError("El pasaporte no es válido.")
+
+    def cargar_desde_api_persona(self, data):
+        persona = data.get("persona", data)
+
+        self.identificacion = persona.get("cedula") or data.get("cedula") or self.identificacion
+        self.nombre_completo = persona.get("nombre") or data.get("nombre") or self.nombre_completo
+
+        fechas = persona.get("fechas", {})
+
+        self.fecha_nacimiento = parse_date(fechas.get("nacimiento")) or self.fecha_nacimiento
+        self.fecha_cedulacion = parse_date(fechas.get("cedulacion")) or self.fecha_cedulacion
+
+        self.genero = persona.get("genero") or data.get("genero")
+        self.sexo = persona.get("sexo")
+        self.estado_civil = persona.get("estadoCivil") or data.get("estadoCivil")
+        self.conyuge = persona.get("conyuge") or data.get("conyuge")
+        self.nacionalidad = persona.get("nacionalidad") or data.get("nacionalidad")
+
+        self.nombre_madre = persona.get("nombreMadre") or data.get("nombreMadre")
+        self.nombre_padre = persona.get("nombrePadre") or data.get("nombrePadre")
+        self.lugar_nacimiento = persona.get("lugarNacimiento") or data.get("lugarNacimiento")
+
+        direccion = persona.get("direccion", {})
+        self.lugar_domicilio = (
+            direccion.get("domicilio")
+            or data.get("lugarDomicilio")
+        )
+        self.calle_domicilio = (
+            direccion.get("calle")
+            or data.get("calleDomicilio")
+        )
+        self.numeracion_domicilio = (
+            direccion.get("numeroCasa")
+            or data.get("numeracionDomicilio")
+        )
+
+        if not self.direccion:
+            partes = [
+                self.lugar_domicilio,
+                self.calle_domicilio,
+                self.numeracion_domicilio,
+            ]
+            self.direccion = " / ".join([p for p in partes if p])
+
+        self.instruccion = persona.get("instruccion") or data.get("instruccion")
+        self.profesion = persona.get("profesion") or data.get("profesion")
+        self.tipo_sangre = persona.get("tipoSangre")
+
+        self.telefono_trabajo = persona.get("telefono") or self.telefono_trabajo
+        self.telefono = persona.get("celular") or self.telefono
+        self.email = persona.get("email") or self.email
+
+        licencia = data.get("licencia", {})
+        self.licencia_tipo = licencia.get("tipo")
+        self.licencia_fecha_desde = parse_date(licencia.get("fechaDesde")) if licencia.get("fechaDesde") else None
+        self.licencia_fecha_hasta = parse_date(licencia.get("fechaHasta")) if licencia.get("fechaHasta") else None
+        self.licencia_puntos = licencia.get("puntos")
+        self.licencia_restricciones = licencia.get("restricciones")
+
+        self.datos_api_originales = data
+        self.normalizar_datos()
+
+    def cargar_desde_api_ruc(self, data):
+        self.identificacion = data.get("numeroRuc") or self.identificacion
+        self.nombre_completo = data.get("razonSocial") or self.nombre_completo
+        self.razon_social = data.get("razonSocial")
+
+        self.estado_contribuyente_ruc = data.get("estadoContribuyenteRuc")
+        self.actividad_economica_principal = data.get("actividadEconomicaPrincipal")
+        self.tipo_contribuyente = data.get("tipoContribuyente")
+        self.regimen = data.get("regimen")
+
+        self.obligado_llevar_contabilidad = data.get("obligadoLlevarContabilidad")
+        self.agente_retencion = data.get("agenteRetencion")
+        self.contribuyente_especial = data.get("contribuyenteEspecial")
+
+        self.representantes_legales = data.get("representantesLegales") or []
+        self.establecimientos = data.get("establecimientos") or []
+
+        matriz = next(
+            (
+                est for est in self.establecimientos
+                if est.get("matriz") == "SI"
+            ),
+            None,
+        )
+
+        if matriz and not self.direccion:
+            self.direccion = matriz.get("direccionCompleta")
+
+        self.datos_api_originales = data
+        self.normalizar_datos()
 
     def save(self, *args, **kwargs):
         self.normalizar_datos()

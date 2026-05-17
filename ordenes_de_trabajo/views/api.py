@@ -369,11 +369,64 @@ def consultar_regcheck(request):
 # =========================================================
 # API: CONSULTAR CÉDULA / RUC CON CACHE
 # =========================================================
+def serializar_cliente(cliente):
+    return {
+        "identificacion": cliente.identificacion,
+        "tipo_documento": cliente.tipo_documento,
+        "nombre_completo": cliente.nombre_completo or "",
+
+        "telefono": cliente.telefono or "",
+        "telefono_secundario": cliente.telefono_secundario or "",
+        "telefono_trabajo": cliente.telefono_trabajo or "",
+        "email": cliente.email or "",
+        "direccion": cliente.direccion or "",
+
+        "genero": cliente.genero or "",
+        "sexo": cliente.sexo or "",
+        "fecha_nacimiento": cliente.fecha_nacimiento.isoformat() if cliente.fecha_nacimiento else "",
+        "fecha_cedulacion": cliente.fecha_cedulacion.isoformat() if cliente.fecha_cedulacion else "",
+        "estado_civil": cliente.estado_civil or "",
+        "conyuge": cliente.conyuge or "",
+        "nacionalidad": cliente.nacionalidad or "",
+
+        "nombre_madre": cliente.nombre_madre or "",
+        "nombre_padre": cliente.nombre_padre or "",
+        "lugar_nacimiento": cliente.lugar_nacimiento or "",
+        "lugar_domicilio": cliente.lugar_domicilio or "",
+        "calle_domicilio": cliente.calle_domicilio or "",
+        "numeracion_domicilio": cliente.numeracion_domicilio or "",
+
+        "instruccion": cliente.instruccion or "",
+        "profesion": cliente.profesion or "",
+        "tipo_sangre": cliente.tipo_sangre or "",
+
+        "licencia_tipo": cliente.licencia_tipo or "",
+        "licencia_fecha_desde": cliente.licencia_fecha_desde.isoformat() if cliente.licencia_fecha_desde else "",
+        "licencia_fecha_hasta": cliente.licencia_fecha_hasta.isoformat() if cliente.licencia_fecha_hasta else "",
+        "licencia_puntos": cliente.licencia_puntos or "",
+        "licencia_restricciones": cliente.licencia_restricciones or "",
+
+        "razon_social": cliente.razon_social or "",
+        "estado_contribuyente_ruc": cliente.estado_contribuyente_ruc or "",
+        "actividad_economica_principal": cliente.actividad_economica_principal or "",
+        "tipo_contribuyente": cliente.tipo_contribuyente or "",
+        "regimen": cliente.regimen or "",
+        "obligado_llevar_contabilidad": cliente.obligado_llevar_contabilidad or "",
+        "agente_retencion": cliente.agente_retencion or "",
+        "contribuyente_especial": cliente.contribuyente_especial or "",
+
+        "representantes_legales": cliente.representantes_legales or [],
+        "establecimientos": cliente.establecimientos or [],
+    }
 @login_required
 def consultar_cedula_api(request):
     identificacion = request.GET.get("cedula", "").strip()
 
-    if not identificacion or not identificacion.isdigit() or len(identificacion) not in [10, 13]:
+    if (
+        not identificacion
+        or not identificacion.isdigit()
+        or len(identificacion) not in [10, 13]
+    ):
         return JsonResponse({
             "exito": False,
             "error": "Identificación inválida. Debe tener 10 o 13 dígitos."
@@ -385,66 +438,72 @@ def consultar_cedula_api(request):
         return JsonResponse({
             "exito": True,
             "origen": "bd",
-            "identificacion": cliente.identificacion,
-            "nombre_completo": cliente.nombre_completo,
-            "telefono": cliente.telefono or "",
-            "telefono_secundario": getattr(cliente, "telefono_secundario", "") or "",
-            "telefono_trabajo": getattr(cliente, "telefono_trabajo", "") or "",
-            "email": cliente.email or "",
-            "direccion": cliente.direccion or "",
+            "cliente": serializar_cliente(cliente),
         })
 
+    es_ruc = len(identificacion) == 13
+
     url = (
-        "https://apiconsult.zampisoft.com/api/"
-        f"consultar?identificacion={identificacion}"
+        "https://apiconsult.zampisoft.com/api/consultar"
+        f"?identificacion={identificacion}"
         f"&token={CEDULA_API_TOKEN}"
     )
 
+    if not es_ruc:
+        url += "&full=true"
+
     try:
-        respuesta = requests.get(url, timeout=15)
+        respuesta = requests.get(
+            url,
+            timeout=20,
+            headers={"Accept": "application/json"}
+        )
 
         if respuesta.status_code != 200:
             return JsonResponse({
                 "exito": False,
-                "error": "El SRI/Registro Civil no encontró resultados."
+                "error": "No se encontraron resultados para la identificación consultada."
             })
 
         data = respuesta.json()
 
-        nombre_api = data.get("razonSocial") or data.get("nombre", "")
-        identificacion_api = data.get("numeroRuc") or data.get("cedula") or identificacion
+        if data.get("error"):
+            return JsonResponse({
+                "exito": False,
+                "error": data.get("error")
+            })
 
-        direccion_api = data.get("lugarDomicilio", "")
-        if not direccion_api and data.get("establecimientos"):
-            direccion_api = data.get("establecimientos")[0].get("direccionCompleta", "")
+        cliente = Cliente()
 
-        tipo_documento = "R" if len(identificacion_api) == 13 else "C"
+        if es_ruc:
+            cliente.cargar_desde_api_ruc(data)
+        else:
+            cliente.cargar_desde_api_persona(data)
 
-        cliente = Cliente.objects.create(
-            tipo_documento=tipo_documento,
-            identificacion=identificacion_api,
-            nombre_completo=(nombre_api or "CONSUMIDOR FINAL").upper(),
-            telefono="",
-            email="",
-            direccion=direccion_api or "",
-        )
+        cliente.save()
 
         return JsonResponse({
             "exito": True,
             "origen": "api_guardada",
-            "identificacion": cliente.identificacion,
-            "nombre_completo": cliente.nombre_completo,
-            "telefono": cliente.telefono or "",
-            "telefono_secundario": getattr(cliente, "telefono_secundario", "") or "",
-            "telefono_trabajo": getattr(cliente, "telefono_trabajo", "") or "",
-            "email": cliente.email or "",
-            "direccion": cliente.direccion or "",
+            "cliente": serializar_cliente(cliente),
+        })
+
+    except requests.Timeout:
+        return JsonResponse({
+            "exito": False,
+            "error": "La consulta demoró demasiado. Intenta nuevamente."
+        })
+
+    except requests.RequestException as e:
+        return JsonResponse({
+            "exito": False,
+            "error": f"Error de conexión con la API: {str(e)}"
         })
 
     except Exception as e:
         return JsonResponse({
             "exito": False,
-            "error": f"Error de conexión: {str(e)}"
+            "error": f"Error interno al procesar la consulta: {str(e)}"
         })
 # =========================================================
 # API: BÚSQUEDA REPUESTOS
