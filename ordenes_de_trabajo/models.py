@@ -8,6 +8,8 @@ from decimal import Decimal, ROUND_HALF_UP
 import uuid
 from django.db import models
 from django.core.exceptions import ValidationError
+from datetime import datetime
+from django.utils.dateparse import parse_date
 TIPOS_TARIFA_VEHICULO = [
         ("NO_APLICA", "No aplica"),
         ("AUTO", "Auto"),
@@ -630,170 +632,90 @@ class Cliente(models.Model):
     # ==========================================
     # CARGAR PERSONA API
     # ==========================================
-    def cargar_desde_api_persona(
-        self,
-        data,
-        full=False
-    ):
+    def parsear_fecha_api(self, valor):
+        if not valor:
+            return None
 
+        valor = str(valor).strip()
+
+        try:
+            if "/" in valor:
+                return datetime.strptime(valor, "%d/%m/%Y").date()
+        except Exception:
+            return None
+
+        return parse_date(valor)
+
+
+    def cargar_desde_api_persona(self, data, full=False):
         persona = data.get("persona", data)
-
-        self.identificacion = (
-            persona.get("cedula")
-            or data.get("cedula")
-            or self.identificacion
-        )
-
-        self.nombre_completo = (
-            persona.get("nombre")
-            or data.get("nombre")
-            or self.nombre_completo
-        )
-
-        self.telefono = (
-            persona.get("celular")
-            or self.telefono
-        )
-
-        self.telefono_trabajo = (
-            persona.get("telefono")
-            or self.telefono_trabajo
-        )
-
-        self.email = (
-            persona.get("email")
-            or self.email
-        )
-
-        if not full:
-            self.normalizar_datos()
-            return
-
         fechas = persona.get("fechas", {})
-
-        self.fecha_nacimiento = parse_date(
-            fechas.get("nacimiento")
-        ) if fechas.get("nacimiento") else None
-
-        self.fecha_cedulacion = parse_date(
-            fechas.get("cedulacion")
-        ) if fechas.get("cedulacion") else None
-
-        self.genero = (
-            persona.get("genero")
-            or data.get("genero")
-        )
-
-        self.sexo = persona.get("sexo")
-
-        self.estado_civil = (
-            persona.get("estadoCivil")
-            or data.get("estadoCivil")
-        )
-
-        self.conyuge = (
-            persona.get("conyuge")
-            or data.get("conyuge")
-        )
-
-        self.nacionalidad = (
-            persona.get("nacionalidad")
-            or data.get("nacionalidad")
-        )
-
-        self.nombre_madre = (
-            persona.get("nombreMadre")
-            or data.get("nombreMadre")
-        )
-
-        self.nombre_padre = (
-            persona.get("nombrePadre")
-            or data.get("nombrePadre")
-        )
-
-        self.lugar_nacimiento = (
-            persona.get("lugarNacimiento")
-            or data.get("lugarNacimiento")
-        )
-
         direccion = persona.get("direccion", {})
-
-        self.lugar_domicilio = (
-            direccion.get("domicilio")
-            or data.get("lugarDomicilio")
-        )
-
-        self.calle_domicilio = (
-            direccion.get("calle")
-            or data.get("calleDomicilio")
-        )
-
-        self.numeracion_domicilio = (
-            direccion.get("numeroCasa")
-            or data.get("numeracionDomicilio")
-        )
-
-        self.provincia = direccion.get("provincia")
-        self.canton = direccion.get("canton")
-        self.parroquia = direccion.get("parroquia")
-
-        self.otras_direcciones = (
-            direccion.get("otrasDirecciones")
-            or []
-        )
-
-        self.instruccion = (
-            persona.get("instruccion")
-            or data.get("instruccion")
-        )
-
-        self.profesion = (
-            persona.get("profesion")
-            or data.get("profesion")
-        )
-
-        self.tipo_sangre = persona.get("tipoSangre")
-
-        self.carnet_conadis = persona.get(
-            "carnetConadis"
-        )
-
-        self.discapacidad = persona.get(
-            "discapacidad"
-        )
-
-        self.porcentaje_discapacidad = persona.get(
-            "porcentajeDiscapacidad"
-        )
-
         licencia = data.get("licencia", {})
 
-        self.licencia_tipo = licencia.get("tipo")
+        self.identificacion = persona.get("cedula") or data.get("cedula") or self.identificacion
+        self.nombre_completo = persona.get("nombre") or data.get("nombre") or self.nombre_completo
 
-        self.licencia_fecha_desde = parse_date(
-            licencia.get("fechaDesde")
-        ) if licencia.get("fechaDesde") else None
+        self.telefono = persona.get("celular") or self.telefono
+        self.telefono_trabajo = persona.get("telefono") or self.telefono_trabajo
+        self.email = persona.get("email") or self.email
 
-        self.licencia_fecha_hasta = parse_date(
-            licencia.get("fechaHasta")
-        ) if licencia.get("fechaHasta") else None
+        self.genero = persona.get("genero") or data.get("genero") or self.genero
+        self.sexo = persona.get("sexo") or data.get("sexo") or self.sexo
+        self.estado_civil = persona.get("estadoCivil") or data.get("estadoCivil") or self.estado_civil
+        self.conyuge = persona.get("conyuge") or data.get("conyuge") or self.conyuge
+        self.nacionalidad = persona.get("nacionalidad") or data.get("nacionalidad") or self.nacionalidad
 
-        self.licencia_puntos = licencia.get(
-            "puntos"
-        )
+        self.nombre_madre = persona.get("nombreMadre") or data.get("nombreMadre") or self.nombre_madre
+        self.nombre_padre = persona.get("nombrePadre") or data.get("nombrePadre") or self.nombre_padre
 
-        self.licencia_restricciones = licencia.get(
-            "restricciones"
-        )
+        self.fecha_nacimiento = self.parsear_fecha_api(
+            fechas.get("nacimiento") or data.get("fechaNacimiento")
+        ) or self.fecha_nacimiento
 
-        self.licencia_todos = licencia.get(
-            "todos"
-        ) or []
+        self.fecha_cedulacion = self.parsear_fecha_api(
+            fechas.get("cedulacion") or data.get("fechaCedulacion")
+        ) or self.fecha_cedulacion
 
-        self.datos_full_consultados = True
+        self.lugar_nacimiento = persona.get("lugarNacimiento") or data.get("lugarNacimiento") or self.lugar_nacimiento
 
+        self.lugar_domicilio = direccion.get("domicilio") or data.get("lugarDomicilio") or self.lugar_domicilio
+        self.calle_domicilio = direccion.get("calle") or data.get("calleDomicilio") or self.calle_domicilio
+        self.numeracion_domicilio = direccion.get("numeroCasa") or data.get("numeracionDomicilio") or self.numeracion_domicilio
+
+        self.provincia = direccion.get("provincia") or self.provincia
+        self.canton = direccion.get("canton") or self.canton
+        self.parroquia = direccion.get("parroquia") or self.parroquia
+        self.otras_direcciones = direccion.get("otrasDirecciones") or self.otras_direcciones
+
+        if not self.direccion:
+            partes = [
+                self.lugar_domicilio,
+                self.calle_domicilio,
+                self.numeracion_domicilio,
+            ]
+            self.direccion = " / ".join([p for p in partes if p])
+
+        self.instruccion = persona.get("instruccion") or data.get("instruccion") or self.instruccion
+        self.profesion = persona.get("profesion") or data.get("profesion") or self.profesion
+        self.tipo_sangre = persona.get("tipoSangre") or data.get("tipoSangre") or self.tipo_sangre
+
+        self.licencia_tipo = licencia.get("tipo") or self.licencia_tipo
+        self.licencia_fecha_desde = self.parsear_fecha_api(licencia.get("fechaDesde")) or self.licencia_fecha_desde
+        self.licencia_fecha_hasta = self.parsear_fecha_api(licencia.get("fechaHasta")) or self.licencia_fecha_hasta
+        self.licencia_puntos = licencia.get("puntos") or self.licencia_puntos
+        self.licencia_restricciones = licencia.get("restricciones") or self.licencia_restricciones
+        self.licencia_todos = licencia.get("todos") or self.licencia_todos
+
+        self.carnet_conadis = persona.get("carnetConadis") or self.carnet_conadis
+
+        if persona.get("discapacidad") is not None:
+            self.discapacidad = persona.get("discapacidad")
+
+        self.porcentaje_discapacidad = persona.get("porcentajeDiscapacidad") or self.porcentaje_discapacidad
+
+        self.datos_full_consultados = full or bool(licencia) or self.datos_full_consultados
         self.datos_api_originales = data
-
         self.normalizar_datos()
 
     # ==========================================
@@ -811,60 +733,76 @@ class Cliente(models.Model):
             or self.nombre_completo
         )
 
-        self.razon_social = data.get(
-            "razonSocial"
+        self.razon_social = (
+            data.get("razonSocial")
+            or self.razon_social
         )
 
-        self.estado_contribuyente_ruc = data.get(
-            "estadoContribuyenteRuc"
+        self.estado_contribuyente_ruc = (
+            data.get("estadoContribuyenteRuc")
+            or self.estado_contribuyente_ruc
         )
 
-        self.actividad_economica_principal = data.get(
-            "actividadEconomicaPrincipal"
+        self.actividad_economica_principal = (
+            data.get("actividadEconomicaPrincipal")
+            or self.actividad_economica_principal
         )
 
-        self.tipo_contribuyente = data.get(
-            "tipoContribuyente"
+        self.tipo_contribuyente = (
+            data.get("tipoContribuyente")
+            or self.tipo_contribuyente
         )
 
-        self.regimen = data.get(
-            "regimen"
+        self.regimen = (
+            data.get("regimen")
+            or self.regimen
         )
 
-        self.categoria = data.get(
-            "categoria"
+        self.categoria = (
+            data.get("categoria")
+            or self.categoria
         )
 
-        self.obligado_llevar_contabilidad = data.get(
-            "obligadoLlevarContabilidad"
+        self.obligado_llevar_contabilidad = (
+            data.get("obligadoLlevarContabilidad")
+            or self.obligado_llevar_contabilidad
         )
 
-        self.agente_retencion = data.get(
-            "agenteRetencion"
+        self.agente_retencion = (
+            data.get("agenteRetencion")
+            or self.agente_retencion
         )
 
-        self.contribuyente_especial = data.get(
-            "contribuyenteEspecial"
+        self.contribuyente_especial = (
+            data.get("contribuyenteEspecial")
+            or self.contribuyente_especial
         )
 
-        self.contribuyente_fantasma = data.get(
-            "contribuyenteFantasma"
+        self.contribuyente_fantasma = (
+            data.get("contribuyenteFantasma")
+            or self.contribuyente_fantasma
         )
 
-        self.transacciones_inexistentes = data.get(
-            "transaccionesInexistente"
+        self.transacciones_inexistentes = (
+            data.get("transaccionesInexistente")
+            or self.transacciones_inexistentes
         )
 
         self.representantes_legales = (
             data.get("representantesLegales")
+            or self.representantes_legales
             or []
         )
 
         self.establecimientos = (
             data.get("establecimientos")
+            or self.establecimientos
             or []
         )
 
+        # ======================================
+        # DIRECCIÓN MATRIZ
+        # ======================================
         matriz = next(
             (
                 est
@@ -874,10 +812,15 @@ class Cliente(models.Model):
             None
         )
 
-        if matriz and not self.direccion:
-            self.direccion = matriz.get(
+        if matriz:
+
+            direccion_matriz = matriz.get(
                 "direccionCompleta"
             )
+
+            if direccion_matriz:
+
+                self.direccion = direccion_matriz
 
         self.datos_api_originales = data
 

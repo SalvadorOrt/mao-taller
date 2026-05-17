@@ -369,145 +369,323 @@ def consultar_regcheck(request):
 # =========================================================
 # API: CONSULTAR CÉDULA / RUC CON CACHE
 # =========================================================
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+import requests
+
+
+# =========================================================
+# SERIALIZADOR
+# =========================================================
 def serializar_cliente(cliente):
+
     return {
+
         "identificacion": cliente.identificacion,
         "tipo_documento": cliente.tipo_documento,
         "nombre_completo": cliente.nombre_completo or "",
 
+        # ======================================
+        # CONTACTO
+        # ======================================
         "telefono": cliente.telefono or "",
         "telefono_secundario": cliente.telefono_secundario or "",
         "telefono_trabajo": cliente.telefono_trabajo or "",
         "email": cliente.email or "",
         "direccion": cliente.direccion or "",
 
+        # ======================================
+        # PERSONALES
+        # ======================================
         "genero": cliente.genero or "",
         "sexo": cliente.sexo or "",
-        "fecha_nacimiento": cliente.fecha_nacimiento.isoformat() if cliente.fecha_nacimiento else "",
-        "fecha_cedulacion": cliente.fecha_cedulacion.isoformat() if cliente.fecha_cedulacion else "",
+
+        "fecha_nacimiento":
+            cliente.fecha_nacimiento.isoformat()
+            if cliente.fecha_nacimiento else "",
+
+        "fecha_cedulacion":
+            cliente.fecha_cedulacion.isoformat()
+            if cliente.fecha_cedulacion else "",
+
         "estado_civil": cliente.estado_civil or "",
         "conyuge": cliente.conyuge or "",
         "nacionalidad": cliente.nacionalidad or "",
 
+        # ======================================
+        # PADRES / NACIMIENTO
+        # ======================================
         "nombre_madre": cliente.nombre_madre or "",
         "nombre_padre": cliente.nombre_padre or "",
-        "lugar_nacimiento": cliente.lugar_nacimiento or "",
-        "lugar_domicilio": cliente.lugar_domicilio or "",
-        "calle_domicilio": cliente.calle_domicilio or "",
-        "numeracion_domicilio": cliente.numeracion_domicilio or "",
 
+        "lugar_nacimiento":
+            cliente.lugar_nacimiento or "",
+
+        # ======================================
+        # DOMICILIO
+        # ======================================
+        "lugar_domicilio":
+            cliente.lugar_domicilio or "",
+
+        "calle_domicilio":
+            cliente.calle_domicilio or "",
+
+        "numeracion_domicilio":
+            cliente.numeracion_domicilio or "",
+
+        "provincia": cliente.provincia or "",
+        "canton": cliente.canton or "",
+        "parroquia": cliente.parroquia or "",
+
+        # ======================================
+        # EDUCACIÓN
+        # ======================================
         "instruccion": cliente.instruccion or "",
         "profesion": cliente.profesion or "",
         "tipo_sangre": cliente.tipo_sangre or "",
 
-        "licencia_tipo": cliente.licencia_tipo or "",
-        "licencia_fecha_desde": cliente.licencia_fecha_desde.isoformat() if cliente.licencia_fecha_desde else "",
-        "licencia_fecha_hasta": cliente.licencia_fecha_hasta.isoformat() if cliente.licencia_fecha_hasta else "",
-        "licencia_puntos": cliente.licencia_puntos or "",
-        "licencia_restricciones": cliente.licencia_restricciones or "",
+        # ======================================
+        # LICENCIA
+        # ======================================
+        "licencia_tipo":
+            cliente.licencia_tipo or "",
 
-        "razon_social": cliente.razon_social or "",
-        "estado_contribuyente_ruc": cliente.estado_contribuyente_ruc or "",
-        "actividad_economica_principal": cliente.actividad_economica_principal or "",
-        "tipo_contribuyente": cliente.tipo_contribuyente or "",
-        "regimen": cliente.regimen or "",
-        "obligado_llevar_contabilidad": cliente.obligado_llevar_contabilidad or "",
-        "agente_retencion": cliente.agente_retencion or "",
-        "contribuyente_especial": cliente.contribuyente_especial or "",
+        "licencia_fecha_desde":
+            cliente.licencia_fecha_desde.isoformat()
+            if cliente.licencia_fecha_desde else "",
 
-        "representantes_legales": cliente.representantes_legales or [],
-        "establecimientos": cliente.establecimientos or [],
+        "licencia_fecha_hasta":
+            cliente.licencia_fecha_hasta.isoformat()
+            if cliente.licencia_fecha_hasta else "",
+
+        "licencia_puntos":
+            cliente.licencia_puntos or "",
+
+        "licencia_restricciones":
+            cliente.licencia_restricciones or "",
+
+        # ======================================
+        # RUC / SRI
+        # ======================================
+        "razon_social":
+            cliente.razon_social or "",
+
+        "estado_contribuyente_ruc":
+            cliente.estado_contribuyente_ruc or "",
+
+        "actividad_economica_principal":
+            cliente.actividad_economica_principal or "",
+
+        "tipo_contribuyente":
+            cliente.tipo_contribuyente or "",
+
+        "regimen":
+            cliente.regimen or "",
+
+        "obligado_llevar_contabilidad":
+            cliente.obligado_llevar_contabilidad or "",
+
+        "agente_retencion":
+            cliente.agente_retencion or "",
+
+        "contribuyente_especial":
+            cliente.contribuyente_especial or "",
+
+        "representantes_legales":
+            cliente.representantes_legales or [],
+
+        "establecimientos":
+            cliente.establecimientos or [],
+
+        # ======================================
+        # CONTROL
+        # ======================================
+        "datos_full_consultados":
+            cliente.datos_full_consultados,
+
+        "fecha_ultima_consulta_api":
+            cliente.fecha_ultima_consulta_api.isoformat()
+            if cliente.fecha_ultima_consulta_api else "",
     }
+
+
+# =========================================================
+# API CONSULTAR
+# =========================================================
 @login_required
 def consultar_cedula_api(request):
-    identificacion = request.GET.get("cedula", "").strip()
 
+    identificacion = request.GET.get(
+        "cedula",
+        ""
+    ).strip()
+
+    # ======================================
+    # VALIDACIÓN
+    # ======================================
     if (
         not identificacion
         or not identificacion.isdigit()
         or len(identificacion) not in [10, 13]
     ):
+
         return JsonResponse({
             "exito": False,
-            "error": "Identificación inválida. Debe tener 10 o 13 dígitos."
+            "error":
+                "Identificación inválida. "
+                "Debe tener 10 o 13 dígitos."
         })
 
-    cliente = Cliente.objects.filter(identificacion=identificacion).first()
+    es_ruc = len(identificacion) == 13
 
-    if cliente:
+    solicita_full = (
+        request.GET
+        .get("full", "false")
+        .strip()
+        .lower()
+        == "true"
+    )
+
+    # ======================================
+    # BUSCAR EN CACHE LOCAL
+    # ======================================
+    cliente = Cliente.objects.filter(
+        identificacion=identificacion
+    ).first()
+
+    # ======================================
+    # SI EXISTE Y NO NECESITA FULL
+    # ======================================
+    if (
+        cliente
+        and (
+            not solicita_full
+            or cliente.datos_full_consultados
+        )
+    ):
+
         return JsonResponse({
             "exito": True,
             "origen": "bd",
             "cliente": serializar_cliente(cliente),
         })
 
-    es_ruc = len(identificacion) == 13
-    
-    # 1. Leemos si el Frontend mandó la orden de gastar los 5 centavos
-    solicita_full = request.GET.get("full", "false").strip().lower() == "true"
-
+    # ======================================
+    # URL API EXTERNA
+    # ======================================
     url = (
         "https://apiconsult.zampisoft.com/api/consultar"
         f"?identificacion={identificacion}"
         f"&token={CEDULA_API_TOKEN}"
     )
 
-    # 2. Solo agregamos full=true si es Cédula Y la pantalla lo pidió
+    # ======================================
+    # FULL SOLO PARA CÉDULA
+    # ======================================
     if not es_ruc and solicita_full:
         url += "&full=true"
 
     try:
+
         respuesta = requests.get(
             url,
             timeout=20,
-            headers={"Accept": "application/json"}
+            headers={
+                "Accept": "application/json"
+            }
         )
 
         if respuesta.status_code != 200:
+
             return JsonResponse({
                 "exito": False,
-                "error": "No se encontraron resultados para la identificación consultada."
+                "error":
+                    "No se encontraron resultados."
             })
 
         data = respuesta.json()
 
         if data.get("error"):
+
             return JsonResponse({
                 "exito": False,
                 "error": data.get("error")
             })
 
-        cliente = Cliente()
+        # ======================================
+        # SI NO EXISTE -> CREAR
+        # ======================================
+        if not cliente:
+            cliente = Cliente()
 
+        # ======================================
+        # CARGAR DATOS PERSONA
+        # ======================================
         if es_ruc:
-            cliente.cargar_desde_api_ruc(data)
-        else:
-            cliente.cargar_desde_api_persona(data)
 
+            cliente.cargar_desde_api_ruc(data)
+
+        else:
+
+            cliente.cargar_desde_api_persona(
+                data,
+                full=solicita_full
+            )
+
+        # ======================================
+        # CONTROL API
+        # ======================================
+        cliente.fecha_ultima_consulta_api = (
+            timezone.now()
+        )
+
+        if solicita_full:
+            cliente.datos_full_consultados = True
+
+        # ======================================
+        # GUARDAR
+        # ======================================
         cliente.save()
 
         return JsonResponse({
+
             "exito": True,
-            "origen": "api_guardada",
-            "cliente": serializar_cliente(cliente),
+
+            "origen":
+                "api_actualizada"
+                if cliente.id else
+                "api_guardada",
+
+            "cliente":
+                serializar_cliente(cliente),
+
         })
 
     except requests.Timeout:
+
         return JsonResponse({
             "exito": False,
-            "error": "La consulta demoró demasiado. Intenta nuevamente."
+            "error":
+                "La consulta demoró demasiado."
         })
 
     except requests.RequestException as e:
+
         return JsonResponse({
             "exito": False,
-            "error": f"Error de conexión con la API: {str(e)}"
+            "error":
+                f"Error de conexión API: {str(e)}"
         })
 
     except Exception as e:
+
         return JsonResponse({
             "exito": False,
-            "error": f"Error interno al procesar la consulta: {str(e)}"
+            "error":
+                f"Error interno: {str(e)}"
         })
 #fetch(`/api/consultar_cedula/?cedula=${cedula}`) 
 #fetch(`/api/consultar_cedula/?cedula=${cedula}&full=true`)   
