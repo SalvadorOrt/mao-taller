@@ -857,72 +857,238 @@ class ExpedienteVehiculo(models.Model):
         null=True,
         blank=True,
     )
-    cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
 
-    placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
-    vehiculo = models.CharField(max_length=150, null=True, blank=True)
-    anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+    cliente_respaldo = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+
+    placa = models.CharField(
+        max_length=15,
+        db_index=True,
+        null=True,
+        blank=True,
+    )
+
+    vehiculo = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+    )
+
+    anio_vehiculo = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================
+    # DATOS API PLACA
+    # ==========================================
+    marca_api = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    modelo_api = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True,
+    )
+
+    descripcion_api = models.CharField(
+        max_length=300,
+        null=True,
+        blank=True,
+    )
+
+    tipo_vehiculo_api = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    subtipo_vehiculo_api = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    numero_chasis = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name="Número de chasis / VIN",
+    )
+
+    imagen_url_api = models.URLField(
+        max_length=500,
+        null=True,
+        blank=True,
+    )
+
+    datos_api_placa = models.JSONField(
+        default=dict,
+        blank=True,
+    )
+
+    fecha_ultima_consulta_placa = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
 
     activo = models.BooleanField(default=True)
-    observacion = models.TextField(null=True, blank=True)
+
+    observacion = models.TextField(
+        null=True,
+        blank=True,
+    )
 
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
-   
+
     class Meta:
         ordering = ["placa", "vehiculo", "id"]
+
         verbose_name = "Expediente de vehículo"
         verbose_name_plural = "Expedientes de vehículos"
+
         indexes = [
             models.Index(fields=["placa"]),
             models.Index(fields=["vehiculo"]),
             models.Index(fields=["cliente_respaldo"]),
+            models.Index(fields=["marca_api"]),
+            models.Index(fields=["modelo_api"]),
         ]
 
     @property
     def nombre_cliente_final(self):
         if self.cliente:
             return self.cliente.nombre_completo
-        return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
+
+        return (
+            self.cliente_respaldo
+            if self.cliente_respaldo
+            else "SIN NOMBRE"
+        )
+
+    @property
+    def descripcion_vehiculo_final(self):
+        return (
+            self.descripcion_api
+            or self.vehiculo
+            or "SIN VEHÍCULO"
+        )
+
+    def cargar_desde_api_placa(self, data):
+        self.marca_api = (
+            data.get("CarMake", {})
+            .get("CurrentTextValue")
+            or self.marca_api
+        )
+
+        self.modelo_api = (
+            data.get("CarModel", {})
+            .get("CurrentTextValue")
+            or data.get("ModelDescription", {})
+            .get("CurrentTextValue")
+            or self.modelo_api
+        )
+
+        self.descripcion_api = (
+            data.get("Description")
+            or self.descripcion_api
+        )
+
+        self.vehiculo = (
+            data.get("Description")
+            or self.vehiculo
+        )
+
+        anio = data.get("Year")
+
+        if anio:
+            try:
+                self.anio_vehiculo = int(anio)
+            except Exception:
+                pass
+
+        self.tipo_vehiculo_api = (
+            data.get("Type")
+            or self.tipo_vehiculo_api
+        )
+
+        self.subtipo_vehiculo_api = (
+            data.get("Subtype")
+            or self.subtipo_vehiculo_api
+        )
+
+        self.numero_chasis = (
+            data.get("VehicleIdentificationNumber")
+            or self.numero_chasis
+        )
+
+        self.imagen_url_api = (
+            data.get("ImageUrl")
+            or self.imagen_url_api
+        )
+
+        self.datos_api_placa = data or self.datos_api_placa
 
     def clean(self):
         if self.placa:
-            self.placa = self.placa.strip().upper()
+            self.placa = (
+                self.placa
+                .strip()
+                .upper()
+                .replace("-", "")
+                .replace(" ", "")
+            )
 
         if self.vehiculo:
-            self.vehiculo = self.vehiculo.strip()
+            self.vehiculo = self.vehiculo.strip().upper()
 
         if self.cliente_respaldo:
-            self.cliente_respaldo = self.cliente_respaldo.strip()
+            self.cliente_respaldo = self.cliente_respaldo.strip().upper()
 
         if self.observacion:
             self.observacion = self.observacion.strip()
+
+        if self.marca_api:
+            self.marca_api = self.marca_api.strip().upper()
+
+        if self.modelo_api:
+            self.modelo_api = self.modelo_api.strip().upper()
+
+        if self.descripcion_api:
+            self.descripcion_api = self.descripcion_api.strip().upper()
+
+        if self.tipo_vehiculo_api:
+            self.tipo_vehiculo_api = self.tipo_vehiculo_api.strip().upper()
+
+        if self.subtipo_vehiculo_api:
+            self.subtipo_vehiculo_api = self.subtipo_vehiculo_api.strip().upper()
+
+        if self.numero_chasis:
+            self.numero_chasis = (
+                self.numero_chasis
+                .strip()
+                .upper()
+                .replace(" ", "")
+            )
 
         if self.anio_vehiculo and self.anio_vehiculo < 1900:
             raise ValidationError("El año del vehículo no es válido.")
 
     def save(self, *args, **kwargs):
-        if self.placa:
-            self.placa = self.placa.strip().upper()
-
-        if self.vehiculo:
-            self.vehiculo = self.vehiculo.strip()
-
-        if self.cliente_respaldo:
-            self.cliente_respaldo = self.cliente_respaldo.strip()
-
-        if self.observacion:
-            self.observacion = self.observacion.strip()
-
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
         placa = self.placa if self.placa else "SIN PLACA"
-        vehiculo = self.vehiculo if self.vehiculo else "SIN VEHÍCULO"
+        vehiculo = self.descripcion_vehiculo_final
         return f"{placa} | {vehiculo} | {self.nombre_cliente_final}"
-
-
 # ==========================================
 # 5. ORDEN DE TRABAJO
 # ==========================================

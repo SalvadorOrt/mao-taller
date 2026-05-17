@@ -260,103 +260,163 @@ from django.contrib.auth.decorators import login_required
 # =========================================================
 @login_required
 def consultar_regcheck(request):
-    placa = request.GET.get("placa", "").strip().upper()
+    placa = (
+        request.GET.get("placa", "")
+        .strip()
+        .upper()
+        .replace("-", "")
+        .replace(" ", "")
+    )
 
     if not placa:
-        return JsonResponse({"exito": False, "error": "Placa vacía"})
+        return JsonResponse({
+            "exito": False,
+            "error": "Placa vacía."
+        })
 
-    # 1. Buscar primero en la base de datos local
-    vehiculo_local = ExpedienteVehiculo.objects.filter(placa=placa).first()
+    expediente = ExpedienteVehiculo.objects.filter(
+        placa=placa
+    ).first()
 
-    if vehiculo_local:
-        cliente = vehiculo_local.cliente
-        # Buscamos la última Orden de Trabajo para sacar tarifa, gama, color y km
-        ultima_ot = vehiculo_local.ordenes.order_by('-fecha_ingreso').first()
-        
+    if expediente:
+        ultima_ot = expediente.ordenes.order_by("-fecha_ingreso").first()
+        cliente = expediente.cliente
+
         return JsonResponse({
             "exito": True,
             "origen": "bd",
-            "placa": placa,
-            "vehiculo": vehiculo_local.vehiculo or "",
-            "anio": vehiculo_local.anio_vehiculo or "",
+            "placa": expediente.placa,
+            "vehiculo": expediente.vehiculo or "",
+            "marca": expediente.marca_api or "",
+            "modelo": expediente.modelo_api or "",
+            "descripcion": expediente.descripcion_api or expediente.vehiculo or "",
+            "anio": expediente.anio_vehiculo or "",
+            "tipo": expediente.tipo_vehiculo_api or "",
+            "subtipo": expediente.subtipo_vehiculo_api or "",
+            "numero_chasis": expediente.numero_chasis or "",
+            "imagen_url": expediente.imagen_url_api or "",
+
             "color": ultima_ot.color if ultima_ot else "",
             "kilometraje": ultima_ot.kilometraje if ultima_ot else "",
+
             "identificacion": cliente.identificacion if cliente else "",
             "nombre_completo": cliente.nombre_completo if cliente else "",
             "telefono": cliente.telefono if cliente else "",
             "email": cliente.email if cliente else "",
             "direccion": cliente.direccion if cliente else "",
-            "tipo_tarifa_vehiculo": ultima_ot.tipo_tarifa_vehiculo if ultima_ot else "NO_APLICA",
-            "gama_vehiculo": ultima_ot.gama_vehiculo if ultima_ot else "NO_APLICA",
+
+            "tipo_tarifa_vehiculo": (
+                ultima_ot.tipo_tarifa_vehiculo
+                if ultima_ot else "NO_APLICA"
+            ),
+            "gama_vehiculo": (
+                ultima_ot.gama_vehiculo
+                if ultima_ot else "NO_APLICA"
+            ),
         })
 
-    # 2. Consultar a la API de PlacaAPI.ec
     url = (
-        "https://www.placaapi.ec/API/reg.asmx/"
-        f"CheckEcuador?RegistrationNumber={placa}"
+        "https://www.placaapi.ec/API/reg.asmx/CheckEcuador"
+        f"?RegistrationNumber={placa}"
         f"&username={PLACA_API_USERNAME}"
     )
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/xml,text/xml,*/*",
     }
 
     try:
-        respuesta = requests.get(url, headers=headers, timeout=15)
+        respuesta = requests.get(
+            url,
+            headers=headers,
+            timeout=20
+        )
 
         if respuesta.status_code != 200:
-            return JsonResponse({"exito": False, "error": f"Error API: {respuesta.status_code}"})
+            return JsonResponse({
+                "exito": False,
+                "error": f"Error API placa: {respuesta.status_code}"
+            })
 
-        # Parsear el XML ignorando namespaces
         root = ET.fromstring(respuesta.content)
+
         json_text = None
+
         for elem in root.iter():
-            if elem.tag.endswith('vehicleJson'):
+            if elem.tag.endswith("vehicleJson"):
                 json_text = elem.text
                 break
 
         if not json_text:
-            return JsonResponse({"exito": False, "error": "Vehículo no encontrado en ANT/SRI."})
+            return JsonResponse({
+                "exito": False,
+                "error": "Vehículo no encontrado."
+            })
 
         datos_auto = json.loads(json_text)
 
-        def obtener_valor(campo_primario, campo_secundario):
-            obj = datos_auto.get(campo_primario) or datos_auto.get(campo_secundario)
-            if isinstance(obj, dict):
-                return obj.get("CurrentTextValue", "")
-            return str(obj or "")
+        def valor_api(campo):
+            valor = datos_auto.get(campo)
 
-        marca = obtener_valor("MakeDescription", "CarMake")
-        if marca.upper() == "VW": marca = "VOLKSWAGEN"
-        modelo = obtener_valor("ModelDescription", "CarModel")
-        
-        anio = datos_auto.get("Year", "")
-        descripcion = datos_auto.get("Description", "")
-        vehiculo_completo = f"{marca} {modelo}".strip()
+            if isinstance(valor, dict):
+                return valor.get("CurrentTextValue", "")
 
-        # 3. Clasificación con Inteligencia Artificial
+            return str(valor or "")
+
+        marca = (
+            valor_api("MakeDescription")
+            or valor_api("CarMake")
+        ).strip().upper()
+
+        if marca == "VW":
+            marca = "VOLKSWAGEN"
+
+        modelo = (
+            valor_api("ModelDescription")
+            or valor_api("CarModel")
+        ).strip().upper()
+
+        descripcion = (
+            datos_auto.get("Description")
+            or f"{marca} {modelo}"
+        ).strip().upper()
+
+        anio = datos_auto.get("Year")
+        tipo = datos_auto.get("Type", "")
+        subtipo = datos_auto.get("Subtype", "")
+        numero_chasis = datos_auto.get("VehicleIdentificationNumber", "")
+        imagen_url = datos_auto.get("ImageUrl", "")
+
         clasificacion = clasificar_vehiculo_con_ia(
-            marca=marca, modelo=modelo, anio=anio, descripcion=descripcion
+            marca=marca,
+            modelo=modelo,
+            anio=anio,
+            descripcion=descripcion,
         )
 
-        # 4. Guardamos en caché local (Solo campos válidos)
-        expediente, creado = ExpedienteVehiculo.objects.update_or_create(
-            placa=placa,
-            defaults={
-                "vehiculo": vehiculo_completo.upper(),
-                "anio_vehiculo": int(anio) if str(anio).isdigit() else None,
-            }
+        expediente = ExpedienteVehiculo(
+            placa=placa
         )
+
+        expediente.cargar_desde_api_placa(datos_auto)
+        expediente.fecha_ultima_consulta_placa = timezone.now()
+        expediente.save()
 
         return JsonResponse({
             "exito": True,
             "origen": "api_guardada",
-            "placa": placa,
-            "vehiculo": expediente.vehiculo or "",
-            "marca": marca,
-            "modelo": modelo,
+            "placa": expediente.placa,
+            "vehiculo": expediente.vehiculo or descripcion,
+            "marca": expediente.marca_api or marca,
+            "modelo": expediente.modelo_api or modelo,
+            "descripcion": expediente.descripcion_api or descripcion,
             "anio": expediente.anio_vehiculo or "",
-            "descripcion": descripcion,
+            "tipo": expediente.tipo_vehiculo_api or tipo,
+            "subtipo": expediente.subtipo_vehiculo_api or subtipo,
+            "numero_chasis": expediente.numero_chasis or numero_chasis or "",
+            "imagen_url": expediente.imagen_url_api or imagen_url or "",
+
             "tipo_tarifa_vehiculo": clasificacion["tipo_tarifa_vehiculo"],
             "gama_vehiculo": clasificacion["gama_vehiculo"],
             "confianza": clasificacion["confianza"],
@@ -364,8 +424,10 @@ def consultar_regcheck(request):
         })
 
     except Exception as e:
-        # Volvemos a un mensaje genérico por seguridad
-        return JsonResponse({"exito": False, "error": "Ocurrió un error al consultar el vehículo."})
+        return JsonResponse({
+            "exito": False,
+            "error": f"Error al consultar placa: {str(e)}"
+        })
 # =========================================================
 # API: CONSULTAR CÉDULA / RUC CON CACHE
 # =========================================================

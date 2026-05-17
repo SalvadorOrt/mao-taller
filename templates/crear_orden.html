@@ -359,13 +359,9 @@
 
         if (pasoActual === 5) setTimeout(redimensionarCanvas, 150);
     }
-
- // ==========================================
-// API FETCH
-// ==========================================
 function buscarPlaca() {
     const placaInput = document.getElementById('id_placa');
-    const placa = placaInput.value.trim().toUpperCase();
+    const placa = placaInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     const msg = document.getElementById('msg_busqueda_placa');
 
     if (!placa) {
@@ -382,7 +378,7 @@ function buscarPlaca() {
     msg.innerHTML = `
         <div class="alert alert-info py-2 mt-3">
             <i class="spinner-border spinner-border-sm"></i>
-            Conectando con SRI/ANT...
+            Consultando vehículo...
         </div>
     `;
 
@@ -390,6 +386,12 @@ function buscarPlaca() {
         .then(res => res.json())
         .then(data => {
             if (data.exito) {
+                const descripcion = data.descripcion || data.vehiculo || 'N/A';
+                const anio = data.anio || 'N/A';
+                const tipo = data.tipo || '';
+                const subtipo = data.subtipo || '';
+                const chasis = data.numero_chasis || '';
+
                 msg.innerHTML = `
                     <div class="alert alert-success text-start mt-3 shadow-sm border-0">
                         <h6 class="fw-bold mb-2">
@@ -398,8 +400,11 @@ function buscarPlaca() {
                         </h6>
 
                         <div class="ps-3 border-start border-success border-3">
-                            <strong>Vehículo:</strong> ${data.vehiculo || 'N/A'}<br>
-                            <strong>Año:</strong> ${data.anio || 'N/A'}<br>
+                            <strong>Vehículo:</strong> ${descripcion}<br>
+                            <strong>Año:</strong> ${anio}<br>
+                            ${tipo ? `<strong>Tipo:</strong> ${tipo}<br>` : ''}
+                            ${subtipo ? `<strong>Uso:</strong> ${subtipo}<br>` : ''}
+                            ${chasis ? `<strong>Chasis:</strong> ${chasis}<br>` : ''}
                         </div>
 
                         <button type="button"
@@ -410,22 +415,26 @@ function buscarPlaca() {
                     </div>
                 `;
 
-                document.getElementById('id_vehiculo').value =
-                    data.vehiculo || '';
+                document.getElementById('id_vehiculo').value = descripcion;
+                document.getElementById('id_anio').value = data.anio || '';
 
-                document.getElementById('id_anio').value =
-                    data.anio || '';
+                if (document.getElementById('id_numero_chasis')) {
+                    document.getElementById('id_numero_chasis').value = chasis;
+                }
+
+                if (document.getElementById('id_color') && data.color) {
+                    document.getElementById('id_color').value = data.color;
+                }
+
+                if (document.getElementById('id_kilometraje') && data.kilometraje) {
+                    document.getElementById('id_kilometraje').value = data.kilometraje;
+                }
 
                 document.getElementById('id_tipo_tarifa_vehiculo').value =
                     data.tipo_tarifa_vehiculo || 'NO_APLICA';
 
                 document.getElementById('id_gama_vehiculo').value =
                     data.gama_vehiculo || 'NO_APLICA';
-
-                console.log('Vehículo:', data.vehiculo);
-                console.log('Año:', data.anio);
-                console.log('Tipo tarifa vehículo:', data.tipo_tarifa_vehiculo);
-                console.log('Gama vehículo:', data.gama_vehiculo);
 
             } else {
                 msg.innerHTML = `

@@ -61,7 +61,11 @@ urlpatterns = [
         ordenes.editar_recepcion_orden,
         name='editar_recepcion_orden'
     ),
-
+    path(
+        'orden/<int:pk>/editar-vehiculo/',
+        ordenes.editar_vehiculo_ot,
+        name='editar_vehiculo_ot'
+    ),
     # ========================
     # Cotizaciones / Proformas
     # ========================
