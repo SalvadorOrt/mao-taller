@@ -637,12 +637,23 @@ function buscarCedula() {
         const trabajosHtml = trabajos.length ? `<ul>${trabajos.map(t => `<li>${t.descripcion}</li>`).join('')}</ul>` : '<p class="text-muted">No se registraron trabajos.</p>';
         const objetosHtml = objetos.length ? `<ul>${objetos.map(o => `<li>${o.descripcion} (${o.cantidad}) ${o.observacion ? '- ' + o.observacion : ''}</li>`).join('')}</ul>` : '<p class="text-muted">No hay objetos adicionales.</p>';
         const sucursalNombre = `{% if sucursal_activa %}{{ sucursal_activa.nombre|escapejs }}{% else %}SIN SUCURSAL{% endif %}`;
+        
+        // Capturar la clave (Si está vacía, mostramos "N/A")
+        const claveEncendido = document.getElementById('id_clave_encendido').value.trim() || 'N/A';
 
         document.getElementById('resumen_final').innerHTML = `
             <h5 class="text-primary mb-3"><i class="bi bi-file-earmark-check"></i> OT - ${document.getElementById('id_placa').value.toUpperCase()}</h5>
             <div class="row text-dark">
-                <div class="col-md-6"><p><strong>Sucursal:</strong> ${sucursalNombre}</p><p><strong>Vehículo:</strong> ${document.getElementById('id_vehiculo').value}</p><p><strong>Color:</strong> ${document.getElementById('id_color').value} | <strong>KM:</strong> ${document.getElementById('id_kilometraje').value}</p></div>
-                <div class="col-md-6"><p><strong>Cliente:</strong> ${document.getElementById('id_nombre').value || 'Consumidor Final'}</p><p><strong>CI/RUC:</strong> ${document.getElementById('id_identificacion_cliente').value || document.getElementById('id_identificacion').value || '-'}</p><p><strong>Combustible:</strong> ${document.getElementById('id_combustible').value}</p></div>
+                <div class="col-md-6">
+                    <p><strong>Sucursal:</strong> ${sucursalNombre}</p>
+                    <p><strong>Vehículo:</strong> ${document.getElementById('id_vehiculo').value}</p>
+                    <p><strong>Color:</strong> ${document.getElementById('id_color').value} | <strong>KM:</strong> ${document.getElementById('id_kilometraje').value}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Cliente:</strong> ${document.getElementById('id_nombre').value || 'Consumidor Final'}</p>
+                    <p><strong>CI/RUC:</strong> ${document.getElementById('id_identificacion_cliente').value || document.getElementById('id_identificacion').value || '-'}</p>
+                    <p><strong>Combustible:</strong> ${document.getElementById('id_combustible').value} | <strong>Clave/PIN:</strong> <span style="color: var(--apple-blue); font-weight: bold;">${claveEncendido}</span></p>
+                </div>
             </div>
             <hr>
             <div class="row">

@@ -881,7 +881,12 @@ class ExpedienteVehiculo(models.Model):
         null=True,
         blank=True,
     )
-
+    clave_encendido = models.CharField(
+        max_length=50, 
+        null=True, 
+        blank=True, 
+        verbose_name="Clave/PIN de Encendido"
+    )
     # ==========================================
     # DATOS API PLACA
     # ==========================================
@@ -1048,7 +1053,8 @@ class ExpedienteVehiculo(models.Model):
 
         if self.vehiculo:
             self.vehiculo = self.vehiculo.strip().upper()
-
+        if self.clave_encendido:
+            self.clave_encendido = self.clave_encendido.strip().upper()
         if self.cliente_respaldo:
             self.cliente_respaldo = self.cliente_respaldo.strip().upper()
 
@@ -1162,7 +1168,12 @@ class OrdenTrabajo(models.Model):
     placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
     vehiculo = models.CharField(max_length=150, null=True, blank=True)
     anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
-
+    clave_encendido = models.CharField(
+        max_length=50, 
+        null=True, 
+        blank=True, 
+        verbose_name="Clave/PIN de Encendido"
+    )
     fecha_origen = models.DateField(null=True, blank=True)
     kilometraje = models.PositiveIntegerField(null=True, blank=True)
     proximo_mantenimiento_km = models.PositiveIntegerField(null=True, blank=True)
@@ -1231,7 +1242,8 @@ class OrdenTrabajo(models.Model):
 
         if self.color:
             self.color = self.color.strip()
-
+        if self.clave_encendido:
+            self.clave_encendido = self.clave_encendido.strip().upper()
         if self.cliente_respaldo:
             self.cliente_respaldo = self.cliente_respaldo.strip()
 

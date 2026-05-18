@@ -19,12 +19,14 @@ from ..utils import (
     obtener_sucursal_activa, obtener_o_crear_expediente, generar_numero_orden,
    
 )
-
 # =========================================================
 # CREAR ORDEN
 # =========================================================
 @login_required
 def crear_orden(request):
+    import uuid
+    from django.db import transaction
+    
     sucursal_activa = obtener_sucursal_activa(request)
 
     if not sucursal_activa:
@@ -37,6 +39,9 @@ def crear_orden(request):
         anio = parse_int(request.POST.get("anio_vehiculo"), None)
         kilometraje = parse_int(request.POST.get("kilometraje"), None)
         nivel_combustible = request.POST.get("nivel_combustible", "1/2").strip()
+        
+        # ---> NUEVO: CAPTURAR LA CLAVE DE ENCENDIDO <---
+        clave_encendido = request.POST.get("clave_encendido", "").strip()
 
         tipo_tarifa_vehiculo = request.POST.get(
             "tipo_tarifa_vehiculo",
@@ -49,27 +54,13 @@ def crear_orden(request):
         ).strip().upper() or "NO_APLICA"
 
         tipos_validos = {
-            "NO_APLICA",
-            "AUTO",
-            "AUTO_3P",
-            "AUTO_5P",
-            "SUV_3P",
-            "SUV_5P",
-            "CAMIONETA_CS",
-            "CAMIONETA_DC",
-            "CAMIONETA_GRANDE",
+            "NO_APLICA", "AUTO", "AUTO_3P", "AUTO_5P", "SUV_3P", "SUV_5P",
+            "CAMIONETA_CS", "CAMIONETA_DC", "CAMIONETA_GRANDE",
         }
 
         gamas_validas = {
-            "NO_APLICA",
-            "ECONOMICA",
-            "MEDIA",
-            "MEDIA_ALTA",
-            "ALTA",
-            "PREMIUM",
-            "LUJO",
-            "COMERCIAL",
-            "DEPORTIVA",
+            "NO_APLICA", "ECONOMICA", "MEDIA", "MEDIA_ALTA", "ALTA",
+            "PREMIUM", "LUJO", "COMERCIAL", "DEPORTIVA",
         }
 
         if tipo_tarifa_vehiculo not in tipos_validos:
@@ -96,10 +87,7 @@ def crear_orden(request):
         email = request.POST.get("email", "").strip().lower()
         direccion = request.POST.get("direccion", "").strip().upper()
 
-        observaciones_recepcion = request.POST.get(
-            "observaciones_recepcion",
-            ""
-        ).strip()
+        observaciones_recepcion = request.POST.get("observaciones_recepcion", "").strip()
 
         # =====================================================
         # IA: CLASIFICAR VEHÍCULO
@@ -135,10 +123,7 @@ def crear_orden(request):
 
         def es_marcado(campo):
             return request.POST.get(campo, "").strip().lower() in [
-                "on",
-                "true",
-                "1",
-                "yes",
+                "on", "true", "1", "yes",
             ]
 
         checks = {
@@ -168,33 +153,17 @@ def crear_orden(request):
         cliente_obj = None
 
         if identificacion:
-            cliente_obj = Cliente.objects.filter(
-                identificacion=identificacion
-            ).first()
+            cliente_obj = Cliente.objects.filter(identificacion=identificacion).first()
 
             if cliente_obj:
                 cliente_obj.tipo_documento = tipo_documento
-
-                if nombre_cliente:
-                    cliente_obj.nombre_completo = nombre_cliente
-
-                if telefono:
-                    cliente_obj.telefono = telefono
-
-                if telefono_secundario:
-                    cliente_obj.telefono_secundario = telefono_secundario
-
-                if telefono_trabajo:
-                    cliente_obj.telefono_trabajo = telefono_trabajo
-
-                if email:
-                    cliente_obj.email = email
-
-                if direccion:
-                    cliente_obj.direccion = direccion
-
+                if nombre_cliente: cliente_obj.nombre_completo = nombre_cliente
+                if telefono: cliente_obj.telefono = telefono
+                if telefono_secundario: cliente_obj.telefono_secundario = telefono_secundario
+                if telefono_trabajo: cliente_obj.telefono_trabajo = telefono_trabajo
+                if email: cliente_obj.email = email
+                if direccion: cliente_obj.direccion = direccion
                 cliente_obj.save()
-
             else:
                 cliente_obj = Cliente.objects.create(
                     tipo_documento=tipo_documento,
@@ -228,6 +197,18 @@ def crear_orden(request):
                 anio
             )
 
+            # =====================================================
+            # SNAPSHOT: LÓGICA DE LA CLAVE DE ENCENDIDO
+            # =====================================================
+            if clave_encendido:
+                # Si el asesor escribió una clave hoy, actualizamos el maestro del auto
+                expediente.clave_encendido = clave_encendido
+                expediente.save()
+            else:
+                # Si el asesor lo dejó en blanco, traemos la última clave guardada en el historial
+                clave_encendido = expediente.clave_encendido
+
+            # Crear la orden
             nueva_orden = OrdenTrabajo.objects.create(
                 numero_orden=generar_numero_orden(),
                 sucursal=sucursal_activa,
@@ -246,6 +227,7 @@ def crear_orden(request):
                 estado="ABIERTA",
                 tipo_tarifa_vehiculo=tipo_tarifa_vehiculo,
                 gama_vehiculo=gama_vehiculo,
+                clave_encendido=clave_encendido,  # <--- SE GUARDA EN LA ORDEN ACTUAL
             )
 
             archivo_firma = procesar_imagen_base64(firma_base64)
@@ -266,7 +248,6 @@ def crear_orden(request):
 
             for idx, item in enumerate(sintomas_json, start=1):
                 desc = str(item.get("descripcion", "")).strip()
-
                 if desc:
                     OrdenSintoma.objects.create(
                         orden=nueva_orden,
@@ -276,7 +257,6 @@ def crear_orden(request):
 
             for idx, item in enumerate(trabajos_json, start=1):
                 desc = str(item.get("descripcion", "")).strip()
-
                 if desc:
                     OrdenTrabajoSolicitado.objects.create(
                         orden=nueva_orden,
@@ -286,15 +266,12 @@ def crear_orden(request):
 
             for item in objetos_json:
                 desc = str(item.get("descripcion", "")).strip()
-
                 if desc:
                     OrdenObjetoAdicional.objects.create(
                         orden=nueva_orden,
                         descripcion=desc,
                         cantidad=max(parse_int(item.get("cantidad"), 1), 1),
-                        observacion=str(
-                            item.get("observacion", "")
-                        ).strip() or None
+                        observacion=str(item.get("observacion", "")).strip() or None
                     )
 
             archivo_croquis = procesar_imagen_base64(croquis_base64)
@@ -305,7 +282,6 @@ def crear_orden(request):
                     trazos=[],
                     observacion="Croquis generado"
                 )
-
                 croquis_obj.imagen_generada.save(
                     f"croquis_ot_{nueva_orden.numero_orden}_{uuid.uuid4().hex[:8]}.png",
                     archivo_croquis

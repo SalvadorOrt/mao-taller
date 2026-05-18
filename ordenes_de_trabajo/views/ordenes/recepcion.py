@@ -13,11 +13,7 @@ from ..utils import (
      cargar_json_lista, procesar_imagen_base64,
     
     puede_operar_orden_desde_sucursal_activa
-)
-# =========================================================
-# EDITAR RECEPCIÓN DE ORDEN (MODAL RÁPIDO COMPLETO)
-# =========================================================
-# =========================================================
+)# =========================================================
 # EDITAR RECEPCIÓN DE ORDEN (MODAL RÁPIDO COMPLETO)
 # =========================================================
 @login_required
@@ -28,7 +24,6 @@ def editar_recepcion_orden(request, pk):
     from django.db import transaction
     from django.conf import settings
     
-    # IMPORTANTE: Asegúrate de importar ExpedienteVehiculo en la parte superior de tu archivo
     from ...models import ExpedienteVehiculo 
 
     orden = get_object_or_404(OrdenTrabajo, pk=pk)
@@ -50,6 +45,9 @@ def editar_recepcion_orden(request, pk):
         nuevo_anio = request.POST.get("anio_vehiculo", "").strip()
         nuevo_color = request.POST.get("color", "").strip().upper()
         nuevo_km = request.POST.get("kilometraje", "").strip()
+        
+        # ---> NUEVO: CAPTURAR LA CLAVE <---
+        nueva_clave = request.POST.get("clave_encendido", "").strip()
 
         # ==================================================
         # 2. CAPTURAR DATOS DE LA RECEPCIÓN ORIGINALES
@@ -74,7 +72,6 @@ def editar_recepcion_orden(request, pk):
                 # 3. MAGIA DEL VEHÍCULO (ESTRATEGIA CASCADA)
                 # ====================================================
                 if nueva_placa and nueva_placa != orden.placa:
-                    # Fase 1: Buscar en la Base de Datos Local
                     expediente_existente = ExpedienteVehiculo.objects.filter(placa=nueva_placa).first()
 
                     if expediente_existente:
@@ -83,7 +80,6 @@ def editar_recepcion_orden(request, pk):
                         orden.vehiculo = expediente_existente.vehiculo
                         orden.anio_vehiculo = expediente_existente.anio_vehiculo
                     else:
-                        # Fase 2: Consumir API de Placas (placaapi.ec)
                         user_placa = getattr(settings, "PLACA_API_USERNAME", "SalvadorOrtega")
                         url_placa = f"https://www.placaapi.ec/API/reg.asmx/CheckEcuador?RegistrationNumber={nueva_placa}&username={user_placa}"
                         
@@ -107,7 +103,6 @@ def editar_recepcion_orden(request, pk):
                                     desc_real = f"{marca} {modelo}".strip().upper()
                                     if not desc_real: desc_real = nuevo_vehiculo
                                     
-                                    # Crear el nuevo expediente amarrado al mismo cliente que ya estaba en la OT
                                     expediente = ExpedienteVehiculo.objects.create(
                                         placa=nueva_placa,
                                         vehiculo=desc_real,
@@ -125,7 +120,6 @@ def editar_recepcion_orden(request, pk):
                                 raise ValueError("Falla API Placas")
                                 
                         except Exception:
-                            # Fase 3: Fallback Manual (Si no hay internet, se guarda lo que tipeó el asesor)
                             expediente = ExpedienteVehiculo.objects.create(
                                 placa=nueva_placa,
                                 vehiculo=nuevo_vehiculo or "VEHÍCULO DESCONOCIDO",
@@ -137,17 +131,27 @@ def editar_recepcion_orden(request, pk):
                             orden.vehiculo = nuevo_vehiculo
                             if nuevo_anio.isdigit(): orden.anio_vehiculo = int(nuevo_anio)
 
-                # Independiente de si la placa cambió o no, actualizamos KM y Color
+                # ====================================================
+                # ACTUALIZACIÓN DE DATOS COMUNES Y SNAPSHOT DE CLAVE
+                # ====================================================
                 if nuevo_km.isdigit():
                     orden.kilometraje = int(nuevo_km)
                 if nuevo_color:
                     orden.color = nuevo_color
 
+                # ---> NUEVO: Guardamos la clave en la Orden de hoy <---
+                orden.clave_encendido = nueva_clave
+
+                # ---> NUEVO: Actualizamos el maestro del vehículo para el futuro <---
+                if orden.expediente:
+                    orden.expediente.clave_encendido = nueva_clave
+                    orden.expediente.save()
+
                 # Guardamos la orden con los datos correctos
                 orden.save()
 
                 # ====================================================
-                # 4. GUARDAR SÍNTOMAS, CROQUIS Y FOTOS (TU CÓDIGO)
+                # 4. GUARDAR SÍNTOMAS, CROQUIS Y FOTOS
                 # ====================================================
                 # Síntomas
                 orden.sintomas_items.all().delete()
