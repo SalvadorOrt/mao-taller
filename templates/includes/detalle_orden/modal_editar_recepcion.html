@@ -107,7 +107,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div>
                         <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Año</span>
                         <input type="number" name="anio_vehiculo" class="form-control-apple" value="{{ orden.anio_vehiculo|default_if_none:'' }}" style="padding: 8px 12px;">
@@ -117,9 +117,14 @@
                         <input type="text" name="color" class="form-control-apple" value="{{ orden.color|default_if_none:'' }}" style="text-transform: uppercase; padding: 8px 12px;">
                     </div>
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Kilometraje Ingreso</span>
-                        <input type="number" name="kilometraje" class="form-control-apple" value="{{ orden.kilometraje|default_if_none:'' }}" required style="font-weight: bold; padding: 8px 12px;">
+                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Kilometraje</span>
+                        <input type="number" name="kilometraje" class="form-control-apple" value="{{ orden.kilometraje|default_if_none:'' }}" required step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="font-weight: bold; padding: 8px 12px;">
                     </div>
+                </div>
+
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Clave / PIN de Encendido</span>
+                    <input type="text" name="clave_encendido" class="form-control-apple" value="{{ orden.clave_encendido|default_if_none:'' }}" placeholder="Ej. *1234# (Dejar vacío si no tiene)" style="font-weight: bold; color: #0071e3; padding: 8px 12px; max-width: 300px;">
                 </div>
             </div>
             <div style="margin-bottom: 25px;">
