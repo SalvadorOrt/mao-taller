@@ -134,6 +134,11 @@ urlpatterns = [
         api.consultar_regcheck,
         name='api_regcheck'
     ),
+    path(
+        'api/buscar-placa/',
+        api.buscar_vehiculo_por_placa,
+        name='api_buscar_placa'
+    ),
 
     #  CONSULTA CÉDULA / RUC (CACHE-ASIDE)
     path(

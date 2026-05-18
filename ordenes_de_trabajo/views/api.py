@@ -939,3 +939,28 @@ def api_buscar_servicios_ot(request):
         })
 
     return JsonResponse({"resultados": data})
+
+# =================================================================================
+# API: AUTOCOMPLETADO DE PLACA PARA RECEPCIÓN
+# =================================================================================
+@login_required
+def buscar_vehiculo_por_placa(request):
+    placa = request.GET.get('placa', '').strip().upper()
+    
+    if placa:
+        # Buscamos el último expediente de esta placa
+        expediente = ExpedienteVehiculo.objects.filter(placa=placa).order_by('-id').first()
+        
+        if expediente and expediente.cliente:
+            return JsonResponse({
+                'encontrado': True,
+                'vehiculo': expediente.vehiculo or '',
+                'anio': expediente.anio_vehiculo or '',
+                'cliente': {
+                    'identificacion': expediente.cliente.identificacion,
+                    'nombre': expediente.cliente.nombre_completo
+                }
+            })
+            
+    # Si no existe la placa o no tiene cliente
+    return JsonResponse({'encontrado': False})

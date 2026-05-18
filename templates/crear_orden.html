@@ -391,12 +391,38 @@ function buscarPlaca() {
                 const tipo = data.tipo || '';
                 const subtipo = data.subtipo || '';
                 const chasis = data.numero_chasis || '';
+                
+                // === NUEVO: DATOS DEL ÚLTIMO DUEÑO ===
+                const cedulaAnterior = data.identificacion || '';
+                const nombreAnterior = data.nombre_completo || '';
+                let alertaDuenoHtml = '';
+
+                if (cedulaAnterior && nombreAnterior) {
+                    // Llenamos el input de la cédula (Paso 1)
+                    document.getElementById('id_identificacion').value = cedulaAnterior;
+                    
+                    // Llenamos los inputs ocultos o del Paso 2
+                    if (document.getElementById('id_identificacion_cliente')) {
+                        document.getElementById('id_identificacion_cliente').value = cedulaAnterior;
+                    }
+                    if (document.getElementById('id_nombre')) {
+                        document.getElementById('id_nombre').value = nombreAnterior;
+                    }
+
+                    // Armamos la alerta visual amigable
+                    alertaDuenoHtml = `
+                        <div class="alert alert-info mt-3 shadow-sm border-0" style="font-size: 13px; background-color: #f5f5f7; border-left: 4px solid var(--apple-blue) !important;">
+                            ℹ️ <b>Sugerencia del Sistema:</b> El último dueño registrado fue <b>${nombreAnterior}</b>.<br>
+                            <span class="text-muted">Si el auto cambió de dueño, borre la cédula de arriba e ingrese la del nuevo propietario.</span>
+                        </div>
+                    `;
+                }
+                // ======================================
 
                 msg.innerHTML = `
                     <div class="alert alert-success text-start mt-3 shadow-sm border-0">
                         <h6 class="fw-bold mb-2">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Vehículo encontrado
+                            <i class="bi bi-check-circle-fill"></i> Vehículo encontrado
                         </h6>
 
                         <div class="ps-3 border-start border-success border-3">
@@ -406,6 +432,8 @@ function buscarPlaca() {
                             ${subtipo ? `<strong>Uso:</strong> ${subtipo}<br>` : ''}
                             ${chasis ? `<strong>Chasis:</strong> ${chasis}<br>` : ''}
                         </div>
+                        
+                        ${alertaDuenoHtml}
 
                         <button type="button"
                                 class="btn-mao btn-mao-success btn-pill mt-3 w-100"
@@ -415,26 +443,21 @@ function buscarPlaca() {
                     </div>
                 `;
 
+                // ... (El resto de tus asignaciones de color, km, tarifa se quedan igual)
                 document.getElementById('id_vehiculo').value = descripcion;
                 document.getElementById('id_anio').value = data.anio || '';
 
                 if (document.getElementById('id_numero_chasis')) {
                     document.getElementById('id_numero_chasis').value = chasis;
                 }
-
                 if (document.getElementById('id_color') && data.color) {
                     document.getElementById('id_color').value = data.color;
                 }
-
                 if (document.getElementById('id_kilometraje') && data.kilometraje) {
                     document.getElementById('id_kilometraje').value = data.kilometraje;
                 }
-
-                document.getElementById('id_tipo_tarifa_vehiculo').value =
-                    data.tipo_tarifa_vehiculo || 'NO_APLICA';
-
-                document.getElementById('id_gama_vehiculo').value =
-                    data.gama_vehiculo || 'NO_APLICA';
+                document.getElementById('id_tipo_tarifa_vehiculo').value = data.tipo_tarifa_vehiculo || 'NO_APLICA';
+                document.getElementById('id_gama_vehiculo').value = data.gama_vehiculo || 'NO_APLICA';
 
             } else {
                 msg.innerHTML = `

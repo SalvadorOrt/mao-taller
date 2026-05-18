@@ -198,15 +198,27 @@ def crear_orden(request):
             )
 
             # =====================================================
-            # SNAPSHOT: LÓGICA DE LA CLAVE DE ENCENDIDO
+            # ACTUALIZAR EXPEDIENTE (CAMBIO DE DUEÑO Y CLAVE)
             # =====================================================
+            expediente_modificado = False
+
+            # 1. Lógica de Cambio de Dueño
+            if expediente.cliente != cliente_obj:
+                expediente.cliente = cliente_obj
+                expediente_modificado = True
+
+            # 2. Lógica de la clave de encendido
             if clave_encendido:
                 # Si el asesor escribió una clave hoy, actualizamos el maestro del auto
                 expediente.clave_encendido = clave_encendido
-                expediente.save()
+                expediente_modificado = True
             else:
-                # Si el asesor lo dejó en blanco, traemos la última clave guardada en el historial
+                # Si el asesor lo dejó en blanco, traemos la última clave guardada
                 clave_encendido = expediente.clave_encendido
+
+            # Guardamos el expediente una sola vez si hubo algún cambio
+            if expediente_modificado:
+                expediente.save()
 
             # Crear la orden
             nueva_orden = OrdenTrabajo.objects.create(
