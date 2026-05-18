@@ -23,7 +23,6 @@ def editar_recepcion_orden(request, pk):
     import xml.etree.ElementTree as ET
     from django.db import transaction
     from django.conf import settings
-    
     from ...models import ExpedienteVehiculo 
 
     orden = get_object_or_404(OrdenTrabajo, pk=pk)
@@ -37,26 +36,15 @@ def editar_recepcion_orden(request, pk):
         return redirect("detalle_orden", pk=pk)
 
     if request.method == "POST":
-        # ==================================================
-        # 1. CAPTURAR NUEVOS DATOS DEL VEHÍCULO
-        # ==================================================
+        # 1. CAPTURAR TEXTOS DEL MODAL
         nueva_placa = request.POST.get("placa", "").strip().upper()
         nuevo_vehiculo = request.POST.get("vehiculo", "").strip().upper()
         nuevo_anio = request.POST.get("anio_vehiculo", "").strip()
         nuevo_color = request.POST.get("color", "").strip().upper()
         nuevo_km = request.POST.get("kilometraje", "").strip()
-        
-        # ---> NUEVO: CAPTURAR LA CLAVE <---
         nueva_clave = request.POST.get("clave_encendido", "").strip()
 
-        # ==================================================
-        # 2. CAPTURAR DATOS DE LA RECEPCIÓN ORIGINALES
-        # ==================================================
-        orden.observaciones_recepcion = request.POST.get(
-            "observaciones_recepcion",
-            orden.observaciones_recepcion or ""
-        ).strip()
-
+        orden.observaciones_recepcion = request.POST.get("observaciones_recepcion", orden.observaciones_recepcion or "").strip()
         sintomas_json = cargar_json_lista(request.POST.get("sintomas_json", ""))
         trabajos_json = cargar_json_lista(request.POST.get("trabajos_json", ""))
         croquis_base64 = request.POST.get("imagen_croquis_base64", "").strip()
@@ -69,8 +57,10 @@ def editar_recepcion_orden(request, pk):
             with transaction.atomic():
                 
                 # ====================================================
-                # 3. MAGIA DEL VEHÍCULO (ESTRATEGIA CASCADA)
+                # MAGIA DEL VEHÍCULO: REGLA -> "EL ASESOR MANDA"
                 # ====================================================
+                
+                # CASO A: EL ASESOR CAMBIÓ LA PLACA
                 if nueva_placa and nueva_placa != orden.placa:
                     expediente_existente = ExpedienteVehiculo.objects.filter(placa=nueva_placa).first()
 
@@ -101,7 +91,12 @@ def editar_recepcion_orden(request, pk):
                                     anio_real = datos_auto.get("Year")
                                     
                                     desc_real = f"{marca} {modelo}".strip().upper()
-                                    if not desc_real: desc_real = nuevo_vehiculo
+                                    
+                                    # ¡BLINDAJE 1! Si la API trajo basura, pero el asesor escribió un nombre a mano, ignoramos a la API.
+                                    if nuevo_vehiculo and nuevo_vehiculo != orden.vehiculo:
+                                        desc_real = nuevo_vehiculo
+                                    elif not desc_real:
+                                        desc_real = nuevo_vehiculo
                                     
                                     expediente = ExpedienteVehiculo.objects.create(
                                         placa=nueva_placa,
@@ -131,75 +126,68 @@ def editar_recepcion_orden(request, pk):
                             orden.vehiculo = nuevo_vehiculo
                             if nuevo_anio.isdigit(): orden.anio_vehiculo = int(nuevo_anio)
 
+                # CASO B: LA PLACA NO CAMBIÓ (Solo quiere arreglar el nombre "BMW" -> "HYUNDAI")
+                else:
+                    # ¡BLINDAJE 2! Verificamos si el asesor borró el nombre viejo y puso uno nuevo
+                    if nuevo_vehiculo and nuevo_vehiculo != orden.vehiculo:
+                        orden.vehiculo = nuevo_vehiculo
+                        if orden.expediente:
+                            orden.expediente.vehiculo = nuevo_vehiculo
+                            
+                            # ESTA ES LA CLAVE: Borramos la "basura" de la API para que no lo reescriba en el frontend
+                            orden.expediente.descripcion_api = ""
+                            orden.expediente.marca_api = ""
+                            orden.expediente.modelo_api = ""
+                            
+                    if nuevo_anio and str(nuevo_anio).isdigit():
+                        orden.anio_vehiculo = int(nuevo_anio)
+                        if orden.expediente:
+                            orden.expediente.anio_vehiculo = int(nuevo_anio)
+
                 # ====================================================
-                # ACTUALIZACIÓN DE DATOS COMUNES Y SNAPSHOT DE CLAVE
+                # ACTUALIZACIONES COMUNES (KM, COLOR, CLAVE)
                 # ====================================================
                 if nuevo_km.isdigit():
                     orden.kilometraje = int(nuevo_km)
                 if nuevo_color:
                     orden.color = nuevo_color
 
-                # ---> NUEVO: Guardamos la clave en la Orden de hoy <---
                 orden.clave_encendido = nueva_clave
-
-                # ---> NUEVO: Actualizamos el maestro del vehículo para el futuro <---
+                
+                # Guardamos todas las correcciones al expediente de un solo golpe
                 if orden.expediente:
                     orden.expediente.clave_encendido = nueva_clave
-                    orden.expediente.save()
+                    orden.expediente.save() 
 
-                # Guardamos la orden con los datos correctos
                 orden.save()
 
                 # ====================================================
-                # 4. GUARDAR SÍNTOMAS, CROQUIS Y FOTOS
+                # GUARDAR SÍNTOMAS, CROQUIS Y FOTOS
                 # ====================================================
-                # Síntomas
                 orden.sintomas_items.all().delete()
                 for idx, item in enumerate(sintomas_json, start=1):
                     desc = str(item.get("descripcion", "")).strip()
-                    if desc:
-                        OrdenSintoma.objects.create(
-                            orden=orden,
-                            descripcion=desc,
-                            orden_item=idx
-                        )
+                    if desc: OrdenSintoma.objects.create(orden=orden, descripcion=desc, orden_item=idx)
 
-                # Trabajos solicitados
                 orden.trabajos_solicitados_items.all().delete()
                 for idx, item in enumerate(trabajos_json, start=1):
                     desc = str(item.get("descripcion", "")).strip()
-                    if desc:
-                        OrdenTrabajoSolicitado.objects.create(
-                            orden=orden,
-                            descripcion_manual=desc,
-                            orden_item=idx
-                        )
+                    if desc: OrdenTrabajoSolicitado.objects.create(orden=orden, descripcion_manual=desc, orden_item=idx)
 
-                # Croquis
                 if croquis_base64:
                     archivo_croquis = procesar_imagen_base64(croquis_base64)
                     if archivo_croquis:
                         croquis_obj, _ = OrdenCroquisDanio.objects.get_or_create(orden=orden)
-                        if croquis_obj.imagen_generada:
-                            croquis_obj.imagen_generada.delete(save=False)
-                        nombre_archivo = f"croquis_upd_{orden.numero_orden}_{uuid.uuid4().hex[:8]}.png"
-                        croquis_obj.imagen_generada.save(nombre_archivo, archivo_croquis, save=True)
+                        if croquis_obj.imagen_generada: croquis_obj.imagen_generada.delete(save=False)
+                        croquis_obj.imagen_generada.save(f"croquis_upd_{orden.numero_orden}_{uuid.uuid4().hex[:8]}.png", archivo_croquis, save=True)
 
-                # Eliminar fotos marcadas
                 if fotos_eliminar:
-                    fotos_queryset = FotoRecepcionVehiculo.objects.filter(orden=orden, id__in=fotos_eliminar)
-                    for foto in fotos_queryset:
-                        if foto.imagen:
-                            foto.imagen.delete(save=False)
+                    for foto in FotoRecepcionVehiculo.objects.filter(orden=orden, id__in=fotos_eliminar):
+                        if foto.imagen: foto.imagen.delete(save=False)
                         foto.delete()
 
-                # Agregar nuevas fotos
                 for foto in fotos_nuevas:
-                    FotoRecepcionVehiculo.objects.create(
-                        orden=orden,
-                        imagen=foto,
-                        descripcion=descripcion_fotos
-                    )
+                    FotoRecepcionVehiculo.objects.create(orden=orden, imagen=foto, descripcion=descripcion_fotos)
 
             messages.success(request, "¡Recepción y datos del vehículo actualizados con éxito!")
             

@@ -981,8 +981,8 @@ class ExpedienteVehiculo(models.Model):
     @property
     def descripcion_vehiculo_final(self):
         return (
-            self.descripcion_api
-            or self.vehiculo
+            self.vehiculo           
+            or self.descripcion_api 
             or "SIN VEHÍCULO"
         )
 
