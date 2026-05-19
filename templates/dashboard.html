@@ -191,11 +191,8 @@
 
             <div class="mb-3">
                 <div class="placa-vehiculo">
-                    <!-- Pasamos la información limpia al JavaScript para que decida el color -->
                     <div class="placa-header"
-                         style="background-color: {% if vehiculo.es_migrada %}#86868b{% else %}{{ vehiculo.color_hex|default:'#1d1d1f' }}{% endif %};"
-                         data-color="{{ vehiculo.color }}"
-                         data-migrada="{{ vehiculo.es_migrada }}">
+                         style="background-color: {% if vehiculo.es_migrada %}#86868b{% elif vehiculo.color %}{{ vehiculo.color }}{% else %}#1d1d1f{% endif %};">
                         {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
                     </div>
                     <div class="placa-numero">{{ vehiculo.placa }}</div>
@@ -243,36 +240,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         
         // =========================================================
-        // 1. SALVAVIDAS DE COLORES (Para órdenes antiguas)
-        // =========================================================
-        const mapaColores = {
-            'BLANCO': '#F5F5F7', 'NEGRO': '#212121', 'PLATA': '#BDBDBD',
-            'GRIS': '#757575', 'ROJO': '#D32F2F', 'VINO': '#880E4F',
-            'AZUL': '#1976D2', 'CELESTE': '#03A9F4', 'VERDE': '#388E3C',
-            'AMARILLO': '#FBC02D'
-        };
-
-        const headers = document.querySelectorAll('.placa-header');
-        headers.forEach(function (header) {
-            const colorName = header.dataset.color;
-            const esMigrada = header.dataset.migrada === "True";
-            
-            // Si viene negra desde la base de datos (orden vieja), el JS la rescata
-            if (header.style.backgroundColor === 'rgb(29, 29, 31)' || header.style.backgroundColor === '#1d1d1f') {
-                let colorFinal = esMigrada ? '#86868b' : '#1d1d1f';
-                
-                if (colorName) {
-                    const colorUpper = colorName.toUpperCase().trim();
-                    if (mapaColores[colorUpper]) {
-                        colorFinal = mapaColores[colorUpper];
-                    }
-                }
-                header.style.backgroundColor = colorFinal;
-            }
-        });
-
-        // =========================================================
-        // 2. BUSCADOR GENERAL DE TARJETAS
+        // BUSCADOR GENERAL DE TARJETAS
         // =========================================================
         const buscador = document.getElementById('buscadorDashboard');
         if (buscador) {
@@ -288,7 +256,7 @@
         }
 
         // =========================================================
-        // 3. REDIRECCIÓN DE LAS TARJETAS AL DETALLE
+        // REDIRECCIÓN DE LAS TARJETAS AL DETALLE
         // =========================================================
         const tarjetasClick = document.querySelectorAll('.tarjeta-click');
         tarjetasClick.forEach(function (tarjeta) {
@@ -301,7 +269,7 @@
         });
 
         // =========================================================
-        // 4. DROPDOWN (COMBOBOX) DE SUCURSALES
+        // DROPDOWN (COMBOBOX) DE SUCURSALES
         // =========================================================
         const combobox = document.getElementById('maoComboboxSucursal');
         const input = document.getElementById('maoComboboxInput');
