@@ -35,7 +35,6 @@ urlpatterns = [
 
     #  NUEVO: Módulo de Clientes
     path('clientes/', clientes.lista_clientes, name='lista_clientes'),
-
     # APIs
     path('api/regcheck/', api.consultar_regcheck, name='api_regcheck'),
     path('api/buscar-placa/', api.buscar_vehiculo_por_placa, name='api_buscar_placa'),
