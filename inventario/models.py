@@ -350,7 +350,7 @@ class CodigoProducto(models.Model):
         max_length=255, 
         blank=True, 
         null=True,
-        db_index=True, # 🔥 ESTA ES LA MAGIA
+        db_index=True, 
         help_text="Puede quedar vacío si el producto se creó rápido sin escanear."
     )
     

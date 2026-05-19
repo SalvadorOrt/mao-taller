@@ -37,7 +37,7 @@
                 <tr>
                     <td class="producto-cell">
                         <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="{{ item.producto.id|default_if_none:'' }}">
-                        <!-- 🔥 AQUI FALTABAN ESTOS 3 VALORES PARA QUE AL GUARDAR DE NUEVO NO SE PIERDAN 🔥 -->
+                        
                         <input type="hidden" name="rep_categoria_id[]" value="{{ item.categoria_referencia.id|default_if_none:'' }}">
                         <input type="hidden" name="rep_codigo_barras[]" value="{{ item.codigo_barras_referencia|default_if_none:'' }}">
                         <input type="hidden" name="rep_codigo_empaque[]" value="{{ item.codigo_empaque_referencia|default_if_none:'' }}">
@@ -53,7 +53,7 @@
                                        onkeydown="manejarTeclaBusquedaProducto(event, this)"
                                        onfocus="buscarProductoEnFila(this)">
                             {% else %}
-                                <!-- 🔥 SI NO ES DE INVENTARIO, MOSTRAMOS LOS DATOS DEL INGRESO RÁPIDO 🔥 -->
+                               
                                 <div class="producto-busqueda-wrap" style="text-align:center; background-color:#f5f5f7; padding:8px; border-radius:6px; font-weight:bold; color:#86868b; font-size:11px;">
                                     {% if item.codigo_barras_referencia %}
                                         {{ item.codigo_barras_referencia }}

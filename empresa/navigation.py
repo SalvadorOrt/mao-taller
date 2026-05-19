@@ -9,7 +9,8 @@ def get_menu_lateral(user):
                 {"label": "Nueva Orden", "url_name": "crear_orden", "icon": "bi-plus-circle"},
                 {"label": "Órdenes de Trabajo", "url_name": "lista_ordenes", "icon": "bi-list-ul"},
                 {"label": "Vehículos / Expedientes", "url": "/admin/ordenes_de_trabajo/expedientevehiculo/", "icon": "bi-car-front"},
-                {"label": "Clientes", "url": "/admin/ordenes_de_trabajo/cliente/", "icon": "bi-people"},
+                
+                {"label": "Clientes", "url": "/clientes/", "icon": "bi-people"},
             ]
         })
 
@@ -28,7 +29,6 @@ def get_menu_lateral(user):
         menu.append({
             "titulo": "Administración",
             "items": [
-                # 🔥 CAMBIO AQUÍ: Cambiamos 'url' por 'url_name' apuntando a tu nueva vista
                 {"label": "Personal y Accesos", "url_name": "lista_usuarios", "icon": "bi-people-fill"},
                 {"label": "Auditoría", "url": "/admin/inventario/auditoria/", "icon": "bi-clock-history"},
                 {"label": "Panel Admin", "url": "/admin/", "icon": "bi-sliders"},

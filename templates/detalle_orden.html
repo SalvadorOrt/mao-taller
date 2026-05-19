@@ -57,13 +57,12 @@
         </div>
     </div>
 
-    <!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN (Fuera del formulario maestro) 🔥 -->
-<!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN (Fuera del formulario maestro) 🔥 -->
+  
     <form id="form_cerrar_orden" method="POST" action="{% url 'cerrar_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
     <form id="form_anular_orden" method="POST" action="{% url 'anular_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
     <form id="formReabrir" method="POST" action="{% url 'reabrir_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
 
-    <!-- 🔥 FORMULARIO MAESTRO DE DETALLES (con novalidate) 🔥 -->
+
     <form method="post" id="formDetalleOT" novalidate>
         {% csrf_token %}
 
@@ -82,7 +81,7 @@
             </a>
 
             {% if puede_editar %}
-                <!-- 🔥 BOTÓN ACTUALIZADO PARA DISPARAR EL GUARDADO DIRECTO 🔥 -->
+                
                 <button type="button" class="btn-login primary" onclick="guardarOTDirecto()">
                     {% if orden.estado != 'ABIERTA' %}
                         <i class="bi bi-shield-check" style="margin-right: 5px;"></i> Guardar Correcciones
@@ -102,7 +101,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // 🔥 1. FUNCIÓN DE GUARDADO DIRECTO (Sin preguntas tediosas) 🔥
+    
     function guardarOTDirecto() {
         // 1. Mostramos pantalla de carga para que el usuario sepa que está procesando
         Swal.fire({
@@ -171,7 +170,7 @@
         });
     }
 
-    // 🔥 3. CAPTURA DE MENSAJES DE DJANGO PARA MOSTRAR MODAL DE ÉXITO AL RECARGAR 🔥
+   
     document.addEventListener("DOMContentLoaded", function() {
         {% if messages %}
             {% for message in messages %}

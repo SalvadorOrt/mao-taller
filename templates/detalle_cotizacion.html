@@ -46,10 +46,10 @@
         </div>
     </div>
 
-    <!-- 🔥 FORMULARIOS OCULTOS DE ACCIÓN 🔥 -->
+    
     <form id="formAprobar" method="POST" action="{% url 'aprobar_cotizacion' cotizacion.pk %}" style="display: none;">{% csrf_token %}</form>
 
-    <!-- 🔥 FORMULARIO MAESTRO DE DETALLES 🔥 -->
+    
     <form method="post" id="formDetalleOT" novalidate>
         {% csrf_token %}
 
@@ -93,7 +93,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // 🔥 1. FUNCIÓN DE GUARDADO DIRECTO (Reutilizada y perfeccionada) 🔥
+   
     function guardarOTDirecto() {
         Swal.fire({
             title: 'Guardando...',
@@ -138,7 +138,7 @@
         formSeguro.submit();
     }
 
-    // 🔥 2. MODAL DE CONFIRMACIÓN PARA APROBAR 🔥
+   
     function confirmarAprobacion(formId) {
         Swal.fire({
             title: '¿Aprobar Proforma?',
@@ -156,7 +156,7 @@
         });
     }
 
-    // 🔥 3. CAPTURA DE MENSAJES DE DJANGO PARA MODAL DE ÉXITO 🔥
+    
     document.addEventListener("DOMContentLoaded", function() {
         {% if messages %}
             {% for message in messages %}

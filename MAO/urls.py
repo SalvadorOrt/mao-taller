@@ -21,7 +21,7 @@ urlpatterns = [
     # Rutas de tus aplicaciones
     path('', include('ordenes_de_trabajo.urls')),
     
-    # 🔥 AQUÍ INCLUIMOS TU APP DE INVENTARIO 🔥
+   
     path('inventario/', include('inventario.urls')), 
 ]
 

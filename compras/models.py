@@ -45,7 +45,7 @@ class Proveedor(models.Model):
         if not self.nombre_contacto or not self.nombre_contacto.strip():
             raise ValidationError("El nombre de contacto es obligatorio.")
 
-        # 🔥 VALIDACIÓN CLAVE PARA WHATSAPP
+        #  VALIDACIÓN CLAVE PARA WHATSAPP
         if self.whatsapp:
             numero = self.whatsapp.strip()
 
