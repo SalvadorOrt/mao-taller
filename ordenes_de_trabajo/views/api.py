@@ -254,10 +254,6 @@ import requests
 import xml.etree.ElementTree as ET
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-
-# =========================================================
-# API: CONSULTAR PLACA CON CACHE (CORREGIDA)
-# =========================================================
 @login_required
 def consultar_regcheck(request):
     placa = (
@@ -281,6 +277,16 @@ def consultar_regcheck(request):
     if expediente:
         ultima_ot = expediente.ordenes.order_by("-fecha_ingreso").first()
         cliente = expediente.cliente
+        
+        # ====================================================
+        # FILTRO DE CALIDAD PARA CÉDULAS MIGRADAS
+        # ====================================================
+        cedula_valida = ""
+        if cliente and cliente.identificacion:
+            ced_temp = str(cliente.identificacion).strip()
+            # Si es solo números y tiene 10 o 13 dígitos, la pasamos
+            if ced_temp.isdigit() and len(ced_temp) in [10, 13]:
+                cedula_valida = ced_temp
 
         return JsonResponse({
             "exito": True,
@@ -299,7 +305,7 @@ def consultar_regcheck(request):
             "color": ultima_ot.color if ultima_ot else "",
             "kilometraje": ultima_ot.kilometraje if ultima_ot else "",
 
-            "identificacion": cliente.identificacion if cliente else "",
+            "identificacion": cedula_valida, # <--- AHORA PASA POR EL FILTRO
             "nombre_completo": cliente.nombre_completo if cliente else "",
             "telefono": cliente.telefono if cliente else "",
             "email": cliente.email if cliente else "",
@@ -940,7 +946,7 @@ def api_buscar_servicios_ot(request):
 
     return JsonResponse({"resultados": data})
 
-# =================================================================================
+## =================================================================================
 # API: AUTOCOMPLETADO DE PLACA PARA RECEPCIÓN
 # =================================================================================
 @login_required
@@ -952,12 +958,18 @@ def buscar_vehiculo_por_placa(request):
         expediente = ExpedienteVehiculo.objects.filter(placa=placa).order_by('-id').first()
         
         if expediente and expediente.cliente:
+            # FILTRO DE CALIDAD
+            cedula_valida = ""
+            ced_temp = str(expediente.cliente.identificacion or "").strip()
+            if ced_temp.isdigit() and len(ced_temp) in [10, 13]:
+                cedula_valida = ced_temp
+                
             return JsonResponse({
                 'encontrado': True,
                 'vehiculo': expediente.vehiculo or '',
                 'anio': expediente.anio_vehiculo or '',
                 'cliente': {
-                    'identificacion': expediente.cliente.identificacion,
+                    'identificacion': cedula_valida, # <--- AHORA PASA POR EL FILTRO
                     'nombre': expediente.cliente.nombre_completo
                 }
             })

@@ -2065,7 +2065,7 @@ class Cotizacion(models.Model):
                 Cotizacion.objects.filter(pk=self.pk).update(total_general=nuevo_total)
 
     def save(self, *args, **kwargs):
-        # 🔥 HERENCIA AUTOMÁTICA: Si hay una OT abierta, la cotización hereda sus datos.
+       
         if self.orden:
             self.placa = self.orden.placa
             self.vehiculo = self.orden.vehiculo
@@ -2117,7 +2117,7 @@ class CotizacionInsumoDetalle(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
     orden_item = models.PositiveIntegerField(default=1)
 
-    # 🔥 NUEVOS CAMPOS (El Espejo de la Orden de Trabajo para el Ingreso Rápido)
+
     categoria_referencia = models.ForeignKey(
         "inventario.Categoria",
         on_delete=models.SET_NULL,
@@ -2161,7 +2161,7 @@ class CotizacionProcedimientoDetalle(models.Model):
     )
     descripcion = models.CharField(max_length=255)
     
-    # 🔥 NUEVO CAMPO: Para mantener el orden de los procedimientos igual que en la OT
+  
     orden_item = models.PositiveIntegerField(default=1)
 
     class Meta:

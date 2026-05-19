@@ -80,7 +80,7 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
     """
     orden = get_object_or_404(OrdenTrabajo, pk=pk_orden)
     
-    # 🔥 USAMOS GET_OR_CREATE PARA EVITAR DUPLICADOS 🔥
+    
     cotizacion, created = Cotizacion.objects.get_or_create(
         orden=orden,
         defaults={
@@ -257,7 +257,7 @@ def aprobar_cotizacion(request, pk):
                     
                     for proc in serv.procedimientos_detalle.all():
                         OrdenServicioProcedimientoDetalle.objects.create(
-                            detalle_servicio=nuevo_servicio_ot, # 🔥 CORRECCIÓN APLICADA AQUÍ
+                            detalle_servicio=nuevo_servicio_ot, 
                             descripcion=proc.descripcion
                         )
 

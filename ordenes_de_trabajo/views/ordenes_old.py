@@ -825,8 +825,6 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
     EVITA LAS 30 PROFORMAS REPETIDAS.
     """
     orden = get_object_or_404(OrdenTrabajo, pk=pk_orden)
-    
-    # 🔥 USAMOS GET_OR_CREATE PARA EVITAR DUPLICADOS 🔥
     cotizacion, created = Cotizacion.objects.get_or_create(
         orden=orden,
         defaults={
