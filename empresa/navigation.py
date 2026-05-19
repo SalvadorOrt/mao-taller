@@ -9,8 +9,8 @@ def get_menu_lateral(user):
                 {"label": "Nueva Orden", "url_name": "crear_orden", "icon": "bi-plus-circle"},
                 {"label": "Órdenes de Trabajo", "url_name": "lista_ordenes", "icon": "bi-list-ul"},
                 {"label": "Vehículos / Expedientes", "url": "/admin/ordenes_de_trabajo/expedientevehiculo/", "icon": "bi-car-front"},
-                
-                {"label": "Clientes", "url": "/clientes/", "icon": "bi-people"},
+                {"label": "Clientes", "url_name": "lista_clientes", "icon": "bi-people"},
+            
             ]
         })
 
