@@ -1263,6 +1263,8 @@ class OrdenTrabajo(models.Model):
             self.hoja_origen = self.hoja_origen.strip()
 
     def _calcular_color_hex(self):
+        if self.color_hex and self.color_hex != "#1d1d1f":
+            return
         self.color_hex = "#1d1d1f"
 
         if not self.color:

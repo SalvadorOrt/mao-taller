@@ -36,6 +36,7 @@ def crear_orden(request):
         placa = request.POST.get("placa", "").strip().upper()
         vehiculo = request.POST.get("vehiculo", "").strip().upper()
         color = request.POST.get("color", "").strip().upper()
+        color_hex = request.POST.get("color_hex", "#1d1d1f").strip()
         anio = parse_int(request.POST.get("anio_vehiculo"), None)
         kilometraje = parse_int(request.POST.get("kilometraje"), None)
         nivel_combustible = request.POST.get("nivel_combustible", "1/2").strip()
@@ -231,6 +232,7 @@ def crear_orden(request):
                 placa=placa,
                 vehiculo=vehiculo,
                 color=color,
+                color_hex=color_hex,
                 anio_vehiculo=anio,
                 kilometraje=kilometraje,
                 nivel_combustible=nivel_combustible,

@@ -193,7 +193,7 @@
                 <div class="placa-vehiculo">
                     <!-- Pasamos la información limpia al JavaScript para que decida el color -->
                     <div class="placa-header"
-                         data-color="{{ vehiculo.color }}"
+                         style="background-color: {% if vehiculo.es_migrada %}#86868b{% else %}{{ vehiculo.color_hex|default:'#1d1d1f' }}{% endif %};"
                          data-migrada="{{ vehiculo.es_migrada }}">
                         {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
                     </div>
@@ -240,42 +240,10 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        
         // =========================================================
-        // LÓGICA DE RECUPERACIÓN DE COLORES
+        // LÓGICA DEL BUSCADOR GENERAL DE TARJETAS
         // =========================================================
-        const mapaColores = {
-            'BLANCO': '#F5F5F7',
-            'NEGRO': '#212121',
-            'PLATA': '#BDBDBD',
-            'GRIS': '#757575',
-            'ROJO': '#D32F2F',
-            'VINO': '#880E4F',
-            'AZUL': '#1976D2',
-            'CELESTE': '#03A9F4',
-            'VERDE': '#388E3C',
-            'AMARILLO': '#FBC02D'
-        };
-
-        const headers = document.querySelectorAll('.placa-header');
-        headers.forEach(function (header) {
-            const colorName = header.dataset.color;
-            const esMigrada = header.dataset.migrada === "True";
-            
-            // 1. Color base por defecto
-            let colorFinal = esMigrada ? '#86868b' : '#1d1d1f';
-            
-            // 2. Si el color existe en el mapa, aplicamos el HEX correspondiente
-            if (colorName) {
-                const colorUpper = colorName.toUpperCase().trim();
-                if (mapaColores[colorUpper]) {
-                    colorFinal = mapaColores[colorUpper];
-                }
-            }
-            
-            header.style.backgroundColor = colorFinal;
-        });
-
-        // Lógica del buscador general de tarjetas
         const buscador = document.getElementById('buscadorDashboard');
         if (buscador) {
             buscador.addEventListener('keyup', function () {
@@ -289,7 +257,9 @@
             });
         }
 
-        // Redirección de las tarjetas
+        // =========================================================
+        // REDIRECCIÓN DE LAS TARJETAS AL DETALLE DE LA OT
+        // =========================================================
         const tarjetasClick = document.querySelectorAll('.tarjeta-click');
         tarjetasClick.forEach(function (tarjeta) {
             tarjeta.addEventListener('click', function () {
@@ -300,7 +270,9 @@
             });
         });
 
-        // Lógica del dropdown de sucursales
+        // =========================================================
+        // LÓGICA DEL DROPDOWN (COMBOBOX) DE SUCURSALES
+        // =========================================================
         const combobox = document.getElementById('maoComboboxSucursal');
         const input = document.getElementById('maoComboboxInput');
         const options = document.querySelectorAll('.mao-combobox-option');
@@ -328,4 +300,3 @@
         }
     });
 </script>
-{% endblock %}
