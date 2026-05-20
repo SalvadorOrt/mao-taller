@@ -578,7 +578,43 @@
             <span>${{ subtotal_moe|floatformat:2 }}</span>
         </div>
     </div>
+    {% if recomendaciones %}
+<div class="section">
+    <div class="section-title">
+        4. Recomendaciones Técnicas
+    </div>
 
+    <table class="detail-table">
+        <colgroup>
+            <col style="width: 28%;">
+            <col style="width: 72%;">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Recomendación</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for rec in recomendaciones %}
+                <tr>
+                    <td>
+                        <strong>
+                            {{ rec.titulo|upper }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        {{ rec.texto|linebreaksbr }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
     <div class="totals-wrap">
         <table class="totals-table">
             <tr>
