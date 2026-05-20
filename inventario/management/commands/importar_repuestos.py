@@ -309,7 +309,7 @@ class Command(BaseCommand):
 
             self.asegurar_stock_en_todas_las_sucursales(codigo_producto)
 
-        self.stdout.write(self.style.SUCCESS("✅ Importación de repuestos completada"))
+        self.stdout.write(self.style.SUCCESS(" Importación de repuestos completada"))
         self.stdout.write(
             f"Sucursales inicializadas con stock en 0: {sucursal_sur.codigo} y {sucursal_norte.codigo}"
         )

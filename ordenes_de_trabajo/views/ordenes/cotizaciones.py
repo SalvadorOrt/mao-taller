@@ -74,10 +74,6 @@ def crear_cotizacion(request):
 
 @login_required
 def nueva_cotizacion_desde_ot(request, pk_orden):
-    """
-    Lógica blindada: Busca la proforma de esta OT o crea una nueva si no existe.
-    EVITA LAS 30 PROFORMAS REPETIDAS.
-    """
     orden = get_object_or_404(OrdenTrabajo, pk=pk_orden)
     
     
@@ -202,11 +198,11 @@ def detalle_cotizacion(request, pk):
                             )
 
                 cotizacion.calcular_total()
-                messages.success(request, f"✅ Proforma guardada. ({repuestos_guardados} repuestos, {servicios_guardados} servicios).")
+                messages.success(request, f"Proforma guardada. ({repuestos_guardados} repuestos, {servicios_guardados} servicios).")
                 return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
         except Exception as e:
-            error_msg = f"🚨 ERROR DEL SISTEMA: {str(e)}"
+            error_msg = f" ERROR DEL SISTEMA: {str(e)}"
             print(traceback.format_exc())
             messages.error(request, error_msg)
             return redirect('detalle_cotizacion', pk=cotizacion.pk)

@@ -946,7 +946,7 @@ def detalle_cotizacion(request, pk):
                             )
 
                 cotizacion.calcular_total()
-                messages.success(request, f"✅ Proforma guardada. ({repuestos_guardados} repuestos, {servicios_guardados} servicios).")
+                messages.success(request, f" Proforma guardada. ({repuestos_guardados} repuestos, {servicios_guardados} servicios).")
                 return redirect('detalle_cotizacion', pk=cotizacion.pk)
 
         except Exception as e:
