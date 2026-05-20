@@ -1,26 +1,21 @@
-
-document.addEventListener("DOMContentLoaded", function () {
-    const btn = document.getElementById("btnAgregarRecomendacion");
-
-    if (btn) {
-        btn.addEventListener("click", agregarFilaRecomendacionOT);
+document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "btnAgregarRecomendacion") {
+        agregarFilaRecomendacionOT();
     }
 
-    document.addEventListener("click", function (e) {
-        const btnEliminar = e.target.closest(".btn-eliminar-recomendacion");
-        if (btnEliminar) {
-            const fila = btnEliminar.closest("tr");
-            if (fila) fila.remove();
-        }
-    });
+    const btnEliminar = e.target.closest(".btn-eliminar-recomendacion");
+    if (btnEliminar) {
+        const fila = btnEliminar.closest("tr");
+        if (fila) fila.remove();
+    }
 });
 
 function agregarFilaRecomendacionOT() {
     const tbody = document.getElementById("contenedorRecomendaciones");
     if (!tbody) return;
 
-    const filaVacia = tbody.querySelector(".texto-sin-recomendaciones");
-    if (filaVacia) filaVacia.remove();
+    const vacia = tbody.querySelector(".texto-sin-recomendaciones");
+    if (vacia) vacia.remove();
 
     const tr = document.createElement("tr");
     tr.className = "recomendacion-item";
