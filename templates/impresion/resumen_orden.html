@@ -551,9 +551,9 @@
                             <td>
                                 {{ serv.descripcion_servicio }}
 
-                                {% if serv.servicio.procedimientos.all %}
+                                {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
-                                        {% for proc in serv.servicio.procedimientos.all %}
+                                        {% for proc in serv.procedimientos_detalle.all %}
                                             &bull; {{ proc.descripcion }}<br>
                                         {% endfor %}
                                     </div>
