@@ -1,6 +1,10 @@
 <style>
-    #contenedorRecomendaciones {
+    #cuerpoTablaRecomendaciones {
         border-collapse: collapse;
+    }
+
+    .ot-table tbody tr:empty {
+        display: none !important;
     }
 
     .recomendacion-textarea {
@@ -11,14 +15,11 @@
 </style>
 
 <div class="ot-card">
-    <div class="section-title"
-         style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
+    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
         <span>Recomendaciones técnicas</span>
 
         {% if puede_editar %}
-            <button type="button"
-                    class="btn-login"
-                    id="btnAgregarRecomendacion">
+            <button type="button" class="btn-login" id="btnAgregarRecomendacion">
                 + Agregar recomendación
             </button>
         {% endif %}
@@ -36,48 +37,48 @@
 
             <tbody id="contenedorRecomendaciones">
                 {% for rec in orden.recomendaciones_items.all %}
-                    <tr class="recomendacion-item">
-                        <td>
-                            <input type="hidden"
-                                   name="recomendacion_id[]"
-                                   value="{{ rec.plantilla.id|default:'' }}">
+                <tr class="recomendacion-item">
+                    <td>
+                        <input type="hidden"
+                               name="recomendacion_id[]"
+                               value="{{ rec.plantilla.id|default:'' }}">
 
-                            <input type="text"
-                                   name="recomendacion_titulo[]"
-                                   value="{{ rec.titulo }}"
-                                   class="form-control-apple"
-                                   placeholder="Título"
-                                   {% if not puede_editar %}readonly{% endif %}>
-                        </td>
+                        <input type="text"
+                               name="recomendacion_titulo[]"
+                               value="{{ rec.titulo }}"
+                               class="form-control-apple"
+                               placeholder="Título"
+                               {% if not puede_editar %}readonly{% endif %}>
+                    </td>
 
-                        <td>
-                            <textarea name="recomendacion_texto[]"
-                                      class="form-control-apple recomendacion-textarea"
-                                      rows="3"
-                                      placeholder="Texto de recomendación"
-                                      {% if not puede_editar %}readonly{% endif %}>{{ rec.texto }}</textarea>
-                        </td>
+                    <td>
+                        <textarea name="recomendacion_texto[]"
+                                  class="form-control-apple recomendacion-textarea"
+                                  rows="3"
+                                  placeholder="Texto de recomendación"
+                                  {% if not puede_editar %}readonly{% endif %}>{{ rec.texto }}</textarea>
+                    </td>
 
-                        <td style="text-align:center;">
-                            {% if puede_editar %}
-                                <button type="button"
-                                        class="btn-login danger small btn-eliminar-recomendacion"
-                                        title="Quitar">
-                                    ✕
-                                </button>
-                            {% else %}
-                                <span style="background:#f5f5f7; color:#86868b; padding:4px 8px; border-radius:6px; font-weight:700; font-size:9px; border:1px solid #e5e5ea;">
-                                    FIJO
-                                </span>
-                            {% endif %}
-                        </td>
-                    </tr>
+                    <td style="text-align:center;">
+                        {% if puede_editar %}
+                            <button type="button"
+                                    class="btn-login danger small btn-eliminar-recomendacion"
+                                    title="Quitar">
+                                ✕
+                            </button>
+                        {% else %}
+                            <span style="background:#f5f5f7; color:#86868b; padding:4px 8px; border-radius:6px; font-weight:700; font-size:9px; border:1px solid #e5e5ea;">
+                                FIJO
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
                 {% empty %}
-                    <tr class="texto-sin-recomendaciones">
-                        <td colspan="3" style="text-align:center; color:#86868b; padding:14px;">
-                            No hay recomendaciones técnicas registradas.
-                        </td>
-                    </tr>
+                <tr class="texto-sin-recomendaciones">
+                    <td colspan="3" style="text-align:center; color:#86868b; padding:14px;">
+                        No hay recomendaciones técnicas registradas.
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
