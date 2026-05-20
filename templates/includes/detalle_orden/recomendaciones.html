@@ -94,3 +94,55 @@
         </table>
     </div>
 </div>
+<script>
+function agregarFilaRecomendacionOT() {
+    const tbody = document.querySelector("#tablaRecomendaciones tbody");
+
+    if (!tbody) {
+        alert("No existe la tabla de recomendaciones");
+        return;
+    }
+
+    const filaVacia = tbody.querySelector(".texto-sin-recomendaciones");
+    if (filaVacia) {
+        filaVacia.remove();
+    }
+
+    const filaHtml = `
+        <tr class="recomendacion-item">
+            <td>
+                <input type="hidden" name="recomendacion_id[]" value="">
+                <input type="text"
+                       name="recomendacion_titulo[]"
+                       class="form-control-apple"
+                       placeholder="Título">
+            </td>
+
+            <td>
+                <textarea name="recomendacion_texto[]"
+                          class="form-control-apple recomendacion-textarea"
+                          rows="3"
+                          placeholder="Texto de recomendación"></textarea>
+            </td>
+
+            <td style="text-align:center;">
+                <button type="button"
+                        class="btn-login danger small"
+                        onclick="eliminarFilaRecomendacionOT(this)">
+                    ✕
+                </button>
+            </td>
+        </tr>
+    `;
+
+    tbody.insertAdjacentHTML("beforeend", filaHtml);
+}
+
+function eliminarFilaRecomendacionOT(boton) {
+    const fila = boton.closest("tr");
+
+    if (fila) {
+        fila.remove();
+    }
+}
+</script>
