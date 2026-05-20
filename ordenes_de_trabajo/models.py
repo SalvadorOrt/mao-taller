@@ -2169,3 +2169,73 @@ class CotizacionProcedimientoDetalle(models.Model):
 
     def __str__(self):
         return f"{self.servicio_cotizado.descripcion_servicio} - {self.descripcion}"
+    
+
+class PlantillaObservacion(models.Model):
+    TIPOS_DOCUMENTO = [
+        ("AMBOS", "Cotización y orden"),
+        ("COTIZACION", "Solo cotización"),
+        ("ORDEN", "Solo orden de trabajo"),
+    ]
+
+    titulo = models.CharField(max_length=150, db_index=True)
+    texto = models.TextField()
+    tipo_documento = models.CharField(
+        max_length=20,
+        choices=TIPOS_DOCUMENTO,
+        default="AMBOS",
+        db_index=True,
+    )
+    activo = models.BooleanField(default=True, db_index=True)
+    orden_visual = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_visual", "titulo"]
+
+    def save(self, *args, **kwargs):
+        if self.titulo:
+            self.titulo = self.titulo.strip().upper()
+        if self.texto:
+            self.texto = self.texto.strip().upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.titulo
+    
+class CotizacionObservacion(models.Model):
+    cotizacion = models.ForeignKey(
+        "Cotizacion",
+        related_name="observaciones_items",
+        on_delete=models.CASCADE,
+    )
+    plantilla = models.ForeignKey(
+        PlantillaObservacion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    titulo = models.CharField(max_length=150)
+    texto = models.TextField()
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]
+
+class OrdenObservacion(models.Model):
+    orden = models.ForeignKey(
+        "OrdenTrabajo",
+        related_name="observaciones_items",
+        on_delete=models.CASCADE,
+    )
+    plantilla = models.ForeignKey(
+        PlantillaObservacion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    titulo = models.CharField(max_length=150)
+    texto = models.TextField()
+    orden_item = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden_item", "id"]

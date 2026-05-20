@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Avg, Max, Min
 
-
 class ServicioCatalogo(models.Model):
     CATEGORIAS = [
         ("MEC", "Mecánica"),
@@ -14,31 +13,31 @@ class ServicioCatalogo(models.Model):
         ("EXT", "Trabajo Externo"),
     ]
 
-    categoria = models.CharField(
-        max_length=3,
-        choices=CATEGORIAS,
-        db_index=True,
-    )
-    codigo = models.CharField(
-        max_length=50,
-        unique=True,
-        db_index=True,
-    )
+    TIPOS_SERVICIO = [
+        ("SIMPLE", "Simple"),
+        ("PAQUETE", "Paquete con procedimientos"),
+        ("VARIABLE", "Precio variable"),
+    ]
+
+    categoria = models.CharField(max_length=3, choices=CATEGORIAS, db_index=True)
+    codigo = models.CharField(max_length=50, unique=True, db_index=True)
     descripcion = models.CharField(max_length=255)
+
+    tipo_servicio = models.CharField(
+        max_length=20,
+        choices=TIPOS_SERVICIO,
+        default="SIMPLE",
+        db_index=True,
+    )
+
     precio_sugerido = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
-    requiere_tipo_tarifa = models.BooleanField(
-        default=False,
-        help_text="Actívalo si el precio depende del tipo de vehículo.",
-    )
-    requiere_variante = models.BooleanField(
-        default=False,
-        help_text="Actívalo si el precio depende de variante (repintado, nuevo, tricapa, especial, etc.).",
-    )
+    requiere_tipo_tarifa = models.BooleanField(default=False)
+    requiere_variante = models.BooleanField(default=False)
     activo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
@@ -66,7 +65,9 @@ class ServicioCatalogo(models.Model):
 
         if self.precio_sugerido is None or self.precio_sugerido < 0:
             raise ValidationError({"precio_sugerido": "El precio sugerido no puede ser negativo."})
-
+        if self.requiere_tipo_tarifa or self.requiere_variante:
+            self.tipo_servicio = "VARIABLE"
+            
     def save(self, *args, **kwargs):
         if self.codigo:
             self.codigo = self.codigo.strip().upper()
@@ -110,11 +111,6 @@ class ServicioCatalogo(models.Model):
         return self.precio_sugerido
 
     def obtener_estadisticas_historicas(self, sucursal=None, tipo_tarifa=None, variante="NORMAL"):
-        """
-        Busca histórico real en OrdenServicioDetalle para este servicio.
-        Puede filtrar por sucursal.
-        Retorna promedio, mínimo, máximo y cantidad de registros.
-        """
         from ordenes_de_trabajo.models import OrdenServicioDetalle
 
         queryset = OrdenServicioDetalle.objects.filter(servicio=self)
@@ -175,9 +171,6 @@ class ServicioCatalogo(models.Model):
         return precio.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     def obtener_resumen_precio(self, sucursal=None, tipo_tarifa=None, variante="NORMAL"):
-        """
-        Devuelve un resumen completo para usar en vistas, AJAX o frontend.
-        """
         tipo_tarifa_final = tipo_tarifa if self.requiere_tipo_tarifa and tipo_tarifa else "NO_APLICA"
         variante_final = variante if self.requiere_variante and variante else "NORMAL"
 
