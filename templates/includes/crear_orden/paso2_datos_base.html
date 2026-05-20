@@ -110,6 +110,10 @@
                    maxlength="7"
                    inputmode="numeric"
                    required
+
+                   oninput="
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                   ">
         </div>
 
         <!-- COMBUSTIBLE -->
