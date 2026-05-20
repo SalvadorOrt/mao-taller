@@ -1,11 +1,11 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
     const btnAgregar = document.getElementById("btnAgregarRecomendacion");
 
     if (btnAgregar) {
         btnAgregar.addEventListener("click", agregarRecomendacionManual);
     }
 
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", function (e) {
         if (e.target.classList.contains("btn-eliminar-recomendacion")) {
             eliminarRecomendacion(e.target);
         }
@@ -14,15 +14,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function agregarRecomendacionManual() {
     const contenedor = document.getElementById("contenedorRecomendaciones");
-    if (!contenedor) return;
 
-    const textoVacio = contenedor.querySelector(".texto-sin-recomendaciones");
-    if (textoVacio) textoVacio.remove();
+    if (!contenedor) {
+        console.error("No existe #contenedorRecomendaciones");
+        return;
+    }
+
+    const filaVacia = contenedor.querySelector(".texto-sin-recomendaciones");
+
+    if (filaVacia) {
+        filaVacia.remove();
+    }
 
     const html = `
         <tr class="recomendacion-item">
             <td>
                 <input type="hidden" name="recomendacion_id[]" value="">
+
                 <input type="text"
                        name="recomendacion_titulo[]"
                        class="form-control-apple"
@@ -39,15 +47,17 @@ function agregarRecomendacionManual() {
             <td style="text-align:center;">
                 <button type="button"
                         class="btn-login danger small btn-eliminar-recomendacion"
-                        title="Quitar">✕</button>
+                        title="Quitar">
+                    ✕
+                </button>
             </td>
         </tr>
-    `.replace(/>\s+</g, '><');
+    `.replace(/>\\s+</g, "><");
 
     contenedor.insertAdjacentHTML("beforeend", html);
 }
 
 function eliminarRecomendacion(boton) {
-    const item = boton.closest(".recomendacion-item");
-    if (item) item.remove();
+    const fila = boton.closest("tr");
+    if (fila) fila.remove();
 }
