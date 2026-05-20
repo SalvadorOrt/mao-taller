@@ -33,59 +33,40 @@ document.addEventListener("DOMContentLoaded", function () {
 // =====================================================
 // AGREGAR FILA
 // =====================================================
-
 function agregarRecomendacionManual() {
-
-    const tbody = document.getElementById(
-        "contenedorRecomendaciones"
-    );
-
+    const tbody = document.getElementById("contenedorRecomendaciones");
     if (!tbody) return;
 
-    const filaVacia = tbody.querySelector(
-        ".texto-sin-recomendaciones"
-    );
-
+    const filaVacia = tbody.querySelector(".texto-sin-recomendaciones");
     if (filaVacia) filaVacia.remove();
 
-    const fila = tbody.insertRow();
+    const html = `
+        <tr class="recomendacion-item">
+            <td style="width:24%;">
+                <input type="hidden" name="recomendacion_id[]" value="">
+                <input type="text"
+                       name="recomendacion_titulo[]"
+                       class="form-control-apple recomendacion-busqueda"
+                       placeholder="Buscar o escribir título">
+            </td>
 
-    fila.className = "recomendacion-item";
+            <td style="width:64%;">
+                <textarea name="recomendacion_texto[]"
+                          class="form-control-apple recomendacion-textarea"
+                          rows="3"
+                          placeholder="Texto de recomendación"></textarea>
+            </td>
 
-    const tdTitulo = fila.insertCell(0);
-    const tdTexto = fila.insertCell(1);
-    const tdAccion = fila.insertCell(2);
-
-    tdTitulo.innerHTML = `
-        <input type="hidden"
-               name="recomendacion_id[]"
-               value="">
-
-        <input type="text"
-               name="recomendacion_titulo[]"
-               class="form-control-apple recomendacion-busqueda"
-               placeholder="Buscar o escribir título">
+            <td style="width:12%; text-align:center;">
+                <button type="button"
+                        class="btn-login danger small btn-eliminar-recomendacion"
+                        title="Quitar">✕</button>
+            </td>
+        </tr>
     `;
 
-    tdTexto.innerHTML = `
-        <textarea name="recomendacion_texto[]"
-                  class="form-control-apple recomendacion-textarea"
-                  rows="3"
-                  placeholder="Texto de recomendación"></textarea>
-    `;
-
-    tdAccion.style.textAlign = "center";
-
-    tdAccion.innerHTML = `
-        <button type="button"
-                class="btn-login danger small btn-eliminar-recomendacion"
-                title="Quitar">
-            ✕
-        </button>
-    `;
+    tbody.insertAdjacentHTML("beforeend", html);
 }
-
-
 // =====================================================
 // ELIMINAR FILA
 // =====================================================
