@@ -16,7 +16,7 @@ from servicios.models import ServicioCatalogo
 from inventario.models import CodigoProducto, StockSucursal
 from .utils import obtener_sucursal_activa
 from ..models import Cliente, ExpedienteVehiculo
-
+from ..models import Cliente, ExpedienteVehiculo, PlantillaRecomendacion
 
 
 
@@ -976,3 +976,37 @@ def buscar_vehiculo_por_placa(request):
             
     # Si no existe la placa o no tiene cliente
     return JsonResponse({'encontrado': False})
+
+
+# =========================================================
+# API: BÚSQUEDA RECOMENDACIONES TÉCNICAS
+# =========================================================
+@login_required
+def api_buscar_recomendaciones_ot(request):
+    query = request.GET.get("q", "").strip()
+
+    recomendaciones = PlantillaRecomendacion.objects.filter(
+        activo=True
+    ).order_by("orden_visual", "titulo")
+
+    if query:
+        terminos = query.split()
+
+        for t in terminos:
+            recomendaciones = recomendaciones.filter(
+                Q(titulo__icontains=t) |
+                Q(texto__icontains=t)
+            )
+
+    data = []
+
+    for item in recomendaciones.distinct()[:20]:
+        data.append({
+            "id": item.id,
+            "titulo": item.titulo,
+            "texto": item.texto,
+        })
+
+    return JsonResponse({
+        "resultados": data
+    })

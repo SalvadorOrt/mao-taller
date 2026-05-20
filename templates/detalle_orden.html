@@ -71,23 +71,7 @@
         {% include 'includes/detalle_orden/tabla_moi.html' %}
         {% include 'includes/detalle_orden/tabla_moe.html' %}
         {% include 'includes/detalle_orden/resumen.html' %}
-        <div class="ot-card" style="margin-top: 15px;">
-            <div class="ot-card-header">
-                <h3>Recomendaciones técnicas</h3>
-            </div>
-
-            <div class="ot-card-body">
-                {% if orden.recomendaciones_items.all %}
-                    {% for rec in orden.recomendaciones_items.all %}
-                        <div style="border: 1px solid #e5e5ea; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
-                            <strong>{{ rec.titulo }}</strong>
-                            <p style="margin-top: 6px; white-space: pre-line;">{{ rec.texto }}</p>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p style="color: #6e6e73;">No hay recomendaciones técnicas registradas.</p>
-                {% endif %}
-            </div>
+        {% include 'includes/detalle_orden/recomendaciones.html' %}
         </div>
         <div class="sticky-actions">
             <a href="{{ url_anterior }}"
@@ -143,7 +127,7 @@
         formSeguro.appendChild(inputCsrf);
 
         // 4. EL IMÁN: Recogemos TODOS los inputs de la pantalla tengan el nombre que tengan
-        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"]';
+        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"], input[name*="recomendacion_"], textarea[name*="recomendacion_"]';
         let todosLosInputs = document.querySelectorAll(selectores);
         
         todosLosInputs.forEach(input => {
@@ -220,5 +204,6 @@
 <script src="{% static 'js/detalle_orden/recepcion.js' %}"></script>
 <script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
 <script src="{% static 'js/detalle_orden/mano_obra.js' %}"></script>
+<script src="{% static 'js/detalle_orden/recomendaciones.js' %}"></script>
 <script src="{% static 'js/detalle_orden/detalle_orden.js' %}"></script>
 {% endblock %}
