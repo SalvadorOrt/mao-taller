@@ -72,7 +72,41 @@
         {% include 'includes/detalle_orden/tabla_moe.html' %}
         {% include 'includes/detalle_orden/resumen.html' %}
         {% include 'includes/detalle_orden/recomendaciones.html' %}
-        
+        {% include 'includes/detalle_orden/recomendaciones.html' %}
+
+<script>
+document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "btnAgregarRecomendacion") {
+        const tbody = document.getElementById("contenedorRecomendaciones");
+        if (!tbody) return;
+
+        const vacia = tbody.querySelector(".texto-sin-recomendaciones");
+        if (vacia) vacia.remove();
+
+        const tr = document.createElement("tr");
+        tr.className = "recomendacion-item";
+        tr.innerHTML = `
+            <td>
+                <input type="hidden" name="recomendacion_id[]" value="">
+                <input type="text" name="recomendacion_titulo[]" class="form-control-apple" placeholder="Buscar recomendación">
+            </td>
+            <td>
+                <textarea name="recomendacion_texto[]" class="form-control-apple recomendacion-textarea" rows="3" placeholder="Texto de recomendación"></textarea>
+            </td>
+            <td style="text-align:center;">
+                <button type="button" class="btn-login danger small btn-eliminar-recomendacion">✕</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    const btnEliminar = e.target.closest(".btn-eliminar-recomendacion");
+    if (btnEliminar) {
+        const fila = btnEliminar.closest("tr");
+        if (fila) fila.remove();
+    }
+});
+</script>
         <div class="sticky-actions">
             <a href="{{ url_anterior }}"
                class="btn-login"
