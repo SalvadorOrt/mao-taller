@@ -71,7 +71,8 @@
         {% include 'includes/detalle_orden/tabla_moi.html' %}
         {% include 'includes/detalle_orden/tabla_moe.html' %}
         {% include 'includes/detalle_orden/resumen.html' %}
-
+        {% include 'includes/detalle_orden/recomendaciones.html' %}
+        
         <div class="sticky-actions">
             <a href="{{ url_anterior }}"
                class="btn-login"
@@ -126,7 +127,7 @@
         formSeguro.appendChild(inputCsrf);
 
         // 4. EL IMÁN: Recogemos TODOS los inputs de la pantalla tengan el nombre que tengan
-        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"]';
+        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"], input[name*="recomendacion_"], textarea[name*="recomendacion_"]';
         let todosLosInputs = document.querySelectorAll(selectores);
         
         todosLosInputs.forEach(input => {
@@ -203,5 +204,6 @@
 <script src="{% static 'js/detalle_orden/recepcion.js' %}"></script>
 <script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
 <script src="{% static 'js/detalle_orden/mano_obra.js' %}"></script>
+<script src="{% static 'js/detalle_orden/recomendaciones.js' %}"></script>
 <script src="{% static 'js/detalle_orden/detalle_orden.js' %}"></script>
 {% endblock %}
