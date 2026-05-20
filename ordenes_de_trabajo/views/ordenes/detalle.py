@@ -18,6 +18,8 @@ from ...models import (
     OrdenInsumoDetalle,
     OrdenServicioDetalle,
     OrdenServicioProcedimientoDetalle,
+    PlantillaRecomendacion,
+    OrdenRecomendacion,
     Cliente,
     ExpedienteVehiculo
 )
@@ -226,7 +228,26 @@ def detalle_orden(request, pk):
                         tipo_tarifa_aplicada=orden.tipo_tarifa_vehiculo or "NO_APLICA",
                         variante_precio_aplicada=variante_aplicada,
                     )
+                    if servicio_obj:
+                        recomendaciones = PlantillaRecomendacion.objects.filter(
+                            activo=True,
+                            servicios=servicio_obj,
+                        ).distinct()
 
+                        for rec in recomendaciones:
+                            existe = OrdenRecomendacion.objects.filter(
+                                orden=orden,
+                                plantilla=rec,
+                            ).exists()
+
+                            if not existe:
+                                OrdenRecomendacion.objects.create(
+                                    orden=orden,
+                                    plantilla=rec,
+                                    titulo=rec.titulo,
+                                    texto=rec.texto,
+                                    orden_item=orden.recomendaciones_items.count() + 1,
+                                )
                     procedimientos = request.POST.getlist(
                         f"{prefix}_procedimientos_{uid}[]"
                     )
