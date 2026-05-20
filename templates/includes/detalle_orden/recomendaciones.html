@@ -72,7 +72,8 @@
                     <td style="text-align:center;">
                         {% if puede_editar %}
                             <button type="button"
-                                    class="btn-login danger small btn-eliminar-recomendacion"
+                                    class="btn-login danger small"
+                                    onclick="this.closest('tr').remove();"
                                     title="Quitar">
                                 ✕
                             </button>
@@ -128,7 +129,7 @@ function agregarFilaRecomendacionOT() {
             <td style="text-align:center;">
                 <button type="button"
                         class="btn-login danger small"
-                        onclick="eliminarFilaRecomendacionOT(this)">
+                        onclick="this.closest('tr').remove();">
                     ✕
                 </button>
             </td>
