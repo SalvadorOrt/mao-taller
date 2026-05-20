@@ -558,14 +558,6 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-
-                                {% if serv.procedimientos_detalle.all %}
-                                    <div class="procedimientos-list">
-                                        {% for proc in serv.procedimientos_detalle.all %}
-                                            &bull; {{ proc.descripcion }}<br>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
                             </td>
                             <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
                             <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
