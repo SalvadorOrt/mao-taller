@@ -1,8 +1,5 @@
 {% load static %}
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
 <style>
     .canvas-modal-bg {
         background-image: url('{% static "base_autos.svg" %}');
@@ -72,111 +69,126 @@
     }
     
     /* =========================================================
-       SELECT MÚLTIPLE DE TÉCNICOS - CHOICES.JS CORREGIDO
+       SELECTOR PROPIO DE TÉCNICOS - BUSCADOR + CHIPS
        ========================================================= */
 
-    #tecnicos-selector {
-        display: none;
-    }
-
-    .choices {
+    .tecnicos-picker {
         width: 100%;
-        margin: 0 !important;
         position: relative;
     }
 
-    .choices__inner {
-        width: 100% !important;
-        min-height: 45px !important;
-        max-height: 95px !important;
-        overflow-y: auto !important;
-        border-radius: 12px !important;
-        border: 1.5px solid var(--border-soft) !important;
-        background: #fff !important;
-        padding: 6px 8px !important;
-        font-size: 0.95rem !important;
-        color: #111 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+    .tecnicos-search {
+        width: 100%;
+        border-radius: 12px;
+        border: 1.5px solid var(--border-soft);
+        background: #fff;
+        color: #111;
+        padding: 9px 12px;
+        font-size: 0.9rem;
+        outline: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
     }
 
-    .choices.is-focused .choices__inner,
-    .choices.is-open .choices__inner {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
+    .tecnicos-search:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
     }
 
-    .choices__list--multiple {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-        align-items: center !important;
+    .tecnicos-resultados {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 44px;
+        z-index: 10060;
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.14);
+        max-height: 170px;
+        overflow-y: auto;
+        padding: 6px;
     }
 
-    .choices__list--multiple .choices__item {
-        background: #0071e3 !important;
-        border: none !important;
-        border-radius: 999px !important;
-        color: #fff !important;
-        font-size: 0.82rem !important;
-        font-weight: 700 !important;
-        padding: 5px 28px 5px 10px !important;
-        margin: 0 !important;
-        position: relative !important;
-        line-height: 1.2 !important;
+    .tecnico-opcion {
+        width: 100%;
+        border: none;
+        background: transparent;
+        text-align: left;
+        color: #111;
+        padding: 9px 10px;
+        border-radius: 9px;
+        font-size: 0.86rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
     }
 
-    .choices__list--multiple .choices__item .choices__button {
-        border-left: 1px solid rgba(255,255,255,0.45) !important;
-        margin-left: 8px !important;
-        padding-left: 8px !important;
-        filter: brightness(0) invert(1) !important;
-        opacity: 1 !important;
-        width: 16px !important;
-        height: 16px !important;
+    .tecnico-opcion:hover {
+        background: #f2f2f7;
     }
 
-    .choices__input,
-    .choices__input--cloned {
-        background: transparent !important;
-        color: #111 !important;
-        font-size: 0.9rem !important;
-        margin: 0 !important;
-        padding: 4px !important;
-        min-width: 130px !important;
+    .tecnico-opcion small {
+        color: var(--muted);
+        font-size: 0.72rem;
+        white-space: nowrap;
     }
 
-    .choices__placeholder {
-        color: #777 !important;
-        opacity: 1 !important;
+    .tecnico-opcion.vacio {
+        color: var(--muted);
+        cursor: default;
+        font-style: italic;
     }
 
-    .choices__list--dropdown,
-    .choices__list[aria-expanded] {
-        border-radius: 12px !important;
-        border: 1px solid var(--border-soft) !important;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.14) !important;
-        z-index: 10050 !important;
-        background: #fff !important;
-        overflow: hidden !important;
+    .tecnico-opcion.vacio:hover {
+        background: transparent;
     }
 
-    .choices__list--dropdown .choices__item,
-    .choices__list[aria-expanded] .choices__item {
-        color: #111 !important;
-        font-size: 0.9rem !important;
-        padding: 10px 12px !important;
+    .tecnicos-seleccionados {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        min-height: 30px;
     }
 
-    .choices__list--dropdown .choices__item--selectable.is-highlighted,
-    .choices__list[aria-expanded] .choices__item--selectable.is-highlighted {
-        background: #f2f2f7 !important;
-        color: #111 !important;
+    .tecnico-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #0071e3;
+        color: #fff;
+        border-radius: 999px;
+        padding: 5px 9px 5px 11px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.2;
     }
 
-    .choices__list--dropdown .choices__item--disabled,
-    .choices__list[aria-expanded] .choices__item--disabled {
-        color: #777 !important;
-        opacity: 1 !important;
+    .tecnico-chip button {
+        width: 17px;
+        height: 17px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.22);
+        color: #fff;
+        font-weight: 900;
+        line-height: 17px;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .tecnico-chip button:hover {
+        background: rgba(255,255,255,0.34);
+    }
+
+    .tecnicos-ayuda {
+        margin-top: 5px;
+        font-size: 0.72rem;
+        color: var(--muted);
     }
 
 </style>
@@ -244,15 +256,25 @@
                         <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
                             <i class="bi bi-tools"></i> Técnicos Asignados
                         </span>
-                        <select name="tecnicos" id="tecnicos-selector" multiple>
-                            {% for tecnico in tecnicos_disponibles %}
-                                <option value="{{ tecnico.id }}" {% if tecnico in orden.tecnicos.all %}selected{% endif %}>
-                                    {{ tecnico.nombre }} {% if tecnico.especialidad %}({{ tecnico.especialidad }}){% endif %}
-                                </option>
-                            {% empty %}
-                                <option disabled>No hay técnicos registrados</option>
-                            {% endfor %}
-                        </select>
+                        <div class="tecnicos-picker" id="tecnicos-picker">
+                            <input type="text"
+                                   id="tecnico_busqueda"
+                                   class="tecnicos-search"
+                                   placeholder="Buscar técnico..."
+                                   autocomplete="off"
+                                   oninput="filtrarTecnicos()"
+                                   onfocus="filtrarTecnicos()">
+
+                            <div id="tecnicos_resultados" class="tecnicos-resultados"></div>
+
+                            <div id="tecnicos_seleccionados" class="tecnicos-seleccionados"></div>
+
+                            <div id="tecnicos_hidden_inputs"></div>
+
+                            <div class="tecnicos-ayuda">
+                                Busca y selecciona técnicos. Para quitar uno, presiona la ×.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -408,27 +430,122 @@
 
 <script>
 
-    let tecnicosChoices = null;
+    const tecnicosDisponibles = [
+        {% for tecnico in tecnicos_disponibles %}
+            {
+                id: "{{ tecnico.id }}",
+                nombre: "{{ tecnico.nombre|escapejs }}",
+                especialidad: "{{ tecnico.especialidad|default_if_none:''|escapejs }}",
+                seleccionado: {% if tecnico in orden.tecnicos.all %}true{% else %}false{% endif %}
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    let tecnicosSeleccionados = tecnicosDisponibles
+        .filter(t => t.seleccionado)
+        .map(t => t.id);
 
     document.addEventListener('DOMContentLoaded', function () {
-        const element = document.getElementById('tecnicos-selector');
+        renderTecnicosSeleccionados();
 
-        if (element && typeof Choices !== 'undefined') {
-            tecnicosChoices = new Choices(element, {
-                removeItemButton: true,
-                searchEnabled: true,
-                shouldSort: false,
-                duplicateItemsAllowed: false,
-                placeholder: true,
-                placeholderValue: 'Buscar técnico...',
-                searchPlaceholderValue: 'Buscar técnico...',
-                noResultsText: 'Técnico no encontrado',
-                noChoicesText: 'No hay más técnicos disponibles',
-                itemSelectText: 'Seleccionar',
-                position: 'bottom'
-            });
-        }
+        document.addEventListener('click', function (event) {
+            const picker = document.getElementById('tecnicos-picker');
+            const resultados = document.getElementById('tecnicos_resultados');
+
+            if (picker && resultados && !picker.contains(event.target)) {
+                resultados.style.display = 'none';
+            }
+        });
     });
+
+    function normalizarTextoTecnico(texto) {
+        return (texto || '')
+            .toString()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function filtrarTecnicos() {
+        const input = document.getElementById('tecnico_busqueda');
+        const contenedor = document.getElementById('tecnicos_resultados');
+
+        if (!input || !contenedor) return;
+
+        const q = normalizarTextoTecnico(input.value.trim());
+
+        const disponibles = tecnicosDisponibles.filter(t => {
+            const yaSeleccionado = tecnicosSeleccionados.includes(t.id);
+            const texto = normalizarTextoTecnico(`${t.nombre} ${t.especialidad || ''}`);
+            return !yaSeleccionado && (!q || texto.includes(q));
+        });
+
+        if (disponibles.length === 0) {
+            contenedor.innerHTML = `
+                <div class="tecnico-opcion vacio">
+                    No hay técnicos disponibles
+                </div>
+            `;
+        } else {
+            contenedor.innerHTML = disponibles.map(t => `
+                <button type="button" class="tecnico-opcion" onclick="agregarTecnico('${t.id}')">
+                    <span>${escapeHtmlTecnico(t.nombre)}</span>
+                    ${t.especialidad ? `<small>${escapeHtmlTecnico(t.especialidad)}</small>` : ''}
+                </button>
+            `).join('');
+        }
+
+        contenedor.style.display = 'block';
+    }
+
+    function agregarTecnico(id) {
+        if (!tecnicosSeleccionados.includes(id)) {
+            tecnicosSeleccionados.push(id);
+        }
+
+        const input = document.getElementById('tecnico_busqueda');
+        if (input) input.value = '';
+
+        renderTecnicosSeleccionados();
+        filtrarTecnicos();
+    }
+
+    function eliminarTecnico(id) {
+        tecnicosSeleccionados = tecnicosSeleccionados.filter(tid => tid !== id);
+        renderTecnicosSeleccionados();
+        filtrarTecnicos();
+    }
+
+    function renderTecnicosSeleccionados() {
+        const chips = document.getElementById('tecnicos_seleccionados');
+        const hidden = document.getElementById('tecnicos_hidden_inputs');
+
+        if (!chips || !hidden) return;
+
+        const seleccionados = tecnicosDisponibles.filter(t => tecnicosSeleccionados.includes(t.id));
+
+        chips.innerHTML = seleccionados.length === 0
+            ? '<span style="color: var(--muted); font-size: 0.78rem; font-style: italic;">Sin técnicos asignados.</span>'
+            : seleccionados.map(t => `
+                <span class="tecnico-chip">
+                    ${escapeHtmlTecnico(t.nombre)}
+                    <button type="button" onclick="eliminarTecnico('${t.id}')" aria-label="Quitar técnico">&times;</button>
+                </span>
+            `).join('');
+
+        hidden.innerHTML = tecnicosSeleccionados.map(id => `
+            <input type="hidden" name="tecnicos" value="${escapeHtmlTecnico(id)}">
+        `).join('');
+    }
+
+    function escapeHtmlTecnico(texto) {
+        return String(texto)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     let modalSintomas = Array.from(document.querySelectorAll('#bridge_sintomas span'))
         .map(s => s.textContent.trim())
