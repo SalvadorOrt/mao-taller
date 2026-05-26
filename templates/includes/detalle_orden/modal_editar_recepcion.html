@@ -71,52 +71,31 @@
         margin-top: 12px;
     }
     
-    /* 🔥 NUEVO: Estilos para el select múltiple de técnicos estilo Apple */
-    .select-multiple-apple {
-        width: 100%;
-        border-radius: 12px;
-        border: 1.5px solid var(--border-soft);
-        padding: 8px;
-        font-size: 0.95rem;
-        background: #fff;
-        color: var(--text);
-        outline: none;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-    
-    .select-multiple-apple:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+    /* =========================================================
+       SELECT MÚLTIPLE DE TÉCNICOS - CHOICES.JS CORREGIDO
+       ========================================================= */
+
+    #tecnicos-selector {
+        display: none;
     }
 
-    .select-multiple-apple option {
-        padding: 8px 12px;
-        margin-bottom: 4px;
-        border-radius: 8px;
-        transition: background 0.2s;
-    }
-
-    .select-multiple-apple option:checked {
-        background: linear-gradient(0deg, var(--primary) 0%, var(--primary) 100%);
-        color: white;
-        font-weight: 600;
-    }
-
-    /* Combobox de Técnicos con Choices.js */
     .choices {
-        margin-bottom: 0 !important;
         width: 100%;
+        margin: 0 !important;
+        position: relative;
     }
 
     .choices__inner {
+        width: 100% !important;
+        min-height: 45px !important;
+        max-height: 95px !important;
+        overflow-y: auto !important;
         border-radius: 12px !important;
         border: 1.5px solid var(--border-soft) !important;
         background: #fff !important;
-        min-height: 45px !important;
         padding: 6px 8px !important;
         font-size: 0.95rem !important;
-        color: var(--text) !important;
+        color: #111 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
     }
 
@@ -126,25 +105,78 @@
         box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
     }
 
-    .choices__list--multiple .choices__item {
-        background-color: var(--primary) !important;
-        border: none !important;
-        border-radius: 8px !important;
-        color: #fff !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
+    .choices__list--multiple {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        align-items: center !important;
     }
 
-    .choices__button {
-        border-left: 1px solid rgba(255,255,255,0.3) !important;
+    .choices__list--multiple .choices__item {
+        background: #0071e3 !important;
+        border: none !important;
+        border-radius: 999px !important;
+        color: #fff !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        padding: 5px 28px 5px 10px !important;
+        margin: 0 !important;
+        position: relative !important;
+        line-height: 1.2 !important;
+    }
+
+    .choices__list--multiple .choices__item .choices__button {
+        border-left: 1px solid rgba(255,255,255,0.45) !important;
+        margin-left: 8px !important;
+        padding-left: 8px !important;
+        filter: brightness(0) invert(1) !important;
+        opacity: 1 !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .choices__input,
+    .choices__input--cloned {
+        background: transparent !important;
+        color: #111 !important;
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        padding: 4px !important;
+        min-width: 130px !important;
+    }
+
+    .choices__placeholder {
+        color: #777 !important;
+        opacity: 1 !important;
     }
 
     .choices__list--dropdown,
     .choices__list[aria-expanded] {
         border-radius: 12px !important;
         border: 1px solid var(--border-soft) !important;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important;
-        z-index: 10000 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.14) !important;
+        z-index: 10050 !important;
+        background: #fff !important;
+        overflow: hidden !important;
+    }
+
+    .choices__list--dropdown .choices__item,
+    .choices__list[aria-expanded] .choices__item {
+        color: #111 !important;
+        font-size: 0.9rem !important;
+        padding: 10px 12px !important;
+    }
+
+    .choices__list--dropdown .choices__item--selectable.is-highlighted,
+    .choices__list[aria-expanded] .choices__item--selectable.is-highlighted {
+        background: #f2f2f7 !important;
+        color: #111 !important;
+    }
+
+    .choices__list--dropdown .choices__item--disabled,
+    .choices__list[aria-expanded] .choices__item--disabled {
+        color: #777 !important;
+        opacity: 1 !important;
     }
 
 </style>
@@ -386,12 +418,14 @@
                 removeItemButton: true,
                 searchEnabled: true,
                 shouldSort: false,
+                duplicateItemsAllowed: false,
                 placeholder: true,
                 placeholderValue: 'Buscar técnico...',
                 searchPlaceholderValue: 'Buscar técnico...',
                 noResultsText: 'Técnico no encontrado',
-                noChoicesText: 'No hay técnicos disponibles',
+                noChoicesText: 'No hay más técnicos disponibles',
                 itemSelectText: 'Seleccionar',
+                position: 'bottom'
             });
         }
     });
