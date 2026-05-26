@@ -12,3 +12,10 @@ db.sqlite3
 
 # IGNORAR ARCHIVOS DE DATOS PESADOS
 *.json
+
+# Entorno virtual
+venv/
+
+# Cache de Python
+__pycache__/
+*.pyc

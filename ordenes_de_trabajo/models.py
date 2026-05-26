@@ -1105,7 +1105,7 @@ class OrdenTrabajo(models.Model):
         ("ANULADA", "Anulada"),
     ]
 
-    NIVELES_COMBUSTIBLE = [
+    NIVELES_COMBUSTIBLE = [     
         ("E", "Vacío"),
         ("1/4", "1/4"),
         ("1/2", "1/2"),
@@ -1151,6 +1151,13 @@ class OrdenTrabajo(models.Model):
         null=True,
         blank=True,
         help_text="Puede quedar vacío en OT históricas migradas.",
+    )
+    tecnicos = models.ManyToManyField(
+        Tecnico,
+        blank=True,
+        related_name="ordenes_asignadas",
+        verbose_name="Técnicos encargados",
+        help_text="Seleccione uno o varios técnicos que trabajarán en esta orden."
     )
     cliente = models.ForeignKey(
         Cliente,

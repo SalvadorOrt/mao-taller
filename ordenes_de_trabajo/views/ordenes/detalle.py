@@ -17,6 +17,7 @@ from ...models import (
     OrdenServicioProcedimientoDetalle,
     PlantillaRecomendacion,
     OrdenRecomendacion,
+    Tecnico,
 )
 
 from ..utils import (
@@ -31,6 +32,7 @@ from ..utils import (
 def detalle_orden(request, pk):
     sucursal_activa = obtener_sucursal_activa(request)
 
+    # 🔥 NUEVO: Hacemos prefetch_related de "tecnicos" para que carguen rápido
     orden = get_object_or_404(
         OrdenTrabajo.objects
         .select_related("sucursal", "cliente", "expediente")
@@ -40,6 +42,7 @@ def detalle_orden(request, pk):
             "insumos_detalles",
             "servicios_detalles",
             "recomendaciones_items",
+            "tecnicos", 
         ),
         pk=pk,
     )
@@ -53,6 +56,9 @@ def detalle_orden(request, pk):
     puede_editar = (es_su_sucursal and orden.estado == "ABIERTA") or puede_reabrir
 
     categorias = Categoria.objects.all().order_by("nombre") if puede_editar else []
+    
+    # 🔥 NUEVO: Cargar los técnicos disponibles de la sucursal activa
+    tecnicos_disponibles = Tecnico.objects.filter(activo=True, sucursal=orden.sucursal).order_by('nombre') if puede_editar else []
 
     if request.method == "POST":
         if not puede_editar:
@@ -306,6 +312,7 @@ def detalle_orden(request, pk):
             "croquis": croquis,
             "croquis_url": croquis_url,
             "categorias_inventario": categorias,
+            "tecnicos_disponibles": tecnicos_disponibles, # 🔥 NUEVO: Enviar los técnicos a la plantilla
             "sucursal_activa": sucursal_activa,
             "puede_editar": puede_editar,
             "puede_reabrir": puede_reabrir,

@@ -1,4 +1,4 @@
-from django.shortcuts import  redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
@@ -11,9 +11,10 @@ from ...models import (
 )
 from ..utils import (
      cargar_json_lista, procesar_imagen_base64,
-    
     puede_operar_orden_desde_sucursal_activa
-)# =========================================================
+)
+
+# =========================================================
 # EDITAR RECEPCIÓN DE ORDEN (MODAL RÁPIDO COMPLETO)
 # =========================================================
 @login_required
@@ -36,7 +37,6 @@ def editar_recepcion_orden(request, pk):
         return redirect("detalle_orden", pk=pk)
 
     if request.method == "POST":
-        # 1. CAPTURAR TEXTOS DEL MODAL
         nueva_placa = request.POST.get("placa", "").strip().upper()
         nuevo_vehiculo = request.POST.get("vehiculo", "").strip().upper()
         nuevo_anio = request.POST.get("anio_vehiculo", "").strip()
@@ -52,15 +52,11 @@ def editar_recepcion_orden(request, pk):
         fotos_nuevas = request.FILES.getlist("fotos_recepcion")
         descripcion_fotos = request.POST.get("descripcion_fotos", "").strip()
         fotos_eliminar = request.POST.getlist("fotos_eliminar")
+        tecnicos_ids = request.POST.getlist("tecnicos")
 
         try:
             with transaction.atomic():
-                
-                # ====================================================
-                # MAGIA DEL VEHÍCULO: REGLA -> "EL ASESOR MANDA"
-                # ====================================================
-                
-                # CASO A: EL ASESOR CAMBIÓ LA PLACA
+
                 if nueva_placa and nueva_placa != orden.placa:
                     expediente_existente = ExpedienteVehiculo.objects.filter(placa=nueva_placa).first()
 
@@ -92,7 +88,6 @@ def editar_recepcion_orden(request, pk):
                                     
                                     desc_real = f"{marca} {modelo}".strip().upper()
                                     
-                                    # ¡BLINDAJE 1! Si la API trajo basura, pero el asesor escribió un nombre a mano, ignoramos a la API.
                                     if nuevo_vehiculo and nuevo_vehiculo != orden.vehiculo:
                                         desc_real = nuevo_vehiculo
                                     elif not desc_real:
@@ -125,16 +120,11 @@ def editar_recepcion_orden(request, pk):
                             orden.placa = nueva_placa
                             orden.vehiculo = nuevo_vehiculo
                             if nuevo_anio.isdigit(): orden.anio_vehiculo = int(nuevo_anio)
-
-                # CASO B: LA PLACA NO CAMBIÓ (Solo quiere arreglar el nombre "BMW" -> "HYUNDAI")
                 else:
-                    # ¡BLINDAJE 2! Verificamos si el asesor borró el nombre viejo y puso uno nuevo
                     if nuevo_vehiculo and nuevo_vehiculo != orden.vehiculo:
                         orden.vehiculo = nuevo_vehiculo
                         if orden.expediente:
                             orden.expediente.vehiculo = nuevo_vehiculo
-                            
-                            # ESTA ES LA CLAVE: Borramos la "basura" de la API para que no lo reescriba en el frontend
                             orden.expediente.descripcion_api = ""
                             orden.expediente.marca_api = ""
                             orden.expediente.modelo_api = ""
@@ -143,27 +133,23 @@ def editar_recepcion_orden(request, pk):
                         orden.anio_vehiculo = int(nuevo_anio)
                         if orden.expediente:
                             orden.expediente.anio_vehiculo = int(nuevo_anio)
-
-                # ====================================================
-                # ACTUALIZACIONES COMUNES (KM, COLOR, CLAVE)
-                # ====================================================
+                
                 if nuevo_km.isdigit():
                     orden.kilometraje = int(nuevo_km)
                 if nuevo_color:
                     orden.color = nuevo_color
-
                 orden.clave_encendido = nueva_clave
-                
-                # Guardamos todas las correcciones al expediente de un solo golpe
                 if orden.expediente:
                     orden.expediente.clave_encendido = nueva_clave
                     orden.expediente.save() 
 
                 orden.save()
 
-                # ====================================================
-                # GUARDAR SÍNTOMAS, CROQUIS Y FOTOS
-                # ====================================================
+                # 🔥 NUEVO: Asignar los técnicos seleccionados a la orden
+                # set() borra los anteriores y pone los nuevos. Si viene vacío, limpia la lista.
+                if tecnicos_ids is not None:
+                    orden.tecnicos.set(tecnicos_ids)
+
                 orden.sintomas_items.all().delete()
                 for idx, item in enumerate(sintomas_json, start=1):
                     desc = str(item.get("descripcion", "")).strip()
@@ -189,7 +175,7 @@ def editar_recepcion_orden(request, pk):
                 for foto in fotos_nuevas:
                     FotoRecepcionVehiculo.objects.create(orden=orden, imagen=foto, descripcion=descripcion_fotos)
 
-            messages.success(request, "¡Recepción y datos del vehículo actualizados con éxito!")
+            messages.success(request, "¡Recepción, datos del vehículo y técnicos actualizados con éxito!")
             
         except Exception as e:
             messages.error(request, f"Ocurrió un error al guardar: {str(e)}")

@@ -67,6 +67,38 @@
         padding: 14px;
         margin-top: 12px;
     }
+    
+    /* 🔥 NUEVO: Estilos para el select múltiple de técnicos estilo Apple */
+    .select-multiple-apple {
+        width: 100%;
+        border-radius: 12px;
+        border: 1.5px solid var(--border-soft);
+        padding: 8px;
+        font-size: 0.95rem;
+        background: #fff;
+        color: var(--text);
+        outline: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    
+    .select-multiple-apple:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+    }
+
+    .select-multiple-apple option {
+        padding: 8px 12px;
+        margin-bottom: 4px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+
+    .select-multiple-apple option:checked {
+        background: linear-gradient(0deg, var(--primary) 0%, var(--primary) 100%);
+        color: white;
+        font-weight: 600;
+    }
 </style>
 
 <div id="modalEditarRecepcion"
@@ -122,11 +154,29 @@
                     </div>
                 </div>
 
-                <div>
-                    <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Clave / PIN de Encendido</span>
-                    <input type="text" name="clave_encendido" class="form-control-apple" value="{{ orden.clave_encendido|default_if_none:'' }}" placeholder="Ej. *1234# (Dejar vacío si no tiene)" style="font-weight: bold; color: #0071e3; padding: 8px 12px; max-width: 300px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Clave / PIN de Encendido</span>
+                        <input type="text" name="clave_encendido" class="form-control-apple" value="{{ orden.clave_encendido|default_if_none:'' }}" placeholder="Ej. *1234# (Dejar vacío si no tiene)" style="font-weight: bold; color: #0071e3; padding: 8px 12px; width: 100%;">
+                    </div>
+                    
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
+                            <i class="bi bi-tools"></i> Técnicos Asignados <small class="text-lowercase fw-normal">(Ctrl+Clic para seleccionar varios)</small>
+                        </span>
+                        <select name="tecnicos" class="select-multiple-apple" multiple size="3">
+                            {% for tecnico in tecnicos_disponibles %}
+                                <option value="{{ tecnico.id }}" {% if tecnico in orden.tecnicos.all %}selected{% endif %}>
+                                    {{ tecnico.nombre }} {% if tecnico.especialidad %}({{ tecnico.especialidad }}){% endif %}
+                                </option>
+                            {% empty %}
+                                <option disabled>No hay técnicos registrados</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
+
             <div style="margin-bottom: 25px;">
                 <label class="info-label" style="margin-bottom: 8px; display: block;">
                     Croquis del vehículo
@@ -251,11 +301,11 @@
         </form>
 
         <div style="padding: 15px 25px; border-top: 1px solid var(--border-soft); display: flex; justify-content: flex-end; gap: 10px; background: var(--head);">
-            <button type="button" onclick="cerrarModalRecepcion()" class="btn-login">
+            <button type="button" onclick="cerrarModalRecepcion()" class="btn-login" style="width: auto;">
                 Cancelar
             </button>
 
-            <button type="button" id="btnGuardarEdicionRapida" onclick="guardarEdicionRapida()" class="btn-login primary">
+            <button type="button" id="btnGuardarEdicionRapida" onclick="guardarEdicionRapida()" class="btn-login primary" style="width: auto; padding: 0 20px;">
                 Guardar y Actualizar
             </button>
         </div>
