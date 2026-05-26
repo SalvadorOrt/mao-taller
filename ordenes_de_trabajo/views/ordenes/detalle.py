@@ -58,7 +58,7 @@ def detalle_orden(request, pk):
     categorias = Categoria.objects.all().order_by("nombre") if puede_editar else []
     
     # 🔥 NUEVO: Cargar los técnicos disponibles de la sucursal activa
-    tecnicos_disponibles = Tecnico.objects.filter(activo=True, sucursal=orden.sucursal).order_by('nombre') if puede_editar else []
+    tecnicos_disponibles = Tecnico.objects.filter(activo=True)
 
     if request.method == "POST":
         if not puede_editar:

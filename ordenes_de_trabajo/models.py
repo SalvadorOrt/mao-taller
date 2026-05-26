@@ -76,6 +76,7 @@ class Sucursal(models.Model):
 # 2. TÉCNICOS (Personal del Taller - No Usuarios)
 # ==========================================
 class Tecnico(models.Model):
+    cedula = models.CharField(max_length=15, unique=True, null=True, blank=True, verbose_name="Cédula / Identificación")
     nombre = models.CharField(max_length=100)
     especialidad = models.CharField(max_length=50, blank=True, null=True)
     sucursal = models.ForeignKey(
