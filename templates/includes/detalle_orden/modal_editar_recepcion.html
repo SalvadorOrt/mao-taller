@@ -1,5 +1,8 @@
 {% load static %}
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
 <style>
     .canvas-modal-bg {
         background-image: url('{% static "base_autos.svg" %}');
@@ -99,6 +102,51 @@
         color: white;
         font-weight: 600;
     }
+
+    /* Combobox de Técnicos con Choices.js */
+    .choices {
+        margin-bottom: 0 !important;
+        width: 100%;
+    }
+
+    .choices__inner {
+        border-radius: 12px !important;
+        border: 1.5px solid var(--border-soft) !important;
+        background: #fff !important;
+        min-height: 45px !important;
+        padding: 6px 8px !important;
+        font-size: 0.95rem !important;
+        color: var(--text) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+    }
+
+    .choices.is-focused .choices__inner,
+    .choices.is-open .choices__inner {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15) !important;
+    }
+
+    .choices__list--multiple .choices__item {
+        background-color: var(--primary) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        color: #fff !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+    }
+
+    .choices__button {
+        border-left: 1px solid rgba(255,255,255,0.3) !important;
+    }
+
+    .choices__list--dropdown,
+    .choices__list[aria-expanded] {
+        border-radius: 12px !important;
+        border: 1px solid var(--border-soft) !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important;
+        z-index: 10000 !important;
+    }
+
 </style>
 
 <div id="modalEditarRecepcion"
@@ -162,9 +210,9 @@
                     
                     <div>
                         <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
-                            <i class="bi bi-tools"></i> Técnicos Asignados <small class="text-lowercase fw-normal">(Ctrl+Clic para seleccionar varios)</small>
+                            <i class="bi bi-tools"></i> Técnicos Asignados
                         </span>
-                        <select name="tecnicos" class="select-multiple-apple" multiple size="3">
+                        <select name="tecnicos" id="tecnicos-selector" multiple>
                             {% for tecnico in tecnicos_disponibles %}
                                 <option value="{{ tecnico.id }}" {% if tecnico in orden.tecnicos.all %}selected{% endif %}>
                                     {{ tecnico.nombre }} {% if tecnico.especialidad %}({{ tecnico.especialidad }}){% endif %}
@@ -327,6 +375,27 @@
 </div>
 
 <script>
+
+    let tecnicosChoices = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const element = document.getElementById('tecnicos-selector');
+
+        if (element && typeof Choices !== 'undefined') {
+            tecnicosChoices = new Choices(element, {
+                removeItemButton: true,
+                searchEnabled: true,
+                shouldSort: false,
+                placeholder: true,
+                placeholderValue: 'Buscar técnico...',
+                searchPlaceholderValue: 'Buscar técnico...',
+                noResultsText: 'Técnico no encontrado',
+                noChoicesText: 'No hay técnicos disponibles',
+                itemSelectText: 'Seleccionar',
+            });
+        }
+    });
+
     let modalSintomas = Array.from(document.querySelectorAll('#bridge_sintomas span'))
         .map(s => s.textContent.trim())
         .filter(Boolean);
