@@ -11,13 +11,13 @@ from ..forms import ClienteForm
 # ==========================================
 # 1. LISTA DE CLIENTES
 # ==========================================
+
 @login_required
 def lista_clientes(request):
     query = request.GET.get('q', '').strip()
     
-    # Traemos los clientes ACTIVOS y contamos sus vehículos
-    # 🔥 Agregamos .filter(activo=True) para el borrado lógico
-    clientes = Cliente.objects.filter(activo=True).annotate(
+    # Traemos TODOS los clientes y contamos sus vehículos (Quitamos el filter activo=True)
+    clientes = Cliente.objects.annotate(
         num_vehiculos=Count('expedientes')
     ).order_by('-id')
 
@@ -37,7 +37,6 @@ def lista_clientes(request):
         'page_obj': page_obj,
         'query': query,
     })
-
 # ==========================================
 # 2. CREAR CLIENTE
 # ==========================================
