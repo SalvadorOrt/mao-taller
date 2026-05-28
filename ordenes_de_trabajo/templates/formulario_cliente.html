@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ accion }} | MAO{% endblock %}
+
+{% block content %}
+<div class="row mb-4 mt-2">
+    <div class="col-md-8 mx-auto">
+        <div class="d-flex align-items-center mb-3">
+            <a href="{% url 'lista_clientes' %}" class="btn-login small me-3" style="width: auto; background: #f5f5f7; border: 1px solid #d2d2d7; color: #1d1d1f; text-decoration: none;">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            <h3 style="font-weight: 700; color: #1d1d1f; margin: 0;">{{ accion }}</h3>
+        </div>
+
+        <div class="login-card p-4" style="border-radius: 18px; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <form method="POST">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger" style="border-radius: 12px; font-size: 14px;">
+                        Por favor corrige los errores indicados abajo.
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Tipo de Documento</label>
+                        {{ form.tipo_documento }}
+                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.tipo_documento.errors }}</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Identificación</label>
+                        {{ form.identificacion }}
+                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.identificacion.errors }}</div>
+                    </div>
+                    
+                    <div class="col-12 mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Nombre Completo / Razón Social</label>
+                        {{ form.nombre_completo }}
+                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.nombre_completo.errors }}</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Teléfono Principal</label>
+                        {{ form.telefono }}
+                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.telefono.errors }}</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Correo Electrónico</label>
+                        {{ form.email }}
+                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.email.errors }}</div>
+                    </div>
+                    
+                    <div class="col-12 mb-4">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Dirección</label>
+                        {{ form.direccion }}
+                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.direccion.errors }}</div>
+                    </div>
+                </div>
+
+                <div class="text-end border-top pt-3 mt-2" style="border-color: #f5f5f7 !important;">
+                    <button type="submit" class="btn-login primary" style="width: auto; padding: 10px 24px;">
+                        <i class="bi bi-save me-2"></i> Guardar Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputCedula = document.getElementById("id_identificacion");
+    const inputNombre = document.getElementById("id_nombre_completo");
+    const inputTelefono = document.getElementById("id_telefono");
+    const inputDireccion = document.getElementById("id_direccion");
+    const inputEmail = document.getElementById("id_email");
+
+    // Crear un botoncito de búsqueda y ponerlo junto al input de cédula
+    if (inputCedula && !inputCedula.disabled) {
+        const btnBuscar = document.createElement("button");
+        btnBuscar.type = "button";
+        btnBuscar.className = "btn-login small primary mt-2";
+        btnBuscar.innerHTML = '<i class="bi bi-search"></i> Buscar en Registro Civil/SRI';
+        
+        inputCedula.parentNode.appendChild(btnBuscar);
+
+        btnBuscar.addEventListener("click", function() {
+            const cedula = inputCedula.value.trim();
+            if (cedula.length !== 10 && cedula.length !== 13) {
+                alert("La identificación debe tener 10 o 13 dígitos.");
+                return;
+            }
+
+            btnBuscar.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Buscando...';
+            btnBuscar.disabled = true;
+
+            // Llamamos a tu API
+            fetch(`/api/consultar_cedula/?cedula=${cedula}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exito && data.cliente) {
+                        // Autocompletamos el formulario
+                        inputNombre.value = data.cliente.nombre_completo || "";
+                        inputTelefono.value = data.cliente.telefono || "";
+                        inputDireccion.value = data.cliente.direccion || "";
+                        inputEmail.value = data.cliente.email || "";
+                        
+                        // Seleccionamos el tipo de documento correcto
+                        const selectTipo = document.getElementById("id_tipo_documento");
+                        if(selectTipo) {
+                            selectTipo.value = data.cliente.tipo_documento;
+                        }
+
+                        alert("¡Datos encontrados y cargados con éxito!");
+                    } else {
+                        alert(data.error || "No se encontró información. Por favor, llene los datos manualmente.");
+                    }
+                })
+                .catch(error => {
+                    alert("Error de conexión. Llene los datos manualmente.");
+                })
+                .finally(() => {
+                    btnBuscar.innerHTML = '<i class="bi bi-search"></i> Buscar en Registro Civil/SRI';
+                    btnBuscar.disabled = false;
+                });
+        });
+    }
+});
+</script>
