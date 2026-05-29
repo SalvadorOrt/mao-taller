@@ -14,13 +14,13 @@
                     <label class="form-label fw-bold">Identificación (Cédula/RUC)</label>
                     <div class="input-group">
                         {{ form.identificacion }}
-                        <button type="button" id="btn_buscar_api" class="btn btn-primary">Buscar</button>
+                        <button type="button" id="btn_buscar_api" class="btn-login">Buscar</button>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-check form-switch" id="div_full_toggle">
                         <input class="form-check-input" type="checkbox" id="check_full">
-                        <label class="form-check-label" for="check_full">Datos Full ($0.05)</label>
+                        <label class="form-check-label" for="check_full">Datos Completos</label>
                     </div>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                 {% endfor %}
             </div>
 
-            <button type="submit" class="btn btn-success mt-3">Guardar Cliente</button>
+            <button type="submit" "btn-login">Guardar Cliente</button>
         </form>
 
         <!-- PANEL DE VISUALIZACIÓN TÉCNICA (Desplegará TODOS los datos extraídos) -->
