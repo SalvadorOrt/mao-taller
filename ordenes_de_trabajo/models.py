@@ -446,7 +446,15 @@ class Cliente(models.Model):
         null=True,
         blank=True,
     )
-
+    def actualizar_campo(self, campo, valor_api):
+        """
+        Actualiza el atributo solo si la API trae un valor válido,
+        preservando lo que ya tenemos en base de datos.
+        """
+        if valor_api not in [None, "", [], {}]:
+            # Si es string, limpiamos espacios, si no, asignamos directo
+            valor = str(valor_api).strip() if isinstance(valor_api, str) else valor_api
+            setattr(self, campo, valor)
     # ==========================================
     # META
     # ==========================================

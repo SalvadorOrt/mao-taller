@@ -1,4 +1,3 @@
-import uuid
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -241,7 +240,7 @@ def crear_orden(request):
                 estado="ABIERTA",
                 tipo_tarifa_vehiculo=tipo_tarifa_vehiculo,
                 gama_vehiculo=gama_vehiculo,
-                clave_encendido=clave_encendido,  # <--- SE GUARDA EN LA ORDEN ACTUAL
+                clave_encendido=clave_encendido,  
             )
 
             archivo_firma = procesar_imagen_base64(firma_base64)

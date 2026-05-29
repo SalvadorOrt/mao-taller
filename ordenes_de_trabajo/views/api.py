@@ -579,182 +579,70 @@ def serializar_cliente(cliente):
             if cliente.fecha_ultima_consulta_api else "",
     }
 
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
+import requests
 
-# =========================================================
-# API CONSULTAR
-# =========================================================
 @login_required
 def consultar_cedula_api(request):
-
-    identificacion = request.GET.get(
-        "cedula",
-        ""
-    ).strip()
-
-    # ======================================
-    # VALIDACIÓN
-    # ======================================
-    if (
-        not identificacion
-        or not identificacion.isdigit()
-        or len(identificacion) not in [10, 13]
-    ):
-
-        return JsonResponse({
-            "exito": False,
-            "error":
-                "Identificación inválida. "
-                "Debe tener 10 o 13 dígitos."
-        })
+    identificacion = request.GET.get("cedula", "").strip()
+    solicita_full = request.GET.get("full", "false").strip().lower() == "true"
+    
+    # 1. Validación básica
+    if not identificacion or not identificacion.isdigit() or len(identificacion) not in [10, 13]:
+        return JsonResponse({"exito": False, "error": "Identificación inválida (10 o 13 dígitos)."})
 
     es_ruc = len(identificacion) == 13
+    cliente = Cliente.objects.filter(identificacion=identificacion).first()
 
-    solicita_full = (
-        request.GET
-        .get("full", "false")
-        .strip()
-        .lower()
-        == "true"
-    )
+    # 2. Lógica de Cache (Ahorro de dinero)
+    if cliente:
+        # Si es Cédula y ya tiene el 'full', o si no pidió 'full'
+        if not es_ruc and (not solicita_full or cliente.datos_full_consultados):
+            return JsonResponse({"exito": True, "origen": "bd", "cliente": serializar_cliente(cliente)})
+        
+        # Si es RUC, verificamos frescura (30 días) para no gastar de más
+        if es_ruc and cliente.fecha_ultima_consulta_api:
+            if (timezone.now() - cliente.fecha_ultima_consulta_api) < timedelta(days=30):
+                return JsonResponse({"exito": True, "origen": "bd_fresca", "cliente": serializar_cliente(cliente)})
 
-    # ======================================
-    # BUSCAR EN CACHE LOCAL
-    # ======================================
-    cliente = Cliente.objects.filter(
-        identificacion=identificacion
-    ).first()
-
-    # ======================================
-    # SI EXISTE Y NO NECESITA FULL
-    # ======================================
-    if (
-        cliente
-        and (
-            not solicita_full
-            or cliente.datos_full_consultados
-        )
-    ):
-
-        return JsonResponse({
-            "exito": True,
-            "origen": "bd",
-            "cliente": serializar_cliente(cliente),
-        })
-
-    # ======================================
-    # URL API EXTERNA
-    # ======================================
-    url = (
-        "https://apiconsult.zampisoft.com/api/consultar"
-        f"?identificacion={identificacion}"
-        f"&token={CEDULA_API_TOKEN}"
-    )
-
-    # ======================================
-    # FULL SOLO PARA CÉDULA
-    # ======================================
+    # 3. Preparación de consulta a API Externa
+    url = f"https://apiconsult.zampisoft.com/api/consultar?identificacion={identificacion}&token={CEDULA_API_TOKEN}"
     if not es_ruc and solicita_full:
         url += "&full=true"
 
     try:
-
-        respuesta = requests.get(
-            url,
-            timeout=20,
-            headers={
-                "Accept": "application/json"
-            }
-        )
-
+        respuesta = requests.get(url, timeout=20, headers={"Accept": "application/json"})
+        
         if respuesta.status_code != 200:
-
-            return JsonResponse({
-                "exito": False,
-                "error":
-                    "No se encontraron resultados."
-            })
+            return JsonResponse({"exito": False, "error": "Error al consultar fuente externa."})
 
         data = respuesta.json()
-
         if data.get("error"):
+            return JsonResponse({"exito": False, "error": data.get("error")})
 
-            return JsonResponse({
-                "exito": False,
-                "error": data.get("error")
-            })
-
-        # ======================================
-        # SI NO EXISTE -> CREAR
-        # ======================================
+        # 4. Actualización / Creación
         if not cliente:
-            cliente = Cliente()
+            cliente = Cliente(identificacion=identificacion)
 
-        # ======================================
-        # CARGAR DATOS PERSONA
-        # ======================================
         if es_ruc:
-
             cliente.cargar_desde_api_ruc(data)
-
         else:
+            cliente.cargar_desde_api_persona(data, full=solicita_full)
 
-            cliente.cargar_desde_api_persona(
-                data,
-                full=solicita_full
-            )
-
-        # ======================================
-        # CONTROL API
-        # ======================================
-        cliente.fecha_ultima_consulta_api = (
-            timezone.now()
-        )
-
-        if solicita_full:
-            cliente.datos_full_consultados = True
-
-        # ======================================
-        # GUARDAR
-        # ======================================
+        cliente.fecha_ultima_consulta_api = timezone.now()
         cliente.save()
 
         return JsonResponse({
-
             "exito": True,
-
-            "origen":
-                "api_actualizada"
-                if cliente.id else
-                "api_guardada",
-
-            "cliente":
-                serializar_cliente(cliente),
-
-        })
-
-    except requests.Timeout:
-
-        return JsonResponse({
-            "exito": False,
-            "error":
-                "La consulta demoró demasiado."
-        })
-
-    except requests.RequestException as e:
-
-        return JsonResponse({
-            "exito": False,
-            "error":
-                f"Error de conexión API: {str(e)}"
+            "origen": "api_actualizada" if cliente.id else "api_guardada",
+            "cliente": serializar_cliente(cliente),
         })
 
     except Exception as e:
-
-        return JsonResponse({
-            "exito": False,
-            "error":
-                f"Error interno: {str(e)}"
-        })
+        return JsonResponse({"exito": False, "error": f"Error de conexión: {str(e)}"})
 #fetch(`/api/consultar_cedula/?cedula=${cedula}`) 
 #fetch(`/api/consultar_cedula/?cedula=${cedula}&full=true`)   
 # =========================================================
