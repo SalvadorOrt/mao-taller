@@ -93,94 +93,88 @@ CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
 @login_required
 def crear_cliente(request):
     if request.method == 'POST':
-        # 1. Recuperamos identificación para validación de seguridad
+        form = ClienteForm(request.POST)
         identificacion = request.POST.get('identificacion', '').strip()
         
-        # SEGURIDAD: Evitar duplicados antes de procesar nada
-        if identificacion and Cliente.objects.filter(identificacion=identificacion).exists():
-            messages.warning(request, f"El cliente con identificación {identificacion} ya existe.")
-            cliente_existente = Cliente.objects.get(identificacion=identificacion)
+        # 1. Seguridad: Si ya existe, redirigir a edición
+        cliente_existente = Cliente.objects.filter(identificacion=identificacion).first()
+        if cliente_existente:
+            messages.warning(request, f"El cliente {identificacion} ya existe.")
             return redirect('editar_cliente', cliente_id=cliente_existente.id)
 
-        form = ClienteForm(request.POST)
-        
         if form.is_valid():
-            # Creamos la instancia sin guardar en BDD aún
             nuevo_cliente = form.save(commit=False)
+            solicitar_full = form.cleaned_data.get('consultar_full', False)
             
-            # 2. CONSUMO DE API (Solo si es identificación válida)
+            # 2. CONSUMO DE API (Solo si no existe en BD)
             if identificacion.isdigit() and len(identificacion) in [10, 13]:
                 es_ruc = len(identificacion) == 13
                 url = f"https://apiconsult.zampisoft.com/api/consultar?identificacion={identificacion}&token={CEDULA_API_TOKEN}"
-                
-                # Si es cédula, pedimos el detalle completo (full=true)
-                if not es_ruc:
+                if not es_ruc and solicitar_full:
                     url += "&full=true"
                     
                 try:
                     respuesta = requests.get(url, timeout=10, headers={"Accept": "application/json"})
-                    
                     if respuesta.status_code == 200:
                         data = respuesta.json()
                         if not data.get("error"):
-                            # Inyectamos TODOS los datos del API al modelo
-                            if es_ruc:
-                                nuevo_cliente.cargar_desde_api_ruc(data)
-                            else:
-                                nuevo_cliente.cargar_desde_api_persona(data, full=True)
-                            
-                            nuevo_cliente.fecha_ultima_consulta_api = timezone.now()
-                            nuevo_cliente.datos_full_consultados = True
+                            nuevo_cliente.aplicar_datos_api(data, es_ruc=es_ruc, full=solicitar_full)
                 except Exception as e:
-                    # Si falla la API, el sistema NO se detiene, continúa con lo manual
-                    print(f"Error al consultar API en crear_cliente: {e}")
+                    print(f"API Falló, guardando datos manuales: {e}")
 
-            # 3. PRIORIDAD MANUAL
-            # Si el usuario llenó algo a mano, eso prevalece sobre lo que trajo la API
-            # (Ej: el usuario corrigió el número de teléfono o la dirección)
-            if form.cleaned_data.get('telefono'):
-                nuevo_cliente.telefono = form.cleaned_data.get('telefono')
-            if form.cleaned_data.get('telefono_secundario'):
-                nuevo_cliente.telefono_secundario = form.cleaned_data.get('telefono_secundario')
-            if form.cleaned_data.get('email'):
-                nuevo_cliente.email = form.cleaned_data.get('email')
-            if form.cleaned_data.get('direccion'):
-                nuevo_cliente.direccion = form.cleaned_data.get('direccion')
-
-            # 4. GUARDADO FINAL SEGURO
-            with transaction.atomic():
-                nuevo_cliente.save()
-            
-            messages.success(request, f"Cliente {nuevo_cliente.nombre_completo} registrado correctamente.")
+            nuevo_cliente.save()
+            messages.success(request, "Cliente registrado correctamente.")
             return redirect('lista_clientes')
-        else:
-            messages.error(request, "El formulario tiene errores, por favor verifique.")
+            
     else:
         form = ClienteForm()
         
-    return render(request, 'formulario_cliente.html', {
-        'form': form, 
-        'accion': 'Nuevo Cliente'
-    })
-# ==========================================
-# 3. EDITAR CLIENTE
-# ==========================================
+    return render(request, 'formulario_cliente.html', {'form': form, 'accion': 'Nuevo Cliente'})
 @login_required
 def editar_cliente(request, cliente_id):
-    # Buscamos el cliente, si no existe devuelve error 404
+    """
+    Vista de edición con capacidad de refresco manual desde API.
+    """
     cliente = get_object_or_404(Cliente, id=cliente_id)
     
+    # 1. Lógica de REFRESCO MANUAL (Si el usuario pulsa un botón de actualizar)
+    if request.method == "POST" and "actualizar_api" in request.POST:
+        identificacion = cliente.identificacion
+        es_ruc = len(identificacion) == 13
+        
+        try:
+            # Reutilizamos la lógica de consulta
+            url = f"https://apiconsult.zampisoft.com/api/consultar?identificacion={identificacion}&token={CEDULA_API_TOKEN}"
+            if not es_ruc:
+                url += "&full=true"
+                
+            respuesta = requests.get(url, timeout=10, headers={"Accept": "application/json"})
+            if respuesta.status_code == 200:
+                data = respuesta.json()
+                if not data.get("error"):
+                    # Usamos el método robusto que definimos en el modelo
+                    cliente.actualizar_datos_inteligente(data, es_ruc=es_ruc, full=True)
+                    messages.success(request, "Datos actualizados exitosamente desde la API.")
+                else:
+                    messages.error(request, "La API respondió con un error.")
+            else:
+                messages.error(request, "Error de conexión con la API.")
+        except Exception as e:
+            messages.error(request, f"Error al actualizar: {str(e)}")
+            
+        return redirect('editar_cliente', cliente_id=cliente.id)
+
+    # 2. Lógica de GUARDADO NORMAL
     if request.method == 'POST':
-        # Le pasamos la 'instance' para que Django sepa que estamos actualizando, no creando uno nuevo
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
             form.save()
-            messages.success(request, "Datos del cliente actualizados correctamente.")
+            messages.success(request, "Cambios guardados correctamente.")
             return redirect('lista_clientes')
         else:
-            messages.error(request, "Por favor corrige los errores en el formulario.")
+            messages.error(request, "Por favor corrija los errores en el formulario.")
     else:
-        # Cargamos el formulario lleno con los datos actuales del cliente
+        # Carga inicial
         form = ClienteForm(instance=cliente)
         
     return render(request, 'formulario_cliente.html', {

@@ -4,81 +4,61 @@
 {% block title %}{{ accion }} | MAO{% endblock %}
 
 {% block content %}
-<div class="row mb-4 mt-2">
-    <div class="col-md-8 mx-auto">
-        <div class="d-flex align-items-center mb-3">
-            <a href="{% url 'lista_clientes' %}" class="btn-login small me-3" style="width: auto; background: #f5f5f7; border: 1px solid #d2d2d7; color: #1d1d1f; text-decoration: none;">
-                <i class="bi bi-arrow-left"></i> Volver
-            </a>
-            <h3 style="font-weight: 700; color: #1d1d1f; margin: 0;">{{ accion }}</h3>
-        </div>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'lista_clientes' %}" class="btn-login small me-3" style="width: auto;">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <h3 style="font-weight: 800; margin: 0;">{{ accion }}</h3>
+            </div>
 
-        <div class="login-card p-4" style="border-radius: 18px; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-            <form method="POST">
-                {% csrf_token %}
-                
-                {% if form.errors %}
-                    <div class="alert alert-danger" style="border-radius: 12px; font-size: 14px;">
-                        Por favor corrige los errores indicados abajo.
-                    </div>
-                {% endif %}
-
-                <div id="api_mensaje" class="mb-3"></div>
-
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Tipo de Doc.</label>
-                        {{ form.tipo_documento }}
-                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.tipo_documento.errors }}</div>
-                    </div>
+            <div class="login-card p-4" style="border-radius: 18px; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <form method="POST" id="clienteForm">
+                    {% csrf_token %}
                     
-                    <div class="col-md-8 mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Identificación</label>
-                        
-                        <div class="d-flex gap-2">
-                            <div style="flex-grow: 1;">
+                    {% if form.errors %}
+                        <div class="alert alert-danger" style="border-radius: 12px;">Por favor, corrige los errores en rojo.</div>
+                    {% endif %}
+                    
+                    <div id="api_mensaje" class="mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-3">{{ form.tipo_documento.label_tag }}{{ form.tipo_documento }}</div>
+                        <div class="col-md-9">
+                            <label>Identificación</label>
+                            <div class="d-flex gap-2">
                                 {{ form.identificacion }}
+                                {% if not cliente %}
+                                <button type="button" id="btn_buscar_api" class="btn btn-primary" style="border-radius: 10px;">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                                {% endif %}
                             </div>
-                            {% if not cliente %}
-                            <button type="button" id="btn_buscar_api" class="btn-login primary small" style="width: auto; padding: 0 15px; border-radius: 12px;">
-                                <i class="bi bi-search"></i> Buscar
-                            </button>
-                            {% endif %}
                         </div>
-                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.identificacion.errors }}</div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">{{ form.nombre_completo.label_tag }}{{ form.nombre_completo }}</div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">{{ form.telefono.label_tag }}{{ form.telefono }}</div>
+                        <div class="col-md-6">{{ form.email.label_tag }}{{ form.email }}</div>
                     </div>
                     
-                    <div class="col-12 mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Nombre Completo / Razón Social</label>
-                        {{ form.nombre_completo }}
-                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.nombre_completo.errors }}</div>
+                    <div class="row mt-3">
+                        <div class="col-12">{{ form.direccion.label_tag }}{{ form.direccion }}</div>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Teléfono Principal</label>
-                        {{ form.telefono }}
-                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.telefono.errors }}</div>
+                    <div class="text-end mt-4 border-top pt-3">
+                        <button type="submit" class="btn btn-success px-4 py-2" style="border-radius: 12px;">
+                            <i class="bi bi-save"></i> Guardar Cliente
+                        </button>
                     </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Correo Electrónico</label>
-                        {{ form.email }}
-                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.email.errors }}</div>
-                    </div>
-                    
-                    <div class="col-12 mb-4">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Dirección</label>
-                        {{ form.direccion }}
-                        <div class="text-danger mt-1" style="font-size: 12px;">{{ form.direccion.errors }}</div>
-                    </div>
-                </div>
-
-                <div class="text-end border-top pt-3 mt-2" style="border-color: #f5f5f7 !important;">
-                    <button type="submit" class="btn-login primary" style="width: auto; padding: 10px 24px;">
-                        <i class="bi bi-save me-2"></i> Guardar Cliente
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -144,5 +124,12 @@
                 });
         });
     });
+    // Prevenir envío accidental mientras la API consulta
+document.getElementById('clienteForm').addEventListener('submit', function(e) {
+    if (document.getElementById('btn_buscar_api').disabled) {
+        e.preventDefault();
+        alert('Por favor, espere a que termine la búsqueda...');
+    }
+});
 </script>
 {% endblock %}

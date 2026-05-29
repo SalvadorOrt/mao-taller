@@ -455,6 +455,45 @@ class Cliente(models.Model):
             # Si es string, limpiamos espacios, si no, asignamos directo
             valor = str(valor_api).strip() if isinstance(valor_api, str) else valor_api
             setattr(self, campo, valor)
+    def actualizar_desde_diccionario(self, data, es_ruc=False, full=False):
+        """
+        Lógica unificada: Solo actualiza campos si la API trae datos 
+        y mantiene los que ya existen si la API devuelve vacío.
+        """
+        if es_ruc:
+            self.cargar_desde_api_ruc(data)
+        else:
+            self.cargar_desde_api_persona(data, full=full)
+        
+        self.fecha_ultima_consulta_api = timezone.now()
+        self.save()
+    def aplicar_datos_api(self, data, es_ruc=False, full=False):
+        """
+        Actualiza solo los campos que están vacíos en la BDD,
+        o que la API trae como valor nuevo.
+        """
+        # Guardamos el estado original para comparar si es necesario
+        if es_ruc:
+            self.cargar_desde_api_ruc(data)
+        else:
+            self.cargar_desde_api_persona(data, full=full)
+            
+        self.fecha_ultima_consulta_api = timezone.now()
+    # En models.py, dentro de tu clase Cliente:
+    def actualizar_datos_inteligente(self, data, es_ruc=False, full=False):
+        """
+        Fusiona datos de API sin sobrescribir información manual crítica.
+        """
+        if es_ruc:
+            self.cargar_desde_api_ruc(data)
+        else:
+            # Usamos los métodos existentes que ya tienen lógica de respaldo
+            self.cargar_desde_api_persona(data, full=full)
+        
+        self.fecha_ultima_consulta_api = timezone.now()
+        if full:
+            self.datos_full_consultados = True
+        self.save()
     # ==========================================
     # META
     # ==========================================
