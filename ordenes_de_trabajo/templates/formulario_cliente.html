@@ -1,111 +1,80 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <div class="container mt-4">
-    <div class="card p-4 shadow-sm" style="border-radius: 15px;">
-        <h3 class="mb-4">Registro de Cliente</h3>
+    <div class="card shadow-sm p-4">
+        <h3>Registro de Cliente</h3>
         <form method="POST" id="clienteForm">
             {% csrf_token %}
-            <div id="api_mensaje" class="mb-3"></div>
-
-            <!-- BÚSQUEDA Y COSTOS -->
-            <div class="row mb-4 align-items-end">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Identificación (Cédula/RUC)</label>
+            
+            <div class="row mb-4 bg-light p-3 rounded">
+                <div class="col-md-8">
+                    <label class="fw-bold">Identificación</label>
                     <div class="input-group">
                         {{ form.identificacion }}
-                        <button type="button" id="btn_buscar_api" class="btn-login">Buscar</button>
+                        <button type="button" id="btn_buscar_api" class="btn btn-primary">Buscar</button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="form-check form-switch" id="div_full_toggle">
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="check_full">
-                        <label class="form-check-label" for="check_full">Datos Completos</label>
+                        <label class="form-check-label" for="check_full">Consultar Datos Full ($0.05)</label>
                     </div>
                 </div>
             </div>
 
-            <!-- TODOS LOS CAMPOS DEL MODELO -->
-            <div class="row">
-                {% for field in form %}
-                    {% if field.name != 'identificacion' %}
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label small fw-bold text-uppercase">{{ field.label }}</label>
-                            {{ field }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
+            <div class="accordion" id="accordionCliente">
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tab1">Contacto</button></h2>
+                    <div id="tab1" class="accordion-collapse collapse show"><div class="accordion-body row">
+                        {% for field in form %}{% if field.name in "telefono,telefono_secundario,telefono_trabajo,email,direccion" %}
+                            <div class="col-md-4">{{ field.label }}{{ field }}</div>
+                        {% endif %}{% endfor %}
+                    </div></div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tab2">Datos Personales</button></h2>
+                    <div id="tab2" class="accordion-collapse collapse"><div class="accordion-body row">
+                        {% for field in form %}{% if field.name in "genero,sexo,estado_civil,fecha_nacimiento,profesion,tipo_sangre" %}
+                            <div class="col-md-4">{{ field.label }}{{ field }}</div>
+                        {% endif %}{% endfor %}
+                    </div></div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tab3">Datos SRI / RUC</button></h2>
+                    <div id="tab3" class="accordion-collapse collapse"><div class="accordion-body row">
+                        {% for field in form %}{% if field.name in "razon_social,estado_contribuyente_ruc,regimen,obligado_llevar_contabilidad,tipo_contribuyente" %}
+                            <div class="col-md-4">{{ field.label }}{{ field }}</div>
+                        {% endif %}{% endfor %}
+                    </div></div>
+                </div>
             </div>
 
-            <button type="submit" class="btn-login">Guardar Cliente</button>
+            <button type="submit" class="btn btn-success mt-4 btn-lg">Guardar Cliente</button>
         </form>
-
-        <!-- PANEL DE VISUALIZACIÓN TÉCNICA (Desplegará TODOS los datos extraídos) -->
-        <div id="panel_datos_tecnicos" class="mt-5 p-4 bg-light rounded d-none">
-            <h5 class="text-primary mb-3">Información Completa Extraída</h5>
-            <div id="contenido_tecnico" class="row"></div>
-        </div>
     </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const inputCedula = document.getElementById("id_identificacion");
-    const checkFull = document.getElementById("check_full");
-    const divFull = document.getElementById("div_full_toggle");
-    const btnBuscar = document.getElementById("btn_buscar_api");
-    const msg = document.getElementById("api_mensaje");
-    const panel = document.getElementById('panel_datos_tecnicos');
-    const contenido = document.getElementById('contenido_tecnico');
-
-    // 1. Dinámica RUC (Bloquea Full)
-    inputCedula.addEventListener("input", function() {
-        if (this.value.trim().length === 13) {
-            checkFull.checked = true;
-            checkFull.disabled = true;
-            divFull.style.opacity = "0.5";
-        } else {
-            checkFull.disabled = false;
-            divFull.style.opacity = "1";
-        }
-    });
-
-    // 2. Búsqueda y Autocompletado Total
-    btnBuscar.addEventListener("click", function() {
-        const cedula = inputCedula.value.trim();
-        const isFull = checkFull.checked;
-
-        if (isFull && !confirm("¿Confirmas la consulta FULL ($0.05)?")) return;
-
-        btnBuscar.disabled = true;
-        msg.innerHTML = '<div class="alert alert-info">Consultando...</div>';
-
-        fetch(`/api/consultar_cedula/?cedula=${cedula}&full=${isFull}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.exito) {
-                    const c = data.cliente;
-                    
-                    // Llenar inputs del formulario
-                    Object.keys(c).forEach(key => {
-                        const input = document.getElementsByName(key)[0];
-                        if (input && c[key] !== null && c[key] !== "") input.value = c[key];
-                    });
-                    
-                    // Llenar Panel Técnico (Muestra TODOS los datos)
-                    panel.classList.remove('d-none');
-                    contenido.innerHTML = Object.entries(c).map(([key, val]) => {
-                        const valor = (typeof val === 'object') ? JSON.stringify(val) : val;
-                        return `<div class="col-md-4 mb-2 small"><strong>${key}:</strong> ${valor || 'N/A'}</div>`;
-                    }).join('');
-
-                    msg.innerHTML = '<div class="alert alert-success">Datos cargados exitosamente.</div>';
-                } else {
-                    msg.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-                }
-            })
-            .finally(() => btnBuscar.disabled = false);
-    });
+document.getElementById('btn_buscar_api').addEventListener('click', function() {
+    const cedula = document.getElementById('id_identificacion').value;
+    const isFull = document.getElementById('check_full').checked;
+    
+    fetch(`/api/consultar_cedula/?cedula=${cedula}&full=${isFull}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                // Autocompletado automático de TODOS los campos encontrados
+                Object.entries(data.cliente).forEach(([key, val]) => {
+                    const input = document.getElementsByName(key)[0];
+                    if (input && val !== null) input.value = val;
+                });
+                alert("Datos cargados correctamente");
+            } else {
+                alert("Error: " + data.error);
+            }
+        });
 });
 </script>
 {% endblock %}
