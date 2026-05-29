@@ -23,16 +23,28 @@
                     </div>
                 {% endif %}
 
+                <div id="api_mensaje" class="mb-3"></div>
+
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Tipo de Documento</label>
+                    <div class="col-md-4 mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Tipo de Doc.</label>
                         {{ form.tipo_documento }}
                         <div class="text-danger mt-1" style="font-size: 12px;">{{ form.tipo_documento.errors }}</div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-8 mb-3">
                         <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Identificación</label>
-                        {{ form.identificacion }}
+                        
+                        <div class="d-flex gap-2">
+                            <div style="flex-grow: 1;">
+                                {{ form.identificacion }}
+                            </div>
+                            {% if not cliente %}
+                            <button type="button" id="btn_buscar_api" class="btn-login primary small" style="width: auto; padding: 0 15px; border-radius: 12px;">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                            {% endif %}
+                        </div>
                         <div class="text-danger mt-1" style="font-size: 12px;">{{ form.identificacion.errors }}</div>
                     </div>
                     
@@ -71,63 +83,66 @@
     </div>
 </div>
 {% endblock %}
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const inputCedula = document.getElementById("id_identificacion");
-    const inputNombre = document.getElementById("id_nombre_completo");
-    const inputTelefono = document.getElementById("id_telefono");
-    const inputDireccion = document.getElementById("id_direccion");
-    const inputEmail = document.getElementById("id_email");
 
-    // Crear un botoncito de búsqueda y ponerlo junto al input de cédula
-    if (inputCedula && !inputCedula.disabled) {
-        const btnBuscar = document.createElement("button");
-        btnBuscar.type = "button";
-        btnBuscar.className = "btn-login small primary mt-2";
-        btnBuscar.innerHTML = '<i class="bi bi-search"></i> Buscar en Registro Civil/SRI';
-        
-        inputCedula.parentNode.appendChild(btnBuscar);
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnBuscar = document.getElementById("btn_buscar_api");
+        if (!btnBuscar) return; // Si estamos editando, el botón no existe y salimos
+
+        // Capturamos los campos generados por Django (por defecto empiezan con id_)
+        const inputCedula = document.getElementById("id_identificacion");
+        const inputNombre = document.getElementById("id_nombre_completo");
+        const inputTelefono = document.getElementById("id_telefono");
+        const inputDireccion = document.getElementById("id_direccion");
+        const inputEmail = document.getElementById("id_email");
+        const selectTipo = document.getElementById("id_tipo_documento");
+        const divMensaje = document.getElementById("api_mensaje");
 
         btnBuscar.addEventListener("click", function() {
-            const cedula = inputCedula.value.trim();
-            if (cedula.length !== 10 && cedula.length !== 13) {
-                alert("La identificación debe tener 10 o 13 dígitos.");
+            const identificacion = inputCedula.value.trim();
+
+            if (identificacion.length !== 10 && identificacion.length !== 13) {
+                divMensaje.innerHTML = `<div class="alert alert-warning py-2" style="font-size: 14px; border-radius: 12px;">La identificación debe tener 10 o 13 dígitos.</div>`;
                 return;
             }
 
-            btnBuscar.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Buscando...';
+            // Cambiar el botón a estado de carga
+            const textoOriginal = btnBuscar.innerHTML;
+            btnBuscar.innerHTML = '<i class="spinner-border spinner-border-sm"></i>';
             btnBuscar.disabled = true;
+            divMensaje.innerHTML = `<div class="alert alert-info py-2" style="font-size: 14px; border-radius: 12px;">Buscando en Registro Civil / SRI...</div>`;
 
-            // Llamamos a tu API
-            fetch(`/api/consultar_cedula/?cedula=${cedula}`)
+            // Llamamos a TU API (La que ya tienes construida en views/api.py)
+            // Agregamos full=true para traer matriz y demás datos pesados
+            fetch(`/api/consultar_cedula/?cedula=${identificacion}&full=true`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.exito && data.cliente) {
-                        // Autocompletamos el formulario
+                        // AUTOCOMPLETAMOS LOS CAMPOS EN PANTALLA
                         inputNombre.value = data.cliente.nombre_completo || "";
                         inputTelefono.value = data.cliente.telefono || "";
                         inputDireccion.value = data.cliente.direccion || "";
                         inputEmail.value = data.cliente.email || "";
                         
-                        // Seleccionamos el tipo de documento correcto
-                        const selectTipo = document.getElementById("id_tipo_documento");
                         if(selectTipo) {
                             selectTipo.value = data.cliente.tipo_documento;
                         }
 
-                        alert("¡Datos encontrados y cargados con éxito!");
+                        divMensaje.innerHTML = `<div class="alert alert-success py-2" style="font-size: 14px; border-radius: 12px;"><i class="bi bi-check-circle-fill me-2"></i>Datos encontrados y autocompletados.</div>`;
                     } else {
-                        alert(data.error || "No se encontró información. Por favor, llene los datos manualmente.");
+                        divMensaje.innerHTML = `<div class="alert alert-danger py-2" style="font-size: 14px; border-radius: 12px;">${data.error || 'No se encontró información. Por favor llene los datos manualmente.'}</div>`;
                     }
                 })
                 .catch(error => {
-                    alert("Error de conexión. Llene los datos manualmente.");
+                    divMensaje.innerHTML = `<div class="alert alert-danger py-2" style="font-size: 14px; border-radius: 12px;">Error de conexión. Llene los datos manualmente.</div>`;
                 })
                 .finally(() => {
-                    btnBuscar.innerHTML = '<i class="bi bi-search"></i> Buscar en Registro Civil/SRI';
+                    // Restaurar botón
+                    btnBuscar.innerHTML = textoOriginal;
                     btnBuscar.disabled = false;
                 });
         });
-    }
-});
+    });
 </script>
+{% endblock %}

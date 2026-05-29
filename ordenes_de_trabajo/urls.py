@@ -37,8 +37,9 @@ urlpatterns = [
     # ==========================================
     path('clientes/', clientes.lista_clientes, name='lista_clientes'),
     path('clientes/nuevo/', clientes.crear_cliente, name='crear_cliente'),
+    path('clientes/<int:cliente_id>/', clientes.detalle_cliente, name='detalle_cliente'),
     path('clientes/<int:cliente_id>/editar/', clientes.editar_cliente, name='editar_cliente'),
-
+    
     # APIs
     path('api/regcheck/', api.consultar_regcheck, name='api_regcheck'),
     path('api/buscar-placa/', api.buscar_vehiculo_por_placa, name='api_buscar_placa'),
