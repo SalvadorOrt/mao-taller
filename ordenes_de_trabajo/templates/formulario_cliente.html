@@ -1,57 +1,419 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm p-4">
-        <h3>Registro de Cliente</h3>
-        <form method="POST" id="clienteForm">
+
+<style>
+    :root{
+        --primary:#0071e3;
+        --head:#fbfbfd;
+        --border-soft:#d8d8de;
+        --muted:#6e6e73;
+        --danger:#d70015;
+        --success:#198754;
+    }
+
+    .cliente-page{
+        max-width:1200px;
+        margin:30px auto;
+        padding:0 18px;
+    }
+
+    .cliente-shell{
+        background:#fff;
+        border:1px solid var(--border-soft);
+        border-radius:22px;
+        box-shadow:0 14px 35px rgba(0,0,0,0.08);
+        overflow:hidden;
+    }
+
+    .cliente-header{
+        background:var(--head);
+        border-bottom:1px solid var(--border-soft);
+        padding:22px 28px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:16px;
+    }
+
+    .cliente-header h3{
+        margin:0;
+        color:var(--primary);
+        font-size:1.35rem;
+        font-weight:800;
+    }
+
+    .cliente-header p{
+        margin:4px 0 0;
+        color:var(--muted);
+        font-size:.86rem;
+    }
+
+    .cliente-body{
+        padding:26px;
+    }
+
+    .cliente-section{
+        background:#fbfbfd;
+        border:1px solid var(--border-soft);
+        border-radius:16px;
+        padding:18px;
+        margin-bottom:18px;
+    }
+
+    .section-title{
+        margin:0 0 14px;
+        color:#111;
+        font-size:.95rem;
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+    }
+
+    .cliente-grid{
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:14px;
+    }
+
+    .cliente-grid.two{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .field-box{
+        display:flex;
+        flex-direction:column;
+        gap:5px;
+    }
+
+    .field-box.full{
+        grid-column:1 / -1;
+    }
+
+    .field-box label{
+        font-size:.73rem;
+        color:var(--muted);
+        text-transform:uppercase;
+        font-weight:800;
+        letter-spacing:.03em;
+    }
+
+    .cliente-form input,
+    .cliente-form select,
+    .cliente-form textarea{
+        width:100%;
+        border-radius:12px;
+        border:1.5px solid var(--border-soft);
+        background:#fff;
+        color:#111;
+        padding:9px 12px;
+        font-size:.9rem;
+        outline:none;
+        transition:.2s ease;
+    }
+
+    .cliente-form textarea{
+        min-height:78px;
+        resize:vertical;
+    }
+
+    .cliente-form input:focus,
+    .cliente-form select:focus,
+    .cliente-form textarea:focus{
+        border-color:var(--primary);
+        box-shadow:0 0 0 4px rgba(0,113,227,.13);
+    }
+
+    .api-box{
+        background:#fff;
+        border:1px solid var(--border-soft);
+        border-radius:16px;
+        padding:16px;
+        margin-bottom:20px;
+    }
+
+    .api-grid{
+        display:grid;
+        grid-template-columns:2fr 1fr;
+        gap:14px;
+        align-items:end;
+    }
+
+    .input-action{
+        display:flex;
+        gap:8px;
+    }
+
+    .input-action input{
+        text-transform:uppercase;
+        font-weight:800;
+    }
+
+    .btn-mao{
+        border:none;
+        border-radius:12px;
+        padding:9px 16px;
+        font-weight:800;
+        cursor:pointer;
+        transition:.2s ease;
+        white-space:nowrap;
+    }
+
+    .btn-mao.primary{
+        background:var(--primary);
+        color:#fff;
+    }
+
+    .btn-mao.success{
+        background:var(--success);
+        color:#fff;
+        font-size:1rem;
+        padding:11px 22px;
+    }
+
+    .btn-mao:hover{
+        transform:translateY(-1px);
+        filter:brightness(.97);
+    }
+
+    .switch-box{
+        background:#fbfbfd;
+        border:1px solid var(--border-soft);
+        border-radius:12px;
+        padding:10px 12px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        min-height:43px;
+    }
+
+    .switch-box label{
+        margin:0;
+        font-size:.84rem;
+        color:#111;
+        font-weight:700;
+    }
+
+    .json-help{
+        font-size:.72rem;
+        color:var(--muted);
+        margin-top:4px;
+    }
+
+    .cliente-footer{
+        background:var(--head);
+        border-top:1px solid var(--border-soft);
+        padding:18px 26px;
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .errorlist{
+        color:var(--danger);
+        font-size:.76rem;
+        margin:4px 0 0;
+        padding-left:16px;
+    }
+
+    @media(max-width:900px){
+        .cliente-grid,
+        .cliente-grid.two,
+        .api-grid{
+            grid-template-columns:1fr;
+        }
+
+        .input-action{
+            flex-direction:column;
+        }
+
+        .cliente-header{
+            align-items:flex-start;
+            flex-direction:column;
+        }
+    }
+</style>
+
+<div class="cliente-page">
+    <div class="cliente-shell">
+        <div class="cliente-header">
+            <div>
+                <h3>Registro de Cliente</h3>
+                <p>Formulario completo con datos personales, contacto, domicilio, licencia, SRI y control API.</p>
+            </div>
+        </div>
+
+        <form method="POST" id="clienteForm" class="cliente-form">
             {% csrf_token %}
-            
-            <div class="row mb-4 bg-light p-3 rounded">
-                <div class="col-md-8">
-                    <label class="fw-bold">Identificación</label>
-                    <div class="input-group">
-                        {{ form.identificacion }}
-                        <button type="button" id="btn_buscar_api" class="btn btn-primary">Buscar</button>
+
+            <div class="cliente-body">
+
+                <div class="api-box">
+                    <div class="api-grid">
+                        <div class="field-box">
+                            <label>Identificación</label>
+                            <div class="input-action">
+                                {{ form.identificacion }}
+                                <button type="button" id="btn_buscar_api" class="btn-mao primary">Buscar</button>
+                            </div>
+                            {{ form.identificacion.errors }}
+                        </div>
+
+                        <div class="switch-box">
+                            <input type="checkbox" id="check_full">
+                            <label for="check_full">Consultar Datos Full ($0.05)</label>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="check_full">
-                        <label class="form-check-label" for="check_full">Consultar Datos Full ($0.05)</label>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Identificación principal</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box">
+                            <label>{{ form.tipo_documento.label }}</label>
+                            {{ form.tipo_documento }}
+                            {{ form.tipo_documento.errors }}
+                        </div>
+
+                        <div class="field-box full">
+                            <label>{{ form.nombre_completo.label }}</label>
+                            {{ form.nombre_completo }}
+                            {{ form.nombre_completo.errors }}
+                        </div>
                     </div>
                 </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Contacto</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box">
+                            <label>{{ form.telefono.label }}</label>
+                            {{ form.telefono }}
+                        </div>
+                        <div class="field-box">
+                            <label>{{ form.telefono_secundario.label }}</label>
+                            {{ form.telefono_secundario }}
+                        </div>
+                        <div class="field-box">
+                            <label>{{ form.telefono_trabajo.label }}</label>
+                            {{ form.telefono_trabajo }}
+                        </div>
+                        <div class="field-box">
+                            <label>{{ form.email.label }}</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="field-box full">
+                            <label>{{ form.direccion.label }}</label>
+                            {{ form.direccion }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Datos personales</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.genero.label }}</label>{{ form.genero }}</div>
+                        <div class="field-box"><label>{{ form.sexo.label }}</label>{{ form.sexo }}</div>
+                        <div class="field-box"><label>{{ form.estado_civil.label }}</label>{{ form.estado_civil }}</div>
+                        <div class="field-box"><label>{{ form.conyuge.label }}</label>{{ form.conyuge }}</div>
+                        <div class="field-box"><label>{{ form.nacionalidad.label }}</label>{{ form.nacionalidad }}</div>
+                        <div class="field-box"><label>{{ form.fecha_nacimiento.label }}</label>{{ form.fecha_nacimiento }}</div>
+                        <div class="field-box"><label>{{ form.fecha_cedulacion.label }}</label>{{ form.fecha_cedulacion }}</div>
+                        <div class="field-box"><label>{{ form.lugar_nacimiento.label }}</label>{{ form.lugar_nacimiento }}</div>
+                        <div class="field-box"><label>{{ form.instruccion.label }}</label>{{ form.instruccion }}</div>
+                        <div class="field-box"><label>{{ form.profesion.label }}</label>{{ form.profesion }}</div>
+                        <div class="field-box"><label>{{ form.tipo_sangre.label }}</label>{{ form.tipo_sangre }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Padres</h4>
+                    <div class="cliente-grid two">
+                        <div class="field-box"><label>{{ form.nombre_madre.label }}</label>{{ form.nombre_madre }}</div>
+                        <div class="field-box"><label>{{ form.nombre_padre.label }}</label>{{ form.nombre_padre }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Domicilio</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.lugar_domicilio.label }}</label>{{ form.lugar_domicilio }}</div>
+                        <div class="field-box"><label>{{ form.calle_domicilio.label }}</label>{{ form.calle_domicilio }}</div>
+                        <div class="field-box"><label>{{ form.numeracion_domicilio.label }}</label>{{ form.numeracion_domicilio }}</div>
+                        <div class="field-box"><label>{{ form.provincia.label }}</label>{{ form.provincia }}</div>
+                        <div class="field-box"><label>{{ form.canton.label }}</label>{{ form.canton }}</div>
+                        <div class="field-box"><label>{{ form.parroquia.label }}</label>{{ form.parroquia }}</div>
+                        <div class="field-box full">
+                            <label>{{ form.otras_direcciones.label }}</label>
+                            {{ form.otras_direcciones }}
+                            <div class="json-help">Campo JSON. Úsalo para guardar direcciones adicionales si la API las devuelve.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Licencia</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.licencia_tipo.label }}</label>{{ form.licencia_tipo }}</div>
+                        <div class="field-box"><label>{{ form.licencia_fecha_desde.label }}</label>{{ form.licencia_fecha_desde }}</div>
+                        <div class="field-box"><label>{{ form.licencia_fecha_hasta.label }}</label>{{ form.licencia_fecha_hasta }}</div>
+                        <div class="field-box"><label>{{ form.licencia_puntos.label }}</label>{{ form.licencia_puntos }}</div>
+                        <div class="field-box full"><label>{{ form.licencia_restricciones.label }}</label>{{ form.licencia_restricciones }}</div>
+                        <div class="field-box full">
+                            <label>{{ form.licencia_todos.label }}</label>
+                            {{ form.licencia_todos }}
+                            <div class="json-help">Campo JSON para varias licencias o información completa de licencia.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Discapacidad</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.carnet_conadis.label }}</label>{{ form.carnet_conadis }}</div>
+                        <div class="field-box"><label>{{ form.discapacidad.label }}</label>{{ form.discapacidad }}</div>
+                        <div class="field-box"><label>{{ form.porcentaje_discapacidad.label }}</label>{{ form.porcentaje_discapacidad }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Datos SRI / RUC</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box full"><label>{{ form.razon_social.label }}</label>{{ form.razon_social }}</div>
+                        <div class="field-box"><label>{{ form.estado_contribuyente_ruc.label }}</label>{{ form.estado_contribuyente_ruc }}</div>
+                        <div class="field-box"><label>{{ form.tipo_contribuyente.label }}</label>{{ form.tipo_contribuyente }}</div>
+                        <div class="field-box"><label>{{ form.regimen.label }}</label>{{ form.regimen }}</div>
+                        <div class="field-box"><label>{{ form.categoria.label }}</label>{{ form.categoria }}</div>
+                        <div class="field-box"><label>{{ form.obligado_llevar_contabilidad.label }}</label>{{ form.obligado_llevar_contabilidad }}</div>
+                        <div class="field-box"><label>{{ form.agente_retencion.label }}</label>{{ form.agente_retencion }}</div>
+                        <div class="field-box"><label>{{ form.contribuyente_especial.label }}</label>{{ form.contribuyente_especial }}</div>
+                        <div class="field-box"><label>{{ form.contribuyente_fantasma.label }}</label>{{ form.contribuyente_fantasma }}</div>
+                        <div class="field-box"><label>{{ form.transacciones_inexistentes.label }}</label>{{ form.transacciones_inexistentes }}</div>
+                        <div class="field-box full"><label>{{ form.actividad_economica_principal.label }}</label>{{ form.actividad_economica_principal }}</div>
+                        <div class="field-box full"><label>{{ form.representantes_legales.label }}</label>{{ form.representantes_legales }}</div>
+                        <div class="field-box full"><label>{{ form.establecimientos.label }}</label>{{ form.establecimientos }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Control API</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.datos_full_consultados.label }}</label>{{ form.datos_full_consultados }}</div>
+                        <div class="field-box"><label>{{ form.fecha_ultima_consulta_api.label }}</label>{{ form.fecha_ultima_consulta_api }}</div>
+                        <div class="field-box full">
+                            <label>{{ form.datos_api_originales.label }}</label>
+                            {{ form.datos_api_originales }}
+                            <div class="json-help">Respuesta original de la API para auditoría o revisión futura.</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="accordion" id="accordionCliente">
-                <div class="accordion-item">
-                    <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tab1">Contacto</button></h2>
-                    <div id="tab1" class="accordion-collapse collapse show"><div class="accordion-body row">
-                        {% for field in form %}{% if field.name in "telefono,telefono_secundario,telefono_trabajo,email,direccion" %}
-                            <div class="col-md-4">{{ field.label }}{{ field }}</div>
-                        {% endif %}{% endfor %}
-                    </div></div>
-                </div>
-
-                <div class="accordion-item">
-                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tab2">Datos Personales</button></h2>
-                    <div id="tab2" class="accordion-collapse collapse"><div class="accordion-body row">
-                        {% for field in form %}{% if field.name in "genero,sexo,estado_civil,fecha_nacimiento,profesion,tipo_sangre" %}
-                            <div class="col-md-4">{{ field.label }}{{ field }}</div>
-                        {% endif %}{% endfor %}
-                    </div></div>
-                </div>
-
-                <div class="accordion-item">
-                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tab3">Datos SRI / RUC</button></h2>
-                    <div id="tab3" class="accordion-collapse collapse"><div class="accordion-body row">
-                        {% for field in form %}{% if field.name in "razon_social,estado_contribuyente_ruc,regimen,obligado_llevar_contabilidad,tipo_contribuyente" %}
-                            <div class="col-md-4">{{ field.label }}{{ field }}</div>
-                        {% endif %}{% endfor %}
-                    </div></div>
-                </div>
+            <div class="cliente-footer">
+                <button type="submit" class="btn-mao success">Guardar Cliente</button>
             </div>
-
-            <button type="submit" class="btn btn-success mt-4 btn-lg">Guardar Cliente</button>
         </form>
     </div>
 </div>
@@ -60,21 +422,42 @@
 document.getElementById('btn_buscar_api').addEventListener('click', function() {
     const cedula = document.getElementById('id_identificacion').value;
     const isFull = document.getElementById('check_full').checked;
-    
+
+    if (!cedula.trim()) {
+        alert("Ingrese una identificación.");
+        return;
+    }
+
+    this.disabled = true;
+    this.innerText = "Buscando...";
+
     fetch(`/api/consultar_cedula/?cedula=${cedula}&full=${isFull}`)
         .then(res => res.json())
         .then(data => {
             if (data.exito) {
-                // Autocompletado automático de TODOS los campos encontrados
                 Object.entries(data.cliente).forEach(([key, val]) => {
                     const input = document.getElementsByName(key)[0];
-                    if (input && val !== null) input.value = val;
+                    if (input && val !== null && val !== undefined) {
+                        if (typeof val === 'object') {
+                            input.value = JSON.stringify(val, null, 2);
+                        } else {
+                            input.value = val;
+                        }
+                    }
                 });
                 alert("Datos cargados correctamente");
             } else {
                 alert("Error: " + data.error);
             }
+        })
+        .catch(() => {
+            alert("No se pudo consultar la API.");
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerText = "Buscar";
         });
 });
 </script>
+
 {% endblock %}

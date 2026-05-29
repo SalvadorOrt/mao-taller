@@ -1,335 +1,463 @@
-{% load humanize %}
+{% extends 'base.html' %}
+{% block content %}
+
 <style>
-    @keyframes fadeInScale {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+    :root{
+        --primary:#0071e3;
+        --head:#fbfbfd;
+        --border-soft:#d8d8de;
+        --muted:#6e6e73;
+        --danger:#d70015;
+        --success:#198754;
     }
-    
-    /* Estilo para el botón de proforma que resalta sin ser invasivo */
-    .btn-proforma {
-        background: #ffffff;
-        color: #0071e3;
-        border: 1px solid #0071e3;
-        transition: all 0.2s ease;
+
+    .cliente-page{
+        max-width:1200px;
+        margin:30px auto;
+        padding:0 18px;
     }
-    
-    .btn-proforma:hover {
-        background: #f5faff;
-        color: #005bb7;
-        border-color: #005bb7;
-        transform: translateY(-1px);
+
+    .cliente-shell{
+        background:#fff;
+        border:1px solid var(--border-soft);
+        border-radius:22px;
+        box-shadow:0 14px 35px rgba(0,0,0,0.08);
+        overflow:hidden;
+    }
+
+    .cliente-header{
+        background:var(--head);
+        border-bottom:1px solid var(--border-soft);
+        padding:22px 28px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:16px;
+    }
+
+    .cliente-header h3{
+        margin:0;
+        color:var(--primary);
+        font-size:1.35rem;
+        font-weight:800;
+    }
+
+    .cliente-header p{
+        margin:4px 0 0;
+        color:var(--muted);
+        font-size:.86rem;
+    }
+
+    .cliente-body{
+        padding:26px;
+    }
+
+    .cliente-section{
+        background:#fbfbfd;
+        border:1px solid var(--border-soft);
+        border-radius:16px;
+        padding:18px;
+        margin-bottom:18px;
+    }
+
+    .section-title{
+        margin:0 0 14px;
+        color:#111;
+        font-size:.95rem;
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+    }
+
+    .cliente-grid{
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:14px;
+    }
+
+    .cliente-grid.two{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .field-box{
+        display:flex;
+        flex-direction:column;
+        gap:5px;
+    }
+
+    .field-box.full{
+        grid-column:1 / -1;
+    }
+
+    .field-box label{
+        font-size:.73rem;
+        color:var(--muted);
+        text-transform:uppercase;
+        font-weight:800;
+        letter-spacing:.03em;
+    }
+
+    .cliente-form input,
+    .cliente-form select,
+    .cliente-form textarea{
+        width:100%;
+        border-radius:12px;
+        border:1.5px solid var(--border-soft);
+        background:#fff;
+        color:#111;
+        padding:9px 12px;
+        font-size:.9rem;
+        outline:none;
+        transition:.2s ease;
+    }
+
+    .cliente-form textarea{
+        min-height:78px;
+        resize:vertical;
+    }
+
+    .cliente-form input:focus,
+    .cliente-form select:focus,
+    .cliente-form textarea:focus{
+        border-color:var(--primary);
+        box-shadow:0 0 0 4px rgba(0,113,227,.13);
+    }
+
+    .api-box{
+        background:#fff;
+        border:1px solid var(--border-soft);
+        border-radius:16px;
+        padding:16px;
+        margin-bottom:20px;
+    }
+
+    .api-grid{
+        display:grid;
+        grid-template-columns:2fr 1fr;
+        gap:14px;
+        align-items:end;
+    }
+
+    .input-action{
+        display:flex;
+        gap:8px;
+    }
+
+    .input-action input{
+        text-transform:uppercase;
+        font-weight:800;
+    }
+
+    .btn-mao{
+        border:none;
+        border-radius:12px;
+        padding:9px 16px;
+        font-weight:800;
+        cursor:pointer;
+        transition:.2s ease;
+        white-space:nowrap;
+    }
+
+    .btn-mao.primary{
+        background:var(--primary);
+        color:#fff;
+    }
+
+    .btn-mao.success{
+        background:var(--success);
+        color:#fff;
+        font-size:1rem;
+        padding:11px 22px;
+    }
+
+    .btn-mao:hover{
+        transform:translateY(-1px);
+        filter:brightness(.97);
+    }
+
+    .switch-box{
+        background:#fbfbfd;
+        border:1px solid var(--border-soft);
+        border-radius:12px;
+        padding:10px 12px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        min-height:43px;
+    }
+
+    .switch-box label{
+        margin:0;
+        font-size:.84rem;
+        color:#111;
+        font-weight:700;
+    }
+
+    .json-help{
+        font-size:.72rem;
+        color:var(--muted);
+        margin-top:4px;
+    }
+
+    .cliente-footer{
+        background:var(--head);
+        border-top:1px solid var(--border-soft);
+        padding:18px 26px;
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .errorlist{
+        color:var(--danger);
+        font-size:.76rem;
+        margin:4px 0 0;
+        padding-left:16px;
+    }
+
+    @media(max-width:900px){
+        .cliente-grid,
+        .cliente-grid.two,
+        .api-grid{
+            grid-template-columns:1fr;
+        }
+
+        .input-action{
+            flex-direction:column;
+        }
+
+        .cliente-header{
+            align-items:flex-start;
+            flex-direction:column;
+        }
     }
 </style>
 
-<div class="ot-card" style="margin-bottom: 20px; animation: fadeInScale 0.4s ease-out;">
-
-    <!-- ============================================= -->
-    <!-- HEADER -->
-    <!-- ============================================= -->
-    <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--border, #d2d2d7);
-        padding-bottom: 15px;
-        margin-bottom: 20px;">
-
-        <div>
-            <div style="
-                font-size: 18px;
-                font-weight: 800;
-                color: var(--text, #1d1d1f);">
-                Orden de Trabajo {{ orden.numero_orden }}
-            </div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px; display: flex; align-items: center; gap: 5px;">
-                <i class="bi bi-calendar-event"></i>
-                <span>Ingresada el: {{ orden.fecha_ingreso|date:"d/m/Y" }} a las {{ orden.fecha_ingreso|time:"H:i" }}</span>
-            </div>
-            <p style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin: 0;">
-                Detalle operativo de la orden
-            </p>
-        </div>
-
-        <div class="d-flex align-items-center gap-2">
-
-            {% if orden.estado == 'ABIERTA' %}
-                <!-- ============================================= -->
-                <!-- BOTÓN DINÁMICO: CREAR O CONTINUAR PROFORMA -->
-                <!-- ============================================= -->
-                {% if orden.cotizacion_vinculada %}
-                    <!-- Si ya existe, mostramos "Ver / Continuar" -->
-                    <a href="{% url 'nueva_cotizacion_desde_ot' orden.id %}" 
-                    class="btn-login btn-proforma"
-                    style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: #f5faff; border-color: #0071e3;">
-                        <i class="bi bi-file-earmark-check" style="margin-right: 4px;"></i>
-                        Continuar Proforma
-                    </a>
-                {% else %}
-                    <!-- Si no existe, mostramos "Nueva" -->
-                    <a href="{% url 'nueva_cotizacion_desde_ot' orden.id %}" 
-                    class="btn-login btn-proforma"
-                    style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-file-earmark-plus" style="margin-right: 4px;"></i>
-                        Nueva Proforma
-                    </a>
-                {% endif %}
-            {% endif %}
-
-            <!-- ============================================= -->
-            <!-- IMPRIMIR FICHA -->
-            <!-- ============================================= -->
-            <button type="button"
-                    onclick="imprimirFichaDirecto()"
-                    class="btn-login"
-                    style="
-                        background: #f5f5f7;
-                        color: #1d1d1f;
-                        border-color: #d2d2d7;">
-                <i class="bi bi-tools" style="margin-right: 4px;"></i>
-                Imprimir Ficha
-            </button>
-
-            <!-- ============================================= -->
-            <!-- RESUMEN -->
-            <!-- ============================================= -->
-            <button type="button"
-                    onclick="imprimirResumenDirecto()"
-                    class="btn-login"
-                    style="
-                        background: #0071e3;
-                        border-color: #0071e3;
-                        color: #fff;">
-                <i class="bi bi-receipt" style="margin-right: 4px;"></i>
-                Resumen de Orden
-            </button>
-
-            {% if orden.estado == 'ABIERTA' %}
-                <!-- ============================================= -->
-                <!-- ANULAR -->
-                <!-- ============================================= -->
-                <form id="form_anular_orden"
-                      method="post"
-                      action="{% url 'anular_orden' orden.id %}"
-                      style="margin: 0;">
-                    {% csrf_token %}
-                    <button type="button"
-                            class="btn-login"
-                            style="
-                                background-color: #ff3b30;
-                                border-color: #ff3b30;
-                                color: #ffffff;"
-                            onclick="confirmarAccionNativa('anular', 'form_anular_orden')">
-                        Anular
-                    </button>
-                </form>
-
-                <!-- ============================================= -->
-                <!-- CERRAR -->
-                <!-- ============================================= -->
-                <form id="form_cerrar_orden"
-                      method="post"
-                      action="{% url 'cerrar_orden' orden.id %}"
-                      style="margin: 0;">
-                    {% csrf_token %}
-                    <button type="button"
-                            class="btn-login"
-                            style="
-                                background-color: #34c759;
-                                border-color: #34c759;
-                                color: #ffffff;"
-                            onclick="confirmarAccionNativa('cerrar', 'form_cerrar_orden')">
-                        Cerrar y Facturar
-                    </button>
-                </form>
-            {% endif %}
-
-            <!-- ============================================= -->
-            <!-- ESTADO -->
-            <!-- ============================================= -->
-            <div style="
-                background: #f2f2f7;
-                border-radius: 8px;
-                padding: 6px 12px;
-                font-size: 11px;
-                color: var(--text, #1d1d1f);
-                border: 1px solid #d2d2d7;
-                margin-left: 5px;">
-                <span style="color: var(--muted, #6e6e73);">Estado:</span>
-                <strong style="margin-left: 4px;">
-                    {{ orden.get_estado_display|upper }}
-                </strong>
+<div class="cliente-page">
+    <div class="cliente-shell">
+        <div class="cliente-header">
+            <div>
+                <h3>Registro de Cliente</h3>
+                <p>Formulario completo con datos personales, contacto, domicilio, licencia, SRI y control API.</p>
             </div>
         </div>
-    </div>
 
-    <!-- ============================================= -->
-    <!-- TARJETAS DE INFORMACIÓN -->
-    <!-- ============================================= -->
-    <div style="
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 15px;">
+        <form method="POST" id="clienteForm" class="cliente-form">
+            {% csrf_token %}
 
-        <!-- CLIENTE -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Cliente</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">{{ orden.nombre_cliente_final|upper }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">C.I./RUC: {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">Celular: {{ orden.cliente.telefono|default:"NO REGISTRADO" }}</div>
-        </div>
+            <div class="cliente-body">
 
-        <!-- VEHÍCULO -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Vehículo</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">{{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">Año: {{ orden.anio_vehiculo|default:"-" }} | Color: {{ orden.color|upper|default:"-" }}</div>
-            
-            
-                <div style="font-size: 12px; font-weight: 800; color: #0071e3; margin-top: 6px; display: inline-block; padding: 2px 6px; background: rgba(0,113,227,0.1); border-radius: 4px;">
-                    <i class="bi bi-key-fill"></i> Clave: {{ orden.clave_encendido }}
+                <div class="api-box">
+                    <div class="api-grid">
+                        <div class="field-box">
+                            <label>Identificación</label>
+                            <div class="input-action">
+                                {{ form.identificacion }}
+                                <button type="button" id="btn_buscar_api" class="btn-mao primary">Buscar</button>
+                            </div>
+                            {{ form.identificacion.errors }}
+                        </div>
+
+                        <div class="switch-box">
+                            <input type="checkbox" id="check_full">
+                            <label for="check_full">Consultar Datos Full ($0.05)</label>
+                        </div>
+                    </div>
                 </div>
-            
-        </div>
 
-        <!-- PLACA -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Placa</div>
-            <div style="font-size: 16px; font-weight: 800; color: #0071e3; letter-spacing: 1px;">{{ orden.placa|upper|default:"S/P" }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 8px; text-transform: uppercase;">Kilometraje</div>
-            <div style="font-size: 15px; font-weight: 800; color: #1d1d1f; margin-top: 2px;">
-                {% if orden.kilometraje %}
-                    {{ orden.kilometraje|intcomma }} km
-                {% else %}
-                    NO REGISTRADO
-                {% endif %}
+                <div class="cliente-section">
+                    <h4 class="section-title">Identificación principal</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box">
+                            <label>{{ form.tipo_documento.label }}</label>
+                            {{ form.tipo_documento }}
+                            {{ form.tipo_documento.errors }}
+                        </div>
+
+                        <div class="field-box full">
+                            <label>{{ form.nombre_completo.label }}</label>
+                            {{ form.nombre_completo }}
+                            {{ form.nombre_completo.errors }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Contacto</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box">
+                            <label>{{ form.telefono.label }}</label>
+                            {{ form.telefono }}
+                        </div>
+                        <div class="field-box">
+                            <label>{{ form.telefono_secundario.label }}</label>
+                            {{ form.telefono_secundario }}
+                        </div>
+                        <div class="field-box">
+                            <label>{{ form.telefono_trabajo.label }}</label>
+                            {{ form.telefono_trabajo }}
+                        </div>
+                        <div class="field-box">
+                            <label>{{ form.email.label }}</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="field-box full">
+                            <label>{{ form.direccion.label }}</label>
+                            {{ form.direccion }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Datos personales</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.genero.label }}</label>{{ form.genero }}</div>
+                        <div class="field-box"><label>{{ form.sexo.label }}</label>{{ form.sexo }}</div>
+                        <div class="field-box"><label>{{ form.estado_civil.label }}</label>{{ form.estado_civil }}</div>
+                        <div class="field-box"><label>{{ form.conyuge.label }}</label>{{ form.conyuge }}</div>
+                        <div class="field-box"><label>{{ form.nacionalidad.label }}</label>{{ form.nacionalidad }}</div>
+                        <div class="field-box"><label>{{ form.fecha_nacimiento.label }}</label>{{ form.fecha_nacimiento }}</div>
+                        <div class="field-box"><label>{{ form.fecha_cedulacion.label }}</label>{{ form.fecha_cedulacion }}</div>
+                        <div class="field-box"><label>{{ form.lugar_nacimiento.label }}</label>{{ form.lugar_nacimiento }}</div>
+                        <div class="field-box"><label>{{ form.instruccion.label }}</label>{{ form.instruccion }}</div>
+                        <div class="field-box"><label>{{ form.profesion.label }}</label>{{ form.profesion }}</div>
+                        <div class="field-box"><label>{{ form.tipo_sangre.label }}</label>{{ form.tipo_sangre }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Padres</h4>
+                    <div class="cliente-grid two">
+                        <div class="field-box"><label>{{ form.nombre_madre.label }}</label>{{ form.nombre_madre }}</div>
+                        <div class="field-box"><label>{{ form.nombre_padre.label }}</label>{{ form.nombre_padre }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Domicilio</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.lugar_domicilio.label }}</label>{{ form.lugar_domicilio }}</div>
+                        <div class="field-box"><label>{{ form.calle_domicilio.label }}</label>{{ form.calle_domicilio }}</div>
+                        <div class="field-box"><label>{{ form.numeracion_domicilio.label }}</label>{{ form.numeracion_domicilio }}</div>
+                        <div class="field-box"><label>{{ form.provincia.label }}</label>{{ form.provincia }}</div>
+                        <div class="field-box"><label>{{ form.canton.label }}</label>{{ form.canton }}</div>
+                        <div class="field-box"><label>{{ form.parroquia.label }}</label>{{ form.parroquia }}</div>
+                        <div class="field-box full">
+                            <label>{{ form.otras_direcciones.label }}</label>
+                            {{ form.otras_direcciones }}
+                            <div class="json-help">Campo JSON. Úsalo para guardar direcciones adicionales si la API las devuelve.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Licencia</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.licencia_tipo.label }}</label>{{ form.licencia_tipo }}</div>
+                        <div class="field-box"><label>{{ form.licencia_fecha_desde.label }}</label>{{ form.licencia_fecha_desde }}</div>
+                        <div class="field-box"><label>{{ form.licencia_fecha_hasta.label }}</label>{{ form.licencia_fecha_hasta }}</div>
+                        <div class="field-box"><label>{{ form.licencia_puntos.label }}</label>{{ form.licencia_puntos }}</div>
+                        <div class="field-box full"><label>{{ form.licencia_restricciones.label }}</label>{{ form.licencia_restricciones }}</div>
+                        <div class="field-box full">
+                            <label>{{ form.licencia_todos.label }}</label>
+                            {{ form.licencia_todos }}
+                            <div class="json-help">Campo JSON para varias licencias o información completa de licencia.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Discapacidad</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.carnet_conadis.label }}</label>{{ form.carnet_conadis }}</div>
+                        <div class="field-box"><label>{{ form.discapacidad.label }}</label>{{ form.discapacidad }}</div>
+                        <div class="field-box"><label>{{ form.porcentaje_discapacidad.label }}</label>{{ form.porcentaje_discapacidad }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Datos SRI / RUC</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box full"><label>{{ form.razon_social.label }}</label>{{ form.razon_social }}</div>
+                        <div class="field-box"><label>{{ form.estado_contribuyente_ruc.label }}</label>{{ form.estado_contribuyente_ruc }}</div>
+                        <div class="field-box"><label>{{ form.tipo_contribuyente.label }}</label>{{ form.tipo_contribuyente }}</div>
+                        <div class="field-box"><label>{{ form.regimen.label }}</label>{{ form.regimen }}</div>
+                        <div class="field-box"><label>{{ form.categoria.label }}</label>{{ form.categoria }}</div>
+                        <div class="field-box"><label>{{ form.obligado_llevar_contabilidad.label }}</label>{{ form.obligado_llevar_contabilidad }}</div>
+                        <div class="field-box"><label>{{ form.agente_retencion.label }}</label>{{ form.agente_retencion }}</div>
+                        <div class="field-box"><label>{{ form.contribuyente_especial.label }}</label>{{ form.contribuyente_especial }}</div>
+                        <div class="field-box"><label>{{ form.contribuyente_fantasma.label }}</label>{{ form.contribuyente_fantasma }}</div>
+                        <div class="field-box"><label>{{ form.transacciones_inexistentes.label }}</label>{{ form.transacciones_inexistentes }}</div>
+                        <div class="field-box full"><label>{{ form.actividad_economica_principal.label }}</label>{{ form.actividad_economica_principal }}</div>
+                        <div class="field-box full"><label>{{ form.representantes_legales.label }}</label>{{ form.representantes_legales }}</div>
+                        <div class="field-box full"><label>{{ form.establecimientos.label }}</label>{{ form.establecimientos }}</div>
+                    </div>
+                </div>
+
+                <div class="cliente-section">
+                    <h4 class="section-title">Control API</h4>
+                    <div class="cliente-grid">
+                        <div class="field-box"><label>{{ form.datos_full_consultados.label }}</label>{{ form.datos_full_consultados }}</div>
+                        <div class="field-box"><label>{{ form.fecha_ultima_consulta_api.label }}</label>{{ form.fecha_ultima_consulta_api }}</div>
+                        <div class="field-box full">
+                            <label>{{ form.datos_api_originales.label }}</label>
+                            {{ form.datos_api_originales }}
+                            <div class="json-help">Respuesta original de la API para auditoría o revisión futura.</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-        </div>
 
-        <!-- COMBUSTIBLE -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase;">Combustible</div>
-                <div style="font-size: 11px; font-weight: 700; background: #e5e5e7; padding: 2px 6px; border-radius: 4px;">{{ orden.get_nivel_combustible_display|default:"-" }}</div>
+            <div class="cliente-footer">
+                <button type="submit" class="btn-mao success">Guardar Cliente</button>
             </div>
-        </div>
-    </div>
-
-    <!-- REPORTE CLIENTE -->
-    <div style="margin-top: 15px; padding: 12px; background: #f5f5f7; border-left: 4px solid #0071e3; border-radius: 4px 8px 8px 4px;">
-        <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 4px;">Reporte del Cliente</div>
-        <div style="font-size: 13px; font-weight: 500; color: #1d1d1f;">
-            {% if orden.sintomas_cliente %}
-                {{ orden.sintomas_cliente|upper }}
-            {% else %}
-                {% for s in orden.sintomas_items.all %}
-                    {{ s.descripcion|upper }}{% if not forloop.last %}, {% endif %}
-                {% empty %}
-                    REVISIÓN TÉCNICA GENERAL
-                {% endfor %}
-            {% endif %}
-        </div>
+        </form>
     </div>
 </div>
 
-    
-    <script>
-        function confirmarAccionNativa(accion, formId) {
-            let titulo = '';
-            let texto = '';
-            let icono = '';
-            let colorBoton = '';
+<script>
+document.getElementById('btn_buscar_api').addEventListener('click', function() {
+    const cedula = document.getElementById('id_identificacion').value;
+    const isFull = document.getElementById('check_full').checked;
 
-            if (accion === 'anular') {
-                titulo = '¿Anular Orden?';
-                texto = 'Esta acción cancelará la orden y no se podrá deshacer.';
-                icono = 'warning';
-                colorBoton = '#ff3b30';
-            } else if (accion === 'cerrar') {
-                titulo = '¿Cerrar y Facturar?';
-                texto = 'El vehículo pasará a estado cerrado y estará listo para facturación.';
-                icono = 'question';
-                colorBoton = '#34c759';
+    if (!cedula.trim()) {
+        alert("Ingrese una identificación.");
+        return;
+    }
+
+    this.disabled = true;
+    this.innerText = "Buscando...";
+
+    fetch(`/api/consultar_cedula/?cedula=${cedula}&full=${isFull}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                Object.entries(data.cliente).forEach(([key, val]) => {
+                    const input = document.getElementsByName(key)[0];
+                    if (input && val !== null && val !== undefined) {
+                        if (typeof val === 'object') {
+                            input.value = JSON.stringify(val, null, 2);
+                        } else {
+                            input.value = val;
+                        }
+                    }
+                });
+                alert("Datos cargados correctamente");
+            } else {
+                alert("Error: " + data.error);
             }
+        })
+        .catch(() => {
+            alert("No se pudo consultar la API.");
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerText = "Buscar";
+        });
+});
+</script>
 
-            Swal.fire({
-                title: titulo,
-                text: texto,
-                icon: icono,
-                showCancelButton: true,
-                confirmButtonColor: colorBoton,
-                cancelButtonColor: '#6e6e73',
-                confirmButtonText: 'Sí, continuar',
-                cancelButtonText: 'Cancelar',
-                customClass: { popup: 'swal-mao-popup', title: 'swal-mao-title', htmlContainer: 'swal-mao-html' }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById(formId).submit();
-                }
-            });
-        }
-
-        function imprimirFichaDirecto() {
-            const btn = event.currentTarget;
-            if (btn.disabled) return; 
-            
-            const textoOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cargando...';
-
-            var viejoIframe = document.getElementById('iframeImpresionDinamico');
-            if (viejoIframe) {
-                viejoIframe.remove();
-            }
-
-            var iframe = document.createElement('iframe');
-            iframe.id = 'iframeImpresionDinamico';
-            iframe.style.position = 'absolute';
-            iframe.style.top = '-10000px';
-            iframe.style.left = '-10000px';
-            iframe.style.width = '1000px';
-            iframe.style.height = '1000px';
-            iframe.style.border = 'none';
-
-            document.body.appendChild(iframe);
-            iframe.src = "{% url 'imprimir_tecnico' orden.id %}";
-
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }, 2000);
-        }
-
-        function imprimirResumenDirecto() {
-            const btn = event.currentTarget;
-            if (btn.disabled) return; 
-            
-            const textoOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando PDF...';
-
-            var viejoIframe = document.getElementById('iframeImpresionResumen');
-            if (viejoIframe) {
-                viejoIframe.remove();
-            }
-
-            var iframe = document.createElement('iframe');
-            iframe.id = 'iframeImpresionResumen';
-            iframe.style.position = 'absolute';
-            iframe.style.top = '-10000px';
-            iframe.style.left = '-10000px';
-            iframe.style.width = '1000px';
-            iframe.style.height = '1000px';
-            iframe.style.border = 'none';
-
-            document.body.appendChild(iframe);
-            iframe.src = "{% url 'imprimir_resumen' orden.id %}";
-
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }, 2000);
-        }
-    </script>
+{% endblock %}
