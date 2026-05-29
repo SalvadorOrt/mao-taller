@@ -1,77 +1,64 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}{{ accion }} | MAO{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-10 mx-auto">
-            <div class="d-flex align-items-center mb-4">
-                <a href="{% url 'lista_clientes' %}" class="btn btn-secondary me-3">Volver</a>
-                <h3 class="m-0">{{ accion }}</h3>
+    <div class="card p-4 shadow-sm" style="border-radius: 15px;">
+        <h3 class="mb-4">Registro de Cliente</h3>
+        <form method="POST" id="clienteForm">
+            {% csrf_token %}
+            <div id="api_mensaje" class="mb-3"></div>
+
+            <!-- BÚSQUEDA Y COSTOS -->
+            <div class="row mb-4 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Identificación (Cédula/RUC)</label>
+                    <div class="input-group">
+                        {{ form.identificacion }}
+                        <button type="button" id="btn_buscar_api" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch" id="div_full_toggle">
+                        <input class="form-check-input" type="checkbox" id="check_full">
+                        <label class="form-check-label" for="check_full">Datos Full ($0.05)</label>
+                    </div>
+                </div>
             </div>
 
-            <div class="card p-4 shadow-sm" style="border-radius: 18px;">
-                <form method="POST" id="clienteForm">
-                    {% csrf_token %}
-                    <div id="api_mensaje" class="mb-3"></div>
-
-                    <div class="row mb-4 border-bottom pb-3">
-                        <div class="col-md-8">
-                            <label class="form-label fw-bold">Identificación (Cédula o RUC)</label>
-                            <div class="input-group">
-                                {{ form.identificacion }}
-                                <button type="button" id="btn_buscar_api" class="btn-login  text-center">
-                                    <i class="bi bi-search"></i> Buscar
-                                </button>
-                            </div>
+            <!-- TODOS LOS CAMPOS DEL MODELO -->
+            <div class="row">
+                {% for field in form %}
+                    {% if field.name != 'identificacion' %}
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small fw-bold text-uppercase">{{ field.label }}</label>
+                            {{ field }}
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <div class="form-check form-switch" id="div_full_toggle">
-                                <input class="form-check-input" type="checkbox" id="check_full">
-                                <label class="form-check-label" for="check_full">
-                                    Consulta Profunda
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        {% for field in form %}
-                            {% if field.name != 'identificacion' and field.name != 'consultar_full' %}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-uppercase fw-bold" style="font-size: 11px;">
-                                        {{ field.label }}
-                                    </label>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                        <div class="text-danger small">{{ field.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-
-                    <div class="text-end mt-4">
-                        <button type="submit" class="btn-login px-4 text-decoration-none d-inline-block text-center">Guardar Cliente</button>
-                    </div>
-                </form>
+                    {% endif %}
+                {% endfor %}
             </div>
+
+            <button type="submit" class="btn btn-success mt-3">Guardar Cliente</button>
+        </form>
+
+        <!-- PANEL DE VISUALIZACIÓN TÉCNICA (Desplegará TODOS los datos extraídos) -->
+        <div id="panel_datos_tecnicos" class="mt-5 p-4 bg-light rounded d-none">
+            <h5 class="text-primary mb-3">Información Completa Extraída</h5>
+            <div id="contenido_tecnico" class="row"></div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const inputCedula = document.getElementById("id_identificacion");
     const checkFull = document.getElementById("check_full");
     const divFull = document.getElementById("div_full_toggle");
     const btnBuscar = document.getElementById("btn_buscar_api");
+    const msg = document.getElementById("api_mensaje");
+    const panel = document.getElementById('panel_datos_tecnicos');
+    const contenido = document.getElementById('contenido_tecnico');
 
-    // 1. Dinámica del RUC: Bloquea el checkbox si detecta 13 dígitos
+    // 1. Dinámica RUC (Bloquea Full)
     inputCedula.addEventListener("input", function() {
         if (this.value.trim().length === 13) {
             checkFull.checked = true;
@@ -83,14 +70,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // 2. Lógica de Búsqueda y Autocompletado Total
+    // 2. Búsqueda y Autocompletado Total
     btnBuscar.addEventListener("click", function() {
         const cedula = inputCedula.value.trim();
         const isFull = checkFull.checked;
-        const msg = document.getElementById("api_mensaje");
+
+        if (isFull && !confirm("¿Confirmas la consulta FULL ($0.05)?")) return;
 
         btnBuscar.disabled = true;
-        msg.innerHTML = '<div class="alert alert-info">Consultando API, por favor espere...</div>';
+        msg.innerHTML = '<div class="alert alert-info">Consultando...</div>';
 
         fetch(`/api/consultar_cedula/?cedula=${cedula}&full=${isFull}`)
             .then(res => res.json())
@@ -98,21 +86,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data.exito) {
                     const c = data.cliente;
                     
-                    // Llenado automático de campos usando sus nombres (name)
+                    // Llenar inputs del formulario
                     Object.keys(c).forEach(key => {
                         const input = document.getElementsByName(key)[0];
-                        if (input && c[key] !== null && c[key] !== "") {
-                            input.value = c[key];
-                        }
+                        if (input && c[key] !== null && c[key] !== "") input.value = c[key];
                     });
                     
-                    msg.innerHTML = '<div class="alert alert-success">Datos cargados correctamente.</div>';
+                    // Llenar Panel Técnico (Muestra TODOS los datos)
+                    panel.classList.remove('d-none');
+                    contenido.innerHTML = Object.entries(c).map(([key, val]) => {
+                        const valor = (typeof val === 'object') ? JSON.stringify(val) : val;
+                        return `<div class="col-md-4 mb-2 small"><strong>${key}:</strong> ${valor || 'N/A'}</div>`;
+                    }).join('');
+
+                    msg.innerHTML = '<div class="alert alert-success">Datos cargados exitosamente.</div>';
                 } else {
                     msg.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
                 }
-            })
-            .catch(err => {
-                msg.innerHTML = '<div class="alert alert-danger">Error de red.</div>';
             })
             .finally(() => btnBuscar.disabled = false);
     });
