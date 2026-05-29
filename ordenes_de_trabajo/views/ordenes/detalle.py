@@ -31,8 +31,6 @@ from ..utils import (
 @login_required
 def detalle_orden(request, pk):
     sucursal_activa = obtener_sucursal_activa(request)
-
-    # 🔥 NUEVO: Hacemos prefetch_related de "tecnicos" para que carguen rápido
     orden = get_object_or_404(
         OrdenTrabajo.objects
         .select_related("sucursal", "cliente", "expediente")
@@ -56,8 +54,6 @@ def detalle_orden(request, pk):
     puede_editar = (es_su_sucursal and orden.estado == "ABIERTA") or puede_reabrir
 
     categorias = Categoria.objects.all().order_by("nombre") if puede_editar else []
-    
-    # 🔥 NUEVO: Cargar los técnicos disponibles de la sucursal activa
     tecnicos_disponibles = Tecnico.objects.filter(activo=True)
 
     if request.method == "POST":
