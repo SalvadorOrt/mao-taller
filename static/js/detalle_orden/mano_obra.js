@@ -16,7 +16,7 @@ function agregarFilaMOI(enfocar = false) {
 }
 
 // =====================================================
-// AGREGAR FILA SIMPLE MOI / MOE
+// AGREGAR FILA SIMPLE MOI / MOE (CORREGIDO PARA EDITAR)
 // =====================================================
 function agregarFilaSimple(idTabla) {
     const tbody = document.querySelector(`#${idTabla} tbody`);
@@ -52,15 +52,12 @@ function agregarFilaSimple(idTabla) {
             </td>
 
             <td>
-                <input type="hidden"
+                <input type="text"
                        name="${prefix}_descripcion[]"
-                       class="descripcion-manual descripcion-moi"
+                       class="form-control-apple descripcion-manual descripcion-${prefix} w-100"
+                       style="font-size:13px; font-weight:500; color:#1d1d1f; padding:8px;"
+                       placeholder="Descripción del servicio"
                        value="">
-
-                <div class="descripcion-visible-moi"
-                     style="font-size:13px; font-weight:500; color:#86868b; padding:4px 2px;">
-                    Seleccione un servicio
-                </div>
             </td>
 
             <td>
@@ -207,9 +204,8 @@ function buscarServicioEnFila(inputElement, prefix = 'moi') {
             });
     }, 300);
 }
-
 // =====================================================
-// SELECCIONAR SERVICIO DE LA BDD
+// SELECCIONAR SERVICIO DE LA BDD (CORREGIDO)
 // =====================================================
 function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
     if (!item || !inputElement) return;
@@ -220,15 +216,13 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
     const servicioHidden = filaPadre.querySelector('.servicio-id-hidden');
     if (servicioHidden) servicioHidden.value = item.id || '';
 
+    // Escribe el código en la primera columna
     inputElement.value = item.codigo || '';
 
-    const descripcionHidden = filaPadre.querySelector('.descripcion-manual');
-    if (descripcionHidden) descripcionHidden.value = item.descripcion || '';
-
-    const descripcionVisible = filaPadre.querySelector('.descripcion-visible-moi');
-    if (descripcionVisible) {
-        descripcionVisible.textContent = item.descripcion || '';
-        descripcionVisible.style.color = '#1d1d1f';
+    // Escribe la descripción en nuestro nuevo input editable de la segunda columna
+    const descripcionInput = filaPadre.querySelector('.descripcion-manual');
+    if (descripcionInput) {
+        descripcionInput.value = item.descripcion || '';
     }
 
     const puInput = filaPadre.querySelector('.pu');
@@ -238,7 +232,7 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
     }
 
     const cantidadInput = filaPadre.querySelector('.cantidad');
-    if (cantidadInput && !cantidadInput.value) {
+    if (cantidadInput && (!cantidadInput.value || cantidadInput.value == '0.00')) {
         cantidadInput.value = '1.00';
     }
 
