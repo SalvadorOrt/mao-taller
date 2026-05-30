@@ -308,7 +308,7 @@ def detalle_orden(request, pk):
             "croquis": croquis,
             "croquis_url": croquis_url,
             "categorias_inventario": categorias,
-            "tecnicos_disponibles": tecnicos_disponibles, # 🔥 NUEVO: Enviar los técnicos a la plantilla
+            "tecnicos_disponibles": tecnicos_disponibles, 
             "sucursal_activa": sucursal_activa,
             "puede_editar": puede_editar,
             "puede_reabrir": puede_reabrir,

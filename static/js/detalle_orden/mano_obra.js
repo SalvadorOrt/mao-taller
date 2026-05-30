@@ -330,7 +330,9 @@ function cerrarModalIngresoRapidoMOI() {
     document.getElementById('irmoi_precio').value = '0.00';
     document.getElementById('irmoi_cantidad').value = '1';
 }
-
+// =====================================================
+// MODAL INGRESO RÁPIDO MOI (CORREGIDO)
+// =====================================================
 function confirmarIngresoRapidoMOI() {
     const descripcion = document.getElementById('irmoi_descripcion').value.trim();
     const precio = numeroSeguro(document.getElementById('irmoi_precio').value);
@@ -357,15 +359,11 @@ function confirmarIngresoRapidoMOI() {
             </td>
 
             <td>
-                <input type="hidden"
+                <input type="text"
                        name="moi_descripcion[]"
-                       class="descripcion-manual descripcion-moi"
+                       class="form-control-apple descripcion-manual descripcion-moi w-100"
+                       style="font-size:13px; font-weight:500; color:#1d1d1f; padding:8px;"
                        value="${escaparHTML(descripcion)}">
-
-                <div class="descripcion-visible-moi"
-                     style="font-size:13px; font-weight:500; color:#1d1d1f; padding:4px 2px;">
-                    ${escaparHTML(descripcion)}
-                </div>
             </td>
 
             <td>
@@ -433,7 +431,6 @@ function confirmarIngresoRapidoMOI() {
     recalcularTotales();
     cerrarModalIngresoRapidoMOI();
 }
-
 // =====================================================
 // AGREGAR FILA MOE DESDE CATÁLOGO
 // =====================================================
@@ -468,7 +465,9 @@ function cerrarModalIngresoRapidoMOE() {
     document.getElementById('irmoe_precio').value = '0.00';
     document.getElementById('irmoe_cantidad').value = '1';
 }
-
+// =====================================================
+// MODAL INGRESO RÁPIDO MOE (CORREGIDO)
+// =====================================================
 function confirmarIngresoRapidoMOE() {
     const descripcion = document.getElementById('irmoe_descripcion').value.trim();
     const precio = numeroSeguro(document.getElementById('irmoe_precio').value);
@@ -495,15 +494,11 @@ function confirmarIngresoRapidoMOE() {
             </td>
 
             <td>
-                <input type="hidden"
+                <input type="text"
                        name="moe_descripcion[]"
-                       class="descripcion-manual descripcion-moe"
+                       class="form-control-apple descripcion-manual descripcion-moe w-100"
+                       style="font-size:13px; font-weight:500; color:#1d1d1f; padding:8px;"
                        value="${escaparHTML(descripcion)}">
-
-                <div class="descripcion-visible-moi"
-                     style="font-size:13px; font-weight:500; color:#1d1d1f; padding:4px 2px;">
-                    ${escaparHTML(descripcion)}
-                </div>
             </td>
 
             <td>
