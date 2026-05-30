@@ -167,15 +167,11 @@
                                     </td>
 
                                     <td>
-                                        <input type="hidden"
-                                               name="moi_descripcion[]"
-                                               class="descripcion-manual descripcion-moi"
-                                               value="{{ item.descripcion_servicio }}">
-
-                                        <div class="descripcion-visible-moi"
-                                             style="font-size:13px; font-weight:500; color:#1d1d1f; padding:4px 2px;">
-                                            {{ item.descripcion_servicio }}
-                                        </div>
+                                        <input type="text"
+                                            name="moi_descripcion[]"
+                                            class="form-control-apple descripcion-manual descripcion-moi w-100"
+                                            style="font-size:13px; font-weight:500; color:#1d1d1f; padding:8px;"
+                                            value="{{ item.descripcion_servicio }}">
                                     </td>
 
                                     <td>
