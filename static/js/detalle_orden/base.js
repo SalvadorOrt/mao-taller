@@ -66,7 +66,7 @@ function recalcularTotales() {
     const moi = sumarTabla('tablaMOI');
     const moe = sumarTabla('tablaMOE');
 
-    const totalConIvaOriginal = rep + moi + moe;
+    const subtotalSinIva = rep + moi + moe;
 
     const porcentajeIva = numeroSeguro(
         document.getElementById('porcentajeIva')?.value
@@ -75,14 +75,6 @@ function recalcularTotales() {
     const porcentajeDescuento = numeroSeguro(
         document.getElementById('descuento_porcentaje')?.value
     );
-
-    const divisorIva = 1 + (porcentajeIva / 100);
-
-    let subtotalSinIva = totalConIvaOriginal;
-
-    if (divisorIva > 0) {
-        subtotalSinIva = totalConIvaOriginal / divisorIva;
-    }
 
     const valorDescuento = subtotalSinIva * (porcentajeDescuento / 100);
 
@@ -96,7 +88,6 @@ function recalcularTotales() {
 
     const totalFinal = baseImponible + iva;
 
-    // TABLAS
     const subtotalRep = document.getElementById('subtotalRepuestos');
     if (subtotalRep) subtotalRep.textContent = rep.toFixed(2);
 
@@ -106,7 +97,6 @@ function recalcularTotales() {
     const subtotalMOE = document.getElementById('subtotalMOE');
     if (subtotalMOE) subtotalMOE.textContent = moe.toFixed(2);
 
-    // RESUMEN
     const resumenRep = document.getElementById('resumenRep');
     if (resumenRep) resumenRep.textContent = rep.toFixed(2);
 
