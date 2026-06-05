@@ -29,7 +29,7 @@
                 type="number"
                 name="descuento_porcentaje"
                 id="descuento_porcentaje"
-                value="{{ orden.descuento_porcentaje|default_if_none:'0.00'|unlocalize }}"
+                value="{{ descuento_porcentaje_html }}"
                 min="0"
                 max="100"
                 step="0.01"

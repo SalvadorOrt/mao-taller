@@ -335,5 +335,8 @@ def detalle_orden(request, pk):
             "porcentaje_iva": porcentaje_iva,
             "iva": iva,
             "total_final": total_final,
+
+            "porcentaje_iva_html": str(porcentaje_iva).replace(",", "."),
+            "descuento_porcentaje_html": str(porcentaje_descuento).replace(",", "."),
         },
     )
