@@ -67,26 +67,26 @@ class Usuario(AbstractUser):
         related_name="usuarios",
         null=True,
         blank=True,
-        help_text="Sucursal base del usuario. Para usuarios normales se usa automáticamente al crear OTs.",
+       
     )
 
     puede_cambiar_sucursal = models.BooleanField(
         default=False,
-        help_text="Permite cambiar la sucursal activa de trabajo. Útil para administradores.",
+       
     )
 
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="inventario_usuario_groups",
         blank=True,
-        help_text="Los grupos a los que pertenece este usuario.",
+       
         verbose_name="grupos",
     )
     user_permissions = models.ManyToManyField(
         "auth.Permission",
         related_name="inventario_usuario_permissions",
         blank=True,
-        help_text="Permisos específicos para este usuario.",
+        
         verbose_name="permisos de usuario",
     )
 
@@ -237,7 +237,7 @@ class Producto(models.Model):
         max_length=20,
         choices=ORIGEN_CHOICES,
         default="BODEGA",
-        help_text="Indica si nació por compra formal o de urgencia en el mostrador."
+      
     )
 
     activo = models.BooleanField(default=True)
@@ -245,7 +245,7 @@ class Producto(models.Model):
 
     datos_incompletos = models.BooleanField(
         default=False,
-        help_text="El bodeguero debe revisar esto."
+      
     )
 
     creado_en = models.DateTimeField(auto_now_add=True)
@@ -351,7 +351,7 @@ class CodigoProducto(models.Model):
         blank=True, 
         null=True,
         db_index=True, 
-        help_text="Puede quedar vacío si el producto se creó rápido sin escanear."
+      
     )
     
     nombre_comercial = models.CharField(max_length=255, blank=True, null=True)
@@ -361,7 +361,19 @@ class CodigoProducto(models.Model):
 
     precio_compra = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    margen_ganancia_porcentaje = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("100.00"),
+       
+    )
 
+    porcentaje_iva_costo = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        
+    )
     activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -414,7 +426,17 @@ class CodigoProducto(models.Model):
         self.codigo_normalizado = self.normalizar_codigo(self.codigo)
 
         if self.precio_compra is not None and self.precio_venta is None:
-            calculo = (self.precio_compra * Decimal("2.0")) * Decimal("1.15")
+            margen = self.margen_ganancia_porcentaje or Decimal("0.00")
+            iva_costo = self.porcentaje_iva_costo or Decimal("0.00")
+
+            costo_con_margen = self.precio_compra * (
+                Decimal("1.00") + margen / Decimal("100")
+            )
+
+            calculo = costo_con_margen * (
+                Decimal("1.00") + iva_costo / Decimal("100")
+            )
+
             self.precio_venta = calculo.quantize(Decimal("0.01"))
 
         self.full_clean()

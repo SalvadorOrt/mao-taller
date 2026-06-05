@@ -7,7 +7,7 @@ from django.db import IntegrityError, models, transaction
 from django.db.models import Sum
 from django.utils import timezone
 
-
+from ordenes_de_trabajo.models import ConfiguracionTributaria
 # =========================================================
 # VALIDADORES ESPECÍFICOS DE FACTURACIÓN
 # =========================================================
@@ -189,13 +189,13 @@ class FacturaVenta(models.Model):
         default=Decimal("0.00"),
     )
 
-    subtotal_iva_15 = models.DecimalField(
+    subtotal_gravado = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
-    iva_15 = models.DecimalField(
+    valor_iva = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -206,7 +206,11 @@ class FacturaVenta(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
     )
-
+    porcentaje_iva = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
     propina = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -502,8 +506,8 @@ class FacturaVenta(models.Model):
 
         total_sin_impuestos = Decimal("0.00")
         total_descuento = Decimal("0.00")
-        subtotal_iva_15 = Decimal("0.00")
-        iva_15 = Decimal("0.00")
+        subtotal_gravado = Decimal("0.00")
+        valor_iva = Decimal("0.00")
         subtotal_iva_0 = Decimal("0.00")
 
         for detalle in detalles:
@@ -511,26 +515,31 @@ class FacturaVenta(models.Model):
             total_descuento += detalle.descuento
 
             if detalle.codigo_porcentaje_iva == "4":
-                subtotal_iva_15 += detalle.precio_total_sin_impuesto
-                iva_15 += detalle.valor_iva
+                subtotal_gravado += detalle.precio_total_sin_impuesto
+                valor_iva += detalle.valor_iva
             elif detalle.codigo_porcentaje_iva == "0":
                 subtotal_iva_0 += detalle.precio_total_sin_impuesto
 
         self.total_sin_impuestos = total_sin_impuestos.quantize(Decimal("0.01"))
         self.total_descuento = total_descuento.quantize(Decimal("0.01"))
-        self.subtotal_iva_15 = subtotal_iva_15.quantize(Decimal("0.01"))
-        self.iva_15 = iva_15.quantize(Decimal("0.01"))
+        
+        # Asignamos a los campos dinámicos que definiste en tu modelo
+        self.subtotal_gravado = subtotal_gravado.quantize(Decimal("0.01"))
+        self.valor_iva = valor_iva.quantize(Decimal("0.01"))
         self.subtotal_iva_0 = subtotal_iva_0.quantize(Decimal("0.01"))
+        
+       
         self.importe_total = (
-            self.total_sin_impuestos - self.total_descuento + self.iva_15 + self.propina
+            self.total_sin_impuestos - self.total_descuento + self.valor_iva + self.propina
         ).quantize(Decimal("0.01"))
 
         if guardar:
+            # Actualizamos los update_fields para reflejar los campos reales de la BD
             self.save(update_fields=[
                 "total_sin_impuestos",
                 "total_descuento",
-                "subtotal_iva_15",
-                "iva_15",
+                "subtotal_gravado",  
+                "valor_iva",         
                 "subtotal_iva_0",
                 "importe_total",
                 "updated_at",
@@ -676,7 +685,7 @@ class FacturaVenta(models.Model):
 class DetalleFacturaVenta(models.Model):
     CODIGOS_IVA = [
         ("0", "0%"),
-        ("4", "15%"),
+        ("4", "IVA vigente"),
     ]
 
     factura = models.ForeignKey(
@@ -728,9 +737,9 @@ class DetalleFacturaVenta(models.Model):
     tarifa_iva = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal("15.00"),
+        null=True,
+        blank=True,
     )
-
     base_imponible = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -763,8 +772,20 @@ class DetalleFacturaVenta(models.Model):
         if self.descuento < 0:
             raise ValidationError({"descuento": "El descuento no puede ser negativo."})
 
+    def obtener_tarifa_iva_activa(self):
+        config = ConfiguracionTributaria.objects.filter(
+            activa=True
+        ).order_by("-fecha_inicio", "-id").first()
+
+        if config:
+            return config.porcentaje_iva
+
+        return Decimal("0.00")
+
+
     def recalcular(self):
         subtotal = (self.cantidad * self.precio_unitario) - self.descuento
+
         if subtotal < 0:
             subtotal = Decimal("0.00")
 
@@ -774,11 +795,15 @@ class DetalleFacturaVenta(models.Model):
         self.base_imponible = subtotal
 
         if self.codigo_porcentaje_iva == "4":
-            self.tarifa_iva = Decimal("15.00")
-            self.valor_iva = (subtotal * Decimal("0.15")).quantize(Decimal("0.01"))
+            if self.tarifa_iva is None:
+                self.tarifa_iva = self.obtener_tarifa_iva_activa()
+
+            self.valor_iva = (
+                subtotal * self.tarifa_iva / Decimal("100")
+            ).quantize(Decimal("0.01"))
         else:
             self.tarifa_iva = Decimal("0.00")
-            self.valor_iva = Decimal("0.00")
+            self.valor_iva = Decimal("0.00") 
 
     def save(self, *args, **kwargs):
         self.recalcular()

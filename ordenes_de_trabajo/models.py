@@ -10,6 +10,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.dateparse import parse_date
+
 TIPOS_TARIFA_VEHICULO = [
         ("NO_APLICA", "No aplica"),
         ("AUTO", "Auto"),
@@ -43,7 +44,6 @@ class Sucursal(models.Model):
         null=True, 
         blank=True,
         related_name="sucursales",
-        help_text="Empresa legal (RUC) bajo la cual factura esta sucursal."
     )
 
     nombre = models.CharField(max_length=100, unique=True)
@@ -1143,9 +1143,19 @@ class ExpedienteVehiculo(models.Model):
         placa = self.placa if self.placa else "SIN PLACA"
         vehiculo = self.descripcion_vehiculo_final
         return f"{placa} | {vehiculo} | {self.nombre_cliente_final}"
-# ==========================================
-# 5. ORDEN DE TRABAJO
-# ==========================================
+
+class ConfiguracionTributaria(models.Model):
+    nombre = models.CharField(max_length=100)
+    porcentaje_iva = models.DecimalField(max_digits=5, decimal_places=2)
+    activa = models.BooleanField(default=True)
+    fecha_inicio = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-fecha_inicio", "-id"]
+
+    def __str__(self):
+        return f"{self.nombre} - {self.porcentaje_iva}%"
+
 class OrdenTrabajo(models.Model):
     ESTADOS = [
         ("ABIERTA", "En Taller / Abierta"),
@@ -1153,7 +1163,7 @@ class OrdenTrabajo(models.Model):
         ("ANULADA", "Anulada"),
     ]
 
-    NIVELES_COMBUSTIBLE = [     
+    NIVELES_COMBUSTIBLE = [
         ("E", "Vacío"),
         ("1/4", "1/4"),
         ("1/2", "1/2"),
@@ -1161,14 +1171,13 @@ class OrdenTrabajo(models.Model):
         ("F", "Lleno"),
     ]
 
-
     numero_orden = models.CharField(max_length=50, unique=True)
 
     sucursal = models.ForeignKey(
-            Sucursal,
-            on_delete=models.PROTECT,
-            related_name="ordenes"
-        )
+        Sucursal,
+        on_delete=models.PROTECT,
+        related_name="ordenes",
+    )
 
     expediente = models.ForeignKey(
         ExpedienteVehiculo,
@@ -1185,28 +1194,29 @@ class OrdenTrabajo(models.Model):
     anio_origen_migracion = models.PositiveSmallIntegerField(null=True, blank=True)
     json_origen = models.JSONField(null=True, blank=True)
     requiere_revision_migracion = models.BooleanField(default=False)
+
     hash_migracion = models.CharField(
         max_length=64,
         null=True,
         blank=True,
         db_index=True,
-        help_text="Hash del JSON importado para detectar duplicados reales.",
     )
+
     usuario_receptor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="ordenes_recibidas",
         null=True,
         blank=True,
-        help_text="Puede quedar vacío en OT históricas migradas.",
     )
+
     tecnicos = models.ManyToManyField(
         Tecnico,
         blank=True,
         related_name="ordenes_asignadas",
         verbose_name="Técnicos encargados",
-        help_text="Seleccione uno o varios técnicos que trabajarán en esta orden."
     )
+
     cliente = models.ForeignKey(
         Cliente,
         on_delete=models.SET_NULL,
@@ -1223,12 +1233,14 @@ class OrdenTrabajo(models.Model):
     placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
     vehiculo = models.CharField(max_length=150, null=True, blank=True)
     anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+
     clave_encendido = models.CharField(
-        max_length=50, 
-        null=True, 
-        blank=True, 
-        verbose_name="Clave/PIN de Encendido"
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Clave/PIN de Encendido",
     )
+
     fecha_origen = models.DateField(null=True, blank=True)
     kilometraje = models.PositiveIntegerField(null=True, blank=True)
     proximo_mantenimiento_km = models.PositiveIntegerField(null=True, blank=True)
@@ -1242,23 +1254,86 @@ class OrdenTrabajo(models.Model):
         choices=TIPOS_TARIFA_VEHICULO,
         default="NO_APLICA",
     )
+
     gama_vehiculo = models.CharField(
         max_length=20,
         default="NO_APLICA",
     )
+
     estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
     fecha_ingreso = models.DateTimeField(default=timezone.now)
-    total_general = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    nivel_combustible = models.CharField(max_length=10, choices=NIVELES_COMBUSTIBLE, null=True, blank=True)
-    checklist_confirmado_cliente = models.BooleanField(default=False)
-    firma_cliente = models.ImageField(
-        upload_to="ordenes/firmas/%Y/%m/", 
-        null=True, 
-        blank=True,
-        help_text="Imagen de la firma digital del cliente."
+
+    # IMPORTANTE:
+    # Este campo se mantiene como ya estaba en producción.
+    # En tu sistema representa el total original CON IVA incluido.
+    total_general = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
     )
+
+    configuracion_iva = models.ForeignKey(
+        ConfiguracionTributaria,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="ordenes_trabajo",
+    )
+
+    porcentaje_iva = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    subtotal_sin_iva = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    descuento_porcentaje = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    valor_descuento = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    valor_iva = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    total_final = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    nivel_combustible = models.CharField(
+        max_length=10,
+        choices=NIVELES_COMBUSTIBLE,
+        null=True,
+        blank=True,
+    )
+
+    checklist_confirmado_cliente = models.BooleanField(default=False)
+
+    firma_cliente = models.ImageField(
+        upload_to="ordenes/firmas/%Y/%m/",
+        null=True,
+        blank=True,
+    )
+
     fecha_firma = models.DateTimeField(null=True, blank=True)
-    
+
     class Meta:
         ordering = ["-fecha_ingreso"]
         verbose_name = "Orden de Trabajo"
@@ -1282,6 +1357,11 @@ class OrdenTrabajo(models.Model):
     def badge_origen(self):
         return "MIGRADA" if self.es_migrada else "NORMAL"
 
+    def obtener_configuracion_iva_activa(self):
+        return ConfiguracionTributaria.objects.filter(
+            activa=True
+        ).order_by("-fecha_inicio", "-id").first()
+
     def _normalizar_campos_texto(self):
         if self.numero_orden:
             self.numero_orden = self.numero_orden.strip().upper()
@@ -1297,8 +1377,10 @@ class OrdenTrabajo(models.Model):
 
         if self.color:
             self.color = self.color.strip()
+
         if self.clave_encendido:
             self.clave_encendido = self.clave_encendido.strip().upper()
+
         if self.cliente_respaldo:
             self.cliente_respaldo = self.cliente_respaldo.strip()
 
@@ -1320,12 +1402,14 @@ class OrdenTrabajo(models.Model):
     def _calcular_color_hex(self):
         if self.color_hex and self.color_hex != "#1d1d1f":
             return
+
         self.color_hex = "#1d1d1f"
 
         if not self.color:
             return
 
         color_lower = self.color.lower()
+
         mapa_colores = {
             "blanco": "#F5F5F7",
             "negro": "#212121",
@@ -1358,16 +1442,76 @@ class OrdenTrabajo(models.Model):
     def calcular_total(self):
         servicios = self.servicios_detalles.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
         insumos = self.insumos_detalles.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
-
         servicios_historicos = self.servicios_historicos.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
         insumos_historicos = self.insumos_historicos.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
 
-        nuevo_total = servicios + insumos + servicios_historicos + insumos_historicos
+        total_con_iva_original = (
+            servicios +
+            insumos +
+            servicios_historicos +
+            insumos_historicos
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        if self.total_general != nuevo_total:
-            self.total_general = nuevo_total
-            if self.pk:
-                OrdenTrabajo.objects.filter(pk=self.pk).update(total_general=nuevo_total)
+        if self.porcentaje_iva is None:
+            config = self.obtener_configuracion_iva_activa()
+
+            if config:
+                self.configuracion_iva = config
+                self.porcentaje_iva = config.porcentaje_iva
+            else:
+                self.porcentaje_iva = Decimal("0.00")
+
+        divisor_iva = Decimal("1.00") + (
+            Decimal(str(self.porcentaje_iva)) / Decimal("100")
+        )
+
+        if divisor_iva <= Decimal("0.00"):
+            subtotal_sin_iva = total_con_iva_original
+        else:
+            subtotal_sin_iva = (
+                total_con_iva_original / divisor_iva
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        descuento_porcentaje = self.descuento_porcentaje or Decimal("0.00")
+
+        valor_descuento = (
+            subtotal_sin_iva *
+            Decimal(str(descuento_porcentaje)) /
+            Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        base_imponible = subtotal_sin_iva - valor_descuento
+
+        if base_imponible < Decimal("0.00"):
+            base_imponible = Decimal("0.00")
+
+        valor_iva = (
+            base_imponible *
+            Decimal(str(self.porcentaje_iva)) /
+            Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        total_final = (
+            base_imponible + valor_iva
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        self.total_general = total_con_iva_original
+        self.subtotal_sin_iva = subtotal_sin_iva
+        self.valor_descuento = valor_descuento
+        self.valor_iva = valor_iva
+        self.total_final = total_final
+
+        if self.pk:
+            OrdenTrabajo.objects.filter(pk=self.pk).update(
+                total_general=total_con_iva_original,
+                configuracion_iva=self.configuracion_iva,
+                porcentaje_iva=self.porcentaje_iva,
+                subtotal_sin_iva=subtotal_sin_iva,
+                descuento_porcentaje=descuento_porcentaje,
+                valor_descuento=valor_descuento,
+                valor_iva=valor_iva,
+                total_final=total_final,
+            )
 
     def clean(self):
         self._normalizar_campos_texto()
@@ -1386,9 +1530,19 @@ class OrdenTrabajo(models.Model):
             raise ValidationError("El año del vehículo no es válido.")
 
         if self.es_migrada and not self.numero_orden_origen:
-            raise ValidationError(
-                {"numero_orden_origen": "Las OT migradas deben guardar el número original extraído."}
-            )
+            raise ValidationError({
+                "numero_orden_origen": "Las OT migradas deben guardar el número original extraído."
+            })
+
+        if self.descuento_porcentaje < Decimal("0.00"):
+            raise ValidationError({
+                "descuento_porcentaje": "El descuento no puede ser negativo."
+            })
+
+        if self.descuento_porcentaje > Decimal("100.00"):
+            raise ValidationError({
+                "descuento_porcentaje": "El descuento no puede ser mayor al 100%."
+            })
 
     def save(self, *args, **kwargs):
         self._normalizar_campos_texto()
@@ -1399,11 +1553,15 @@ class OrdenTrabajo(models.Model):
 
     def __str__(self):
         placa = self.placa if self.placa else "SIN PLACA"
+
         if self.es_migrada and self.numero_orden_origen:
-            return f"[{self.sucursal.codigo}] OT {self.numero_orden} | ORIGEN {self.numero_orden_origen} - {placa} ({self.nombre_cliente_final})"
+            return (
+                f"[{self.sucursal.codigo}] OT {self.numero_orden} | "
+                f"ORIGEN {self.numero_orden_origen} - {placa} "
+                f"({self.nombre_cliente_final})"
+            )
+
         return f"[{self.sucursal.codigo}] OT {self.numero_orden} - {placa} ({self.nombre_cliente_final})"
-
-
 # ==========================================
 # 6. RECEPCIÓN
 # ==========================================
@@ -1600,7 +1758,7 @@ class OrdenCroquisDanio(models.Model):
     trazos = models.JSONField(
         default=list,
         blank=True,
-        help_text="Trazo libre dibujado sobre la plantilla del vehículo.",
+    
     )
     imagen_generada = models.ImageField(
         upload_to="ordenes/croquis/",
@@ -1686,7 +1844,7 @@ class OrdenServicioDetalle(models.Model):
     descripcion_servicio = models.CharField(
         max_length=255,
         blank=False,  
-        help_text="Descripción real que aparece en la OT. Aísla la orden del catálogo núcleo.",
+  
     )
 
     class Meta:
@@ -1749,7 +1907,7 @@ class OrdenInsumoDetalle(models.Model):
         max_length=255,
         blank=True,
         verbose_name="Descripción para el Cliente",
-        help_text="Lo que aparecerá impreso en la factura."
+       
     )
 
     cantidad = models.DecimalField(
@@ -1956,7 +2114,7 @@ class OrdenServicioHistorico(models.Model):
     procedimientos = models.JSONField(
         default=list,
         blank=True,
-        help_text="Sub-procedimientos o líneas hijas del servicio histórico."
+
     )
     class Meta:
         ordering = ["tipo", "orden_item", "id"]
@@ -2069,11 +2227,8 @@ class Cotizacion(models.Model):
         null=True, 
         blank=True, 
         related_name="cotizacion_vinculada", # Cambiado a singular
-        help_text="Si la proforma nace de una OT abierta."
+    
     )
-
-    # 🚗 DATOS DEL VEHÍCULO Y CLIENTE
-    # Siempre requeridos para mantener el historial por placa.
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, related_name="cotizaciones")
     cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
     placa = models.CharField(max_length=15, db_index=True) # <-- ESTE FUE EL CAMBIO QUE DETECTÓ DJANGO
@@ -2083,10 +2238,10 @@ class Cotizacion(models.Model):
     # Control de la Cotización
     estado = models.CharField(max_length=15, choices=ESTADOS_COTIZACION, default="PENDIENTE")
     fecha_creacion = models.DateTimeField(default=timezone.now)
-    validez_dias = models.PositiveIntegerField(default=15, help_text="Días de validez de los precios")
+    validez_dias = models.PositiveIntegerField(default=15)
     
     total_general = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    observaciones = models.TextField(null=True, blank=True, help_text="Notas para el cliente en la proforma")
+    observaciones = models.TextField(null=True, blank=True)
 
     # Si la cotización era de mostrador y se aprueba, aquí se guarda la OT que nació de ella.
     orden_generada = models.OneToOneField(
@@ -2095,7 +2250,7 @@ class Cotizacion(models.Model):
         null=True, 
         blank=True, 
         related_name="cotizacion_origen",
-        help_text="La OT oficial que nació de esta cotización de mostrador."
+       
     )
 
     class Meta:

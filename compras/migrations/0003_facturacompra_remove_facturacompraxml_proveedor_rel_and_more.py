@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 ('iva', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('total', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('forma_pago', models.CharField(choices=[('CONTADO', 'Contado'), ('CREDITO', 'Crédito')], default='CONTADO', max_length=10)),
-                ('dias_plazo', models.PositiveIntegerField(default=0, help_text='Ej: 15, 30 días')),
+                ('dias_plazo', models.PositiveIntegerField(default=0)),
                 ('fecha_vencimiento', models.DateField(blank=True, null=True, verbose_name='Vence el')),
                 ('saldo_pendiente', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('esta_pagada', models.BooleanField(default=False, verbose_name='¿Pagada?')),

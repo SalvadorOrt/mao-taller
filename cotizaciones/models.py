@@ -31,19 +31,19 @@ class ProveedorEspecialidad(models.Model):
         max_length=100,
         null=True,
         blank=True,
-        help_text="Ej: FILTROS, FRENOS, SUSPENSION, MOTOR",
+       
     )
 
     marca = models.CharField(
         max_length=100,
         null=True,
         blank=True,
-        help_text="Ej: TOYOTA, CHEVROLET, HYUNDAI, WIX, FRAM",
+       
     )
 
     prioridad = models.PositiveIntegerField(
         default=1,
-        help_text="Menor número = mayor prioridad al sugerir proveedor.",
+    
     )
 
     activo = models.BooleanField(default=True)
@@ -123,7 +123,7 @@ class SolicitudCotizacion(models.Model):
 
     titulo = models.CharField(
         max_length=200,
-        help_text="Ej: Repuestos faltantes OT-00025",
+  
     )
 
     observacion = models.TextField(null=True, blank=True)
@@ -220,7 +220,7 @@ class ItemSolicitudCotizacion(models.Model):
         max_length=100,
         null=True,
         blank=True,
-        help_text="Código proveedor / empaque / referencia conocida",
+        
     )
 
     codigo_barras = models.CharField(
@@ -404,12 +404,12 @@ class CotizacionProveedor(models.Model):
         max_length=100,
         null=True,
         blank=True,
-        help_text="Ej: inmediato, 1 hora, mañana, 2 días",
+       
     )
 
     calidad_referencial = models.PositiveSmallIntegerField(
         default=3,
-        help_text="Escala 1 a 5",
+    
     )
 
     observacion = models.TextField(null=True, blank=True)
@@ -532,7 +532,7 @@ class DecisionCotizacion(models.Model):
     motivo = models.TextField(
         null=True,
         blank=True,
-        help_text="Ej: mejor relación calidad/precio, disponibilidad inmediata, proveedor confiable",
+ 
     )
 
     precio_total = models.DecimalField(

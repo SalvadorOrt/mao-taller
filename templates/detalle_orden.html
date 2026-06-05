@@ -57,14 +57,14 @@
         </div>
     </div>
 
-  
     <form id="form_cerrar_orden" method="POST" action="{% url 'cerrar_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
     <form id="form_anular_orden" method="POST" action="{% url 'anular_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
     <form id="formReabrir" method="POST" action="{% url 'reabrir_orden' orden.pk %}" style="display: none;">{% csrf_token %}</form>
 
-
     <form method="post" id="formDetalleOT" novalidate>
         {% csrf_token %}
+
+        <input type="hidden" id="porcentajeIva" value="{{ porcentaje_iva|default:'0' }}">
 
         {% include 'includes/detalle_orden/info_general.html' %}
         {% include 'includes/detalle_orden/tabla_repuestos.html' %}
@@ -72,7 +72,6 @@
         {% include 'includes/detalle_orden/tabla_moe.html' %}
         {% include 'includes/detalle_orden/resumen.html' %}
         {% include 'includes/detalle_orden/recomendaciones.html' %}
-
 
         <div class="sticky-actions">
             <a href="{{ url_anterior }}"
@@ -83,7 +82,6 @@
             </a>
 
             {% if puede_editar %}
-                
                 <button type="button" class="btn-login primary" onclick="guardarOTDirecto()">
                     {% if orden.estado != 'ABIERTA' %}
                         <i class="bi bi-shield-check" style="margin-right: 5px;"></i> Guardar Correcciones
@@ -103,23 +101,19 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    
     function guardarOTDirecto() {
-        // 1. Mostramos pantalla de carga para que el usuario sepa que está procesando
         Swal.fire({
             title: 'Guardando...',
             html: 'Sincronizando repuestos y servicios...',
             allowOutsideClick: false,
             didOpen: () => { Swal.showLoading(); }
         });
-        
-        // 2. CREAMOS UN FORMULARIO INVISIBLE Y BLINDADO
+
         let formSeguro = document.createElement('form');
         formSeguro.method = 'POST';
         formSeguro.action = window.location.href;
         formSeguro.style.display = 'none';
-        
-        // 3. Capturamos el Token de Seguridad
+
         let csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
         let inputCsrf = document.createElement('input');
         inputCsrf.type = 'hidden';
@@ -127,10 +121,18 @@
         inputCsrf.value = csrf;
         formSeguro.appendChild(inputCsrf);
 
-        // 4. EL IMÁN: Recogemos TODOS los inputs de la pantalla tengan el nombre que tengan
-        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"], input[name*="recomendacion_"], textarea[name*="recomendacion_"]';
+        let selectores = [
+            'input[name*="rep_"]',
+            'input[name*="moi_"]',
+            'input[name*="moe_"]',
+            'input[name*="recomendacion_"]',
+            'textarea[name*="recomendacion_"]',
+            'select[name="descuento_porcentaje"]',
+            'input[name="descuento_porcentaje"]'
+        ].join(', ');
+
         let todosLosInputs = document.querySelectorAll(selectores);
-        
+
         todosLosInputs.forEach(input => {
             let clon = document.createElement('input');
             clon.type = 'hidden';
@@ -139,8 +141,8 @@
             formSeguro.appendChild(clon);
         });
 
-        // 5. Capturamos las observaciones (si las tienes)
         let observaciones = document.querySelector('textarea[name="observaciones_tecnicas"]');
+
         if (observaciones) {
             let clonObs = document.createElement('input');
             clonObs.type = 'hidden';
@@ -149,19 +151,17 @@
             formSeguro.appendChild(clonObs);
         }
 
-        // 6. ¡Disparamos el formulario limpio a Python!
         document.body.appendChild(formSeguro);
         formSeguro.submit();
     }
 
-    // 2. MODAL DE CONFIRMACIÓN PARA REABRIR (Este sí se queda porque es una acción delicada)
     function confirmarReabrir(formId) {
         Swal.fire({
             title: '¿Reabrir Orden Histórica?',
             text: 'Esta orden volverá a estar "ABIERTA". Usa esta opción solo si necesitas realizar cambios profundos en el detalle técnico.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#ff9500', 
+            confirmButtonColor: '#ff9500',
             cancelButtonColor: '#6e6e73',
             confirmButtonText: 'Sí, reabrir',
             cancelButtonText: 'Cancelar'
@@ -172,7 +172,6 @@
         });
     }
 
-   
     document.addEventListener("DOMContentLoaded", function() {
         {% if messages %}
             {% for message in messages %}
@@ -183,7 +182,7 @@
                         icon: 'success',
                         confirmButtonColor: '#34c759',
                         confirmButtonText: 'Entendido',
-                        timer: 2500 // Se cierra solo después de 2.5 segundos
+                        timer: 2500
                     });
                 {% elif message.tags == 'error' %}
                     Swal.fire({
@@ -195,8 +194,13 @@
                 {% endif %}
             {% endfor %}
         {% endif %}
+
+        if (typeof recalcularTotales === 'function') {
+            recalcularTotales();
+        }
     });
 </script>
+
 <script src="{% static 'js/detalle_orden/base.js' %}"></script>
 <script src="{% static 'js/detalle_orden/recepcion.js' %}"></script>
 <script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>

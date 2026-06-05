@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('iva', models.DecimalField(decimal_places=2, default=0.0, max_digits=12)),
                 ('total', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True, verbose_name='Total Factura')),
                 ('forma_pago', models.CharField(choices=[('CONTADO', 'Contado (Efectivo/Transf inmediata)'), ('CREDITO', 'Crédito')], default='CONTADO', max_length=10)),
-                ('dias_plazo', models.IntegerField(default=0, help_text='Ej: 15, 30 días')),
+                ('dias_plazo', models.IntegerField(default=0)),
                 ('fecha_vencimiento', models.DateField(blank=True, null=True, verbose_name='Vence el')),
                 ('saldo_pendiente', models.DecimalField(decimal_places=2, default=0.0, max_digits=12)),
                 ('esta_pagada', models.BooleanField(default=False, verbose_name='¿Pagada?')),
@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
                 ('fecha_pago', models.DateField(auto_now_add=True)),
                 ('monto_pagado', models.DecimalField(decimal_places=2, max_digits=12)),
                 ('metodo', models.CharField(choices=[('TRANSFERENCIA', 'Transferencia Bancaria'), ('EFECTIVO', 'Efectivo'), ('CHEQUE', 'Cheque')], max_length=20)),
-                ('comprobante_banco', models.CharField(blank=True, help_text='N° de Operación o Cheque', max_length=100)),
+                ('comprobante_banco', models.CharField(blank=True, max_length=100)),
                 ('factura', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='abonos', to='compras.facturacompraxml')),
             ],
             options={

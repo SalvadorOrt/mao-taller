@@ -60,80 +60,76 @@ function sumarTabla(idTabla) {
 
     return total;
 }
-
 function recalcularTotales() {
 
     const rep = sumarTabla('tablaRepuestos');
-
     const moi = sumarTabla('tablaMOI');
-
     const moe = sumarTabla('tablaMOE');
 
-    const subtotal = rep + moi + moe;
+    const totalConIvaOriginal = rep + moi + moe;
 
-    const iva = subtotal * 0.15;
+    const porcentajeIva = numeroSeguro(
+        document.getElementById('porcentajeIva')?.value
+    );
 
-    const total = subtotal + iva;
+    const porcentajeDescuento = numeroSeguro(
+        document.getElementById('descuento_porcentaje')?.value
+    );
 
-    // =========================================
-    // TABLAS
-    // =========================================
-    const subtotalRep = document.getElementById('subtotalRepuestos');
+    const divisorIva = 1 + (porcentajeIva / 100);
 
-    if (subtotalRep) {
-        subtotalRep.textContent = rep.toFixed(2);
+    let subtotalSinIva = totalConIvaOriginal;
+
+    if (divisorIva > 0) {
+        subtotalSinIva = totalConIvaOriginal / divisorIva;
     }
+
+    const valorDescuento = subtotalSinIva * (porcentajeDescuento / 100);
+
+    let baseImponible = subtotalSinIva - valorDescuento;
+
+    if (baseImponible < 0) {
+        baseImponible = 0;
+    }
+
+    const iva = baseImponible * (porcentajeIva / 100);
+
+    const totalFinal = baseImponible + iva;
+
+    // TABLAS
+    const subtotalRep = document.getElementById('subtotalRepuestos');
+    if (subtotalRep) subtotalRep.textContent = rep.toFixed(2);
 
     const subtotalMOI = document.getElementById('subtotalMOI');
-
-    if (subtotalMOI) {
-        subtotalMOI.textContent = moi.toFixed(2);
-    }
+    if (subtotalMOI) subtotalMOI.textContent = moi.toFixed(2);
 
     const subtotalMOE = document.getElementById('subtotalMOE');
+    if (subtotalMOE) subtotalMOE.textContent = moe.toFixed(2);
 
-    if (subtotalMOE) {
-        subtotalMOE.textContent = moe.toFixed(2);
-    }
-
-    // =========================================
     // RESUMEN
-    // =========================================
     const resumenRep = document.getElementById('resumenRep');
-
-    if (resumenRep) {
-        resumenRep.textContent = rep.toFixed(2);
-    }
+    if (resumenRep) resumenRep.textContent = rep.toFixed(2);
 
     const resumenMOI = document.getElementById('resumenMOI');
-
-    if (resumenMOI) {
-        resumenMOI.textContent = moi.toFixed(2);
-    }
+    if (resumenMOI) resumenMOI.textContent = moi.toFixed(2);
 
     const resumenMOE = document.getElementById('resumenMOE');
-
-    if (resumenMOE) {
-        resumenMOE.textContent = moe.toFixed(2);
-    }
+    if (resumenMOE) resumenMOE.textContent = moe.toFixed(2);
 
     const subtotalGeneral = document.getElementById('subtotalGeneral');
+    if (subtotalGeneral) subtotalGeneral.textContent = subtotalSinIva.toFixed(2);
 
-    if (subtotalGeneral) {
-        subtotalGeneral.textContent = subtotal.toFixed(2);
-    }
+    const descuentoTotal = document.getElementById('descuentoTotal');
+    if (descuentoTotal) descuentoTotal.textContent = valorDescuento.toFixed(2);
+
+    const ivaLabel = document.getElementById('ivaLabel');
+    if (ivaLabel) ivaLabel.textContent = `IVA ${porcentajeIva.toFixed(2)}%`;
 
     const ivaTotal = document.getElementById('ivaTotal');
-
-    if (ivaTotal) {
-        ivaTotal.textContent = iva.toFixed(2);
-    }
+    if (ivaTotal) ivaTotal.textContent = iva.toFixed(2);
 
     const granTotal = document.getElementById('granTotal');
-
-    if (granTotal) {
-        granTotal.textContent = total.toFixed(2);
-    }
+    if (granTotal) granTotal.textContent = totalFinal.toFixed(2);
 }
 
 function eliminarFila(boton) {

@@ -27,20 +27,24 @@ from ..utils import (
     puede_operar_orden_desde_sucursal_activa,
 )
 
-
 @login_required
 def detalle_orden(request, pk):
     sucursal_activa = obtener_sucursal_activa(request)
     orden = get_object_or_404(
         OrdenTrabajo.objects
-        .select_related("sucursal", "cliente", "expediente")
+        .select_related(
+            "sucursal",
+            "cliente",
+            "expediente",
+            "configuracion_iva",
+        )
         .prefetch_related(
             "insumos_historicos",
             "servicios_historicos",
             "insumos_detalles",
             "servicios_detalles",
             "recomendaciones_items",
-            "tecnicos", 
+            "tecnicos",
         ),
         pk=pk,
     )
@@ -285,10 +289,17 @@ def detalle_orden(request, pk):
                 orden_item_rec += 1
 
             # =========================
-            # OBSERVACIONES TÉCNICAS
+            # DESCUENTO Y OBSERVACIONES
             # =========================
+            orden.descuento_porcentaje = parse_decimal(
+                request.POST.get("descuento_porcentaje", "0"),
+                Decimal("0.00"),
+            )
+
             orden.observaciones_tecnicas = request.POST.get("observaciones_tecnicas", "").strip()
+
             orden.save()
+            orden.calcular_total()
 
         messages.success(request, "Orden actualizada correctamente.")
         return redirect("detalle_orden", pk=orden.pk)
@@ -296,9 +307,14 @@ def detalle_orden(request, pk):
     croquis = OrdenCroquisDanio.objects.filter(orden=orden).first()
     croquis_url = croquis.imagen_generada.url if croquis and croquis.imagen_generada else ""
 
-    subtotal = Decimal(orden.total_general or 0) / Decimal("1.15")
-    iva = Decimal(orden.total_general or 0) - subtotal
-    total_final = Decimal(orden.total_general or 0)
+    orden.calcular_total()
+
+    subtotal = Decimal(orden.subtotal_sin_iva or 0)
+    descuento = Decimal(orden.valor_descuento or 0)
+    porcentaje_descuento = Decimal(orden.descuento_porcentaje or 0)
+    porcentaje_iva = Decimal(orden.porcentaje_iva or 0)
+    iva = Decimal(orden.valor_iva or 0)
+    total_final = Decimal(orden.total_final or 0)
 
     return render(
         request,
@@ -308,12 +324,15 @@ def detalle_orden(request, pk):
             "croquis": croquis,
             "croquis_url": croquis_url,
             "categorias_inventario": categorias,
-            "tecnicos_disponibles": tecnicos_disponibles, 
+            "tecnicos_disponibles": tecnicos_disponibles,
             "sucursal_activa": sucursal_activa,
             "puede_editar": puede_editar,
             "puede_reabrir": puede_reabrir,
             "url_anterior": url_anterior,
             "subtotal": subtotal,
+            "descuento": descuento,
+            "porcentaje_descuento": porcentaje_descuento,
+            "porcentaje_iva": porcentaje_iva,
             "iva": iva,
             "total_final": total_final,
         },

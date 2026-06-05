@@ -19,90 +19,48 @@
 
         <div class="total-box">
             <div class="total-label">Subtotal sin IVA</div>
-            <div class="total-value">$<span id="subtotalGeneral">0.00</span></div>
+            <div class="total-value">$<span id="subtotalGeneral">{{ subtotal|default:"0.00"|floatformat:2 }}</span></div>
         </div>
 
         <div class="total-box">
-            <div class="total-label">IVA 15%</div>
-            <div class="total-value">$<span id="ivaTotal">0.00</span></div>
+            <div class="total-label">Descuento (%)</div>
+            <input
+                type="number"
+                name="descuento_porcentaje"
+                id="descuento_porcentaje"
+                value="{{ porcentaje_descuento|default:'0' }}"
+                min="0"
+                max="100"
+                step="0.01"
+                class="form-control"
+                style="width: 100%; margin-top: 6px;"
+                {% if not puede_editar %}readonly{% endif %}
+                oninput="recalcularTotales()"
+                onchange="recalcularTotales()"
+            >
+            <div class="total-value" style="margin-top: 6px;">
+                -$<span id="descuentoTotal">{{ descuento|default:"0.00"|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-label">
+                <span id="ivaLabel">IVA {{ porcentaje_iva|default:"0"|floatformat:2 }}%</span>
+            </div>
+            <div class="total-value">$<span id="ivaTotal">{{ iva|default:"0.00"|floatformat:2 }}</span></div>
         </div>
 
         <div class="total-box final">
             <div class="total-label">Total a pagar</div>
-            <div class="total-value">$<span id="granTotal">0.00</span></div>
+            <div class="total-value">$<span id="granTotal">{{ total_final|default:"0.00"|floatformat:2 }}</span></div>
         </div>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-        function normalizarNumero(valor) {
-            if (!valor) return 0;
-
-            valor = String(valor)
-                .replace(/\$/g, '')
-                .replace(/\s/g, '')
-                .replace(/,/g, '.');
-
-            const numero = parseFloat(valor);
-            return isNaN(numero) ? 0 : numero;
-        }
-
-        function sumarTabla(idTabla) {
-            let total = 0;
-            const tabla = document.getElementById(idTabla);
-
-            if (!tabla) return 0;
-
-            const filas = tabla.querySelectorAll('tbody tr');
-
-            filas.forEach(fila => {
-                let valor = 0;
-
-                const inputValor = fila.querySelector('input.valor');
-
-                if (inputValor) {
-                    valor = normalizarNumero(inputValor.value);
-                } else {
-                    const celdaValor = fila.querySelector('.valor');
-                    if (celdaValor) {
-                        valor = normalizarNumero(celdaValor.textContent);
-                    }
-                }
-
-                total += valor;
-            });
-
-            return total;
-        }
-
-        const rep = sumarTabla('tablaRepuestos');
-        const moi = sumarTabla('tablaMOI');
-        const moe = sumarTabla('tablaMOE');
-
-        const subtotal = rep + moi + moe;
-        const iva = +(subtotal * 0.15).toFixed(2);
-        const total = +(subtotal + iva).toFixed(2);
-
-        const elementosActualizar = {
-            resumenRep: rep,
-            resumenMOI: moi,
-            resumenMOE: moe,
-            subtotalGeneral: subtotal,
-            ivaTotal: iva,
-            granTotal: total,
-
-            subtotalRepuestos: rep,
-            subtotalMOI: moi,
-            subtotalMOE: moe
-        };
-
-        for (const [id, valor] of Object.entries(elementosActualizar)) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.textContent = Number(valor).toFixed(2);
-            }
+        if (typeof recalcularTotales === 'function') {
+            recalcularTotales();
         }
     });
 </script>

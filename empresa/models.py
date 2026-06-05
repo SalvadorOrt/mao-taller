@@ -1,6 +1,4 @@
 import os
-from decimal import Decimal
-
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -64,14 +62,14 @@ class EmpresaEmisora(models.Model):
         max_length=3,
         default="001",
         validators=[solo_3_digitos],
-        help_text="Valor por defecto para facturación si la sucursal no define uno propio.",
+        
     )
 
     punto_emision = models.CharField(
         max_length=3,
         default="001",
         validators=[solo_3_digitos],
-        help_text="Valor por defecto para facturación si la sucursal no define uno propio.",
+       
     )
 
     contribuyente_especial = models.CharField(
@@ -84,14 +82,6 @@ class EmpresaEmisora(models.Model):
         max_length=2,
         choices=OBLIGADO_CONTABILIDAD_CHOICES,
         default="SI",
-    )
-
-    # ---> AQUÍ ESTÁ EL NUEVO CAMPO DINÁMICO PARA EL IVA <---
-    porcentaje_iva = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=Decimal("15.00"),
-        help_text="Porcentaje actual del IVA (ej. 15.00 o 12.00)",
     )
 
     agente_retencion = models.BooleanField(default=False)
@@ -171,9 +161,6 @@ class EmpresaEmisora(models.Model):
         if not self.nombre_comercial:
             self.nombre_comercial = self.razon_social
 
-        # Validación de seguridad para el IVA
-        if self.porcentaje_iva is not None and (self.porcentaje_iva < 0 or self.porcentaje_iva > 100):
-            raise ValidationError({"porcentaje_iva": "El porcentaje de IVA debe estar entre 0 y 100."})
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -199,29 +186,29 @@ class FirmaElectronica(models.Model):
 
     nombre = models.CharField(
         max_length=100,
-        help_text="Nombre interno para identificar la firma.",
+       
     )
 
     titular = models.CharField(
         max_length=200,
-        help_text="Nombre del titular de la firma electrónica.",
+        
     )
 
     ruc = models.CharField(
         max_length=13,
         validators=[solo_13_digitos],
-        help_text="RUC asociado a la firma.",
+       
     )
 
     archivo_firma = models.FileField(
         upload_to="firmas_electronicas/",
         validators=[validar_archivo_firma],
-        help_text="Archivo de firma electrónica .p12 o .pfx",
+       
     )
 
     password_firma = models.CharField(
         max_length=255,
-        help_text="Contraseña de la firma electrónica. Luego conviene cifrar este campo.",
+       
     )
 
     entidad_certificadora = models.CharField(

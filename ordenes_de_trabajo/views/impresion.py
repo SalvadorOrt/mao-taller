@@ -103,9 +103,13 @@ def imprimir_resumen_orden(request, pk):
         if serv.tipo == "MOE"
     )
 
-    subtotal = subtotal_repuestos + subtotal_moi + subtotal_moe
-    iva = subtotal * Decimal("0.15")
-    total_final = subtotal + iva
+    orden.calcular_total()
+    subtotal = Decimal(orden.subtotal_sin_iva or 0)
+    descuento = Decimal(orden.valor_descuento or 0)
+    porcentaje_descuento = Decimal(orden.descuento_porcentaje or 0)
+    porcentaje_iva = Decimal(orden.porcentaje_iva or 0)
+    iva = Decimal(orden.valor_iva or 0)
+    total_final = Decimal(orden.total_final or 0)
 
     return render(
         request,

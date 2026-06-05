@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='proveedor',
             name='whatsapp',
-            field=models.CharField(blank=True, help_text='Número en formato internacional. Ej: +593999999999', max_length=30, null=True),
+            field=models.CharField(blank=True, max_length=30, null=True),
         ),
     ]

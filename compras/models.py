@@ -21,7 +21,7 @@ class Proveedor(models.Model):
         max_length=30,
         blank=True,
         null=True,
-        help_text="Número en formato internacional. Ej: +593999999999",
+        
     )
 
     tiene_whatsapp = models.BooleanField(default=True)
@@ -155,7 +155,7 @@ class FacturaCompra(models.Model):
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
 
     forma_pago = models.CharField(max_length=10, choices=FORMAS_PAGO, default="CONTADO")
-    dias_plazo = models.PositiveIntegerField(default=0, help_text="Ej: 15, 30 días")
+    dias_plazo = models.PositiveIntegerField(default=0)
     fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name="Vence el")
 
     saldo_pendiente = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
