@@ -2388,7 +2388,6 @@ class PlantillaRecomendacion(models.Model):
 
     def __str__(self):
         return self.titulo
-
 class OrdenRecomendacion(models.Model):
 
     orden = models.ForeignKey(
@@ -2416,7 +2415,6 @@ class OrdenRecomendacion(models.Model):
         verbose_name_plural = "Recomendaciones de órdenes"
 
     def save(self, *args, **kwargs):
-
         if self.titulo:
             self.titulo = self.titulo.strip().upper()
 
@@ -2426,61 +2424,4 @@ class OrdenRecomendacion(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-
-        return (
-            f"{self.orden.numero_orden} | "
-            f"{self.titulo}"
-        )
-
-    def clean(self):
-        self._normalizar_campos_texto()
-
-        if not self.numero_orden or not self.numero_orden.strip():
-            raise ValidationError("El número de orden es obligatorio.")
-
-        if not self.sucursal_id:
-            raise ValidationError({"sucursal": "La sucursal es obligatoria."})
-
-        if not self.es_migrada:
-            if not self.placa or not self.placa.strip():
-                raise ValidationError("La placa es obligatoria para órdenes no migradas.")
-
-        if self.anio_vehiculo and self.anio_vehiculo < 1900:
-            raise ValidationError("El año del vehículo no es válido.")
-
-        if self.es_migrada and not self.numero_orden_origen:
-            raise ValidationError({
-                "numero_orden_origen": "Las OT migradas deben guardar el número original extraído."
-            })
-
-        if self.descuento_porcentaje < Decimal("0.00"):
-            raise ValidationError({
-                "descuento_porcentaje": "El descuento no puede ser negativo."
-            })
-
-        if self.descuento_porcentaje > Decimal("100.00"):
-            raise ValidationError({
-                "descuento_porcentaje": "El descuento no puede ser mayor al 100%."
-            })
-
-    def save(self, *args, **kwargs):
-        self._normalizar_campos_texto()
-        self._calcular_color_hex()
-
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        placa = self.placa if self.placa else "SIN PLACA"
-
-        if self.es_migrada and self.numero_orden_origen:
-            return (
-                f"[{self.sucursal.codigo}] OT {self.numero_orden} | "
-                f"ORIGEN {self.numero_orden_origen} - {placa} "
-                f"({self.nombre_cliente_final})"
-            )
-
-        return f"[{self.sucursal.codigo}] OT {self.numero_orden} - {placa} ({self.nombre_cliente_final})"
-
-
-
+        return f"{self.orden.numero_orden} | {self.titulo}"
