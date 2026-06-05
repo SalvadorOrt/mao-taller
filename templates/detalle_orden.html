@@ -64,7 +64,7 @@
     <form method="post" id="formDetalleOT" novalidate>
         {% csrf_token %}
 
-        <input type="hidden" id="porcentajeIva" value="{{ porcentaje_iva|default:'0' }}">
+        <input type="hidden" id="porcentajeIva" value="{{ orden.porcentaje_iva|default_if_none:'0.00'|floatformat:2 }}">
 
         {% include 'includes/detalle_orden/info_general.html' %}
         {% include 'includes/detalle_orden/tabla_repuestos.html' %}
