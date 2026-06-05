@@ -19,7 +19,7 @@
 
         <div class="total-box">
             <div class="total-label">Subtotal sin IVA</div>
-            <div class="total-value">$<span id="subtotalGeneral">{{ subtotal|default:"0.00"|floatformat:2 }}</span></div>
+            <span id="subtotalGeneral">{{ orden.subtotal_sin_iva|default:"0.00"|floatformat:2 }}</span>
         </div>
 
         <div class="total-box">
@@ -28,7 +28,7 @@
                 type="number"
                 name="descuento_porcentaje"
                 id="descuento_porcentaje"
-                value="{{ porcentaje_descuento|default:'0' }}"
+                value="{{ orden.descuento_porcentaje|default:'0.00' }}"
                 min="0"
                 max="100"
                 step="0.01"
@@ -39,20 +39,20 @@
                 onchange="recalcularTotales()"
             >
             <div class="total-value" style="margin-top: 6px;">
-                -$<span id="descuentoTotal">{{ descuento|default:"0.00"|floatformat:2 }}</span>
+                -$<span id="descuentoTotal">{{ orden.valor_descuento|default:"0.00"|floatformat:2 }}</span>
             </div>
         </div>
 
         <div class="total-box">
             <div class="total-label">
-                <span id="ivaLabel">IVA {{ porcentaje_iva|default:"0"|floatformat:2 }}%</span>
+                <span id="ivaLabel">IVA {{ orden.porcentaje_iva|default:"0"|floatformat:2 }}%</span>
             </div>
             <div class="total-value">$<span id="ivaTotal">{{ iva|default:"0.00"|floatformat:2 }}</span></div>
         </div>
 
         <div class="total-box final">
             <div class="total-label">Total a pagar</div>
-            <div class="total-value">$<span id="granTotal">{{ total_final|default:"0.00"|floatformat:2 }}</span></div>
+            <span id="granTotal">{{ orden.total_final|default:"0.00"|floatformat:2 }}</span>
         </div>
     </div>
 </div>
