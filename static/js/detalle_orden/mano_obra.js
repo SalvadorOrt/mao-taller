@@ -24,7 +24,7 @@ function agregarFilaSimple(idTabla) {
 
     const isMoi = idTabla === 'tablaMOI';
     const prefix = isMoi ? 'moi' : 'moe';
-    const parentIndex = isMoi ? contadorPadresMOI++ : Date.now();
+    const parentIndex = Date.now();
 
     const placeholder = isMoi
         ? 'Buscar servicio interno...'
@@ -338,7 +338,7 @@ function confirmarIngresoRapidoMOI() {
     }
 
     const tbody = document.getElementById('cuerpoTablaMOI');
-    const parentIndex = contadorPadresMOI++;
+    const parentIndex = Date.now();
     const subtotal = (precio * cantidad).toFixed(2);
 
     const html = `

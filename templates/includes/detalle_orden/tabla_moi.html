@@ -140,7 +140,7 @@
 
                     {% for item in orden.servicios_detalles.all %}
                         {% if item.tipo_servicio == "MEC" %}
-                            {% with uid_moi=forloop.counter0 %}
+                            {% with uid_moi=item.id %}
                                 <tr class="fila-padre-moi">
                                     <td class="servicio-cell">
                                         <input type="hidden" name="moi_uid[]" value="{{ uid_moi }}">

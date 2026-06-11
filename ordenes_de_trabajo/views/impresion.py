@@ -31,7 +31,11 @@ def obtener_porcentaje_iva_activo():
 @xframe_options_sameorigin
 def imprimir_tecnico(request, pk):
     orden = get_object_or_404(
-        OrdenTrabajo.objects.select_related("sucursal__empresa"),
+        OrdenTrabajo.objects.select_related(
+            "sucursal__empresa",
+            "cliente",
+            "expediente",
+        ),
         pk=pk,
     )
 
