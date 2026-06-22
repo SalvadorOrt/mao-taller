@@ -12,7 +12,7 @@ db.sqlite3
 
 # IGNORAR ARCHIVOS DE DATOS PESADOS
 *.json
-
+!repuestos_exportados.json
 # Entorno virtual
 venv/
 
