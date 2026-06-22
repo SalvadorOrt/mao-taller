@@ -10,7 +10,6 @@ def get_menu_lateral(user):
                 {"label": "Órdenes de Trabajo", "url_name": "lista_ordenes", "icon": "bi-list-ul"},
                 {"label": "Vehículos / Expedientes", "url": "/admin/ordenes_de_trabajo/expedientevehiculo/", "icon": "bi-car-front"},
                 {"label": "Clientes", "url_name": "lista_clientes", "icon": "bi-people"},
-            
             ]
         })
 
@@ -18,10 +17,11 @@ def get_menu_lateral(user):
         menu.append({
             "titulo": "Inventario",
             "items": [
-                {"label": "Productos Base", "url": "/admin/inventario/producto/", "icon": "bi-box-seam"},
-                {"label": "Productos y Códigos", "url": "/admin/inventario/codigoproducto/", "icon": "bi-upc-scan"},
-                {"label": "Stock", "url": "/admin/inventario/stocksucursal/", "icon": "bi-stack"},
-                {"label": "Movimientos", "url": "/admin/inventario/movimientostock/", "icon": "bi-arrow-left-right"},
+                {"label": "Dashboard Inventario", "url_name": "inventario_dashboard", "icon": "bi-speedometer2"},
+                {"label": "Catálogo", "url_name": "inventario_catalogo", "icon": "bi-box-seam"},
+                {"label": "Stock", "url_name": "inventario_stock", "icon": "bi-stack"},
+                {"label": "Movimientos", "url_name": "inventario_movimientos", "icon": "bi-arrow-left-right"},
+                {"label": "Inventario Físico", "url_name": "inventario_fisico", "icon": "bi-clipboard-check"},
             ]
         })
 
@@ -30,7 +30,6 @@ def get_menu_lateral(user):
             "titulo": "Administración",
             "items": [
                 {"label": "Personal y Accesos", "url_name": "lista_usuarios", "icon": "bi-people-fill"},
-                {"label": "Auditoría", "url": "/admin/inventario/auditoria/", "icon": "bi-clock-history"},
                 {"label": "Panel Admin", "url": "/admin/", "icon": "bi-sliders"},
             ]
         })
