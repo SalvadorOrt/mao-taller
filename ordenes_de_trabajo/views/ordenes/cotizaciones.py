@@ -188,9 +188,21 @@ def detalle_cotizacion(request, pk):
                         servicios_guardados += 1
 
                         procedimientos = request.POST.getlist(f"{prefix}_procedimientos_{uid}[]")
-                        for j, procedimiento in enumerate(procedimientos, start=1):
+                        
+                        procedimientos_limpios = []
+                        procedimientos_vistos = set()
+
+                        for procedimiento in procedimientos:
                             procedimiento = procedimiento.strip()
-                            if not procedimiento: continue
+                            if not procedimiento:
+                                continue
+                            clave = procedimiento.upper()
+                            if clave in procedimientos_vistos:
+                                continue
+                            procedimientos_vistos.add(clave)
+                            procedimientos_limpios.append(procedimiento)
+
+                        for j, procedimiento in enumerate(procedimientos_limpios, start=1):
                             CotizacionProcedimientoDetalle.objects.create(
                                 servicio_cotizado=detalle_servicio,
                                 descripcion=procedimiento.upper(),

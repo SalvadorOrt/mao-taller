@@ -98,7 +98,6 @@ class Proveedor(models.Model):
     def __str__(self):
         return self.empresa if self.empresa else self.nombre_contacto
 
-
 # =========================================================
 # FACTURA DE COMPRA (CABECERA + ARCHIVOS)
 # =========================================================
@@ -122,6 +121,20 @@ class FacturaCompra(models.Model):
         on_delete=models.PROTECT,
         related_name="facturas_compra",
         verbose_name="Sucursal destino",
+    )
+
+    configuracion_iva = models.ForeignKey(
+        "ordenes_de_trabajo.ConfiguracionTributaria",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+
+    porcentaje_iva = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
     )
 
     clave_acceso_sri = models.CharField("Clave de Acceso SRI", max_length=49, blank=True, null=True)
@@ -176,6 +189,57 @@ class FacturaCompra(models.Model):
             models.Index(fields=["procesado"]),
             models.Index(fields=["sucursal_destino"]),
         ]
+
+    def obtener_configuracion_iva_activa(self):
+        from ordenes_de_trabajo.models import ConfiguracionTributaria
+
+        return ConfiguracionTributaria.objects.filter(
+            activa=True
+        ).order_by("-fecha_inicio", "-id").first()
+
+    def calcular_totales(self):
+        if not self.pk:
+            return
+
+        if self.porcentaje_iva is None:
+            config = self.obtener_configuracion_iva_activa()
+
+            if config:
+                self.configuracion_iva = config
+                self.porcentaje_iva = config.porcentaje_iva
+            else:
+                self.porcentaje_iva = Decimal("0.00")
+
+        detalles = self.detalles_originales.all()
+
+        nuevo_subtotal = Decimal("0.00")
+        base_con_iva = Decimal("0.00")
+
+        for det in detalles:
+            nuevo_subtotal += det.subtotal
+
+            if det.aplica_iva:
+                base_con_iva += det.subtotal
+
+        nuevo_iva = (
+            base_con_iva * (self.porcentaje_iva / Decimal("100"))
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        nuevo_total = nuevo_subtotal + nuevo_iva
+
+        FacturaCompra.objects.filter(pk=self.pk).update(
+            subtotal=nuevo_subtotal,
+            iva=nuevo_iva,
+            total=nuevo_total,
+            porcentaje_iva=self.porcentaje_iva,
+            configuracion_iva=self.configuracion_iva,
+        )
+
+        self.subtotal = nuevo_subtotal
+        self.iva = nuevo_iva
+        self.total = nuevo_total
+
+        self.recalcular_estado_pago(guardar=True)
 
     def clean(self):
         if self.subtotal < 0:
@@ -331,15 +395,32 @@ class DetalleFacturaOriginal(models.Model):
         codigo = self.codigo_proveedor or "SIN CÓDIGO"
         return f"{codigo} - {self.descripcion_proveedor}"
 
-
 # =========================================================
 # DETALLE NORMALIZADO POR EL SISTEMA / USUARIO / IA
 # =========================================================
 class DetalleFacturaNormalizado(models.Model):
+
+    DESTINO_CHOICES = [
+        ("INVENTARIO", "Repuesto / Insumo (Suma Stock)"),
+        ("GASTO", "Gasto Administrativo (Comida, Suministros)"),
+        ("SERVICIO", "Servicio Externo (Mano de obra, Torno)"),
+    ]
+
     detalle_original = models.OneToOneField(
         DetalleFacturaOriginal,
         on_delete=models.CASCADE,
         related_name="detalle_normalizado",
+    )
+
+    tipo_destino = models.CharField(
+        max_length=20,
+        choices=DESTINO_CHOICES,
+        default="INVENTARIO",
+    )
+
+    aplica_iva = models.BooleanField(
+        default=True,
+        help_text="¿Este ítem grava IVA?",
     )
 
     codigo_sistema = models.CharField(max_length=100, blank=True, null=True)
@@ -355,6 +436,7 @@ class DetalleFacturaNormalizado(models.Model):
         blank=True,
         related_name="detalles_normalizados_compra",
     )
+
     codigo_producto_rel = models.ForeignKey(
         "inventario.CodigoProducto",
         on_delete=models.SET_NULL,
@@ -394,27 +476,56 @@ class DetalleFacturaNormalizado(models.Model):
     def clean(self):
         if self.cantidad <= 0:
             raise ValidationError("La cantidad debe ser mayor que 0.")
+
         if self.costo_unitario < 0:
             raise ValidationError("El costo unitario no puede ser negativo.")
+
         if self.costo_anterior is not None and self.costo_anterior < 0:
             raise ValidationError("El costo anterior no puede ser negativo.")
+
+        if self.tipo_destino == "INVENTARIO":
+            if not self.nombre_limpio and not self.producto_rel:
+                raise ValidationError(
+                    "Si es para inventario, debe tener un nombre limpio o un producto asignado."
+                )
 
     def save(self, *args, **kwargs):
         if self.codigo_sistema:
             self.codigo_sistema = self.codigo_sistema.strip().upper()
+
         if self.nombre_limpio:
             self.nombre_limpio = self.nombre_limpio.strip()
+
         if self.marca_limpia:
             self.marca_limpia = self.marca_limpia.strip()
+
         if self.categoria_limpia:
             self.categoria_limpia = self.categoria_limpia.strip()
+
         if self.codigo_barras:
             self.codigo_barras = self.codigo_barras.strip()
+
         if self.observaciones:
             self.observaciones = self.observaciones.strip()
 
+        if self.tipo_destino in ["GASTO", "SERVICIO"]:
+            self.marca_limpia = ""
+            self.categoria_limpia = ""
+            self.producto_rel = None
+            self.codigo_producto_rel = None
+
         self.full_clean()
         super().save(*args, **kwargs)
+
+        if self.factura:
+            self.factura.calcular_totales()
+
+    def delete(self, *args, **kwargs):
+        factura = self.factura
+        super().delete(*args, **kwargs)
+
+        if factura:
+            factura.calcular_totales()
 
     def __str__(self):
         codigo = self.codigo_sistema or self.codigo_original or "SIN CÓDIGO"
