@@ -23,8 +23,8 @@ from ..models import (
     Producto,
     CodigoProducto,
     StockSucursal,
+    ImagenProducto,
 )
-
 
 def precio_secreto(precio):
     if precio is None:
@@ -183,7 +183,6 @@ def catalogo_detalle(request, codigo_id):
         "precio_secreto": precio_secreto(codigo.precio_venta),
     })
 
-
 @login_required
 def catalogo_crear(request):
     categorias = Categoria.objects.all().order_by("nombre")
@@ -197,12 +196,21 @@ def catalogo_crear(request):
         descripcion = request.POST.get("descripcion", "").strip()
 
         codigo_txt = request.POST.get("codigo", "").strip()
+        tipo_codigo = request.POST.get("tipo_codigo", "aftermarket").strip()
+
         codigo_barras = request.POST.get("codigo_barras", "").strip()
         nombre_comercial = request.POST.get("nombre_comercial", "").strip()
+
+        presentacion_cantidad = request.POST.get("presentacion_cantidad", "").strip()
+        presentacion_unidad = request.POST.get("presentacion_unidad", "").strip()
 
         precio_compra = request.POST.get("precio_compra", "").strip()
         precio_venta = request.POST.get("precio_venta", "").strip()
         margen = request.POST.get("margen_ganancia_porcentaje", "").strip()
+        porcentaje_iva_costo = request.POST.get("porcentaje_iva_costo", "").strip()
+
+        datos_incompletos = request.POST.get("datos_incompletos") == "on"
+        descontinuado = request.POST.get("descontinuado") == "on"
 
         try:
             categoria = get_object_or_404(Categoria, id=categoria_id)
@@ -211,22 +219,36 @@ def catalogo_crear(request):
             producto = Producto.objects.create(
                 categoria=categoria,
                 nombre_base=nombre_base,
-                descripcion=descripcion,
+                descripcion=descripcion or None,
                 origen="BODEGA",
                 activo=True,
+                descontinuado=descontinuado,
+                datos_incompletos=datos_incompletos,
             )
 
             codigo = CodigoProducto.objects.create(
                 producto=producto,
                 marca=marca,
                 codigo=codigo_txt,
+                tipo_codigo=tipo_codigo,
                 codigo_barras=codigo_barras or None,
                 nombre_comercial=nombre_comercial or None,
+                presentacion_cantidad=Decimal(presentacion_cantidad) if presentacion_cantidad else None,
+                presentacion_unidad=presentacion_unidad or None,
                 precio_compra=Decimal(precio_compra) if precio_compra else None,
                 precio_venta=Decimal(precio_venta) if precio_venta else None,
                 margen_ganancia_porcentaje=Decimal(margen) if margen else Decimal("100.00"),
+                porcentaje_iva_costo=Decimal(porcentaje_iva_costo) if porcentaje_iva_costo else Decimal("0.00"),
                 activo=True,
             )
+
+            imagenes = request.FILES.getlist("imagenes")
+            for imagen in imagenes:
+                ImagenProducto.objects.create(
+                    codigo_producto=codigo,
+                    imagen=imagen,
+                    descripcion=f"Imagen de {codigo.codigo}",
+                )
 
             messages.success(request, "Producto creado correctamente.")
             return redirect("inventario_catalogo_detalle", codigo_id=codigo.id)
@@ -238,8 +260,9 @@ def catalogo_crear(request):
             messages.error(request, f"No se pudo crear el producto: {e}")
 
     return render(request, "inventario/catalogo_crear.html", {
-    "categorias": categorias,
-    "marcas": marcas,
+        "categorias": categorias,
+        "marcas": marcas,
+        "tipos_codigo": CodigoProducto.TIPO_CODIGO_CHOICES,
     })
 
 

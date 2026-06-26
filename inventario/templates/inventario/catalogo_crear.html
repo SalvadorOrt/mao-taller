@@ -3,6 +3,8 @@
 
 {% block content %}
 
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <style>
     .form-card {
         background: #fff;
@@ -49,6 +51,33 @@
         gap: 10px;
         margin-top: 20px;
     }
+
+    .select2-container .select2-selection--single {
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid var(--border-soft);
+        padding: 6px 8px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px;
+    }
+
+    .preview-grid {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .preview-grid img {
+        width: 95px;
+        height: 75px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid var(--border-soft);
+        background: #fff;
+    }
 </style>
 
 <div class="form-card">
@@ -59,7 +88,7 @@
                 Nuevo Repuesto
             </h2>
             <p style="margin:4px 0 0 0; color:var(--muted); font-size:0.9rem;">
-                Crear producto base, código comercial y código de barras.
+                Crear producto base, código comercial, barcode, presentación e imágenes.
             </p>
         </div>
 
@@ -68,7 +97,7 @@
         </a>
     </div>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="form-section">
@@ -77,7 +106,7 @@
             <div class="form-grid-2">
                 <div>
                     <label class="field-label">Categoría</label>
-                    <select name="categoria" class="form-control-apple" required>
+                    <select name="categoria" class="form-control-apple select2" required>
                         <option value="">Seleccione categoría...</option>
                         {% for categoria in categorias %}
                             <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
@@ -87,7 +116,7 @@
 
                 <div>
                     <label class="field-label">Marca</label>
-                    <select name="marca" class="form-control-apple" required>
+                    <select name="marca" class="form-control-apple select2" required>
                         <option value="">Seleccione marca...</option>
                         {% for marca in marcas %}
                             <option value="{{ marca.id }}">{{ marca.nombre }}</option>
@@ -113,12 +142,33 @@
                           placeholder="Descripción opcional..."
                           style="min-height:80px;"></textarea>
             </div>
+
+            <div style="margin-top:15px; display:flex; gap:18px; flex-wrap:wrap;">
+                <label>
+                    <input type="checkbox" name="datos_incompletos">
+                    Datos incompletos
+                </label>
+
+                <label>
+                    <input type="checkbox" name="descontinuado">
+                    Descontinuado
+                </label>
+            </div>
         </div>
 
         <div class="form-section">
             <h4 style="margin:0 0 15px 0;">Código comercial</h4>
 
-            <div class="form-grid-2">
+            <div class="form-grid-3">
+                <div>
+                    <label class="field-label">Tipo de código</label>
+                    <select name="tipo_codigo" class="form-control-apple">
+                        {% for valor, texto in tipos_codigo %}
+                            <option value="{{ valor }}">{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <div>
                     <label class="field-label">Código del repuesto</label>
                     <input type="text"
@@ -145,6 +195,30 @@
                        name="nombre_comercial"
                        class="form-control-apple"
                        placeholder="Nombre visible en mostrador o factura">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 style="margin:0 0 15px 0;">Presentación</h4>
+
+            <div class="form-grid-2">
+                <div>
+                    <label class="field-label">Cantidad presentación</label>
+                    <input type="number"
+                           name="presentacion_cantidad"
+                           class="form-control-apple"
+                           step="0.01"
+                           min="0"
+                           placeholder="Ej. 1, 2, 12">
+                </div>
+
+                <div>
+                    <label class="field-label">Unidad</label>
+                    <input type="text"
+                           name="presentacion_unidad"
+                           class="form-control-apple"
+                           placeholder="UND, PAR, KIT, LT, ML">
+                </div>
             </div>
         </div>
 
@@ -182,6 +256,29 @@
                            value="100.00">
                 </div>
             </div>
+
+            <div style="margin-top:15px;">
+                <label class="field-label">IVA costo %</label>
+                <input type="number"
+                       name="porcentaje_iva_costo"
+                       class="form-control-apple"
+                       step="0.01"
+                       min="0"
+                       value="0.00">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 style="margin:0 0 15px 0;">Imágenes</h4>
+
+            <input type="file"
+                   name="imagenes"
+                   id="imagenes"
+                   class="form-control-apple"
+                   accept="image/*"
+                   multiple>
+
+            <div id="preview_imagenes" class="preview-grid"></div>
         </div>
 
         <div class="form-actions">
@@ -196,5 +293,35 @@
 
     </form>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('.select2').select2({
+            width: '100%',
+            placeholder: 'Buscar...',
+            allowClear: true
+        });
+    });
+
+    const inputImagenes = document.getElementById('imagenes');
+    const preview = document.getElementById('preview_imagenes');
+
+    if (inputImagenes) {
+        inputImagenes.addEventListener('change', function () {
+            preview.innerHTML = '';
+
+            Array.from(this.files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                preview.appendChild(img);
+            });
+        });
+    }
+</script>
 
 {% endblock %}
