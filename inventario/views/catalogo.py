@@ -237,9 +237,9 @@ def catalogo_crear(request):
         except Exception as e:
             messages.error(request, f"No se pudo crear el producto: {e}")
 
-    return render(request, "inventario/catalogo/form_crear.html", {
-        "categorias": categorias,
-        "marcas": marcas,
+    return render(request, "inventario/catalogo_crear.html", {
+    "categorias": categorias,
+    "marcas": marcas,
     })
 
 
