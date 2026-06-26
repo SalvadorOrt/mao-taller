@@ -78,6 +78,14 @@
         border: 1px solid var(--border-soft);
         background: #fff;
     }
+    
+    .checkbox-group {
+        margin-top: 15px; 
+        display: flex; 
+        gap: 18px; 
+        flex-wrap: wrap;
+        align-items: center;
+    }
 </style>
 
 <div class="form-card">
@@ -101,9 +109,17 @@
         {% csrf_token %}
 
         <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Datos del producto</h4>
+            <h4 style="margin:0 0 15px 0;">Datos del producto base</h4>
 
-            <div class="form-grid-2">
+            <div class="form-grid-3">
+                <div>
+                    <label class="field-label">SKU Interno (Opcional)</label>
+                    <input type="text"
+                           name="sku_interno"
+                           class="form-control-apple"
+                           placeholder="Dejar vacío para autogenerar"
+                           style="text-transform:uppercase;">
+                </div>
                 <div>
                     <label class="field-label">Categoría</label>
                     <select name="categoria" class="form-control-apple select2" required>
@@ -113,13 +129,11 @@
                         {% endfor %}
                     </select>
                 </div>
-
                 <div>
-                    <label class="field-label">Marca</label>
-                    <select name="marca" class="form-control-apple select2" required>
-                        <option value="">Seleccione marca...</option>
-                        {% for marca in marcas %}
-                            <option value="{{ marca.id }}">{{ marca.nombre }}</option>
+                    <label class="field-label">Origen de creación</label>
+                    <select name="origen" class="form-control-apple">
+                        {% for valor, texto in origenes_producto %}
+                            <option value="{{ valor }}">{{ texto }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -143,12 +157,15 @@
                           style="min-height:80px;"></textarea>
             </div>
 
-            <div style="margin-top:15px; display:flex; gap:18px; flex-wrap:wrap;">
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="producto_activo" checked>
+                    Producto Activo
+                </label>
                 <label>
                     <input type="checkbox" name="datos_incompletos">
                     Datos incompletos
                 </label>
-
                 <label>
                     <input type="checkbox" name="descontinuado">
                     Descontinuado
@@ -158,8 +175,18 @@
 
         <div class="form-section">
             <h4 style="margin:0 0 15px 0;">Código comercial</h4>
-
+            
             <div class="form-grid-3">
+                <div>
+                    <label class="field-label">Marca</label>
+                    <select name="marca" class="form-control-apple select2" required>
+                        <option value="">Seleccione marca...</option>
+                        {% for marca in marcas %}
+                            <option value="{{ marca.id }}">{{ marca.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <div>
                     <label class="field-label">Tipo de código</label>
                     <select name="tipo_codigo" class="form-control-apple">
@@ -178,7 +205,9 @@
                            required
                            style="text-transform:uppercase; font-weight:bold;">
                 </div>
+            </div>
 
+            <div class="form-grid-2" style="margin-top:15px;">
                 <div>
                     <label class="field-label">Código de barras</label>
                     <input type="text"
@@ -187,14 +216,20 @@
                            placeholder="Escanee o escriba el barcode"
                            autofocus>
                 </div>
+                <div>
+                    <label class="field-label">Nombre comercial (Opcional)</label>
+                    <input type="text"
+                           name="nombre_comercial"
+                           class="form-control-apple"
+                           placeholder="Nombre visible en mostrador o factura">
+                </div>
             </div>
 
-            <div style="margin-top:15px;">
-                <label class="field-label">Nombre comercial</label>
-                <input type="text"
-                       name="nombre_comercial"
-                       class="form-control-apple"
-                       placeholder="Nombre visible en mostrador o factura">
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="codigo_activo" checked>
+                    Código Activo para la venta
+                </label>
             </div>
         </div>
 
@@ -282,7 +317,7 @@
         </div>
 
         <div class="form-actions">
-            <a href="{% url 'inventario_catalogo' %}" class="btn-login" style="width:auto;">
+            <a href="{% url 'inventario_catalogo' %}" class="btn-login" style="width:auto; text-decoration:none;">
                 Cancelar
             </a>
 
@@ -308,19 +343,80 @@
 
     const inputImagenes = document.getElementById('imagenes');
     const preview = document.getElementById('preview_imagenes');
+    const dt = new DataTransfer();
 
     if (inputImagenes) {
         inputImagenes.addEventListener('change', function () {
-            preview.innerHTML = '';
-
             Array.from(this.files).forEach(file => {
-                if (!file.type.startsWith('image/')) return;
-
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                preview.appendChild(img);
+                if (file.type.startsWith('image/')) {
+                    dt.items.add(file);
+                }
             });
+
+            this.files = dt.files;
+            actualizarPreview();
         });
+    }
+
+    function actualizarPreview() {
+        preview.innerHTML = ''; 
+        
+        Array.from(inputImagenes.files).forEach((file, index) => {
+            const imgContainer = document.createElement('div');
+            imgContainer.style.position = 'relative';
+            imgContainer.style.display = 'inline-block';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            
+            const btnEliminar = document.createElement('button');
+            btnEliminar.innerHTML = '×';
+            btnEliminar.style.position = 'absolute';
+            btnEliminar.style.top = '-5px';
+            btnEliminar.style.right = '-5px';
+            btnEliminar.style.background = '#ff3b30';
+            btnEliminar.style.color = 'white';
+            btnEliminar.style.border = 'none';
+            btnEliminar.style.borderRadius = '50%';
+            btnEliminar.style.width = '20px';
+            btnEliminar.style.height = '20px';
+            btnEliminar.style.cursor = 'pointer';
+            btnEliminar.style.fontSize = '14px';
+            btnEliminar.style.lineHeight = '1';
+            btnEliminar.style.padding = '0';
+            btnEliminar.style.display = 'flex';
+            btnEliminar.style.alignItems = 'center';
+            btnEliminar.style.justifyContent = 'center';
+            btnEliminar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+
+            btnEliminar.onclick = function(e) {
+                e.preventDefault(); 
+                eliminarArchivo(index);
+            };
+
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(btnEliminar);
+            preview.appendChild(imgContainer);
+        });
+    }
+
+    function eliminarArchivo(index) {
+        const dtNuevo = new DataTransfer();
+        const files = inputImagenes.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                dtNuevo.items.add(files[i]);
+            }
+        }
+        
+        inputImagenes.files = dtNuevo.files;
+        dt.items.clear();
+        for (let i = 0; i < dtNuevo.files.length; i++) {
+            dt.items.add(dtNuevo.files[i]);
+        }
+        
+        actualizarPreview();
     }
 </script>
 

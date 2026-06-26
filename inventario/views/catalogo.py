@@ -16,7 +16,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum, Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
-
+from django.core.exceptions import ValidationError
+from decimal import Decimal, InvalidOperation
+from django.db import transaction
 from ..models import (
     Categoria,
     MarcaRepuesto,
@@ -184,48 +186,69 @@ def catalogo_detalle(request, codigo_id):
     })
 
 @login_required
+@transaction.atomic  # <--- CRÍTICO: Todo o nada.
 def catalogo_crear(request):
     categorias = Categoria.objects.all().order_by("nombre")
     marcas = MarcaRepuesto.objects.all().order_by("nombre")
 
     if request.method == "POST":
+        # Relaciones
         categoria_id = request.POST.get("categoria")
         marca_id = request.POST.get("marca")
 
+        # Datos del Producto
+        sku_interno = request.POST.get("sku_interno", "").strip() # Añadido
         nombre_base = request.POST.get("nombre_base", "").strip()
         descripcion = request.POST.get("descripcion", "").strip()
-
-        codigo_txt = request.POST.get("codigo", "").strip()
-        tipo_codigo = request.POST.get("tipo_codigo", "aftermarket").strip()
-
-        codigo_barras = request.POST.get("codigo_barras", "").strip()
-        nombre_comercial = request.POST.get("nombre_comercial", "").strip()
-
-        presentacion_cantidad = request.POST.get("presentacion_cantidad", "").strip()
-        presentacion_unidad = request.POST.get("presentacion_unidad", "").strip()
-
-        precio_compra = request.POST.get("precio_compra", "").strip()
-        precio_venta = request.POST.get("precio_venta", "").strip()
-        margen = request.POST.get("margen_ganancia_porcentaje", "").strip()
-        porcentaje_iva_costo = request.POST.get("porcentaje_iva_costo", "").strip()
-
+        origen = request.POST.get("origen", "BODEGA").strip() # Añadido
+        
+        # Booleanos del Producto
         datos_incompletos = request.POST.get("datos_incompletos") == "on"
         descontinuado = request.POST.get("descontinuado") == "on"
+        producto_activo = request.POST.get("producto_activo") != "off" # Por defecto True si no viene 'off'
+
+        # Datos del Código
+        codigo_txt = request.POST.get("codigo", "").strip()
+        tipo_codigo = request.POST.get("tipo_codigo", "aftermarket").strip()
+        codigo_barras = request.POST.get("codigo_barras", "").strip()
+        nombre_comercial = request.POST.get("nombre_comercial", "").strip()
+        presentacion_unidad = request.POST.get("presentacion_unidad", "").strip()
+        
+        # Booleano del Código
+        codigo_activo = request.POST.get("codigo_activo") != "off"
 
         try:
+            # Validación segura de Decimales
+            def safe_decimal(value, default=None):
+                if not value:
+                    return default
+                try:
+                    return Decimal(value.strip())
+                except InvalidOperation:
+                    raise ValidationError(f"El valor '{value}' no es un número válido.")
+
+            presentacion_cantidad = safe_decimal(request.POST.get("presentacion_cantidad"))
+            precio_compra = safe_decimal(request.POST.get("precio_compra"))
+            precio_venta = safe_decimal(request.POST.get("precio_venta"))
+            margen = safe_decimal(request.POST.get("margen_ganancia_porcentaje"), Decimal("100.00"))
+            porcentaje_iva_costo = safe_decimal(request.POST.get("porcentaje_iva_costo"), Decimal("0.00"))
+
             categoria = get_object_or_404(Categoria, id=categoria_id)
             marca = get_object_or_404(MarcaRepuesto, id=marca_id)
 
+            # 1. Crear Producto
             producto = Producto.objects.create(
+                sku_interno=sku_interno or "", # Si viene vacío, el modelo autogenera
                 categoria=categoria,
                 nombre_base=nombre_base,
                 descripcion=descripcion or None,
-                origen="BODEGA",
-                activo=True,
+                origen=origen,
+                activo=producto_activo,
                 descontinuado=descontinuado,
                 datos_incompletos=datos_incompletos,
             )
 
+            # 2. Crear Código del Producto
             codigo = CodigoProducto.objects.create(
                 producto=producto,
                 marca=marca,
@@ -233,15 +256,16 @@ def catalogo_crear(request):
                 tipo_codigo=tipo_codigo,
                 codigo_barras=codigo_barras or None,
                 nombre_comercial=nombre_comercial or None,
-                presentacion_cantidad=Decimal(presentacion_cantidad) if presentacion_cantidad else None,
+                presentacion_cantidad=presentacion_cantidad,
                 presentacion_unidad=presentacion_unidad or None,
-                precio_compra=Decimal(precio_compra) if precio_compra else None,
-                precio_venta=Decimal(precio_venta) if precio_venta else None,
-                margen_ganancia_porcentaje=Decimal(margen) if margen else Decimal("100.00"),
-                porcentaje_iva_costo=Decimal(porcentaje_iva_costo) if porcentaje_iva_costo else Decimal("0.00"),
-                activo=True,
+                precio_compra=precio_compra,
+                precio_venta=precio_venta,
+                margen_ganancia_porcentaje=margen,
+                porcentaje_iva_costo=porcentaje_iva_costo,
+                activo=codigo_activo,
             )
 
+            # 3. Guardar Imágenes
             imagenes = request.FILES.getlist("imagenes")
             for imagen in imagenes:
                 ImagenProducto.objects.create(
@@ -254,15 +278,18 @@ def catalogo_crear(request):
             return redirect("inventario_catalogo_detalle", codigo_id=codigo.id)
 
         except ValidationError as e:
-            messages.error(request, e)
-
+            # Atrapa errores de validación (ej. Decimales mal formados)
+            messages.error(request, e.message if hasattr(e, 'message') else e.messages[0])
+            
         except Exception as e:
-            messages.error(request, f"No se pudo crear el producto: {e}")
+            # Al fallar aquí, @transaction.atomic revierte CUALQUIER guardado previo.
+            messages.error(request, f"No se pudo crear el producto: {str(e)}")
 
     return render(request, "inventario/catalogo_crear.html", {
         "categorias": categorias,
         "marcas": marcas,
         "tipos_codigo": CodigoProducto.TIPO_CODIGO_CHOICES,
+        "origenes_producto": Producto.ORIGEN_CHOICES, # Añadido para el template
     })
 
 
