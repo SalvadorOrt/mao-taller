@@ -35,7 +35,6 @@ from .views.fisico import (
     inventario_fisico_detalle,
 )
 
-
 urlpatterns = [
 
     # =====================================================
@@ -46,34 +45,74 @@ urlpatterns = [
     path('usuarios/editar/<int:pk>/', views.gestionar_usuario, name='editar_usuario'),
 
     # =====================================================
-    # INVENTARIO
+    # DASHBOARD INVENTARIO
     # =====================================================
-    path('inventario/', dashboard_inventario, name='inventario_dashboard'),
+    path('', dashboard_inventario, name='inventario_dashboard'),
 
-    # Catálogo
-    path('inventario/catalogo/', catalogo_lista, name='inventario_catalogo'),
-    path('inventario/catalogo/nuevo/', catalogo_crear, name='inventario_catalogo_crear'),
-    path('inventario/catalogo/<int:codigo_id>/', catalogo_detalle, name='inventario_catalogo_detalle'),
-    path('inventario/catalogo/<int:codigo_id>/editar/', catalogo_editar_codigo, name='inventario_catalogo_editar'),
-    path('inventario/catalogo/<int:codigo_id>/toggle/', catalogo_toggle_codigo, name='inventario_catalogo_toggle'),
-    path('inventario/catalogo/producto/<int:producto_id>/nuevo-codigo/', catalogo_crear_codigo_equivalente, name='inventario_catalogo_nuevo_codigo'),
+    # =====================================================
+    # CATÁLOGO
+    # =====================================================
+    path('catalogo/', catalogo_lista, name='inventario_catalogo'),
+    path('catalogo/nuevo/', catalogo_crear, name='inventario_catalogo_crear'),
+    path('catalogo/<int:codigo_id>/', catalogo_detalle, name='inventario_catalogo_detalle'),
+    path('catalogo/<int:codigo_id>/editar/', catalogo_editar_codigo, name='inventario_catalogo_editar'),
+    path('catalogo/<int:codigo_id>/toggle/', catalogo_toggle_codigo, name='inventario_catalogo_toggle'),
+    path(
+        'catalogo/producto/<int:producto_id>/nuevo-codigo/',
+        catalogo_crear_codigo_equivalente,
+        name='inventario_catalogo_nuevo_codigo'
+    ),
 
-    # Stock
-    path('inventario/stock/', stock_lista, name='inventario_stock'),
-    path('inventario/stock/alertas/', stock_alertas, name='inventario_stock_alertas'),
-    path('inventario/stock/producto/<int:codigo_id>/', stock_detalle_producto, name='inventario_stock_detalle_producto'),
-    path('inventario/stock/<int:stock_id>/ubicacion/', stock_editar_ubicacion, name='inventario_stock_editar_ubicacion'),
+    # =====================================================
+    # STOCK
+    # =====================================================
+    path('stock/', stock_lista, name='inventario_stock'),
+    path('stock/alertas/', stock_alertas, name='inventario_stock_alertas'),
+    path(
+        'stock/producto/<int:codigo_id>/',
+        stock_detalle_producto,
+        name='inventario_stock_detalle_producto'
+    ),
+    path(
+        'stock/<int:stock_id>/ubicacion/',
+        stock_editar_ubicacion,
+        name='inventario_stock_editar_ubicacion'
+    ),
 
-    # Movimientos
-    path('inventario/movimientos/', movimiento_lista, name='inventario_movimientos'),
-    path('inventario/movimientos/nuevo/', movimiento_crear, name='inventario_movimiento_crear'),
-    path('inventario/movimientos/<int:movimiento_id>/', movimiento_detalle, name='inventario_movimiento_detalle'),
-    path('inventario/movimientos/producto/<int:codigo_id>/', movimiento_historial_producto, name='inventario_historial_producto'),
-    path('inventario/movimientos/producto/<int:codigo_id>/entrada/', movimiento_entrada_rapida, name='inventario_movimiento_entrada_rapida'),
-    path('inventario/movimientos/producto/<int:codigo_id>/salida/', movimiento_salida_rapida, name='inventario_movimiento_salida_rapida'),
+    # =====================================================
+    # MOVIMIENTOS
+    # =====================================================
+    path('movimientos/', movimiento_lista, name='inventario_movimientos'),
+    path('movimientos/nuevo/', movimiento_crear, name='inventario_movimiento_crear'),
+    path(
+        'movimientos/<int:movimiento_id>/',
+        movimiento_detalle,
+        name='inventario_movimiento_detalle'
+    ),
+    path(
+        'movimientos/producto/<int:codigo_id>/',
+        movimiento_historial_producto,
+        name='inventario_historial_producto'
+    ),
+    path(
+        'movimientos/producto/<int:codigo_id>/entrada/',
+        movimiento_entrada_rapida,
+        name='inventario_movimiento_entrada_rapida'
+    ),
+    path(
+        'movimientos/producto/<int:codigo_id>/salida/',
+        movimiento_salida_rapida,
+        name='inventario_movimiento_salida_rapida'
+    ),
 
-    # Inventario físico
-    path('inventario/fisico/', inventario_fisico_lista, name='inventario_fisico'),
-    path('inventario/fisico/nuevo/', inventario_fisico_crear, name='inventario_fisico_crear'),
-    path('inventario/fisico/<int:inventario_id>/', inventario_fisico_detalle, name='inventario_fisico_detalle'),
+    # =====================================================
+    # INVENTARIO FÍSICO
+    # =====================================================
+    path('fisico/', inventario_fisico_lista, name='inventario_fisico'),
+    path('fisico/nuevo/', inventario_fisico_crear, name='inventario_fisico_crear'),
+    path(
+        'fisico/<int:inventario_id>/',
+        inventario_fisico_detalle,
+        name='inventario_fisico_detalle'
+    ),
 ]
