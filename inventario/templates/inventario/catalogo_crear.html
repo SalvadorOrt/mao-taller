@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .form-card {
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .form-section {
+        background: #fbfbfd;
+        border: 1px solid var(--border-soft);
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 20px;
+    }
+
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .form-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+    }
+
+    .field-label {
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="form-card">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div>
+            <h2 style="margin:0; color:var(--primary); font-weight:800;">
+                Nuevo Repuesto
+            </h2>
+            <p style="margin:4px 0 0 0; color:var(--muted); font-size:0.9rem;">
+                Crear producto base, código comercial y código de barras.
+            </p>
+        </div>
+
+        <a href="{% url 'inventario_catalogo' %}" class="btn-login" style="width:auto;">
+            Volver
+        </a>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <h4 style="margin:0 0 15px 0;">Datos del producto</h4>
+
+            <div class="form-grid-2">
+                <div>
+                    <label class="field-label">Categoría</label>
+                    <select name="categoria" class="form-control-apple" required>
+                        <option value="">Seleccione categoría...</option>
+                        {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="field-label">Marca</label>
+                    <select name="marca" class="form-control-apple" required>
+                        <option value="">Seleccione marca...</option>
+                        {% for marca in marcas %}
+                            <option value="{{ marca.id }}">{{ marca.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:15px;">
+                <label class="field-label">Nombre base del repuesto</label>
+                <input type="text"
+                       name="nombre_base"
+                       class="form-control-apple"
+                       placeholder="Ej. Filtro de aceite Toyota Hilux"
+                       required
+                       style="text-transform:uppercase;">
+            </div>
+
+            <div style="margin-top:15px;">
+                <label class="field-label">Descripción</label>
+                <textarea name="descripcion"
+                          class="form-control-apple"
+                          placeholder="Descripción opcional..."
+                          style="min-height:80px;"></textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 style="margin:0 0 15px 0;">Código comercial</h4>
+
+            <div class="form-grid-2">
+                <div>
+                    <label class="field-label">Código del repuesto</label>
+                    <input type="text"
+                           name="codigo"
+                           class="form-control-apple"
+                           placeholder="Ej. WIX-51394"
+                           required
+                           style="text-transform:uppercase; font-weight:bold;">
+                </div>
+
+                <div>
+                    <label class="field-label">Código de barras</label>
+                    <input type="text"
+                           name="codigo_barras"
+                           class="form-control-apple"
+                           placeholder="Escanee o escriba el barcode"
+                           autofocus>
+                </div>
+            </div>
+
+            <div style="margin-top:15px;">
+                <label class="field-label">Nombre comercial</label>
+                <input type="text"
+                       name="nombre_comercial"
+                       class="form-control-apple"
+                       placeholder="Nombre visible en mostrador o factura">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 style="margin:0 0 15px 0;">Precios</h4>
+
+            <div class="form-grid-3">
+                <div>
+                    <label class="field-label">Precio compra</label>
+                    <input type="number"
+                           name="precio_compra"
+                           class="form-control-apple"
+                           step="0.01"
+                           min="0"
+                           placeholder="0.00">
+                </div>
+
+                <div>
+                    <label class="field-label">Precio venta</label>
+                    <input type="number"
+                           name="precio_venta"
+                           class="form-control-apple"
+                           step="0.01"
+                           min="0"
+                           placeholder="0.00">
+                </div>
+
+                <div>
+                    <label class="field-label">Margen %</label>
+                    <input type="number"
+                           name="margen_ganancia_porcentaje"
+                           class="form-control-apple"
+                           step="0.01"
+                           min="0"
+                           value="100.00">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'inventario_catalogo' %}" class="btn-login" style="width:auto;">
+                Cancelar
+            </a>
+
+            <button type="submit" class="btn-login primary" style="width:auto; padding:0 22px;">
+                Guardar Repuesto
+            </button>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}
