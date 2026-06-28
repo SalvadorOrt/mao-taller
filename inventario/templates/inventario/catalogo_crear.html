@@ -3,8 +3,6 @@
 
 {% block content %}
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
 <style>
     .form-card {
         background: #fff;
@@ -52,15 +50,12 @@
         margin-top: 20px;
     }
 
-    .select2-container .select2-selection--single {
-        height: 42px;
-        border-radius: 12px;
-        border: 1px solid var(--border-soft);
-        padding: 6px 8px;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 40px;
+    .checkbox-group {
+        margin-top: 15px;
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
     .preview-grid {
@@ -77,6 +72,75 @@
         border-radius: 12px;
         border: 1px solid var(--border-soft);
         background: #fff;
+    }
+
+    .combo-wrap {
+        position: relative;
+        width: 100%;
+    }
+
+    .combo-input {
+        width: 100%;
+        padding-right: 35px;
+    }
+
+    .combo-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #86868b;
+        font-size: 13px;
+        pointer-events: none;
+    }
+
+    .combo-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #d2d2d7;
+        border-radius: 10px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.14);
+        max-height: 220px;
+        overflow-y: auto;
+        z-index: 9999;
+    }
+
+    .combo-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f5f5f7;
+    }
+
+    .combo-item:hover,
+    .combo-item.active {
+        background: #f5f5f7;
+    }
+
+    .combo-code {
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
+
+    .combo-title {
+        font-size: 13px;
+        color: #1d1d1f;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .combo-empty {
+        display: none;
+        padding: 12px;
+        font-size: 12px;
+        color: #86868b;
+        text-align: center;
     }
 </style>
 
@@ -101,25 +165,59 @@
         {% csrf_token %}
 
         <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Datos del producto</h4>
+            <h4 style="margin:0 0 15px 0;">Datos del producto base</h4>
 
-            <div class="form-grid-2">
+            <div class="form-grid-3">
                 <div>
-                    <label class="field-label">Categoría</label>
-                    <select name="categoria" class="form-control-apple select2" required>
-                        <option value="">Seleccione categoría...</option>
-                        {% for categoria in categorias %}
-                            <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
-                        {% endfor %}
-                    </select>
+                    <label class="field-label">SKU Interno (Opcional)</label>
+                    <input type="text"
+                           name="sku_interno"
+                           class="form-control-apple"
+                           placeholder="Dejar vacío para autogenerar"
+                           style="text-transform:uppercase;">
                 </div>
 
                 <div>
-                    <label class="field-label">Marca</label>
-                    <select name="marca" class="form-control-apple select2" required>
-                        <option value="">Seleccione marca...</option>
-                        {% for marca in marcas %}
-                            <option value="{{ marca.id }}">{{ marca.nombre }}</option>
+                    <label class="field-label">Categoría</label>
+
+                    <div class="combo-wrap">
+                        <input type="text"
+                               id="categoria_visual"
+                               class="form-control-apple combo-input"
+                               placeholder="Buscar categoría..."
+                               autocomplete="off"
+                               required
+                               oninput="filtrarCombo('categoria')"
+                               onfocus="mostrarCombo('categoria')"
+                               onkeydown="manejarTeclasCombo(event, 'categoria')">
+
+                        <span class="combo-icon">⌕</span>
+
+                        <input type="hidden" name="categoria" id="categoria_id" required>
+
+                        <div id="categoria_dropdown" class="combo-dropdown">
+                            {% for categoria in categorias %}
+                                <div class="combo-item"
+                                     data-id="{{ categoria.id }}"
+                                     data-nombre="{{ categoria.nombre }}"
+                                     onclick="seleccionarCombo('categoria', this)">
+                                    <div class="combo-code">Categoría</div>
+                                    <div class="combo-title">{{ categoria.nombre }}</div>
+                                </div>
+                            {% endfor %}
+
+                            <div id="categoria_empty" class="combo-empty">
+                                Sin coincidencias
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">Origen de creación</label>
+                    <select name="origen" class="form-control-apple">
+                        {% for valor, texto in origenes_producto %}
+                            <option value="{{ valor }}">{{ texto }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -143,12 +241,15 @@
                           style="min-height:80px;"></textarea>
             </div>
 
-            <div style="margin-top:15px; display:flex; gap:18px; flex-wrap:wrap;">
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="producto_activo" checked>
+                    Producto Activo
+                </label>
                 <label>
                     <input type="checkbox" name="datos_incompletos">
                     Datos incompletos
                 </label>
-
                 <label>
                     <input type="checkbox" name="descontinuado">
                     Descontinuado
@@ -160,6 +261,42 @@
             <h4 style="margin:0 0 15px 0;">Código comercial</h4>
 
             <div class="form-grid-3">
+                <div>
+                    <label class="field-label">Marca</label>
+
+                    <div class="combo-wrap">
+                        <input type="text"
+                               id="marca_visual"
+                               class="form-control-apple combo-input"
+                               placeholder="Buscar marca..."
+                               autocomplete="off"
+                               required
+                               oninput="filtrarCombo('marca')"
+                               onfocus="mostrarCombo('marca')"
+                               onkeydown="manejarTeclasCombo(event, 'marca')">
+
+                        <span class="combo-icon">⌕</span>
+
+                        <input type="hidden" name="marca" id="marca_id" required>
+
+                        <div id="marca_dropdown" class="combo-dropdown">
+                            {% for marca in marcas %}
+                                <div class="combo-item"
+                                     data-id="{{ marca.id }}"
+                                     data-nombre="{{ marca.nombre }}"
+                                     onclick="seleccionarCombo('marca', this)">
+                                    <div class="combo-code">Marca</div>
+                                    <div class="combo-title">{{ marca.nombre }}</div>
+                                </div>
+                            {% endfor %}
+
+                            <div id="marca_empty" class="combo-empty">
+                                Sin coincidencias
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label class="field-label">Tipo de código</label>
                     <select name="tipo_codigo" class="form-control-apple">
@@ -178,7 +315,9 @@
                            required
                            style="text-transform:uppercase; font-weight:bold;">
                 </div>
+            </div>
 
+            <div class="form-grid-2" style="margin-top:15px;">
                 <div>
                     <label class="field-label">Código de barras</label>
                     <input type="text"
@@ -187,14 +326,20 @@
                            placeholder="Escanee o escriba el barcode"
                            autofocus>
                 </div>
+                <div>
+                    <label class="field-label">Nombre comercial (Opcional)</label>
+                    <input type="text"
+                           name="nombre_comercial"
+                           class="form-control-apple"
+                           placeholder="Nombre visible en mostrador o factura">
+                </div>
             </div>
 
-            <div style="margin-top:15px;">
-                <label class="field-label">Nombre comercial</label>
-                <input type="text"
-                       name="nombre_comercial"
-                       class="form-control-apple"
-                       placeholder="Nombre visible en mostrador o factura">
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="codigo_activo" checked>
+                    Código Activo para la venta
+                </label>
             </div>
         </div>
 
@@ -282,7 +427,7 @@
         </div>
 
         <div class="form-actions">
-            <a href="{% url 'inventario_catalogo' %}" class="btn-login" style="width:auto;">
+            <a href="{% url 'inventario_catalogo' %}" class="btn-login" style="width:auto; text-decoration:none;">
                 Cancelar
             </a>
 
@@ -294,33 +439,223 @@
     </form>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
-    $(document).ready(function () {
-        $('.select2').select2({
-            width: '100%',
-            placeholder: 'Buscar...',
-            allowClear: true
+    const comboIndex = {
+        categoria: -1,
+        marca: -1
+    };
+
+    function mostrarCombo(tipo) {
+        document.getElementById(`${tipo}_dropdown`).style.display = 'block';
+        filtrarCombo(tipo);
+    }
+
+    function filtrarCombo(tipo) {
+        const input = document.getElementById(`${tipo}_visual`);
+        const hidden = document.getElementById(`${tipo}_id`);
+        const dropdown = document.getElementById(`${tipo}_dropdown`);
+        const items = dropdown.querySelectorAll('.combo-item');
+        const empty = document.getElementById(`${tipo}_empty`);
+
+        const filtro = input.value.toLowerCase().trim();
+
+        hidden.value = '';
+        dropdown.style.display = 'block';
+        comboIndex[tipo] = -1;
+
+        let visibles = 0;
+
+        items.forEach(item => {
+            const nombre = item.dataset.nombre.toLowerCase();
+
+            if (nombre.includes(filtro)) {
+                item.style.display = 'block';
+                item.classList.remove('active');
+                visibles++;
+            } else {
+                item.style.display = 'none';
+                item.classList.remove('active');
+            }
         });
+
+        empty.style.display = visibles === 0 ? 'block' : 'none';
+    }
+
+    function seleccionarCombo(tipo, elemento) {
+        document.getElementById(`${tipo}_visual`).value = elemento.dataset.nombre;
+        document.getElementById(`${tipo}_id`).value = elemento.dataset.id;
+        document.getElementById(`${tipo}_dropdown`).style.display = 'none';
+        comboIndex[tipo] = -1;
+    }
+
+    function manejarTeclasCombo(event, tipo) {
+        const dropdown = document.getElementById(`${tipo}_dropdown`);
+        const visibles = Array.from(dropdown.querySelectorAll('.combo-item'))
+            .filter(item => item.style.display !== 'none');
+
+        if (event.key === 'Escape') {
+            dropdown.style.display = 'none';
+            comboIndex[tipo] = -1;
+            return;
+        }
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+
+            if (visibles.length === 0) return;
+
+            comboIndex[tipo]++;
+
+            if (comboIndex[tipo] >= visibles.length) {
+                comboIndex[tipo] = 0;
+            }
+
+            marcarActivo(visibles, comboIndex[tipo]);
+        }
+
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+
+            if (visibles.length === 0) return;
+
+            comboIndex[tipo]--;
+
+            if (comboIndex[tipo] < 0) {
+                comboIndex[tipo] = visibles.length - 1;
+            }
+
+            marcarActivo(visibles, comboIndex[tipo]);
+        }
+
+        if (event.key === 'Enter') {
+            if (comboIndex[tipo] >= 0 && visibles[comboIndex[tipo]]) {
+                event.preventDefault();
+                seleccionarCombo(tipo, visibles[comboIndex[tipo]]);
+            }
+        }
+    }
+
+    function marcarActivo(items, index) {
+        items.forEach(item => item.classList.remove('active'));
+
+        const item = items[index];
+
+        if (item) {
+            item.classList.add('active');
+            item.scrollIntoView({
+                block: 'nearest'
+            });
+        }
+    }
+
+    document.addEventListener('click', function (event) {
+        ['categoria', 'marca'].forEach(tipo => {
+            const wrap = document.getElementById(`${tipo}_dropdown`).closest('.combo-wrap');
+
+            if (!wrap.contains(event.target)) {
+                document.getElementById(`${tipo}_dropdown`).style.display = 'none';
+                comboIndex[tipo] = -1;
+            }
+        });
+    });
+
+    document.querySelector('form').addEventListener('submit', function (event) {
+        const categoriaId = document.getElementById('categoria_id').value;
+        const marcaId = document.getElementById('marca_id').value;
+
+        if (!categoriaId) {
+            event.preventDefault();
+            alert('Debe seleccionar una categoría válida.');
+            document.getElementById('categoria_visual').focus();
+            return;
+        }
+
+        if (!marcaId) {
+            event.preventDefault();
+            alert('Debe seleccionar una marca válida.');
+            document.getElementById('marca_visual').focus();
+            return;
+        }
     });
 
     const inputImagenes = document.getElementById('imagenes');
     const preview = document.getElementById('preview_imagenes');
+    const dt = new DataTransfer();
 
     if (inputImagenes) {
         inputImagenes.addEventListener('change', function () {
-            preview.innerHTML = '';
-
             Array.from(this.files).forEach(file => {
-                if (!file.type.startsWith('image/')) return;
-
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                preview.appendChild(img);
+                if (file.type.startsWith('image/')) {
+                    dt.items.add(file);
+                }
             });
+
+            this.files = dt.files;
+            actualizarPreview();
         });
+    }
+
+    function actualizarPreview() {
+        preview.innerHTML = '';
+
+        Array.from(inputImagenes.files).forEach((file, index) => {
+            const imgContainer = document.createElement('div');
+            imgContainer.style.position = 'relative';
+            imgContainer.style.display = 'inline-block';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+
+            const btnEliminar = document.createElement('button');
+            btnEliminar.innerHTML = '×';
+            btnEliminar.style.position = 'absolute';
+            btnEliminar.style.top = '-5px';
+            btnEliminar.style.right = '-5px';
+            btnEliminar.style.background = '#ff3b30';
+            btnEliminar.style.color = 'white';
+            btnEliminar.style.border = 'none';
+            btnEliminar.style.borderRadius = '50%';
+            btnEliminar.style.width = '20px';
+            btnEliminar.style.height = '20px';
+            btnEliminar.style.cursor = 'pointer';
+            btnEliminar.style.fontSize = '14px';
+            btnEliminar.style.lineHeight = '1';
+            btnEliminar.style.padding = '0';
+            btnEliminar.style.display = 'flex';
+            btnEliminar.style.alignItems = 'center';
+            btnEliminar.style.justifyContent = 'center';
+            btnEliminar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+
+            btnEliminar.onclick = function(e) {
+                e.preventDefault();
+                eliminarArchivo(index);
+            };
+
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(btnEliminar);
+            preview.appendChild(imgContainer);
+        });
+    }
+
+    function eliminarArchivo(index) {
+        const dtNuevo = new DataTransfer();
+        const files = inputImagenes.files;
+
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                dtNuevo.items.add(files[i]);
+            }
+        }
+
+        inputImagenes.files = dtNuevo.files;
+
+        dt.items.clear();
+
+        for (let i = 0; i < dtNuevo.files.length; i++) {
+            dt.items.add(dtNuevo.files[i]);
+        }
+
+        actualizarPreview();
     }
 </script>
 
