@@ -27,6 +27,13 @@ from ..models import (
     StockSucursal,
     ImagenProducto,
 )
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+
+from inventario.forms import ProductoForm, CodigoProductoFormSet
+from inventario.models import CodigoProducto, ImagenProducto
 
 def precio_secreto(precio):
     if precio is None:
@@ -184,111 +191,100 @@ def catalogo_detalle(request, codigo_id):
         "movimientos": movimientos,
         "precio_secreto": precio_secreto(codigo.precio_venta),
     })
+
+
+
+
 @login_required
-@transaction.atomic  # <--- CRÍTICO: Todo o nada.
+@transaction.atomic
 def catalogo_crear(request):
-    categorias = Categoria.objects.all().order_by("nombre")
-    marcas = MarcaRepuesto.objects.all().order_by("nombre")
 
     if request.method == "POST":
-        # Relaciones
-        categoria_id = request.POST.get("categoria")
-        marca_id = request.POST.get("marca")
 
-        # Datos del Producto
-        sku_interno = request.POST.get("sku_interno", "").strip()
-        nombre_base = request.POST.get("nombre_base", "").strip()
-        descripcion = request.POST.get("descripcion", "").strip()
-        
-        # Booleanos del Producto
-        datos_incompletos = request.POST.get("datos_incompletos") == "on"
-        descontinuado = request.POST.get("descontinuado") == "on"
-        producto_activo = request.POST.get("producto_activo") != "off" # Por defecto True si no viene 'off'
+        producto_form = ProductoForm(request.POST)
 
-        # Datos del Código
-        codigo_txt = request.POST.get("codigo", "").strip()
-        tipo_codigo = request.POST.get("tipo_codigo", "aftermarket").strip()
-        codigo_barras = request.POST.get("codigo_barras", "").strip()
-        nombre_comercial = request.POST.get("nombre_comercial", "").strip()
-        presentacion_unidad = request.POST.get("presentacion_unidad", "").strip()
-        
-        # Booleano del Código
-        codigo_activo = request.POST.get("codigo_activo") != "off"
+        codigo_formset = CodigoProductoFormSet(
+            request.POST,
+            request.FILES,
+            queryset=CodigoProducto.objects.none(),
+            prefix="codigos"
+        )
 
-        try:
-            # Validación segura de Decimales
-            def safe_decimal(value, default=None):
-                if not value:
-                    return default
-                try:
-                    return Decimal(value.strip())
-                except InvalidOperation:
-                    raise ValidationError(f"El valor '{value}' no es un número válido.")
+        if producto_form.is_valid() and codigo_formset.is_valid():
 
-            presentacion_cantidad = safe_decimal(request.POST.get("presentacion_cantidad"))
-            precio_compra = safe_decimal(request.POST.get("precio_compra"))
-            precio_venta = safe_decimal(request.POST.get("precio_venta"))
-            margen = safe_decimal(request.POST.get("margen_ganancia_porcentaje"), Decimal("100.00"))
-            porcentaje_iva_costo = safe_decimal(request.POST.get("porcentaje_iva_costo"), Decimal("0.00"))
+            producto = producto_form.save(commit=False)
 
-            categoria = get_object_or_404(Categoria, id=categoria_id)
-            marca = get_object_or_404(MarcaRepuesto, id=marca_id)
+            # SKU automático: NO se asigna aquí.
+            # Origen formal de bodega.
+            producto.origen = "BODEGA"
 
-            # 1. Crear Producto
-            producto = Producto.objects.create(
-                sku_interno=sku_interno or "", # Si viene vacío, el modelo autogenera
-                categoria=categoria,
-                nombre_base=nombre_base,
-                descripcion=descripcion or None,
-                origen="BODEGA", # FIJADO DIRECTAMENTE A BODEGA
-                activo=producto_activo,
-                descontinuado=descontinuado,
-                datos_incompletos=datos_incompletos,
-            )
+            producto.save()
 
-            # 2. Crear Código del Producto
-            codigo = CodigoProducto.objects.create(
-                producto=producto,
-                marca=marca,
-                codigo=codigo_txt,
-                tipo_codigo=tipo_codigo,
-                codigo_barras=codigo_barras or None,
-                nombre_comercial=nombre_comercial or None,
-                presentacion_cantidad=presentacion_cantidad,
-                presentacion_unidad=presentacion_unidad or None,
-                precio_compra=precio_compra,
-                precio_venta=precio_venta,
-                margen_ganancia_porcentaje=margen,
-                porcentaje_iva_costo=porcentaje_iva_costo,
-                activo=codigo_activo,
-            )
+            codigos_creados = []
 
-            # 3. Guardar Imágenes
-            imagenes = request.FILES.getlist("imagenes")
-            for imagen in imagenes:
-                ImagenProducto.objects.create(
-                    codigo_producto=codigo,
-                    imagen=imagen,
-                    descripcion=f"Imagen de {codigo.codigo}",
+            for index, codigo_form in enumerate(codigo_formset):
+
+                if not codigo_form.cleaned_data:
+                    continue
+
+                if codigo_form.cleaned_data.get("DELETE"):
+                    continue
+
+                codigo = codigo_form.save(commit=False)
+                codigo.producto = producto
+                codigo.save()
+
+                codigos_creados.append(codigo)
+
+                imagenes = request.FILES.getlist(
+                    f"imagenes_codigo_{index}"
                 )
 
-            messages.success(request, "Producto creado correctamente.")
-            return redirect("inventario_catalogo_detalle", codigo_id=codigo.id)
+                for imagen in imagenes:
+                    ImagenProducto.objects.create(
+                        codigo_producto=codigo,
+                        imagen=imagen,
+                        descripcion=f"Imagen de {codigo.codigo}",
+                    )
 
-        except ValidationError as e:
-            # Atrapa errores de validación (ej. Decimales mal formados)
-            messages.error(request, e.message if hasattr(e, 'message') else e.messages[0])
-            
-        except Exception as e:
-            # Al fallar aquí, @transaction.atomic revierte CUALQUIER guardado previo.
-            messages.error(request, f"No se pudo crear el producto: {str(e)}")
+            if not codigos_creados:
+                messages.error(
+                    request,
+                    "Debe agregar al menos un código comercial."
+                )
+                raise ValueError("Debe agregar al menos un código comercial.")
 
-    return render(request, "inventario/catalogo_crear.html", {
-        "categorias": categorias,
-        "marcas": marcas,
-        "tipos_codigo": CodigoProducto.TIPO_CODIGO_CHOICES,
-    })
+            messages.success(
+                request,
+                "Producto creado correctamente."
+            )
 
+            return redirect(
+                "inventario_catalogo_detalle",
+                codigo_id=codigos_creados[0].id
+            )
+
+        messages.error(
+            request,
+            "Revise los datos ingresados."
+        )
+
+    else:
+        producto_form = ProductoForm()
+
+        codigo_formset = CodigoProductoFormSet(
+            queryset=CodigoProducto.objects.none(),
+            prefix="codigos"
+        )
+
+    return render(
+        request,
+        "inventario/catalogo_crear.html",
+        {
+            "producto_form": producto_form,
+            "codigo_formset": codigo_formset,
+        }
+    )
 @login_required
 def catalogo_editar_codigo(request, codigo_id):
     codigo = get_object_or_404(

@@ -3,6 +3,8 @@
 
 {% block content %}
 
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <style>
     .form-card {
         background: #fff;
@@ -10,7 +12,7 @@
         border-radius: 18px;
         padding: 24px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-        max-width: 1000px;
+        max-width: 1100px;
         margin: 0 auto;
     }
 
@@ -58,6 +60,28 @@
         align-items: center;
     }
 
+    .codigo-card {
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+        position: relative;
+    }
+
+    .codigo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    .codigo-title {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 0.9rem;
+    }
+
     .preview-grid {
         display: flex;
         gap: 10px;
@@ -74,73 +98,63 @@
         background: #fff;
     }
 
-    .combo-wrap {
-        position: relative;
-        width: 100%;
-    }
-
-    .combo-input {
-        width: 100%;
-        padding-right: 35px;
-    }
-
-    .combo-icon {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #86868b;
-        font-size: 13px;
-        pointer-events: none;
-    }
-
-    .combo-dropdown {
-        display: none;
-        position: absolute;
-        top: calc(100% + 5px);
-        left: 0;
-        right: 0;
+    .select2-container--default .select2-selection--single {
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid var(--border-soft);
         background: #fff;
+        display: flex;
+        align-items: center;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #1d1d1f;
+        font-size: 13px;
+        padding-left: 12px;
+        line-height: 42px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 42px;
+        right: 8px;
+    }
+
+    .select2-dropdown {
         border: 1px solid #d2d2d7;
         border-radius: 10px;
         box-shadow: 0 8px 22px rgba(0,0,0,0.14);
-        max-height: 220px;
-        overflow-y: auto;
-        z-index: 9999;
+        overflow: hidden;
     }
 
-    .combo-item {
+    .select2-search--dropdown {
+        padding: 10px;
+        background: #fff;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 9px 12px;
+        outline: none;
+        font-size: 13px;
+    }
+
+    .select2-results__option {
         padding: 10px 12px;
-        cursor: pointer;
+        font-size: 13px;
         border-bottom: 1px solid #f5f5f7;
     }
 
-    .combo-item:hover,
-    .combo-item.active {
+    .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
         background: #f5f5f7;
-    }
-
-    .combo-code {
-        font-size: 10px;
-        font-weight: 800;
-        color: var(--primary);
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-    }
-
-    .combo-title {
-        font-size: 13px;
         color: #1d1d1f;
-        font-weight: 600;
-        margin-top: 2px;
     }
 
-    .combo-empty {
-        display: none;
-        padding: 12px;
+    .errorlist {
+        color: #ff3b30;
         font-size: 12px;
-        color: #86868b;
-        text-align: center;
+        margin: 5px 0 0 0;
+        padding-left: 18px;
     }
 </style>
 
@@ -152,7 +166,7 @@
                 Nuevo Repuesto
             </h2>
             <p style="margin:4px 0 0 0; color:var(--muted); font-size:0.9rem;">
-                Crear producto base, código comercial, barcode, presentación e imágenes.
+                Crear producto base con uno o varios códigos comerciales.
             </p>
         </div>
 
@@ -167,263 +181,182 @@
         <div class="form-section">
             <h4 style="margin:0 0 15px 0;">Datos del producto base</h4>
 
-            <div class="form-grid-3">
+            <div class="form-grid-2">
                 <div>
-                    <label class="field-label">SKU Interno (Opcional)</label>
-                    <input type="text"
-                           name="sku_interno"
-                           class="form-control-apple"
-                           placeholder="Dejar vacío para autogenerar"
-                           style="text-transform:uppercase;">
+                    <label class="field-label">{{ producto_form.categoria.label }}</label>
+                    {{ producto_form.categoria }}
+                    {{ producto_form.categoria.errors }}
                 </div>
 
                 <div>
-                    <label class="field-label">Categoría</label>
-
-                    <div class="combo-wrap">
-                        <input type="text"
-                               id="categoria_visual"
-                               class="form-control-apple combo-input"
-                               placeholder="Buscar categoría..."
-                               autocomplete="off"
-                               required
-                               oninput="filtrarCombo('categoria')"
-                               onfocus="mostrarCombo('categoria')"
-                               onkeydown="manejarTeclasCombo(event, 'categoria')">
-
-                        <span class="combo-icon">⌕</span>
-
-                        <input type="hidden" name="categoria" id="categoria_id" required>
-
-                        <div id="categoria_dropdown" class="combo-dropdown">
-                            {% for categoria in categorias %}
-                                <div class="combo-item"
-                                     data-id="{{ categoria.id }}"
-                                     data-nombre="{{ categoria.nombre }}"
-                                     onclick="seleccionarCombo('categoria', this)">
-                                    <div class="combo-code">Categoría</div>
-                                    <div class="combo-title">{{ categoria.nombre }}</div>
-                                </div>
-                            {% endfor %}
-
-                            <div id="categoria_empty" class="combo-empty">
-                                Sin coincidencias
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="field-label">Origen de creación</label>
-                    <select name="origen" class="form-control-apple">
-                        {% for valor, texto in origenes_producto %}
-                            <option value="{{ valor }}">{{ texto }}</option>
-                        {% endfor %}
-                    </select>
+                    <label class="field-label">{{ producto_form.nombre_base.label }}</label>
+                    {{ producto_form.nombre_base }}
+                    {{ producto_form.nombre_base.errors }}
                 </div>
             </div>
 
             <div style="margin-top:15px;">
-                <label class="field-label">Nombre base del repuesto</label>
-                <input type="text"
-                       name="nombre_base"
-                       class="form-control-apple"
-                       placeholder="Ej. Filtro de aceite Toyota Hilux"
-                       required
-                       style="text-transform:uppercase;">
-            </div>
-
-            <div style="margin-top:15px;">
-                <label class="field-label">Descripción</label>
-                <textarea name="descripcion"
-                          class="form-control-apple"
-                          placeholder="Descripción opcional..."
-                          style="min-height:80px;"></textarea>
+                <label class="field-label">{{ producto_form.descripcion.label }}</label>
+                {{ producto_form.descripcion }}
+                {{ producto_form.descripcion.errors }}
             </div>
 
             <div class="checkbox-group">
                 <label>
-                    <input type="checkbox" name="producto_activo" checked>
-                    Producto Activo
+                    {{ producto_form.activo }}
+                    Producto activo
                 </label>
+
                 <label>
-                    <input type="checkbox" name="datos_incompletos">
+                    {{ producto_form.datos_incompletos }}
                     Datos incompletos
                 </label>
+
                 <label>
-                    <input type="checkbox" name="descontinuado">
+                    {{ producto_form.descontinuado }}
                     Descontinuado
                 </label>
             </div>
         </div>
 
         <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Código comercial</h4>
-
-            <div class="form-grid-3">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <div>
-                    <label class="field-label">Marca</label>
+                    <h4 style="margin:0;">Códigos comerciales</h4>
+                    <p style="margin:4px 0 0 0; color:var(--muted); font-size:0.85rem;">
+                        Un producto puede tener varios códigos, marcas, presentaciones e imágenes.
+                    </p>
+                </div>
 
-                    <div class="combo-wrap">
-                        <input type="text"
-                               id="marca_visual"
-                               class="form-control-apple combo-input"
-                               placeholder="Buscar marca..."
-                               autocomplete="off"
-                               required
-                               oninput="filtrarCombo('marca')"
-                               onfocus="mostrarCombo('marca')"
-                               onkeydown="manejarTeclasCombo(event, 'marca')">
+                <button type="button" class="btn-login" style="width:auto;" onclick="agregarCodigo()">
+                    + Agregar código
+                </button>
+            </div>
 
-                        <span class="combo-icon">⌕</span>
+            {{ codigo_formset.management_form }}
 
-                        <input type="hidden" name="marca" id="marca_id" required>
+            <div id="codigos-container">
+                {% for form in codigo_formset %}
+                    <div class="codigo-card codigo-form">
+                        <div class="codigo-header">
+                            <div class="codigo-title">
+                                Código comercial {{ forloop.counter }}
+                            </div>
 
-                        <div id="marca_dropdown" class="combo-dropdown">
-                            {% for marca in marcas %}
-                                <div class="combo-item"
-                                     data-id="{{ marca.id }}"
-                                     data-nombre="{{ marca.nombre }}"
-                                     onclick="seleccionarCombo('marca', this)">
-                                    <div class="combo-code">Marca</div>
-                                    <div class="combo-title">{{ marca.nombre }}</div>
-                                </div>
-                            {% endfor %}
+                            <button type="button"
+                                    class="btn-login danger small"
+                                    style="width:auto;"
+                                    onclick="eliminarCodigo(this)">
+                                Quitar
+                            </button>
+                        </div>
 
-                            <div id="marca_empty" class="combo-empty">
-                                Sin coincidencias
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+
+                        <div style="display:none;">
+                            {{ form.DELETE }}
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div>
+                                <label class="field-label">{{ form.marca.label }}</label>
+                                {{ form.marca }}
+                                {{ form.marca.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">{{ form.tipo_codigo.label }}</label>
+                                {{ form.tipo_codigo }}
+                                {{ form.tipo_codigo.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">{{ form.codigo.label }}</label>
+                                {{ form.codigo }}
+                                {{ form.codigo.errors }}
                             </div>
                         </div>
+
+                        <div class="form-grid-2" style="margin-top:15px;">
+                            <div>
+                                <label class="field-label">{{ form.codigo_barras.label }}</label>
+                                {{ form.codigo_barras }}
+                                {{ form.codigo_barras.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">{{ form.nombre_comercial.label }}</label>
+                                {{ form.nombre_comercial }}
+                                {{ form.nombre_comercial.errors }}
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2" style="margin-top:15px;">
+                            <div>
+                                <label class="field-label">{{ form.presentacion_cantidad.label }}</label>
+                                {{ form.presentacion_cantidad }}
+                                {{ form.presentacion_cantidad.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">{{ form.presentacion_unidad.label }}</label>
+                                {{ form.presentacion_unidad }}
+                                {{ form.presentacion_unidad.errors }}
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3" style="margin-top:15px;">
+                            <div>
+                                <label class="field-label">{{ form.precio_compra.label }}</label>
+                                {{ form.precio_compra }}
+                                {{ form.precio_compra.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">{{ form.precio_venta.label }}</label>
+                                {{ form.precio_venta }}
+                                {{ form.precio_venta.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">{{ form.margen_ganancia_porcentaje.label }}</label>
+                                {{ form.margen_ganancia_porcentaje }}
+                                {{ form.margen_ganancia_porcentaje.errors }}
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2" style="margin-top:15px;">
+                            <div>
+                                <label class="field-label">{{ form.porcentaje_iva_costo.label }}</label>
+                                {{ form.porcentaje_iva_costo }}
+                                {{ form.porcentaje_iva_costo.errors }}
+                            </div>
+
+                            <div>
+                                <label class="field-label">Imágenes del código</label>
+
+                                <input type="file"
+                                       name="imagenes_codigo_{{ forloop.counter0 }}"
+                                       class="form-control-apple imagenes-codigo"
+                                       accept="image/*"
+                                       multiple
+                                       onchange="previewImagenesCodigo(this)">
+
+                                <div class="preview-grid"></div>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <label>
+                                {{ form.activo }}
+                                Código activo para la venta
+                            </label>
+                        </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="field-label">Tipo de código</label>
-                    <select name="tipo_codigo" class="form-control-apple">
-                        {% for valor, texto in tipos_codigo %}
-                            <option value="{{ valor }}">{{ texto }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">Código del repuesto</label>
-                    <input type="text"
-                           name="codigo"
-                           class="form-control-apple"
-                           placeholder="Ej. WIX-51394"
-                           required
-                           style="text-transform:uppercase; font-weight:bold;">
-                </div>
+                {% endfor %}
             </div>
-
-            <div class="form-grid-2" style="margin-top:15px;">
-                <div>
-                    <label class="field-label">Código de barras</label>
-                    <input type="text"
-                           name="codigo_barras"
-                           class="form-control-apple"
-                           placeholder="Escanee o escriba el barcode"
-                           autofocus>
-                </div>
-                <div>
-                    <label class="field-label">Nombre comercial (Opcional)</label>
-                    <input type="text"
-                           name="nombre_comercial"
-                           class="form-control-apple"
-                           placeholder="Nombre visible en mostrador o factura">
-                </div>
-            </div>
-
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" name="codigo_activo" checked>
-                    Código Activo para la venta
-                </label>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Presentación</h4>
-
-            <div class="form-grid-2">
-                <div>
-                    <label class="field-label">Cantidad presentación</label>
-                    <input type="number"
-                           name="presentacion_cantidad"
-                           class="form-control-apple"
-                           step="0.01"
-                           min="0"
-                           placeholder="Ej. 1, 2, 12">
-                </div>
-
-                <div>
-                    <label class="field-label">Unidad</label>
-                    <input type="text"
-                           name="presentacion_unidad"
-                           class="form-control-apple"
-                           placeholder="UND, PAR, KIT, LT, ML">
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Precios</h4>
-
-            <div class="form-grid-3">
-                <div>
-                    <label class="field-label">Precio compra</label>
-                    <input type="number"
-                           name="precio_compra"
-                           class="form-control-apple"
-                           step="0.01"
-                           min="0"
-                           placeholder="0.00">
-                </div>
-
-                <div>
-                    <label class="field-label">Precio venta</label>
-                    <input type="number"
-                           name="precio_venta"
-                           class="form-control-apple"
-                           step="0.01"
-                           min="0"
-                           placeholder="0.00">
-                </div>
-
-                <div>
-                    <label class="field-label">Margen %</label>
-                    <input type="number"
-                           name="margen_ganancia_porcentaje"
-                           class="form-control-apple"
-                           step="0.01"
-                           min="0"
-                           value="100.00">
-                </div>
-            </div>
-
-            <div style="margin-top:15px;">
-                <label class="field-label">IVA costo %</label>
-                <input type="number"
-                       name="porcentaje_iva_costo"
-                       class="form-control-apple"
-                       step="0.01"
-                       min="0"
-                       value="0.00">
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Imágenes</h4>
-
-            <input type="file"
-                   name="imagenes"
-                   id="imagenes"
-                   class="form-control-apple"
-                   accept="image/*"
-                   multiple>
-
-            <div id="preview_imagenes" class="preview-grid"></div>
         </div>
 
         <div class="form-actions">
@@ -435,170 +368,203 @@
                 Guardar Repuesto
             </button>
         </div>
-
     </form>
 </div>
 
+<div id="empty-form-template" style="display:none;">
+    <div class="codigo-card codigo-form">
+        <div class="codigo-header">
+            <div class="codigo-title">
+                Código comercial __NUM__
+            </div>
+
+            <button type="button"
+                    class="btn-login danger small"
+                    style="width:auto;"
+                    onclick="eliminarCodigo(this)">
+                Quitar
+            </button>
+        </div>
+
+        {% for hidden in codigo_formset.empty_form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
+
+        <div style="display:none;">
+            {{ codigo_formset.empty_form.DELETE }}
+        </div>
+
+        <div class="form-grid-3">
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.marca.label }}</label>
+                {{ codigo_formset.empty_form.marca }}
+            </div>
+
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.tipo_codigo.label }}</label>
+                {{ codigo_formset.empty_form.tipo_codigo }}
+            </div>
+
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.codigo.label }}</label>
+                {{ codigo_formset.empty_form.codigo }}
+            </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:15px;">
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.codigo_barras.label }}</label>
+                {{ codigo_formset.empty_form.codigo_barras }}
+            </div>
+
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.nombre_comercial.label }}</label>
+                {{ codigo_formset.empty_form.nombre_comercial }}
+            </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:15px;">
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.presentacion_cantidad.label }}</label>
+                {{ codigo_formset.empty_form.presentacion_cantidad }}
+            </div>
+
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.presentacion_unidad.label }}</label>
+                {{ codigo_formset.empty_form.presentacion_unidad }}
+            </div>
+        </div>
+
+        <div class="form-grid-3" style="margin-top:15px;">
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.precio_compra.label }}</label>
+                {{ codigo_formset.empty_form.precio_compra }}
+            </div>
+
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.precio_venta.label }}</label>
+                {{ codigo_formset.empty_form.precio_venta }}
+            </div>
+
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.margen_ganancia_porcentaje.label }}</label>
+                {{ codigo_formset.empty_form.margen_ganancia_porcentaje }}
+            </div>
+        </div>
+
+        <div class="form-grid-2" style="margin-top:15px;">
+            <div>
+                <label class="field-label">{{ codigo_formset.empty_form.porcentaje_iva_costo.label }}</label>
+                {{ codigo_formset.empty_form.porcentaje_iva_costo }}
+            </div>
+
+            <div>
+                <label class="field-label">Imágenes del código</label>
+
+                <input type="file"
+                       name="imagenes_codigo___prefix__"
+                       class="form-control-apple imagenes-codigo"
+                       accept="image/*"
+                       multiple
+                       onchange="previewImagenesCodigo(this)">
+
+                <div class="preview-grid"></div>
+            </div>
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                {{ codigo_formset.empty_form.activo }}
+                Código activo para la venta
+            </label>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-    const comboIndex = {
-        categoria: -1,
-        marca: -1
-    };
-
-    function mostrarCombo(tipo) {
-        document.getElementById(`${tipo}_dropdown`).style.display = 'block';
-        filtrarCombo(tipo);
-    }
-
-    function filtrarCombo(tipo) {
-        const input = document.getElementById(`${tipo}_visual`);
-        const hidden = document.getElementById(`${tipo}_id`);
-        const dropdown = document.getElementById(`${tipo}_dropdown`);
-        const items = dropdown.querySelectorAll('.combo-item');
-        const empty = document.getElementById(`${tipo}_empty`);
-
-        const filtro = input.value.toLowerCase().trim();
-
-        hidden.value = '';
-        dropdown.style.display = 'block';
-        comboIndex[tipo] = -1;
-
-        let visibles = 0;
-
-        items.forEach(item => {
-            const nombre = item.dataset.nombre.toLowerCase();
-
-            if (nombre.includes(filtro)) {
-                item.style.display = 'block';
-                item.classList.remove('active');
-                visibles++;
-            } else {
-                item.style.display = 'none';
-                item.classList.remove('active');
-            }
-        });
-
-        empty.style.display = visibles === 0 ? 'block' : 'none';
-    }
-
-    function seleccionarCombo(tipo, elemento) {
-        document.getElementById(`${tipo}_visual`).value = elemento.dataset.nombre;
-        document.getElementById(`${tipo}_id`).value = elemento.dataset.id;
-        document.getElementById(`${tipo}_dropdown`).style.display = 'none';
-        comboIndex[tipo] = -1;
-    }
-
-    function manejarTeclasCombo(event, tipo) {
-        const dropdown = document.getElementById(`${tipo}_dropdown`);
-        const visibles = Array.from(dropdown.querySelectorAll('.combo-item'))
-            .filter(item => item.style.display !== 'none');
-
-        if (event.key === 'Escape') {
-            dropdown.style.display = 'none';
-            comboIndex[tipo] = -1;
-            return;
-        }
-
-        if (event.key === 'ArrowDown') {
-            event.preventDefault();
-
-            if (visibles.length === 0) return;
-
-            comboIndex[tipo]++;
-
-            if (comboIndex[tipo] >= visibles.length) {
-                comboIndex[tipo] = 0;
+    function inicializarSelect2(contexto) {
+        $(contexto).find('.select2').each(function () {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('destroy');
             }
 
-            marcarActivo(visibles, comboIndex[tipo]);
-        }
-
-        if (event.key === 'ArrowUp') {
-            event.preventDefault();
-
-            if (visibles.length === 0) return;
-
-            comboIndex[tipo]--;
-
-            if (comboIndex[tipo] < 0) {
-                comboIndex[tipo] = visibles.length - 1;
-            }
-
-            marcarActivo(visibles, comboIndex[tipo]);
-        }
-
-        if (event.key === 'Enter') {
-            if (comboIndex[tipo] >= 0 && visibles[comboIndex[tipo]]) {
-                event.preventDefault();
-                seleccionarCombo(tipo, visibles[comboIndex[tipo]]);
-            }
-        }
-    }
-
-    function marcarActivo(items, index) {
-        items.forEach(item => item.classList.remove('active'));
-
-        const item = items[index];
-
-        if (item) {
-            item.classList.add('active');
-            item.scrollIntoView({
-                block: 'nearest'
+            $(this).select2({
+                width: '100%',
+                placeholder: 'Buscar...',
+                allowClear: true
             });
-        }
+        });
     }
 
-    document.addEventListener('click', function (event) {
-        ['categoria', 'marca'].forEach(tipo => {
-            const wrap = document.getElementById(`${tipo}_dropdown`).closest('.combo-wrap');
-
-            if (!wrap.contains(event.target)) {
-                document.getElementById(`${tipo}_dropdown`).style.display = 'none';
-                comboIndex[tipo] = -1;
-            }
-        });
+    $(document).ready(function () {
+        inicializarSelect2(document);
     });
 
-    document.querySelector('form').addEventListener('submit', function (event) {
-        const categoriaId = document.getElementById('categoria_id').value;
-        const marcaId = document.getElementById('marca_id').value;
+    function agregarCodigo() {
+        const totalFormsInput = document.getElementById('id_codigos-TOTAL_FORMS');
+        const totalForms = parseInt(totalFormsInput.value);
 
-        if (!categoriaId) {
-            event.preventDefault();
-            alert('Debe seleccionar una categoría válida.');
-            document.getElementById('categoria_visual').focus();
+        let template = document.getElementById('empty-form-template').innerHTML;
+
+        template = template.replaceAll('__prefix__', totalForms);
+        template = template.replaceAll('__NUM__', totalForms + 1);
+
+        const container = document.getElementById('codigos-container');
+        container.insertAdjacentHTML('beforeend', template);
+
+        totalFormsInput.value = totalForms + 1;
+
+        const nuevaFila = container.lastElementChild;
+        inicializarSelect2(nuevaFila);
+        actualizarTitulosCodigos();
+    }
+
+    function eliminarCodigo(boton) {
+        const cardsVisibles = Array.from(document.querySelectorAll('.codigo-form'))
+            .filter(card => card.style.display !== 'none');
+
+        if (cardsVisibles.length <= 1) {
+            alert('Debe existir al menos un código comercial.');
             return;
         }
 
-        if (!marcaId) {
-            event.preventDefault();
-            alert('Debe seleccionar una marca válida.');
-            document.getElementById('marca_visual').focus();
-            return;
+        const card = boton.closest('.codigo-form');
+        const deleteInput = card.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+        if (deleteInput) {
+            deleteInput.checked = true;
+            card.style.display = 'none';
+        } else {
+            card.remove();
         }
-    });
 
-    const inputImagenes = document.getElementById('imagenes');
-    const preview = document.getElementById('preview_imagenes');
-    const dt = new DataTransfer();
+        actualizarTitulosCodigos();
+    }
 
-    if (inputImagenes) {
-        inputImagenes.addEventListener('change', function () {
-            Array.from(this.files).forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    dt.items.add(file);
-                }
-            });
+    function actualizarTitulosCodigos() {
+        const cards = Array.from(document.querySelectorAll('.codigo-form'))
+            .filter(card => card.style.display !== 'none');
 
-            this.files = dt.files;
-            actualizarPreview();
+        cards.forEach((card, index) => {
+            const titulo = card.querySelector('.codigo-title');
+            if (titulo) {
+                titulo.textContent = `Código comercial ${index + 1}`;
+            }
         });
     }
 
-    function actualizarPreview() {
+    function previewImagenesCodigo(input) {
+        const preview = input.parentElement.querySelector('.preview-grid');
         preview.innerHTML = '';
 
-        Array.from(inputImagenes.files).forEach((file, index) => {
+        Array.from(input.files).forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                return;
+            }
+
             const imgContainer = document.createElement('div');
             imgContainer.style.position = 'relative';
             imgContainer.style.display = 'inline-block';
@@ -606,56 +572,9 @@
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
 
-            const btnEliminar = document.createElement('button');
-            btnEliminar.innerHTML = '×';
-            btnEliminar.style.position = 'absolute';
-            btnEliminar.style.top = '-5px';
-            btnEliminar.style.right = '-5px';
-            btnEliminar.style.background = '#ff3b30';
-            btnEliminar.style.color = 'white';
-            btnEliminar.style.border = 'none';
-            btnEliminar.style.borderRadius = '50%';
-            btnEliminar.style.width = '20px';
-            btnEliminar.style.height = '20px';
-            btnEliminar.style.cursor = 'pointer';
-            btnEliminar.style.fontSize = '14px';
-            btnEliminar.style.lineHeight = '1';
-            btnEliminar.style.padding = '0';
-            btnEliminar.style.display = 'flex';
-            btnEliminar.style.alignItems = 'center';
-            btnEliminar.style.justifyContent = 'center';
-            btnEliminar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-
-            btnEliminar.onclick = function(e) {
-                e.preventDefault();
-                eliminarArchivo(index);
-            };
-
             imgContainer.appendChild(img);
-            imgContainer.appendChild(btnEliminar);
             preview.appendChild(imgContainer);
         });
-    }
-
-    function eliminarArchivo(index) {
-        const dtNuevo = new DataTransfer();
-        const files = inputImagenes.files;
-
-        for (let i = 0; i < files.length; i++) {
-            if (i !== index) {
-                dtNuevo.items.add(files[i]);
-            }
-        }
-
-        inputImagenes.files = dtNuevo.files;
-
-        dt.items.clear();
-
-        for (let i = 0; i < dtNuevo.files.length; i++) {
-            dt.items.add(dtNuevo.files[i]);
-        }
-
-        actualizarPreview();
     }
 </script>
 
