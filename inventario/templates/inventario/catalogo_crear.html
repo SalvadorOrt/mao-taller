@@ -12,7 +12,7 @@
         border-radius: 18px;
         padding: 24px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-        max-width: 1100px;
+        max-width: 1220px;
         margin: 0 auto;
     }
 
@@ -24,25 +24,51 @@
         margin-bottom: 20px;
     }
 
+    .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: #1d1d1f;
+        font-weight: 800;
+    }
+
+    .section-title span {
+        font-size: 15px;
+    }
+
+    .section-subtitle {
+        margin: 4px 0 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 400;
+    }
+
     .form-grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 15px;
     }
 
-    .form-grid-3 {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 15px;
-    }
-
     .field-label {
-        font-size: 0.75rem;
-        color: var(--muted);
+        font-size: 10px;
+        color: #86868b;
         text-transform: uppercase;
-        font-weight: 700;
+        font-weight: 800;
+        letter-spacing: 0.45px;
         display: block;
         margin-bottom: 5px;
+    }
+
+    .checkbox-group {
+        margin-top: 15px;
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        align-items: center;
+        font-size: 12px;
+        color: #1d1d1f;
+        font-weight: 500;
     }
 
     .form-actions {
@@ -52,55 +78,208 @@
         margin-top: 20px;
     }
 
-    .checkbox-group {
-        margin-top: 15px;
-        display: flex;
-        gap: 18px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-
-    .codigo-card {
-        background: #fff;
-        border: 1px solid var(--border-soft);
+    .catalog-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #e5e5ea;
         border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 14px;
-        position: relative;
+        background: #fff;
     }
 
-    .codigo-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 14px;
+    .catalog-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1180px;
+        background: #fff;
     }
 
-    .codigo-title {
+    .catalog-table thead th {
+        background: #f5f5f7;
+        color: #86868b;
+        font-size: 10px;
         font-weight: 800;
-        color: var(--primary);
-        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.45px;
+        padding: 9px 8px;
+        border-bottom: 1px solid #e5e5ea;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .catalog-table tbody td {
+        padding: 7px 6px;
+        border-bottom: 1px solid #f5f5f7;
+        vertical-align: top;
+    }
+
+    .catalog-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .catalog-table tbody tr:hover {
+        background: #fbfbfd;
+    }
+
+    .row-number {
+        color: #86868b;
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+        padding-top: 16px !important;
+    }
+
+    .form-control-apple,
+    .catalog-table input,
+    .catalog-table select,
+    .catalog-table textarea {
+        font-size: 12px;
+    }
+
+    .catalog-table .form-control-apple {
+        height: 34px;
+        border-radius: 8px;
+        padding: 6px 8px;
+        width: 100%;
+    }
+
+    .compact-number {
+        min-width: 82px;
+    }
+
+    .compact-code {
+        min-width: 125px;
+        text-transform: uppercase;
+        font-weight: 800;
+    }
+
+    .compact-barcode {
+        min-width: 135px;
+    }
+
+    .compact-presentation {
+        min-width: 70px;
+    }
+
+    .image-cell {
+        min-width: 150px;
+    }
+
+    .image-mini-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .image-input-hidden {
+        display: none;
+    }
+
+    .image-upload-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: 8px;
+        border: 1px solid #d2d2d7;
+        background: #fff;
+        color: #1d1d1f;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .image-upload-btn:hover {
+        background: #f5f5f7;
+    }
+
+    .image-count {
+        font-size: 10px;
+        color: #86868b;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
     .preview-grid {
         display: flex;
-        gap: 10px;
+        gap: 5px;
         flex-wrap: wrap;
-        margin-top: 12px;
+        margin-top: 7px;
     }
 
     .preview-grid img {
-        width: 95px;
-        height: 75px;
+        width: 34px;
+        height: 30px;
         object-fit: cover;
-        border-radius: 12px;
-        border: 1px solid var(--border-soft);
+        border-radius: 7px;
+        border: 1px solid #e5e5ea;
         background: #fff;
     }
 
+    .delete-holder {
+        display: none;
+    }
+
+    .row-actions {
+        display: flex;
+        justify-content: center;
+        padding-top: 2px;
+    }
+
+    .btn-row-remove {
+        width: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border-radius: 8px !important;
+    }
+
+    .codigo-activo-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: #1d1d1f;
+        white-space: nowrap;
+        margin-top: 6px;
+    }
+
+    .table-footer-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+    }
+
+    .info-pill {
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+        border-radius: 999px;
+        padding: 7px 11px;
+        font-size: 11px;
+        color: #86868b;
+        font-weight: 700;
+    }
+
+    .errorlist {
+        color: #ff3b30;
+        font-size: 11px;
+        margin: 5px 0 0 0;
+        padding-left: 16px;
+    }
+
+    .select2-container {
+        width: 100% !important;
+        font-size: 12px;
+    }
+
     .select2-container--default .select2-selection--single {
-        height: 42px;
-        border-radius: 12px;
+        height: 34px;
+        border-radius: 8px;
         border: 1px solid var(--border-soft);
         background: #fff;
         display: flex;
@@ -109,39 +288,48 @@
 
     .select2-container--default .select2-selection--single .select2-selection__rendered {
         color: #1d1d1f;
-        font-size: 13px;
-        padding-left: 12px;
-        line-height: 42px;
+        font-size: 12px;
+        padding-left: 8px;
+        padding-right: 24px;
+        line-height: 34px;
+        font-weight: 500;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #86868b;
     }
 
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 42px;
-        right: 8px;
+        height: 34px;
+        right: 5px;
     }
 
     .select2-dropdown {
         border: 1px solid #d2d2d7;
-        border-radius: 10px;
-        box-shadow: 0 8px 22px rgba(0,0,0,0.14);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         overflow: hidden;
+        z-index: 99999;
     }
 
     .select2-search--dropdown {
-        padding: 10px;
+        padding: 8px;
         background: #fff;
     }
 
     .select2-container--default .select2-search--dropdown .select2-search__field {
-        border: 1px solid var(--border-soft);
-        border-radius: 10px;
-        padding: 9px 12px;
+        border: 1px solid #d2d2d7;
+        border-radius: 8px;
+        padding: 8px 10px;
         outline: none;
-        font-size: 13px;
+        font-size: 12px;
+        color: #1d1d1f;
     }
 
     .select2-results__option {
-        padding: 10px 12px;
-        font-size: 13px;
+        padding: 9px 11px;
+        font-size: 12px;
+        color: #1d1d1f;
         border-bottom: 1px solid #f5f5f7;
     }
 
@@ -150,23 +338,31 @@
         color: #1d1d1f;
     }
 
-    .errorlist {
-        color: #ff3b30;
-        font-size: 12px;
-        margin: 5px 0 0 0;
-        padding-left: 18px;
+    .select2-container--default .select2-results__option--selected {
+        background: #eef4ff;
+        color: var(--primary);
+        font-weight: 800;
+    }
+
+    @media (max-width: 780px) {
+        .form-grid-2 {
+            grid-template-columns: 1fr;
+        }
+
+        .form-card {
+            padding: 16px;
+        }
     }
 </style>
 
 <div class="form-card">
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:15px;">
         <div>
             <h2 style="margin:0; color:var(--primary); font-weight:800;">
                 Nuevo Repuesto
             </h2>
             <p style="margin:4px 0 0 0; color:var(--muted); font-size:0.9rem;">
-                Crear producto base con uno o varios códigos comerciales.
+                Crear producto base con varios códigos comerciales e imágenes por código.
             </p>
         </div>
 
@@ -175,11 +371,13 @@
         </a>
     </div>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" id="formCatalogoCrear">
         {% csrf_token %}
 
         <div class="form-section">
-            <h4 style="margin:0 0 15px 0;">Datos del producto base</h4>
+            <div class="section-title">
+                <span>Datos del producto base</span>
+            </div>
 
             <div class="form-grid-2">
                 <div>
@@ -220,10 +418,10 @@
         </div>
 
         <div class="form-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div class="section-title">
                 <div>
-                    <h4 style="margin:0;">Códigos comerciales</h4>
-                    <p style="margin:4px 0 0 0; color:var(--muted); font-size:0.85rem;">
+                    <span>Códigos comerciales</span>
+                    <p class="section-subtitle">
                         Un producto puede tener varios códigos, marcas, presentaciones e imágenes.
                     </p>
                 </div>
@@ -235,127 +433,139 @@
 
             {{ codigo_formset.management_form }}
 
-            <div id="codigos-container">
-                {% for form in codigo_formset %}
-                    <div class="codigo-card codigo-form">
-                        <div class="codigo-header">
-                            <div class="codigo-title">
-                                Código comercial {{ forloop.counter }}
-                            </div>
+            <div class="catalog-table-wrap">
+                <table class="catalog-table" id="tablaCodigos">
+                    <thead>
+                        <tr>
+                            <th style="width:42px; text-align:center;">#</th>
+                            <th style="width:145px;">Marca</th>
+                            <th style="width:120px;">Tipo</th>
+                            <th style="width:135px;">Código</th>
+                            <th style="width:145px;">Barras</th>
+                            <th style="width:110px;">Nombre comercial</th>
+                            <th style="width:85px;">Pres.</th>
+                            <th style="width:75px;">Unidad</th>
+                            <th style="width:90px;">Compra</th>
+                            <th style="width:90px;">Venta</th>
+                            <th style="width:85px;">Margen</th>
+                            <th style="width:80px;">IVA</th>
+                            <th style="width:160px;">Imágenes</th>
+                            <th style="width:70px; text-align:center;">Acción</th>
+                        </tr>
+                    </thead>
 
-                            <button type="button"
-                                    class="btn-login danger small"
-                                    style="width:auto;"
-                                    onclick="eliminarCodigo(this)">
-                                Quitar
-                            </button>
-                        </div>
+                    <tbody id="codigos-container">
+                        {% for form in codigo_formset %}
+                            <tr class="codigo-form">
+                                <td class="row-number"></td>
 
-                        {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
+                                <td>
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+
+                                    <span class="delete-holder">
+                                        {{ form.DELETE }}
+                                    </span>
+
+                                    {{ form.marca }}
+                                    {{ form.marca.errors }}
+
+                                    <label class="codigo-activo-label">
+                                        {{ form.activo }} Activo
+                                    </label>
+                                </td>
+
+                                <td>
+                                    {{ form.tipo_codigo }}
+                                    {{ form.tipo_codigo.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.codigo }}
+                                    {{ form.codigo.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.codigo_barras }}
+                                    {{ form.codigo_barras.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.nombre_comercial }}
+                                    {{ form.nombre_comercial.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.presentacion_cantidad }}
+                                    {{ form.presentacion_cantidad.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.presentacion_unidad }}
+                                    {{ form.presentacion_unidad.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.precio_compra }}
+                                    {{ form.precio_compra.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.precio_venta }}
+                                    {{ form.precio_venta.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.margen_ganancia_porcentaje }}
+                                    {{ form.margen_ganancia_porcentaje.errors }}
+                                </td>
+
+                                <td>
+                                    {{ form.porcentaje_iva_costo }}
+                                    {{ form.porcentaje_iva_costo.errors }}
+                                </td>
+
+                                <td class="image-cell">
+                                    <div class="image-mini-actions">
+                                        <label class="image-upload-btn">
+                                            + Imágenes
+                                            <input type="file"
+                                                   name="imagenes_codigo_{{ forloop.counter0 }}"
+                                                   class="image-input-hidden imagenes-codigo"
+                                                   accept="image/*"
+                                                   multiple
+                                                   onchange="previewImagenesCodigo(this)">
+                                        </label>
+                                        <span class="image-count">0 archivos</span>
+                                    </div>
+                                    <div class="preview-grid"></div>
+                                </td>
+
+                                <td>
+                                    <div class="row-actions">
+                                        <button type="button"
+                                                class="btn-login danger small btn-row-remove"
+                                                onclick="eliminarCodigo(this)"
+                                                title="Quitar">
+                                            ✕
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-                        <div style="display:none;">
-                            {{ form.DELETE }}
-                        </div>
+            <div class="table-footer-actions">
+                <button type="button" class="btn-login" style="width:auto;" onclick="agregarCodigo()">
+                    + Agregar código
+                </button>
 
-                        <div class="form-grid-3">
-                            <div>
-                                <label class="field-label">{{ form.marca.label }}</label>
-                                {{ form.marca }}
-                                {{ form.marca.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">{{ form.tipo_codigo.label }}</label>
-                                {{ form.tipo_codigo }}
-                                {{ form.tipo_codigo.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">{{ form.codigo.label }}</label>
-                                {{ form.codigo }}
-                                {{ form.codigo.errors }}
-                            </div>
-                        </div>
-
-                        <div class="form-grid-2" style="margin-top:15px;">
-                            <div>
-                                <label class="field-label">{{ form.codigo_barras.label }}</label>
-                                {{ form.codigo_barras }}
-                                {{ form.codigo_barras.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">{{ form.nombre_comercial.label }}</label>
-                                {{ form.nombre_comercial }}
-                                {{ form.nombre_comercial.errors }}
-                            </div>
-                        </div>
-
-                        <div class="form-grid-2" style="margin-top:15px;">
-                            <div>
-                                <label class="field-label">{{ form.presentacion_cantidad.label }}</label>
-                                {{ form.presentacion_cantidad }}
-                                {{ form.presentacion_cantidad.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">{{ form.presentacion_unidad.label }}</label>
-                                {{ form.presentacion_unidad }}
-                                {{ form.presentacion_unidad.errors }}
-                            </div>
-                        </div>
-
-                        <div class="form-grid-3" style="margin-top:15px;">
-                            <div>
-                                <label class="field-label">{{ form.precio_compra.label }}</label>
-                                {{ form.precio_compra }}
-                                {{ form.precio_compra.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">{{ form.precio_venta.label }}</label>
-                                {{ form.precio_venta }}
-                                {{ form.precio_venta.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">{{ form.margen_ganancia_porcentaje.label }}</label>
-                                {{ form.margen_ganancia_porcentaje }}
-                                {{ form.margen_ganancia_porcentaje.errors }}
-                            </div>
-                        </div>
-
-                        <div class="form-grid-2" style="margin-top:15px;">
-                            <div>
-                                <label class="field-label">{{ form.porcentaje_iva_costo.label }}</label>
-                                {{ form.porcentaje_iva_costo }}
-                                {{ form.porcentaje_iva_costo.errors }}
-                            </div>
-
-                            <div>
-                                <label class="field-label">Imágenes del código</label>
-
-                                <input type="file"
-                                       name="imagenes_codigo_{{ forloop.counter0 }}"
-                                       class="form-control-apple imagenes-codigo"
-                                       accept="image/*"
-                                       multiple
-                                       onchange="previewImagenesCodigo(this)">
-
-                                <div class="preview-grid"></div>
-                            </div>
-                        </div>
-
-                        <div class="checkbox-group">
-                            <label>
-                                {{ form.activo }}
-                                Código activo para la venta
-                            </label>
-                        </div>
-                    </div>
-                {% endfor %}
+                <div class="info-pill">
+                    SKU automático · Origen: Bodega · Imágenes por código
+                </div>
             </div>
         </div>
 
@@ -371,115 +581,67 @@
     </form>
 </div>
 
-<div id="empty-form-template" style="display:none;">
-    <div class="codigo-card codigo-form">
-        <div class="codigo-header">
-            <div class="codigo-title">
-                Código comercial __NUM__
-            </div>
+<table style="display:none;">
+    <tbody id="empty-form-template">
+        <tr class="codigo-form">
+            <td class="row-number"></td>
 
-            <button type="button"
-                    class="btn-login danger small"
-                    style="width:auto;"
-                    onclick="eliminarCodigo(this)">
-                Quitar
-            </button>
-        </div>
+            <td>
+                {% for hidden in codigo_formset.empty_form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
 
-        {% for hidden in codigo_formset.empty_form.hidden_fields %}
-            {{ hidden }}
-        {% endfor %}
+                <span class="delete-holder">
+                    {{ codigo_formset.empty_form.DELETE }}
+                </span>
 
-        <div style="display:none;">
-            {{ codigo_formset.empty_form.DELETE }}
-        </div>
-
-        <div class="form-grid-3">
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.marca.label }}</label>
                 {{ codigo_formset.empty_form.marca }}
-            </div>
 
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.tipo_codigo.label }}</label>
-                {{ codigo_formset.empty_form.tipo_codigo }}
-            </div>
+                <label class="codigo-activo-label">
+                    {{ codigo_formset.empty_form.activo }} Activo
+                </label>
+            </td>
 
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.codigo.label }}</label>
-                {{ codigo_formset.empty_form.codigo }}
-            </div>
-        </div>
+            <td>{{ codigo_formset.empty_form.tipo_codigo }}</td>
+            <td>{{ codigo_formset.empty_form.codigo }}</td>
+            <td>{{ codigo_formset.empty_form.codigo_barras }}</td>
+            <td>{{ codigo_formset.empty_form.nombre_comercial }}</td>
+            <td>{{ codigo_formset.empty_form.presentacion_cantidad }}</td>
+            <td>{{ codigo_formset.empty_form.presentacion_unidad }}</td>
+            <td>{{ codigo_formset.empty_form.precio_compra }}</td>
+            <td>{{ codigo_formset.empty_form.precio_venta }}</td>
+            <td>{{ codigo_formset.empty_form.margen_ganancia_porcentaje }}</td>
+            <td>{{ codigo_formset.empty_form.porcentaje_iva_costo }}</td>
 
-        <div class="form-grid-2" style="margin-top:15px;">
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.codigo_barras.label }}</label>
-                {{ codigo_formset.empty_form.codigo_barras }}
-            </div>
-
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.nombre_comercial.label }}</label>
-                {{ codigo_formset.empty_form.nombre_comercial }}
-            </div>
-        </div>
-
-        <div class="form-grid-2" style="margin-top:15px;">
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.presentacion_cantidad.label }}</label>
-                {{ codigo_formset.empty_form.presentacion_cantidad }}
-            </div>
-
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.presentacion_unidad.label }}</label>
-                {{ codigo_formset.empty_form.presentacion_unidad }}
-            </div>
-        </div>
-
-        <div class="form-grid-3" style="margin-top:15px;">
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.precio_compra.label }}</label>
-                {{ codigo_formset.empty_form.precio_compra }}
-            </div>
-
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.precio_venta.label }}</label>
-                {{ codigo_formset.empty_form.precio_venta }}
-            </div>
-
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.margen_ganancia_porcentaje.label }}</label>
-                {{ codigo_formset.empty_form.margen_ganancia_porcentaje }}
-            </div>
-        </div>
-
-        <div class="form-grid-2" style="margin-top:15px;">
-            <div>
-                <label class="field-label">{{ codigo_formset.empty_form.porcentaje_iva_costo.label }}</label>
-                {{ codigo_formset.empty_form.porcentaje_iva_costo }}
-            </div>
-
-            <div>
-                <label class="field-label">Imágenes del código</label>
-
-                <input type="file"
-                       name="imagenes_codigo___prefix__"
-                       class="form-control-apple imagenes-codigo"
-                       accept="image/*"
-                       multiple
-                       onchange="previewImagenesCodigo(this)">
-
+            <td class="image-cell">
+                <div class="image-mini-actions">
+                    <label class="image-upload-btn">
+                        + Imágenes
+                        <input type="file"
+                               name="imagenes_codigo___prefix__"
+                               class="image-input-hidden imagenes-codigo"
+                               accept="image/*"
+                               multiple
+                               onchange="previewImagenesCodigo(this)">
+                    </label>
+                    <span class="image-count">0 archivos</span>
+                </div>
                 <div class="preview-grid"></div>
-            </div>
-        </div>
+            </td>
 
-        <div class="checkbox-group">
-            <label>
-                {{ codigo_formset.empty_form.activo }}
-                Código activo para la venta
-            </label>
-        </div>
-    </div>
-</div>
+            <td>
+                <div class="row-actions">
+                    <button type="button"
+                            class="btn-login danger small btn-row-remove"
+                            onclick="eliminarCodigo(this)"
+                            title="Quitar">
+                        ✕
+                    </button>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -499,8 +661,30 @@
         });
     }
 
+    function aplicarClasesCompactas(contexto) {
+        const root = contexto || document;
+
+        root.querySelectorAll('input[name$="-codigo"]').forEach(input => {
+            input.classList.add('compact-code');
+        });
+
+        root.querySelectorAll('input[name$="-codigo_barras"]').forEach(input => {
+            input.classList.add('compact-barcode');
+        });
+
+        root.querySelectorAll('input[name$="-presentacion_cantidad"], input[name$="-precio_compra"], input[name$="-precio_venta"], input[name$="-margen_ganancia_porcentaje"], input[name$="-porcentaje_iva_costo"]').forEach(input => {
+            input.classList.add('compact-number');
+        });
+
+        root.querySelectorAll('input[name$="-presentacion_unidad"]').forEach(input => {
+            input.classList.add('compact-presentation');
+        });
+    }
+
     $(document).ready(function () {
         inicializarSelect2(document);
+        aplicarClasesCompactas(document);
+        actualizarNumeracionCodigos();
     });
 
     function agregarCodigo() {
@@ -510,7 +694,6 @@
         let template = document.getElementById('empty-form-template').innerHTML;
 
         template = template.replaceAll('__prefix__', totalForms);
-        template = template.replaceAll('__NUM__', totalForms + 1);
 
         const container = document.getElementById('codigos-container');
         container.insertAdjacentHTML('beforeend', template);
@@ -519,62 +702,70 @@
 
         const nuevaFila = container.lastElementChild;
         inicializarSelect2(nuevaFila);
-        actualizarTitulosCodigos();
+        aplicarClasesCompactas(nuevaFila);
+        actualizarNumeracionCodigos();
     }
 
     function eliminarCodigo(boton) {
-        const cardsVisibles = Array.from(document.querySelectorAll('.codigo-form'))
-            .filter(card => card.style.display !== 'none');
+        const filasVisibles = Array.from(document.querySelectorAll('.codigo-form'))
+            .filter(fila => fila.style.display !== 'none');
 
-        if (cardsVisibles.length <= 1) {
+        if (filasVisibles.length <= 1) {
             alert('Debe existir al menos un código comercial.');
             return;
         }
 
-        const card = boton.closest('.codigo-form');
-        const deleteInput = card.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        const fila = boton.closest('.codigo-form');
+        const deleteInput = fila.querySelector('input[type="checkbox"][name$="-DELETE"]');
 
         if (deleteInput) {
             deleteInput.checked = true;
-            card.style.display = 'none';
+            fila.style.display = 'none';
         } else {
-            card.remove();
+            fila.remove();
         }
 
-        actualizarTitulosCodigos();
+        actualizarNumeracionCodigos();
     }
 
-    function actualizarTitulosCodigos() {
-        const cards = Array.from(document.querySelectorAll('.codigo-form'))
-            .filter(card => card.style.display !== 'none');
+    function actualizarNumeracionCodigos() {
+        const filas = Array.from(document.querySelectorAll('.codigo-form'))
+            .filter(fila => fila.style.display !== 'none');
 
-        cards.forEach((card, index) => {
-            const titulo = card.querySelector('.codigo-title');
-            if (titulo) {
-                titulo.textContent = `Código comercial ${index + 1}`;
+        filas.forEach((fila, index) => {
+            const numero = fila.querySelector('.row-number');
+            if (numero) {
+                numero.textContent = index + 1;
             }
         });
     }
 
     function previewImagenesCodigo(input) {
-        const preview = input.parentElement.querySelector('.preview-grid');
+        const cell = input.closest('.image-cell');
+        const preview = cell.querySelector('.preview-grid');
+        const count = cell.querySelector('.image-count');
+
         preview.innerHTML = '';
 
-        Array.from(input.files).forEach(file => {
-            if (!file.type.startsWith('image/')) {
-                return;
-            }
+        const files = Array.from(input.files).filter(file => file.type.startsWith('image/'));
 
-            const imgContainer = document.createElement('div');
-            imgContainer.style.position = 'relative';
-            imgContainer.style.display = 'inline-block';
+        count.textContent = files.length === 1 ? '1 archivo' : `${files.length} archivos`;
 
+        files.slice(0, 4).forEach(file => {
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
-
-            imgContainer.appendChild(img);
-            preview.appendChild(imgContainer);
+            preview.appendChild(img);
         });
+
+        if (files.length > 4) {
+            const extra = document.createElement('span');
+            extra.textContent = `+${files.length - 4}`;
+            extra.style.fontSize = '10px';
+            extra.style.fontWeight = '800';
+            extra.style.color = '#86868b';
+            extra.style.alignSelf = 'center';
+            preview.appendChild(extra);
+        }
     }
 </script>
 
