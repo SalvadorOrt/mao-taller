@@ -184,7 +184,6 @@ def catalogo_detalle(request, codigo_id):
         "movimientos": movimientos,
         "precio_secreto": precio_secreto(codigo.precio_venta),
     })
-
 @login_required
 @transaction.atomic  # <--- CRÍTICO: Todo o nada.
 def catalogo_crear(request):
@@ -197,10 +196,9 @@ def catalogo_crear(request):
         marca_id = request.POST.get("marca")
 
         # Datos del Producto
-        sku_interno = request.POST.get("sku_interno", "").strip() # Añadido
+        sku_interno = request.POST.get("sku_interno", "").strip()
         nombre_base = request.POST.get("nombre_base", "").strip()
         descripcion = request.POST.get("descripcion", "").strip()
-        origen = request.POST.get("origen", "BODEGA").strip() # Añadido
         
         # Booleanos del Producto
         datos_incompletos = request.POST.get("datos_incompletos") == "on"
@@ -242,7 +240,7 @@ def catalogo_crear(request):
                 categoria=categoria,
                 nombre_base=nombre_base,
                 descripcion=descripcion or None,
-                origen=origen,
+                origen="BODEGA", # FIJADO DIRECTAMENTE A BODEGA
                 activo=producto_activo,
                 descontinuado=descontinuado,
                 datos_incompletos=datos_incompletos,
@@ -289,9 +287,7 @@ def catalogo_crear(request):
         "categorias": categorias,
         "marcas": marcas,
         "tipos_codigo": CodigoProducto.TIPO_CODIGO_CHOICES,
-        "origenes_producto": Producto.ORIGEN_CHOICES, # Añadido para el template
     })
-
 
 @login_required
 def catalogo_editar_codigo(request, codigo_id):
