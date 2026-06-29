@@ -1,0 +1,29 @@
+<div class="form-section">
+    <h4>Datos del producto base</h4>
+
+    <div class="form-grid-2">
+        <div>
+            <label class="field-label">{{ producto_form.categoria.label }}</label>
+            {{ producto_form.categoria }}
+            {{ producto_form.categoria.errors }}
+        </div>
+
+        <div>
+            <label class="field-label">{{ producto_form.nombre_base.label }}</label>
+            {{ producto_form.nombre_base }}
+            {{ producto_form.nombre_base.errors }}
+        </div>
+    </div>
+
+    <div style="margin-top:15px;">
+        <label class="field-label">{{ producto_form.descripcion.label }}</label>
+        {{ producto_form.descripcion }}
+        {{ producto_form.descripcion.errors }}
+    </div>
+
+    <div class="checkbox-group">
+        <label>{{ producto_form.activo }} Activo</label>
+        <label>{{ producto_form.datos_incompletos }} Datos incompletos</label>
+        <label>{{ producto_form.descontinuado }} Descontinuado</label>
+    </div>
+</div>

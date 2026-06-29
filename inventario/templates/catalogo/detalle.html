@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Detalle Repuesto
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>{{ producto.nombre_base }}</h2>
+        <p>{{ producto.sku_interno }} | {{ producto.categoria.nombre }}</p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+        <a href="{% url 'inventario_catalogo' %}"
+           class="btn-login">
+            Volver
+        </a>
+
+        <a href="{% url 'inventario_catalogo_editar' codigo.id %}"
+           class="btn-login primary">
+            Editar
+        </a>
+    </div>
+</div>
+
+<div class="form-card">
+
+    <div class="form-section">
+        <h4>Producto base</h4>
+
+        <div class="detail-grid">
+            <div>
+                <span class="field-label">SKU</span>
+                <strong>{{ producto.sku_interno }}</strong>
+            </div>
+
+            <div>
+                <span class="field-label">Categoría</span>
+                <strong>{{ producto.categoria.nombre }}</strong>
+            </div>
+
+            <div>
+                <span class="field-label">Estado</span>
+                {% if producto.activo %}
+                    <span class="badge-success">Activo</span>
+                {% else %}
+                    <span class="badge-danger">Inactivo</span>
+                {% endif %}
+            </div>
+
+            <div>
+                <span class="field-label">Precio secreto</span>
+                <strong>{{ precio_secreto }}</strong>
+            </div>
+        </div>
+
+        {% if producto.descripcion %}
+            <div style="margin-top:15px;">
+                <span class="field-label">Descripción</span>
+                <p>{{ producto.descripcion }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-section">
+        <h4>Atributos técnicos</h4>
+
+        <div class="ot-table-wrap">
+            <table class="ot-table">
+                <thead>
+                    <tr>
+                        <th>Atributo</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for atributo in atributos %}
+                        <tr>
+                            <td>{{ atributo.atributo }}</td>
+                            <td>{{ atributo.valor }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="2" style="text-align:center; color:#86868b;">
+                                Sin atributos registrados.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h4>Códigos comerciales</h4>
+
+        <div class="ot-table-wrap">
+            <table class="ot-table">
+                <thead>
+                    <tr>
+                        <th>Marca</th>
+                        <th>Tipo</th>
+                        <th>Código</th>
+                        <th>Barras</th>
+                        <th>Nombre comercial</th>
+                        <th>Compra</th>
+                        <th>Venta</th>
+                        <th>Secreto</th>
+                        <th>Activo</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for cod in codigos_equivalentes %}
+                        <tr {% if cod.id == codigo.id %}style="background:#f5f5f7;"{% endif %}>
+                            <td>{{ cod.marca.nombre }}</td>
+                            <td>{{ cod.get_tipo_codigo_display }}</td>
+                            <td><strong>{{ cod.codigo }}</strong></td>
+                            <td>{{ cod.codigo_barras|default:"-" }}</td>
+                            <td>{{ cod.nombre_comercial|default:"-" }}</td>
+                            <td>
+                                {% if cod.precio_compra %}
+                                    ${{ cod.precio_compra }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cod.precio_venta %}
+                                    ${{ cod.precio_venta }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ cod.precio_secreto }}</strong></td>
+                            <td>
+                                {% if cod.activo %}
+                                    <span class="badge-success">Sí</span>
+                                {% else %}
+                                    <span class="badge-danger">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" style="text-align:center; color:#86868b;">
+                                Sin códigos comerciales.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h4>Imágenes del código seleccionado</h4>
+
+        <div class="preview-grid">
+            {% for imagen in imagenes %}
+                <img src="{{ imagen.imagen.url }}"
+                     alt="{{ imagen.descripcion|default:'Imagen de producto' }}">
+            {% empty %}
+                <p style="color:#86868b;">Sin imágenes registradas para este código.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h4>Stock por sucursal</h4>
+
+        <div class="ot-table-wrap">
+            <table class="ot-table">
+                <thead>
+                    <tr>
+                        <th>Sucursal</th>
+                        <th>Cantidad</th>
+                        <th>Ubicación</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for stock in stocks %}
+                        <tr>
+                            <td>{{ stock.sucursal.nombre }}</td>
+                            <td><strong>{{ stock.cantidad }}</strong></td>
+                            <td>{{ stock.ubicacion|default:"-" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align:center; color:#86868b;">
+                                Sin stock registrado.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h4>Últimos movimientos</h4>
+
+        <div class="ot-table-wrap">
+            <table class="ot-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Sucursal</th>
+                        <th>Cantidad</th>
+                        <th>Referencia</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for mov in movimientos %}
+                        <tr>
+                            <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>{{ mov.get_tipo_movimiento_display }}</td>
+                            <td>{{ mov.sucursal.nombre }}</td>
+                            <td>{{ mov.cantidad }}</td>
+                            <td>{{ mov.referencia|default:"-" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:#86868b;">
+                                Sin movimientos registrados.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

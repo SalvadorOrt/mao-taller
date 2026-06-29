@@ -1,0 +1,87 @@
+<div class="form-section">
+    <div class="section-header-row">
+        <div>
+            <h4>Atributos técnicos</h4>
+            <p>Características del producto base.</p>
+        </div>
+
+        <button type="button"
+                class="btn-login"
+                style="width:auto;"
+                onclick="agregarAtributo()">
+            + Agregar atributo
+        </button>
+    </div>
+
+    <div class="ot-table-wrap">
+        <table class="ot-table" id="tablaAtributos">
+            <thead>
+                <tr>
+                    <th style="width:45%;">Atributo</th>
+                    <th style="width:45%;">Valor</th>
+                    <th style="width:10%;">Acción</th>
+                </tr>
+            </thead>
+
+            <tbody id="atributosContainer">
+                {% for form in atributo_formset %}
+                    <tr class="atributo-form">
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+
+                        <td>
+                            {{ form.atributo }}
+                            {{ form.atributo.errors }}
+                        </td>
+
+                        <td>
+                            {{ form.valor }}
+                            {{ form.valor.errors }}
+                        </td>
+
+                        <td style="text-align:center;">
+                            <div style="display:none;">
+                                {{ form.DELETE }}
+                            </div>
+
+                            <button type="button"
+                                    class="btn-login danger small"
+                                    onclick="eliminarAtributo(this)">
+                                ✕
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<template id="atributoEmptyFormTemplate">
+    <tr class="atributo-form">
+        {% for hidden in atributo_formset.empty_form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
+
+        <td>
+            {{ atributo_formset.empty_form.atributo }}
+        </td>
+
+        <td>
+            {{ atributo_formset.empty_form.valor }}
+        </td>
+
+        <td style="text-align:center;">
+            <div style="display:none;">
+                {{ atributo_formset.empty_form.DELETE }}
+            </div>
+
+            <button type="button"
+                    class="btn-login danger small"
+                    onclick="eliminarAtributo(this)">
+                ✕
+            </button>
+        </td>
+    </tr>
+</template>

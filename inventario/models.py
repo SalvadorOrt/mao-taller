@@ -219,6 +219,7 @@ class MarcaRepuesto(models.Model):
 
     def __str__(self):
         return self.nombre
+
 # =========================================================
 # PRODUCTO BASE / FAMILIA FUNCIONAL
 # =========================================================
@@ -229,7 +230,11 @@ class Producto(models.Model):
     ]
 
     sku_interno = models.CharField(max_length=50, unique=True, blank=True)
-    categoria = models.ForeignKey("Categoria", on_delete=models.PROTECT, related_name="productos")
+    categoria = models.ForeignKey(
+        "Categoria",
+        on_delete=models.PROTECT,
+        related_name="productos",
+    )
     nombre_base = models.CharField(max_length=255)
     descripcion = models.TextField(blank=True, null=True)
 
@@ -237,16 +242,11 @@ class Producto(models.Model):
         max_length=20,
         choices=ORIGEN_CHOICES,
         default="BODEGA",
-      
     )
 
     activo = models.BooleanField(default=True)
     descontinuado = models.BooleanField(default=False)
-
-    datos_incompletos = models.BooleanField(
-        default=False,
-      
-    )
+    datos_incompletos = models.BooleanField(default=False)
 
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -256,14 +256,15 @@ class Producto(models.Model):
         verbose_name = "Producto"
         verbose_name_plural = "Productos"
 
+    def __str__(self):
+        return f"{self.sku_interno} - {self.nombre_base}"
+
     def clean(self):
         if not self.categoria_id:
             raise ValidationError("La categoría es obligatoria.")
+
         if not self.nombre_base or not self.nombre_base.strip():
             raise ValidationError("El nombre base del producto es obligatorio.")
-
-    def __str__(self):
-        return f"{self.sku_interno} - {self.nombre_base}"
 
     def _generar_sku(self):
         if not self.categoria_id:
@@ -289,9 +290,75 @@ class Producto(models.Model):
 
             return f"{prefijo}-{siguiente_numero:04d}"
 
+    def codigo_principal(self):
+        codigo = (
+            self.codigos
+            .filter(activo=True)
+            .order_by("id")
+            .first()
+        )
+
+        if codigo:
+            return codigo
+
+        return (
+            self.codigos
+            .order_by("id")
+            .first()
+        )
+
+    @property
+    def precio_venta_principal(self):
+        codigo = self.codigo_principal()
+        return codigo.precio_venta if codigo else None
+
+    @property
+    def precio_compra_principal(self):
+        codigo = self.codigo_principal()
+        return codigo.precio_compra if codigo else None
+
+    @property
+    def precio_secreto(self):
+        codigo = self.codigo_principal()
+        return codigo.precio_secreto if codigo else "---"
+
+    @property
+    def imagen_principal(self):
+        codigo = self.codigo_principal()
+
+        if not codigo:
+            return None
+
+        return codigo.imagenes.first()
+
+    @property
+    def total_codigos(self):
+        return self.codigos.count()
+
+    @property
+    def total_atributos(self):
+        return self.valores_atributos.count()
+
+    @property
+    def tiene_codigos(self):
+        return self.codigos.exists()
+
+    @property
+    def tiene_imagenes(self):
+        return self.codigos.filter(
+            imagenes__isnull=False
+        ).exists()
+
+    @property
+    def tiene_atributos(self):
+        return self.valores_atributos.exists()
+
     def save(self, *args, **kwargs):
+        if self.sku_interno:
+            self.sku_interno = self.sku_interno.strip().upper()
+
         if self.nombre_base:
-            self.nombre_base = self.nombre_base.strip()
+            self.nombre_base = self.nombre_base.strip().upper()
 
         if self.descripcion:
             self.descripcion = self.descripcion.strip()
@@ -300,30 +367,30 @@ class Producto(models.Model):
 
         if self.pk:
             producto_anterior = Producto.objects.filter(pk=self.pk).first()
-            if producto_anterior and producto_anterior.categoria_id != self.categoria_id:
+
+            if (
+                producto_anterior
+                and producto_anterior.categoria_id != self.categoria_id
+            ):
                 categoria_cambio = True
 
         self.full_clean()
 
-        # Nuevo producto: genera SKU
         if not self.pk and not self.sku_interno:
             self.sku_interno = self._generar_sku()
 
-        # Producto existente: si cambió la categoría, genera nuevo SKU
         elif self.pk and categoria_cambio:
             self.sku_interno = self._generar_sku()
-
-        # Si escribiste manualmente un SKU, lo normaliza
-        elif self.sku_interno:
-            self.sku_interno = self.sku_interno.strip().upper()
 
         while True:
             try:
                 with transaction.atomic():
                     super().save(*args, **kwargs)
                 break
+
             except IntegrityError:
                 match = re.search(r"(\d+)$", self.sku_interno)
+
                 if match:
                     siguiente_numero = int(match.group(1)) + 1
                     prefijo = self.sku_interno[:match.start()]
@@ -340,41 +407,83 @@ class CodigoProducto(models.Model):
         ("interno", "Interno"),
     ]
 
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="codigos")
-    marca = models.ForeignKey("MarcaRepuesto", on_delete=models.PROTECT, related_name="codigos")
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name="codigos"
+    )
+    marca = models.ForeignKey(
+        "MarcaRepuesto",
+        on_delete=models.PROTECT,
+        related_name="codigos"
+    )
+
     codigo = models.CharField(max_length=100)
-    codigo_normalizado = models.CharField(max_length=100, blank=True, editable=False, db_index=True)
-    tipo_codigo = models.CharField(max_length=20, choices=TIPO_CODIGO_CHOICES, default="aftermarket")
+    codigo_normalizado = models.CharField(
+        max_length=100,
+        blank=True,
+        editable=False,
+        db_index=True
+    )
+
+    tipo_codigo = models.CharField(
+        max_length=20,
+        choices=TIPO_CODIGO_CHOICES,
+        default="aftermarket"
+    )
 
     codigo_barras = models.CharField(
-        max_length=255, 
-        blank=True, 
+        max_length=255,
+        blank=True,
         null=True,
-        db_index=True, 
-      
+        db_index=True,
     )
-    
-    nombre_comercial = models.CharField(max_length=255, blank=True, null=True)
 
-    presentacion_cantidad = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    presentacion_unidad = models.CharField(max_length=20, blank=True, null=True)
+    nombre_comercial = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
 
-    precio_compra = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    precio_venta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    presentacion_cantidad = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+    presentacion_unidad = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+    precio_compra = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+    precio_venta = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
     margen_ganancia_porcentaje = models.DecimalField(
         max_digits=6,
         decimal_places=2,
         default=Decimal("100.00"),
-       
     )
 
     porcentaje_iva_costo = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
-        
     )
+
     activo = models.BooleanField(default=True)
+
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -385,15 +494,59 @@ class CodigoProducto(models.Model):
         unique_together = ("producto", "marca", "codigo")
 
     def __str__(self):
-        return f"{self.marca.nombre} - {self.codigo}"
+        marca = self.marca.nombre if self.marca_id else "SIN MARCA"
+        return f"{marca} - {self.codigo}"
 
     @staticmethod
     def normalizar_codigo(valor):
         if not valor:
             return ""
-        return re.sub(r"[^A-Z0-9]", "", valor.upper())
+
+        return re.sub(
+            r"[^A-Z0-9]",
+            "",
+            valor.upper()
+        )
+
+    @staticmethod
+    def convertir_precio_secreto(precio):
+        if precio is None:
+            return "---"
+
+        clave = {
+            "1": "M",
+            "2": "E",
+            "3": "C",
+            "4": "A",
+            "5": "N",
+            "6": "I",
+            "7": "O",
+            "8": "R",
+            "9": "T",
+            "0": "S",
+            ".": ".",
+        }
+
+        texto = f"{precio:.2f}"
+
+        return "".join(
+            clave.get(caracter, caracter)
+            for caracter in texto
+        )
+
+    @property
+    def precio_secreto(self):
+        return self.convertir_precio_secreto(
+            self.precio_venta
+        )
 
     def clean(self):
+        if not self.producto_id:
+            raise ValidationError("El producto base es obligatorio.")
+
+        if not self.marca_id:
+            raise ValidationError("La marca es obligatoria.")
+
         if not self.codigo or not self.codigo.strip():
             raise ValidationError("El código del producto es obligatorio.")
 
@@ -403,7 +556,31 @@ class CodigoProducto(models.Model):
         if self.precio_venta is not None and self.precio_venta < 0:
             raise ValidationError("El precio de venta no puede ser negativo.")
 
-        if self.presentacion_cantidad is not None and self.presentacion_cantidad <= 0:
+        if (
+            self.precio_compra is not None
+            and self.precio_venta is not None
+            and self.precio_venta < self.precio_compra
+        ):
+            raise ValidationError(
+                "El precio de venta no puede ser menor que el precio de compra."
+            )
+
+        if (
+            self.margen_ganancia_porcentaje is not None
+            and self.margen_ganancia_porcentaje < 0
+        ):
+            raise ValidationError("El margen no puede ser negativo.")
+
+        if (
+            self.porcentaje_iva_costo is not None
+            and self.porcentaje_iva_costo < 0
+        ):
+            raise ValidationError("El IVA costo no puede ser negativo.")
+
+        if (
+            self.presentacion_cantidad is not None
+            and self.presentacion_cantidad <= 0
+        ):
             raise ValidationError("La presentación debe ser mayor que 0.")
 
     def save(self, *args, **kwargs):
@@ -411,6 +588,10 @@ class CodigoProducto(models.Model):
 
         if self.codigo:
             self.codigo = self.codigo.strip().upper()
+
+        self.codigo_normalizado = self.normalizar_codigo(
+            self.codigo
+        )
 
         if self.codigo_barras:
             self.codigo_barras = self.codigo_barras.strip()
@@ -421,33 +602,36 @@ class CodigoProducto(models.Model):
             self.nombre_comercial = self.nombre_comercial.strip()
 
         if self.presentacion_unidad:
-            self.presentacion_unidad = self.presentacion_unidad.strip()
-
-        self.codigo_normalizado = self.normalizar_codigo(self.codigo)
+            self.presentacion_unidad = self.presentacion_unidad.strip().upper()
 
         if self.precio_compra is not None and self.precio_venta is None:
             margen = self.margen_ganancia_porcentaje or Decimal("0.00")
             iva_costo = self.porcentaje_iva_costo or Decimal("0.00")
 
             costo_con_margen = self.precio_compra * (
-                Decimal("1.00") + margen / Decimal("100")
+                Decimal("1.00") + margen / Decimal("100.00")
             )
 
             calculo = costo_con_margen * (
-                Decimal("1.00") + iva_costo / Decimal("100")
+                Decimal("1.00") + iva_costo / Decimal("100.00")
             )
 
-            self.precio_venta = calculo.quantize(Decimal("0.01"))
+            self.precio_venta = calculo.quantize(
+                Decimal("0.01")
+            )
 
         self.full_clean()
+
         super().save(*args, **kwargs)
 
         if es_nuevo:
-            # Creación automática de stock para la zona de cuarentena
             from ordenes_de_trabajo.models import Sucursal
-            from inventario.models import StockSucursal # Importar modelo de stock
+            from inventario.models import StockSucursal
 
-            sucursales_activas = Sucursal.objects.filter(activa=True)
+            sucursales_activas = Sucursal.objects.filter(
+                activa=True
+            )
+
             stocks_a_crear = []
 
             for sucursal in sucursales_activas:
@@ -455,14 +639,16 @@ class CodigoProducto(models.Model):
                     StockSucursal(
                         codigo_producto=self,
                         sucursal=sucursal,
-                        cantidad=0, # Entra con stock 0, la OT lo bajará a -1 luego.
+                        cantidad=Decimal("0.00"),
                         ubicacion=None,
                     )
                 )
 
             if stocks_a_crear:
-                StockSucursal.objects.bulk_create(stocks_a_crear, ignore_conflicts=True)
-
+                StockSucursal.objects.bulk_create(
+                    stocks_a_crear,
+                    ignore_conflicts=True
+                )
 # =========================================================
 # ATRIBUTOS TÉCNICOS
 # =========================================================
