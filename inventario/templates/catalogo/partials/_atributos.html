@@ -5,10 +5,11 @@
             <p>Características del producto base.</p>
         </div>
 
-        <button type="button"
-                class="btn-login"
-                style="width:auto;"
-                onclick="agregarAtributo()">
+        <button
+            type="button"
+            class="btn-login"
+            style="width:auto;"
+            onclick="agregarAtributo()">
             + Agregar atributo
         </button>
     </div>
@@ -31,7 +32,44 @@
                         {% endfor %}
 
                         <td>
-                            {{ form.atributo }}
+                            <div class="field-with-action">
+                                <div class="apple-dropdown" data-dropdown-tipo="atributo">
+                                    <input
+                                        type="text"
+                                        class="form-control-apple apple-dropdown-input"
+                                        placeholder="Buscar atributo..."
+                                        autocomplete="off">
+
+                                    <input
+                                        type="hidden"
+                                        name="{{ form.atributo.html_name }}"
+                                        class="apple-dropdown-hidden"
+                                        value="{{ form.atributo.value|default:'' }}">
+
+                                    <div class="apple-dropdown-menu">
+                                        {% for atributo in form.atributo.field.queryset %}
+                                            <div
+                                                class="apple-dropdown-item"
+                                                data-id="{{ atributo.id }}"
+                                                data-nombre="{{ atributo }}">
+                                                {{ atributo }}
+                                            </div>
+                                        {% endfor %}
+
+                                        <div class="apple-dropdown-no-result">
+                                            Sin coincidencias
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="btn-login btn-mini"
+                                    onclick="abrirModalBootstrap('modalAtributo')">
+                                    +
+                                </button>
+                            </div>
+
                             {{ form.atributo.errors }}
                         </td>
 
@@ -45,9 +83,10 @@
                                 {{ form.DELETE }}
                             </div>
 
-                            <button type="button"
-                                    class="btn-login danger small"
-                                    onclick="eliminarAtributo(this)">
+                            <button
+                                type="button"
+                                class="btn-login danger small"
+                                onclick="eliminarAtributo(this)">
                                 ✕
                             </button>
                         </td>
@@ -65,7 +104,43 @@
         {% endfor %}
 
         <td>
-            {{ atributo_formset.empty_form.atributo }}
+            <div class="field-with-action">
+                <div class="apple-dropdown" data-dropdown-tipo="atributo">
+                    <input
+                        type="text"
+                        class="form-control-apple apple-dropdown-input"
+                        placeholder="Buscar atributo..."
+                        autocomplete="off">
+
+                    <input
+                        type="hidden"
+                        name="{{ atributo_formset.empty_form.atributo.html_name }}"
+                        class="apple-dropdown-hidden"
+                        value="{{ atributo_formset.empty_form.atributo.value|default:'' }}">
+
+                    <div class="apple-dropdown-menu">
+                        {% for atributo in atributo_formset.empty_form.atributo.field.queryset %}
+                            <div
+                                class="apple-dropdown-item"
+                                data-id="{{ atributo.id }}"
+                                data-nombre="{{ atributo }}">
+                                {{ atributo }}
+                            </div>
+                        {% endfor %}
+
+                        <div class="apple-dropdown-no-result">
+                            Sin coincidencias
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-login btn-mini"
+                    onclick="abrirModalBootstrap('modalAtributo')">
+                    +
+                </button>
+            </div>
         </td>
 
         <td>
@@ -77,9 +152,10 @@
                 {{ atributo_formset.empty_form.DELETE }}
             </div>
 
-            <button type="button"
-                    class="btn-login danger small"
-                    onclick="eliminarAtributo(this)">
+            <button
+                type="button"
+                class="btn-login danger small"
+                onclick="eliminarAtributo(this)">
                 ✕
             </button>
         </td>

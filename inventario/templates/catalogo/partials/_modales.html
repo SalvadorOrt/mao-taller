@@ -1,89 +1,236 @@
-<div class="modal fade" id="modalCategoria" tabindex="-1">
+<!-- ===================================================== -->
+<!-- MODAL CATEGORÍA -->
+<!-- ===================================================== -->
+
+<div class="modal fade" id="modalCategoria" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">Nueva categoría</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                <h5 class="modal-title">
+                    Nueva categoría
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
             </div>
 
             <div class="modal-body">
-                <label class="field-label">Nombre</label>
-                <input id="categoriaNombre" type="text" class="form-control-apple">
 
-                <label class="field-label" style="margin-top:12px;">Prefijo SKU</label>
-                <input id="categoriaPrefijo" type="text" class="form-control-apple">
+                <div class="mb-3">
+
+                    <label class="field-label">
+                        Nombre
+                    </label>
+
+                    <input
+                        id="categoriaNombre"
+                        type="text"
+                        class="form-control-apple"
+                        autocomplete="off">
+
+                </div>
+
+                <div>
+
+                    <label class="field-label">
+                        Prefijo SKU
+                    </label>
+
+                    <input
+                        id="categoriaPrefijo"
+                        type="text"
+                        class="form-control-apple"
+                        autocomplete="off">
+
+                </div>
+
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn-login" data-bs-dismiss="modal">
+
+                <button
+                    type="button"
+                    class="btn-login"
+                    data-bs-dismiss="modal">
+
                     Cancelar
+
                 </button>
 
-                <button type="button" class="btn-login primary" onclick="guardarCategoria()">
+                <button
+                    type="button"
+                    class="btn-login primary"
+                    onclick="guardarCategoria()">
+
                     Guardar
+
                 </button>
+
             </div>
 
         </div>
+
     </div>
+
 </div>
 
-<div class="modal fade" id="modalMarca" tabindex="-1">
+
+<!-- ===================================================== -->
+<!-- MODAL MARCA -->
+<!-- ===================================================== -->
+
+<div class="modal fade" id="modalMarca" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">Nueva marca</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                <h5 class="modal-title">
+                    Nueva marca
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
             </div>
 
             <div class="modal-body">
-                <label class="field-label">Nombre</label>
-                <input id="marcaNombre" type="text" class="form-control-apple">
+
+                <label class="field-label">
+                    Nombre
+                </label>
+
+                <input
+                    id="marcaNombre"
+                    type="text"
+                    class="form-control-apple"
+                    autocomplete="off">
+
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn-login" data-bs-dismiss="modal">
+
+                <button
+                    type="button"
+                    class="btn-login"
+                    data-bs-dismiss="modal">
+
                     Cancelar
+
                 </button>
 
-                <button type="button" class="btn-login primary" onclick="guardarMarca()">
+                <button
+                    type="button"
+                    class="btn-login primary"
+                    onclick="guardarMarca()">
+
                     Guardar
+
                 </button>
+
             </div>
 
         </div>
+
     </div>
+
 </div>
 
-<div class="modal fade" id="modalAtributo" tabindex="-1">
+
+<!-- ===================================================== -->
+<!-- MODAL ATRIBUTO -->
+<!-- ===================================================== -->
+
+<div class="modal fade" id="modalAtributo" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">Nuevo atributo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                <h5 class="modal-title">
+                    Nuevo atributo
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
             </div>
 
             <div class="modal-body">
-                <label class="field-label">Nombre</label>
-                <input id="atributoNombre" type="text" class="form-control-apple">
 
-                <label class="field-label" style="margin-top:12px;">Unidad</label>
-                <input id="atributoUnidad" type="text" class="form-control-apple">
+                <div class="mb-3">
+
+                    <label class="field-label">
+                        Nombre
+                    </label>
+
+                    <input
+                        id="atributoNombre"
+                        type="text"
+                        class="form-control-apple"
+                        autocomplete="off">
+
+                </div>
+
+                <div>
+
+                    <label class="field-label">
+                        Unidad
+                    </label>
+
+                    <input
+                        id="atributoUnidad"
+                        type="text"
+                        class="form-control-apple"
+                        autocomplete="off"
+                        placeholder="Ej: mm, cm, L, Kg">
+
+                </div>
+
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn-login" data-bs-dismiss="modal">
+
+                <button
+                    type="button"
+                    class="btn-login"
+                    data-bs-dismiss="modal">
+
                     Cancelar
+
                 </button>
 
-                <button type="button" class="btn-login primary" onclick="guardarAtributo()">
+                <button
+                    type="button"
+                    class="btn-login primary"
+                    onclick="guardarAtributo()">
+
                     Guardar
+
                 </button>
+
             </div>
 
         </div>
+
     </div>
+
 </div>

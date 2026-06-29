@@ -43,8 +43,45 @@
                             {{ hidden }}
                         {% endfor %}
 
-                        <td>
-                            {{ form.marca }}
+                        <td style="min-width:220px;">
+                            <div class="field-with-action">
+                                <div class="apple-dropdown" data-dropdown-tipo="marca">
+                                    <input
+                                        type="text"
+                                        class="form-control-apple apple-dropdown-input"
+                                        placeholder="Buscar marca..."
+                                        autocomplete="off">
+
+                                    <input
+                                        type="hidden"
+                                        name="{{ form.marca.html_name }}"
+                                        class="apple-dropdown-hidden"
+                                        value="{{ form.marca.value|default:'' }}">
+
+                                    <div class="apple-dropdown-menu">
+                                        {% for marca in form.marca.field.queryset %}
+                                            <div
+                                                class="apple-dropdown-item"
+                                                data-id="{{ marca.id }}"
+                                                data-nombre="{{ marca.nombre }}">
+                                                {{ marca.nombre }}
+                                            </div>
+                                        {% endfor %}
+
+                                        <div class="apple-dropdown-no-result">
+                                            Sin coincidencias
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="btn-login btn-mini"
+                                    onclick="abrirModalBootstrap('modalMarca')">
+                                    +
+                                </button>
+                            </div>
+
                             {{ form.marca.errors }}
                         </td>
 
@@ -96,7 +133,46 @@
             {{ hidden }}
         {% endfor %}
 
-        <td>{{ codigo_formset.empty_form.marca }}</td>
+        <td style="min-width:220px;">
+            <div class="field-with-action">
+                <div class="apple-dropdown" data-dropdown-tipo="marca">
+                    <input
+                        type="text"
+                        class="form-control-apple apple-dropdown-input"
+                        placeholder="Buscar marca..."
+                        autocomplete="off">
+
+                    <input
+                        type="hidden"
+                        name="{{ codigo_formset.empty_form.marca.html_name }}"
+                        class="apple-dropdown-hidden"
+                        value="{{ codigo_formset.empty_form.marca.value|default:'' }}">
+
+                    <div class="apple-dropdown-menu">
+                        {% for marca in codigo_formset.empty_form.marca.field.queryset %}
+                            <div
+                                class="apple-dropdown-item"
+                                data-id="{{ marca.id }}"
+                                data-nombre="{{ marca.nombre }}">
+                                {{ marca.nombre }}
+                            </div>
+                        {% endfor %}
+
+                        <div class="apple-dropdown-no-result">
+                            Sin coincidencias
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-login btn-mini"
+                    onclick="abrirModalBootstrap('modalMarca')">
+                    +
+                </button>
+            </div>
+        </td>
+
         <td>{{ codigo_formset.empty_form.tipo_codigo }}</td>
         <td>{{ codigo_formset.empty_form.codigo }}</td>
         <td>{{ codigo_formset.empty_form.codigo_barras }}</td>

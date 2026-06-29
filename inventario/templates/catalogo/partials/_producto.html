@@ -5,11 +5,50 @@
     <div class="form-grid-2">
 
         <div>
-            <label class="field-label">
-                {{ producto_form.categoria.label }}
-            </label>
+            <label class="field-label">Categoría</label>
 
-            {{ producto_form.categoria }}
+            <div class="field-with-action">
+
+                <div class="apple-dropdown" data-dropdown-tipo="categoria">
+
+                    <input
+                        type="text"
+                        class="form-control-apple apple-dropdown-input"
+                        placeholder="Buscar categoría..."
+                        autocomplete="off">
+
+                    <input
+                        type="hidden"
+                        name="categoria"
+                        class="apple-dropdown-hidden"
+                        value="{{ producto_form.categoria.value|default:'' }}">
+
+                    <div class="apple-dropdown-menu">
+                        {% for categoria in producto_form.categoria.field.queryset %}
+                            <div
+                                class="apple-dropdown-item"
+                                data-id="{{ categoria.id }}"
+                                data-nombre="{{ categoria.nombre }}">
+                                {{ categoria.nombre }}
+                            </div>
+                        {% endfor %}
+
+                        <div class="apple-dropdown-no-result">
+                            Sin coincidencias
+                        </div>
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-login btn-mini"
+                    onclick="abrirModalBootstrap('modalCategoria')">
+                    +
+                </button>
+
+            </div>
+
             {{ producto_form.categoria.errors }}
         </div>
 
@@ -25,22 +64,15 @@
     </div>
 
     <div style="margin-top:15px;">
-
         <label class="field-label">
             {{ producto_form.descripcion.label }}
         </label>
 
         {{ producto_form.descripcion }}
         {{ producto_form.descripcion.errors }}
-
     </div>
 
-    <!-- ===================================================== -->
-    <!-- IMÁGENES DEL PRODUCTO -->
-    <!-- ===================================================== -->
-
     <div style="margin-top:20px;">
-
         <label class="field-label">
             Imágenes del producto
         </label>
@@ -59,36 +91,14 @@
 
         <div
             id="previewImagenesProducto"
-            class="preview-imagenes"
-            style="
-                margin-top:15px;
-                display:flex;
-                flex-wrap:wrap;
-                gap:12px;
-            ">
+            class="preview-imagenes">
         </div>
-
     </div>
 
-    <!-- ===================================================== -->
-
     <div class="checkbox-group">
-
-        <label>
-            {{ producto_form.activo }}
-            Activo
-        </label>
-
-        <label>
-            {{ producto_form.datos_incompletos }}
-            Datos incompletos
-        </label>
-
-        <label>
-            {{ producto_form.descontinuado }}
-            Descontinuado
-        </label>
-
+        <label>{{ producto_form.activo }} Activo</label>
+        <label>{{ producto_form.datos_incompletos }} Datos incompletos</label>
+        <label>{{ producto_form.descontinuado }} Descontinuado</label>
     </div>
 
 </div>

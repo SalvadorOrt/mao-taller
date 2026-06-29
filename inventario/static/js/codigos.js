@@ -1,91 +1,61 @@
 // =========================================================
-// ATRIBUTOS TÉCNICOS
+// CÓDIGOS COMERCIALES
 // =========================================================
 
-function inicializarAtributos() {
-
-    const tabla = document.getElementById("tablaAtributos");
+function inicializarCodigos() {
+    const tabla = document.getElementById("tablaCodigos");
 
     if (!tabla) {
         return;
     }
 
-    inicializarSelect2(tabla);
+    inicializarDropdownsApple();
 }
 
 
 // =========================================================
-// AGREGAR ATRIBUTO
+// AGREGAR CÓDIGO
 // =========================================================
 
-function agregarAtributo() {
-
-    const totalForms = document.getElementById(
-        "id_atributos-TOTAL_FORMS"
-    );
-
-    const container = document.getElementById(
-        "atributosContainer"
-    );
-
-    const template = document.getElementById(
-        "atributoEmptyFormTemplate"
-    );
+function agregarCodigo() {
+    const totalForms = document.getElementById("id_codigos-TOTAL_FORMS");
+    const container = document.getElementById("codigosContainer");
+    const template = document.getElementById("codigoEmptyFormTemplate");
 
     if (!totalForms || !container || !template) {
-        console.error("No se encontró el formset de atributos.");
+        console.error("No se encontró el formset de códigos.");
         return;
     }
 
     const indice = parseInt(totalForms.value);
 
     let html = template.innerHTML;
-
     html = html.replace(/__prefix__/g, indice);
 
-    container.insertAdjacentHTML(
-        "beforeend",
-        html
-    );
-
+    container.insertAdjacentHTML("beforeend", html);
     totalForms.value = indice + 1;
 
-    const nuevaFila = container.lastElementChild;
-
-    inicializarSelect2(nuevaFila);
+    inicializarDropdownsApple();
 }
 
 
 // =========================================================
-// ELIMINAR ATRIBUTO
+// ELIMINAR CÓDIGO
 // =========================================================
 
-function eliminarAtributo(boton) {
-
-    const fila = boton.closest(".atributo-form");
+function eliminarCodigo(boton) {
+    const fila = boton.closest(".codigo-form");
 
     if (!fila) {
         return;
     }
 
     const filasVisibles = Array.from(
-
-        document.querySelectorAll(
-            "#atributosContainer .atributo-form"
-        )
-
-    ).filter(
-
-        fila => fila.style.display !== "none"
-
-    );
+        document.querySelectorAll("#codigosContainer .codigo-form")
+    ).filter(fila => fila.style.display !== "none");
 
     if (filasVisibles.length <= 1) {
-
-        alert(
-            "Debe existir al menos un atributo."
-        );
-
+        alert("Debe existir al menos un código comercial.");
         return;
     }
 
@@ -94,36 +64,21 @@ function eliminarAtributo(boton) {
     );
 
     if (deleteInput) {
-
         deleteInput.checked = true;
-
         fila.style.display = "none";
-
-    }
-
-    else {
-
+    } else {
         fila.remove();
-
     }
-
 }
 
 
 // =========================================================
-// LIMPIAR ATRIBUTOS
+// LIMPIAR CÓDIGOS
 // =========================================================
 
-function limpiarAtributos() {
-
-    document.querySelectorAll(
-
-        "#atributosContainer .atributo-form"
-
-    ).forEach(function (fila) {
-
+function limpiarCodigos() {
+    document.querySelectorAll("#codigosContainer .codigo-form").forEach(function (fila) {
         fila.querySelectorAll("input").forEach(function (input) {
-
             if (
                 input.type !== "hidden" &&
                 input.type !== "checkbox"
@@ -131,112 +86,119 @@ function limpiarAtributos() {
                 input.value = "";
             }
 
+            if (input.type === "checkbox" && !input.name.endsWith("-DELETE")) {
+                input.checked = false;
+            }
         });
 
         fila.querySelectorAll("select").forEach(function (select) {
-
             select.selectedIndex = 0;
-
-            if (
-                $(select).hasClass("select2-hidden-accessible")
-            ) {
-
-                $(select).trigger("change");
-
-            }
-
         });
 
-    });
+        fila.querySelectorAll(".apple-dropdown").forEach(function (dropdown) {
+            const visible = dropdown.querySelector(".apple-dropdown-input");
+            const hidden = dropdown.querySelector(".apple-dropdown-hidden");
 
+            if (visible) visible.value = "";
+            if (hidden) hidden.value = "";
+        });
+    });
 }
 
 
 // =========================================================
-// VALIDAR ATRIBUTOS
+// VALIDAR CÓDIGOS
 // =========================================================
 
-function validarAtributos() {
-
+function validarCodigos() {
     let valido = true;
 
-    const filas = document.querySelectorAll(
-        "#atributosContainer .atributo-form"
-    );
+    const filas = document.querySelectorAll("#codigosContainer .codigo-form");
 
     filas.forEach(function (fila) {
-
         if (fila.style.display === "none") {
             return;
         }
 
-        const atributo = fila.querySelector(
-            'select[name$="-atributo"]'
+        const marca = fila.querySelector(
+            'input[type="hidden"][name$="-marca"]'
         );
 
-        const valor = fila.querySelector(
-            'input[name$="-valor"]'
+        const codigo = fila.querySelector(
+            'input[name$="-codigo"]'
         );
 
-        if (!atributo.value) {
+        if (!marca || !marca.value) {
+            const visible = fila.querySelector(".apple-dropdown-input");
 
-            atributo.focus();
-
-            valido = false;
-
-            return;
-
-        }
-
-        if (!valor.value.trim()) {
-
-            valor.focus();
+            if (visible) visible.focus();
 
             valido = false;
-
             return;
-
         }
 
+        if (!codigo || !codigo.value.trim()) {
+            codigo.focus();
+            valido = false;
+            return;
+        }
     });
 
     return valido;
-
 }
 
 
 // =========================================================
-// OBTENER ATRIBUTOS
+// OBTENER CÓDIGOS
 // =========================================================
 
-function obtenerAtributos() {
+function obtenerCodigos() {
+    const codigos = [];
 
-    const atributos = [];
-
-    document.querySelectorAll(
-
-        "#atributosContainer .atributo-form"
-
-    ).forEach(function (fila) {
-
+    document.querySelectorAll("#codigosContainer .codigo-form").forEach(function (fila) {
         if (fila.style.display === "none") {
             return;
         }
 
-        atributos.push({
-
-            atributo: fila.querySelector(
-                'select[name$="-atributo"]'
-            ).value,
-
-            valor: fila.querySelector(
-                'input[name$="-valor"]'
-            ).value,
-
+        codigos.push({
+            marca: obtenerValorFila(fila, 'input[type="hidden"][name$="-marca"]'),
+            tipo_codigo: obtenerValorFila(fila, 'select[name$="-tipo_codigo"]'),
+            codigo: obtenerValorFila(fila, 'input[name$="-codigo"]'),
+            codigo_barras: obtenerValorFila(fila, 'input[name$="-codigo_barras"]'),
+            nombre_comercial: obtenerValorFila(fila, 'input[name$="-nombre_comercial"]'),
+            presentacion_cantidad: obtenerValorFila(fila, 'input[name$="-presentacion_cantidad"]'),
+            presentacion_unidad: obtenerValorFila(fila, 'input[name$="-presentacion_unidad"]'),
+            precio_compra: obtenerValorFila(fila, 'input[name$="-precio_compra"]'),
+            precio_venta: obtenerValorFila(fila, 'input[name$="-precio_venta"]'),
+            margen_ganancia_porcentaje: obtenerValorFila(fila, 'input[name$="-margen_ganancia_porcentaje"]'),
+            porcentaje_iva_costo: obtenerValorFila(fila, 'input[name$="-porcentaje_iva_costo"]'),
+            activo: obtenerCheckboxFila(fila, 'input[name$="-activo"]'),
         });
-
     });
 
-    return atributos;
-
+    return codigos;
 }
+
+
+// =========================================================
+// UTILIDADES DE FILA
+// =========================================================
+
+function obtenerValorFila(fila, selector) {
+    const campo = fila.querySelector(selector);
+    return campo ? campo.value : "";
+}
+
+function obtenerCheckboxFila(fila, selector) {
+    const campo = fila.querySelector(selector);
+    return campo ? campo.checked : false;
+}
+
+
+// =========================================================
+// INICIALIZACIÓN
+// =========================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+    inicializarCodigos();
+});

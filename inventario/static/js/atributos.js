@@ -1,235 +1,193 @@
-// =====================================================
-// MODALES RÁPIDOS: CATEGORÍA, MARCA, ATRIBUTO
-// Requiere:
-// - utilidades.js
-// - select2.js
-// =====================================================
+// =========================================================
+// ATRIBUTOS TÉCNICOS
+// =========================================================
 
-function inicializarModales() {
-    prepararEnterModal("categoriaNombre", guardarCategoria);
-    prepararEnterModal("categoriaPrefijo", guardarCategoria);
+function inicializarAtributos() {
+    const tabla = document.getElementById("tablaAtributos");
 
-    prepararEnterModal("marcaNombre", guardarMarca);
+    if (!tabla) {
+        return;
+    }
 
-    prepararEnterModal("atributoNombre", guardarAtributo);
-    prepararEnterModal("atributoUnidad", guardarAtributo);
+    inicializarDropdownsApple();
 }
 
-function prepararEnterModal(inputId, callback) {
-    const input = document.getElementById(inputId);
 
-    if (!input) return;
+// =========================================================
+// AGREGAR ATRIBUTO
+// =========================================================
 
-    input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            callback();
+function agregarAtributo() {
+    const totalForms = document.getElementById(
+        "id_atributos-TOTAL_FORMS"
+    );
+
+    const container = document.getElementById(
+        "atributosContainer"
+    );
+
+    const template = document.getElementById(
+        "atributoEmptyFormTemplate"
+    );
+
+    if (!totalForms || !container || !template) {
+        console.error("No se encontró el formset de atributos.");
+        return;
+    }
+
+    const indice = parseInt(totalForms.value);
+
+    let html = template.innerHTML;
+
+    html = html.replace(/__prefix__/g, indice);
+
+    container.insertAdjacentHTML(
+        "beforeend",
+        html
+    );
+
+    totalForms.value = indice + 1;
+
+    inicializarDropdownsApple();
+}
+
+
+// =========================================================
+// ELIMINAR ATRIBUTO
+// =========================================================
+
+function eliminarAtributo(boton) {
+    const fila = boton.closest(".atributo-form");
+
+    if (!fila) {
+        return;
+    }
+
+    const filasVisibles = Array.from(
+        document.querySelectorAll(
+            "#atributosContainer .atributo-form"
+        )
+    ).filter(
+        fila => fila.style.display !== "none"
+    );
+
+    if (filasVisibles.length <= 1) {
+        alert(
+            "Debe existir al menos un atributo."
+        );
+
+        return;
+    }
+
+    const deleteInput = fila.querySelector(
+        'input[type="checkbox"][name$="-DELETE"]'
+    );
+
+    if (deleteInput) {
+        deleteInput.checked = true;
+        fila.style.display = "none";
+    } else {
+        fila.remove();
+    }
+}
+
+
+// =========================================================
+// LIMPIAR ATRIBUTOS
+// =========================================================
+
+function limpiarAtributos() {
+    document.querySelectorAll(
+        "#atributosContainer .atributo-form"
+    ).forEach(function (fila) {
+        fila.querySelectorAll("input").forEach(function (input) {
+            if (
+                input.type !== "hidden" &&
+                input.type !== "checkbox"
+            ) {
+                input.value = "";
+            }
+        });
+
+        fila.querySelectorAll(".apple-dropdown").forEach(function (dropdown) {
+            const visible = dropdown.querySelector(".apple-dropdown-input");
+            const hidden = dropdown.querySelector(".apple-dropdown-hidden");
+
+            if (visible) visible.value = "";
+            if (hidden) hidden.value = "";
+        });
+    });
+}
+
+
+// =========================================================
+// VALIDAR ATRIBUTOS
+// =========================================================
+
+function validarAtributos() {
+    let valido = true;
+
+    const filas = document.querySelectorAll(
+        "#atributosContainer .atributo-form"
+    );
+
+    filas.forEach(function (fila) {
+        if (fila.style.display === "none") {
+            return;
+        }
+
+        const atributo = fila.querySelector(
+            'input[type="hidden"][name$="-atributo"]'
+        );
+
+        const valor = fila.querySelector(
+            'input[name$="-valor"]'
+        );
+
+        if (!atributo || !atributo.value) {
+            const visible = fila.querySelector(".apple-dropdown-input");
+
+            if (visible) visible.focus();
+
+            valido = false;
+            return;
+        }
+
+        if (!valor.value.trim()) {
+            valor.focus();
+            valido = false;
+            return;
         }
     });
+
+    return valido;
 }
 
 
-// =====================================================
-// CATEGORÍA RÁPIDA
-// =====================================================
-async function guardarCategoria() {
-    const form = document.getElementById("catalogoForm");
+// =========================================================
+// OBTENER ATRIBUTOS
+// =========================================================
 
-    if (!form || !form.dataset.urlCategoriaRapida) {
-        alert("Falta configurar la URL de categoría rápida.");
-        return;
-    }
+function obtenerAtributos() {
+    const atributos = [];
 
-    const nombreInput = document.getElementById("categoriaNombre");
-    const prefijoInput = document.getElementById("categoriaPrefijo");
+    document.querySelectorAll(
+        "#atributosContainer .atributo-form"
+    ).forEach(function (fila) {
+        if (fila.style.display === "none") {
+            return;
+        }
 
-    const nombre = nombreInput.value.trim().toUpperCase();
-    const prefijo = prefijoInput.value.trim().toUpperCase();
+        atributos.push({
+            atributo: fila.querySelector(
+                'input[type="hidden"][name$="-atributo"]'
+            ).value,
 
-    if (!nombre) {
-        alert("Ingrese el nombre de la categoría.");
-        nombreInput.focus();
-        return;
-    }
-
-    if (!prefijo) {
-        alert("Ingrese el prefijo SKU.");
-        prefijoInput.focus();
-        return;
-    }
-
-    const data = new FormData();
-    data.append("nombre", nombre);
-    data.append("prefijo_sku", prefijo);
-
-    const resp = await postForm(form.dataset.urlCategoriaRapida, data);
-
-    if (!resp.ok) {
-        alert(resp.error || "No se pudo crear la categoría.");
-        return;
-    }
-
-    const selectCategoria = document.querySelector('select[name="categoria"]');
-
-    agregarOpcionSelect(
-        selectCategoria,
-        resp.id,
-        resp.nombre,
-        true
-    );
-
-    limpiarModalCategoria();
-    cerrarModal("modalCategoria");
-}
-
-function limpiarModalCategoria() {
-    const nombreInput = document.getElementById("categoriaNombre");
-    const prefijoInput = document.getElementById("categoriaPrefijo");
-
-    if (nombreInput) nombreInput.value = "";
-    if (prefijoInput) prefijoInput.value = "";
-}
-
-
-// =====================================================
-// MARCA RÁPIDA
-// =====================================================
-async function guardarMarca() {
-    const form = document.getElementById("catalogoForm");
-
-    if (!form || !form.dataset.urlMarcaRapida) {
-        alert("Falta configurar la URL de marca rápida.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("marcaNombre");
-    const nombre = nombreInput.value.trim().toUpperCase();
-
-    if (!nombre) {
-        alert("Ingrese el nombre de la marca.");
-        nombreInput.focus();
-        return;
-    }
-
-    const data = new FormData();
-    data.append("nombre", nombre);
-
-    const resp = await postForm(form.dataset.urlMarcaRapida, data);
-
-    if (!resp.ok) {
-        alert(resp.error || "No se pudo crear la marca.");
-        return;
-    }
-
-    const selectsMarca = document.querySelectorAll("select.codigo-marca");
-
-    selectsMarca.forEach(select => {
-        agregarOpcionSelect(
-            select,
-            resp.id,
-            resp.nombre,
-            false
-        );
+            valor: fila.querySelector(
+                'input[name$="-valor"]'
+            ).value,
+        });
     });
 
-    const ultimaFila = document.querySelector(
-        "#codigosContainer .codigo-form:last-child"
-    );
-
-    const ultimoSelectMarca = ultimaFila
-        ? ultimaFila.querySelector("select.codigo-marca")
-        : null;
-
-    if (ultimoSelectMarca) {
-        agregarOpcionSelect(
-            ultimoSelectMarca,
-            resp.id,
-            resp.nombre,
-            true
-        );
-    }
-
-    limpiarModalMarca();
-    cerrarModal("modalMarca");
-}
-
-function limpiarModalMarca() {
-    const nombreInput = document.getElementById("marcaNombre");
-
-    if (nombreInput) nombreInput.value = "";
-}
-
-
-// =====================================================
-// ATRIBUTO RÁPIDO
-// =====================================================
-async function guardarAtributo() {
-    const form = document.getElementById("catalogoForm");
-
-    if (!form || !form.dataset.urlAtributoRapido) {
-        alert("Falta configurar la URL de atributo rápido.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("atributoNombre");
-    const unidadInput = document.getElementById("atributoUnidad");
-
-    const nombre = nombreInput.value.trim().toUpperCase();
-    const unidad = unidadInput.value.trim().toUpperCase();
-
-    if (!nombre) {
-        alert("Ingrese el nombre del atributo.");
-        nombreInput.focus();
-        return;
-    }
-
-    const data = new FormData();
-    data.append("nombre", nombre);
-    data.append("unidad", unidad);
-
-    const resp = await postForm(form.dataset.urlAtributoRapido, data);
-
-    if (!resp.ok) {
-        alert(resp.error || "No se pudo crear el atributo.");
-        return;
-    }
-
-    const selectsAtributo = document.querySelectorAll("select.atributo-select");
-
-    selectsAtributo.forEach(select => {
-        agregarOpcionSelect(
-            select,
-            resp.id,
-            resp.nombre,
-            false
-        );
-    });
-
-    const ultimaFila = document.querySelector(
-        "#atributosContainer .atributo-form:last-child"
-    );
-
-    const ultimoSelectAtributo = ultimaFila
-        ? ultimaFila.querySelector("select.atributo-select")
-        : null;
-
-    if (ultimoSelectAtributo) {
-        agregarOpcionSelect(
-            ultimoSelectAtributo,
-            resp.id,
-            resp.nombre,
-            true
-        );
-    }
-
-    limpiarModalAtributo();
-    cerrarModal("modalAtributo");
-}
-
-function limpiarModalAtributo() {
-    const nombreInput = document.getElementById("atributoNombre");
-    const unidadInput = document.getElementById("atributoUnidad");
-
-    if (nombreInput) nombreInput.value = "";
-    if (unidadInput) unidadInput.value = "";
+    return atributos;
 }

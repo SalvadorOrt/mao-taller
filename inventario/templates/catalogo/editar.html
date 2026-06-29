@@ -7,9 +7,6 @@ Editar Repuesto
 
 {% block extra_css %}
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-
-<link rel="stylesheet"
       href="{% static 'inventario/css/catalogo_form.css' %}">
 {% endblock %}
 
@@ -111,17 +108,16 @@ Editar Repuesto
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="{% static 'inventario/js/catalogo/utilidades.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo/select2.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo/imagenes.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo/atributos.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo/codigos.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo/modales.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo/index.js' %}"></script>
+<script src="{% static 'inventario/js/utilidades.js' %}"></script>
+<script src="{% static 'inventario/js/dropdowns.js' %}"></script>
+<script src="{% static 'inventario/js/imagenes.js' %}"></script>
+<script src="{% static 'inventario/js/atributos.js' %}"></script>
+<script src="{% static 'inventario/js/codigos.js' %}"></script>
+<script src="{% static 'inventario/js/modales.js' %}"></script>
+<script src="{% static 'inventario/js/catalogo_form.js' %}"></script>
+<script src="{% static 'inventario/js/index.js' %}"></script>
+
 {% endblock %}

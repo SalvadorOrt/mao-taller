@@ -1,11 +1,9 @@
 // =========================================================
-// IMÁGENES POR CÓDIGO
+// IMÁGENES DEL PRODUCTO
 // =========================================================
 
 function inicializarImagenes(contexto = document) {
-
     contexto.querySelectorAll(".imagen-input").forEach(input => {
-
         if (input.dataset.inicializado === "1") {
             return;
         }
@@ -13,13 +11,9 @@ function inicializarImagenes(contexto = document) {
         input.dataset.inicializado = "1";
 
         input.addEventListener("change", function () {
-            mostrarPreviewImagenes(this);
+            mostrarPreviewImagenesProducto(this);
         });
-
     });
-
-    actualizarNombreInputsImagenes();
-
 }
 
 
@@ -27,22 +21,18 @@ function inicializarImagenes(contexto = document) {
 // PREVIEW
 // =========================================================
 
-function mostrarPreviewImagenes(input) {
+function mostrarPreviewImagenesProducto(input) {
+    const contenedor = document.getElementById("previewImagenesProducto");
 
-    const fila = input.closest(".codigo-form");
-
-    if (!fila) return;
-
-    const contenedor = fila.querySelector(".preview-imagenes");
-
-    if (!contenedor) return;
+    if (!contenedor) {
+        return;
+    }
 
     contenedor.innerHTML = "";
 
     const archivos = Array.from(input.files);
 
     if (archivos.length === 0) {
-
         contenedor.innerHTML = `
             <div class="preview-vacio">
                 Sin imágenes seleccionadas
@@ -50,11 +40,9 @@ function mostrarPreviewImagenes(input) {
         `;
 
         return;
-
     }
 
     archivos.forEach((archivo) => {
-
         if (!archivo.type.startsWith("image/")) {
             return;
         }
@@ -62,7 +50,6 @@ function mostrarPreviewImagenes(input) {
         const lector = new FileReader();
 
         lector.onload = function (e) {
-
             const tarjeta = document.createElement("div");
             tarjeta.className = "preview-item";
 
@@ -82,42 +69,10 @@ function mostrarPreviewImagenes(input) {
             `;
 
             contenedor.appendChild(tarjeta);
-
         };
 
         lector.readAsDataURL(archivo);
-
     });
-
-}
-
-
-// =========================================================
-// ACTUALIZA LOS NOMBRES
-// imagenes_codigo_0
-// imagenes_codigo_1
-// =========================================================
-
-function actualizarNombreInputsImagenes() {
-
-    const filas = document.querySelectorAll(
-        "#codigosContainer .codigo-form"
-    );
-
-    filas.forEach((fila, indice) => {
-
-        if (fila.style.display === "none") {
-            return;
-        }
-
-        const input = fila.querySelector(".imagen-input");
-
-        if (!input) return;
-
-        input.name = `imagenes_codigo_${indice}`;
-
-    });
-
 }
 
 
@@ -125,11 +80,9 @@ function actualizarNombreInputsImagenes() {
 // LIMPIAR
 // =========================================================
 
-function limpiarImagenesFila(fila) {
-
-    const input = fila.querySelector(".imagen-input");
-
-    const preview = fila.querySelector(".preview-imagenes");
+function limpiarImagenesProducto() {
+    const input = document.getElementById("imagenesProducto");
+    const preview = document.getElementById("previewImagenesProducto");
 
     if (input) {
         input.value = "";
@@ -138,7 +91,6 @@ function limpiarImagenesFila(fila) {
     if (preview) {
         preview.innerHTML = "";
     }
-
 }
 
 
@@ -146,16 +98,14 @@ function limpiarImagenesFila(fila) {
 // CONTADOR
 // =========================================================
 
-function cantidadImagenesFila(fila) {
-
-    const input = fila.querySelector(".imagen-input");
+function cantidadImagenesProducto() {
+    const input = document.getElementById("imagenesProducto");
 
     if (!input) {
         return 0;
     }
 
     return input.files.length;
-
 }
 
 
@@ -164,7 +114,6 @@ function cantidadImagenesFila(fila) {
 // =========================================================
 
 function formatearTamanoArchivo(bytes) {
-
     if (bytes < 1024) {
         return bytes + " B";
     }
@@ -174,7 +123,6 @@ function formatearTamanoArchivo(bytes) {
     }
 
     return (bytes / 1024 / 1024).toFixed(2) + " MB";
-
 }
 
 
@@ -182,16 +130,14 @@ function formatearTamanoArchivo(bytes) {
 // OBTENER IMÁGENES
 // =========================================================
 
-function obtenerImagenesFila(fila) {
-
-    const input = fila.querySelector(".imagen-input");
+function obtenerImagenesProducto() {
+    const input = document.getElementById("imagenesProducto");
 
     if (!input) {
         return [];
     }
 
     return Array.from(input.files);
-
 }
 
 
@@ -199,34 +145,29 @@ function obtenerImagenesFila(fila) {
 // VALIDAR
 // =========================================================
 
-function validarImagenesFila(fila) {
-
-    const archivos = obtenerImagenesFila(fila);
+function validarImagenesProducto() {
+    const archivos = obtenerImagenesProducto();
 
     for (const archivo of archivos) {
-
         if (!archivo.type.startsWith("image/")) {
-
-            alert(
-                `"${archivo.name}" no es una imagen válida.`
-            );
-
+            alert(`"${archivo.name}" no es una imagen válida.`);
             return false;
-
         }
 
         if (archivo.size > (10 * 1024 * 1024)) {
-
-            alert(
-                `"${archivo.name}" supera los 10 MB.`
-            );
-
+            alert(`"${archivo.name}" supera los 10 MB.`);
             return false;
-
         }
-
     }
 
     return true;
-
 }
+
+
+// =========================================================
+// INICIALIZACIÓN
+// =========================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+    inicializarImagenes();
+});

@@ -158,17 +158,29 @@ Detalle Repuesto
     </div>
 
     <div class="form-section">
-        <h4>Imágenes del código seleccionado</h4>
+    <h4>Imágenes del producto</h4>
 
-        <div class="preview-grid">
-            {% for imagen in imagenes %}
-                <img src="{{ imagen.imagen.url }}"
-                     alt="{{ imagen.descripcion|default:'Imagen de producto' }}">
-            {% empty %}
-                <p style="color:#86868b;">Sin imágenes registradas para este código.</p>
-            {% endfor %}
-        </div>
+    <div class="preview-grid">
+        {% for imagen in imagenes %}
+            <div class="preview-item">
+                <img
+                    src="{{ imagen.imagen.url }}"
+                    alt="{{ imagen.descripcion|default:'Imagen de producto' }}"
+                    class="preview-img">
+
+                {% if imagen.descripcion %}
+                    <div class="preview-nombre">
+                        {{ imagen.descripcion }}
+                    </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p style="color:#86868b;">
+                Sin imágenes registradas para este producto.
+            </p>
+        {% endfor %}
     </div>
+</div>
 
     <div class="form-section">
         <h4>Stock por sucursal</h4>
