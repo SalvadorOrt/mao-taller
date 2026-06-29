@@ -1,235 +1,187 @@
-// =====================================================
-// MODALES RÁPIDOS: CATEGORÍA, MARCA, ATRIBUTO
-// Requiere:
-// - utilidades.js
-// - select2.js
-// =====================================================
-
-function inicializarModales() {
-    prepararEnterModal("categoriaNombre", guardarCategoria);
-    prepararEnterModal("categoriaPrefijo", guardarCategoria);
-
-    prepararEnterModal("marcaNombre", guardarMarca);
-
-    prepararEnterModal("atributoNombre", guardarAtributo);
-    prepararEnterModal("atributoUnidad", guardarAtributo);
+function obtenerCSRFToken() {
+    const input = document.querySelector("input[name='csrfmiddlewaretoken']");
+    return input ? input.value : "";
 }
 
-function prepararEnterModal(inputId, callback) {
-    const input = document.getElementById(inputId);
+function cerrarModalPorId(idModal) {
+    const modalElement = document.getElementById(idModal);
 
-    if (!input) return;
+    if (!modalElement) return;
 
-    input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            callback();
+    const modal = bootstrap.Modal.getInstance(modalElement);
+
+    if (modal) {
+        modal.hide();
+    }
+}
+
+function limpiarInput(id) {
+    const input = document.getElementById(id);
+
+    if (input) {
+        input.value = "";
+    }
+}
+
+function agregarOpcionADropdowns(tipo, id, nombre, seleccionar = true) {
+    const dropdowns = document.querySelectorAll(
+        `.apple-dropdown[data-dropdown-tipo="${tipo}"]`
+    );
+
+    dropdowns.forEach((wrap) => {
+        const input = wrap.querySelector(".apple-dropdown-input");
+        const hidden = wrap.querySelector(".apple-dropdown-hidden");
+        const menu = wrap.querySelector(".apple-dropdown-menu");
+
+        if (!input || !hidden || !menu) return;
+
+        const existe = menu.querySelector(
+            `.apple-dropdown-item[data-id="${id}"]`
+        );
+
+        if (!existe) {
+            const item = document.createElement("div");
+
+            item.className = "apple-dropdown-item";
+            item.dataset.id = id;
+            item.dataset.nombre = nombre;
+            item.textContent = nombre;
+
+            item.addEventListener("click", () => {
+                input.value = nombre;
+                hidden.value = id;
+                menu.style.display = "none";
+            });
+
+            const noResult = menu.querySelector(".apple-dropdown-no-result");
+
+            if (noResult) {
+                menu.insertBefore(item, noResult);
+            } else {
+                menu.appendChild(item);
+            }
+        }
+
+        if (seleccionar) {
+            input.value = nombre;
+            hidden.value = id;
+            menu.style.display = "none";
         }
     });
 }
 
-
-// =====================================================
-// CATEGORÍA RÁPIDA
-// =====================================================
 async function guardarCategoria() {
     const form = document.getElementById("catalogoForm");
 
-    if (!form || !form.dataset.urlCategoriaRapida) {
-        alert("Falta configurar la URL de categoría rápida.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("categoriaNombre");
-    const prefijoInput = document.getElementById("categoriaPrefijo");
-
-    const nombre = nombreInput.value.trim().toUpperCase();
-    const prefijo = prefijoInput.value.trim().toUpperCase();
+    const nombre = document.getElementById("categoriaNombre").value.trim();
+    const prefijo = document.getElementById("categoriaPrefijo").value.trim();
 
     if (!nombre) {
         alert("Ingrese el nombre de la categoría.");
-        nombreInput.focus();
         return;
     }
 
     if (!prefijo) {
         alert("Ingrese el prefijo SKU.");
-        prefijoInput.focus();
         return;
     }
 
-    const data = new FormData();
-    data.append("nombre", nombre);
-    data.append("prefijo_sku", prefijo);
+    const response = await fetch(form.dataset.urlCategoriaRapida, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": obtenerCSRFToken(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            nombre: nombre,
+            prefijo_sku: prefijo,
+        }),
+    });
 
-    const resp = await postForm(form.dataset.urlCategoriaRapida, data);
+    const data = await response.json();
 
-    if (!resp.ok) {
-        alert(resp.error || "No se pudo crear la categoría.");
+    if (!response.ok || !data.ok) {
+        alert(data.error || "No se pudo crear la categoría.");
         return;
     }
 
-    const selectCategoria = document.querySelector('select[name="categoria"]');
+    agregarOpcionADropdowns("categoria", data.id, data.nombre, true);
 
-    agregarOpcionSelect(
-        selectCategoria,
-        resp.id,
-        resp.nombre,
-        true
-    );
+    limpiarInput("categoriaNombre");
+    limpiarInput("categoriaPrefijo");
 
-    limpiarModalCategoria();
-    cerrarModal("modalCategoria");
+    cerrarModalPorId("modalCategoria");
 }
 
-function limpiarModalCategoria() {
-    const nombreInput = document.getElementById("categoriaNombre");
-    const prefijoInput = document.getElementById("categoriaPrefijo");
-
-    if (nombreInput) nombreInput.value = "";
-    if (prefijoInput) prefijoInput.value = "";
-}
-
-
-// =====================================================
-// MARCA RÁPIDA
-// =====================================================
 async function guardarMarca() {
     const form = document.getElementById("catalogoForm");
 
-    if (!form || !form.dataset.urlMarcaRapida) {
-        alert("Falta configurar la URL de marca rápida.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("marcaNombre");
-    const nombre = nombreInput.value.trim().toUpperCase();
+    const nombre = document.getElementById("marcaNombre").value.trim();
 
     if (!nombre) {
         alert("Ingrese el nombre de la marca.");
-        nombreInput.focus();
         return;
     }
 
-    const data = new FormData();
-    data.append("nombre", nombre);
-
-    const resp = await postForm(form.dataset.urlMarcaRapida, data);
-
-    if (!resp.ok) {
-        alert(resp.error || "No se pudo crear la marca.");
-        return;
-    }
-
-    const selectsMarca = document.querySelectorAll("select.codigo-marca");
-
-    selectsMarca.forEach(select => {
-        agregarOpcionSelect(
-            select,
-            resp.id,
-            resp.nombre,
-            false
-        );
+    const response = await fetch(form.dataset.urlMarcaRapida, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": obtenerCSRFToken(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            nombre: nombre,
+        }),
     });
 
-    const ultimaFila = document.querySelector(
-        "#codigosContainer .codigo-form:last-child"
-    );
+    const data = await response.json();
 
-    const ultimoSelectMarca = ultimaFila
-        ? ultimaFila.querySelector("select.codigo-marca")
-        : null;
-
-    if (ultimoSelectMarca) {
-        agregarOpcionSelect(
-            ultimoSelectMarca,
-            resp.id,
-            resp.nombre,
-            true
-        );
+    if (!response.ok || !data.ok) {
+        alert(data.error || "No se pudo crear la marca.");
+        return;
     }
 
-    limpiarModalMarca();
-    cerrarModal("modalMarca");
+    agregarOpcionADropdowns("marca", data.id, data.nombre, true);
+
+    limpiarInput("marcaNombre");
+
+    cerrarModalPorId("modalMarca");
 }
 
-function limpiarModalMarca() {
-    const nombreInput = document.getElementById("marcaNombre");
-
-    if (nombreInput) nombreInput.value = "";
-}
-
-
-// =====================================================
-// ATRIBUTO RÁPIDO
-// =====================================================
 async function guardarAtributo() {
     const form = document.getElementById("catalogoForm");
 
-    if (!form || !form.dataset.urlAtributoRapido) {
-        alert("Falta configurar la URL de atributo rápido.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("atributoNombre");
-    const unidadInput = document.getElementById("atributoUnidad");
-
-    const nombre = nombreInput.value.trim().toUpperCase();
-    const unidad = unidadInput.value.trim().toUpperCase();
+    const nombre = document.getElementById("atributoNombre").value.trim();
+    const unidad = document.getElementById("atributoUnidad").value.trim();
 
     if (!nombre) {
         alert("Ingrese el nombre del atributo.");
-        nombreInput.focus();
         return;
     }
 
-    const data = new FormData();
-    data.append("nombre", nombre);
-    data.append("unidad", unidad);
-
-    const resp = await postForm(form.dataset.urlAtributoRapido, data);
-
-    if (!resp.ok) {
-        alert(resp.error || "No se pudo crear el atributo.");
-        return;
-    }
-
-    const selectsAtributo = document.querySelectorAll("select.atributo-select");
-
-    selectsAtributo.forEach(select => {
-        agregarOpcionSelect(
-            select,
-            resp.id,
-            resp.nombre,
-            false
-        );
+    const response = await fetch(form.dataset.urlAtributoRapido, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": obtenerCSRFToken(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            nombre: nombre,
+            unidad: unidad,
+        }),
     });
 
-    const ultimaFila = document.querySelector(
-        "#atributosContainer .atributo-form:last-child"
-    );
+    const data = await response.json();
 
-    const ultimoSelectAtributo = ultimaFila
-        ? ultimaFila.querySelector("select.atributo-select")
-        : null;
-
-    if (ultimoSelectAtributo) {
-        agregarOpcionSelect(
-            ultimoSelectAtributo,
-            resp.id,
-            resp.nombre,
-            true
-        );
+    if (!response.ok || !data.ok) {
+        alert(data.error || "No se pudo crear el atributo.");
+        return;
     }
 
-    limpiarModalAtributo();
-    cerrarModal("modalAtributo");
-}
+    agregarOpcionADropdowns("atributo", data.id, data.nombre, true);
 
-function limpiarModalAtributo() {
-    const nombreInput = document.getElementById("atributoNombre");
-    const unidadInput = document.getElementById("atributoUnidad");
+    limpiarInput("atributoNombre");
+    limpiarInput("atributoUnidad");
 
-    if (nombreInput) nombreInput.value = "";
-    if (unidadInput) unidadInput.value = "";
+    cerrarModalPorId("modalAtributo");
 }

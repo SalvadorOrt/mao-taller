@@ -179,7 +179,6 @@ def catalogo_detalle(request, codigo_id):
         "precio_secreto": codigo.precio_secreto,
     })
 
-
 @login_required
 @transaction.atomic
 def catalogo_crear(request):
@@ -188,7 +187,6 @@ def catalogo_crear(request):
 
         codigo_formset = CodigoProductoFormSet(
             request.POST,
-            request.FILES,
             queryset=CodigoProducto.objects.none(),
             prefix="codigos",
         )
@@ -204,9 +202,18 @@ def catalogo_crear(request):
             producto.origen = "BODEGA"
             producto.save()
 
+            imagenes_producto = request.FILES.getlist("imagenes_producto")
+
+            for imagen in imagenes_producto:
+                ImagenProducto.objects.create(
+                    producto=producto,
+                    imagen=imagen,
+                    descripcion=f"Imagen de {producto.nombre_base}",
+                )
+
             codigos_creados = []
 
-            for index, codigo_form in enumerate(codigo_formset):
+            for codigo_form in codigo_formset:
                 if not codigo_form.cleaned_data:
                     continue
 
@@ -218,15 +225,6 @@ def catalogo_crear(request):
                 codigo.save()
 
                 codigos_creados.append(codigo)
-
-                imagenes = request.FILES.getlist(f"imagenes_codigo_{index}")
-
-                for imagen in imagenes:
-                    ImagenProducto.objects.create(
-                        producto=producto,
-                        imagen=imagen,
-                        descripcion=f"Imagen de {codigo.codigo}",
-                    )
 
             for atributo_form in atributo_formset:
                 if not atributo_form.cleaned_data:
@@ -270,8 +268,6 @@ def catalogo_crear(request):
         "codigo_formset": codigo_formset,
         "atributo_formset": atributo_formset,
     })
-
-
 @login_required
 @transaction.atomic
 def catalogo_editar_codigo(request, codigo_id):

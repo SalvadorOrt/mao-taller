@@ -3,7 +3,7 @@
     <div class="section-header-row">
         <div>
             <h4>Códigos comerciales</h4>
-            <p>Un mismo producto puede tener varios códigos, marcas e imágenes.</p>
+            <p>Un mismo producto puede tener varios códigos y marcas.</p>
         </div>
 
         <button
@@ -11,153 +11,65 @@
             class="btn-login"
             style="width:auto;"
             onclick="agregarCodigo()">
-
             + Agregar código
-
         </button>
-
     </div>
 
     <div class="ot-table-wrap">
-
         <table class="ot-table" id="tablaCodigos">
-
             <thead>
-
                 <tr>
-
                     <th>Marca</th>
                     <th>Tipo</th>
                     <th>Código</th>
                     <th>Barras</th>
                     <th>Nombre comercial</th>
-
                     <th>Cant.</th>
                     <th>Unidad</th>
-
                     <th>Compra</th>
                     <th>Venta</th>
                     <th>Secreto</th>
-
                     <th>Margen %</th>
                     <th>IVA %</th>
-
                     <th>Activo</th>
-
-                    <th>Imágenes</th>
-
                     <th></th>
-
                 </tr>
-
             </thead>
 
             <tbody id="codigosContainer">
-
                 {% for form in codigo_formset %}
-
                     <tr class="codigo-form">
-
                         {% for hidden in form.hidden_fields %}
                             {{ hidden }}
                         {% endfor %}
 
                         <td>
-
                             {{ form.marca }}
-
                             {{ form.marca.errors }}
-
                         </td>
 
-                        <td>
-
-                            {{ form.tipo_codigo }}
-
-                        </td>
+                        <td>{{ form.tipo_codigo }}</td>
 
                         <td>
-
                             {{ form.codigo }}
-
                             {{ form.codigo.errors }}
-
                         </td>
 
-                        <td>
-
-                            {{ form.codigo_barras }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.nombre_comercial }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.presentacion_cantidad }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.presentacion_unidad }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.precio_compra }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.precio_venta }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.precio_secreto }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.margen_ganancia_porcentaje }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.porcentaje_iva_costo }}
-
-                        </td>
+                        <td>{{ form.codigo_barras }}</td>
+                        <td>{{ form.nombre_comercial }}</td>
+                        <td>{{ form.presentacion_cantidad }}</td>
+                        <td>{{ form.presentacion_unidad }}</td>
+                        <td>{{ form.precio_compra }}</td>
+                        <td>{{ form.precio_venta }}</td>
+                        <td>{{ form.precio_secreto }}</td>
+                        <td>{{ form.margen_ganancia_porcentaje }}</td>
+                        <td>{{ form.porcentaje_iva_costo }}</td>
 
                         <td style="text-align:center;">
-
                             {{ form.activo }}
-
-                        </td>
-
-                        <td style="min-width:220px;">
-
-                            <input
-                                type="file"
-                                multiple
-                                class="form-control-apple imagen-input"
-                                name="imagenes_codigo_{{ forloop.counter0 }}">
-
-                            <div class="preview-imagenes"></div>
-
                         </td>
 
                         <td>
-
                             <div style="display:none;">
                                 {{ form.DELETE }}
                             </div>
@@ -166,93 +78,52 @@
                                 type="button"
                                 class="btn-login danger small"
                                 onclick="eliminarCodigo(this)">
-
                                 ✕
-
                             </button>
-
                         </td>
-
                     </tr>
-
                 {% endfor %}
-
             </tbody>
-
         </table>
-
     </div>
 
 </div>
 
 
 <template id="codigoEmptyFormTemplate">
+    <tr class="codigo-form">
+        {% for hidden in codigo_formset.empty_form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
 
-<tr class="codigo-form">
+        <td>{{ codigo_formset.empty_form.marca }}</td>
+        <td>{{ codigo_formset.empty_form.tipo_codigo }}</td>
+        <td>{{ codigo_formset.empty_form.codigo }}</td>
+        <td>{{ codigo_formset.empty_form.codigo_barras }}</td>
+        <td>{{ codigo_formset.empty_form.nombre_comercial }}</td>
+        <td>{{ codigo_formset.empty_form.presentacion_cantidad }}</td>
+        <td>{{ codigo_formset.empty_form.presentacion_unidad }}</td>
+        <td>{{ codigo_formset.empty_form.precio_compra }}</td>
+        <td>{{ codigo_formset.empty_form.precio_venta }}</td>
+        <td>{{ codigo_formset.empty_form.precio_secreto }}</td>
+        <td>{{ codigo_formset.empty_form.margen_ganancia_porcentaje }}</td>
+        <td>{{ codigo_formset.empty_form.porcentaje_iva_costo }}</td>
 
-    {% for hidden in codigo_formset.empty_form.hidden_fields %}
-        {{ hidden }}
-    {% endfor %}
+        <td style="text-align:center;">
+            {{ codigo_formset.empty_form.activo }}
+        </td>
 
-    <td>{{ codigo_formset.empty_form.marca }}</td>
+        <td>
+            <div style="display:none;">
+                {{ codigo_formset.empty_form.DELETE }}
+            </div>
 
-    <td>{{ codigo_formset.empty_form.tipo_codigo }}</td>
-
-    <td>{{ codigo_formset.empty_form.codigo }}</td>
-
-    <td>{{ codigo_formset.empty_form.codigo_barras }}</td>
-
-    <td>{{ codigo_formset.empty_form.nombre_comercial }}</td>
-
-    <td>{{ codigo_formset.empty_form.presentacion_cantidad }}</td>
-
-    <td>{{ codigo_formset.empty_form.presentacion_unidad }}</td>
-
-    <td>{{ codigo_formset.empty_form.precio_compra }}</td>
-
-    <td>{{ codigo_formset.empty_form.precio_venta }}</td>
-
-    <td>{{ codigo_formset.empty_form.precio_secreto }}</td>
-
-    <td>{{ codigo_formset.empty_form.margen_ganancia_porcentaje }}</td>
-
-    <td>{{ codigo_formset.empty_form.porcentaje_iva_costo }}</td>
-
-    <td style="text-align:center;">
-
-        {{ codigo_formset.empty_form.activo }}
-
-    </td>
-
-    <td style="min-width:220px;">
-
-        <input
-            type="file"
-            multiple
-            class="form-control-apple imagen-input"
-            name="imagenes_codigo___prefix__">
-
-        <div class="preview-imagenes"></div>
-
-    </td>
-
-    <td>
-
-        <div style="display:none;">
-            {{ codigo_formset.empty_form.DELETE }}
-        </div>
-
-        <button
-            type="button"
-            class="btn-login danger small"
-            onclick="eliminarCodigo(this)">
-
-            ✕
-
-        </button>
-
-    </td>
-
-</tr>
-
+            <button
+                type="button"
+                class="btn-login danger small"
+                onclick="eliminarCodigo(this)">
+                ✕
+            </button>
+        </td>
+    </tr>
 </template>

@@ -8,9 +8,6 @@ Nuevo Repuesto
 {% block extra_css %}
 
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-
-<link rel="stylesheet"
       href="{% static 'inventario/css/catalogo_form.css' %}">
 
 {% endblock %}
@@ -21,12 +18,10 @@ Nuevo Repuesto
 
     <div>
 
-        <h2>
-            Nuevo Repuesto
-        </h2>
+        <h2>Nuevo Repuesto</h2>
 
         <p>
-            Crear producto, atributos técnicos, códigos comerciales e imágenes.
+            Crear producto, imágenes, atributos técnicos y códigos comerciales.
         </p>
 
     </div>
@@ -35,9 +30,7 @@ Nuevo Repuesto
 
         <a href="{% url 'inventario_catalogo' %}"
            class="btn-login">
-
             Volver
-
         </a>
 
     </div>
@@ -79,40 +72,18 @@ Nuevo Repuesto
             </div>
         {% endif %}
 
-        <!-- ========================================= -->
-        <!-- PRODUCTO BASE -->
-        <!-- ========================================= -->
-
         {% include "catalogo/partials/_producto.html" %}
-
-        <!-- ========================================= -->
-        <!-- ATRIBUTOS -->
-        <!-- ========================================= -->
-
         {% include "catalogo/partials/_atributos.html" %}
-
-        <!-- ========================================= -->
-        <!-- CÓDIGOS -->
-        <!-- ========================================= -->
-
         {% include "catalogo/partials/_codigos.html" %}
-
-        <!-- ========================================= -->
-        <!-- MODALES -->
-        <!-- ========================================= -->
-
         {% include "catalogo/partials/_modales.html" %}
 
         <hr>
 
         <div class="form-actions">
 
-            <a
-                href="{% url 'inventario_catalogo' %}"
-                class="btn-login">
-
+            <a href="{% url 'inventario_catalogo' %}"
+               class="btn-login">
                 Cancelar
-
             </a>
 
             <button
@@ -131,14 +102,21 @@ Nuevo Repuesto
 
 {% endblock %}
 
-
 {% block extra_js %}
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="{% static 'inventario/js/utilidades.js' %}"></script>
+
+<script src="{% static 'inventario/js/dropdowns.js' %}"></script>
+
+<script src="{% static 'inventario/js/imagenes.js' %}"></script>
+
+<script src="{% static 'inventario/js/atributos.js' %}"></script>
+
+<script src="{% static 'inventario/js/codigos.js' %}"></script>
+
+<script src="{% static 'inventario/js/modales.js' %}"></script>
 
 <script src="{% static 'inventario/js/catalogo_form.js' %}"></script>
 
