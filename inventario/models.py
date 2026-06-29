@@ -324,12 +324,7 @@ class Producto(models.Model):
 
     @property
     def imagen_principal(self):
-        codigo = self.codigo_principal()
-
-        if not codigo:
-            return None
-
-        return codigo.imagenes.first()
+        return self.imagenes.first()
 
     @property
     def total_codigos(self):
@@ -345,9 +340,7 @@ class Producto(models.Model):
 
     @property
     def tiene_imagenes(self):
-        return self.codigos.filter(
-            imagenes__isnull=False
-        ).exists()
+        return self.imagenes.exists()
 
     @property
     def tiene_atributos(self):
@@ -982,12 +975,18 @@ class ComponenteKit(models.Model):
     def __str__(self):
         return f"{self.kit.nombre} - {self.codigo_producto.codigo}"
 
-
 # =========================================================
 # IMÁGENES
 # =========================================================
 class ImagenProducto(models.Model):
-    codigo_producto = models.ForeignKey(CodigoProducto, on_delete=models.CASCADE, related_name="imagenes")
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name="imagenes",
+        null=True,
+        blank=True,
+    )
+
     imagen = models.ImageField(upload_to="productos/")
     descripcion = models.CharField(max_length=200, blank=True, null=True)
 
@@ -1001,7 +1000,7 @@ class ImagenProducto(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Imagen de {self.codigo_producto.codigo}"
+        return f"Imagen de {self.producto.sku_interno}" if self.producto else "Imagen sin producto"
 
 
 # =========================================================

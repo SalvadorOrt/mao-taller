@@ -1,17 +1,15 @@
 from django import forms
 from django.forms import modelformset_factory
-
 from .models import (
     Atributo,
     Categoria,
     CodigoProducto,
+    ImagenProducto,
     MarcaRepuesto,
     Producto,
     Usuario,
     ValorAtributoProducto,
 )
-
-
 class UsuarioForm(forms.ModelForm):
     # Campo extra para la contraseña (no es obligatorio al editar, pero sí al crear)
     password = forms.CharField(
@@ -361,7 +359,42 @@ class AtributoForm(forms.ModelForm):
             return unidad.strip().upper()
 
         return None
+class ImagenProductoForm(forms.ModelForm):
 
+    class Meta:
+        model = ImagenProducto
+
+        fields = [
+            "imagen",
+            "descripcion",
+        ]
+
+        widgets = {
+            "imagen": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control-apple",
+                    "accept": "image/*",
+                }
+            ),
+            "descripcion": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+        }
+
+        labels = {
+            "imagen": "Imagen",
+            "descripcion": "Descripción",
+        }
+
+    def clean_descripcion(self):
+        descripcion = self.cleaned_data.get("descripcion", "")
+
+        if descripcion:
+            return descripcion.strip()
+
+        return None
 CodigoProductoFormSet = modelformset_factory(
     CodigoProducto,
     form=CodigoProductoForm,

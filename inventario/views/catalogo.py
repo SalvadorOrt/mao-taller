@@ -1,39 +1,3 @@
-'''
-listar productos
-buscar por código, marca, nombre, SKU, código de barras
-crear producto
-editar producto
-ver detalle del producto
-crear códigos/equivalencias
-editar precios
-activar/desactivar producto
-'''
-from decimal import Decimal
-
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
-from django.db import transaction
-from django.db.models import Q
-from django.shortcuts import render, redirect, get_object_or_404
-
-from inventario.forms import (
-    ProductoForm,
-    CodigoProductoFormSet,
-    ValorAtributoProductoFormSet,
-)
-
-from inventario.models import (
-    Categoria,
-    MarcaRepuesto,
-    Producto,
-    CodigoProducto,
-    StockSucursal,
-    ImagenProducto,
-    ValorAtributoProducto,
-)
-from decimal import Decimal, InvalidOperation
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -69,15 +33,11 @@ def catalogo_lista(request):
 
     codigos = (
         CodigoProducto.objects
-        .select_related(
-            "producto",
-            "producto__categoria",
-            "marca",
-        )
+        .select_related("producto", "producto__categoria", "marca")
         .prefetch_related(
             "stocks_por_sucursal",
             "stocks_por_sucursal__sucursal",
-            "imagenes",
+            "producto__imagenes",
         )
         .order_by("producto__nombre_base", "marca__nombre", "codigo")
     )
@@ -144,7 +104,7 @@ def catalogo_lista(request):
             "stock_total": stock_total,
             "precio_secreto": codigo.precio_secreto,
             "equivalencias": equivalencias,
-            "total_imagenes": codigo.imagenes.count(),
+            "total_imagenes": codigo.producto.imagenes.count(),
         })
 
     categorias = Categoria.objects.all().order_by("nombre")
@@ -167,13 +127,9 @@ def catalogo_lista(request):
 def catalogo_detalle(request, codigo_id):
     codigo = get_object_or_404(
         CodigoProducto.objects
-        .select_related(
-            "producto",
-            "producto__categoria",
-            "marca",
-        )
+        .select_related("producto", "producto__categoria", "marca")
         .prefetch_related(
-            "imagenes",
+            "producto__imagenes",
             "producto__codigos",
             "producto__codigos__marca",
             "producto__valores_atributos",
@@ -187,7 +143,7 @@ def catalogo_detalle(request, codigo_id):
     codigos_equivalentes = (
         producto.codigos
         .select_related("marca")
-        .prefetch_related("imagenes")
+        .prefetch_related("producto__imagenes")
         .order_by("marca__nombre", "codigo")
     )
 
@@ -197,7 +153,7 @@ def catalogo_detalle(request, codigo_id):
         .order_by("atributo__nombre")
     )
 
-    imagenes = codigo.imagenes.all().order_by("id")
+    imagenes = producto.imagenes.all().order_by("id")
 
     stocks = (
         StockSucursal.objects
@@ -243,11 +199,7 @@ def catalogo_crear(request):
             prefix="atributos",
         )
 
-        if (
-            producto_form.is_valid()
-            and codigo_formset.is_valid()
-            and atributo_formset.is_valid()
-        ):
+        if producto_form.is_valid() and codigo_formset.is_valid() and atributo_formset.is_valid():
             producto = producto_form.save(commit=False)
             producto.origen = "BODEGA"
             producto.save()
@@ -267,13 +219,11 @@ def catalogo_crear(request):
 
                 codigos_creados.append(codigo)
 
-                imagenes = request.FILES.getlist(
-                    f"imagenes_codigo_{index}"
-                )
+                imagenes = request.FILES.getlist(f"imagenes_codigo_{index}")
 
                 for imagen in imagenes:
                     ImagenProducto.objects.create(
-                        codigo_producto=codigo,
+                        producto=producto,
                         imagen=imagen,
                         descripcion=f"Imagen de {codigo.codigo}",
                     )
@@ -290,28 +240,17 @@ def catalogo_crear(request):
                 atributo_valor.save()
 
             if not codigos_creados:
-                messages.error(
-                    request,
-                    "Debe agregar al menos un código comercial."
-                )
-                raise ValidationError(
-                    "Debe agregar al menos un código comercial."
-                )
+                messages.error(request, "Debe agregar al menos un código comercial.")
+                raise ValidationError("Debe agregar al menos un código comercial.")
 
-            messages.success(
-                request,
-                "Producto creado correctamente."
-            )
+            messages.success(request, "Producto creado correctamente.")
 
             return redirect(
                 "inventario_catalogo_detalle",
                 codigo_id=codigos_creados[0].id,
             )
 
-        messages.error(
-            request,
-            "Revise los datos ingresados."
-        )
+        messages.error(request, "Revise los datos ingresados.")
 
     else:
         producto_form = ProductoForm()
@@ -326,7 +265,7 @@ def catalogo_crear(request):
             prefix="atributos",
         )
 
-    return render(request,"catalogo/crear.html", {
+    return render(request, "catalogo/crear.html", {
         "producto_form": producto_form,
         "codigo_formset": codigo_formset,
         "atributo_formset": atributo_formset,
@@ -367,11 +306,7 @@ def catalogo_editar_codigo(request, codigo_id):
                 prefix="atributos",
             )
 
-            if (
-                producto_form.is_valid()
-                and codigo_formset.is_valid()
-                and atributo_formset.is_valid()
-            ):
+            if producto_form.is_valid() and codigo_formset.is_valid() and atributo_formset.is_valid():
                 producto = producto_form.save(commit=False)
                 producto.origen = producto.origen or "BODEGA"
                 producto.save()
@@ -393,13 +328,11 @@ def catalogo_editar_codigo(request, codigo_id):
 
                     codigos_guardados.append(codigo_obj)
 
-                    imagenes = request.FILES.getlist(
-                        f"imagenes_codigo_{index}"
-                    )
+                    imagenes = request.FILES.getlist(f"imagenes_codigo_{index}")
 
                     for imagen in imagenes:
                         ImagenProducto.objects.create(
-                            codigo_producto=codigo_obj,
+                            producto=producto,
                             imagen=imagen,
                             descripcion=f"Imagen de {codigo_obj.codigo}",
                         )
@@ -424,28 +357,17 @@ def catalogo_editar_codigo(request, codigo_id):
                 )
 
                 if not codigo_destino:
-                    messages.error(
-                        request,
-                        "El producto debe tener al menos un código comercial."
-                    )
-                    raise ValidationError(
-                        "El producto debe tener al menos un código comercial."
-                    )
+                    messages.error(request, "El producto debe tener al menos un código comercial.")
+                    raise ValidationError("El producto debe tener al menos un código comercial.")
 
-                messages.success(
-                    request,
-                    "Producto actualizado correctamente."
-                )
+                messages.success(request, "Producto actualizado correctamente.")
 
                 return redirect(
                     "inventario_catalogo_detalle",
                     codigo_id=codigo_destino.id,
                 )
 
-            messages.error(
-                request,
-                "Revise los datos ingresados."
-            )
+            messages.error(request, "Revise los datos ingresados.")
 
         except ValidationError as e:
             messages.error(request, e)
@@ -510,40 +432,27 @@ def catalogo_crear_codigo_equivalente(request, producto_id):
 
                 codigos_creados.append(codigo)
 
-                imagenes = request.FILES.getlist(
-                    f"imagenes_codigo_{index}"
-                )
+                imagenes = request.FILES.getlist(f"imagenes_codigo_{index}")
 
                 for imagen in imagenes:
                     ImagenProducto.objects.create(
-                        codigo_producto=codigo,
+                        producto=producto,
                         imagen=imagen,
                         descripcion=f"Imagen de {codigo.codigo}",
                     )
 
             if not codigos_creados:
-                messages.error(
-                    request,
-                    "Debe agregar al menos un código comercial."
-                )
-                raise ValidationError(
-                    "Debe agregar al menos un código comercial."
-                )
+                messages.error(request, "Debe agregar al menos un código comercial.")
+                raise ValidationError("Debe agregar al menos un código comercial.")
 
-            messages.success(
-                request,
-                "Código equivalente agregado correctamente."
-            )
+            messages.success(request, "Código equivalente agregado correctamente.")
 
             return redirect(
                 "inventario_catalogo_detalle",
                 codigo_id=codigos_creados[0].id,
             )
 
-        messages.error(
-            request,
-            "Revise los datos ingresados."
-        )
+        messages.error(request, "Revise los datos ingresados.")
 
     else:
         codigo_formset = CodigoProductoFormSet(
