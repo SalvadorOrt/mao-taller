@@ -1,258 +1,89 @@
-<div class="form-section">
+<div class="modal fade" id="modalCategoria" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
 
-    <div class="section-header-row">
-        <div>
-            <h4>Códigos comerciales</h4>
-            <p>Un mismo producto puede tener varios códigos, marcas e imágenes.</p>
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label class="field-label">Nombre</label>
+                <input id="categoriaNombre" type="text" class="form-control-apple">
+
+                <label class="field-label" style="margin-top:12px;">Prefijo SKU</label>
+                <input id="categoriaPrefijo" type="text" class="form-control-apple">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-login" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn-login primary" onclick="guardarCategoria()">
+                    Guardar
+                </button>
+            </div>
+
         </div>
-
-        <button
-            type="button"
-            class="btn-login"
-            style="width:auto;"
-            onclick="agregarCodigo()">
-
-            + Agregar código
-
-        </button>
-
     </div>
-
-    <div class="ot-table-wrap">
-
-        <table class="ot-table" id="tablaCodigos">
-
-            <thead>
-
-                <tr>
-
-                    <th>Marca</th>
-                    <th>Tipo</th>
-                    <th>Código</th>
-                    <th>Barras</th>
-                    <th>Nombre comercial</th>
-
-                    <th>Cant.</th>
-                    <th>Unidad</th>
-
-                    <th>Compra</th>
-                    <th>Venta</th>
-                    <th>Secreto</th>
-
-                    <th>Margen %</th>
-                    <th>IVA %</th>
-
-                    <th>Activo</th>
-
-                    <th>Imágenes</th>
-
-                    <th></th>
-
-                </tr>
-
-            </thead>
-
-            <tbody id="codigosContainer">
-
-                {% for form in codigo_formset %}
-
-                    <tr class="codigo-form">
-
-                        {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
-                        {% endfor %}
-
-                        <td>
-
-                            {{ form.marca }}
-
-                            {{ form.marca.errors }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.tipo_codigo }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.codigo }}
-
-                            {{ form.codigo.errors }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.codigo_barras }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.nombre_comercial }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.presentacion_cantidad }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.presentacion_unidad }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.precio_compra }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.precio_venta }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.precio_secreto }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.margen_ganancia_porcentaje }}
-
-                        </td>
-
-                        <td>
-
-                            {{ form.porcentaje_iva_costo }}
-
-                        </td>
-
-                        <td style="text-align:center;">
-
-                            {{ form.activo }}
-
-                        </td>
-
-                        <td style="min-width:220px;">
-
-                            <input
-                                type="file"
-                                multiple
-                                class="form-control-apple imagen-input"
-                                name="imagenes_codigo_{{ forloop.counter0 }}">
-
-                            <div class="preview-imagenes"></div>
-
-                        </td>
-
-                        <td>
-
-                            <div style="display:none;">
-                                {{ form.DELETE }}
-                            </div>
-
-                            <button
-                                type="button"
-                                class="btn-login danger small"
-                                onclick="eliminarCodigo(this)">
-
-                                ✕
-
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
 </div>
 
+<div class="modal fade" id="modalMarca" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
 
-<template id="codigoEmptyFormTemplate">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva marca</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-<tr class="codigo-form">
+            <div class="modal-body">
+                <label class="field-label">Nombre</label>
+                <input id="marcaNombre" type="text" class="form-control-apple">
+            </div>
 
-    {% for hidden in codigo_formset.empty_form.hidden_fields %}
-        {{ hidden }}
-    {% endfor %}
+            <div class="modal-footer">
+                <button type="button" class="btn-login" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
 
-    <td>{{ codigo_formset.empty_form.marca }}</td>
+                <button type="button" class="btn-login primary" onclick="guardarMarca()">
+                    Guardar
+                </button>
+            </div>
 
-    <td>{{ codigo_formset.empty_form.tipo_codigo }}</td>
-
-    <td>{{ codigo_formset.empty_form.codigo }}</td>
-
-    <td>{{ codigo_formset.empty_form.codigo_barras }}</td>
-
-    <td>{{ codigo_formset.empty_form.nombre_comercial }}</td>
-
-    <td>{{ codigo_formset.empty_form.presentacion_cantidad }}</td>
-
-    <td>{{ codigo_formset.empty_form.presentacion_unidad }}</td>
-
-    <td>{{ codigo_formset.empty_form.precio_compra }}</td>
-
-    <td>{{ codigo_formset.empty_form.precio_venta }}</td>
-
-    <td>{{ codigo_formset.empty_form.precio_secreto }}</td>
-
-    <td>{{ codigo_formset.empty_form.margen_ganancia_porcentaje }}</td>
-
-    <td>{{ codigo_formset.empty_form.porcentaje_iva_costo }}</td>
-
-    <td style="text-align:center;">
-
-        {{ codigo_formset.empty_form.activo }}
-
-    </td>
-
-    <td style="min-width:220px;">
-
-        <input
-            type="file"
-            multiple
-            class="form-control-apple imagen-input"
-            name="imagenes_codigo___prefix__">
-
-        <div class="preview-imagenes"></div>
-
-    </td>
-
-    <td>
-
-        <div style="display:none;">
-            {{ codigo_formset.empty_form.DELETE }}
         </div>
+    </div>
+</div>
 
-        <button
-            type="button"
-            class="btn-login danger small"
-            onclick="eliminarCodigo(this)">
+<div class="modal fade" id="modalAtributo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
 
-            ✕
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo atributo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-        </button>
+            <div class="modal-body">
+                <label class="field-label">Nombre</label>
+                <input id="atributoNombre" type="text" class="form-control-apple">
 
-    </td>
+                <label class="field-label" style="margin-top:12px;">Unidad</label>
+                <input id="atributoUnidad" type="text" class="form-control-apple">
+            </div>
 
-</tr>
+            <div class="modal-footer">
+                <button type="button" class="btn-login" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
 
-</template>
+                <button type="button" class="btn-login primary" onclick="guardarAtributo()">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
