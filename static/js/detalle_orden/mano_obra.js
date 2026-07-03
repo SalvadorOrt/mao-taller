@@ -1,11 +1,10 @@
-const PUEDE_EDITAR_OT =
+const PUEDE_EDITAR_MANO_OBRA =
     document.querySelector(".ot-wrapper")?.dataset.puedeEditar === "true";
-
 let contadorPadresMOI = document.querySelectorAll('#cuerpoTablaMOI .fila-padre-moi').length;
 let timeoutBusquedaServicio = null;
 
 function agregarFilaMOI(enfocar = false) {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     agregarFilaSimple('tablaMOI');
 
@@ -18,7 +17,7 @@ function agregarFilaMOI(enfocar = false) {
 }
 
 function agregarFilaMOE(enfocar = false) {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     agregarFilaSimple('tablaMOE');
 
@@ -31,7 +30,7 @@ function agregarFilaMOE(enfocar = false) {
 }
 
 function agregarFilaSimple(idTabla) {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const tbody = document.querySelector(`#${idTabla} tbody`);
     if (!tbody) return;
@@ -137,7 +136,7 @@ function agregarFilaSimple(idTabla) {
 }
 
 function buscarServicioEnFila(inputElement, prefix = 'moi') {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const query = inputElement.value.trim();
     const fila = inputElement.closest('tr');
@@ -210,7 +209,7 @@ function buscarServicioEnFila(inputElement, prefix = 'moi') {
 }
 
 function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
     if (!item || !inputElement) return;
 
     const filaPadre = inputElement.closest('tr');
@@ -263,7 +262,7 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
 }
 
 function agregarProcedimientoMOI(boton, texto = '') {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const filaHijas = boton?.closest('.fila-hijas-moi');
     if (!filaHijas) return;
@@ -298,14 +297,14 @@ function agregarProcedimientoMOI(boton, texto = '') {
 }
 
 function eliminarProcedimientoMOI(boton) {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const item = boton.closest('.procedimiento-item-moi');
     if (item) item.remove();
 }
 
 function abrirModalIngresoRapidoMOI() {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const modal = document.getElementById('modalIngresoRapidoMOI');
     if (modal) modal.style.display = 'flex';
@@ -328,7 +327,7 @@ function cerrarModalIngresoRapidoMOI() {
 }
 
 function confirmarIngresoRapidoMOI() {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const descripcion = document.getElementById('irmoi_descripcion').value.trim();
     const precio = numeroSeguro(document.getElementById('irmoi_precio').value);
@@ -429,7 +428,7 @@ function confirmarIngresoRapidoMOI() {
 }
 
 function abrirModalIngresoRapidoMOE() {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const modal = document.getElementById('modalIngresoRapidoMOE');
     if (modal) modal.style.display = 'flex';
@@ -452,7 +451,7 @@ function cerrarModalIngresoRapidoMOE() {
 }
 
 function confirmarIngresoRapidoMOE() {
-    if (!PUEDE_EDITAR_OT) return;
+    if (!PUEDE_EDITAR_MANO_OBRA) return;
 
     const descripcion = document.getElementById('irmoe_descripcion').value.trim();
     const precio = numeroSeguro(document.getElementById('irmoe_precio').value);
