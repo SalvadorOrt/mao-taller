@@ -36,15 +36,18 @@
         </div>
 
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            {% if puede_editar %}
-                <button type="button"
-                        onclick="abrirModalRecepcion()"
-                        class="btn-login"
-                        style="background: #f5f5f7; color: var(--text);">
+            <button type="button"
+                    onclick="abrirModalRecepcion()"
+                    class="btn-login"
+                    style="background: #f5f5f7; color: var(--text);">
+                {% if puede_editar %}
                     <i class="bi bi-pencil-square" style="margin-right: 5px;"></i>
-                    {% if orden.estado != 'ABIERTA' %}Corregir Datos (Admin){% else %}Editar Recepción{% endif %}
-                </button>
-            {% endif %}
+                    Editar Recepción
+                {% else %}
+                    <i class="bi bi-eye" style="margin-right: 5px;"></i>
+                    Ver Recepción
+                {% endif %}
+            </button>
 
             {% if puede_reabrir and orden.estado != 'ABIERTA' %}
                 <button type="button"
