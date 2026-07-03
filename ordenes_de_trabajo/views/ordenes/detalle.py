@@ -55,7 +55,15 @@ def detalle_orden(request, pk):
 
     es_su_sucursal = puede_operar_orden_desde_sucursal_activa(request, orden)
     puede_reabrir = request.user.has_perm("ordenes_de_trabajo.can_reopen_orden")
-    puede_editar = (es_su_sucursal and orden.estado == "ABIERTA") or puede_reabrir
+    puede_reabrir = (
+        request.user.has_perm("ordenes_de_trabajo.can_reopen_orden")
+        and orden.estado in ["CERRADA", "ANULADA"]
+    )
+
+    puede_editar = (
+        es_su_sucursal
+        and orden.estado == "ABIERTA"
+    )
 
     categorias = Categoria.objects.all().order_by("nombre") if puede_editar else []
     tecnicos_disponibles = Tecnico.objects.filter(activo=True)

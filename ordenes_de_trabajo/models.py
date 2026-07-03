@@ -1353,6 +1353,83 @@ class OrdenTrabajo(models.Model):
     def badge_origen(self):
         return "MIGRADA" if self.es_migrada else "NORMAL"
 
+
+    def esta_bloqueada(self):
+        return self.estado in ["CERRADA", "ANULADA"]
+
+    def puede_editarse(self):
+        return self.estado == "ABIERTA"
+
+    def _estado_anterior(self):
+        if not self.pk:
+            return None
+
+        return (
+            OrdenTrabajo.objects
+            .filter(pk=self.pk)
+            .values_list("estado", flat=True)
+            .first()
+        )
+
+    def _campos_modificados(self):
+        if not self.pk:
+            return []
+
+        anterior = OrdenTrabajo.objects.filter(pk=self.pk).first()
+
+        if not anterior:
+            return []
+
+        ignorar = {
+            "id",
+            "total_general",
+            "subtotal_sin_iva",
+            "valor_descuento",
+            "valor_iva",
+            "total_final",
+            "configuracion_iva",
+            "porcentaje_iva",
+        }
+
+        modificados = []
+
+        for field in self._meta.concrete_fields:
+            nombre = field.name
+
+            if nombre in ignorar:
+                continue
+
+            valor_anterior = getattr(anterior, nombre)
+            valor_actual = getattr(self, nombre)
+
+            if valor_anterior != valor_actual:
+                modificados.append(nombre)
+
+        return modificados
+
+    def validar_bloqueo_edicion(self):
+        estado_anterior = self._estado_anterior()
+
+        if not estado_anterior:
+            return
+
+        if estado_anterior not in ["CERRADA", "ANULADA"]:
+            return
+
+        campos_modificados = self._campos_modificados()
+
+        if not campos_modificados:
+            return
+
+        # Única excepción: reabrir la orden.
+        if campos_modificados == ["estado"] and self.estado == "ABIERTA":
+            return
+
+        raise ValidationError(
+            "No se puede modificar una orden cerrada o anulada. "
+            "Primero debe reabrirse."
+        )
+
     def obtener_configuracion_iva_activa(self):
         return ConfiguracionTributaria.objects.filter(
             activa=True
@@ -1500,6 +1577,7 @@ class OrdenTrabajo(models.Model):
 
     def clean(self):
         self._normalizar_campos_texto()
+        self.validar_bloqueo_edicion()
 
         if not self.numero_orden or not self.numero_orden.strip():
             raise ValidationError("El número de orden es obligatorio.")
@@ -1573,20 +1651,26 @@ class TrabajoRecepcionCatalogo(models.Model):
     def __str__(self):
         return self.nombre
 
-
 class OrdenTrabajoSolicitado(models.Model):
     orden = models.ForeignKey(
         OrdenTrabajo,
         related_name="trabajos_solicitados_items",
         on_delete=models.CASCADE,
     )
+
     trabajo_catalogo = models.ForeignKey(
         TrabajoRecepcionCatalogo,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
-    descripcion_manual = models.CharField(max_length=255, null=True, blank=True)
+
+    descripcion_manual = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
     orden_item = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -1594,28 +1678,52 @@ class OrdenTrabajoSolicitado(models.Model):
         verbose_name = "Trabajo solicitado"
         verbose_name_plural = "Trabajos solicitados"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar trabajos solicitados de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+        self.validar_orden_editable()
+
         descripcion = (self.descripcion_manual or "").strip()
+
         if not self.trabajo_catalogo and not descripcion:
-            raise ValidationError("Debe seleccionar un trabajo del catálogo o ingresar una descripción manual.")
+            raise ValidationError(
+                "Debe seleccionar un trabajo del catálogo o ingresar una descripción manual."
+            )
 
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.descripcion_manual:
             self.descripcion_manual = self.descripcion_manual.strip()
+
         self.full_clean()
+
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
+
     def __str__(self):
-        return self.trabajo_catalogo.nombre if self.trabajo_catalogo else (self.descripcion_manual or "Trabajo")
-
-
+        return (
+            self.trabajo_catalogo.nombre
+            if self.trabajo_catalogo
+            else (self.descripcion_manual or "Trabajo")
+        )
 class OrdenSintoma(models.Model):
     orden = models.ForeignKey(
         OrdenTrabajo,
         related_name="sintomas_items",
         on_delete=models.CASCADE,
     )
+
     descripcion = models.CharField(max_length=255)
+
     orden_item = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -1623,19 +1731,37 @@ class OrdenSintoma(models.Model):
         verbose_name = "Síntoma de cliente"
         verbose_name_plural = "Síntomas de cliente"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar los síntomas de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+        self.validar_orden_editable()
+
         if not self.descripcion or not self.descripcion.strip():
-            raise ValidationError("La descripción del síntoma es obligatoria.")
+            raise ValidationError(
+                "La descripción del síntoma es obligatoria."
+            )
 
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.descripcion:
             self.descripcion = self.descripcion.strip()
+
         self.full_clean()
+
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.orden_item}. {self.descripcion}"
-
 
 # ==========================================
 # 7. CHECKLIST Y RECEPCIÓN
@@ -1646,6 +1772,7 @@ class OrdenChecklistRecepcion(models.Model):
         related_name="checklist_recepcion",
         on_delete=models.CASCADE,
     )
+
     matricula = models.BooleanField(default=False)
     plumas = models.BooleanField(default=False)
     radio = models.BooleanField(default=False)
@@ -1665,21 +1792,39 @@ class OrdenChecklistRecepcion(models.Model):
         verbose_name = "Checklist de recepción"
         verbose_name_plural = "Checklists de recepción"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se puede modificar el checklist de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
+    def clean(self):
+        self.validar_orden_editable()
+
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.adicionales_reportados:
             self.adicionales_reportados = self.adicionales_reportados.strip()
+
+        self.full_clean()
+
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"Checklist OT {self.orden.numero_orden}"
-
-
 class OrdenObjetoAdicional(models.Model):
     orden = models.ForeignKey(
         OrdenTrabajo,
         related_name="objetos_adicionales",
         on_delete=models.CASCADE,
     )
+
     descripcion = models.CharField(max_length=255)
     cantidad = models.PositiveIntegerField(default=1)
     observacion = models.CharField(max_length=255, null=True, blank=True)
@@ -1689,23 +1834,45 @@ class OrdenObjetoAdicional(models.Model):
         verbose_name = "Objeto adicional"
         verbose_name_plural = "Objetos adicionales"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar objetos adicionales de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+        self.validar_orden_editable()
+
         if not self.descripcion or not self.descripcion.strip():
-            raise ValidationError("La descripción del objeto adicional es obligatoria.")
+            raise ValidationError(
+                "La descripción del objeto adicional es obligatoria."
+            )
+
         if self.cantidad <= 0:
-            raise ValidationError("La cantidad debe ser mayor que 0.")
+            raise ValidationError(
+                "La cantidad debe ser mayor que 0."
+            )
 
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.descripcion:
             self.descripcion = self.descripcion.strip()
+
         if self.observacion:
             self.observacion = self.observacion.strip()
+
         self.full_clean()
+
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.descripcion} - OT {self.orden.numero_orden}"
-
 
 class FotoRecepcionVehiculo(models.Model):
     orden = models.ForeignKey(
@@ -1713,9 +1880,21 @@ class FotoRecepcionVehiculo(models.Model):
         related_name="fotos_recepcion",
         on_delete=models.CASCADE,
     )
+
     imagen = models.ImageField(upload_to="ordenes/recepcion/")
-    tipo_foto = models.CharField(max_length=50, null=True, blank=True)
-    descripcion = models.CharField(max_length=255, null=True, blank=True)
+
+    tipo_foto = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+    )
+
+    descripcion = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1723,16 +1902,35 @@ class FotoRecepcionVehiculo(models.Model):
         verbose_name = "Foto de recepción"
         verbose_name_plural = "Fotos de recepción"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar fotografías de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
+    def clean(self):
+        self.validar_orden_editable()
+
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.tipo_foto:
             self.tipo_foto = self.tipo_foto.strip()
+
         if self.descripcion:
             self.descripcion = self.descripcion.strip()
+
+        self.full_clean()
+
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"Foto OT {self.orden.numero_orden}"
-
 
 class OrdenCroquisDanio(models.Model):
     orden = models.OneToOneField(
@@ -1740,27 +1938,53 @@ class OrdenCroquisDanio(models.Model):
         related_name="croquis_danio",
         on_delete=models.CASCADE,
     )
+
     trazos = models.JSONField(
         default=list,
         blank=True,
-    
     )
+
     imagen_generada = models.ImageField(
         upload_to="ordenes/croquis/",
         null=True,
         blank=True,
     )
-    observacion = models.CharField(max_length=255, null=True, blank=True)
+
+    observacion = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Croquis de daño"
         verbose_name_plural = "Croquis de daños"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se puede modificar el croquis de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
+    def clean(self):
+        self.validar_orden_editable()
+
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.observacion:
             self.observacion = self.observacion.strip()
+
+        self.full_clean()
+
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"Croquis OT {self.orden.numero_orden}"
@@ -1772,6 +1996,7 @@ class OrdenServicioDetalle(models.Model):
         ("TRICAPA", "Tricapa / Candys"),
         ("ESPECIAL", "Color especial"),
     ]
+
     TIPOS_SERVICIO = [
         ("MEC", "Mano de Obra Interna"),
         ("EXT", "Mano de Obra Externa"),
@@ -1782,11 +2007,10 @@ class OrdenServicioDetalle(models.Model):
         related_name="servicios_detalles",
         on_delete=models.CASCADE,
     )
-    
-    
+
     servicio = models.ForeignKey(
         "servicios.ServicioCatalogo",
-        on_delete=models.SET_NULL, 
+        on_delete=models.SET_NULL,
         related_name="ordenes_detalle",
         null=True,
         blank=True,
@@ -1797,39 +2021,47 @@ class OrdenServicioDetalle(models.Model):
         choices=TIPOS_SERVICIO,
         default="MEC",
     )
-    
+
     tecnico_responsable = models.ForeignKey(
         Tecnico,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
-    
+
     cantidad = models.DecimalField(
-            max_digits=10,
-            decimal_places=2,
-            default=Decimal("1.00")
-        )
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("1.00"),
+    )
+
+    precio_unitario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False,
+    )
+
     orden_item = models.PositiveIntegerField(default=1)
 
     tipo_tarifa_aplicada = models.CharField(
-    max_length=20,
-    default="NO_APLICA",
-)
-    
+        max_length=20,
+        default="NO_APLICA",
+    )
+
     variante_precio_aplicada = models.CharField(
         max_length=20,
         choices=VARIANTES_PRECIO,
         default="NORMAL",
     )
 
-   
     descripcion_servicio = models.CharField(
         max_length=255,
-        blank=False,  
-  
+        blank=False,
     )
 
     class Meta:
@@ -1837,43 +2069,68 @@ class OrdenServicioDetalle(models.Model):
         verbose_name = "Detalle de servicio"
         verbose_name_plural = "Detalles de servicios"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar servicios de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+        self.validar_orden_editable()
+
         if self.cantidad is None or self.cantidad <= 0:
-            raise ValidationError("La cantidad del servicio debe ser mayor que 0.")
+            raise ValidationError(
+                "La cantidad del servicio debe ser mayor que 0."
+            )
+
         if self.precio_unitario is None or self.precio_unitario < 0:
-            raise ValidationError("El precio unitario del servicio no puede ser negativo.")
-        
+            raise ValidationError(
+                "El precio unitario del servicio no puede ser negativo."
+            )
+
         if not self.descripcion_servicio and not self.servicio:
-            raise ValidationError("Debe proporcionar una descripción o seleccionar un servicio del catálogo.")
+            raise ValidationError(
+                "Debe proporcionar una descripción o seleccionar un servicio del catálogo."
+            )
 
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if not self.tipo_tarifa_aplicada:
-            self.tipo_tarifa_aplicada = self.orden.tipo_tarifa_vehiculo or "NO_APLICA"
+            self.tipo_tarifa_aplicada = (
+                self.orden.tipo_tarifa_vehiculo or "NO_APLICA"
+            )
 
         if not self.variante_precio_aplicada:
             self.variante_precio_aplicada = "NORMAL"
 
-       
         if self.servicio and not self.descripcion_servicio:
             self.descripcion_servicio = self.servicio.descripcion
 
         self.subtotal = (
             Decimal(str(self.cantidad)) * self.precio_unitario
         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        self.full_clean()
+
         with transaction.atomic():
             super().save(*args, **kwargs)
             self.orden.calcular_total()
 
     def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         orden = self.orden
+
         with transaction.atomic():
             super().delete(*args, **kwargs)
             orden.calcular_total()
 
     def __str__(self):
-        return f"[{self.tipo_servicio}] {self.descripcion_servicio} - OT {self.orden.numero_orden}"
-    
-
+        return (
+            f"[{self.tipo_servicio}] "
+            f"{self.descripcion_servicio} - OT {self.orden.numero_orden}"
+        )
 class OrdenInsumoDetalle(models.Model):
     orden = models.ForeignKey(
         "OrdenTrabajo",
@@ -2052,7 +2309,18 @@ class OrdenServicioProcedimientoDetalle(models.Model):
         verbose_name = "Procedimiento aplicado en OT"
         verbose_name_plural = "Procedimientos aplicados en OT"
 
+    def validar_orden_editable(self):
+        if (
+            self.detalle_servicio
+            and self.detalle_servicio.orden.estado in ["CERRADA", "ANULADA"]
+        ):
+            raise ValidationError(
+                "No se pueden modificar procedimientos de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+
+        self.validar_orden_editable()
 
         if not self.descripcion or not self.descripcion.strip():
             raise ValidationError(
@@ -2061,6 +2329,8 @@ class OrdenServicioProcedimientoDetalle(models.Model):
 
     def save(self, *args, **kwargs):
 
+        self.validar_orden_editable()
+
         if self.descripcion:
             self.descripcion = self.descripcion.strip().upper()
 
@@ -2068,13 +2338,18 @@ class OrdenServicioProcedimientoDetalle(models.Model):
 
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
+
     def __str__(self):
 
         return (
             f"{self.detalle_servicio.descripcion_servicio} "
             f"- {self.descripcion}"
         )
-
 # ==========================================
 # 9. DETALLES HISTÓRICOS MIGRADOS
 # ==========================================
@@ -2089,6 +2364,7 @@ class OrdenServicioHistorico(models.Model):
         related_name="servicios_historicos",
         on_delete=models.CASCADE,
     )
+
     tipo = models.CharField(max_length=3, choices=TIPOS)
     descripcion_original = models.TextField()
     cantidad = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -2096,17 +2372,26 @@ class OrdenServicioHistorico(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     es_cortesia = models.BooleanField(default=False)
     orden_item = models.PositiveIntegerField(default=1)
+
     procedimientos = models.JSONField(
         default=list,
         blank=True,
-
     )
+
     class Meta:
         ordering = ["tipo", "orden_item", "id"]
         verbose_name = "Servicio histórico migrado"
         verbose_name_plural = "Servicios históricos migrados"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar servicios históricos de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+        self.validar_orden_editable()
+
         if not self.descripcion_original or not self.descripcion_original.strip():
             raise ValidationError("La descripción histórica es obligatoria.")
 
@@ -2120,6 +2405,8 @@ class OrdenServicioHistorico(models.Model):
             raise ValidationError("El subtotal histórico no puede ser negativo.")
 
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.descripcion_original:
             self.descripcion_original = self.descripcion_original.strip()
 
@@ -2130,27 +2417,54 @@ class OrdenServicioHistorico(models.Model):
             self.orden.calcular_total()
 
     def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         orden = self.orden
+
         with transaction.atomic():
             super().delete(*args, **kwargs)
             orden.calcular_total()
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.descripcion_original}"
-
-
 class OrdenInsumoHistorico(models.Model):
     orden = models.ForeignKey(
         OrdenTrabajo,
         related_name="insumos_historicos",
         on_delete=models.CASCADE,
     )
+
     descripcion_original = models.TextField()
-    codigo_original = models.CharField(max_length=100, null=True, blank=True)
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    subtotal = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    codigo_original = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    cantidad = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    precio_unitario = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    subtotal = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     orden_item = models.PositiveIntegerField(default=1)
+
     requiere_revision = models.BooleanField(default=False)
 
     class Meta:
@@ -2158,20 +2472,40 @@ class OrdenInsumoHistorico(models.Model):
         verbose_name = "Insumo histórico migrado"
         verbose_name_plural = "Insumos históricos migrados"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar insumos históricos de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+
+        self.validar_orden_editable()
+
         if not self.descripcion_original or not self.descripcion_original.strip():
-            raise ValidationError("La descripción histórica del insumo es obligatoria.")
+            raise ValidationError(
+                "La descripción histórica del insumo es obligatoria."
+            )
 
         if self.cantidad is not None and self.cantidad <= 0:
-            raise ValidationError("La cantidad histórica debe ser mayor que 0.")
+            raise ValidationError(
+                "La cantidad histórica debe ser mayor que 0."
+            )
 
         if self.precio_unitario is not None and self.precio_unitario < 0:
-            raise ValidationError("El precio unitario histórico no puede ser negativo.")
+            raise ValidationError(
+                "El precio unitario histórico no puede ser negativo."
+            )
 
         if self.subtotal is not None and self.subtotal < 0:
-            raise ValidationError("El subtotal histórico no puede ser negativo.")
+            raise ValidationError(
+                "El subtotal histórico no puede ser negativo."
+            )
 
     def save(self, *args, **kwargs):
+
+        self.validar_orden_editable()
+
         if self.descripcion_original:
             self.descripcion_original = self.descripcion_original.strip()
 
@@ -2185,7 +2519,11 @@ class OrdenInsumoHistorico(models.Model):
             self.orden.calcular_total()
 
     def delete(self, *args, **kwargs):
+
+        self.validar_orden_editable()
+
         orden = self.orden
+
         with transaction.atomic():
             super().delete(*args, **kwargs)
             orden.calcular_total()
@@ -2414,14 +2752,42 @@ class OrdenRecomendacion(models.Model):
         verbose_name = "Recomendación de orden"
         verbose_name_plural = "Recomendaciones de órdenes"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar las recomendaciones de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
+    def clean(self):
+        self.validar_orden_editable()
+
+        if not self.titulo or not self.titulo.strip():
+            raise ValidationError(
+                "El título de la recomendación es obligatorio."
+            )
+
+        if not self.texto or not self.texto.strip():
+            raise ValidationError(
+                "El texto de la recomendación es obligatorio."
+            )
+
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if self.titulo:
             self.titulo = self.titulo.strip().upper()
 
         if self.texto:
             self.texto = self.texto.strip().upper()
 
+        self.full_clean()
+
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.orden.numero_orden} | {self.titulo}"
