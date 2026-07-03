@@ -14,22 +14,30 @@ from ..utils import (
 # =========================================================
 @login_required
 def cerrar_orden(request, pk):
-    if request.method == "POST":
-        orden = get_object_or_404(OrdenTrabajo, pk=pk)
-        
-        if not puede_operar_orden_desde_sucursal_activa(request, orden):
-            messages.error(request, "No tienes permiso para operar esta orden desde tu sucursal activa.")
-            return redirect("detalle_orden", pk=pk)
-            
-        if orden.estado == 'ABIERTA':
-            orden.estado = 'CERRADA'
-            orden.save()
-            messages.success(request, f"La orden {orden.numero_orden} ha sido cerrada.")
-        else:
-            messages.error(request, f"No se puede cerrar la orden porque actualmente está {orden.estado}.")
-    else:
+    if request.method != "POST":
         messages.error(request, "Método no permitido. Debe usar el botón oficial del sistema.")
-        
+        return redirect("detalle_orden", pk=pk)
+
+    orden = get_object_or_404(OrdenTrabajo, pk=pk)
+
+    if not puede_operar_orden_desde_sucursal_activa(request, orden):
+        messages.error(request, "No tienes permiso para operar esta orden desde tu sucursal activa.")
+        return redirect("detalle_orden", pk=pk)
+
+    if orden.estado != "ABIERTA":
+        messages.error(request, f"No se puede cerrar la orden porque actualmente está {orden.estado}.")
+        return redirect("detalle_orden", pk=pk)
+
+    puede, mensaje = orden.puede_cerrarse()
+
+    if not puede:
+        messages.error(request, mensaje)
+        return redirect("detalle_orden", pk=pk)
+
+    orden.estado = "CERRADA"
+    orden.save()
+
+    messages.success(request, f"La orden {orden.numero_orden} ha sido cerrada.")
     return redirect("detalle_orden", pk=pk)
 
 @login_required

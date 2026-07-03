@@ -1357,8 +1357,20 @@ class OrdenTrabajo(models.Model):
     def esta_bloqueada(self):
         return self.estado in ["CERRADA", "ANULADA"]
 
+
     def puede_editarse(self):
         return self.estado == "ABIERTA"
+
+
+    def puede_cerrarse(self):
+        if self.estado != "ABIERTA":
+            return False, "Solo se pueden cerrar órdenes abiertas."
+
+        if not self.tecnicos.exists():
+            return False, "Debe asignar al menos un técnico antes de cerrar la orden."
+
+        return True, None
+
 
     def _estado_anterior(self):
         if not self.pk:
