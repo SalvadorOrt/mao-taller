@@ -39,8 +39,6 @@ def crear_orden(request):
         anio = parse_int(request.POST.get("anio_vehiculo"), None)
         kilometraje = parse_int(request.POST.get("kilometraje"), None)
         nivel_combustible = request.POST.get("nivel_combustible", "1/2").strip()
-        
-        # ---> NUEVO: CAPTURAR LA CLAVE DE ENCENDIDO <---
         clave_encendido = request.POST.get("clave_encendido", "").strip()
 
         tipo_tarifa_vehiculo = request.POST.get(
