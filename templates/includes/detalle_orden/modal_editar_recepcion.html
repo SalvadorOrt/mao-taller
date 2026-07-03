@@ -67,10 +67,6 @@
         padding: 14px;
         margin-top: 12px;
     }
-    
-    /* =========================================================
-       SELECTOR PROPIO DE TÉCNICOS - BUSCADOR + CHIPS
-       ========================================================= */
 
     .tecnicos-picker {
         width: 100%;
@@ -131,28 +127,10 @@
         background: #f2f2f7;
     }
 
-    .tecnico-opcion small {
-        color: var(--muted);
-        font-size: 0.72rem;
-        white-space: nowrap;
-    }
-
     .tecnico-opcion.vacio {
         color: var(--muted);
         cursor: default;
         font-style: italic;
-    }
-
-    .tecnico-opcion.vacio:hover {
-        background: transparent;
-    }
-
-    .tecnicos-seleccionados {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 8px;
-        min-height: 30px;
     }
 
     .tecnico-chip {
@@ -165,7 +143,6 @@
         padding: 5px 9px 5px 11px;
         font-size: 0.78rem;
         font-weight: 700;
-        line-height: 1.2;
     }
 
     .tecnico-chip button {
@@ -180,30 +157,19 @@
         padding: 0;
         cursor: pointer;
     }
-
-    .tecnico-chip button:hover {
-        background: rgba(255,255,255,0.34);
-    }
-
-    .tecnicos-ayuda {
-        margin-top: 5px;
-        font-size: 0.72rem;
-        color: var(--muted);
-    }
-
 </style>
-{% if puede_editar %}
+
 <div id="modalEditarRecepcion"
-     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px;">
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(4px); padding:20px;">
 
-    <div style="background: #fff; width: 100%; max-width: 900px; max-height: 95vh; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+    <div style="background:#fff; width:100%; max-width:900px; max-height:95vh; border-radius:20px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
 
-        <div style="padding: 15px 25px; border-bottom: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; background: var(--head);">
-            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary);">
-                Editar Recepción y Vehículo
+        <div style="padding:15px 25px; border-bottom:1px solid var(--border-soft); display:flex; justify-content:space-between; align-items:center; background:var(--head);">
+            <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:var(--primary);">
+                {% if puede_editar %}Editar Recepción y Vehículo{% else %}Ver Recepción y Vehículo{% endif %}
             </h3>
 
-            <button type="button" onclick="cerrarModalRecepcion()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">
+            <button type="button" onclick="cerrarModalRecepcion()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--muted);">
                 &times;
             </button>
         </div>
@@ -212,77 +178,97 @@
               method="POST"
               action="{% url 'editar_recepcion_orden' orden.pk %}"
               enctype="multipart/form-data"
-              style="overflow-y: auto; padding: 25px; margin: 0;">
+              style="overflow-y:auto; padding:25px; margin:0;">
 
             {% csrf_token %}
 
             <input type="hidden" name="sintomas_json" id="modal_sintomas_json">
             <input type="hidden" name="trabajos_json" id="modal_trabajos_json">
 
-            <div style="margin-bottom: 20px; background: #fbfbfd; border: 1px solid var(--border-soft); border-radius: 12px; padding: 15px;">
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 15px;">
+            <div style="margin-bottom:20px; background:#fbfbfd; border:1px solid var(--border-soft); border-radius:12px; padding:15px;">
+                <div style="display:grid; grid-template-columns:1fr 2fr; gap:15px; margin-bottom:15px;">
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Placa Correcta</span>
-                        <input type="text" name="placa" class="form-control-apple" value="{{ orden.placa }}" required style="text-transform: uppercase; font-weight: bold; padding: 8px 12px;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">Placa Correcta</span>
+                        <input type="text" name="placa" class="form-control-apple" value="{{ orden.placa }}" required
+                               style="text-transform:uppercase; font-weight:bold; padding:8px 12px;"
+                               {% if not puede_editar %}readonly{% endif %}>
                     </div>
+
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Vehículo (Marca y Modelo)</span>
-                        <input type="text" name="vehiculo" class="form-control-apple" value="{{ orden.vehiculo }}" required style="text-transform: uppercase; padding: 8px 12px;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">Vehículo</span>
+                        <input type="text" name="vehiculo" class="form-control-apple" value="{{ orden.vehiculo }}" required
+                               style="text-transform:uppercase; padding:8px 12px;"
+                               {% if not puede_editar %}readonly{% endif %}>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-bottom:15px;">
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Año</span>
-                        <input type="number" name="anio_vehiculo" class="form-control-apple" value="{{ orden.anio_vehiculo|default_if_none:'' }}" style="padding: 8px 12px;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">Año</span>
+                        <input type="number" name="anio_vehiculo" class="form-control-apple" value="{{ orden.anio_vehiculo|default_if_none:'' }}"
+                               style="padding:8px 12px;"
+                               {% if not puede_editar %}readonly{% endif %}>
                     </div>
+
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Color</span>
-                        <input type="text" name="color" class="form-control-apple" value="{{ orden.color|default_if_none:'' }}" style="text-transform: uppercase; padding: 8px 12px;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">Color</span>
+                        <input type="text" name="color" class="form-control-apple" value="{{ orden.color|default_if_none:'' }}"
+                               style="text-transform:uppercase; padding:8px 12px;"
+                               {% if not puede_editar %}readonly{% endif %}>
                     </div>
+
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Kilometraje</span>
-                        <input type="number" name="kilometraje" class="form-control-apple" value="{{ orden.kilometraje|default_if_none:'' }}" required step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="font-weight: bold; padding: 8px 12px;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">Kilometraje</span>
+                        <input type="number" name="kilometraje" class="form-control-apple" value="{{ orden.kilometraje|default_if_none:'' }}" required step="1"
+                               {% if puede_editar %}oninput="this.value = this.value.replace(/[^0-9]/g, '')"{% else %}readonly{% endif %}
+                               style="font-weight:bold; padding:8px 12px;">
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Clave / PIN de Encendido</span>
-                        <input type="text" name="clave_encendido" class="form-control-apple" value="{{ orden.clave_encendido|default_if_none:'' }}" placeholder="Ej. *1234# (Dejar vacío si no tiene)" style="font-weight: bold; color: #0071e3; padding: 8px 12px; width: 100%;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">Clave / PIN de Encendido</span>
+                        <input type="text" name="clave_encendido" class="form-control-apple"
+                               value="{{ orden.clave_encendido|default_if_none:'' }}"
+                               placeholder="Ej. *1234#"
+                               style="font-weight:bold; color:#0071e3; padding:8px 12px; width:100%;"
+                               {% if not puede_editar %}readonly{% endif %}>
                     </div>
-                    
+
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
+                        <span style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;">
                             <i class="bi bi-tools"></i> Técnicos Asignados
                         </span>
-                        <div class="tecnicos-picker" id="tecnicos-picker">
-                            <input type="text"
-                                   id="tecnico_busqueda"
-                                   class="tecnicos-search"
-                                   placeholder="Buscar técnico..."
-                                   autocomplete="off"
-                                   oninput="filtrarTecnicos()"
-                                   onfocus="filtrarTecnicos()">
 
-                            <div id="tecnicos_resultados" class="tecnicos-resultados"></div>
+                        <div class="tecnicos-picker" id="tecnicos-picker">
+                            {% if puede_editar %}
+                                <input type="text"
+                                       id="tecnico_busqueda"
+                                       class="tecnicos-search"
+                                       placeholder="Buscar técnico..."
+                                       autocomplete="off"
+                                       oninput="filtrarTecnicos()"
+                                       onfocus="filtrarTecnicos()">
+                                <div id="tecnicos_resultados" class="tecnicos-resultados"></div>
+                            {% endif %}
 
                             <div id="tecnicos_seleccionados" class="tecnicos-seleccionados"></div>
 
-                            <div id="tecnicos_hidden_inputs"></div>
+                            {% if puede_editar %}
+                                <div id="tecnicos_hidden_inputs"></div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-bottom: 25px;">
-                <label class="info-label" style="margin-bottom: 8px; display: block;">
+            <div style="margin-bottom:25px;">
+                <label class="info-label" style="margin-bottom:8px; display:block;">
                     Croquis del vehículo
                 </label>
 
                 <div class="canvas-modal-bg"
-                     style="position: relative; width: 100%; border: 1px solid var(--border-soft); border-radius: 12px; overflow: hidden; aspect-ratio: 1000/220;">
-
+                     style="position:relative; width:100%; border:1px solid var(--border-soft); border-radius:12px; overflow:hidden; aspect-ratio:1000/220;">
                     {% if croquis_url %}
                         <img src="{{ croquis_url }}"
                              alt="Croquis guardado"
@@ -291,10 +277,10 @@
                 </div>
             </div>
 
-            <div style="margin-bottom: 25px; background: #fbfbfd; padding: 15px; border-radius: 12px; border: 1px solid var(--border-soft);">
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px;">
-                    <label class="info-label" style="margin: 0;">Fotos de recepción</label>
-                    <span style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">
+            <div style="margin-bottom:25px; background:#fbfbfd; padding:15px; border-radius:12px; border:1px solid var(--border-soft);">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px;">
+                    <label class="info-label" style="margin:0;">Fotos de recepción</label>
+                    <span style="font-size:0.75rem; color:var(--muted); font-weight:600;">
                         {{ orden.fotos_recepcion.count }} foto(s)
                     </span>
                 </div>
@@ -314,79 +300,87 @@
                                         Foto subida {{ foto.fecha_subida|date:"d/m/Y H:i" }}
                                     {% endif %}
 
-                                    <label class="foto-delete-check">
-                                        <input type="checkbox" name="fotos_eliminar" value="{{ foto.id }}">
-                                        Eliminar
-                                    </label>
+                                    {% if puede_editar %}
+                                        <label class="foto-delete-check">
+                                            <input type="checkbox" name="fotos_eliminar" value="{{ foto.id }}">
+                                            Eliminar
+                                        </label>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div style="color: var(--muted); font-size: 0.85rem; font-style: italic; margin-top: 8px;">
+                    <div style="color:var(--muted); font-size:0.85rem; font-style:italic; margin-top:8px;">
                         No hay fotos de recepción registradas.
                     </div>
                 {% endif %}
 
-                <div class="upload-fotos-box">
-                    <label class="info-label" style="display: block; margin-bottom: 8px;">
-                        Agregar nuevas fotos
-                    </label>
+                {% if puede_editar %}
+                    <div class="upload-fotos-box">
+                        <label class="info-label" style="display:block; margin-bottom:8px;">
+                            Agregar nuevas fotos
+                        </label>
 
-                    <input type="file"
-                           name="fotos_recepcion"
-                           id="modal_fotos_recepcion"
-                           class="form-control-apple"
-                           accept="image/*"
-                           multiple>
+                        <input type="file"
+                               name="fotos_recepcion"
+                               id="modal_fotos_recepcion"
+                               class="form-control-apple"
+                               accept="image/*"
+                               multiple>
 
-                    <input type="text"
-                           name="descripcion_fotos"
-                           class="form-control-apple"
-                           placeholder="Descripción para las nuevas fotos..."
-                           style="margin-top: 10px;">
+                        <input type="text"
+                               name="descripcion_fotos"
+                               class="form-control-apple"
+                               placeholder="Descripción para las nuevas fotos..."
+                               style="margin-top:10px;">
 
-                    <div id="preview_fotos_nuevas"
-                         style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                        <div id="preview_fotos_nuevas"
+                             style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                        </div>
                     </div>
-                </div>
+                {% endif %}
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                <div style="background: #fbfbfd; padding: 15px; border-radius: 12px; border: 1px solid var(--border-soft);">
-                    <label class="info-label" style="display: block; margin-bottom: 10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                <div style="background:#fbfbfd; padding:15px; border-radius:12px; border:1px solid var(--border-soft);">
+                    <label class="info-label" style="display:block; margin-bottom:10px;">
                         Quejas del Cliente
                     </label>
 
-                    <div id="modal_lista_sintomas" style="margin-bottom: 12px; min-height: 50px;"></div>
+                    <div id="modal_lista_sintomas" style="margin-bottom:12px; min-height:50px;"></div>
 
-                    <div class="input-group-mao" style="display: flex; gap: 8px;">
-                        <input type="text"
-                               id="add_sintoma_txt"
-                               class="form-control-apple"
-                               placeholder="Nuevo síntoma..."
-                               onkeypress="if(event.key === 'Enter') { event.preventDefault(); modalAgregarSintoma(); }">
+                    {% if puede_editar %}
+                        <div class="input-group-mao" style="display:flex; gap:8px;">
+                            <input type="text"
+                                   id="add_sintoma_txt"
+                                   class="form-control-apple"
+                                   placeholder="Nuevo síntoma..."
+                                   onkeypress="if(event.key === 'Enter') { event.preventDefault(); modalAgregarSintoma(); }">
 
-                        <button type="button" onclick="modalAgregarSintoma()" class="btn-login primary small">+</button>
-                    </div>
+                            <button type="button" onclick="modalAgregarSintoma()" class="btn-login primary small">+</button>
+                        </div>
+                    {% endif %}
                 </div>
 
-                <div style="background: #fbfbfd; padding: 15px; border-radius: 12px; border: 1px solid var(--border-soft);">
-                    <label class="info-label" style="display: block; margin-bottom: 10px;">
+                <div style="background:#fbfbfd; padding:15px; border-radius:12px; border:1px solid var(--border-soft);">
+                    <label class="info-label" style="display:block; margin-bottom:10px;">
                         Trabajos Solicitados
                     </label>
 
-                    <div id="modal_lista_trabajos" style="margin-bottom: 12px; min-height: 50px;"></div>
+                    <div id="modal_lista_trabajos" style="margin-bottom:12px; min-height:50px;"></div>
 
-                    <div class="input-group-mao" style="display: flex; gap: 8px;">
-                        <input type="text"
-                               id="add_trabajo_txt"
-                               class="form-control-apple"
-                               placeholder="Nuevo trabajo..."
-                               onkeypress="if(event.key === 'Enter') { event.preventDefault(); modalAgregarTrabajo(); }">
+                    {% if puede_editar %}
+                        <div class="input-group-mao" style="display:flex; gap:8px;">
+                            <input type="text"
+                                   id="add_trabajo_txt"
+                                   class="form-control-apple"
+                                   placeholder="Nuevo trabajo..."
+                                   onkeypress="if(event.key === 'Enter') { event.preventDefault(); modalAgregarTrabajo(); }">
 
-                        <button type="button" onclick="modalAgregarTrabajo()" class="btn-login primary small">+</button>
-                    </div>
+                            <button type="button" onclick="modalAgregarTrabajo()" class="btn-login primary small">+</button>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -394,30 +388,30 @@
                 <label class="info-label">Observaciones Adicionales</label>
                 <textarea name="observaciones_recepcion"
                           class="form-control-apple"
-                          style="min-height: 80px; margin-top: 5px;">{{ orden.observaciones_recepcion }}</textarea>
+                          style="min-height:80px; margin-top:5px;"
+                          {% if not puede_editar %}readonly{% endif %}>{{ orden.observaciones_recepcion }}</textarea>
             </div>
         </form>
 
-        <div style="padding: 15px 25px; border-top: 1px solid var(--border-soft); display: flex; justify-content: flex-end; gap: 10px; background: var(--head);">
-            <button type="button" onclick="cerrarModalRecepcion()" class="btn-login" style="width: auto;">
-                Cancelar
+        <div style="padding:15px 25px; border-top:1px solid var(--border-soft); display:flex; justify-content:flex-end; gap:10px; background:var(--head);">
+            <button type="button" onclick="cerrarModalRecepcion()" class="btn-login" style="width:auto;">
+                Cerrar
             </button>
 
             {% if puede_editar %}
-            <button
-                type="button"
-                id="btnGuardarEdicionRapida"
-                onclick="guardarEdicionRapida()"
-                class="btn-login primary"
-                style="width:auto;padding:0 20px;">
-                Guardar y Actualizar
-            </button>
+                <button type="button"
+                        id="btnGuardarEdicionRapida"
+                        onclick="guardarEdicionRapida()"
+                        class="btn-login primary"
+                        style="width:auto; padding:0 20px;">
+                    Guardar y Actualizar
+                </button>
             {% endif %}
         </div>
     </div>
 </div>
-{% endif %}
-<div id="django_data_bridge" style="display: none;">
+
+<div id="django_data_bridge" style="display:none;">
     <div id="bridge_sintomas">
         {% for s in orden.sintomas_items.all %}
             <span>{{ s.descripcion }}</span>
@@ -432,6 +426,7 @@
 </div>
 
 <script>
+    const PUEDE_EDITAR_RECEPCION = {{ puede_editar|yesno:"true,false" }};
 
     const tecnicosDisponibles = [
         {% for tecnico in tecnicos_disponibles %}
@@ -470,6 +465,8 @@
     }
 
     function filtrarTecnicos() {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         const input = document.getElementById('tecnico_busqueda');
         const contenedor = document.getElementById('tecnicos_resultados');
 
@@ -484,11 +481,7 @@
         });
 
         if (disponibles.length === 0) {
-            contenedor.innerHTML = `
-                <div class="tecnico-opcion vacio">
-                    No hay técnicos disponibles
-                </div>
-            `;
+            contenedor.innerHTML = `<div class="tecnico-opcion vacio">No hay técnicos disponibles</div>`;
         } else {
             contenedor.innerHTML = disponibles.map(t => `
                 <button type="button" class="tecnico-opcion" onclick="agregarTecnico('${t.id}')">
@@ -502,6 +495,8 @@
     }
 
     function agregarTecnico(id) {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         if (!tecnicosSeleccionados.includes(id)) {
             tecnicosSeleccionados.push(id);
         }
@@ -514,6 +509,8 @@
     }
 
     function eliminarTecnico(id) {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         tecnicosSeleccionados = tecnicosSeleccionados.filter(tid => tid !== id);
         renderTecnicosSeleccionados();
         filtrarTecnicos();
@@ -523,7 +520,7 @@
         const chips = document.getElementById('tecnicos_seleccionados');
         const hidden = document.getElementById('tecnicos_hidden_inputs');
 
-        if (!chips || !hidden) return;
+        if (!chips) return;
 
         const seleccionados = tecnicosDisponibles.filter(t => tecnicosSeleccionados.includes(t.id));
 
@@ -532,13 +529,17 @@
             : seleccionados.map(t => `
                 <span class="tecnico-chip">
                     ${escapeHtmlTecnico(t.nombre)}
-                    <button type="button" onclick="eliminarTecnico('${t.id}')" aria-label="Quitar técnico">&times;</button>
+                    ${PUEDE_EDITAR_RECEPCION ? `
+                        <button type="button" onclick="eliminarTecnico('${t.id}')" aria-label="Quitar técnico">&times;</button>
+                    ` : ""}
                 </span>
             `).join('');
 
-        hidden.innerHTML = tecnicosSeleccionados.map(id => `
-            <input type="hidden" name="tecnicos" value="${escapeHtmlTecnico(id)}">
-        `).join('');
+        if (hidden) {
+            hidden.innerHTML = tecnicosSeleccionados.map(id => `
+                <input type="hidden" name="tecnicos" value="${escapeHtmlTecnico(id)}">
+            `).join('');
+        }
     }
 
     function escapeHtmlTecnico(texto) {
@@ -577,12 +578,16 @@
         const listS = document.getElementById('modal_lista_sintomas');
         const listT = document.getElementById('modal_lista_trabajos');
 
+        if (!listS || !listT) return;
+
         listS.innerHTML = modalSintomas.length === 0
             ? '<div style="color:var(--muted); font-size:0.8rem; font-style:italic;">No hay síntomas registrados.</div>'
             : modalSintomas.map((s, i) => `
                 <div class="modal-item-row">
-                    <span style="font-weight: 500;">• ${s}</span>
-                    <span onclick="modalEliminarSintoma(${i})" style="color:var(--danger); cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</span>
+                    <span style="font-weight:500;">• ${escapeHtmlTecnico(s)}</span>
+                    ${PUEDE_EDITAR_RECEPCION ? `
+                        <span onclick="modalEliminarSintoma(${i})" style="color:var(--danger); cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</span>
+                    ` : ""}
                 </div>
             `).join('');
 
@@ -590,15 +595,19 @@
             ? '<div style="color:var(--muted); font-size:0.8rem; font-style:italic;">No hay trabajos solicitados.</div>'
             : modalTrabajos.map((t, i) => `
                 <div class="modal-item-row">
-                    <span style="font-weight: 500;">• ${t}</span>
-                    <span onclick="modalEliminarTrabajo(${i})" style="color:var(--danger); cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</span>
+                    <span style="font-weight:500;">• ${escapeHtmlTecnico(t)}</span>
+                    ${PUEDE_EDITAR_RECEPCION ? `
+                        <span onclick="modalEliminarTrabajo(${i})" style="color:var(--danger); cursor:pointer; font-weight:bold; font-size:1.1rem;">&times;</span>
+                    ` : ""}
                 </div>
             `).join('');
     }
 
     function modalAgregarSintoma() {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         const txt = document.getElementById('add_sintoma_txt');
-        if (txt.value.trim()) {
+        if (txt && txt.value.trim()) {
             modalSintomas.push(txt.value.trim());
             txt.value = '';
             renderModalListas();
@@ -606,8 +615,10 @@
     }
 
     function modalAgregarTrabajo() {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         const txt = document.getElementById('add_trabajo_txt');
-        if (txt.value.trim()) {
+        if (txt && txt.value.trim()) {
             modalTrabajos.push(txt.value.trim());
             txt.value = '';
             renderModalListas();
@@ -615,11 +626,15 @@
     }
 
     function modalEliminarSintoma(i) {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         modalSintomas.splice(i, 1);
         renderModalListas();
     }
 
     function modalEliminarTrabajo(i) {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         modalTrabajos.splice(i, 1);
         renderModalListas();
     }
@@ -627,8 +642,10 @@
     const inputFotosModal = document.getElementById('modal_fotos_recepcion');
     const previewFotosNuevas = document.getElementById('preview_fotos_nuevas');
 
-    if (inputFotosModal) {
+    if (inputFotosModal && previewFotosNuevas) {
         inputFotosModal.addEventListener('change', function () {
+            if (!PUEDE_EDITAR_RECEPCION) return;
+
             previewFotosNuevas.innerHTML = '';
 
             Array.from(this.files).forEach(file => {
@@ -647,10 +664,13 @@
     }
 
     function guardarEdicionRapida() {
+        if (!PUEDE_EDITAR_RECEPCION) return;
+
         const btn = document.getElementById('btnGuardarEdicionRapida');
+        if (!btn) return;
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="spinner-border spinner-border-sm" style="margin-right: 5px;"></i> Guardando...';
+        btn.innerHTML = '<i class="spinner-border spinner-border-sm" style="margin-right:5px;"></i> Guardando...';
 
         const inputSintoma = document.getElementById('add_sintoma_txt');
         if (inputSintoma && inputSintoma.value.trim() !== '') {
@@ -676,5 +696,4 @@
 
         document.getElementById('formEdicionRapida').submit();
     }
-
 </script>
