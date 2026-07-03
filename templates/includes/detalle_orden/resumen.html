@@ -35,9 +35,12 @@
                 step="0.01"
                 class="form-control"
                 style="width: 100%; margin-top: 6px;"
-                {% if not puede_editar %}readonly{% endif %}
-                oninput="recalcularTotales()"
-                onchange="recalcularTotales()"
+                {% if puede_editar %}
+                    oninput="recalcularTotales()"
+                    onchange="recalcularTotales()"
+                {% else %}
+                    readonly
+                {% endif %}
             >
             <div class="total-value" style="margin-top: 6px;">
                 -$<span id="descuentoTotal">{{ orden.valor_descuento|default:"0.00"|floatformat:2 }}</span>

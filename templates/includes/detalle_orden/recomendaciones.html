@@ -1,5 +1,4 @@
 <style>
-
 #tablaRecomendaciones{
     width:100%;
     table-layout:fixed;
@@ -19,7 +18,6 @@
     min-height:72px;
     resize:vertical;
 }
-
 </style>
 
 <div class="ot-card">
@@ -29,7 +27,7 @@
         {% if puede_editar %}
             <button type="button"
         class="btn-login"
-        onclick="agregarFilaRecomendacionOT(true)">
+        onclick="agregarFilaRecomendacionOT()">
                 + Agregar recomendación
             </button>
         {% endif %}
@@ -73,7 +71,7 @@
                         {% if puede_editar %}
                             <button type="button"
                                     class="btn-login danger small"
-                                    onclick="this.closest('tr').remove();"
+                                    onclick="eliminarFilaRecomendacionOT(this);"
                                     title="Quitar">
                                 ✕
                             </button>
@@ -95,16 +93,16 @@
         </table>
     </div>
 </div>
+
 <script>
+const PUEDE_EDITAR_RECOMENDACIONES = ("{{ puede_editar|yesno:'true,false' }}" === "true");
+
 function agregarFilaRecomendacionOT() {
+    if (!PUEDE_EDITAR_RECOMENDACIONES) return;
+
     const tbody = document.querySelector("#tablaRecomendaciones tbody");
-
-    if (!tbody) {
-        alert("No existe la tabla de recomendaciones");
-        return;
-    }
-
     const filaVacia = tbody.querySelector(".texto-sin-recomendaciones");
+    
     if (filaVacia) {
         filaVacia.remove();
     }
@@ -118,18 +116,16 @@ function agregarFilaRecomendacionOT() {
                        class="form-control-apple"
                        placeholder="Título">
             </td>
-
             <td>
                 <textarea name="recomendacion_texto[]"
                           class="form-control-apple recomendacion-textarea"
                           rows="3"
                           placeholder="Texto de recomendación"></textarea>
             </td>
-
             <td style="text-align:center;">
                 <button type="button"
                         class="btn-login danger small"
-                        onclick="this.closest('tr').remove();">
+                        onclick="eliminarFilaRecomendacionOT(this);">
                     ✕
                 </button>
             </td>
@@ -140,10 +136,23 @@ function agregarFilaRecomendacionOT() {
 }
 
 function eliminarFilaRecomendacionOT(boton) {
-    const fila = boton.closest("tr");
+    if (!PUEDE_EDITAR_RECOMENDACIONES) return;
 
+    const fila = boton.closest("tr");
     if (fila) {
         fila.remove();
+    }
+    
+    // Opcional: Si no hay mas filas, mostrar el mensaje inicial
+    const tbody = document.querySelector("#tablaRecomendaciones tbody");
+    if (tbody.querySelectorAll(".recomendacion-item").length === 0) {
+        tbody.insertAdjacentHTML("beforeend", `
+            <tr class="texto-sin-recomendaciones">
+                <td colspan="3" style="text-align:center; color:#86868b; padding:14px;">
+                    No hay recomendaciones técnicas registradas.
+                </td>
+            </tr>
+        `);
     }
 }
 </script>

@@ -93,9 +93,9 @@
         </div>
     </form>
 </div>
-
-<div id="productoFloatingDropdown" class="producto-floating-dropdown"></div>
-
+{% if puede_editar %}
+    <div id="productoFloatingDropdown" class="producto-floating-dropdown"></div>
+{% endif %}
 {% include 'includes/detalle_orden/modal_editar_recepcion.html' %}
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

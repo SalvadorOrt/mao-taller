@@ -1,13 +1,18 @@
 let inputActivoBusqueda = null;
 let timeoutBusquedaProducto = null;
 
-const floatingDropdown = document.getElementById('productoFloatingDropdown');
+const PUEDE_EDITAR_OT =
+    document.querySelector(".ot-wrapper")?.dataset.puedeEditar === "true";
+
+const floatingDropdown = document.getElementById("productoFloatingDropdown");
 
 // =====================================================
 // AGREGAR FILA REPUESTO
 // =====================================================
 function agregarFilaRepuesto(enfocar = false) {
-    const tbody = document.querySelector('#tablaRepuestos tbody');
+    if (!PUEDE_EDITAR_OT) return;
+
+    const tbody = document.querySelector("#tablaRepuestos tbody");
     if (!tbody) return;
 
     const filaHtml = `
@@ -69,24 +74,26 @@ function agregarFilaRepuesto(enfocar = false) {
 
             <td>
                 <div class="row-controls">
-                    <button type="button"
-                            class="btn-login danger small"
-                            onclick="eliminarFila(this)"
-                            title="Quitar">
-                        ✕
-                    </button>
+                    ${PUEDE_EDITAR_OT ? `
+                        <button type="button"
+                                class="btn-login danger small"
+                                onclick="eliminarFila(this)"
+                                title="Quitar">
+                            ✕
+                        </button>
+                    ` : ""}
                 </div>
             </td>
         </tr>
     `;
 
-    tbody.insertAdjacentHTML('beforeend', filaHtml);
+    tbody.insertAdjacentHTML("beforeend", filaHtml);
 
     if (enfocar) {
         setTimeout(() => {
-            const filas = tbody.querySelectorAll('tr');
+            const filas = tbody.querySelectorAll("tr");
             const ultimaFila = filas[filas.length - 1];
-            const input = ultimaFila?.querySelector('.producto-busqueda-input');
+            const input = ultimaFila?.querySelector(".producto-busqueda-input");
 
             if (input) input.focus();
         }, 50);
@@ -97,7 +104,9 @@ function agregarFilaRepuesto(enfocar = false) {
 // BUSCAR PRODUCTO
 // =====================================================
 async function buscarProductoEnFila(input) {
-    const texto = (input.value || '').trim();
+    if (!PUEDE_EDITAR_OT) return;
+
+    const texto = (input.value || "").trim();
 
     if (texto.length < 2) {
         ocultarDropdownFlotante();
@@ -130,18 +139,18 @@ async function buscarProductoEnFila(input) {
                 }
 
                 renderDropdownFlotante(input, resultados);
-            } else {
+            } else if (floatingDropdown) {
                 floatingDropdown.innerHTML = `
                     <div class="sin-resultados">
                         Sin coincidencias en inventario
                     </div>
                 `;
 
-                floatingDropdown.style.display = 'block';
+                floatingDropdown.style.display = "block";
             }
 
         } catch (error) {
-            console.error('Error buscando productos:', error);
+            console.error("Error buscando productos:", error);
             ocultarDropdownFlotante();
         }
     }, 250);
@@ -151,22 +160,23 @@ async function buscarProductoEnFila(input) {
 // RENDER DROPDOWN
 // =====================================================
 function renderDropdownFlotante(input, resultados) {
+    if (!PUEDE_EDITAR_OT) return;
     if (!floatingDropdown) return;
 
     floatingDropdown.innerHTML = resultados.map((item, index) => {
-        const precio = item.precio_venta || item.p_u || '0.00';
+        const precio = item.precio_venta || item.p_u || "0.00";
 
         return `
-            <div class="producto-sugerencia-item ${index === 0 ? 'active' : ''}"
+            <div class="producto-sugerencia-item ${index === 0 ? "active" : ""}"
                  data-item='${JSON.stringify(item).replace(/'/g, "&apos;")}'
                  onclick="seleccionarProductoEnFilaDesdeObjeto(JSON.parse(this.dataset.item))">
 
                 <div class="producto-sugerencia-codigo">
-                    ${item.codigo || ''}
+                    ${item.codigo || ""}
                 </div>
 
                 <div class="producto-sugerencia-extra">
-                    ${item.descripcion || ''}
+                    ${item.descripcion || ""}
                     ·
                     <strong>Stock: ${item.stock || 0}</strong>
                     ·
@@ -174,35 +184,36 @@ function renderDropdownFlotante(input, resultados) {
                 </div>
             </div>
         `;
-    }).join('');
+    }).join("");
 
-    floatingDropdown.style.display = 'block';
+    floatingDropdown.style.display = "block";
 }
 
 // =====================================================
 // SELECCIONAR PRODUCTO
 // =====================================================
 function seleccionarProductoEnFilaDesdeObjeto(item) {
+    if (!PUEDE_EDITAR_OT) return;
     if (!inputActivoBusqueda || !item) return;
 
-    const fila = inputActivoBusqueda.closest('tr');
+    const fila = inputActivoBusqueda.closest("tr");
     if (!fila) return;
 
     const precio = item.precio_venta || item.p_u || 0;
-    const descripcion = item.descripcion || '';
-    const codigo = item.codigo || '';
+    const descripcion = item.descripcion || "";
+    const codigo = item.codigo || "";
 
-    const hidden = fila.querySelector('.producto-id-hidden');
-    const inputBusqueda = fila.querySelector('.producto-busqueda-input');
-    const descripcionInput = fila.querySelector('.descripcion-manual');
-    const puInput = fila.querySelector('.pu');
-    const stockView = fila.querySelector('.stock-view');
+    const hidden = fila.querySelector(".producto-id-hidden");
+    const inputBusqueda = fila.querySelector(".producto-busqueda-input");
+    const descripcionInput = fila.querySelector(".descripcion-manual");
+    const puInput = fila.querySelector(".pu");
+    const stockView = fila.querySelector(".stock-view");
 
-    if (hidden) hidden.value = item.id || '';
+    if (hidden) hidden.value = item.id || "";
 
     if (inputBusqueda) {
-        const descripcionCorta = descripcion.includes('-')
-            ? descripcion.split('-')[0].trim()
+        const descripcionCorta = descripcion.includes("-")
+            ? descripcion.split("-")[0].trim()
             : descripcion;
 
         inputBusqueda.value = `${codigo} - ${descripcionCorta}`.trim();
@@ -222,11 +233,11 @@ function seleccionarProductoEnFilaDesdeObjeto(item) {
 
     ocultarDropdownFlotante();
 
-    if (typeof recalcularFilaDesdeTr === 'function') {
+    if (typeof recalcularFilaDesdeTr === "function") {
         recalcularFilaDesdeTr(fila);
     }
 
-    if (typeof recalcularTotales === 'function') {
+    if (typeof recalcularTotales === "function") {
         recalcularTotales();
     }
 }
@@ -235,18 +246,19 @@ function seleccionarProductoEnFilaDesdeObjeto(item) {
 // TECLAS
 // =====================================================
 function manejarTeclaBusquedaProducto(event, input) {
+    if (!PUEDE_EDITAR_OT) return;
     if (!floatingDropdown) return;
 
     const items = Array.from(
-        floatingDropdown.querySelectorAll('.producto-sugerencia-item')
+        floatingDropdown.querySelectorAll(".producto-sugerencia-item")
     );
 
-    if (event.key === 'Enter') {
+    if (event.key === "Enter") {
         event.preventDefault();
 
-        if (items.length > 0 && floatingDropdown.style.display === 'block') {
+        if (items.length > 0 && floatingDropdown.style.display === "block") {
             const activeItem =
-                items.find(item => item.classList.contains('active')) || items[0];
+                items.find(item => item.classList.contains("active")) || items[0];
 
             if (activeItem) {
                 seleccionarProductoEnFilaDesdeObjeto(
@@ -260,37 +272,31 @@ function manejarTeclaBusquedaProducto(event, input) {
         return;
     }
 
-    if (!items.length || floatingDropdown.style.display !== 'block') return;
+    if (!items.length || floatingDropdown.style.display !== "block") return;
 
     let activeIndex = items.findIndex(
-        item => item.classList.contains('active')
+        item => item.classList.contains("active")
     );
 
     if (activeIndex < 0) activeIndex = 0;
 
-    if (event.key === 'ArrowDown') {
+    if (event.key === "ArrowDown") {
         event.preventDefault();
-
-        items[activeIndex]?.classList.remove('active');
-
+        items[activeIndex]?.classList.remove("active");
         activeIndex = (activeIndex + 1) % items.length;
-
-        items[activeIndex].classList.add('active');
-        items[activeIndex].scrollIntoView({ block: 'nearest' });
+        items[activeIndex].classList.add("active");
+        items[activeIndex].scrollIntoView({ block: "nearest" });
     }
 
-    if (event.key === 'ArrowUp') {
+    if (event.key === "ArrowUp") {
         event.preventDefault();
-
-        items[activeIndex]?.classList.remove('active');
-
+        items[activeIndex]?.classList.remove("active");
         activeIndex = (activeIndex - 1 + items.length) % items.length;
-
-        items[activeIndex].classList.add('active');
-        items[activeIndex].scrollIntoView({ block: 'nearest' });
+        items[activeIndex].classList.add("active");
+        items[activeIndex].scrollIntoView({ block: "nearest" });
     }
 
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
         ocultarDropdownFlotante();
     }
 }
@@ -301,11 +307,12 @@ function manejarTeclaBusquedaProducto(event, input) {
 function ocultarDropdownFlotante() {
     if (!floatingDropdown) return;
 
-    floatingDropdown.style.display = 'none';
-    floatingDropdown.innerHTML = '';
+    floatingDropdown.style.display = "none";
+    floatingDropdown.innerHTML = "";
 }
 
 function posicionarDropdownFlotante(input) {
+    if (!PUEDE_EDITAR_OT) return;
     if (!floatingDropdown || !input) return;
 
     const rect = input.getBoundingClientRect();
@@ -318,31 +325,31 @@ function posicionarDropdownFlotante(input) {
 // =====================================================
 // EVENTOS GLOBALES
 // =====================================================
-document.addEventListener('click', function (e) {
+document.addEventListener("click", function (e) {
     if (
         floatingDropdown &&
         !floatingDropdown.contains(e.target) &&
-        !e.target.classList.contains('producto-busqueda-input')
+        !e.target.classList.contains("producto-busqueda-input")
     ) {
         ocultarDropdownFlotante();
     }
 });
 
-window.addEventListener('resize', function () {
+window.addEventListener("resize", function () {
     if (
         inputActivoBusqueda &&
         floatingDropdown &&
-        floatingDropdown.style.display === 'block'
+        floatingDropdown.style.display === "block"
     ) {
         posicionarDropdownFlotante(inputActivoBusqueda);
     }
 });
 
-window.addEventListener('scroll', function () {
+window.addEventListener("scroll", function () {
     if (
         inputActivoBusqueda &&
         floatingDropdown &&
-        floatingDropdown.style.display === 'block'
+        floatingDropdown.style.display === "block"
     ) {
         posicionarDropdownFlotante(inputActivoBusqueda);
 

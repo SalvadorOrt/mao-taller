@@ -55,7 +55,7 @@
 
         <div class="d-flex align-items-center gap-2">
 
-            {% if orden.estado == 'ABIERTA' %}
+            {% if puede_editar %}
                 <!-- ============================================= -->
                 <!-- BOTÓN DINÁMICO: CREAR O CONTINUAR PROFORMA -->
                 <!-- ============================================= -->
@@ -106,7 +106,7 @@
                 Resumen de Orden
             </button>
 
-            {% if orden.estado == 'ABIERTA' %}
+            {% if puede_editar %}
                 <!-- ============================================= -->
                 <!-- ANULAR -->
                 <!-- ============================================= -->

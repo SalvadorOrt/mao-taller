@@ -117,16 +117,17 @@
                                          style="position:relative;">
 
                                         <input type="text"
-                                               class="form-control-apple servicio-busqueda-input"
-                                               placeholder="Buscar código o servicio externo..."
-                                               autocomplete="off"
-
-                                               value="{% if item.servicio %}{{ item.servicio.codigo }}{% else %}[ MANUAL ]{% endif %}"
-
-                                               style="text-align:center; font-weight:600;"
-
-                                               oninput="buscarServicioEnFila(this, 'moe')"
-                                               onfocus="buscarServicioEnFila(this, 'moe')">
+                                            class="form-control-apple servicio-busqueda-input"
+                                            placeholder="Buscar código o servicio externo..."
+                                            autocomplete="off"
+                                            value="{% if item.servicio %}{{ item.servicio.codigo }}{% else %}[ MANUAL ]{% endif %}"
+                                            style="text-align:center; font-weight:600;"
+                                            {% if puede_editar %}
+                                                oninput="buscarServicioEnFila(this, 'moe')"
+                                                onfocus="buscarServicioEnFila(this, 'moe')"
+                                            {% else %}
+                                                readonly
+                                            {% endif %}>
 
                                         <div class="dropdown-resultados-servicios"
                                              style="display:none;
@@ -169,28 +170,24 @@
                                 <td>
 
                                     <input type="number"
-                                           step="0.01"
-                                           inputmode="decimal"
-                                           name="moe_pu[]"
-                                           class="form-control-apple pu"
-
-                                           value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-
-                                           oninput="calcularFila(this)">
+                                        step="0.01"
+                                        inputmode="decimal"
+                                        name="moe_pu[]"
+                                        class="form-control-apple pu"
+                                        value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                        {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
 
                                 </td>
 
                                 <td>
 
                                     <input type="number"
-                                           step="0.01"
-                                           inputmode="decimal"
-                                           name="moe_cantidad[]"
-                                           class="form-control-apple cantidad"
-
-                                           value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
-
-                                           oninput="calcularFila(this)">
+                                        step="0.01"
+                                        inputmode="decimal"
+                                        name="moe_cantidad[]"
+                                        class="form-control-apple cantidad"
+                                        value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                        {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
 
                                 </td>
 
@@ -211,17 +208,15 @@
                                 <td>
 
                                     <div class="row-controls">
-
+                                    {% if puede_editar %}
                                         <button type="button"
                                                 class="btn-login danger small"
                                                 onclick="eliminarFila(this)"
                                                 title="Quitar">
-
                                             ✕
-
                                         </button>
-
-                                    </div>
+                                    {% endif %}
+                                </div>
 
                                 </td>
 
@@ -268,7 +263,7 @@
 <!-- ===================================================== -->
 <!-- MODAL INGRESO RÁPIDO MOE -->
 <!-- ===================================================== -->
-
+{% if puede_editar %}
 <div id="modalIngresoRapidoMOE"
      style="display:none;
             position:fixed;
@@ -391,3 +386,4 @@
 
     </div>
 </div>
+{% endif %}

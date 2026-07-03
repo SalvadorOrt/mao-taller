@@ -1,10 +1,12 @@
+const PUEDE_EDITAR_OT =
+    document.querySelector(".ot-wrapper")?.dataset.puedeEditar === "true";
+
 let contadorPadresMOI = document.querySelectorAll('#cuerpoTablaMOI .fila-padre-moi').length;
 let timeoutBusquedaServicio = null;
 
-// =====================================================
-// AGREGAR FILA MOI DESDE CATÁLOGO
-// =====================================================
 function agregarFilaMOI(enfocar = false) {
+    if (!PUEDE_EDITAR_OT) return;
+
     agregarFilaSimple('tablaMOI');
 
     if (enfocar) {
@@ -15,20 +17,29 @@ function agregarFilaMOI(enfocar = false) {
     }
 }
 
-// =====================================================
-// AGREGAR FILA SIMPLE MOI / MOE (CORREGIDO PARA EDITAR)
-// =====================================================
+function agregarFilaMOE(enfocar = false) {
+    if (!PUEDE_EDITAR_OT) return;
+
+    agregarFilaSimple('tablaMOE');
+
+    if (enfocar) {
+        const filas = document.querySelectorAll('#cuerpoTablaMOE tr');
+        const ultimaFila = filas[filas.length - 1];
+        const input = ultimaFila?.querySelector('.servicio-busqueda-input');
+        if (input) input.focus();
+    }
+}
+
 function agregarFilaSimple(idTabla) {
+    if (!PUEDE_EDITAR_OT) return;
+
     const tbody = document.querySelector(`#${idTabla} tbody`);
     if (!tbody) return;
 
     const isMoi = idTabla === 'tablaMOI';
     const prefix = isMoi ? 'moi' : 'moe';
     const parentIndex = Date.now();
-
-    const placeholder = isMoi
-        ? 'Buscar servicio interno...'
-        : 'Buscar servicio externo...';
+    const placeholder = isMoi ? 'Buscar servicio interno...' : 'Buscar servicio externo...';
 
     const filaPadre = `
         <tr class="${isMoi ? 'fila-padre-moi' : ''}">
@@ -105,11 +116,8 @@ function agregarFilaSimple(idTabla) {
         const filaHijas = `
             <tr class="fila-hijas-moi">
                 <td></td>
-
                 <td>
-                    <div class="procedimientos-moi"
-                         data-parent-index="${parentIndex}">
-                    </div>
+                    <div class="procedimientos-moi" data-parent-index="${parentIndex}"></div>
 
                     <button type="button"
                             class="btn-login small"
@@ -117,7 +125,6 @@ function agregarFilaSimple(idTabla) {
                         + Agregar procedimiento
                     </button>
                 </td>
-
                 <td></td>
                 <td></td>
                 <td></td>
@@ -129,10 +136,9 @@ function agregarFilaSimple(idTabla) {
     }
 }
 
-// =====================================================
-// BUSCAR SERVICIO EN API
-// =====================================================
 function buscarServicioEnFila(inputElement, prefix = 'moi') {
+    if (!PUEDE_EDITAR_OT) return;
+
     const query = inputElement.value.trim();
     const fila = inputElement.closest('tr');
     const dropdown = fila.querySelector('.dropdown-resultados-servicios');
@@ -170,11 +176,9 @@ function buscarServicioEnFila(inputElement, prefix = 'moi') {
                             <div style="font-weight:700; color:#0071e3; margin-bottom:2px;">
                                 ${escaparHTML(item.codigo || '')}
                             </div>
-
                             <div style="color:#4a4a4a;">
                                 ${escaparHTML(item.descripcion || '')}
                             </div>
-
                             <div style="font-size:10px; color:#34c759; font-weight:600; margin-top:2px;">
                                 P.U. $${escaparHTML(item.precio_recomendado || item.p_u || '0.00')}
                             </div>
@@ -204,10 +208,9 @@ function buscarServicioEnFila(inputElement, prefix = 'moi') {
             });
     }, 300);
 }
-// =====================================================
-// SELECCIONAR SERVICIO DE LA BDD (CORREGIDO)
-// =====================================================
+
 function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
+    if (!PUEDE_EDITAR_OT) return;
     if (!item || !inputElement) return;
 
     const filaPadre = inputElement.closest('tr');
@@ -216,10 +219,8 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
     const servicioHidden = filaPadre.querySelector('.servicio-id-hidden');
     if (servicioHidden) servicioHidden.value = item.id || '';
 
-    // Escribe el código en la primera columna
     inputElement.value = item.codigo || '';
 
-    // Escribe la descripción en nuestro nuevo input editable de la segunda columna
     const descripcionInput = filaPadre.querySelector('.descripcion-manual');
     if (descripcionInput) {
         descripcionInput.value = item.descripcion || '';
@@ -232,7 +233,7 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
     }
 
     const cantidadInput = filaPadre.querySelector('.cantidad');
-    if (cantidadInput && (!cantidadInput.value || cantidadInput.value == '0.00')) {
+    if (cantidadInput && (!cantidadInput.value || cantidadInput.value === '0.00')) {
         cantidadInput.value = '1.00';
     }
 
@@ -246,7 +247,7 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
             if (contenedor) {
                 contenedor.innerHTML = '';
 
-                if (Array.isArray(item.procedimientos)) {
+                if (Array.isArray(item.procedimientos) && botonAgregar) {
                     item.procedimientos.forEach(proc => {
                         agregarProcedimientoMOI(
                             botonAgregar,
@@ -261,11 +262,10 @@ function seleccionarServicioEnFila(item, inputElement, prefix = 'moi') {
     recalcularTotales();
 }
 
-// =====================================================
-// AGREGAR PROCEDIMIENTO
-// =====================================================
 function agregarProcedimientoMOI(boton, texto = '') {
-    const filaHijas = boton.closest('.fila-hijas-moi');
+    if (!PUEDE_EDITAR_OT) return;
+
+    const filaHijas = boton?.closest('.fila-hijas-moi');
     if (!filaHijas) return;
 
     const contenedor = filaHijas.querySelector('.procedimientos-moi');
@@ -297,18 +297,16 @@ function agregarProcedimientoMOI(boton, texto = '') {
     contenedor.insertAdjacentHTML('beforeend', html);
 }
 
-// =====================================================
-// ELIMINAR PROCEDIMIENTO
-// =====================================================
 function eliminarProcedimientoMOI(boton) {
+    if (!PUEDE_EDITAR_OT) return;
+
     const item = boton.closest('.procedimiento-item-moi');
     if (item) item.remove();
 }
 
-// =====================================================
-// MODAL INGRESO RÁPIDO MOI
-// =====================================================
 function abrirModalIngresoRapidoMOI() {
+    if (!PUEDE_EDITAR_OT) return;
+
     const modal = document.getElementById('modalIngresoRapidoMOI');
     if (modal) modal.style.display = 'flex';
 
@@ -320,14 +318,18 @@ function cerrarModalIngresoRapidoMOI() {
     const modal = document.getElementById('modalIngresoRapidoMOI');
     if (modal) modal.style.display = 'none';
 
-    document.getElementById('irmoi_descripcion').value = '';
-    document.getElementById('irmoi_precio').value = '0.00';
-    document.getElementById('irmoi_cantidad').value = '1';
+    const descripcion = document.getElementById('irmoi_descripcion');
+    const precio = document.getElementById('irmoi_precio');
+    const cantidad = document.getElementById('irmoi_cantidad');
+
+    if (descripcion) descripcion.value = '';
+    if (precio) precio.value = '0.00';
+    if (cantidad) cantidad.value = '1';
 }
-// =====================================================
-// MODAL INGRESO RÁPIDO MOI (CORREGIDO)
-// =====================================================
+
 function confirmarIngresoRapidoMOI() {
+    if (!PUEDE_EDITAR_OT) return;
+
     const descripcion = document.getElementById('irmoi_descripcion').value.trim();
     const precio = numeroSeguro(document.getElementById('irmoi_precio').value);
     const cantidad = numeroSeguro(document.getElementById('irmoi_cantidad').value);
@@ -338,6 +340,8 @@ function confirmarIngresoRapidoMOI() {
     }
 
     const tbody = document.getElementById('cuerpoTablaMOI');
+    if (!tbody) return;
+
     const parentIndex = Date.now();
     const subtotal = (precio * cantidad).toFixed(2);
 
@@ -400,7 +404,6 @@ function confirmarIngresoRapidoMOI() {
 
         <tr class="fila-hijas-moi">
             <td></td>
-
             <td>
                 <div class="procedimientos-moi"
                      data-parent-index="${parentIndex}">
@@ -412,7 +415,6 @@ function confirmarIngresoRapidoMOI() {
                     + Agregar procedimiento
                 </button>
             </td>
-
             <td></td>
             <td></td>
             <td></td>
@@ -425,25 +427,10 @@ function confirmarIngresoRapidoMOI() {
     recalcularTotales();
     cerrarModalIngresoRapidoMOI();
 }
-// =====================================================
-// AGREGAR FILA MOE DESDE CATÁLOGO
-// =====================================================
-function agregarFilaMOE(enfocar = false) {
-    agregarFilaSimple('tablaMOE');
 
-    if (enfocar) {
-        const filas = document.querySelectorAll('#cuerpoTablaMOE tr');
-        const ultimaFila = filas[filas.length - 1];
-        const input = ultimaFila?.querySelector('.servicio-busqueda-input');
-
-        if (input) input.focus();
-    }
-}
-
-// =====================================================
-// MODAL INGRESO RÁPIDO MOE
-// =====================================================
 function abrirModalIngresoRapidoMOE() {
+    if (!PUEDE_EDITAR_OT) return;
+
     const modal = document.getElementById('modalIngresoRapidoMOE');
     if (modal) modal.style.display = 'flex';
 
@@ -455,14 +442,18 @@ function cerrarModalIngresoRapidoMOE() {
     const modal = document.getElementById('modalIngresoRapidoMOE');
     if (modal) modal.style.display = 'none';
 
-    document.getElementById('irmoe_descripcion').value = '';
-    document.getElementById('irmoe_precio').value = '0.00';
-    document.getElementById('irmoe_cantidad').value = '1';
+    const descripcion = document.getElementById('irmoe_descripcion');
+    const precio = document.getElementById('irmoe_precio');
+    const cantidad = document.getElementById('irmoe_cantidad');
+
+    if (descripcion) descripcion.value = '';
+    if (precio) precio.value = '0.00';
+    if (cantidad) cantidad.value = '1';
 }
-// =====================================================
-// MODAL INGRESO RÁPIDO MOE (CORREGIDO)
-// =====================================================
+
 function confirmarIngresoRapidoMOE() {
+    if (!PUEDE_EDITAR_OT) return;
+
     const descripcion = document.getElementById('irmoe_descripcion').value.trim();
     const precio = numeroSeguro(document.getElementById('irmoe_precio').value);
     const cantidad = numeroSeguro(document.getElementById('irmoe_cantidad').value);
@@ -473,6 +464,8 @@ function confirmarIngresoRapidoMOE() {
     }
 
     const tbody = document.getElementById('cuerpoTablaMOE');
+    if (!tbody) return;
+
     const uid = Date.now();
     const subtotal = (precio * cantidad).toFixed(2);
 
