@@ -481,13 +481,7 @@ def guardar_detalle_ot(request, pk):
     with transaction.atomic():
         orden = (
             OrdenTrabajo.objects
-            .select_for_update()
-            .select_related(
-                "sucursal",
-                "cliente",
-                "expediente",
-                "configuracion_iva",
-            )
+            .select_for_update(of=("self",))
             .get(pk=pk)
         )
 
@@ -551,7 +545,6 @@ def guardar_detalle_ot(request, pk):
 
     messages.success(request, "Orden actualizada correctamente.")
     return redirect("detalle_orden", pk=pk)
-
 
 @login_required
 def detalle_orden(request, pk):
