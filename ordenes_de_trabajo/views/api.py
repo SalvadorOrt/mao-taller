@@ -1,8 +1,11 @@
 # ordenes_de_trabajo/views/api.py
-PLACA_API_USERNAME = "SalvadorOrtega"
-CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
 
-GEMINI_API_KEY = "AIzaSyAA5PGQW2XAGoYGzjFjeo8T97fxgy44678"
+PLACA_API_USERNAME = settings.PLACA_API_USERNAME
+CEDULA_API_TOKEN = settings.CEDULA_API_TOKEN
+
+from django.conf import settings
+
+api_key = settings.GEMINI_API_KEY
 
 
 import json

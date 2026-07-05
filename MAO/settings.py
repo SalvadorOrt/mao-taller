@@ -131,10 +131,12 @@ LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # =========================
-# 🤖 GEMINI API
+# 🤖 API KEYS
 # =========================
-GEMINI_API_KEY = "AIzaSyBMzvUKzsdX_Le2BeBjsCwo4bbcp-CJnPI"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+PLACA_API_USERNAME = os.getenv("PLACA_API_USERNAME")
+CEDULA_API_TOKEN = os.getenv("CEDULA_API_TOKEN")
 
 '''
 from pathlib import Path
@@ -300,6 +302,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # =========================
 # 🤖 GEMINI API
 # =========================
-GEMINI_API_KEY = "AIzaSyBMzvUKzsdX_Le2BeBjsCwo4bbcp-CJnPI"
+GEMINI_API_KEY = ""
 
 '''

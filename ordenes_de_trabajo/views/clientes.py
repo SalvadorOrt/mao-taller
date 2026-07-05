@@ -84,9 +84,9 @@ from django.contrib.auth.decorators import login_required
 # Asegúrate de importar tu formulario y tu modelo
 from ..forms import ClienteForm
 from ..models import Cliente
-
+from django.conf import settings
 # Tu token de la API
-CEDULA_API_TOKEN = "yKGE-7wqa-kwNp-3AvU"
+CEDULA_API_TOKEN = settings.CEDULA_API_TOKEN
 # ==========================================
 # 2. CREAR CLIENTE (HÍBRIDO: MANUAL + API)
 # ==========================================

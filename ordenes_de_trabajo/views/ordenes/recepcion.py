@@ -77,11 +77,7 @@ def editar_recepcion_orden(request, pk):
                         orden.anio_vehiculo = expediente_existente.anio_vehiculo
 
                     else:
-                        user_placa = getattr(
-                            settings,
-                            "PLACA_API_USERNAME",
-                            "SalvadorOrtega"
-                        )
+                        user_placa = settings.PLACA_API_USERNAME
 
                         url_placa = (
                             "https://www.placaapi.ec/API/reg.asmx/CheckEcuador"
