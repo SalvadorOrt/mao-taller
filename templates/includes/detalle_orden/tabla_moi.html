@@ -43,6 +43,11 @@
         border: 1px solid #ffcc00;
         white-space: nowrap;
     }
+
+    .fila-eliminada-moi,
+    .procedimiento-eliminado-moi {
+        display: none !important;
+    }
 </style>
 
 <div class="ot-card moi-card">
@@ -141,8 +146,12 @@
                     {% for item in orden.servicios_detalles.all %}
                         {% if item.tipo_servicio == "MEC" %}
                             {% with uid_moi=item.id %}
-                                <tr class="fila-padre-moi">
+                                <tr class="fila-padre-moi" data-uid-moi="{{ uid_moi }}">
                                     <td class="servicio-cell">
+                                        <input type="hidden" name="moi_detalle_id[]" value="{{ item.id }}">
+                                        <input type="hidden" name="moi_delete[]" value="0">
+                                        <input type="hidden" name="moi_actualizado_en[]" value="{{ item.actualizado_en|date:'c' }}">
+
                                         <input type="hidden" name="moi_uid[]" value="{{ uid_moi }}">
 
                                         <input type="hidden"
@@ -172,34 +181,31 @@
 
                                     <td>
                                         <input type="text"
-                                        name="moi_descripcion[]"
-                                        class="form-control-apple descripcion-manual descripcion-moi w-100"
-                                        style="font-size:13px; font-weight:500; color:#1d1d1f; padding:8px;"
-                                        value="{{ item.descripcion_servicio }}"
-                                        {% if puede_editar %}
-                                        {% else %}
-                                            readonly
-                                        {% endif %}>
+                                               name="moi_descripcion[]"
+                                               class="form-control-apple descripcion-manual descripcion-moi w-100"
+                                               style="font-size:13px; font-weight:500; color:#1d1d1f; padding:8px;"
+                                               value="{{ item.descripcion_servicio }}"
+                                               {% if not puede_editar %}readonly{% endif %}>
                                     </td>
 
                                     <td>
                                         <input type="number"
-                                        step="0.01"
-                                        inputmode="decimal"
-                                        name="moi_pu[]"
-                                        class="form-control-apple pu"
-                                        value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-                                        {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
+                                               step="0.01"
+                                               inputmode="decimal"
+                                               name="moi_pu[]"
+                                               class="form-control-apple pu"
+                                               value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                               {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
                                     </td>
 
                                     <td>
                                         <input type="number"
-                                            step="0.01"
-                                            inputmode="decimal"
-                                            name="moi_cantidad[]"
-                                            class="form-control-apple cantidad"
-                                            value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
-                                            {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
+                                               step="0.01"
+                                               inputmode="decimal"
+                                               name="moi_cantidad[]"
+                                               class="form-control-apple cantidad"
+                                               value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                               {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
                                     </td>
 
                                     <td>
@@ -217,7 +223,7 @@
                                             {% if puede_editar %}
                                                 <button type="button"
                                                         class="btn-login danger small"
-                                                        onclick="eliminarFila(this)"
+                                                        onclick="eliminarFilaMOI(this)"
                                                         title="Quitar">
                                                     ✕
                                                 </button>
@@ -226,7 +232,7 @@
                                     </td>
                                 </tr>
 
-                                <tr class="fila-hijas-moi">
+                                <tr class="fila-hijas-moi" data-parent-uid-moi="{{ uid_moi }}">
                                     <td></td>
 
                                     <td>
@@ -236,12 +242,16 @@
                                             {% if item.procedimientos_detalle.exists %}
                                                 {% for proc in item.procedimientos_detalle.all %}
                                                     <div class="procedimiento-item-moi">
+                                                        <input type="hidden" name="moi_procedimiento_id_{{ uid_moi }}[]" value="{{ proc.id }}">
+                                                        <input type="hidden" name="moi_procedimiento_delete_{{ uid_moi }}[]" value="0">
+                                                        <input type="hidden" name="moi_procedimiento_actualizado_en_{{ uid_moi }}[]" value="{{ proc.actualizado_en|date:'c' }}">
+
                                                         <input type="text"
-                                                            name="moi_procedimientos_{{ uid_moi }}[]"
-                                                            class="form-control-apple"
-                                                            value="{{ proc.descripcion }}"
-                                                            placeholder="Procedimiento incluido"
-                                                            {% if not puede_editar %}readonly{% endif %}>
+                                                               name="moi_procedimientos_{{ uid_moi }}[]"
+                                                               class="form-control-apple"
+                                                               value="{{ proc.descripcion }}"
+                                                               placeholder="Procedimiento incluido"
+                                                               {% if not puede_editar %}readonly{% endif %}>
 
                                                         {% if puede_editar %}
                                                             <button type="button"
@@ -256,11 +266,11 @@
                                         </div>
 
                                         {% if puede_editar %}
-                                        <button type="button"
-                                                class="btn-login small"
-                                                onclick="agregarProcedimientoMOI(this)">
-                                            + Agregar procedimiento
-                                        </button>
+                                            <button type="button"
+                                                    class="btn-login small"
+                                                    onclick="agregarProcedimientoMOI(this)">
+                                                + Agregar procedimiento
+                                            </button>
                                         {% endif %}
                                     </td>
 
@@ -362,3 +372,61 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+function eliminarFilaMOI(boton) {
+    const filaPadre = boton.closest('tr');
+    if (!filaPadre) return;
+
+    const uid = filaPadre.dataset.uidMoi;
+    const detalleId = filaPadre.querySelector('input[name="moi_detalle_id[]"]');
+    const deleteInput = filaPadre.querySelector('input[name="moi_delete[]"]');
+
+    const filaHijas = uid
+        ? document.querySelector(`tr.fila-hijas-moi[data-parent-uid-moi="${uid}"]`)
+        : filaPadre.nextElementSibling;
+
+    if (detalleId && detalleId.value) {
+        if (deleteInput) {
+            deleteInput.value = '1';
+        }
+
+        filaPadre.classList.add('fila-eliminada-moi');
+        filaPadre.style.display = 'none';
+
+        if (filaHijas) {
+            filaHijas.classList.add('fila-eliminada-moi');
+            filaHijas.style.display = 'none';
+        }
+    } else {
+        if (filaHijas) {
+            filaHijas.remove();
+        }
+
+        filaPadre.remove();
+    }
+
+    if (typeof recalcularTotales === 'function') {
+        recalcularTotales();
+    }
+}
+
+function eliminarProcedimientoMOI(boton) {
+    const item = boton.closest('.procedimiento-item-moi');
+    if (!item) return;
+
+    const procId = item.querySelector('input[name^="moi_procedimiento_id_"]');
+    const deleteInput = item.querySelector('input[name^="moi_procedimiento_delete_"]');
+
+    if (procId && procId.value) {
+        if (deleteInput) {
+            deleteInput.value = '1';
+        }
+
+        item.classList.add('procedimiento-eliminado-moi');
+        item.style.display = 'none';
+    } else {
+        item.remove();
+    }
+}
+</script>

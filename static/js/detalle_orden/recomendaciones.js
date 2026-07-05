@@ -8,7 +8,11 @@ function agregarFilaRecomendacionOT(enfocar = false) {
     const filaHtml = `
         <tr class="recomendacion-item">
             <td>
+                <input type="hidden" name="recomendacion_detalle_id[]" value="">
+                <input type="hidden" name="recomendacion_delete[]" value="0">
+                <input type="hidden" name="recomendacion_actualizado_en[]" value="">
                 <input type="hidden" name="recomendacion_id[]" value="">
+
                 <input type="text"
                        name="recomendacion_titulo[]"
                        class="form-control-apple recomendacion-busqueda"
@@ -33,7 +37,7 @@ function agregarFilaRecomendacionOT(enfocar = false) {
 
     if (enfocar) {
         setTimeout(() => {
-            const filas = tbody.querySelectorAll('tr.recomendacion-item');
+            const filas = tbody.querySelectorAll('tr.recomendacion-item:not(.recomendacion-eliminada)');
             const ultimaFila = filas[filas.length - 1];
             const input = ultimaFila?.querySelector('.recomendacion-busqueda');
             if (input) input.focus();
@@ -43,5 +47,35 @@ function agregarFilaRecomendacionOT(enfocar = false) {
 
 function eliminarFilaRecomendacion(boton) {
     const fila = boton.closest('tr');
-    if (fila) fila.remove();
+    if (!fila) return;
+
+    const detalleId = fila.querySelector('input[name="recomendacion_detalle_id[]"]');
+    const deleteInput = fila.querySelector('input[name="recomendacion_delete[]"]');
+
+    if (detalleId && detalleId.value) {
+        if (deleteInput) {
+            deleteInput.value = "1";
+        }
+
+        fila.classList.add("recomendacion-eliminada");
+        fila.style.display = "none";
+    } else {
+        fila.remove();
+    }
+
+    const tbody = document.querySelector('#tablaRecomendaciones tbody');
+    if (!tbody) return;
+
+    const visibles = Array.from(tbody.querySelectorAll('.recomendacion-item'))
+        .filter(item => !item.classList.contains('recomendacion-eliminada'));
+
+    if (visibles.length === 0 && !tbody.querySelector('.texto-sin-recomendaciones')) {
+        tbody.insertAdjacentHTML('beforeend', `
+            <tr class="texto-sin-recomendaciones">
+                <td colspan="3" style="text-align:center; color:#86868b; padding:14px;">
+                    No hay recomendaciones técnicas registradas.
+                </td>
+            </tr>
+        `);
+    }
 }

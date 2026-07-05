@@ -67,6 +67,7 @@
     <form method="post" id="formDetalleOT" novalidate>
         {% csrf_token %}
 
+        <input type="hidden" name="orden_version" value="{{ orden.version }}">
         <input type="hidden" id="porcentajeIva" value="{{ orden.porcentaje_iva|default_if_none:'0.00' }}">
 
         {% include 'includes/detalle_orden/info_general.html' %}
@@ -96,9 +97,11 @@
         </div>
     </form>
 </div>
+
 {% if puede_editar %}
     <div id="productoFloatingDropdown" class="producto-floating-dropdown"></div>
 {% endif %}
+
 {% include 'includes/detalle_orden/modal_editar_recepcion.html' %}
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -107,52 +110,76 @@
     function guardarOTDirecto() {
         Swal.fire({
             title: 'Guardando...',
-            html: 'Sincronizando repuestos y servicios...',
+            html: 'Sincronizando repuestos, servicios y recomendaciones...',
             allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
 
-        let formSeguro = document.createElement('form');
+        const formOriginal = document.getElementById('formDetalleOT');
+
+        if (!formOriginal) {
+            Swal.fire({
+                title: 'Error',
+                text: 'No se encontró el formulario principal de la orden.',
+                icon: 'error',
+                confirmButtonColor: '#ff3b30'
+            });
+            return;
+        }
+
+        const formSeguro = document.createElement('form');
         formSeguro.method = 'POST';
         formSeguro.action = window.location.href;
         formSeguro.style.display = 'none';
 
-        let csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        let inputCsrf = document.createElement('input');
-        inputCsrf.type = 'hidden';
-        inputCsrf.name = 'csrfmiddlewaretoken';
-        inputCsrf.value = csrf;
-        formSeguro.appendChild(inputCsrf);
+        const csrf = formOriginal.querySelector('[name=csrfmiddlewaretoken]');
 
-        let selectores = [
+        if (csrf) {
+            const inputCsrf = document.createElement('input');
+            inputCsrf.type = 'hidden';
+            inputCsrf.name = 'csrfmiddlewaretoken';
+            inputCsrf.value = csrf.value;
+            formSeguro.appendChild(inputCsrf);
+        }
+
+        const selectores = [
+            'input[name="orden_version"]',
+
             'input[name*="rep_"]',
+            'select[name*="rep_"]',
+            'textarea[name*="rep_"]',
+
             'input[name*="moi_"]',
+            'select[name*="moi_"]',
+            'textarea[name*="moi_"]',
+
             'input[name*="moe_"]',
+            'select[name*="moe_"]',
+            'textarea[name*="moe_"]',
+
             'input[name*="recomendacion_"]',
+            'select[name*="recomendacion_"]',
             'textarea[name*="recomendacion_"]',
+
             'select[name="descuento_porcentaje"]',
-            'input[name="descuento_porcentaje"]'
+            'input[name="descuento_porcentaje"]',
+
+            'textarea[name="observaciones_tecnicas"]'
         ].join(', ');
 
-        let todosLosInputs = document.querySelectorAll(selectores);
+        const campos = formOriginal.querySelectorAll(selectores);
 
-        todosLosInputs.forEach(input => {
-            let clon = document.createElement('input');
+        campos.forEach(campo => {
+            if (!campo.name) return;
+
+            const clon = document.createElement('input');
             clon.type = 'hidden';
-            clon.name = input.name;
-            clon.value = input.value;
+            clon.name = campo.name;
+            clon.value = campo.value;
             formSeguro.appendChild(clon);
         });
-
-        let observaciones = document.querySelector('textarea[name="observaciones_tecnicas"]');
-
-        if (observaciones) {
-            let clonObs = document.createElement('input');
-            clonObs.type = 'hidden';
-            clonObs.name = 'observaciones_tecnicas';
-            clonObs.value = observaciones.value;
-            formSeguro.appendChild(clonObs);
-        }
 
         document.body.appendChild(formSeguro);
         formSeguro.submit();
@@ -181,7 +208,7 @@
                 {% if message.tags == 'success' %}
                     Swal.fire({
                         title: '¡Guardado Exitoso!',
-                        text: '{{ message }}',
+                        text: '{{ message|escapejs }}',
                         icon: 'success',
                         confirmButtonColor: '#34c759',
                         confirmButtonText: 'Entendido',
@@ -190,9 +217,16 @@
                 {% elif message.tags == 'error' %}
                     Swal.fire({
                         title: 'Error',
-                        text: '{{ message }}',
+                        text: '{{ message|escapejs }}',
                         icon: 'error',
                         confirmButtonColor: '#ff3b30'
+                    });
+                {% elif message.tags == 'warning' %}
+                    Swal.fire({
+                        title: 'Advertencia',
+                        text: '{{ message|escapejs }}',
+                        icon: 'warning',
+                        confirmButtonColor: '#ff9500'
                     });
                 {% endif %}
             {% endfor %}

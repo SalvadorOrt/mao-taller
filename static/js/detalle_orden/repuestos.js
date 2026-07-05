@@ -6,6 +6,15 @@ const PUEDE_EDITAR_OT =
 
 const floatingDropdown = document.getElementById("productoFloatingDropdown");
 
+function escaparHtml(valor) {
+    return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
 // =====================================================
 // AGREGAR FILA REPUESTO
 // =====================================================
@@ -18,6 +27,10 @@ function agregarFilaRepuesto(enfocar = false) {
     const filaHtml = `
         <tr>
             <td class="producto-cell">
+                <input type="hidden" name="rep_detalle_id[]" value="">
+                <input type="hidden" name="rep_delete[]" value="0">
+                <input type="hidden" name="rep_actualizado_en[]" value="">
+
                 <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="">
                 <input type="hidden" name="rep_categoria_id[]" value="">
                 <input type="hidden" name="rep_codigo_barras[]" value="">
@@ -74,14 +87,12 @@ function agregarFilaRepuesto(enfocar = false) {
 
             <td>
                 <div class="row-controls">
-                    ${PUEDE_EDITAR_OT ? `
-                        <button type="button"
-                                class="btn-login danger small"
-                                onclick="eliminarFila(this)"
-                                title="Quitar">
-                            ✕
-                        </button>
-                    ` : ""}
+                    <button type="button"
+                            class="btn-login danger small"
+                            onclick="eliminarFila(this)"
+                            title="Quitar">
+                        ✕
+                    </button>
                 </div>
             </td>
         </tr>
@@ -91,12 +102,40 @@ function agregarFilaRepuesto(enfocar = false) {
 
     if (enfocar) {
         setTimeout(() => {
-            const filas = tbody.querySelectorAll("tr");
+            const filas = tbody.querySelectorAll("tr:not(.fila-eliminada)");
             const ultimaFila = filas[filas.length - 1];
             const input = ultimaFila?.querySelector(".producto-busqueda-input");
 
             if (input) input.focus();
         }, 50);
+    }
+}
+
+// =====================================================
+// ELIMINAR FILA REPUESTO
+// =====================================================
+function eliminarFila(boton) {
+    if (!PUEDE_EDITAR_OT) return;
+
+    const fila = boton.closest("tr");
+    if (!fila) return;
+
+    const detalleId = fila.querySelector('input[name="rep_detalle_id[]"]');
+    const deleteInput = fila.querySelector('input[name="rep_delete[]"]');
+
+    if (detalleId && detalleId.value) {
+        if (deleteInput) {
+            deleteInput.value = "1";
+        }
+
+        fila.classList.add("fila-eliminada");
+        fila.style.display = "none";
+    } else {
+        fila.remove();
+    }
+
+    if (typeof recalcularTotales === "function") {
+        recalcularTotales();
     }
 }
 
@@ -165,22 +204,23 @@ function renderDropdownFlotante(input, resultados) {
 
     floatingDropdown.innerHTML = resultados.map((item, index) => {
         const precio = item.precio_venta || item.p_u || "0.00";
+        const itemSeguro = escaparHtml(JSON.stringify(item));
 
         return `
             <div class="producto-sugerencia-item ${index === 0 ? "active" : ""}"
-                 data-item='${JSON.stringify(item).replace(/'/g, "&apos;")}'
+                 data-item="${itemSeguro}"
                  onclick="seleccionarProductoEnFilaDesdeObjeto(JSON.parse(this.dataset.item))">
 
                 <div class="producto-sugerencia-codigo">
-                    ${item.codigo || ""}
+                    ${escaparHtml(item.codigo || "")}
                 </div>
 
                 <div class="producto-sugerencia-extra">
-                    ${item.descripcion || ""}
+                    ${escaparHtml(item.descripcion || "")}
                     ·
-                    <strong>Stock: ${item.stock || 0}</strong>
+                    <strong>Stock: ${escaparHtml(item.stock || 0)}</strong>
                     ·
-                    $${precio}
+                    $${escaparHtml(precio)}
                 </div>
             </div>
         `;

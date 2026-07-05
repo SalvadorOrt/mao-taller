@@ -18,6 +18,11 @@
     min-height:72px;
     resize:vertical;
 }
+
+.recomendacion-eliminada{
+    display:none !important;
+}
+
 </style>
 
 <div class="ot-card">
@@ -26,8 +31,8 @@
 
         {% if puede_editar %}
             <button type="button"
-        class="btn-login"
-        onclick="agregarFilaRecomendacionOT()">
+                    class="btn-login"
+                    onclick="agregarFilaRecomendacionOT()">
                 + Agregar recomendación
             </button>
         {% endif %}
@@ -47,6 +52,10 @@
                 {% for rec in orden.recomendaciones_items.all %}
                 <tr class="recomendacion-item">
                     <td>
+                        <input type="hidden" name="recomendacion_detalle_id[]" value="{{ rec.id }}">
+                        <input type="hidden" name="recomendacion_delete[]" value="0">
+                        <input type="hidden" name="recomendacion_actualizado_en[]" value="{{ rec.actualizado_en|date:'c' }}">
+
                         <input type="hidden"
                                name="recomendacion_id[]"
                                value="{{ rec.plantilla.id|default:'' }}">
@@ -101,8 +110,10 @@ function agregarFilaRecomendacionOT() {
     if (!PUEDE_EDITAR_RECOMENDACIONES) return;
 
     const tbody = document.querySelector("#tablaRecomendaciones tbody");
+    if (!tbody) return;
+
     const filaVacia = tbody.querySelector(".texto-sin-recomendaciones");
-    
+
     if (filaVacia) {
         filaVacia.remove();
     }
@@ -110,18 +121,25 @@ function agregarFilaRecomendacionOT() {
     const filaHtml = `
         <tr class="recomendacion-item">
             <td>
+                <input type="hidden" name="recomendacion_detalle_id[]" value="">
+                <input type="hidden" name="recomendacion_delete[]" value="0">
+                <input type="hidden" name="recomendacion_actualizado_en[]" value="">
+
                 <input type="hidden" name="recomendacion_id[]" value="">
+
                 <input type="text"
                        name="recomendacion_titulo[]"
                        class="form-control-apple"
                        placeholder="Título">
             </td>
+
             <td>
                 <textarea name="recomendacion_texto[]"
                           class="form-control-apple recomendacion-textarea"
                           rows="3"
                           placeholder="Texto de recomendación"></textarea>
             </td>
+
             <td style="text-align:center;">
                 <button type="button"
                         class="btn-login danger small"
@@ -139,13 +157,29 @@ function eliminarFilaRecomendacionOT(boton) {
     if (!PUEDE_EDITAR_RECOMENDACIONES) return;
 
     const fila = boton.closest("tr");
-    if (fila) {
+    if (!fila) return;
+
+    const detalleId = fila.querySelector('input[name="recomendacion_detalle_id[]"]');
+    const deleteInput = fila.querySelector('input[name="recomendacion_delete[]"]');
+
+    if (detalleId && detalleId.value) {
+        if (deleteInput) {
+            deleteInput.value = "1";
+        }
+
+        fila.classList.add("recomendacion-eliminada");
+        fila.style.display = "none";
+    } else {
         fila.remove();
     }
-    
-    // Opcional: Si no hay mas filas, mostrar el mensaje inicial
+
     const tbody = document.querySelector("#tablaRecomendaciones tbody");
-    if (tbody.querySelectorAll(".recomendacion-item").length === 0) {
+    if (!tbody) return;
+
+    const visibles = Array.from(tbody.querySelectorAll(".recomendacion-item"))
+        .filter(item => !item.classList.contains("recomendacion-eliminada"));
+
+    if (visibles.length === 0 && !tbody.querySelector(".texto-sin-recomendaciones")) {
         tbody.insertAdjacentHTML("beforeend", `
             <tr class="texto-sin-recomendaciones">
                 <td colspan="3" style="text-align:center; color:#86868b; padding:14px;">

@@ -3,12 +3,14 @@
     .moe-table-wrap {
         overflow: visible !important;
     }
+
+    .fila-eliminada-moe {
+        display: none !important;
+    }
 </style>
 
 <div class="ot-card moe-card">
-    <div class="section-title"
-         style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
-
+    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
         <span>Mano de Obra Externa</span>
 
         {% if puede_editar %}
@@ -38,192 +40,145 @@
                 {% if orden.es_migrada %}
 
                     {% for item in orden.servicios_historicos.all %}
+                        {% if item.tipo == "MOE" %}
+                            <tr class="form-readonly">
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple"
+                                           value="{{ item.codigo_original|default:'[ S/C ]' }}"
+                                           readonly
+                                           style="text-align:center; font-weight:600; color:#86868b;">
+                                </td>
 
-                        <tr class="form-readonly">
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple"
+                                           value="{{ item.descripcion_original }}"
+                                           readonly>
+                                </td>
 
-                            <td>
-                                <input type="text"
-                                       class="form-control-apple"
-                                       value="{{ item.codigo_original|default:'[ S/C ]' }}"
-                                       readonly
-                                       style="text-align:center; font-weight:600; color:#86868b;">
-                            </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple pu"
+                                           value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                           readonly>
+                                </td>
 
-                            <td>
-                                <input type="text"
-                                       class="form-control-apple"
-                                       value="{{ item.descripcion_original }}"
-                                       readonly>
-                            </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple cantidad"
+                                           value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                           readonly>
+                                </td>
 
-                            <td>
-                                <input type="text"
-                                       class="form-control-apple pu"
-                                       value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-                                       readonly>
-                            </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control-apple valor"
+                                           value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                           readonly>
+                                </td>
 
-                            <td>
-                                <input type="text"
-                                       class="form-control-apple cantidad"
-                                       value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
-                                       readonly>
-                            </td>
-
-                            <td>
-                                <input type="text"
-                                       class="form-control-apple valor"
-                                       value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-                                       readonly>
-                            </td>
-
-                            <td style="text-align:center;">
-                                <span style="background:#fff5cc;
-                                             color:#ff9500;
-                                             padding:4px 8px;
-                                             border-radius:6px;
-                                             font-weight:700;
-                                             font-size:9px;
-                                             border:1px solid #ffcc00;">
-
-                                    HISTÓRICO
-                                </span>
-                            </td>
-
-                        </tr>
-
+                                <td style="text-align:center;">
+                                    <span style="background:#fff5cc; color:#ff9500; padding:4px 8px; border-radius:6px; font-weight:700; font-size:9px; border:1px solid #ffcc00;">
+                                        HISTÓRICO
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
 
                 {% else %}
 
                     {% for item in orden.servicios_detalles.all %}
-
                         {% if item.tipo_servicio == "EXT" %}
-
-                            <tr>
-
+                            <tr class="fila-padre-moe">
                                 <td class="servicio-cell">
-
-                                    <input type="hidden"
-                                           name="moe_uid[]"
-                                           value="{{ forloop.counter0 }}">
-
+                                    <input type="hidden" name="moe_detalle_id[]" value="{{ item.id }}">
+                                    <input type="hidden" name="moe_delete[]" value="0">
+                                    <input type="hidden" name="moe_actualizado_en[]" value="{{ item.actualizado_en|date:'c' }}">
+                                    
+                                    <input type="hidden" name="moe_uid[]" value="{{ forloop.counter0 }}">
+                                    
                                     <input type="hidden"
                                            name="moe_servicio_id[]"
                                            class="servicio-id-hidden"
                                            value="{{ item.servicio.id|default_if_none:'' }}">
 
-                                    <div class="servicio-busqueda-wrap"
-                                         style="position:relative;">
-
+                                    <div class="servicio-busqueda-wrap" style="position:relative;">
                                         <input type="text"
-                                            class="form-control-apple servicio-busqueda-input"
-                                            placeholder="Buscar código o servicio externo..."
-                                            autocomplete="off"
-                                            value="{% if item.servicio %}{{ item.servicio.codigo }}{% else %}[ MANUAL ]{% endif %}"
-                                            style="text-align:center; font-weight:600;"
-                                            {% if puede_editar %}
-                                                oninput="buscarServicioEnFila(this, 'moe')"
-                                                onfocus="buscarServicioEnFila(this, 'moe')"
-                                            {% else %}
-                                                readonly
-                                            {% endif %}>
+                                               class="form-control-apple servicio-busqueda-input"
+                                               placeholder="Buscar código o servicio externo..."
+                                               autocomplete="off"
+                                               value="{% if item.servicio %}{{ item.servicio.codigo }}{% else %}[ MANUAL ]{% endif %}"
+                                               style="text-align:center; font-weight:600;"
+                                               {% if puede_editar %}
+                                                   oninput="buscarServicioEnFila(this, 'moe')"
+                                                   onfocus="buscarServicioEnFila(this, 'moe')"
+                                               {% else %}
+                                                   readonly
+                                               {% endif %}>
 
                                         <div class="dropdown-resultados-servicios"
-                                             style="display:none;
-                                                    position:absolute;
-                                                    top:100%;
-                                                    left:0;
-                                                    right:0;
-                                                    background:white;
-                                                    border:1px solid #d2d2d7;
-                                                    border-radius:8px;
-                                                    box-shadow:0 4px 12px rgba(0,0,0,0.15);
-                                                    z-index:1000;
-                                                    margin-top:4px;
-                                                    text-align:left;">
+                                             style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #d2d2d7; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:1000; margin-top:4px; text-align:left;">
                                         </div>
-
                                     </div>
-
                                 </td>
 
                                 <td>
-
                                     <input type="hidden"
                                            name="moe_descripcion[]"
                                            class="descripcion-manual descripcion-moe"
                                            value="{{ item.descripcion_servicio }}">
 
-                                    <div class="descripcion-visible-moi"
-                                         style="font-size:13px;
-                                                font-weight:500;
-                                                color:#1d1d1f;
-                                                padding:4px 2px;">
-
+                                    <div class="descripcion-visible-moi" style="font-size:13px; font-weight:500; color:#1d1d1f; padding:4px 2px;">
                                         {{ item.descripcion_servicio }}
-
                                     </div>
-
                                 </td>
 
                                 <td>
-
                                     <input type="number"
-                                        step="0.01"
-                                        inputmode="decimal"
-                                        name="moe_pu[]"
-                                        class="form-control-apple pu"
-                                        value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-                                        {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
-
+                                           step="0.01"
+                                           inputmode="decimal"
+                                           name="moe_pu[]"
+                                           class="form-control-apple pu"
+                                           value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                           {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
                                 </td>
 
                                 <td>
-
                                     <input type="number"
-                                        step="0.01"
-                                        inputmode="decimal"
-                                        name="moe_cantidad[]"
-                                        class="form-control-apple cantidad"
-                                        value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
-                                        {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
-
+                                           step="0.01"
+                                           inputmode="decimal"
+                                           name="moe_cantidad[]"
+                                           class="form-control-apple cantidad"
+                                           value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                           {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
                                 </td>
 
                                 <td>
-
                                     <input type="number"
                                            step="0.01"
                                            inputmode="decimal"
                                            name="moe_valor[]"
                                            class="form-control-apple valor"
-
                                            value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-
                                            readonly>
-
                                 </td>
 
                                 <td>
-
                                     <div class="row-controls">
-                                    {% if puede_editar %}
-                                        <button type="button"
-                                                class="btn-login danger small"
-                                                onclick="eliminarFila(this)"
-                                                title="Quitar">
-                                            ✕
-                                        </button>
-                                    {% endif %}
-                                </div>
-
+                                        {% if puede_editar %}
+                                            <button type="button"
+                                                    class="btn-login danger small"
+                                                    onclick="eliminarFilaMOE(this)"
+                                                    title="Quitar">
+                                                ✕
+                                            </button>
+                                        {% endif %}
+                                    </div>
                                 </td>
-
                             </tr>
-
                         {% endif %}
-
                     {% endfor %}
 
                 {% endif %}
@@ -233,21 +188,14 @@
     </div>
 
     <div class="table-footer-actions">
-
         {% if puede_editar %}
-
             <button type="button"
                     class="btn-login"
                     onclick="agregarFilaMOE(true)">
-
                 + Agregar mano de obra externa
-
             </button>
-
         {% else %}
-
             <div></div>
-
         {% endif %}
 
         <div class="subtotal-box">
@@ -256,134 +204,100 @@
                 $<span id="subtotalMOE">0.00</span>
             </div>
         </div>
-
     </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- MODAL INGRESO RÁPIDO MOE -->
-<!-- ===================================================== -->
 {% if puede_editar %}
 <div id="modalIngresoRapidoMOE"
-     style="display:none;
-            position:fixed;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
-            background:rgba(0,0,0,0.5);
-            z-index:1000;
-            justify-content:center;
-            align-items:flex-start;
-            padding-top:10vh;
-            backdrop-filter:blur(3px);">
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:flex-start; padding-top:10vh; backdrop-filter:blur(3px);">
 
-    <div style="background:#ffffff;
-                padding:25px;
-                border-radius:14px;
-                width:420px;
-                box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+    <div style="background:#ffffff; padding:25px; border-radius:14px; width:420px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
 
-        <h3 style="margin-top:0;
-                   margin-bottom:20px;
-                   font-size:18px;
-                   color:#1d1d1f;
-                   font-weight:600;">
-
+        <h3 style="margin-top:0; margin-bottom:20px; font-size:18px; color:#1d1d1f; font-weight:600;">
             + Ingreso Rápido Mano de Obra Externa
-
         </h3>
 
         <div style="margin-bottom:15px;">
-
-            <label style="font-size:12px;
-                          color:#1d1d1f;
-                          display:block;
-                          margin-bottom:4px;
-                          font-weight:500;">
-
+            <label style="font-size:12px; color:#1d1d1f; display:block; margin-bottom:4px; font-weight:500;">
                 Descripción:
-
             </label>
-
             <input type="text"
                    id="irmoe_descripcion"
                    class="form-control-apple"
                    style="width:100%;">
-
         </div>
 
         <div style="display:flex; gap:15px; margin-bottom:20px;">
-
             <div style="flex:1;">
-
-                <label style="font-size:12px;
-                              color:#1d1d1f;
-                              margin-bottom:4px;
-                              display:block;
-                              font-weight:500;">
-
+                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
                     Precio Unit. ($)
-
                 </label>
-
                 <input type="number"
                        id="irmoe_precio"
                        class="form-control-apple"
                        style="width:100%;"
                        step="0.01"
                        value="0.00">
-
             </div>
 
             <div style="flex:1;">
-
-                <label style="font-size:12px;
-                              color:#1d1d1f;
-                              margin-bottom:4px;
-                              display:block;
-                              font-weight:500;">
-
+                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
                     Cantidad
-
                 </label>
-
                 <input type="number"
                        id="irmoe_cantidad"
                        class="form-control-apple"
                        style="width:100%;"
                        step="1"
                        value="1">
-
             </div>
-
         </div>
 
-        <div style="display:flex;
-                    justify-content:flex-end;
-                    gap:10px;">
-
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
             <button type="button"
                     class="btn-login"
-                    style="background:#e5e5ea;
-                           border-color:#e5e5ea;
-                           color:#1d1d1f;"
+                    style="background:#e5e5ea; border-color:#e5e5ea; color:#1d1d1f;"
                     onclick="cerrarModalIngresoRapidoMOE()">
-
                 Cancelar
-
             </button>
 
             <button type="button"
                     class="btn-login primary"
                     onclick="confirmarIngresoRapidoMOE()">
-
                 Agregar a la Orden
-
             </button>
-
         </div>
-
     </div>
 </div>
 {% endif %}
+
+<script>
+function eliminarFilaMOE(boton) {
+    const fila = boton.closest('tr');
+
+    if (!fila) return;
+
+    // Buscar el input oculto que guarda el ID real de la base de datos
+    const detalleId = fila.querySelector('input[name="moe_detalle_id[]"]');
+    const deleteInput = fila.querySelector('input[name="moe_delete[]"]');
+
+    if (detalleId && detalleId.value) {
+        // Si el registro ya existe en BD, marcamos para eliminar lógicamente
+        if (deleteInput) {
+            deleteInput.value = '1';
+        }
+
+        // Ocultamos la fila visualmente mediante la nueva clase
+        fila.classList.add('fila-eliminada-moe');
+        fila.style.display = 'none';
+    } else {
+        // Si es una fila nueva (no tiene ID en BD), la removemos por completo del DOM
+        fila.remove();
+    }
+
+    // Actualizar totales si existe la función
+    if (typeof recalcularTotales === 'function') {
+        recalcularTotales();
+    }
+}
+</script>

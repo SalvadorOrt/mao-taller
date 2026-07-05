@@ -994,7 +994,10 @@ class ExpedienteVehiculo(models.Model):
         blank=True,
     )
 
-    creado_en = models.DateTimeField(auto_now_add=True)
+    creado_en = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
     actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -1260,7 +1263,11 @@ class OrdenTrabajo(models.Model):
 
     estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
     fecha_ingreso = models.DateTimeField(default=timezone.now)
+    estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
+    fecha_ingreso = models.DateTimeField(default=timezone.now)
 
+    actualizado_en = models.DateTimeField(auto_now=True)
+    version = models.PositiveIntegerField(default=1)
  
     total_general = models.DecimalField(
         max_digits=12,
@@ -1401,6 +1408,8 @@ class OrdenTrabajo(models.Model):
             "total_final",
             "configuracion_iva",
             "porcentaje_iva",
+            "actualizado_en",
+            "version",
         }
 
         modificados = []
@@ -2076,6 +2085,12 @@ class OrdenServicioDetalle(models.Model):
         blank=False,
     )
 
+    creado_en = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
+    actualizado_en = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ["orden_item", "id"]
         verbose_name = "Detalle de servicio"
@@ -2120,7 +2135,7 @@ class OrdenServicioDetalle(models.Model):
             self.descripcion_servicio = self.servicio.descripcion
 
         self.subtotal = (
-            Decimal(str(self.cantidad)) * self.precio_unitario
+            Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         self.full_clean()
@@ -2161,50 +2176,67 @@ class OrdenInsumoDetalle(models.Model):
         max_length=255,
         blank=True,
         verbose_name="Descripción para el Cliente",
-       
     )
 
     cantidad = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=Decimal("1.00")
+        default=Decimal("1.00"),
     )
 
     precio_unitario = models.DecimalField(
         max_digits=10,
-        decimal_places=2
+        decimal_places=2,
     )
 
     subtotal = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        editable=False
+        editable=False,
     )
 
     orden_item = models.PositiveIntegerField(default=1)
+
     categoria_referencia = models.ForeignKey(
-                    "inventario.Categoria",
-                    on_delete=models.SET_NULL,
-                    null=True,
-                    blank=True,
-                )
+        "inventario.Categoria",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
     codigo_empaque_referencia = models.CharField(
-            max_length=100,
-            null=True,
-            blank=True,
-            verbose_name="Código de empaque referencial",
-        )
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name="Código de empaque referencial",
+    )
+
     codigo_barras_referencia = models.CharField(
-            max_length=100,
-            null=True,
-            blank=True,
-        )
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    creado_en = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
+    actualizado_en = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ["orden_item", "id"]
         verbose_name = "Detalle de insumo"
         verbose_name_plural = "Detalles de insumos"
 
+    def validar_orden_editable(self):
+        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+            raise ValidationError(
+                "No se pueden modificar repuestos de una orden cerrada o anulada. Primero debe reabrirse."
+            )
+
     def clean(self):
+        self.validar_orden_editable()
+
         if self.cantidad is None or self.cantidad <= 0:
             raise ValidationError("La cantidad del insumo debe ser mayor que 0.")
 
@@ -2215,6 +2247,7 @@ class OrdenInsumoDetalle(models.Model):
             raise ValidationError(
                 "Debe seleccionar un repuesto del inventario o escribir una descripción manual."
             )
+
     def _registrar_movimiento_stock(self, codigo_producto, cantidad, tipo, referencia):
         from inventario.models import MovimientoStock
 
@@ -2227,6 +2260,8 @@ class OrdenInsumoDetalle(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         if not self.descripcion_factura and self.producto:
             self.descripcion_factura = str(self.producto)
 
@@ -2246,23 +2281,30 @@ class OrdenInsumoDetalle(models.Model):
             cantidad_anterior = Decimal("0.00")
 
             if es_edicion:
-                anterior = OrdenInsumoDetalle.objects.select_for_update().get(pk=self.pk)
+                anterior = (
+                    OrdenInsumoDetalle.objects
+                    .select_for_update()
+                    .get(pk=self.pk)
+                )
+
                 producto_anterior = anterior.producto
                 cantidad_anterior = anterior.cantidad
 
-                if producto_anterior:
-                    cambio_stock = (
-                        producto_anterior.id != (self.producto.id if self.producto else None)
-                        or cantidad_anterior != self.cantidad
-                    )
+                producto_anterior_id = producto_anterior.id if producto_anterior else None
+                producto_actual_id = self.producto.id if self.producto else None
 
-                    if cambio_stock:
-                        self._registrar_movimiento_stock(
-                            codigo_producto=producto_anterior,
-                            cantidad=cantidad_anterior,
-                            tipo="entrada",
-                            referencia=f"REVERSA {referencia}",
-                        )
+                cambio_stock = (
+                    producto_anterior_id != producto_actual_id
+                    or cantidad_anterior != self.cantidad
+                )
+
+                if cambio_stock and producto_anterior:
+                    self._registrar_movimiento_stock(
+                        codigo_producto=producto_anterior,
+                        cantidad=cantidad_anterior,
+                        tipo="entrada",
+                        referencia=f"REVERSA {referencia}",
+                    )
 
             super().save(*args, **kwargs)
 
@@ -2278,6 +2320,8 @@ class OrdenInsumoDetalle(models.Model):
             self.orden.calcular_total()
 
     def delete(self, *args, **kwargs):
+        self.validar_orden_editable()
+
         placa_ref = self.orden.placa if self.orden.placa else "SIN PLACA"
         referencia = f"REVERSA OT: {self.orden.numero_orden} | Placa: {placa_ref}"
 
@@ -2299,7 +2343,7 @@ class OrdenInsumoDetalle(models.Model):
 
     def __str__(self):
         return f"{self.descripcion_factura} (x{self.cantidad}) - OT {self.orden.numero_orden}"
-    
+
 class OrdenServicioProcedimientoDetalle(models.Model):
 
     detalle_servicio = models.ForeignKey(
@@ -2314,6 +2358,14 @@ class OrdenServicioProcedimientoDetalle(models.Model):
 
     orden_item = models.PositiveIntegerField(
         default=1
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True
     )
 
     class Meta:
@@ -2331,7 +2383,6 @@ class OrdenServicioProcedimientoDetalle(models.Model):
             )
 
     def clean(self):
-
         self.validar_orden_editable()
 
         if not self.descripcion or not self.descripcion.strip():
@@ -2340,7 +2391,6 @@ class OrdenServicioProcedimientoDetalle(models.Model):
             )
 
     def save(self, *args, **kwargs):
-
         self.validar_orden_editable()
 
         if self.descripcion:
@@ -2351,13 +2401,11 @@ class OrdenServicioProcedimientoDetalle(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-
         self.validar_orden_editable()
 
         super().delete(*args, **kwargs)
 
     def __str__(self):
-
         return (
             f"{self.detalle_servicio.descripcion_servicio} "
             f"- {self.descripcion}"
@@ -2738,6 +2786,8 @@ class PlantillaRecomendacion(models.Model):
 
     def __str__(self):
         return self.titulo
+    
+
 class OrdenRecomendacion(models.Model):
 
     orden = models.ForeignKey(
@@ -2753,11 +2803,23 @@ class OrdenRecomendacion(models.Model):
         blank=True,
     )
 
-    titulo = models.CharField(max_length=150)
+    titulo = models.CharField(
+        max_length=150
+    )
 
     texto = models.TextField()
 
-    orden_item = models.PositiveIntegerField(default=1)
+    orden_item = models.PositiveIntegerField(
+        default=1
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True
+    )
 
     class Meta:
         ordering = ["orden_item", "id"]
