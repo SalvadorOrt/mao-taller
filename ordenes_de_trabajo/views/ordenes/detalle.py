@@ -484,7 +484,13 @@ def guardar_detalle_ot(request, pk):
             .select_for_update(of=("self",))
             .get(pk=pk)
         )
-
+        messages.error(
+            request,
+            f"DEBUG POST: rep={len(request.POST.getlist('rep_descripcion[]'))}, "
+            f"moi={len(request.POST.getlist('moi_descripcion[]'))}, "
+            f"moe={len(request.POST.getlist('moe_descripcion[]'))}, "
+            f"rec={len(request.POST.getlist('recomendacion_titulo[]'))}"
+        )
         if orden.estado != "ABIERTA":
             messages.error(
                 request,
