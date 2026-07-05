@@ -476,7 +476,7 @@ def merge_recomendaciones_manuales(request, orden):
             claves.add(clave)
             orden_item += 1
 
-from django.http import HttpResponse
+
 def guardar_detalle_ot(request, pk):
     with transaction.atomic():
         orden = (
@@ -484,16 +484,7 @@ def guardar_detalle_ot(request, pk):
             .select_for_update(of=("self",))
             .get(pk=pk)
         )
-        return HttpResponse(
-            f"""
-            <h1>DEBUG POST</h1>
-            <p>rep: {len(request.POST.getlist('rep_descripcion[]'))}</p>
-            <p>moi: {len(request.POST.getlist('moi_descripcion[]'))}</p>
-            <p>moe: {len(request.POST.getlist('moe_descripcion[]'))}</p>
-            <p>rec: {len(request.POST.getlist('recomendacion_titulo[]'))}</p>
-            <pre>{list(request.POST.keys())}</pre>
-            """
-        )
+        
         if orden.estado != "ABIERTA":
             messages.error(
                 request,

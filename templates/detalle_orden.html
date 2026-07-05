@@ -109,46 +109,47 @@
 <script>
     
     function guardarOTDirecto() {
-    Swal.fire({
-        title: 'Guardando...',
-        html: 'Sincronizando repuestos, servicios y recomendaciones...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
+        Swal.fire({
+            title: 'Guardando...',
+            html: 'Sincronizando repuestos, servicios y recomendaciones...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const formSeguro = document.createElement('form');
+        formSeguro.method = 'POST';
+        formSeguro.action = window.location.href;
+        formSeguro.style.display = 'none';
+
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+
+        if (csrf) {
+            const inputCsrf = document.createElement('input');
+            inputCsrf.type = 'hidden';
+            inputCsrf.name = 'csrfmiddlewaretoken';
+            inputCsrf.value = csrf.value;
+            formSeguro.appendChild(inputCsrf);
         }
-    });
 
-    const formSeguro = document.createElement('form');
-    formSeguro.method = 'POST';
-    formSeguro.action = window.location.href;
-    formSeguro.style.display = 'none';
+        const campos = document.querySelectorAll('input, textarea, select');
 
-    const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (csrf) {
-        const inputCsrf = document.createElement('input');
-        inputCsrf.type = 'hidden';
-        inputCsrf.name = 'csrfmiddlewaretoken';
-        inputCsrf.value = csrf.value;
-        formSeguro.appendChild(inputCsrf);
+        campos.forEach(campo => {
+            if (!campo.name) return;
+            if (campo.disabled) return;
+            if (campo.name === 'csrfmiddlewaretoken') return;
+
+            const clon = document.createElement('input');
+            clon.type = 'hidden';
+            clon.name = campo.name;
+            clon.value = campo.value;
+            formSeguro.appendChild(clon);
+        });
+
+        document.body.appendChild(formSeguro);
+        formSeguro.submit();
     }
-
-    const campos = document.querySelectorAll('input, textarea, select');
-
-    campos.forEach(campo => {
-        if (!campo.name) return;
-        if (campo.disabled) return;
-        if (campo.name === 'csrfmiddlewaretoken') return;
-
-        const clon = document.createElement('input');
-        clon.type = 'hidden';
-        clon.name = campo.name;
-        clon.value = campo.value;
-        formSeguro.appendChild(clon);
-    });
-
-    document.body.appendChild(formSeguro);
-    formSeguro.submit();
-}
     function confirmarReabrir(formId) {
         Swal.fire({
             title: '¿Reabrir Orden Histórica?',
