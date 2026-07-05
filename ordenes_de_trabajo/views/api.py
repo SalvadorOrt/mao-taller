@@ -1,12 +1,10 @@
 # ordenes_de_trabajo/views/api.py
 
-PLACA_API_USERNAME = settings.PLACA_API_USERNAME
-CEDULA_API_TOKEN = settings.CEDULA_API_TOKEN
-
 from django.conf import settings
 
-api_key = settings.GEMINI_API_KEY
-
+PLACA_API_USERNAME = settings.PLACA_API_USERNAME
+CEDULA_API_TOKEN = settings.CEDULA_API_TOKEN
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 
 import json
 import requests
@@ -18,16 +16,9 @@ from django.db.models import Q
 from servicios.models import ServicioCatalogo
 from inventario.models import CodigoProducto, StockSucursal
 from .utils import obtener_sucursal_activa
-from ..models import Cliente, ExpedienteVehiculo
 from ..models import Cliente, ExpedienteVehiculo, PlantillaRecomendacion
-
 from datetime import timedelta
-import requests
-from datetime import timedelta
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.conf import settings
 
 # =========================================================
 # IA: CLASIFICAR VEHÍCULO
