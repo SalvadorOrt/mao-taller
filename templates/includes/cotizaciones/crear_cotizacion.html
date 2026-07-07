@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">Nueva Cotización</h3>
+            <p class="text-muted mb-0">
+                Crea una proforma sin abrir una orden de trabajo.
+            </p>
+        </div>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+            Volver
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="card shadow-sm">
+        {% csrf_token %}
+
+        <div class="card-body">
+
+            <h5 class="mb-3">Datos del vehículo</h5>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label class="form-label">Placa *</label>
+                    <input 
+                        type="text"
+                        name="placa"
+                        class="form-control text-uppercase"
+                        placeholder="Ej: PBA1234"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label">Vehículo</label>
+                    <input 
+                        type="text"
+                        name="vehiculo"
+                        class="form-control text-uppercase"
+                        placeholder="Ej: CHEVROLET AVEO"
+                    >
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Año</label>
+                    <input 
+                        type="number"
+                        name="anio_vehiculo"
+                        class="form-control"
+                        placeholder="Ej: 2018"
+                        min="1900"
+                        max="2100"
+                    >
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <h5 class="mb-3">Cliente opcional</h5>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label class="form-label">Identificación</label>
+                    <input 
+                        type="text"
+                        name="identificacion"
+                        class="form-control"
+                        placeholder="Cédula / RUC"
+                    >
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label">Nombre del cliente</label>
+                    <input 
+                        type="text"
+                        name="nombre_cliente"
+                        class="form-control text-uppercase"
+                        placeholder="Nombre completo"
+                    >
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <div class="mb-3">
+                <label class="form-label">Observaciones</label>
+                <textarea 
+                    name="observaciones"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Observaciones generales de la cotización"
+                ></textarea>
+            </div>
+
+        </div>
+
+        <div class="card-footer d-flex justify-content-end gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Crear cotización
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

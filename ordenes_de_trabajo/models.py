@@ -2590,7 +2590,6 @@ class OrdenInsumoHistorico(models.Model):
 
     def __str__(self):
         return self.descripcion_original
-
 # ==========================================
 # 10. COTIZACIONES / PROFORMAS (MÓDULO HÍBRIDO)
 # ==========================================
@@ -2602,38 +2601,118 @@ class Cotizacion(models.Model):
     ]
 
     numero_cotizacion = models.CharField(max_length=50, unique=True)
-    sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT, related_name="cotizaciones")
-    
-    orden = models.OneToOneField( # Cambiado de ForeignKey a OneToOneField
-        'OrdenTrabajo', 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
-        related_name="cotizacion_vinculada", # Cambiado a singular
-    
+
+    sucursal = models.ForeignKey(
+        Sucursal,
+        on_delete=models.PROTECT,
+        related_name="cotizaciones",
     )
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, related_name="cotizaciones")
+
+    orden = models.OneToOneField(
+        "OrdenTrabajo",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="cotizacion_vinculada",
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cotizaciones",
+    )
+
     cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
-    placa = models.CharField(max_length=15, db_index=True) # <-- ESTE FUE EL CAMBIO QUE DETECTÓ DJANGO
+
+    placa = models.CharField(max_length=15, db_index=True)
+
     vehiculo = models.CharField(max_length=150, null=True, blank=True)
+
     anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
 
-    # Control de la Cotización
-    estado = models.CharField(max_length=15, choices=ESTADOS_COTIZACION, default="PENDIENTE")
+    tipo_tarifa_vehiculo = models.CharField(
+        max_length=20,
+        choices=TIPOS_TARIFA_VEHICULO,
+        default="NO_APLICA",
+    )
+
+    gama_vehiculo = models.CharField(
+        max_length=20,
+        choices=GAMAS_VEHICULO,
+        default="NO_APLICA",
+    )
+
+    estado = models.CharField(
+        max_length=15,
+        choices=ESTADOS_COTIZACION,
+        default="PENDIENTE",
+    )
+
     fecha_creacion = models.DateTimeField(default=timezone.now)
+
     validez_dias = models.PositiveIntegerField(default=15)
-    
-    total_general = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+
     observaciones = models.TextField(null=True, blank=True)
 
-    # Si la cotización era de mostrador y se aprueba, aquí se guarda la OT que nació de ella.
+    total_general = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    configuracion_iva = models.ForeignKey(
+        ConfiguracionTributaria,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cotizaciones",
+    )
+
+    porcentaje_iva = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    subtotal_sin_iva = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    descuento_porcentaje = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    valor_descuento = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    valor_iva = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    total_final = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
     orden_generada = models.OneToOneField(
-        'OrdenTrabajo', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        "OrdenTrabajo",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="cotizacion_origen",
-       
     )
 
     class Meta:
@@ -2645,71 +2724,286 @@ class Cotizacion(models.Model):
     def nombre_cliente_final(self):
         if self.cliente:
             return self.cliente.nombre_completo
+
         return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
 
-    def calcular_total(self):
-        servicios = self.servicios_cotizados.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
-        insumos = self.insumos_cotizados.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
-        nuevo_total = servicios + insumos
+    def obtener_configuracion_iva_activa(self):
+        return ConfiguracionTributaria.objects.filter(
+            activa=True
+        ).order_by("-fecha_inicio", "-id").first()
 
-        if self.total_general != nuevo_total:
-            self.total_general = nuevo_total
-            if self.pk:
-                Cotizacion.objects.filter(pk=self.pk).update(total_general=nuevo_total)
+    def _normalizar_campos_texto(self):
+        if self.numero_cotizacion:
+            self.numero_cotizacion = self.numero_cotizacion.strip().upper()
+
+        if self.placa:
+            self.placa = self.placa.strip().upper().replace("-", "").replace(" ", "")
+
+        if self.vehiculo:
+            self.vehiculo = self.vehiculo.strip().upper()
+
+        if self.cliente_respaldo:
+            self.cliente_respaldo = self.cliente_respaldo.strip().upper()
+
+        if self.observaciones:
+            self.observaciones = self.observaciones.strip()
+
+    def calcular_total(self):
+        servicios = (
+            self.servicios_cotizados.aggregate(total=Sum("subtotal"))["total"]
+            or Decimal("0.00")
+        )
+
+        insumos = (
+            self.insumos_cotizados.aggregate(total=Sum("subtotal"))["total"]
+            or Decimal("0.00")
+        )
+
+        subtotal_sin_iva = (servicios + insumos).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        if self.porcentaje_iva is None:
+            config = self.obtener_configuracion_iva_activa()
+
+            if config:
+                self.configuracion_iva = config
+                self.porcentaje_iva = config.porcentaje_iva
+            else:
+                self.porcentaje_iva = Decimal("0.00")
+
+        descuento_porcentaje = self.descuento_porcentaje or Decimal("0.00")
+
+        valor_descuento = (
+            subtotal_sin_iva
+            * Decimal(str(descuento_porcentaje))
+            / Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        base_imponible = subtotal_sin_iva - valor_descuento
+
+        if base_imponible < Decimal("0.00"):
+            base_imponible = Decimal("0.00")
+
+        valor_iva = (
+            base_imponible
+            * Decimal(str(self.porcentaje_iva))
+            / Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        total_final = (base_imponible + valor_iva).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        self.total_general = subtotal_sin_iva
+        self.subtotal_sin_iva = subtotal_sin_iva
+        self.descuento_porcentaje = descuento_porcentaje
+        self.valor_descuento = valor_descuento
+        self.valor_iva = valor_iva
+        self.total_final = total_final
+
+        if self.pk:
+            Cotizacion.objects.filter(pk=self.pk).update(
+                total_general=subtotal_sin_iva,
+                configuracion_iva=self.configuracion_iva,
+                porcentaje_iva=self.porcentaje_iva,
+                subtotal_sin_iva=subtotal_sin_iva,
+                descuento_porcentaje=descuento_porcentaje,
+                valor_descuento=valor_descuento,
+                valor_iva=valor_iva,
+                total_final=total_final,
+            )
+
+    def clean(self):
+        self._normalizar_campos_texto()
+
+        if not self.numero_cotizacion or not self.numero_cotizacion.strip():
+            raise ValidationError("El número de cotización es obligatorio.")
+
+        if not self.sucursal_id:
+            raise ValidationError({"sucursal": "La sucursal es obligatoria."})
+
+        if not self.placa or not self.placa.strip():
+            raise ValidationError("La placa es obligatoria.")
+
+        if self.anio_vehiculo and self.anio_vehiculo < 1900:
+            raise ValidationError("El año del vehículo no es válido.")
+
+        if self.descuento_porcentaje < Decimal("0.00"):
+            raise ValidationError({
+                "descuento_porcentaje": "El descuento no puede ser negativo."
+            })
+
+        if self.descuento_porcentaje > Decimal("100.00"):
+            raise ValidationError({
+                "descuento_porcentaje": "El descuento no puede ser mayor al 100%."
+            })
 
     def save(self, *args, **kwargs):
-       
         if self.orden:
             self.placa = self.orden.placa
             self.vehiculo = self.orden.vehiculo
             self.cliente = self.orden.cliente
             self.cliente_respaldo = self.orden.cliente_respaldo
             self.anio_vehiculo = self.orden.anio_vehiculo
-        
-        if self.placa:
-            self.placa = self.placa.strip().upper()
-            
+            self.tipo_tarifa_vehiculo = self.orden.tipo_tarifa_vehiculo
+            self.gama_vehiculo = self.orden.gama_vehiculo
+
+        self._normalizar_campos_texto()
+
+        self.full_clean()
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"COT {self.numero_cotizacion} - {self.placa} ({self.nombre_cliente_final})"
-
-
 class CotizacionServicioDetalle(models.Model):
-    cotizacion = models.ForeignKey(Cotizacion, related_name="servicios_cotizados", on_delete=models.CASCADE)
-    servicio = models.ForeignKey("servicios.ServicioCatalogo", on_delete=models.SET_NULL, null=True, blank=True)
-    
-    tipo_servicio = models.CharField(max_length=10, choices=OrdenServicioDetalle.TIPOS_SERVICIO, default="MEC")
+    VARIANTES_PRECIO = OrdenServicioDetalle.VARIANTES_PRECIO
+
+    cotizacion = models.ForeignKey(
+        Cotizacion,
+        related_name="servicios_cotizados",
+        on_delete=models.CASCADE,
+    )
+
+    servicio = models.ForeignKey(
+        "servicios.ServicioCatalogo",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    tipo_servicio = models.CharField(
+        max_length=10,
+        choices=OrdenServicioDetalle.TIPOS_SERVICIO,
+        default="MEC",
+    )
+
     descripcion_servicio = models.CharField(max_length=255)
-    
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("1.00"))
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+
+    cantidad = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("1.00"),
+    )
+
+    precio_unitario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False,
+    )
+
     orden_item = models.PositiveIntegerField(default=1)
+
+    tipo_tarifa_aplicada = models.CharField(
+        max_length=20,
+        default="NO_APLICA",
+    )
+
+    variante_precio_aplicada = models.CharField(
+        max_length=20,
+        choices=VARIANTES_PRECIO,
+        default="NORMAL",
+    )
 
     class Meta:
         ordering = ["orden_item", "id"]
+        verbose_name = "Servicio cotizado"
+        verbose_name_plural = "Servicios cotizados"
+
+    def clean(self):
+        if self.cantidad is None or self.cantidad <= 0:
+            raise ValidationError("La cantidad del servicio debe ser mayor que 0.")
+
+        if self.precio_unitario is None or self.precio_unitario < 0:
+            raise ValidationError("El precio unitario del servicio no puede ser negativo.")
+
+        if not self.descripcion_servicio and not self.servicio:
+            raise ValidationError(
+                "Debe proporcionar una descripción o seleccionar un servicio del catálogo."
+            )
 
     def save(self, *args, **kwargs):
-        self.subtotal = (Decimal(str(self.cantidad)) * self.precio_unitario).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        super().save(*args, **kwargs)
-        self.cotizacion.calcular_total()
+        if not self.tipo_tarifa_aplicada:
+            self.tipo_tarifa_aplicada = (
+                self.cotizacion.tipo_tarifa_vehiculo or "NO_APLICA"
+            )
+
+        if not self.variante_precio_aplicada:
+            self.variante_precio_aplicada = "NORMAL"
+
+        if self.servicio and not self.descripcion_servicio:
+            self.descripcion_servicio = self.servicio.descripcion
+
+        if self.descripcion_servicio:
+            self.descripcion_servicio = self.descripcion_servicio.strip().upper()
+
+        self.subtotal = (
+            Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        self.full_clean()
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.cotizacion.calcular_total()
 
     def delete(self, *args, **kwargs):
         cotizacion = self.cotizacion
-        super().delete(*args, **kwargs)
-        cotizacion.calcular_total()
+
+        with transaction.atomic():
+            super().delete(*args, **kwargs)
+            cotizacion.calcular_total()
+
+    def __str__(self):
+        return f"[{self.tipo_servicio}] {self.descripcion_servicio} - COT {self.cotizacion.numero_cotizacion}"
+
 
 class CotizacionInsumoDetalle(models.Model):
-    cotizacion = models.ForeignKey(Cotizacion, related_name="insumos_cotizados", on_delete=models.CASCADE)
-    producto = models.ForeignKey("inventario.CodigoProducto", on_delete=models.PROTECT, null=True, blank=True)
-    
-    descripcion_factura = models.CharField(max_length=255, blank=True)
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("1.00"))
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
-    orden_item = models.PositiveIntegerField(default=1)
+    cotizacion = models.ForeignKey(
+        Cotizacion,
+        related_name="insumos_cotizados",
+        on_delete=models.CASCADE,
+    )
 
+    producto = models.ForeignKey(
+        "inventario.CodigoProducto",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+
+    descripcion_factura = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Descripción para el Cliente",
+    )
+
+    cantidad = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("1.00"),
+    )
+
+    precio_unitario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False,
+    )
+
+    orden_item = models.PositiveIntegerField(default=1)
 
     categoria_referencia = models.ForeignKey(
         "inventario.Categoria",
@@ -2717,11 +3011,13 @@ class CotizacionInsumoDetalle(models.Model):
         null=True,
         blank=True,
     )
+
     codigo_empaque_referencia = models.CharField(
         max_length=100,
         null=True,
         blank=True,
     )
+
     codigo_barras_referencia = models.CharField(
         max_length=100,
         null=True,
@@ -2730,39 +3026,79 @@ class CotizacionInsumoDetalle(models.Model):
 
     class Meta:
         ordering = ["orden_item", "id"]
+        verbose_name = "Repuesto cotizado"
+        verbose_name_plural = "Repuestos cotizados"
 
-    # Nota: Aquí NO hay def _registrar_movimiento_stock() porque es solo una proforma tentativa.
+    def clean(self):
+        if self.cantidad is None or self.cantidad <= 0:
+            raise ValidationError("La cantidad del repuesto debe ser mayor que 0.")
+
+        if self.precio_unitario is None or self.precio_unitario < 0:
+            raise ValidationError("El precio unitario del repuesto no puede ser negativo.")
+
+        if not self.producto and not (self.descripcion_factura or "").strip():
+            raise ValidationError(
+                "Debe seleccionar un repuesto del inventario o escribir una descripción manual."
+            )
+
     def save(self, *args, **kwargs):
         if not self.descripcion_factura and self.producto:
             self.descripcion_factura = str(self.producto)
-            
-        self.subtotal = (Decimal(str(self.cantidad)) * self.precio_unitario).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        super().save(*args, **kwargs)
-        self.cotizacion.calcular_total()
+
+        if self.descripcion_factura:
+            self.descripcion_factura = self.descripcion_factura.strip().upper()
+
+        self.subtotal = (
+            Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        self.full_clean()
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.cotizacion.calcular_total()
 
     def delete(self, *args, **kwargs):
         cotizacion = self.cotizacion
-        super().delete(*args, **kwargs)
-        cotizacion.calcular_total()
+
+        with transaction.atomic():
+            super().delete(*args, **kwargs)
+            cotizacion.calcular_total()
+
+    def __str__(self):
+        return f"{self.descripcion_factura} (x{self.cantidad}) - COT {self.cotizacion.numero_cotizacion}"
 
 
 class CotizacionProcedimientoDetalle(models.Model):
     servicio_cotizado = models.ForeignKey(
-        CotizacionServicioDetalle, 
-        related_name='procedimientos_detalle', 
-        on_delete=models.CASCADE
+        CotizacionServicioDetalle,
+        related_name="procedimientos_detalle",
+        on_delete=models.CASCADE,
     )
+
     descripcion = models.CharField(max_length=255)
-    
-  
+
     orden_item = models.PositiveIntegerField(default=1)
 
     class Meta:
         ordering = ["orden_item", "id"]
+        verbose_name = "Procedimiento cotizado"
+        verbose_name_plural = "Procedimientos cotizados"
+
+    def clean(self):
+        if not self.descripcion or not self.descripcion.strip():
+            raise ValidationError("La descripción del procedimiento es obligatoria.")
+
+    def save(self, *args, **kwargs):
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip().upper()
+
+        self.full_clean()
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.servicio_cotizado.descripcion_servicio} - {self.descripcion}"
-    
 class PlantillaRecomendacion(models.Model):
     titulo = models.CharField(max_length=150, db_index=True)
     texto = models.TextField()

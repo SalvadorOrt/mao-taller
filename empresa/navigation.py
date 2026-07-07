@@ -7,6 +7,7 @@ def get_menu_lateral(user):
             "items": [
                 {"label": "Dashboard Taller", "url_name": "dashboard", "icon": "bi-house-door"},
                 {"label": "Nueva Orden", "url_name": "crear_orden", "icon": "bi-plus-circle"},
+                {"label": "Nueva Cotización", "url_name": "crear_cotizacion", "icon": "bi-file-earmark-plus"},
                 {"label": "Órdenes de Trabajo", "url_name": "lista_ordenes", "icon": "bi-list-ul"},
                 {"label": "Vehículos / Expedientes", "url": "/admin/ordenes_de_trabajo/expedientevehiculo/", "icon": "bi-car-front"},
                 {"label": "Clientes", "url_name": "lista_clientes", "icon": "bi-people"},

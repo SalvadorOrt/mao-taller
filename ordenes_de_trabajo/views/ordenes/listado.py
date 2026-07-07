@@ -1,20 +1,10 @@
-
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-
 from django.db.models import Q, Count
+from django.core.paginator import Paginator
 
-# 🚀 IMPORTAMOS LOS MODELOS DE INVENTARIO NECESARIOS PARA LA "CUARENTENA"
-
-from ...models import (
-    Sucursal,
-   
-    OrdenTrabajo
-)
-from ..utils import (
-    obtener_sucursal_activa,
-    
-)
+from ...models import OrdenTrabajo, Sucursal, Tecnico
+from ..utils import obtener_sucursal_activa
 
 
 # =========================================================
@@ -47,15 +37,17 @@ def dashboard_taller(request):
         "sucursales": sucursales,
         "puede_cambiar_sucursal": puede_cambiar_sucursal
     })
+
+
 # =========================================================
 # LISTADO GLOBAL DE ÓRDENES (Buscador y Filtros de Precisión)
 # =========================================================
 @login_required
 def lista_ordenes(request):
-    LIMITE_RESULTADOS = 40
-
     sucursal_activa = obtener_sucursal_activa(request)
+
     sucursales = Sucursal.objects.filter(activa=True).order_by("nombre")
+    tecnicos = Tecnico.objects.filter(activo=True).order_by("nombre")
 
     sucursal_id_req = request.GET.get("sucursal_filtro")
 
@@ -64,24 +56,26 @@ def lista_ordenes(request):
     else:
         sucursal_filtro = sucursal_id_req
 
-    ordenes_base = (
+    ordenes = (
         OrdenTrabajo.objects
-        .select_related("cliente", "sucursal")
+        .select_related("cliente", "sucursal", "usuario_receptor")
+        .prefetch_related("tecnicos")
         .order_by("-fecha_ingreso")
     )
 
-    total_general = ordenes_base.count()
-    ordenes = ordenes_base
+    total_general = ordenes.count()
 
     if sucursal_filtro and sucursal_filtro != "todas":
         ordenes = ordenes.filter(sucursal_id=sucursal_filtro)
 
     q = request.GET.get("q", "").strip()
+
     if q:
         ordenes = ordenes.filter(
             Q(numero_orden__icontains=q) |
             Q(numero_orden_origen__icontains=q) |
             Q(placa__icontains=q) |
+            Q(vehiculo__icontains=q) |
             Q(cliente__nombre_completo__icontains=q) |
             Q(cliente_respaldo__icontains=q)
         )
@@ -89,6 +83,10 @@ def lista_ordenes(request):
     estado = request.GET.get("estado", "")
     if estado:
         ordenes = ordenes.filter(estado=estado)
+
+    tecnico_id = request.GET.get("tecnico", "")
+    if tecnico_id:
+        ordenes = ordenes.filter(tecnicos__id=tecnico_id)
 
     fecha_inicio = request.GET.get("fecha_inicio", "")
     if fecha_inicio:
@@ -98,33 +96,50 @@ def lista_ordenes(request):
     if fecha_fin:
         ordenes = ordenes.filter(fecha_ingreso__date__lte=fecha_fin)
 
-    total_filtrado = ordenes.count()
+    tipo_orden = request.GET.get("tipo_orden", "")
+    if tipo_orden == "normal":
+        ordenes = ordenes.filter(es_migrada=False)
+    elif tipo_orden == "migrada":
+        ordenes = ordenes.filter(es_migrada=True)
+
+    total_filtrado = ordenes.distinct().count()
 
     filtros_activos = any([
         q,
         estado,
+        tecnico_id,
         fecha_inicio,
         fecha_fin,
+        tipo_orden,
         sucursal_id_req not in [None, "", "todas"],
     ])
 
-    ordenes = ordenes[:LIMITE_RESULTADOS]
+    paginator = Paginator(ordenes.distinct(), 40)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
-    desde = 1 if total_filtrado > 0 else 0
-    hasta = min(LIMITE_RESULTADOS, total_filtrado)
+    desde = page_obj.start_index() if total_filtrado > 0 else 0
+    hasta = page_obj.end_index() if total_filtrado > 0 else 0
 
     return render(request, "lista_ordenes.html", {
-        "ordenes": ordenes,
+        "ordenes": page_obj,
+        "page_obj": page_obj,
+
         "sucursales": sucursales,
+        "tecnicos": tecnicos,
+
         "sucursal_filtro": sucursal_filtro,
         "q": q,
         "estado": estado,
+        "tecnico_id": tecnico_id,
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
+        "tipo_orden": tipo_orden,
+
         "total_general": total_general,
         "total_filtrado": total_filtrado,
         "filtros_activos": filtros_activos,
         "desde": desde,
         "hasta": hasta,
-        "limite_resultados": LIMITE_RESULTADOS,
+        "limite_resultados": 40,
     })
