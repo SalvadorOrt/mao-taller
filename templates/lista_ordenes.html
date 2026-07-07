@@ -7,65 +7,32 @@
 
 {% block content %}
 
+<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+
 <style>
-    :root {
-        --bg: #f5f5f7;
-        --surface: #ffffff;
-        --text: #1d1d1f;
-        --muted: #6e6e73;
-        --border: #e5e5e7;
-        --border-soft: #eff1f4;
-        --head: #f7f8fa;
-        --accent: #0071e3;
-        --accent-hover: #0062c4;
-        --danger: #ff3b30;
-        --success: #34c759;
-        --warning: #d97706;
+    .lista-ot-wrapper {
+        padding-top: 8px;
+        padding-bottom: 18px;
     }
 
-    .ot-wrapper {
-        padding: 8px 0 18px 0;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: var(--text);
-    }
-
-    .ot-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        margin-bottom: 20px;
-    }
-
-    .section-title {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--text);
-        margin-bottom: 14px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border-soft);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-    }
-
-    .ot-filter-form {
+    .lista-ot-filter-form {
         display: flex;
-        gap: 14px;
+        gap: 12px;
         flex-wrap: wrap;
         align-items: flex-end;
         margin: 0;
     }
 
-    .ot-field {
+    .lista-ot-field {
         min-width: 140px;
     }
 
-    .ot-field.search {
+    .lista-ot-field.search {
         flex: 1;
         min-width: 260px;
     }
 
-    .ot-label {
+    .lista-ot-label {
         font-size: 10px;
         font-weight: 700;
         color: var(--muted);
@@ -75,164 +42,125 @@
         letter-spacing: 0.04em;
     }
 
-    .form-control-apple {
-        height: 38px;
-        min-height: 38px;
-        border-radius: 11px;
-        border: 1px solid #dcdce1;
-        background-color: #fff;
-        font-size: 13px;
-        font-weight: 500;
-        padding: 0 11px;
-        width: 100%;
+    .lista-ot-input {
+        height: 36px;
+        min-height: 36px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fff;
         color: var(--text);
+        font-size: 12px;
+        font-weight: 500;
+        padding: 0 10px;
+        width: 100%;
         outline: none;
         box-shadow: none;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        transition: all 0.15s ease;
     }
 
-    .form-control-apple::placeholder {
+    .lista-ot-input::placeholder {
         color: #a1a1a6;
         font-weight: 400;
     }
 
-    .form-control-apple:focus {
+    .lista-ot-input:focus {
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.09);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
     }
 
-    .btn-login {
-        min-height: 38px;
-        height: 38px;
-        border-radius: 11px;
-        border: 1px solid #dcdce1;
-        background: #ffffff;
-        color: var(--text);
-        font-weight: 650;
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        padding: 0 16px;
-        text-decoration: none;
-        line-height: 1;
-        transition: all 0.15s ease;
-        white-space: nowrap;
-    }
-
-    .btn-login:hover {
-        border-color: var(--accent);
-        background: #fbfbfd;
-        color: var(--text);
-        text-decoration: none;
-    }
-
-    .btn-login.primary {
-        background: var(--accent);
-        color: white;
-        border-color: var(--accent);
-    }
-
-    .btn-login.primary:hover {
-        background: var(--accent-hover);
-        border-color: var(--accent-hover);
-        color: white;
-    }
-
-    .result-summary {
+    .lista-ot-summary {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 12px;
         margin-bottom: 12px;
-        padding: 11px 13px;
+        padding: 10px 12px;
         background: #fbfbfd;
         border: 1px solid var(--border-soft);
-        border-radius: 12px;
+        border-radius: 10px;
     }
 
-    .result-summary-main {
-        font-size: 13px;
+    .lista-ot-summary-main {
+        font-size: 12px;
         font-weight: 700;
         color: var(--text);
     }
 
-    .result-summary-sub {
-        font-size: 12px;
-        font-weight: 500;
+    .lista-ot-summary-sub {
+        font-size: 11px;
+        font-weight: 600;
         color: var(--muted);
         margin-top: 2px;
     }
 
-    .ot-table-wrap {
+    .lista-ot-table-wrap {
         overflow: auto;
         max-height: 620px;
-        margin-top: 10px;
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 12px;
         background: #fff;
     }
 
-    .ot-table {
+    .lista-ot-table {
         width: 100%;
+        min-width: 1080px;
         border-collapse: separate;
         border-spacing: 0;
-        min-width: 1050px;
         background: #fff;
     }
 
-    .ot-table thead th {
+    .lista-ot-table thead th {
         position: sticky;
         top: 0;
         z-index: 10;
-        font-size: 11px;
-        font-weight: 750;
-        color: var(--muted);
-        text-transform: uppercase;
-        padding: 13px 14px;
         background: rgba(247, 248, 250, 0.96);
         backdrop-filter: blur(8px);
         border-bottom: 1px solid var(--border);
-        text-align: left;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
         letter-spacing: 0.04em;
+        padding: 12px;
+        text-align: left;
     }
 
-    .ot-table tbody td {
-        padding: 12px 14px;
-        vertical-align: middle;
+    .lista-ot-table tbody td {
+        padding: 11px 12px;
         border-bottom: 1px solid var(--border-soft);
-        font-size: 13px;
+        vertical-align: middle;
         color: var(--text);
     }
 
-    .ot-table tbody tr {
-        transition: background-color 0.15s ease;
+    .lista-ot-table tbody tr {
         cursor: default;
+        transition: background 0.15s ease;
     }
 
-    .ot-table tbody tr:hover {
-        background-color: #fbfbfd;
+    .lista-ot-table tbody tr:hover {
+        background: #fbfbfd;
     }
 
-    .ot-numero {
-        font-size: 14px;
-        font-weight: 750;
+    .lista-ot-numero {
+        font-size: 13px;
+        font-weight: 700;
         color: var(--text);
-        letter-spacing: -0.01em;
+        line-height: 1.2;
     }
 
-    .ot-numero.migrada {
-        color: var(--warning);
+    .lista-ot-numero.migrada {
+        color: #d97706;
     }
 
-    .ot-meta {
-        font-size: 12px;
+    .lista-ot-meta {
+        font-size: 11px;
         font-weight: 500;
         color: var(--muted);
+        line-height: 1.25;
+        margin-top: 2px;
     }
 
-    .ot-placa {
+    .lista-ot-placa {
         display: inline-flex;
         align-items: center;
         min-height: 24px;
@@ -241,58 +169,60 @@
         border: 1px solid var(--border-soft);
         background: #fbfbfd;
         font-size: 12px;
-        font-weight: 750;
+        font-weight: 700;
         letter-spacing: 0.04em;
         color: var(--text);
     }
 
-    .ot-cliente {
-        font-size: 13px;
+    .lista-ot-cliente {
+        font-size: 12px;
         font-weight: 700;
         color: var(--text);
-        line-height: 1.2;
+        line-height: 1.25;
     }
 
-    .ot-vehiculo {
-        font-size: 12px;
+    .lista-ot-vehiculo {
+        font-size: 11px;
         font-weight: 500;
         color: var(--muted);
-        line-height: 1.2;
+        line-height: 1.25;
         margin-top: 3px;
     }
 
-    .ot-badge {
+    .lista-ot-badge {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-width: 78px;
-        min-height: 24px;
+        min-height: 23px;
         padding: 4px 10px;
         border-radius: 999px;
-        font-weight: 750;
-        font-size: 11px;
+        font-weight: 700;
+        font-size: 10px;
         letter-spacing: 0.03em;
+        border: 1px solid transparent;
+        text-transform: uppercase;
     }
 
-    .ot-badge.abierta {
-        background: #e8fbe8;
+    .lista-ot-badge.abierta {
+        background: #e5fbe4;
         color: #1f8939;
-        border: 1px solid #b7efc5;
+        border-color: #b7efc5;
     }
 
-    .ot-badge.cerrada {
+    .lista-ot-badge.cerrada {
         background: #f5f5f7;
         color: var(--muted);
-        border: 1px solid var(--border);
+        border-color: var(--border);
     }
 
-    .ot-badge.anulada {
+    .lista-ot-badge.anulada {
         background: #ffebe9;
         color: var(--danger);
-        border: 1px solid #ffd6d6;
+        border-color: #ffd6d6;
     }
 
-    .ot-actions {
+    .lista-ot-actions {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -300,7 +230,7 @@
         position: relative;
     }
 
-    .ot-action-btn {
+    .lista-ot-action-btn {
         height: 32px;
         min-width: 32px;
         border-radius: 9px;
@@ -308,7 +238,7 @@
         background: #fff;
         color: var(--text);
         font-size: 12px;
-        font-weight: 650;
+        font-weight: 700;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -319,33 +249,31 @@
         transition: all 0.15s ease;
     }
 
-    .ot-action-btn:hover {
+    .lista-ot-action-btn:hover {
         background: #f5f5f7;
-        border-color: #d2d2d7;
         color: var(--text);
         text-decoration: none;
     }
 
-    .ot-action-btn.open {
+    .lista-ot-action-btn.open {
         color: var(--accent);
         border-color: rgba(0, 113, 227, 0.25);
         background: #f5faff;
     }
 
-    .ot-action-btn.open:hover {
+    .lista-ot-action-btn.open:hover {
         background: #edf6ff;
-        border-color: rgba(0, 113, 227, 0.4);
     }
 
-    .ot-action-dropdown {
+    .lista-ot-dropdown {
         display: none;
         position: absolute;
         right: 0;
         top: 38px;
-        background: #ffffff;
+        background: #fff;
         border: 1px solid var(--border);
-        border-radius: 12px;
-        box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         z-index: 1000;
         min-width: 165px;
         text-align: left;
@@ -353,7 +281,7 @@
         padding: 5px;
     }
 
-    .ot-menu-link {
+    .lista-ot-menu-link {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -361,75 +289,116 @@
         color: var(--text);
         text-decoration: none;
         font-size: 12px;
-        font-weight: 650;
-        border-radius: 8px;
+        font-weight: 600;
+        border-radius: 7px;
         transition: background 0.15s ease;
     }
 
-    .ot-menu-link:hover {
+    .lista-ot-menu-link:hover {
         background: #f5f5f7;
         color: var(--text);
         text-decoration: none;
     }
 
-    .ot-menu-link.primary {
+    .lista-ot-menu-link.primary {
         color: var(--accent);
     }
 
-    .ot-menu-separator {
+    .lista-ot-menu-separator {
         height: 1px;
         background: var(--border-soft);
         margin: 5px 0;
     }
 
-    .ot-empty {
-        text-align: center;
-        padding: 64px 20px;
-        background-color: #fafafa;
+    .apple-dropdown-menu {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 42px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        z-index: 1200;
+        max-height: 240px;
+        overflow-y: auto;
+        padding: 5px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
     }
 
-    .ot-empty-icon {
+    .apple-dropdown-item {
+        padding: 9px 11px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+        transition: background 0.12s ease;
+    }
+
+    .apple-dropdown-item:hover,
+    .apple-dropdown-item.activo {
+        background: #f5f5f7;
+    }
+
+    .apple-dropdown-no-result {
+        display: none;
+        padding: 10px 11px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .lista-ot-empty {
+        text-align: center;
+        padding: 60px 20px;
+        background: #fafafa;
+    }
+
+    .lista-ot-empty-icon {
         font-size: 2.4rem;
         opacity: 0.3;
         margin-bottom: 10px;
         color: var(--muted);
     }
 
-    .ot-empty-title {
+    .lista-ot-empty-title {
         margin: 0 0 5px 0;
         font-weight: 700;
         color: var(--text);
         font-size: 15px;
     }
 
-    .ot-empty-text {
+    .lista-ot-empty-text {
         margin: 0;
         color: var(--muted);
         font-size: 13px;
     }
 </style>
 
-<div class="container-fluid ot-wrapper">
+<div class="container lista-ot-wrapper">
 
-    <div class="ot-card">
+    <div class="ot-card" style="margin-bottom: 15px; padding: 15px;">
         <div class="section-title">Filtros de búsqueda</div>
 
-        <form method="GET" action="{% url 'lista_ordenes' %}" class="ot-filter-form">
+        <form method="GET" action="{% url 'lista_ordenes' %}" class="lista-ot-filter-form">
 
-            <div class="ot-field search">
-                <label class="ot-label">Buscar</label>
+            <div class="lista-ot-field search">
+                <label class="lista-ot-label">Buscar</label>
                 <input type="text"
                        name="q"
                        value="{{ q|default:'' }}"
-                       class="form-control-apple"
+                       class="lista-ot-input"
                        placeholder="Orden, placa, cliente o vehículo">
             </div>
 
-            <div class="ot-field" style="min-width: 220px;">
-                <label class="ot-label">Sucursal</label>
-                <select name="sucursal_filtro" class="form-control-apple" onchange="this.form.submit()">
+            <div class="lista-ot-field" style="min-width: 210px;">
+                <label class="lista-ot-label">Sucursal</label>
+                <select name="sucursal_filtro"
+                        class="lista-ot-input"
+                        onchange="this.form.submit()">
                     <option value="todas" {% if sucursal_filtro == 'todas' %}selected{% endif %}>
-                        Todas las sucursales
+                        Todas
                     </option>
 
                     {% for suc in sucursales %}
@@ -440,9 +409,11 @@
                 </select>
             </div>
 
-            <div class="ot-field">
-                <label class="ot-label">Estado</label>
-                <select name="estado" class="form-control-apple" onchange="this.form.submit()">
+            <div class="lista-ot-field" style="min-width: 140px;">
+                <label class="lista-ot-label">Estado</label>
+                <select name="estado"
+                        class="lista-ot-input"
+                        onchange="this.form.submit()">
                     <option value="">Todos</option>
                     <option value="ABIERTA" {% if estado == 'ABIERTA' %}selected{% endif %}>Abiertas</option>
                     <option value="CERRADA" {% if estado == 'CERRADA' %}selected{% endif %}>Cerradas</option>
@@ -450,20 +421,61 @@
                 </select>
             </div>
 
-            <div class="ot-field">
-                <label class="ot-label">Desde</label>
+            <div class="lista-ot-field" style="min-width: 210px; position: relative;">
+                <label class="lista-ot-label">Técnico</label>
+
+                <div class="apple-dropdown" data-dropdown-tipo="tecnico" style="position: relative;">
+                    <input type="text"
+                           class="lista-ot-input apple-dropdown-input"
+                           placeholder="Buscar técnico..."
+                           autocomplete="off">
+
+                    <input type="hidden"
+                           name="tecnico"
+                           class="apple-dropdown-hidden"
+                           value="{{ tecnico_id|default:'' }}">
+
+                    <div class="apple-dropdown-menu">
+                        {% for tecnico in tecnicos %}
+                            <div class="apple-dropdown-item"
+                                 data-id="{{ tecnico.id }}"
+                                 data-nombre="{{ tecnico.nombre }}">
+                                {{ tecnico.nombre }}
+                            </div>
+                        {% endfor %}
+
+                        <div class="apple-dropdown-no-result">
+                            Sin resultados
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lista-ot-field" style="min-width: 140px;">
+                <label class="lista-ot-label">Tipo</label>
+                <select name="tipo_orden"
+                        class="lista-ot-input"
+                        onchange="this.form.submit()">
+                    <option value="">Todas</option>
+                    <option value="normal" {% if tipo_orden == 'normal' %}selected{% endif %}>Normales</option>
+                    <option value="migrada" {% if tipo_orden == 'migrada' %}selected{% endif %}>Migradas</option>
+                </select>
+            </div>
+
+            <div class="lista-ot-field" style="min-width: 135px;">
+                <label class="lista-ot-label">Desde</label>
                 <input type="date"
                        name="fecha_inicio"
                        value="{{ fecha_inicio }}"
-                       class="form-control-apple">
+                       class="lista-ot-input">
             </div>
 
-            <div class="ot-field">
-                <label class="ot-label">Hasta</label>
+            <div class="lista-ot-field" style="min-width: 135px;">
+                <label class="lista-ot-label">Hasta</label>
                 <input type="date"
                        name="fecha_fin"
                        value="{{ fecha_fin }}"
-                       class="form-control-apple">
+                       class="lista-ot-input">
             </div>
 
             <div style="display: flex; gap: 8px;">
@@ -480,17 +492,17 @@
         </form>
     </div>
 
-    <div class="ot-card" style="padding-bottom: 12px;">
+    <div class="ot-card" style="padding: 15px;">
         <div class="section-title">Listado de órdenes de trabajo</div>
 
         {% if filtros_activos %}
-            <div class="result-summary">
+            <div class="lista-ot-summary">
                 <div>
-                    <div class="result-summary-main">
+                    <div class="lista-ot-summary-main">
                         {{ total_filtrado }} coincidencia{{ total_filtrado|pluralize }} encontrada{{ total_filtrado|pluralize }}
                     </div>
 
-                    <div class="result-summary-sub">
+                    <div class="lista-ot-summary-sub">
                         {% if total_filtrado > limite_resultados %}
                             Mostrando los primeros {{ limite_resultados }} resultados
                         {% elif total_filtrado > 0 %}
@@ -501,22 +513,22 @@
                     </div>
                 </div>
 
-                <div class="result-summary-sub">
+                <div class="lista-ot-summary-sub">
                     Filtros aplicados
                 </div>
             </div>
         {% endif %}
 
-        <div class="ot-table-wrap">
-            <table class="ot-table" id="tablaOrdenes">
+        <div class="lista-ot-table-wrap">
+            <table class="lista-ot-table" id="tablaOrdenes">
                 <thead>
                     <tr>
-                        <th style="width: 17%;">N° Orden</th>
-                        <th style="width: 14%;">Fecha ingreso</th>
-                        <th style="width: 13%;">Placa</th>
-                        <th style="width: 32%;">Cliente / Vehículo</th>
+                        <th style="width: 16%;">N° Orden</th>
+                        <th style="width: 13%;">Fecha</th>
+                        <th style="width: 12%;">Placa</th>
+                        <th style="width: 31%;">Cliente / Vehículo</th>
                         <th style="width: 12%; text-align: center;">Estado</th>
-                        <th style="width: 12%; text-align: center;">Acciones</th>
+                        <th style="width: 16%; text-align: center;">Acciones</th>
                     </tr>
                 </thead>
 
@@ -525,101 +537,117 @@
                         <tr>
                             <td>
                                 {% if orden.es_migrada and orden.numero_orden_origen %}
-                                    <div class="ot-numero migrada">{{ orden.numero_orden_origen }}</div>
-                                    <div class="ot-meta">Migrada</div>
+                                    <div class="lista-ot-numero migrada">
+                                        {{ orden.numero_orden_origen }}
+                                    </div>
+                                    <div class="lista-ot-meta">
+                                        Migrada
+                                    </div>
                                 {% else %}
-                                    <div class="ot-numero">{{ orden.numero_orden }}</div>
-                                    <div class="ot-meta">Normal</div>
+                                    <div class="lista-ot-numero">
+                                        {{ orden.numero_orden }}
+                                    </div>
+                                    <div class="lista-ot-meta">
+                                        Normal
+                                    </div>
                                 {% endif %}
                             </td>
 
                             <td>
-                                <div class="ot-meta">
+                                <div class="lista-ot-meta">
                                     {{ orden.fecha_ingreso|date:"d/m/Y" }}
                                 </div>
-                                <div class="ot-meta">
+                                <div class="lista-ot-meta">
                                     {{ orden.fecha_ingreso|date:"H:i" }}
                                 </div>
                             </td>
 
                             <td>
-                                <span class="ot-placa">
+                                <span class="lista-ot-placa">
                                     {{ orden.placa|default:"S/P" }}
                                 </span>
                             </td>
 
                             <td>
-                                <div class="ot-cliente">
+                                <div class="lista-ot-cliente">
                                     {{ orden.nombre_cliente_final|truncatechars:38|upper }}
                                 </div>
-                                <div class="ot-vehiculo">
+
+                                <div class="lista-ot-vehiculo">
                                     {{ orden.vehiculo|truncatechars:42|default:"-" }}
                                 </div>
                             </td>
 
                             <td style="text-align: center;">
                                 {% if orden.estado == 'ABIERTA' %}
-                                    <span class="ot-badge abierta">Abierta</span>
+                                    <span class="lista-ot-badge abierta">
+                                        Abierta
+                                    </span>
                                 {% elif orden.estado == 'CERRADA' %}
-                                    <span class="ot-badge cerrada">Cerrada</span>
+                                    <span class="lista-ot-badge cerrada">
+                                        Cerrada
+                                    </span>
                                 {% else %}
-                                    <span class="ot-badge anulada">Anulada</span>
+                                    <span class="lista-ot-badge anulada">
+                                        Anulada
+                                    </span>
                                 {% endif %}
                             </td>
 
                             <td>
-                                <div class="ot-actions">
+                                <div class="lista-ot-actions">
 
                                     <a href="{% url 'detalle_orden' orden.id %}"
-                                       class="ot-action-btn open"
+                                       class="lista-ot-action-btn open"
                                        title="Ver orden">
                                         <i class="bi bi-eye"></i>
                                         Ver
                                     </a>
 
                                     <button type="button"
-                                            class="ot-action-btn"
+                                            class="lista-ot-action-btn"
                                             onclick="toggleAccionesMenu({{ orden.id }}, event)"
                                             title="Más acciones">
                                         <i class="bi bi-three-dots"></i>
                                     </button>
 
-                                    <div id="menu-acciones-{{ orden.id }}" class="ot-action-dropdown">
+                                    <div id="menu-acciones-{{ orden.id }}" class="lista-ot-dropdown">
 
                                         <a href="{% url 'imprimir_tecnico' orden.id %}"
                                            target="_blank"
-                                           class="ot-menu-link">
+                                           class="lista-ot-menu-link">
                                             <i class="bi bi-printer"></i>
                                             Imprimir ficha
                                         </a>
 
                                         {% if orden.estado == 'ABIERTA' and orden.sucursal.id == request.user.sucursal_id %}
-                                            <div class="ot-menu-separator"></div>
+                                            <div class="lista-ot-menu-separator"></div>
 
                                             <a href="{% url 'detalle_orden' orden.id %}"
-                                               class="ot-menu-link primary">
+                                               class="lista-ot-menu-link primary">
                                                 <i class="bi bi-pencil-square"></i>
                                                 Editar orden
                                             </a>
                                         {% endif %}
 
                                     </div>
+
                                 </div>
                             </td>
                         </tr>
 
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="ot-empty">
-                                <div class="ot-empty-icon">
+                            <td colspan="6" class="lista-ot-empty">
+                                <div class="lista-ot-empty-icon">
                                     <i class="bi bi-inbox"></i>
                                 </div>
 
-                                <h5 class="ot-empty-title">
+                                <h5 class="lista-ot-empty-title">
                                     No se encontraron órdenes
                                 </h5>
 
-                                <p class="ot-empty-text">
+                                <p class="lista-ot-empty-text">
                                     Intenta cambiar los filtros de búsqueda o el rango de fechas.
                                 </p>
                             </td>
@@ -628,6 +656,7 @@
                 </tbody>
             </table>
         </div>
+
     </div>
 
 </div>
@@ -636,7 +665,7 @@
     function toggleAccionesMenu(ordenId, event) {
         event.stopPropagation();
 
-        const todosLosMenus = document.querySelectorAll(".ot-action-dropdown");
+        const todosLosMenus = document.querySelectorAll(".lista-ot-dropdown");
 
         todosLosMenus.forEach((menu) => {
             if (menu.id !== "menu-acciones-" + ordenId) {
@@ -656,10 +685,14 @@
     }
 
     document.addEventListener("click", function () {
-        document.querySelectorAll(".ot-action-dropdown").forEach((menu) => {
+        document.querySelectorAll(".lista-ot-dropdown").forEach((menu) => {
             menu.style.display = "none";
         });
     });
 </script>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'inventario/js/dropdowns.js' %}"></script>
 {% endblock %}
