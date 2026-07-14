@@ -174,12 +174,68 @@
         gap: 15px;">
 
         <!-- CLIENTE -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Cliente</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">{{ orden.nombre_cliente_final|upper }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">C.I./RUC: {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">Celular: {{ orden.cliente.telefono|default:"NO REGISTRADO" }}</div>
-        </div>
+<div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+
+    <div
+        style="
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted, #6e6e73);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        "
+    >
+        Cliente
+    </div>
+
+    <div
+        style="
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text, #1d1d1f);
+        "
+    >
+        {{ orden.nombre_cliente_final|upper }}
+    </div>
+
+    <div
+        style="
+            font-size: 11px;
+            color: var(--muted, #6e6e73);
+            margin-top: 4px;
+        "
+    >
+        C.I./RUC:
+        {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
+    </div>
+
+    <div
+        style="
+            font-size: 11px;
+            color: var(--muted, #6e6e73);
+            margin-top: 4px;
+        "
+    >
+        Celular:
+        {{ orden.cliente.telefono|default:"NO REGISTRADO" }}
+    </div>
+
+    <div
+        style="
+            font-size: 11px;
+            color: var(--muted, #6e6e73);
+            margin-top: 4px;
+        "
+    >
+        Correo:
+        {% if orden.cliente and orden.cliente.email %}
+            {{ orden.cliente.email|lower }}
+        {% else %}
+            NO REGISTRADO
+        {% endif %}
+    </div>
+
+</div>
 
         <!-- VEHÍCULO -->
         <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
