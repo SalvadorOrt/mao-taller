@@ -173,3 +173,51 @@ function agregarTrabajoManualComoCheckbox() {
     input.value = "";
     input.focus();
 }
+
+window.agregarTrabajoManualComoCheckbox = function () {
+    const input = document.getElementById("nuevo_trabajo_manual");
+    const grid = document.getElementById("grid_trabajos_realizar");
+
+    if (!input || !grid) {
+        console.error("No se encontró el input o el grid de trabajos.");
+        return;
+    }
+
+    const descripcion = input.value.trim();
+
+    if (!descripcion) {
+        input.focus();
+        return;
+    }
+
+    const existe = Array.from(
+        grid.querySelectorAll(".trabajo-checkbox")
+    ).some(function (checkbox) {
+        return checkbox.value.trim().toLowerCase() === descripcion.toLowerCase();
+    });
+
+    if (existe) {
+        alert("Ese trabajo ya está en la lista.");
+        input.select();
+        return;
+    }
+
+    const label = document.createElement("label");
+    label.className = "badge-trabajo";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "trabajo-checkbox";
+    checkbox.value = descripcion;
+    checkbox.checked = true;
+
+    label.appendChild(checkbox);
+    label.appendChild(
+        document.createTextNode(" " + descripcion)
+    );
+
+    grid.appendChild(label);
+
+    input.value = "";
+    input.focus();
+};
