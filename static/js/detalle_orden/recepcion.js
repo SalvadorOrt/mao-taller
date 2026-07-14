@@ -1,3 +1,4 @@
+console.log("RECEPCION JS CARGADO");
 function abrirModalRecepcion() {
     renderModalListas();
 
@@ -136,52 +137,39 @@ function guardarEdicionRapida() {
         form.submit();
     }
 }
-
 function agregarTrabajoManualComoCheckbox() {
-    const input = document.getElementById('nuevo_trabajo_manual');
-    const grid = document.getElementById('grid_trabajos_realizar');
+    const input = document.getElementById("nuevo_trabajo_manual");
+    const grid = document.getElementById("grid_trabajos_realizar");
 
-    if (!input || !grid) {
-        console.error(
-            'No se encontró nuevo_trabajo_manual o grid_trabajos_realizar'
-        );
-        return;
-    }
+    if (!input || !grid) return;
 
     const descripcion = input.value.trim();
 
-    if (!descripcion) {
-        input.focus();
+    if (descripcion === "") return;
+
+    const existe = Array.from(
+        grid.querySelectorAll(".trabajo-checkbox")
+    ).some(c => c.value.toLowerCase() === descripcion.toLowerCase());
+
+    if (existe) {
+        alert("Ese trabajo ya existe.");
         return;
     }
 
-    // Evitar trabajos repetidos
-    const trabajosExistentes = Array.from(
-        grid.querySelectorAll('.trabajo-checkbox')
-    ).map(checkbox => checkbox.value.trim().toLowerCase());
+    const label = document.createElement("label");
+    label.className = "badge-trabajo";
 
-    if (trabajosExistentes.includes(descripcion.toLowerCase())) {
-        alert('Ese trabajo ya está agregado.');
-        input.select();
-        return;
-    }
-
-    const label = document.createElement('label');
-    label.className = 'badge-trabajo';
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'trabajo-checkbox';
-    checkbox.value = descripcion;
-    checkbox.checked = true;
-
-    label.appendChild(checkbox);
-    label.appendChild(
-        document.createTextNode(` ${descripcion}`)
-    );
+    label.innerHTML = `
+        <input
+            type="checkbox"
+            class="trabajo-checkbox"
+            value="${descripcion}"
+            checked>
+        ${descripcion}
+    `;
 
     grid.appendChild(label);
 
-    input.value = '';
+    input.value = "";
     input.focus();
 }
