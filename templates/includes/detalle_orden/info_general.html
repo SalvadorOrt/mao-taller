@@ -217,21 +217,112 @@
         </div>
     </div>
 
-    <!-- REPORTE CLIENTE -->
-    <div style="margin-top: 15px; padding: 12px; background: #f5f5f7; border-left: 4px solid #0071e3; border-radius: 4px 8px 8px 4px;">
-        <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 4px;">Reporte del Cliente</div>
-        <div style="font-size: 13px; font-weight: 500; color: #1d1d1f;">
+    <!-- ============================================= -->
+<!-- REPORTE DEL CLIENTE Y TRABAJOS SOLICITADOS -->
+<!-- ============================================= -->
+<div
+    style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 12px;
+        margin-top: 15px;
+    "
+>
+    <!-- REPORTE DEL CLIENTE -->
+    <div
+        style="
+            padding: 12px;
+            background: #f5f5f7;
+            border-left: 4px solid #0071e3;
+            border-radius: 4px 8px 8px 4px;
+        "
+    >
+        <div
+            style="
+                font-size: 10px;
+                font-weight: 700;
+                color: var(--muted, #6e6e73);
+                text-transform: uppercase;
+                margin-bottom: 6px;
+            "
+        >
+            Reporte del Cliente
+        </div>
+
+        <div
+            style="
+                font-size: 13px;
+                font-weight: 500;
+                color: #1d1d1f;
+                line-height: 1.5;
+            "
+        >
             {% if orden.sintomas_cliente %}
                 {{ orden.sintomas_cliente|upper }}
             {% else %}
-                {% for s in orden.sintomas_items.all %}
-                    {{ s.descripcion|upper }}{% if not forloop.last %}, {% endif %}
+                {% for sintoma in orden.sintomas_items.all %}
+                    <div style="margin-bottom: 4px;">
+                        <strong>{{ forloop.counter }}.</strong>
+                        {{ sintoma.descripcion|upper }}
+                    </div>
                 {% empty %}
-                    REVISIÓN TÉCNICA GENERAL
+                    <span style="color: #86868b;">
+                        REVISIÓN TÉCNICA GENERAL
+                    </span>
                 {% endfor %}
             {% endif %}
         </div>
     </div>
+
+    <!-- TRABAJOS SOLICITADOS -->
+    <div
+        style="
+            padding: 12px;
+            background: #f5f5f7;
+            border-left: 4px solid #34c759;
+            border-radius: 4px 8px 8px 4px;
+        "
+    >
+        <div
+            style="
+                font-size: 10px;
+                font-weight: 700;
+                color: var(--muted, #6e6e73);
+                text-transform: uppercase;
+                margin-bottom: 6px;
+            "
+        >
+            Trabajos Solicitados
+        </div>
+
+        <div
+            style="
+                font-size: 13px;
+                font-weight: 500;
+                color: #1d1d1f;
+                line-height: 1.5;
+            "
+        >
+            {% for trabajo in orden.trabajos_solicitados_items.all %}
+                <div style="margin-bottom: 4px;">
+                    <strong>{{ forloop.counter }}.</strong>
+
+                    {% if trabajo.trabajo_catalogo %}
+                        {{ trabajo.trabajo_catalogo.nombre|upper }}
+                    {% elif trabajo.descripcion_manual %}
+                        {{ trabajo.descripcion_manual|upper }}
+                    {% else %}
+                        TRABAJO SIN DESCRIPCIÓN
+                    {% endif %}
+                </div>
+            {% empty %}
+                <span style="color: #86868b;">
+                    NO HAY TRABAJOS SOLICITADOS
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 </div>
 
     
