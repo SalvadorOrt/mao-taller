@@ -217,7 +217,7 @@
         </div>
     </div>
 
-<!-- ============================================= -->
+    <!-- ============================================= -->
 <!-- REPORTE DEL CLIENTE Y TRABAJOS SOLICITADOS -->
 <!-- ============================================= -->
 <div
@@ -226,28 +226,25 @@
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 12px;
         margin-top: 15px;
+        margin-bottom: 28px;
     "
 >
-    <!-- ========================================= -->
     <!-- REPORTE DEL CLIENTE -->
-    <!-- ========================================= -->
     <div
         style="
             padding: 12px;
             background: #f5f5f7;
             border-left: 4px solid #0071e3;
             border-radius: 4px 8px 8px 4px;
-            min-width: 0;
         "
     >
         <div
             style="
-                font-size: 9px;
+                font-size: 10px;
                 font-weight: 700;
                 color: var(--muted, #6e6e73);
                 text-transform: uppercase;
-                letter-spacing: 0.6px;
-                margin-bottom: 7px;
+                margin-bottom: 6px;
             "
         >
             Reporte del Cliente
@@ -255,60 +252,22 @@
 
         <div
             style="
-                font-size: 11px;
-                font-weight: 400;
+                font-size: 13px;
+                font-weight: 500;
                 color: #1d1d1f;
-                line-height: 1.45;
-                overflow-wrap: anywhere;
-                word-break: break-word;
+                line-height: 1.5;
             "
         >
             {% if orden.sintomas_cliente %}
-                <div
-                    style="
-                        white-space: pre-line;
-                        margin-bottom: 4px;
-                    "
-                >
-                    {{ orden.sintomas_cliente|upper }}
-                </div>
+                {{ orden.sintomas_cliente|upper }}
             {% else %}
                 {% for sintoma in orden.sintomas_items.all %}
-                    <div
-                        style="
-                            display: flex;
-                            align-items: flex-start;
-                            gap: 5px;
-                            margin-bottom: 5px;
-                        "
-                    >
-                        <strong
-                            style="
-                                flex: 0 0 18px;
-                                font-size: 10px;
-                                font-weight: 700;
-                                color: #1d1d1f;
-                            "
-                        >
-                            {{ forloop.counter }}.
-                        </strong>
-
-                        <span
-                            style="
-                                flex: 1;
-                                min-width: 0;
-                            "
-                        >
-                            {{ sintoma.descripcion|upper }}
-                        </span>
+                    <div style="margin-bottom: 4px;">
+                        <strong>{{ forloop.counter }}.</strong>
+                        {{ sintoma.descripcion|upper }}
                     </div>
                 {% empty %}
-                    <span
-                        style="
-                            color: #86868b;
-                            font-style: italic;
-                        "
-                    >
+                    <span style="color: #86868b;">
                         REVISIÓN TÉCNICA GENERAL
                     </span>
                 {% endfor %}
@@ -316,26 +275,22 @@
         </div>
     </div>
 
-    <!-- ========================================= -->
     <!-- TRABAJOS SOLICITADOS -->
-    <!-- ========================================= -->
     <div
         style="
             padding: 12px;
             background: #f5f5f7;
             border-left: 4px solid #34c759;
             border-radius: 4px 8px 8px 4px;
-            min-width: 0;
         "
     >
         <div
             style="
-                font-size: 9px;
+                font-size: 10px;
                 font-weight: 700;
                 color: var(--muted, #6e6e73);
                 text-transform: uppercase;
-                letter-spacing: 0.6px;
-                margin-bottom: 7px;
+                margin-bottom: 6px;
             "
         >
             Trabajos Solicitados
@@ -343,61 +298,32 @@
 
         <div
             style="
-                font-size: 11px;
-                font-weight: 400;
+                font-size: 13px;
+                font-weight: 500;
                 color: #1d1d1f;
-                line-height: 1.45;
-                overflow-wrap: anywhere;
-                word-break: break-word;
+                line-height: 1.5;
             "
         >
             {% for trabajo in orden.trabajos_solicitados_items.all %}
-                <div
-                    style="
-                        display: flex;
-                        align-items: flex-start;
-                        gap: 5px;
-                        margin-bottom: 5px;
-                    "
-                >
-                    <strong
-                        style="
-                            flex: 0 0 18px;
-                            font-size: 10px;
-                            font-weight: 700;
-                            color: #1d1d1f;
-                        "
-                    >
-                        {{ forloop.counter }}.
-                    </strong>
+                <div style="margin-bottom: 4px;">
+                    <strong>{{ forloop.counter }}.</strong>
 
-                    <span
-                        style="
-                            flex: 1;
-                            min-width: 0;
-                        "
-                    >
-                        {% if trabajo.trabajo_catalogo %}
-                            {{ trabajo.trabajo_catalogo.nombre|upper }}
-                        {% elif trabajo.descripcion_manual %}
-                            {{ trabajo.descripcion_manual|upper }}
-                        {% else %}
-                            TRABAJO SIN DESCRIPCIÓN
-                        {% endif %}
-                    </span>
+                    {% if trabajo.trabajo_catalogo %}
+                        {{ trabajo.trabajo_catalogo.nombre|upper }}
+                    {% elif trabajo.descripcion_manual %}
+                        {{ trabajo.descripcion_manual|upper }}
+                    {% else %}
+                        TRABAJO SIN DESCRIPCIÓN
+                    {% endif %}
                 </div>
             {% empty %}
-                <span
-                    style="
-                        color: #86868b;
-                        font-style: italic;
-                    "
-                >
+                <span style="color: #86868b;">
                     NO HAY TRABAJOS SOLICITADOS
                 </span>
             {% endfor %}
         </div>
     </div>
+</div>
 </div>
 
     
