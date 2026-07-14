@@ -136,3 +136,52 @@ function guardarEdicionRapida() {
         form.submit();
     }
 }
+
+function agregarTrabajoManualComoCheckbox() {
+    const input = document.getElementById('nuevo_trabajo_manual');
+    const grid = document.getElementById('grid_trabajos_realizar');
+
+    if (!input || !grid) {
+        console.error(
+            'No se encontró nuevo_trabajo_manual o grid_trabajos_realizar'
+        );
+        return;
+    }
+
+    const descripcion = input.value.trim();
+
+    if (!descripcion) {
+        input.focus();
+        return;
+    }
+
+    // Evitar trabajos repetidos
+    const trabajosExistentes = Array.from(
+        grid.querySelectorAll('.trabajo-checkbox')
+    ).map(checkbox => checkbox.value.trim().toLowerCase());
+
+    if (trabajosExistentes.includes(descripcion.toLowerCase())) {
+        alert('Ese trabajo ya está agregado.');
+        input.select();
+        return;
+    }
+
+    const label = document.createElement('label');
+    label.className = 'badge-trabajo';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'trabajo-checkbox';
+    checkbox.value = descripcion;
+    checkbox.checked = true;
+
+    label.appendChild(checkbox);
+    label.appendChild(
+        document.createTextNode(` ${descripcion}`)
+    );
+
+    grid.appendChild(label);
+
+    input.value = '';
+    input.focus();
+}
