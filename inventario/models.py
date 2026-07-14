@@ -5,6 +5,19 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max
 from django.contrib.auth.base_user import BaseUserManager
+import unicodedata
+
+from django.conf import settings
+from django.utils import timezone
+import re
+import unicodedata
+from decimal import Decimal
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
 # =========================================================
 # MANAGER PERSONALIZADO DE USUARIO
 # =========================================================
@@ -219,87 +232,226 @@ class MarcaRepuesto(models.Model):
 
     def __str__(self):
         return self.nombre
-
 # =========================================================
 # PRODUCTO BASE / FAMILIA FUNCIONAL
 # =========================================================
+
 class Producto(models.Model):
     ORIGEN_CHOICES = [
-        ("BODEGA", "Ingreso formal en Bodega"),
-        ("MOSTRADOR", "Creación rápida al vuelo"),
+        (
+            "INDIVIDUAL",
+            "Creación individual desde inventario",
+        ),
+        (
+            "FACTURA",
+            "Creado desde factura de compra",
+        ),
+        (
+            "MOSTRADOR",
+            "Creación rápida desde mostrador",
+        ),
     ]
 
-    sku_interno = models.CharField(max_length=50, unique=True, blank=True)
+    sku_interno = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+    )
+
     categoria = models.ForeignKey(
         "Categoria",
         on_delete=models.PROTECT,
         related_name="productos",
     )
-    nombre_base = models.CharField(max_length=255)
-    descripcion = models.TextField(blank=True, null=True)
+
+    nombre_base = models.CharField(
+        max_length=255,
+    )
+
+    descripcion = models.TextField(
+        blank=True,
+        null=True,
+    )
 
     origen = models.CharField(
         max_length=20,
         choices=ORIGEN_CHOICES,
-        default="BODEGA",
+        default="INDIVIDUAL",
+        db_index=True,
     )
 
-    activo = models.BooleanField(default=True)
-    descontinuado = models.BooleanField(default=False)
-    datos_incompletos = models.BooleanField(default=False)
+    # Solo se llena cuando el producto nació desde una factura.
+    detalle_origen_creacion = models.ForeignKey(
+        "compras.DetalleFacturaOriginal",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="productos_creados",
+        help_text=(
+            "Detalle original de la factura que dio origen "
+            "a la creación del producto."
+        ),
+    )
 
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="productos_creados",
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    descontinuado = models.BooleanField(
+        default=False,
+    )
+
+    datos_incompletos = models.BooleanField(
+        default=False,
+        help_text=(
+            "Indica que el producto fue creado rápidamente "
+            "y todavía requiere revisión."
+        ),
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["sku_interno"]
+        ordering = [
+            "sku_interno",
+        ]
+
         verbose_name = "Producto"
         verbose_name_plural = "Productos"
 
+        indexes = [
+            models.Index(
+                fields=["categoria", "activo"],
+            ),
+            models.Index(
+                fields=["origen", "activo"],
+            ),
+            models.Index(
+                fields=["nombre_base"],
+            ),
+        ]
+
     def __str__(self):
-        return f"{self.sku_interno} - {self.nombre_base}"
+        sku = self.sku_interno or "SIN SKU"
+
+        return f"{sku} - {self.nombre_base}"
 
     def clean(self):
-        if not self.categoria_id:
-            raise ValidationError("La categoría es obligatoria.")
+        errores = {}
 
-        if not self.nombre_base or not self.nombre_base.strip():
-            raise ValidationError("El nombre base del producto es obligatorio.")
+        if not self.categoria_id:
+            errores["categoria"] = (
+                "La categoría es obligatoria."
+            )
+
+        if (
+            not self.nombre_base
+            or not self.nombre_base.strip()
+        ):
+            errores["nombre_base"] = (
+                "El nombre base del producto es obligatorio."
+            )
+
+        if self.origen == "FACTURA":
+            if not self.detalle_origen_creacion_id:
+                errores["detalle_origen_creacion"] = (
+                    "Un producto creado desde una factura debe "
+                    "estar vinculado al detalle original."
+                )
+
+        elif self.detalle_origen_creacion_id:
+            errores["detalle_origen_creacion"] = (
+                "El detalle de origen solo debe asignarse cuando "
+                "el producto fue creado desde una factura."
+            )
+
+        if (
+            self.descontinuado
+            and self.activo
+        ):
+            errores["descontinuado"] = (
+                "Un producto descontinuado no debe permanecer activo."
+            )
+
+        if errores:
+            raise ValidationError(errores)
 
     def _generar_sku(self):
         if not self.categoria_id:
-            raise ValueError("La categoría es obligatoria para generar el SKU.")
-
-        prefijo = f"MAO-{self.categoria.prefijo_sku}"
-
-        with transaction.atomic():
-            Categoria.objects.select_for_update().get(id=self.categoria_id)
-
-            ultimo = (
-                Producto.objects
-                .filter(sku_interno__startswith=prefijo)
-                .aggregate(max_sku=Max("sku_interno"))
-                .get("max_sku")
+            raise ValidationError(
+                "La categoría es obligatoria para generar el SKU."
             )
 
-            if not ultimo:
-                siguiente_numero = 1
-            else:
-                match = re.search(r"(\d+)$", ultimo)
-                siguiente_numero = int(match.group(1)) + 1 if match else 1
+        prefijo_categoria = (
+            self.categoria.prefijo_sku
+            or ""
+        ).strip().upper()
 
-            return f"{prefijo}-{siguiente_numero:04d}"
+        if not prefijo_categoria:
+            raise ValidationError(
+                "La categoría debe tener un prefijo SKU."
+            )
+
+        prefijo = f"MAO-{prefijo_categoria}-"
+
+        with transaction.atomic():
+            # Bloquea la categoría para evitar que dos procesos
+            # generen el mismo consecutivo al mismo tiempo.
+            Categoria.objects.select_for_update().get(
+                pk=self.categoria_id
+            )
+
+            ultimo_producto = (
+                Producto.objects
+                .filter(
+                    sku_interno__startswith=prefijo,
+                )
+                .order_by("-sku_interno")
+                .first()
+            )
+
+            siguiente_numero = 1
+
+            if ultimo_producto:
+                coincidencia = re.search(
+                    r"(\d+)$",
+                    ultimo_producto.sku_interno,
+                )
+
+                if coincidencia:
+                    siguiente_numero = (
+                        int(coincidencia.group(1)) + 1
+                    )
+
+            return (
+                f"{prefijo}"
+                f"{siguiente_numero:04d}"
+            )
 
     def codigo_principal(self):
-        codigo = (
+        codigo_activo = (
             self.codigos
             .filter(activo=True)
             .order_by("id")
             .first()
         )
 
-        if codigo:
-            return codigo
+        if codigo_activo:
+            return codigo_activo
 
         return (
             self.codigos
@@ -310,17 +462,32 @@ class Producto(models.Model):
     @property
     def precio_venta_principal(self):
         codigo = self.codigo_principal()
-        return codigo.precio_venta if codigo else None
+
+        return (
+            codigo.precio_venta
+            if codigo
+            else None
+        )
 
     @property
     def precio_compra_principal(self):
         codigo = self.codigo_principal()
-        return codigo.precio_compra if codigo else None
+
+        return (
+            codigo.precio_compra
+            if codigo
+            else None
+        )
 
     @property
     def precio_secreto(self):
         codigo = self.codigo_principal()
-        return codigo.precio_secreto if codigo else "---"
+
+        return (
+            codigo.precio_secreto
+            if codigo
+            else "---"
+        )
 
     @property
     def imagen_principal(self):
@@ -346,50 +513,122 @@ class Producto(models.Model):
     def tiene_atributos(self):
         return self.valores_atributos.exists()
 
+    @property
+    def fue_creado_desde_factura(self):
+        return self.origen == "FACTURA"
+
+    @property
+    def necesita_revision(self):
+        return self.datos_incompletos
+
     def save(self, *args, **kwargs):
         if self.sku_interno:
-            self.sku_interno = self.sku_interno.strip().upper()
+            self.sku_interno = (
+                self.sku_interno
+                .strip()
+                .upper()
+            )
 
         if self.nombre_base:
-            self.nombre_base = self.nombre_base.strip().upper()
+            self.nombre_base = (
+                self.nombre_base
+                .strip()
+                .upper()
+            )
 
         if self.descripcion:
-            self.descripcion = self.descripcion.strip()
+            self.descripcion = (
+                self.descripcion.strip()
+            )
+
+        self.origen = (
+            self.origen
+            or "INDIVIDUAL"
+        ).strip().upper()
+
+        if self.descontinuado:
+            self.activo = False
 
         categoria_cambio = False
 
         if self.pk:
-            producto_anterior = Producto.objects.filter(pk=self.pk).first()
+            producto_anterior = (
+                Producto.objects
+                .filter(pk=self.pk)
+                .only("categoria_id")
+                .first()
+            )
 
-            if (
+            categoria_cambio = bool(
                 producto_anterior
-                and producto_anterior.categoria_id != self.categoria_id
-            ):
-                categoria_cambio = True
+                and producto_anterior.categoria_id
+                != self.categoria_id
+            )
 
         self.full_clean()
 
+        sku_generado_automaticamente = False
+
         if not self.pk and not self.sku_interno:
             self.sku_interno = self._generar_sku()
+            sku_generado_automaticamente = True
 
         elif self.pk and categoria_cambio:
             self.sku_interno = self._generar_sku()
+            sku_generado_automaticamente = True
 
-        while True:
+        update_fields = kwargs.get("update_fields")
+
+        if (
+            update_fields is not None
+            and sku_generado_automaticamente
+        ):
+            campos = set(update_fields)
+            campos.add("sku_interno")
+            campos.add("actualizado_en")
+            kwargs["update_fields"] = list(campos)
+
+        intentos = 0
+        maximo_intentos = 10
+
+        while intentos < maximo_intentos:
             try:
                 with transaction.atomic():
                     super().save(*args, **kwargs)
-                break
+
+                return
 
             except IntegrityError:
-                match = re.search(r"(\d+)$", self.sku_interno)
-
-                if match:
-                    siguiente_numero = int(match.group(1)) + 1
-                    prefijo = self.sku_interno[:match.start()]
-                    self.sku_interno = f"{prefijo}{siguiente_numero:04d}"
-                else:
+                if not sku_generado_automaticamente:
                     raise
+
+                intentos += 1
+
+                coincidencia = re.search(
+                    r"(\d+)$",
+                    self.sku_interno,
+                )
+
+                if not coincidencia:
+                    raise
+
+                siguiente_numero = (
+                    int(coincidencia.group(1)) + 1
+                )
+
+                prefijo = self.sku_interno[
+                    :coincidencia.start()
+                ]
+
+                self.sku_interno = (
+                    f"{prefijo}"
+                    f"{siguiente_numero:04d}"
+                )
+
+        raise IntegrityError(
+            "No se pudo generar un SKU único después "
+            "de varios intentos."
+        )
 # =========================================================
 # CÓDIGO COMERCIAL / ÍTEM VENDIBLE
 # =========================================================
@@ -1094,3 +1333,1093 @@ class CatalogoMostrador(CodigoProducto):
         proxy = True
         verbose_name = "Consulta de Mostrador"
         verbose_name_plural = "Consultas de Mostrador"
+
+
+# =========================================================
+# NORMALIZACIÓN PARA BÚSQUEDA Y APRENDIZAJE
+# =========================================================
+
+def normalizar_texto(valor):
+    """
+    Genera una versión comparable sin modificar el texto original.
+
+    Ejemplo:
+        "Aceite 10W-30 API SN"
+        → "ACEITE 10W 30 API SN"
+    """
+    texto = str(valor or "").strip().upper()
+
+    if not texto:
+        return ""
+
+    texto = unicodedata.normalize("NFD", texto)
+
+    texto = "".join(
+        caracter
+        for caracter in texto
+        if unicodedata.category(caracter) != "Mn"
+    )
+
+    texto = re.sub(r"[^A-Z0-9\s]", " ", texto)
+    texto = re.sub(r"\s+", " ", texto)
+
+    return texto.strip()
+
+
+def normalizar_codigo(valor):
+    """
+    Ejemplos:
+        FC-8625
+        FC 8625
+        fc8625
+
+    Resultado:
+        FC8625
+    """
+    return re.sub(
+        r"[^A-Z0-9]",
+        "",
+        str(valor or "").strip().upper(),
+    )
+
+
+# =========================================================
+# ALIAS / VOCABULARIO DE PRODUCTOS
+# =========================================================
+
+class AliasProducto(models.Model):
+    ORIGENES = [
+        ("MANUAL", "Registrado manualmente"),
+        ("FACTURA", "Obtenido de factura"),
+        ("APRENDIZAJE", "Generado por aprendizaje"),
+        ("IMPORTACION", "Importación"),
+    ]
+
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name="alias",
+    )
+
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="alias_productos",
+    )
+
+    alias_original = models.CharField(
+        max_length=255,
+        help_text=(
+            "Forma real en que apareció el producto. "
+            "Ejemplo: CABIN FILTER, FILT HABITÁCULO o 10W30."
+        ),
+    )
+
+    alias_normalizado = models.CharField(
+        max_length=255,
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+
+    codigo_producto = models.ForeignKey(
+        CodigoProducto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="alias",
+    )
+
+    marca = models.ForeignKey(
+        MarcaRepuesto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="alias_productos",
+    )
+
+    origen = models.CharField(
+        max_length=20,
+        choices=ORIGENES,
+        default="MANUAL",
+        db_index=True,
+    )
+
+    veces_confirmado = models.PositiveIntegerField(
+        default=1,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-veces_confirmado",
+            "alias_normalizado",
+        ]
+
+        verbose_name = "Alias de producto"
+        verbose_name_plural = "Alias de productos"
+
+        indexes = [
+            models.Index(
+                fields=["alias_normalizado", "activo"],
+            ),
+            models.Index(
+                fields=["producto", "activo"],
+            ),
+            models.Index(
+                fields=["categoria", "activo"],
+            ),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "producto",
+                    "alias_normalizado",
+                ],
+                name="inventario_alias_unico_por_producto",
+            ),
+            models.CheckConstraint(
+                condition=Q(veces_confirmado__gte=1),
+                name="inventario_alias_confirmaciones_mayor_cero",
+            ),
+        ]
+
+    def clean(self):
+        errores = {}
+
+        if (
+            not self.alias_original
+            or not self.alias_original.strip()
+        ):
+            errores["alias_original"] = (
+                "El alias es obligatorio."
+            )
+
+        if (
+            self.producto_id
+            and self.categoria_id
+            and self.producto.categoria_id
+            != self.categoria_id
+        ):
+            errores["categoria"] = (
+                "La categoría debe coincidir con "
+                "la categoría del producto."
+            )
+
+        if self.codigo_producto_id:
+            if (
+                self.producto_id
+                and self.codigo_producto.producto_id
+                != self.producto_id
+            ):
+                errores["codigo_producto"] = (
+                    "El código seleccionado no pertenece "
+                    "al producto."
+                )
+
+            if (
+                self.marca_id
+                and self.codigo_producto.marca_id
+                != self.marca_id
+            ):
+                errores["marca"] = (
+                    "La marca no coincide con la marca "
+                    "del código seleccionado."
+                )
+
+        if self.veces_confirmado < 1:
+            errores["veces_confirmado"] = (
+                "Debe existir al menos una confirmación."
+            )
+
+        if errores:
+            raise ValidationError(errores)
+
+    def save(self, *args, **kwargs):
+        if self.producto_id and not self.categoria_id:
+            self.categoria = self.producto.categoria
+
+        if self.codigo_producto_id:
+            if not self.producto_id:
+                self.producto = self.codigo_producto.producto
+
+            if not self.categoria_id:
+                self.categoria = (
+                    self.codigo_producto.producto.categoria
+                )
+
+            if not self.marca_id:
+                self.marca = self.codigo_producto.marca
+
+        self.alias_original = (
+            self.alias_original or ""
+        ).strip()
+
+        self.alias_normalizado = normalizar_texto(
+            self.alias_original
+        )
+
+        self.origen = (
+            self.origen or "MANUAL"
+        ).strip().upper()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def registrar_confirmacion(self):
+        self.veces_confirmado += 1
+
+        self.save(
+            update_fields=[
+                "veces_confirmado",
+                "actualizado_en",
+            ]
+        )
+
+    def __str__(self):
+        return (
+            f"{self.alias_original} → "
+            f"{self.producto.nombre_base}"
+        )
+
+
+# =========================================================
+# APRENDIZAJE CONFIRMADO
+# =========================================================
+
+class AprendizajeProducto(models.Model):
+    ORIGENES = [
+        ("FACTURA", "Factura de compra"),
+        ("INDIVIDUAL", "Creación individual"),
+        ("MOSTRADOR", "Creación rápida"),
+        ("CORRECCION", "Corrección de usuario"),
+        ("IMPORTACION", "Importación"),
+    ]
+
+    detalle_original = models.ForeignKey(
+        "compras.DetalleFacturaOriginal",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aprendizajes_producto",
+    )
+
+    proveedor = models.ForeignKey(
+        "compras.Proveedor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aprendizajes_producto",
+    )
+
+    origen = models.CharField(
+        max_length=20,
+        choices=ORIGENES,
+        default="INDIVIDUAL",
+        db_index=True,
+    )
+
+    texto_original = models.TextField(
+        help_text=(
+            "Texto original que fue confirmado. "
+            "No se debe sobrescribir con el nombre limpio."
+        ),
+    )
+
+    texto_normalizado = models.TextField(
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+
+    codigo_original = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+    )
+
+    codigo_normalizado = models.CharField(
+        max_length=150,
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+
+    producto_confirmado = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name="aprendizajes_confirmados",
+    )
+
+    categoria_confirmada = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="aprendizajes_confirmados",
+    )
+
+    codigo_producto_confirmado = models.ForeignKey(
+        CodigoProducto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aprendizajes_confirmados",
+    )
+
+    marca_confirmada = models.ForeignKey(
+        MarcaRepuesto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aprendizajes_confirmados",
+    )
+
+    veces_confirmado = models.PositiveIntegerField(
+        default=1,
+    )
+
+    confianza_promedio = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("100.00"),
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    confirmado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aprendizajes_confirmados",
+    )
+
+    observacion = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
+
+    ultima_confirmacion_en = models.DateTimeField(
+        default=timezone.now,
+    )
+
+    class Meta:
+        ordering = [
+            "-veces_confirmado",
+            "-ultima_confirmacion_en",
+        ]
+
+        verbose_name = "Aprendizaje de producto"
+        verbose_name_plural = "Aprendizajes de productos"
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "codigo_normalizado",
+                    "proveedor",
+                    "activo",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "texto_normalizado",
+                    "activo",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "producto_confirmado",
+                    "activo",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "categoria_confirmada",
+                    "activo",
+                ]
+            ),
+        ]
+
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(veces_confirmado__gte=1),
+                name="inventario_aprendizaje_confirmaciones_mayor_cero",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(confianza_promedio__gte=0)
+                    & Q(confianza_promedio__lte=100)
+                ),
+                name="inventario_aprendizaje_confianza_valida",
+            ),
+        ]
+
+    def clean(self):
+        errores = {}
+
+        if (
+            not self.texto_original
+            or not self.texto_original.strip()
+        ):
+            errores["texto_original"] = (
+                "El texto original es obligatorio."
+            )
+
+        if not self.producto_confirmado_id:
+            errores["producto_confirmado"] = (
+                "El producto confirmado es obligatorio."
+            )
+
+        if not self.categoria_confirmada_id:
+            errores["categoria_confirmada"] = (
+                "La categoría confirmada es obligatoria."
+            )
+
+        if (
+            self.producto_confirmado_id
+            and self.categoria_confirmada_id
+            and self.producto_confirmado.categoria_id
+            != self.categoria_confirmada_id
+        ):
+            errores["categoria_confirmada"] = (
+                "La categoría no coincide con "
+                "la categoría del producto."
+            )
+
+        if self.codigo_producto_confirmado_id:
+            codigo = self.codigo_producto_confirmado
+
+            if (
+                self.producto_confirmado_id
+                and codigo.producto_id
+                != self.producto_confirmado_id
+            ):
+                errores["codigo_producto_confirmado"] = (
+                    "El código no pertenece al producto confirmado."
+                )
+
+            if (
+                self.marca_confirmada_id
+                and codigo.marca_id
+                != self.marca_confirmada_id
+            ):
+                errores["marca_confirmada"] = (
+                    "La marca no coincide con el código confirmado."
+                )
+
+        if (
+            self.confianza_promedio < Decimal("0.00")
+            or self.confianza_promedio > Decimal("100.00")
+        ):
+            errores["confianza_promedio"] = (
+                "La confianza debe estar entre 0 y 100."
+            )
+
+        if errores:
+            raise ValidationError(errores)
+
+    def save(self, *args, **kwargs):
+        if self.detalle_original_id:
+            detalle = self.detalle_original
+
+            if not self.texto_original:
+                self.texto_original = (
+                    detalle.descripcion_proveedor
+                )
+
+            if not self.codigo_original:
+                self.codigo_original = (
+                    detalle.codigo_proveedor
+                )
+
+            if not self.proveedor_id:
+                self.proveedor = (
+                    detalle.factura.proveedor_rel
+                )
+
+            self.origen = "FACTURA"
+
+        if self.codigo_producto_confirmado_id:
+            codigo = self.codigo_producto_confirmado
+
+            if not self.producto_confirmado_id:
+                self.producto_confirmado = codigo.producto
+
+            if not self.categoria_confirmada_id:
+                self.categoria_confirmada = (
+                    codigo.producto.categoria
+                )
+
+            if not self.marca_confirmada_id:
+                self.marca_confirmada = codigo.marca
+
+        elif (
+            self.producto_confirmado_id
+            and not self.categoria_confirmada_id
+        ):
+            self.categoria_confirmada = (
+                self.producto_confirmado.categoria
+            )
+
+        self.texto_original = (
+            self.texto_original or ""
+        ).strip()
+
+        self.texto_normalizado = normalizar_texto(
+            self.texto_original
+        )
+
+        if self.codigo_original:
+            self.codigo_original = (
+                self.codigo_original.strip().upper()
+            )
+
+        self.codigo_normalizado = normalizar_codigo(
+            self.codigo_original
+        )
+
+        if self.observacion:
+            self.observacion = self.observacion.strip()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def registrar_confirmacion(
+        self,
+        usuario=None,
+        confianza=None,
+    ):
+        cantidad_anterior = self.veces_confirmado
+        self.veces_confirmado += 1
+        self.ultima_confirmacion_en = timezone.now()
+
+        if usuario is not None:
+            self.confirmado_por = usuario
+
+        if confianza is not None:
+            nueva = Decimal(str(confianza))
+
+            if nueva < 0 or nueva > 100:
+                raise ValidationError(
+                    "La confianza debe estar entre 0 y 100."
+                )
+
+            total = (
+                self.confianza_promedio
+                * Decimal(cantidad_anterior)
+            )
+
+            self.confianza_promedio = (
+                (total + nueva)
+                / Decimal(self.veces_confirmado)
+            ).quantize(Decimal("0.01"))
+
+        self.save()
+
+    def __str__(self):
+        return (
+            f"{self.texto_original[:70]} → "
+            f"{self.producto_confirmado}"
+        )
+
+
+# =========================================================
+# SUGERENCIA DEL MOTOR
+# =========================================================
+
+class SugerenciaProducto(models.Model):
+    ESTADOS = [
+        ("PENDIENTE", "Pendiente"),
+        ("CONFIRMADA", "Confirmada"),
+        ("CORREGIDA", "Corregida"),
+        ("RECHAZADA", "Rechazada"),
+        ("EXPIRADA", "Expirada"),
+    ]
+
+    ORIGENES = [
+        ("FACTURA", "Factura de compra"),
+        ("INDIVIDUAL", "Creación individual"),
+        ("CODIGO", "Creación de código"),
+        ("MOSTRADOR", "Creación rápida"),
+        ("IMPORTACION", "Importación"),
+    ]
+
+    detalle_original = models.ForeignKey(
+        "compras.DetalleFacturaOriginal",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="sugerencias_producto",
+    )
+
+    proveedor = models.ForeignKey(
+        "compras.Proveedor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_producto",
+    )
+
+    origen = models.CharField(
+        max_length=20,
+        choices=ORIGENES,
+        default="INDIVIDUAL",
+        db_index=True,
+    )
+
+    texto_entrada = models.TextField()
+
+    texto_normalizado = models.TextField(
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+
+    codigo_entrada = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+    )
+
+    codigo_normalizado = models.CharField(
+        max_length=150,
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+
+    producto_sugerido = models.ForeignKey(
+        Producto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_recibidas",
+    )
+
+    categoria_sugerida = models.ForeignKey(
+        Categoria,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_recibidas",
+    )
+
+    codigo_producto_sugerido = models.ForeignKey(
+        CodigoProducto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_recibidas",
+    )
+
+    marca_sugerida = models.ForeignKey(
+        MarcaRepuesto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_recibidas",
+    )
+
+    confianza = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    puntaje_codigo = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    puntaje_texto = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    puntaje_compras = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    puntaje_aprendizaje = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    puntaje_alias = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    puntaje_proveedor = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS,
+        default="PENDIENTE",
+        db_index=True,
+    )
+
+    producto_confirmado = models.ForeignKey(
+        Producto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_confirmadas",
+    )
+
+    categoria_confirmada = models.ForeignKey(
+        Categoria,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_confirmadas",
+    )
+
+    codigo_producto_confirmado = models.ForeignKey(
+        CodigoProducto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_confirmadas",
+    )
+
+    marca_confirmada = models.ForeignKey(
+        MarcaRepuesto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_confirmadas",
+    )
+
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sugerencias_revisadas",
+    )
+
+    revisado_en = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    motivo_revision = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "estado",
+            "-confianza",
+            "-creado_en",
+        ]
+
+        verbose_name = "Sugerencia de producto"
+        verbose_name_plural = "Sugerencias de productos"
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "estado",
+                    "confianza",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "codigo_normalizado",
+                    "proveedor",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "texto_normalizado",
+                    "estado",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "origen",
+                    "estado",
+                ]
+            ),
+        ]
+
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(confianza__gte=0)
+                    & Q(confianza__lte=100)
+                ),
+                name="inventario_sugerencia_confianza_valida",
+            ),
+        ]
+
+    def clean(self):
+        errores = {}
+
+        if (
+            not self.texto_entrada
+            or not self.texto_entrada.strip()
+        ):
+            errores["texto_entrada"] = (
+                "El texto de entrada es obligatorio."
+            )
+
+        campos_puntaje = [
+            "confianza",
+            "puntaje_codigo",
+            "puntaje_texto",
+            "puntaje_compras",
+            "puntaje_aprendizaje",
+            "puntaje_alias",
+            "puntaje_proveedor",
+        ]
+
+        for campo in campos_puntaje:
+            valor = getattr(self, campo)
+
+            if valor < 0 or valor > 100:
+                errores[campo] = (
+                    "El puntaje debe estar entre 0 y 100."
+                )
+
+        if self.codigo_producto_sugerido_id:
+            codigo = self.codigo_producto_sugerido
+
+            if (
+                self.producto_sugerido_id
+                and codigo.producto_id
+                != self.producto_sugerido_id
+            ):
+                errores["codigo_producto_sugerido"] = (
+                    "El código no pertenece al producto sugerido."
+                )
+
+            if (
+                self.marca_sugerida_id
+                and codigo.marca_id
+                != self.marca_sugerida_id
+            ):
+                errores["marca_sugerida"] = (
+                    "La marca no coincide con el código sugerido."
+                )
+
+        if (
+            self.producto_sugerido_id
+            and self.categoria_sugerida_id
+            and self.producto_sugerido.categoria_id
+            != self.categoria_sugerida_id
+        ):
+            errores["categoria_sugerida"] = (
+                "La categoría no coincide con el producto sugerido."
+            )
+
+        if self.estado in {
+            "CONFIRMADA",
+            "CORREGIDA",
+        }:
+            if not self.producto_confirmado_id:
+                errores["producto_confirmado"] = (
+                    "Debe indicar el producto confirmado."
+                )
+
+            if not self.categoria_confirmada_id:
+                errores["categoria_confirmada"] = (
+                    "Debe indicar la categoría confirmada."
+                )
+
+            if not self.revisado_en:
+                errores["revisado_en"] = (
+                    "Debe registrar la fecha de revisión."
+                )
+
+        if (
+            self.estado == "RECHAZADA"
+            and not self.revisado_en
+        ):
+            errores["revisado_en"] = (
+                "Debe registrar la fecha de rechazo."
+            )
+
+        if self.codigo_producto_confirmado_id:
+            codigo = self.codigo_producto_confirmado
+
+            if (
+                self.producto_confirmado_id
+                and codigo.producto_id
+                != self.producto_confirmado_id
+            ):
+                errores["codigo_producto_confirmado"] = (
+                    "El código no pertenece al producto confirmado."
+                )
+
+            if (
+                self.marca_confirmada_id
+                and codigo.marca_id
+                != self.marca_confirmada_id
+            ):
+                errores["marca_confirmada"] = (
+                    "La marca no coincide con el código confirmado."
+                )
+
+        if errores:
+            raise ValidationError(errores)
+
+    def save(self, *args, **kwargs):
+        if self.detalle_original_id:
+            detalle = self.detalle_original
+
+            if not self.texto_entrada:
+                self.texto_entrada = (
+                    detalle.descripcion_proveedor
+                )
+
+            if not self.codigo_entrada:
+                self.codigo_entrada = (
+                    detalle.codigo_proveedor
+                )
+
+            if not self.proveedor_id:
+                self.proveedor = (
+                    detalle.factura.proveedor_rel
+                )
+
+            self.origen = "FACTURA"
+
+        if self.codigo_producto_sugerido_id:
+            codigo = self.codigo_producto_sugerido
+
+            if not self.producto_sugerido_id:
+                self.producto_sugerido = codigo.producto
+
+            if not self.categoria_sugerida_id:
+                self.categoria_sugerida = (
+                    codigo.producto.categoria
+                )
+
+            if not self.marca_sugerida_id:
+                self.marca_sugerida = codigo.marca
+
+        elif (
+            self.producto_sugerido_id
+            and not self.categoria_sugerida_id
+        ):
+            self.categoria_sugerida = (
+                self.producto_sugerido.categoria
+            )
+
+        if self.codigo_producto_confirmado_id:
+            codigo = self.codigo_producto_confirmado
+
+            if not self.producto_confirmado_id:
+                self.producto_confirmado = codigo.producto
+
+            if not self.categoria_confirmada_id:
+                self.categoria_confirmada = (
+                    codigo.producto.categoria
+                )
+
+            if not self.marca_confirmada_id:
+                self.marca_confirmada = codigo.marca
+
+        elif (
+            self.producto_confirmado_id
+            and not self.categoria_confirmada_id
+        ):
+            self.categoria_confirmada = (
+                self.producto_confirmado.categoria
+            )
+
+        self.texto_entrada = (
+            self.texto_entrada or ""
+        ).strip()
+
+        self.texto_normalizado = normalizar_texto(
+            self.texto_entrada
+        )
+
+        if self.codigo_entrada:
+            self.codigo_entrada = (
+                self.codigo_entrada.strip().upper()
+            )
+
+        self.codigo_normalizado = normalizar_codigo(
+            self.codigo_entrada
+        )
+
+        if self.motivo_revision:
+            self.motivo_revision = (
+                self.motivo_revision.strip()
+            )
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @property
+    def fue_acertada(self):
+        if self.estado != "CONFIRMADA":
+            return False
+
+        return (
+            self.producto_sugerido_id
+            == self.producto_confirmado_id
+            and self.categoria_sugerida_id
+            == self.categoria_confirmada_id
+            and self.codigo_producto_sugerido_id
+            == self.codigo_producto_confirmado_id
+            and self.marca_sugerida_id
+            == self.marca_confirmada_id
+        )
+
+    def __str__(self):
+        resultado = (
+            self.producto_sugerido
+            or self.categoria_sugerida
+            or "SIN SUGERENCIA"
+        )
+
+        return (
+            f"{self.texto_entrada[:60]} → "
+            f"{resultado} ({self.confianza}%)"
+        )
