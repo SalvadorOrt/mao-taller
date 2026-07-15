@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Historial de vehículos | MAO
+{% endblock %}
+
+{% block page_title %}
+    Historial de vehículos
+{% endblock %}
+
+{% block page_subtitle %}
+    Busca una placa para consultar su línea de tiempo de mantenimientos
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .historial-vehiculos-wrapper {
+        padding-top: 8px;
+        padding-bottom: 28px;
+    }
+
+    .historial-vehiculos-card {
+        background: #ffffff;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
+    }
+
+    .historial-vehiculos-title {
+        margin: 0 0 6px;
+        color: var(--text, #1d1d1f);
+        font-size: 16px;
+        font-weight: 760;
+        letter-spacing: -0.015em;
+    }
+
+    .historial-vehiculos-subtitle {
+        margin: 0;
+        color: var(--muted, #6e6e73);
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .historial-search-form {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+    }
+
+    .historial-search-field {
+        flex: 1;
+        min-width: 260px;
+    }
+
+    .historial-search-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted, #6e6e73);
+        font-size: 10px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .historial-search-input {
+        width: 100%;
+        height: 42px;
+        padding: 0 12px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 11px;
+        background: #ffffff;
+        color: var(--text, #1d1d1f);
+        font-size: 13px;
+        font-weight: 550;
+        outline: none;
+        transition: all 0.15s ease;
+    }
+
+    .historial-search-input::placeholder {
+        color: #a1a1a6;
+        font-weight: 450;
+    }
+
+    .historial-search-input:focus {
+        border-color: var(--accent, #0071e3);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+    }
+
+    .historial-search-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .historial-search-button,
+    .historial-clear-link {
+        min-height: 42px;
+        padding: 0 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border-radius: 11px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .historial-search-button {
+        border: 1px solid var(--accent, #0071e3);
+        background: var(--accent, #0071e3);
+        color: #ffffff;
+    }
+
+    .historial-search-button:hover {
+        filter: brightness(0.97);
+    }
+
+    .historial-clear-link {
+        border: 1px solid var(--border, #e5e5e7);
+        background: #ffffff;
+        color: var(--text, #1d1d1f);
+    }
+
+    .historial-clear-link:hover {
+        background: #f5f5f7;
+        color: var(--text, #1d1d1f);
+        text-decoration: none;
+    }
+
+    .historial-results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 13px;
+    }
+
+    .historial-results-count {
+        color: var(--muted, #6e6e73);
+        font-size: 11px;
+        font-weight: 650;
+    }
+
+    .historial-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .vehiculo-card {
+        min-width: 0;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 14px;
+        background: #ffffff;
+        overflow: hidden;
+        transition: all 0.17s ease;
+    }
+
+    .vehiculo-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(0, 113, 227, 0.24);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+    }
+
+    .vehiculo-card-link {
+        display: block;
+        padding: 15px;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .vehiculo-card-link:hover {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .vehiculo-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .vehiculo-card-main {
+        min-width: 0;
+    }
+
+    .vehiculo-card-label {
+        margin-bottom: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 9px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .vehiculo-card-placa {
+        display: inline-flex;
+        align-items: center;
+        min-height: 31px;
+        padding: 4px 11px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 9px;
+        background: #fbfbfd;
+        color: var(--text, #1d1d1f);
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+    }
+
+    .vehiculo-card-arrow {
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #f5faff;
+        color: var(--accent, #0071e3);
+        font-size: 14px;
+    }
+
+    .vehiculo-card-title {
+        margin: 13px 0 0;
+        color: var(--text, #1d1d1f);
+        font-size: 14px;
+        font-weight: 740;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .vehiculo-card-client {
+        margin-top: 7px;
+        color: var(--muted, #6e6e73);
+        font-size: 11px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .vehiculo-card-client strong {
+        color: var(--text, #1d1d1f);
+        font-weight: 650;
+    }
+
+    .vehiculo-card-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 13px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-soft, #efeff2);
+    }
+
+    .vehiculo-card-meta-item {
+        min-width: 0;
+    }
+
+    .vehiculo-card-meta-label {
+        margin-bottom: 3px;
+        color: var(--muted, #6e6e73);
+        font-size: 8px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .vehiculo-card-meta-value {
+        color: var(--text, #1d1d1f);
+        font-size: 11px;
+        font-weight: 650;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .historial-empty {
+        padding: 58px 20px;
+        text-align: center;
+    }
+
+    .historial-empty-icon {
+        margin-bottom: 10px;
+        color: var(--muted, #6e6e73);
+        font-size: 34px;
+        opacity: 0.42;
+    }
+
+    .historial-empty-title {
+        margin: 0 0 6px;
+        color: var(--text, #1d1d1f);
+        font-size: 15px;
+        font-weight: 750;
+    }
+
+    .historial-empty-text {
+        margin: 0;
+        color: var(--muted, #6e6e73);
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    @media (max-width: 1050px) {
+        .historial-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 680px) {
+        .historial-vehiculos-card {
+            padding: 14px;
+            border-radius: 13px;
+        }
+
+        .historial-search-field {
+            min-width: 100%;
+        }
+
+        .historial-search-actions {
+            width: 100%;
+        }
+
+        .historial-search-button,
+        .historial-clear-link {
+            flex: 1;
+        }
+
+        .historial-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="container historial-vehiculos-wrapper">
+
+    <section class="historial-vehiculos-card">
+
+        <h1 class="historial-vehiculos-title">
+            Buscar historial de un vehículo
+        </h1>
+
+        <p class="historial-vehiculos-subtitle">
+            Busca por placa, vehículo o cliente para consultar la línea de tiempo
+            completa de mantenimientos.
+        </p>
+
+        <form method="GET"
+              action="{% url 'historial_vehiculos' %}"
+              class="historial-search-form">
+
+            <div class="historial-search-field">
+
+                <label for="historial-q"
+                       class="historial-search-label">
+                    Vehículo
+                </label>
+
+                <input type="text"
+                       id="historial-q"
+                       name="q"
+                       value="{{ q|default:'' }}"
+                       class="historial-search-input"
+                       placeholder="Ejemplo: PCP9501, Hyundai Sonata o nombre del cliente"
+                       autocomplete="off"
+                       autofocus>
+
+            </div>
+
+            <div class="historial-search-actions">
+
+                <button type="submit"
+                        class="historial-search-button">
+                    <i class="bi bi-search"></i>
+                    Buscar
+                </button>
+
+                {% if q %}
+                    <a href="{% url 'historial_vehiculos' %}"
+                       class="historial-clear-link">
+                        Limpiar
+                    </a>
+                {% endif %}
+
+            </div>
+
+        </form>
+
+    </section>
+
+    {% if q %}
+
+        <section class="historial-vehiculos-card">
+
+            <div class="historial-results-header">
+
+                <div>
+                    <h2 class="historial-vehiculos-title">
+                        Vehículos encontrados
+                    </h2>
+
+                    <p class="historial-vehiculos-subtitle">
+                        Selecciona una placa para abrir su línea de tiempo.
+                    </p>
+                </div>
+
+                <div class="historial-results-count">
+                    {{ expedientes|length }}
+                    resultado{{ expedientes|length|pluralize }}
+                </div>
+
+            </div>
+
+            {% if expedientes %}
+
+                <div class="historial-grid">
+
+                    {% for expediente in expedientes %}
+
+                        <article class="vehiculo-card">
+
+                            <a href="{% url 'detalle_expediente' expediente.id %}"
+                               class="vehiculo-card-link">
+
+                                <div class="vehiculo-card-top">
+
+                                    <div class="vehiculo-card-main">
+
+                                        <div class="vehiculo-card-label">
+                                            Placa
+                                        </div>
+
+                                        <div class="vehiculo-card-placa">
+                                            {{ expediente.placa|default:"SIN PLACA" }}
+                                        </div>
+
+                                    </div>
+
+                                    <div class="vehiculo-card-arrow">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </div>
+
+                                </div>
+
+                                <h3 class="vehiculo-card-title">
+                                    {{ expediente.descripcion_vehiculo_final|default:"SIN VEHÍCULO" }}
+                                </h3>
+
+                                <div class="vehiculo-card-client">
+                                    Cliente:
+                                    <strong>
+                                        {{ expediente.nombre_cliente_final|default:"SIN NOMBRE" }}
+                                    </strong>
+                                </div>
+
+                                <div class="vehiculo-card-meta">
+
+                                    <div class="vehiculo-card-meta-item">
+                                        <div class="vehiculo-card-meta-label">
+                                            Año
+                                        </div>
+
+                                        <div class="vehiculo-card-meta-value">
+                                            {{ expediente.anio_vehiculo|default:"NO REGISTRADO" }}
+                                        </div>
+                                    </div>
+
+                                    <div class="vehiculo-card-meta-item">
+                                        <div class="vehiculo-card-meta-label">
+                                            Marca
+                                        </div>
+
+                                        <div class="vehiculo-card-meta-value">
+                                            {{ expediente.marca_api|default:"NO REGISTRADA" }}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </a>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="historial-empty">
+
+                    <div class="historial-empty-icon">
+                        <i class="bi bi-car-front"></i>
+                    </div>
+
+                    <h2 class="historial-empty-title">
+                        No se encontraron vehículos
+                    </h2>
+
+                    <p class="historial-empty-text">
+                        No existe ningún expediente que coincida con
+                        “{{ q }}”. Revisa la placa o intenta buscar por cliente.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    {% else %}
+
+        <section class="historial-vehiculos-card">
+
+            <div class="historial-empty">
+
+                <div class="historial-empty-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+
+                <h2 class="historial-empty-title">
+                    Consulta la línea de tiempo de un vehículo
+                </h2>
+
+                <p class="historial-empty-text">
+                    Ingresa una placa, el nombre del vehículo o el nombre del
+                    cliente para comenzar.
+                </p>
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

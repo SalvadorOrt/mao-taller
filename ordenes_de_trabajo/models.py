@@ -1263,9 +1263,6 @@ class OrdenTrabajo(models.Model):
 
     estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
     fecha_ingreso = models.DateTimeField(default=timezone.now)
-    estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
-    fecha_ingreso = models.DateTimeField(default=timezone.now)
-
     actualizado_en = models.DateTimeField(auto_now=True)
     version = models.PositiveIntegerField(default=1)
  

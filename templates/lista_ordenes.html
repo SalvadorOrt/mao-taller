@@ -603,7 +603,14 @@
                                         <i class="bi bi-eye"></i>
                                         Ver
                                     </a>
-
+                                    {% if orden.expediente_id %}
+                                        <a href="{% url 'detalle_expediente' orden.expediente_id %}?ot={{ orden.id }}"
+                                        class="lista-ot-action-btn"
+                                        title="Ver línea de tiempo de mantenimientos">
+                                            <i class="bi bi-clock-history"></i>
+                                            Historial
+                                        </a>
+                                    {% endif %}
                                     <button type="button"
                                             class="lista-ot-action-btn"
                                             onclick="toggleAccionesMenu({{ orden.id }}, event)"

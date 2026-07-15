@@ -1,0 +1,1151 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Línea de tiempo de mantenimientos | MAO
+{% endblock %}
+
+{% block page_title %}
+    Línea de tiempo de mantenimientos
+{% endblock %}
+
+{% block page_subtitle %}
+    Historial cronológico del vehículo
+    {{ expediente.placa|default:"SIN PLACA" }}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* =========================================================
+       CONTENEDOR GENERAL
+    ========================================================= */
+    .historial-wrapper {
+        padding-top: 8px;
+        padding-bottom: 30px;
+    }
+
+    .historial-card {
+        background: #ffffff;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
+    }
+
+    .historial-section-title {
+        margin: 0 0 14px;
+        color: var(--text, #1d1d1f);
+        font-size: 14px;
+        font-weight: 750;
+        letter-spacing: -0.01em;
+    }
+
+    /* =========================================================
+       NAVEGACIÓN SUPERIOR
+    ========================================================= */
+    .historial-top-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .historial-back-link {
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 0 12px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--text, #1d1d1f);
+        font-size: 12px;
+        font-weight: 650;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .historial-back-link:hover {
+        background: #f5f5f7;
+        color: var(--text, #1d1d1f);
+        text-decoration: none;
+    }
+
+    .historial-count {
+        color: var(--muted, #6e6e73);
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    /* =========================================================
+       CABECERA DEL VEHÍCULO
+    ========================================================= */
+    .vehiculo-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+        gap: 16px;
+    }
+
+    .vehiculo-main {
+        min-width: 0;
+    }
+
+    .vehiculo-kicker {
+        margin-bottom: 6px;
+        color: var(--muted, #6e6e73);
+        font-size: 10px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .vehiculo-title {
+        margin: 0;
+        color: var(--text, #1d1d1f);
+        font-size: clamp(20px, 3vw, 29px);
+        font-weight: 780;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
+        overflow-wrap: anywhere;
+    }
+
+    .vehiculo-placa {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 12px;
+        min-height: 34px;
+        padding: 5px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border, #e5e5e7);
+        background: #fbfbfd;
+        color: var(--text, #1d1d1f);
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+    }
+
+    .vehiculo-client {
+        margin-top: 14px;
+        color: var(--muted, #6e6e73);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .vehiculo-client strong {
+        color: var(--text, #1d1d1f);
+        font-weight: 700;
+    }
+
+    .vehiculo-data-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .vehiculo-data-item {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 12px;
+        background: #fbfbfd;
+    }
+
+    .vehiculo-data-label {
+        margin-bottom: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 9px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .vehiculo-data-value {
+        color: var(--text, #1d1d1f);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    /* =========================================================
+       LÍNEA DE TIEMPO
+    ========================================================= */
+    .timeline-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 12px 3px 16px;
+        scroll-behavior: smooth;
+    }
+
+    .timeline-scroll::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .timeline-scroll::-webkit-scrollbar-track {
+        background: #f5f5f7;
+        border-radius: 999px;
+    }
+
+    .timeline-scroll::-webkit-scrollbar-thumb {
+        background: #c7c7cc;
+        border-radius: 999px;
+    }
+
+    .timeline-list {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        width: max-content;
+        min-width: 100%;
+        padding: 12px 8px 3px;
+    }
+
+    .timeline-line {
+        position: absolute;
+        top: 31px;
+        left: 31px;
+        right: 31px;
+        height: 2px;
+        background: #e5e5e7;
+        z-index: 0;
+    }
+
+    .timeline-item {
+        position: relative;
+        z-index: 1;
+        width: 116px;
+        flex: 0 0 116px;
+        text-align: center;
+    }
+
+    .timeline-button {
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .timeline-number {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #d2d2d7;
+        border-radius: 50%;
+        background: #ffffff;
+        color: var(--text, #1d1d1f);
+        font-size: 13px;
+        font-weight: 800;
+        transition: all 0.18s ease;
+    }
+
+    .timeline-button:hover .timeline-number {
+        border-color: var(--accent, #0071e3);
+        color: var(--accent, #0071e3);
+        transform: translateY(-2px);
+    }
+
+    .timeline-item.active .timeline-number {
+        border-color: var(--accent, #0071e3);
+        background: var(--accent, #0071e3);
+        color: #ffffff;
+        box-shadow: 0 0 0 5px rgba(0, 113, 227, 0.1);
+    }
+
+    .timeline-date {
+        margin-top: 10px;
+        color: var(--text, #1d1d1f);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .timeline-km {
+        margin-top: 3px;
+        color: var(--muted, #6e6e73);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    .timeline-alert {
+        margin-top: 3px;
+        color: #c9342f;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    /* =========================================================
+       PANEL DE RESUMEN
+    ========================================================= */
+    .orden-panel {
+        display: none;
+    }
+
+    .orden-panel.active {
+        display: block;
+        animation: historialFade 0.2s ease;
+    }
+
+    @keyframes historialFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .orden-summary-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-soft, #efeff2);
+    }
+
+    .orden-position {
+        margin-bottom: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 10px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .orden-number {
+        margin: 0;
+        color: var(--text, #1d1d1f);
+        font-size: 21px;
+        font-weight: 780;
+        letter-spacing: -0.02em;
+    }
+
+    .orden-date {
+        margin-top: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .orden-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 25px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .orden-status.abierta {
+        background: #e5fbe4;
+        border-color: #b7efc5;
+        color: #1f8939;
+    }
+
+    .orden-status.cerrada {
+        background: #f5f5f7;
+        border-color: #d2d2d7;
+        color: #6e6e73;
+    }
+
+    .orden-status.anulada {
+        background: #ffebe9;
+        border-color: #ffd6d6;
+        color: #c9342f;
+    }
+
+    .orden-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .orden-metric {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 12px;
+        background: #fbfbfd;
+    }
+
+    .orden-metric-label {
+        margin-bottom: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 9px;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .orden-metric-value {
+        color: var(--text, #1d1d1f);
+        font-size: 14px;
+        font-weight: 760;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .orden-metric-value.positive {
+        color: #1f8939;
+    }
+
+    .orden-metric-value.warning {
+        color: #c9342f;
+    }
+
+    .orden-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .orden-summary-box {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .orden-summary-box-title {
+        margin: 0 0 10px;
+        color: var(--text, #1d1d1f);
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .orden-summary-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--text, #1d1d1f);
+    }
+
+    .orden-summary-list li {
+        margin-bottom: 7px;
+        font-size: 11px;
+        font-weight: 550;
+        line-height: 1.4;
+    }
+
+    .orden-summary-list li:last-child {
+        margin-bottom: 0;
+    }
+
+    .orden-empty-text {
+        margin: 0;
+        color: var(--muted, #6e6e73);
+        font-size: 11px;
+        font-weight: 550;
+        line-height: 1.45;
+    }
+
+    .orden-observation {
+        white-space: pre-line;
+    }
+
+    .orden-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-soft, #efeff2);
+    }
+
+    .orden-action-link {
+        min-height: 38px;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--text, #1d1d1f);
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .orden-action-link:hover {
+        background: #f5f5f7;
+        color: var(--text, #1d1d1f);
+        text-decoration: none;
+    }
+
+    .orden-action-link.primary {
+        border-color: rgba(0, 113, 227, 0.25);
+        background: #f5faff;
+        color: var(--accent, #0071e3);
+    }
+
+    .orden-action-link.primary:hover {
+        background: #edf6ff;
+    }
+
+    /* =========================================================
+       ESTADO VACÍO
+    ========================================================= */
+    .historial-empty {
+        padding: 55px 20px;
+        text-align: center;
+    }
+
+    .historial-empty-icon {
+        margin-bottom: 10px;
+        color: var(--muted, #6e6e73);
+        font-size: 32px;
+        opacity: 0.45;
+    }
+
+    .historial-empty-title {
+        margin: 0 0 6px;
+        color: var(--text, #1d1d1f);
+        font-size: 15px;
+        font-weight: 750;
+    }
+
+    .historial-empty-text {
+        margin: 0;
+        color: var(--muted, #6e6e73);
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 900px) {
+        .vehiculo-header {
+            grid-template-columns: 1fr;
+        }
+
+        .orden-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .historial-card {
+            padding: 14px;
+            border-radius: 13px;
+        }
+
+        .vehiculo-data-grid,
+        .orden-summary-grid,
+        .orden-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .orden-summary-header {
+            flex-direction: column;
+        }
+
+        .orden-actions {
+            justify-content: stretch;
+        }
+
+        .orden-action-link {
+            width: 100%;
+        }
+
+        .timeline-item {
+            width: 100px;
+            flex-basis: 100px;
+        }
+    }
+</style>
+
+<div class="container historial-wrapper">
+
+    <!-- =====================================================
+         ACCIONES SUPERIORES
+    ====================================================== -->
+    <div class="historial-top-actions">
+
+        <a href="{% url 'historial_vehiculos' %}"
+           class="historial-back-link">
+            <i class="bi bi-arrow-left"></i>
+            Buscar otro vehículo
+        </a>
+
+        <div class="historial-count">
+            {{ total_ordenes }}
+            orden{{ total_ordenes|pluralize:"es" }}
+            registrada{{ total_ordenes|pluralize:"s" }}
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         CABECERA DEL VEHÍCULO
+    ====================================================== -->
+    <section class="historial-card">
+
+        <div class="vehiculo-header">
+
+            <div class="vehiculo-main">
+
+                <div class="vehiculo-kicker">
+                    Vehículo
+                </div>
+
+                <h1 class="vehiculo-title">
+                    {{ expediente.descripcion_vehiculo_final|default:"SIN VEHÍCULO" }}
+                </h1>
+
+                <div class="vehiculo-placa">
+                    {{ expediente.placa|default:"SIN PLACA" }}
+                </div>
+
+                <div class="vehiculo-client">
+                    Cliente:
+                    <strong>
+                        {{ expediente.nombre_cliente_final|default:"SIN NOMBRE" }}
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="vehiculo-data-grid">
+
+                <div class="vehiculo-data-item">
+                    <div class="vehiculo-data-label">
+                        Año
+                    </div>
+
+                    <div class="vehiculo-data-value">
+                        {{ expediente.anio_vehiculo|default:"NO REGISTRADO" }}
+                    </div>
+                </div>
+
+                <div class="vehiculo-data-item">
+                    <div class="vehiculo-data-label">
+                        Visitas
+                    </div>
+
+                    <div class="vehiculo-data-value">
+                        {{ total_ordenes }}
+                    </div>
+                </div>
+
+                <div class="vehiculo-data-item">
+                    <div class="vehiculo-data-label">
+                        Marca
+                    </div>
+
+                    <div class="vehiculo-data-value">
+                        {{ expediente.marca_api|default:"NO REGISTRADA" }}
+                    </div>
+                </div>
+
+                <div class="vehiculo-data-item">
+                    <div class="vehiculo-data-label">
+                        VIN / chasis
+                    </div>
+
+                    <div class="vehiculo-data-value">
+                        {{ expediente.numero_chasis|default:"NO REGISTRADO" }}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    {% if ordenes %}
+
+        <!-- =================================================
+             LÍNEA DE TIEMPO
+        ================================================== -->
+        <section class="historial-card">
+
+            <h2 class="historial-section-title">
+                Línea de tiempo de mantenimientos
+            </h2>
+
+            <div class="timeline-scroll"
+                 id="timelineScroll">
+
+                <div class="timeline-list">
+
+                    {% if total_ordenes > 1 %}
+                        <div class="timeline-line"></div>
+                    {% endif %}
+
+                    {% for orden in ordenes %}
+
+                        <div class="timeline-item {% if forloop.last %}active{% endif %}"
+                             id="timeline-item-{{ orden.id }}">
+
+                            <button type="button"
+                                    class="timeline-button"
+                                    data-orden-id="{{ orden.id }}"
+                                    onclick="seleccionarOrden('{{ orden.id }}')">
+
+                                <span class="timeline-number">
+                                    {{ orden.posicion_historial }}
+                                </span>
+
+                                <div class="timeline-date">
+                                    {{ orden.fecha_ingreso|date:"d/m/Y" }}
+                                </div>
+
+                                <div class="timeline-km">
+                                    {% if orden.kilometraje is not None %}
+                                        {{ orden.kilometraje|floatformat:"0" }} km
+                                    {% else %}
+                                        Km no registrado
+                                    {% endif %}
+                                </div>
+
+                                {% if orden.kilometraje_inconsistente %}
+                                    <div class="timeline-alert">
+                                        Revisar kilometraje
+                                    </div>
+                                {% endif %}
+
+                            </button>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- =================================================
+             RESUMEN DE LA OT SELECCIONADA
+        ================================================== -->
+        <section class="historial-card">
+
+            <h2 class="historial-section-title">
+                Resumen de la visita
+            </h2>
+
+            {% for orden in ordenes %}
+
+                <article class="orden-panel {% if forloop.last %}active{% endif %}"
+                         id="orden-panel-{{ orden.id }}">
+
+                    <div class="orden-summary-header">
+
+                        <div>
+                            <div class="orden-position">
+                                Visita {{ orden.posicion_historial }}
+                                de {{ total_ordenes }}
+                            </div>
+
+                            <h3 class="orden-number">
+                                {% if orden.es_migrada and orden.numero_orden_origen %}
+                                    OT {{ orden.numero_orden_origen }}
+                                {% else %}
+                                    OT {{ orden.numero_orden }}
+                                {% endif %}
+                            </h3>
+
+                            <div class="orden-date">
+                                {{ orden.fecha_ingreso|date:"d/m/Y" }}
+
+                                {% if not orden.es_migrada %}
+                                    · {{ orden.fecha_ingreso|date:"H:i" }}
+                                {% endif %}
+
+                                {% if orden.sucursal %}
+                                    · {{ orden.sucursal.nombre }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            {% if orden.estado == "ABIERTA" %}
+                                <span class="orden-status abierta">
+                                    Abierta
+                                </span>
+                            {% elif orden.estado == "CERRADA" %}
+                                <span class="orden-status cerrada">
+                                    Cerrada
+                                </span>
+                            {% else %}
+                                <span class="orden-status anulada">
+                                    Anulada
+                                </span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <!-- MÉTRICAS PRINCIPALES -->
+                    <div class="orden-metrics">
+
+                        <div class="orden-metric">
+                            <div class="orden-metric-label">
+                                Kilometraje
+                            </div>
+
+                            <div class="orden-metric-value">
+                                {% if orden.kilometraje is not None %}
+                                    {{ orden.kilometraje|floatformat:"0" }} km
+                                {% else %}
+                                    No registrado
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="orden-metric">
+                            <div class="orden-metric-label">
+                                Desde visita anterior
+                            </div>
+
+                            {% if orden.kilometraje_inconsistente %}
+                                <div class="orden-metric-value warning">
+                                    Revisar dato
+                                </div>
+                            {% elif orden.diferencia_km is not None %}
+                                <div class="orden-metric-value positive">
+                                    +{{ orden.diferencia_km|floatformat:"0" }} km
+                                </div>
+                            {% else %}
+                                <div class="orden-metric-value">
+                                    No disponible
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="orden-metric">
+                            <div class="orden-metric-label">
+                                Próximo mantenimiento
+                            </div>
+
+                            <div class="orden-metric-value">
+                                {% if orden.proximo_mantenimiento_km is not None %}
+                                    {{ orden.proximo_mantenimiento_km|floatformat:"0" }} km
+                                {% else %}
+                                    No registrado
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="orden-metric">
+                            <div class="orden-metric-label">
+                                Total
+                            </div>
+
+                            <div class="orden-metric-value">
+                                ${{ orden.total_final|default:"0.00"|floatformat:"2" }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- INFORMACIÓN RESUMIDA -->
+                    <div class="orden-summary-grid">
+
+                        <!-- TRABAJOS SOLICITADOS -->
+                        <div class="orden-summary-box">
+
+                            <h4 class="orden-summary-box-title">
+                                Trabajos solicitados
+                            </h4>
+
+                            {% if orden.trabajos_solicitados_items.all %}
+                                <ul class="orden-summary-list">
+                                    {% for trabajo in orden.trabajos_solicitados_items.all|slice:":5" %}
+                                        <li>
+                                            {{ trabajo }}
+                                        </li>
+                                    {% empty %}
+                                        <li>
+                                            Sin trabajos solicitados registrados.
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="orden-empty-text">
+                                    Sin trabajos solicitados registrados.
+                                </p>
+                            {% endif %}
+
+                        </div>
+
+                        <!-- SÍNTOMAS -->
+                        <div class="orden-summary-box">
+
+                            <h4 class="orden-summary-box-title">
+                                Síntomas reportados
+                            </h4>
+
+                            {% if orden.sintomas_items.all %}
+                                <ul class="orden-summary-list">
+                                    {% for sintoma in orden.sintomas_items.all|slice:":5" %}
+                                        <li>
+                                            {{ sintoma.descripcion }}
+                                        </li>
+                                    {% empty %}
+                                        <li>
+                                            Sin síntomas registrados.
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% elif orden.sintomas_cliente %}
+                                <p class="orden-empty-text orden-observation">
+                                    {{ orden.sintomas_cliente|truncatechars:420 }}
+                                </p>
+                            {% else %}
+                                <p class="orden-empty-text">
+                                    Sin síntomas registrados.
+                                </p>
+                            {% endif %}
+
+                        </div>
+
+                        <!-- SERVICIOS -->
+                        <div class="orden-summary-box">
+
+                            <h4 class="orden-summary-box-title">
+                                Servicios realizados
+                            </h4>
+
+                            {% if orden.servicios_detalles.all or orden.servicios_historicos.all %}
+                                <ul class="orden-summary-list">
+
+                                    {% for servicio in orden.servicios_detalles.all|slice:":5" %}
+                                        <li>
+                                            {{ servicio.descripcion_servicio }}
+                                        </li>
+                                    {% endfor %}
+
+                                    {% if not orden.servicios_detalles.all %}
+                                        {% for servicio in orden.servicios_historicos.all|slice:":5" %}
+                                            <li>
+                                                {{ servicio.descripcion_original }}
+                                            </li>
+                                        {% endfor %}
+                                    {% endif %}
+
+                                </ul>
+                            {% else %}
+                                <p class="orden-empty-text">
+                                    Sin servicios registrados.
+                                </p>
+                            {% endif %}
+
+                        </div>
+
+                        <!-- REPUESTOS -->
+                        <div class="orden-summary-box">
+
+                            <h4 class="orden-summary-box-title">
+                                Repuestos e insumos
+                            </h4>
+
+                            {% if orden.insumos_detalles.all or orden.insumos_historicos.all %}
+                                <ul class="orden-summary-list">
+
+                                    {% for insumo in orden.insumos_detalles.all|slice:":5" %}
+                                        <li>
+                                            {{ insumo.descripcion_factura }}
+                                            {% if insumo.cantidad %}
+                                                · {{ insumo.cantidad|floatformat:"2" }}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+
+                                    {% if not orden.insumos_detalles.all %}
+                                        {% for insumo in orden.insumos_historicos.all|slice:":5" %}
+                                            <li>
+                                                {{ insumo.descripcion_original }}
+                                                {% if insumo.cantidad %}
+                                                    · {{ insumo.cantidad|floatformat:"2" }}
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    {% endif %}
+
+                                </ul>
+                            {% else %}
+                                <p class="orden-empty-text">
+                                    Sin repuestos registrados.
+                                </p>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                    {% if orden.observaciones_tecnicas %}
+                        <div class="orden-summary-box"
+                             style="margin-top: 12px;">
+
+                            <h4 class="orden-summary-box-title">
+                                Observaciones técnicas
+                            </h4>
+
+                            <p class="orden-empty-text orden-observation">
+                                {{ orden.observaciones_tecnicas|truncatechars:650 }}
+                            </p>
+
+                        </div>
+                    {% endif %}
+
+                    <div class="orden-actions">
+
+                        <a href="{% url 'imprimir_resumen' orden.id %}"
+                           target="_blank"
+                           class="orden-action-link">
+                            <i class="bi bi-printer"></i>
+                            Imprimir resumen
+                        </a>
+
+                        <a href="{% url 'detalle_orden' orden.id %}"
+                           class="orden-action-link primary">
+                            <i class="bi bi-eye"></i>
+                            Ver orden completa
+                        </a>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </section>
+
+    {% else %}
+
+        <!-- =================================================
+             EXPEDIENTE SIN ÓRDENES
+        ================================================== -->
+        <section class="historial-card">
+
+            <div class="historial-empty">
+
+                <div class="historial-empty-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+
+                <h2 class="historial-empty-title">
+                    Este vehículo no tiene mantenimientos registrados
+                </h2>
+
+                <p class="historial-empty-text">
+                    El expediente existe, pero todavía no contiene órdenes
+                    de trabajo asociadas.
+                </p>
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+</div>
+
+<script>
+    function seleccionarOrden(ordenId) {
+        const timelineItems = document.querySelectorAll(".timeline-item");
+        const panels = document.querySelectorAll(".orden-panel");
+
+        timelineItems.forEach((item) => {
+            item.classList.remove("active");
+        });
+
+        panels.forEach((panel) => {
+            panel.classList.remove("active");
+        });
+
+        const timelineItem = document.getElementById(
+            "timeline-item-" + ordenId
+        );
+
+        const panel = document.getElementById(
+            "orden-panel-" + ordenId
+        );
+
+        if (timelineItem) {
+            timelineItem.classList.add("active");
+
+            timelineItem.scrollIntoView({
+                behavior: "smooth",
+                inline: "center",
+                block: "nearest",
+            });
+        }
+
+        if (panel) {
+            panel.classList.add("active");
+        }
+
+        const nuevaUrl = new URL(window.location.href);
+        nuevaUrl.searchParams.set("ot", ordenId);
+
+        window.history.replaceState(
+            {},
+            "",
+            nuevaUrl
+        );
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const parametros = new URLSearchParams(window.location.search);
+        const ordenId = parametros.get("ot");
+
+        if (ordenId) {
+            const panel = document.getElementById(
+                "orden-panel-" + ordenId
+            );
+
+            if (panel) {
+                seleccionarOrden(ordenId);
+                return;
+            }
+        }
+
+        const ultimoItem = document.querySelector(
+            ".timeline-item:last-child"
+        );
+
+        if (ultimoItem) {
+            ultimoItem.scrollIntoView({
+                behavior: "auto",
+                inline: "end",
+                block: "nearest",
+            });
+        }
+    });
+</script>
+
+{% endblock %}
