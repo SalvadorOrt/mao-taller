@@ -60,6 +60,220 @@ function sumarTabla(idTabla) {
 
     return total;
 }
+function contarFilasTabla(idTabla) {
+    let cantidad = 0;
+
+    document.querySelectorAll(
+        `#${idTabla} tbody tr`
+    ).forEach(function (fila) {
+        /*
+         * Solo contamos filas económicas reales.
+         *
+         * Las filas auxiliares, procedimientos,
+         * mensajes vacíos o filas hijas normalmente
+         * no contienen un campo con clase .valor.
+         */
+        const campoValor = fila.querySelector(
+            '.valor'
+        );
+
+        if (!campoValor) {
+            return;
+        }
+
+        /*
+         * No contar filas eliminadas u ocultas.
+         */
+        if (
+            fila.hidden ||
+            fila.style.display === 'none'
+        ) {
+            return;
+        }
+
+        cantidad += 1;
+    });
+
+    return cantidad;
+}
+
+function calcularPorcentajeParte(
+    valorParte,
+    subtotalGeneral
+) {
+    if (
+        subtotalGeneral <= 0 ||
+        valorParte <= 0
+    ) {
+        return 0;
+    }
+
+    return (
+        valorParte /
+        subtotalGeneral
+    ) * 100;
+}
+
+function textoCantidad(
+    cantidad,
+    singular,
+    plural
+) {
+    return cantidad === 1
+        ? `1 ${singular}`
+        : `${cantidad} ${plural}`;
+}
+
+function actualizarComposicionOrden({
+    rep,
+    moi,
+    moe,
+    subtotalSinIva
+}) {
+    const porcentajeRep =
+        calcularPorcentajeParte(
+            rep,
+            subtotalSinIva
+        );
+
+    const porcentajeMOI =
+        calcularPorcentajeParte(
+            moi,
+            subtotalSinIva
+        );
+
+    const porcentajeMOE =
+        calcularPorcentajeParte(
+            moe,
+            subtotalSinIva
+        );
+
+    const cantidadRep =
+        contarFilasTabla(
+            'tablaRepuestos'
+        );
+
+    const cantidadMOI =
+        contarFilasTabla(
+            'tablaMOI'
+        );
+
+    const cantidadMOE =
+        contarFilasTabla(
+            'tablaMOE'
+        );
+
+    const elementoPorcentajeRep =
+        document.getElementById(
+            'porcentajeRep'
+        );
+
+    if (elementoPorcentajeRep) {
+        elementoPorcentajeRep.textContent =
+            `${porcentajeRep.toFixed(2)}%`;
+    }
+
+    const elementoPorcentajeMOI =
+        document.getElementById(
+            'porcentajeMOI'
+        );
+
+    if (elementoPorcentajeMOI) {
+        elementoPorcentajeMOI.textContent =
+            `${porcentajeMOI.toFixed(2)}%`;
+    }
+
+    const elementoPorcentajeMOE =
+        document.getElementById(
+            'porcentajeMOE'
+        );
+
+    if (elementoPorcentajeMOE) {
+        elementoPorcentajeMOE.textContent =
+            `${porcentajeMOE.toFixed(2)}%`;
+    }
+
+    const elementoCantidadRep =
+        document.getElementById(
+            'cantidadRep'
+        );
+
+    if (elementoCantidadRep) {
+        elementoCantidadRep.textContent =
+            textoCantidad(
+                cantidadRep,
+                'producto',
+                'productos'
+            );
+    }
+
+    const elementoCantidadMOI =
+        document.getElementById(
+            'cantidadMOI'
+        );
+
+    if (elementoCantidadMOI) {
+        elementoCantidadMOI.textContent =
+            textoCantidad(
+                cantidadMOI,
+                'servicio',
+                'servicios'
+            );
+    }
+
+    const elementoCantidadMOE =
+        document.getElementById(
+            'cantidadMOE'
+        );
+
+    if (elementoCantidadMOE) {
+        elementoCantidadMOE.textContent =
+            textoCantidad(
+                cantidadMOE,
+                'servicio',
+                'servicios'
+            );
+    }
+
+    const barraRep =
+        document.getElementById(
+            'barraRep'
+        );
+
+    if (barraRep) {
+        barraRep.style.width =
+            `${Math.min(
+                porcentajeRep,
+                100
+            ).toFixed(2)}%`;
+    }
+
+    const barraMOI =
+        document.getElementById(
+            'barraMOI'
+        );
+
+    if (barraMOI) {
+        barraMOI.style.width =
+            `${Math.min(
+                porcentajeMOI,
+                100
+            ).toFixed(2)}%`;
+    }
+
+    const barraMOE =
+        document.getElementById(
+            'barraMOE'
+        );
+
+    if (barraMOE) {
+        barraMOE.style.width =
+            `${Math.min(
+                porcentajeMOE,
+                100
+            ).toFixed(2)}%`;
+    }
+} 
 function validarDescuento() {
     const tipoCampo = document.getElementById(
         'tipo_descuento'
@@ -203,7 +417,12 @@ function recalcularTotales() {
     const moe = sumarTabla('tablaMOE');
 
     const subtotalSinIva = rep + moi + moe;
-
+    actualizarComposicionOrden({
+        rep: rep,
+        moi: moi,
+        moe: moe,
+        subtotalSinIva: subtotalSinIva
+    });
     const porcentajeIva = numeroSeguro(
         document.getElementById('porcentajeIva')?.value
     );

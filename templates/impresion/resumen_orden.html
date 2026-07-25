@@ -1,12 +1,21 @@
 {% load static %}
 {% load l10n %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Resumen de Orden - {{ orden.numero_orden }}</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>
+        Resumen de Orden -
+        {{ orden.numero_orden }}
+    </title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
     <style>
         :root {
             --primary: #123b7a;
@@ -16,6 +25,7 @@
             --line: #d9dee8;
             --danger: #c1121f;
             --dark: #0f172a;
+            --soft: #f8fafc;
             --radius: 9px;
         }
 
@@ -33,34 +43,44 @@
         body {
             background: #e5e7eb;
             color: var(--text);
-            font-family: 'Inter', Arial, sans-serif;
+            font-family:
+                "Inter",
+                Arial,
+                sans-serif;
             font-size: 10.3px;
             line-height: 1.45;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            -webkit-print-color-adjust:
+                exact !important;
+            print-color-adjust:
+                exact !important;
         }
 
         .page {
             width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
-            background: #fff;
-            padding: 9mm 10mm;
             overflow: hidden;
+            background: #ffffff;
+            padding: 9mm 10mm;
         }
+
+        /* =====================================
+           ENCABEZADO
+        ===================================== */
 
         .top-table {
             width: 100%;
+            margin-bottom: 11px;
             table-layout: fixed;
             border-collapse: collapse;
-            border-bottom: 2px solid var(--primary);
-            margin-bottom: 11px;
+            border-bottom:
+                2px solid var(--primary);
         }
 
         .top-table td {
-            border: none;
+            padding: 0 0 8px;
+            border: 0;
             vertical-align: top;
-            padding: 0 0 8px 0;
         }
 
         .top-left {
@@ -81,22 +101,27 @@
 
         .company {
             margin-top: 5px;
-            font-size: 8.6px;
             color: var(--muted);
-            line-height: 1.45;
+            font-size: 8.6px;
             font-weight: 500;
+            line-height: 1.45;
         }
 
-       .doc-title {
-    font-family: "Montserrat", "Helvetica Neue", Arial, sans-serif;
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: 0.8px;
-    color: #1d4f91;
-    text-transform: uppercase;
-}
+        .doc-title {
+            color: #1d4f91;
+            font-family:
+                "Montserrat",
+                "Helvetica Neue",
+                Arial,
+                sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
 
         .doc-number {
+            display: inline-block;
             margin-top: 6px;
             padding: 5px 9px;
             border: 1px solid var(--line);
@@ -105,48 +130,55 @@
             color: var(--danger);
             font-size: 9.5px;
             font-weight: 900;
-            display: inline-block;
         }
 
         .doc-date {
             margin-top: 6px;
-            font-size: 9px;
             color: var(--muted);
+            font-size: 9px;
             font-weight: 700;
         }
 
+        /* =====================================
+           DATOS GENERALES
+        ===================================== */
+
         .info-grid {
             width: 100%;
+            margin: 0 -6px 11px;
             table-layout: fixed;
             border-collapse: separate;
             border-spacing: 6px;
-            margin: 0 -6px 11px -6px;
         }
 
         .info-grid td {
+            padding: 7px 8px;
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            background: #fff;
-            padding: 7px 8px;
+            background: #ffffff;
             vertical-align: top;
         }
 
         .label {
             display: block;
             margin-bottom: 3px;
+            color: var(--muted);
             font-size: 7.4px;
             font-weight: 800;
-            color: var(--muted);
+            letter-spacing: 0.06em;
             text-transform: uppercase;
-            letter-spacing: .06em;
         }
 
         .value {
             display: block;
+            color: var(--dark);
             font-size: 10.2px;
             font-weight: 800;
-            color: var(--dark);
         }
+
+        /* =====================================
+           SECCIONES
+        ===================================== */
 
         .section {
             margin-top: 11px;
@@ -157,11 +189,11 @@
             align-items: center;
             gap: 9px;
             margin-bottom: 6px;
+            color: var(--primary);
             font-size: 9px;
             font-weight: 900;
-            color: var(--primary);
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            letter-spacing: .08em;
         }
 
         .section-title::after {
@@ -169,44 +201,49 @@
             flex: 1;
             height: 1px;
             background: var(--primary);
-            opacity: .24;
+            opacity: 0.24;
         }
+
+        /* =====================================
+           TABLAS DE DETALLE
+        ===================================== */
 
         .detail-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            margin-bottom: 5px;
+            overflow: hidden;
             table-layout: fixed;
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            overflow: hidden;
-            margin-bottom: 5px;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
         .detail-table th {
-            background: var(--primary);
-            color: #fff;
             padding: 6px 7px;
+            background: var(--primary);
+            color: #ffffff;
             font-size: 8px;
             font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: .05em;
+            letter-spacing: 0.05em;
             text-align: left;
+            text-transform: uppercase;
         }
 
         .detail-table td {
-            border-bottom: 1px solid var(--line);
             padding: 6px 7px;
+            border-bottom:
+                1px solid var(--line);
+            background: #ffffff;
+            color: var(--text);
             font-size: 9.8px;
             font-weight: 500;
-            background: #fff;
             vertical-align: top;
-            color: var(--text);
             overflow-wrap: anywhere;
         }
 
         .detail-table tbody tr:last-child td {
-            border-bottom: none;
+            border-bottom: 0;
         }
 
         .detail-table tbody tr:nth-child(even) td {
@@ -233,26 +270,26 @@
             padding-left: 9px;
             color: var(--muted);
             font-size: 8.4px;
-            line-height: 1.4;
             font-weight: 500;
+            line-height: 1.4;
         }
 
         .empty-row td {
+            padding: 9px;
             color: var(--muted);
+            font-size: 9.5px;
             font-style: italic;
             text-align: center;
-            padding: 9px;
-            font-size: 9.5px;
         }
 
         .section-subtotal {
             width: 100%;
-            text-align: right;
+            margin: 4px 0 8px;
+            padding-right: 2px;
+            color: var(--dark);
             font-size: 9.3px;
             font-weight: 900;
-            color: var(--dark);
-            margin: 4px 0 8px 0;
-            padding-right: 2px;
+            text-align: right;
         }
 
         .section-subtotal span {
@@ -260,65 +297,154 @@
             font-size: 10.5px;
         }
 
-        .totals-wrap {
-            width: 100%;
+        /* =====================================
+           COMPOSICIÓN ECONÓMICA
+        ===================================== */
+
+        .economic-summary {
             margin-top: 14px;
         }
 
-        .totals-table {
-            width: 43%;
-            margin-left: auto;
+        .economic-grid {
+            width: 100%;
+            table-layout: fixed;
             border-collapse: separate;
-            border-spacing: 0;
+            border-spacing: 6px;
+            margin: 0 -6px 8px;
+        }
+
+        .economic-card {
+            padding: 8px 9px;
             border: 1px solid var(--line);
             border-radius: var(--radius);
+            background: var(--soft);
+            vertical-align: top;
+        }
+
+        .economic-card-label {
+            display: block;
+            margin-bottom: 3px;
+            color: var(--muted);
+            font-size: 7.5px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .economic-card-value {
+            display: block;
+            color: var(--dark);
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+
+        .economic-card-meta {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 8px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .economic-card-meta strong {
+            color: var(--primary);
+            font-weight: 900;
+        }
+
+        .economic-progress {
+            width: 100%;
+            height: 4px;
+            margin-top: 6px;
             overflow: hidden;
-            background: #fff;
+            border-radius: 999px;
+            background: #dfe5ed;
+        }
+
+        .economic-progress-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: var(--primary);
+        }
+
+        /* =====================================
+           TOTALES
+        ===================================== */
+
+        .totals-wrap {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .totals-table {
+            width: 45%;
+            margin-left: auto;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #ffffff;
         }
 
         .totals-table td {
             padding: 8px 9px;
+            border-bottom:
+                1px solid var(--line);
             font-size: 10.2px;
-            border-bottom: 1px solid var(--line);
         }
 
         .totals-table tr:last-child td {
-            border-bottom: none;
+            border-bottom: 0;
             background: var(--primary-soft);
         }
 
         .total-label {
-            font-weight: 900;
             color: var(--dark);
+            font-weight: 900;
             text-transform: uppercase;
         }
 
         .total-final-label {
-            font-size: 10.8px !important;
             color: var(--danger);
+            font-size: 10.8px !important;
             font-weight: 900;
         }
 
         .total-value {
-            text-align: right;
-            font-weight: 900;
             color: var(--danger);
             font-size: 14px !important;
+            font-weight: 900;
+            text-align: right;
+        }
+
+        .total-note {
+            display: block;
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 7px;
+            font-weight: 600;
+            text-transform: none;
         }
 
         .note {
             margin-top: 7px;
-            text-align: right;
-            font-size: 7.8px;
             color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: .04em;
+            font-size: 7.8px;
             font-weight: 600;
+            letter-spacing: 0.04em;
+            text-align: right;
+            text-transform: uppercase;
         }
+
+        /* =====================================
+           IMPRESIÓN
+        ===================================== */
 
         @media print {
             body {
-                background: #fff;
+                background: #ffffff;
             }
 
             .page {
@@ -331,6 +457,8 @@
 
             .section,
             .detail-table,
+            .economic-summary,
+            .economic-grid,
             .totals-wrap {
                 page-break-inside: avoid;
                 break-inside: avoid;
@@ -343,66 +471,131 @@
 
 <div class="page">
 
+    <!-- =====================================
+         ENCABEZADO
+    ====================================== -->
+
     <table class="top-table">
         <tr>
             <td class="top-left">
                 <div class="logo">
                     {% if empresa and empresa.logo %}
-                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                        <img
+                            src="{{ empresa.logo.url }}"
+                            alt="Logo Empresa"
+                        >
                     {% else %}
-                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                        <img
+                            src="{% static 'logo.png' %}"
+                            alt="Logo MAO"
+                        >
                     {% endif %}
                 </div>
 
                 <div class="company">
-                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+                    RUC:
+                    {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
+                    <br>
+
                     {{ empresa.direccion|default:"Quito, Ecuador" }}
                 </div>
             </td>
 
             <td class="top-right">
-                <div class="doc-title">Resumen de Orden</div>
-                <div class="doc-number">OT N° {{ orden.numero_orden }}</div>
+                <div class="doc-title">
+                    Resumen de Orden
+                </div>
+
+                <div class="doc-number">
+                    OT N.° {{ orden.numero_orden }}
+                </div>
+
                 <div class="doc-date">
-                    Fecha ingreso: {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+                    Fecha de ingreso:
+                    {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
                 </div>
             </td>
         </tr>
     </table>
 
+    <!-- =====================================
+         DATOS DEL CLIENTE Y VEHÍCULO
+    ====================================== -->
+
     <table class="info-grid">
         <tr>
             <td>
-                <span class="label">Cliente</span>
-                <span class="value">{{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}</span>
+                <span class="label">
+                    Cliente
+                </span>
+
+                <span class="value">
+                    {{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}
+                </span>
             </td>
+
             <td>
-                <span class="label">C.I. / RUC</span>
-                <span class="value">{{ orden.cliente.identificacion|default:"-" }}</span>
+                <span class="label">
+                    C.I. / RUC
+                </span>
+
+                <span class="value">
+                    {{ orden.cliente.identificacion|default:"-" }}
+                </span>
             </td>
+
             <td>
-                <span class="label">Placa</span>
-                <span class="value">{{ orden.placa|upper|default:"S/P" }}</span>
+                <span class="label">
+                    Placa
+                </span>
+
+                <span class="value">
+                    {{ orden.placa|upper|default:"S/P" }}
+                </span>
             </td>
         </tr>
+
         <tr>
             <td>
-                <span class="label">Vehículo</span>
-                <span class="value">{{ orden.vehiculo|upper|default:"-" }}</span>
+                <span class="label">
+                    Vehículo
+                </span>
+
+                <span class="value">
+                    {{ orden.vehiculo|upper|default:"-" }}
+                </span>
             </td>
+
             <td>
-                <span class="label">Año</span>
-                <span class="value">{{ orden.anio_vehiculo|default:"-" }}</span>
+                <span class="label">
+                    Año
+                </span>
+
+                <span class="value">
+                    {{ orden.anio_vehiculo|default:"-" }}
+                </span>
             </td>
+
             <td>
-                <span class="label">Kilometraje</span>
-                <span class="value">{{ orden.kilometraje|default:"0" }} km</span>
+                <span class="label">
+                    Kilometraje
+                </span>
+
+                <span class="value">
+                    {{ orden.kilometraje|default:"0" }} km
+                </span>
             </td>
         </tr>
     </table>
 
+    <!-- =====================================
+         1. REPUESTOS
+    ====================================== -->
+
     <div class="section">
-        <div class="section-title">1. Repuestos e Insumos</div>
+        <div class="section-title">
+            1. Repuestos e Insumos
+        </div>
 
         <table class="detail-table">
             <colgroup>
@@ -411,39 +604,77 @@
                 <col style="width: 15%;">
                 <col style="width: 15%;">
             </colgroup>
+
             <thead>
                 <tr>
-                    <th class="text-center">Cant.</th>
-                    <th>Descripción</th>
-                    <th class="text-right">P.U.</th>
-                    <th class="text-right">Valor</th>
+                    <th class="text-center">
+                        Cant.
+                    </th>
+
+                    <th>
+                        Descripción
+                    </th>
+
+                    <th class="text-right">
+                        P.U.
+                    </th>
+
+                    <th class="text-right">
+                        Valor
+                    </th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for rep in repuestos %}
                     <tr>
-                        <td class="text-center">{{ rep.cantidad|floatformat:2 }}</td>
-                        <td>{{ rep.descripcion_factura }}</td>
-                        <td class="text-right">${{ rep.precio_unitario|floatformat:2 }}</td>
-                        <td class="text-right">${{ rep.subtotal|floatformat:2 }}</td>
+                        <td class="text-center">
+                            {{ rep.cantidad|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            {{ rep.descripcion_factura }}
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep.precio_unitario|floatformat:2 }}
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep.subtotal|floatformat:2 }}
+                        </td>
                     </tr>
                 {% endfor %}
 
                 {% for rep_hist in repuestos_historicos %}
                     <tr>
-                        <td class="text-center">{{ rep_hist.cantidad|floatformat:2 }}</td>
+                        <td class="text-center">
+                            {{ rep_hist.cantidad|floatformat:2 }}
+                        </td>
+
                         <td>
                             {{ rep_hist.descripcion_original }}
-                            <span class="muted">(Migrado)</span>
+
+                            <span class="muted">
+                                (Migrado)
+                            </span>
                         </td>
-                        <td class="text-right">${{ rep_hist.precio_unitario|floatformat:2 }}</td>
-                        <td class="text-right">${{ rep_hist.subtotal|floatformat:2 }}</td>
+
+                        <td class="text-right">
+                            ${{ rep_hist.precio_unitario|floatformat:2 }}
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep_hist.subtotal|floatformat:2 }}
+                        </td>
                     </tr>
                 {% endfor %}
 
                 {% if not repuestos and not repuestos_historicos %}
                     <tr class="empty-row">
-                        <td colspan="4">No existen repuestos registrados.</td>
+                        <td colspan="4">
+                            No existen repuestos registrados.
+                        </td>
                     </tr>
                 {% endif %}
             </tbody>
@@ -451,12 +682,21 @@
 
         <div class="section-subtotal">
             Subtotal repuestos:
-            <span>${{ subtotal_repuestos|floatformat:2 }}</span>
+
+            <span>
+                ${{ subtotal_repuestos|default:"0.00"|floatformat:2 }}
+            </span>
         </div>
     </div>
 
+    <!-- =====================================
+         2. MANO DE OBRA INTERNA
+    ====================================== -->
+
     <div class="section">
-        <div class="section-title">2. Mano de Obra Interna</div>
+        <div class="section-title">
+            2. Mano de Obra Interna
+        </div>
 
         <table class="detail-table">
             <colgroup>
@@ -465,60 +705,113 @@
                 <col style="width: 15%;">
                 <col style="width: 15%;">
             </colgroup>
+
             <thead>
                 <tr>
-                    <th class="text-center">Cant.</th>
-                    <th>Descripción del Trabajo</th>
-                    <th class="text-right">P.U.</th>
-                    <th class="text-right">Valor</th>
+                    <th class="text-center">
+                        Cant.
+                    </th>
+
+                    <th>
+                        Descripción del trabajo
+                    </th>
+
+                    <th class="text-right">
+                        P.U.
+                    </th>
+
+                    <th class="text-right">
+                        Valor
+                    </th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for serv in servicios %}
-                    {% if serv.servicio.categoria != 'EXT' and serv.tipo_servicio != 'EXT' %}
+                    {% if serv.servicio.categoria != "EXT" and serv.tipo_servicio != "EXT" %}
                         <tr>
-                            <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                            <td class="text-center">
+                                {{ serv.cantidad|floatformat:1 }}
+                            </td>
+
                             <td>
                                 {{ serv.descripcion_servicio }}
 
                                 {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.procedimientos_detalle.all %}
-                                            &bull; {{ proc.descripcion }}<br>
+                                            &bull;
+                                            {{ proc.descripcion }}
+                                            <br>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </td>
-                            <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+
+                            <td class="text-right">
+                                ${{ serv.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
 
                 {% for serv_hist in servicios_historicos %}
-                    {% if serv_hist.tipo == 'MO' %}
+                    {% if serv_hist.tipo == "MO" %}
                         <tr>
-                            <td class="text-center">{{ serv_hist.cantidad|floatformat:1 }}</td>
+                            <td class="text-center">
+                                {{ serv_hist.cantidad|floatformat:1 }}
+                            </td>
+
                             <td>
                                 {{ serv_hist.descripcion_original }}
-                                <span class="muted">(Migrado)</span>
+
+                                <span class="muted">
+                                    (Migrado)
+                                </span>
                             </td>
-                            <td class="text-right">${{ serv_hist.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv_hist.subtotal|floatformat:2 }}</td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
+
+                {% if cantidad_moi|default:0 == 0 %}
+                    <tr class="empty-row">
+                        <td colspan="4">
+                            No existe mano de obra interna registrada.
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
 
         <div class="section-subtotal">
             Subtotal M.O. interna:
-            <span>${{ subtotal_moi|floatformat:2 }}</span>
+
+            <span>
+                ${{ subtotal_moi|default:"0.00"|floatformat:2 }}
+            </span>
         </div>
     </div>
 
+    <!-- =====================================
+         3. MANO DE OBRA EXTERNA
+    ====================================== -->
+
     <div class="section">
-        <div class="section-title">3. Trabajos y Servicios Externos</div>
+        <div class="section-title">
+            3. Trabajos y Servicios Externos
+        </div>
 
         <table class="detail-table">
             <colgroup>
@@ -527,138 +820,334 @@
                 <col style="width: 15%;">
                 <col style="width: 15%;">
             </colgroup>
+
             <thead>
                 <tr>
-                    <th class="text-center">Cant.</th>
-                    <th>Descripción del Proveedor / Trabajo</th>
-                    <th class="text-right">P.U.</th>
-                    <th class="text-right">Valor</th>
+                    <th class="text-center">
+                        Cant.
+                    </th>
+
+                    <th>
+                        Descripción del proveedor / trabajo
+                    </th>
+
+                    <th class="text-right">
+                        P.U.
+                    </th>
+
+                    <th class="text-right">
+                        Valor
+                    </th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for serv in servicios %}
-                    {% if serv.servicio.categoria == 'EXT' or serv.tipo_servicio == 'EXT' %}
+                    {% if serv.servicio.categoria == "EXT" or serv.tipo_servicio == "EXT" %}
                         <tr>
-                            <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                            <td class="text-center">
+                                {{ serv.cantidad|floatformat:1 }}
+                            </td>
+
                             <td>
                                 {{ serv.descripcion_servicio }}
 
                                 {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.procedimientos_detalle.all %}
-                                            &bull; {{ proc.descripcion }}<br>
+                                            &bull;
+                                            {{ proc.descripcion }}
+                                            <br>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </td>
-                            <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+
+                            <td class="text-right">
+                                ${{ serv.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
 
                 {% for serv_hist in servicios_historicos %}
-                    {% if serv_hist.tipo == 'MOE' %}
+                    {% if serv_hist.tipo == "MOE" %}
                         <tr>
-                            <td class="text-center">{{ serv_hist.cantidad|floatformat:1 }}</td>
+                            <td class="text-center">
+                                {{ serv_hist.cantidad|floatformat:1 }}
+                            </td>
+
                             <td>
                                 {{ serv_hist.descripcion_original }}
-                                <span class="muted">(Migrado)</span>
+
+                                <span class="muted">
+                                    (Migrado)
+                                </span>
                             </td>
-                            <td class="text-right">${{ serv_hist.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv_hist.subtotal|floatformat:2 }}</td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
+
+                {% if cantidad_moe|default:0 == 0 %}
+                    <tr class="empty-row">
+                        <td colspan="4">
+                            No existen trabajos externos registrados.
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
 
         <div class="section-subtotal">
             Subtotal M.O. externa:
-            <span>${{ subtotal_moe|floatformat:2 }}</span>
+
+            <span>
+                ${{ subtotal_moe|default:"0.00"|floatformat:2 }}
+            </span>
         </div>
     </div>
 
-    <div class="totals-wrap">
-    <table class="totals-table">
-        <tr>
-            <td class="total-label">Subtotal general</td>
-            <td class="text-right">
-                ${{ subtotal|floatformat:2 }}
-            </td>
-        </tr>
+    <!-- =====================================
+         4. RESUMEN ECONÓMICO
+    ====================================== -->
 
-        {% if orden.valor_descuento > 0 %}
-        <tr>
-            <td class="total-label">
-                Descuento
-                {% if orden.tipo_descuento == "PORCENTAJE" %}
-                    ({{ orden.descuento_porcentaje|floatformat:2 }}%)
-                {% endif %}
-            </td>
-            <td class="text-right">
-                -${{ orden.valor_descuento|floatformat:2 }}
-            </td>
-        </tr>
-        {% endif %}
+    <div class="economic-summary">
+        <div class="section-title">
+            4. Resumen Económico
+        </div>
 
-        <tr>
-            <td class="total-label">
-                IVA {{ orden.porcentaje_iva|floatformat:2 }}%
-            </td>
-            <td class="text-right">
-                ${{ iva|floatformat:2 }}
-            </td>
-        </tr>
-
-        <tr>
-            <td class="total-label total-final-label">
-                Total a pagar
-            </td>
-            <td class="total-value">
-                ${{ total_final|floatformat:2 }}
-            </td>
-        </tr>
-    </table>
-</div>
-    </div>
-{% if recomendaciones %}
-<div class="section">
-    <div class="section-title">
-        4. Recomendaciones Técnicas
-    </div>
-
-    <table class="detail-table">
-        <colgroup>
-            <col style="width: 28%;">
-            <col style="width: 72%;">
-        </colgroup>
-
-        <thead>
+        <table class="economic-grid">
             <tr>
-                <th>Título</th>
-                <th>Recomendación</th>
-            </tr>
-        </thead>
+                <td class="economic-card">
+                    <span class="economic-card-label">
+                        Repuestos
+                    </span>
 
-        <tbody>
-            {% for rec in recomendaciones %}
-                <tr>
-                    <td>
+                    <span class="economic-card-value">
+                        ${{ subtotal_repuestos|default:"0.00"|floatformat:2 }}
+                    </span>
+
+                    <span class="economic-card-meta">
                         <strong>
-                            {{ rec.titulo|upper }}
+                            {{ porcentaje_repuestos|default:"0.00"|floatformat:2 }}%
                         </strong>
+
+                        del subtotal
+                        &bull;
+
+                        {{ cantidad_repuestos|default:0 }}
+
+                        {% if cantidad_repuestos == 1 %}
+                            producto
+                        {% else %}
+                            productos
+                        {% endif %}
+                    </span>
+
+                    <div class="economic-progress">
+                        <div
+                            class="economic-progress-fill"
+                            style="width: {{ porcentaje_repuestos|default:0|unlocalize }}%;"
+                        ></div>
+                    </div>
+                </td>
+
+                <td class="economic-card">
+                    <span class="economic-card-label">
+                        M.O. interna
+                    </span>
+
+                    <span class="economic-card-value">
+                        ${{ subtotal_moi|default:"0.00"|floatformat:2 }}
+                    </span>
+
+                    <span class="economic-card-meta">
+                        <strong>
+                            {{ porcentaje_moi|default:"0.00"|floatformat:2 }}%
+                        </strong>
+
+                        del subtotal
+                        &bull;
+
+                        {{ cantidad_moi|default:0 }}
+
+                        {% if cantidad_moi == 1 %}
+                            servicio
+                        {% else %}
+                            servicios
+                        {% endif %}
+                    </span>
+
+                    <div class="economic-progress">
+                        <div
+                            class="economic-progress-fill"
+                            style="width: {{ porcentaje_moi|default:0|unlocalize }}%;"
+                        ></div>
+                    </div>
+                </td>
+
+                <td class="economic-card">
+                    <span class="economic-card-label">
+                        M.O. externa
+                    </span>
+
+                    <span class="economic-card-value">
+                        ${{ subtotal_moe|default:"0.00"|floatformat:2 }}
+                    </span>
+
+                    <span class="economic-card-meta">
+                        <strong>
+                            {{ porcentaje_moe|default:"0.00"|floatformat:2 }}%
+                        </strong>
+
+                        del subtotal
+                        &bull;
+
+                        {{ cantidad_moe|default:0 }}
+
+                        {% if cantidad_moe == 1 %}
+                            servicio
+                        {% else %}
+                            servicios
+                        {% endif %}
+                    </span>
+
+                    <div class="economic-progress">
+                        <div
+                            class="economic-progress-fill"
+                            style="width: {{ porcentaje_moe|default:0|unlocalize }}%;"
+                        ></div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="totals-wrap">
+            <table class="totals-table">
+                <tr>
+                    <td class="total-label">
+                        Subtotal general
                     </td>
 
-                    <td>
-                        {{ rec.texto|linebreaksbr }}
+                    <td class="text-right">
+                        ${{ subtotal|default:"0.00"|floatformat:2 }}
                     </td>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+
+                {% if orden.valor_descuento > 0 %}
+                    <tr>
+                        <td class="total-label">
+                            Descuento
+
+                            {% if orden.tipo_descuento == "PORCENTAJE" %}
+                                (
+                                {{ orden.descuento_porcentaje|floatformat:2 }}
+                                %)
+                            {% endif %}
+
+                            {% if orden.tipo_descuento == "VALOR_FIJO" %}
+                                <span class="total-note">
+                                    Equivale al
+                                    {{ orden.descuento_porcentaje|floatformat:2 }}%
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-right">
+                            -${{ orden.valor_descuento|floatformat:2 }}
+                        </td>
+                    </tr>
+                {% endif %}
+
+                <tr>
+                    <td class="total-label">
+                        IVA
+                        {{ orden.porcentaje_iva|default:"0"|floatformat:2 }}%
+
+                        {% if not orden.sumar_iva_al_total %}
+                            <span class="total-note">
+                                Informativo: no sumado al total
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-right">
+                        ${{ iva|default:"0.00"|floatformat:2 }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="total-label total-final-label">
+                        Total a pagar
+                    </td>
+
+                    <td class="total-value">
+                        ${{ total_final|default:"0.00"|floatformat:2 }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- =====================================
+         RECOMENDACIONES
+    ====================================== -->
+
+    {% if recomendaciones %}
+        <div class="section">
+            <div class="section-title">
+                5. Recomendaciones Técnicas
+            </div>
+
+            <table class="detail-table">
+                <colgroup>
+                    <col style="width: 28%;">
+                    <col style="width: 72%;">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>
+                            Título
+                        </th>
+
+                        <th>
+                            Recomendación
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for rec in recomendaciones %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ rec.titulo|upper }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ rec.texto|linebreaksbr }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
 </div>
 
 </body>
