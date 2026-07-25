@@ -59,7 +59,8 @@ function sumarTabla(idTabla) {
     });
 
     return total;
-}function recalcularTotales() {
+}
+function recalcularTotales() {
     const rep = sumarTabla('tablaRepuestos');
     const moi = sumarTabla('tablaMOI');
     const moe = sumarTabla('tablaMOE');
@@ -96,7 +97,6 @@ function sumarTabla(idTabla) {
         porcentajeDescuento = subtotalSinIva > 0
             ? (valorDescuento / subtotalSinIva) * 100
             : 0;
-
     } else {
         porcentajeDescuento = descuentoIngresado;
 
@@ -117,7 +117,6 @@ function sumarTabla(idTabla) {
         baseImponible = 0;
     }
 
-    // El IVA siempre se calcula y se muestra.
     const iva = baseImponible * (porcentajeIva / 100);
 
     const sumarIvaAlTotal = (
@@ -126,7 +125,6 @@ function sumarTabla(idTabla) {
         )?.checked ?? true
     );
 
-    // Solo se suma al total cuando el checkbox está marcado.
     const totalFinal = sumarIvaAlTotal
         ? baseImponible + iva
         : baseImponible;
@@ -184,7 +182,9 @@ function sumarTabla(idTabla) {
     );
 
     if (subtotalGeneral) {
-        subtotalGeneral.textContent = subtotalSinIva.toFixed(2);
+        subtotalGeneral.textContent = (
+            subtotalSinIva.toFixed(2)
+        );
     }
 
     const descuentoTotal = document.getElementById(
@@ -192,7 +192,9 @@ function sumarTabla(idTabla) {
     );
 
     if (descuentoTotal) {
-        descuentoTotal.textContent = valorDescuento.toFixed(2);
+        descuentoTotal.textContent = (
+            valorDescuento.toFixed(2)
+        );
     }
 
     const descuentoPorcentajeTexto = document.getElementById(
@@ -241,7 +243,6 @@ function sumarTabla(idTabla) {
         granTotal.textContent = totalFinal.toFixed(2);
     }
 }
-
 function eliminarFila(boton) {
 
     const fila = boton.closest('tr');
