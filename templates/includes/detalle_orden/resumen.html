@@ -3,7 +3,8 @@
 <style>
     .totals-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
         gap: 10px;
         align-items: start;
     }
@@ -33,6 +34,64 @@
         line-height: 1.2;
     }
 
+    /* =========================================
+       COMPOSICIÓN ECONÓMICA
+    ========================================= */
+
+    .total-box-composicion {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .total-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+        color: #6e6e73;
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .total-meta strong {
+        color: #1d1d1f;
+        font-weight: 700;
+    }
+
+    .total-separador {
+        color: #b0b0b5;
+    }
+
+    .total-barra {
+        width: 100%;
+        height: 5px;
+        margin-top: 7px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e8e8ed;
+    }
+
+    .total-barra-valor {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: #0a74da;
+        transition: width 0.2s ease;
+    }
+
+    .total-box-moi .total-barra-valor {
+        background: #34c759;
+    }
+
+    .total-box-moe .total-barra-valor {
+        background: #ff9500;
+    }
+
+    /* =========================================
+       DESCUENTO
+    ========================================= */
+
     .descuento-segmentado {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -61,7 +120,8 @@
     .descuento-opcion.activo {
         background: #ffffff;
         color: #1d1d1f;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+        box-shadow:
+            0 1px 4px rgba(0, 0, 0, 0.14);
     }
 
     .descuento-opcion:disabled {
@@ -102,8 +162,8 @@
         padding: 6px 8px;
         border-radius: 7px;
         background: rgba(0, 0, 0, 0.035);
-        font-size: 12px;
         color: #666;
+        font-size: 12px;
         line-height: 1.25;
     }
 
@@ -114,6 +174,10 @@
     .descuento-total-valor {
         margin-top: 5px;
     }
+
+    /* =========================================
+       IVA
+    ========================================= */
 
     .iva-checkbox-label {
         display: flex;
@@ -136,6 +200,10 @@
         cursor: default;
         opacity: 0.7;
     }
+
+    /* =========================================
+       RESPONSIVE
+    ========================================= */
 
     @media (max-width: 900px) {
         .totals-grid {
@@ -162,35 +230,147 @@
 
     <div class="totals-grid">
 
-        <div class="total-box">
+        <!-- =====================================
+             REPUESTOS
+        ====================================== -->
+
+        <div
+            class="total-box
+                   total-box-composicion
+                   total-box-repuestos"
+        >
             <div class="total-label">
-                Sub total repuestos
+                Subtotal repuestos
             </div>
 
             <div class="total-value">
                 $<span id="resumenRep">0.00</span>
             </div>
+
+            <div class="total-meta">
+                <strong id="porcentajeRep">
+                    0.00%
+                </strong>
+
+                <span>
+                    del subtotal
+                </span>
+
+                <span class="total-separador">
+                    •
+                </span>
+
+                <span id="cantidadRep">
+                    0 productos
+                </span>
+            </div>
+
+            <div
+                class="total-barra"
+                aria-hidden="true"
+            >
+                <div
+                    id="barraRep"
+                    class="total-barra-valor"
+                ></div>
+            </div>
         </div>
 
-        <div class="total-box">
+        <!-- =====================================
+             MANO DE OBRA INTERNA
+        ====================================== -->
+
+        <div
+            class="total-box
+                   total-box-composicion
+                   total-box-moi"
+        >
             <div class="total-label">
-                Sub total M.O. interna
+                Subtotal M.O. interna
             </div>
 
             <div class="total-value">
                 $<span id="resumenMOI">0.00</span>
             </div>
+
+            <div class="total-meta">
+                <strong id="porcentajeMOI">
+                    0.00%
+                </strong>
+
+                <span>
+                    del subtotal
+                </span>
+
+                <span class="total-separador">
+                    •
+                </span>
+
+                <span id="cantidadMOI">
+                    0 servicios
+                </span>
+            </div>
+
+            <div
+                class="total-barra"
+                aria-hidden="true"
+            >
+                <div
+                    id="barraMOI"
+                    class="total-barra-valor"
+                ></div>
+            </div>
         </div>
 
-        <div class="total-box">
+        <!-- =====================================
+             MANO DE OBRA EXTERNA
+        ====================================== -->
+
+        <div
+            class="total-box
+                   total-box-composicion
+                   total-box-moe"
+        >
             <div class="total-label">
-                Sub total M.O. externa
+                Subtotal M.O. externa
             </div>
 
             <div class="total-value">
                 $<span id="resumenMOE">0.00</span>
             </div>
+
+            <div class="total-meta">
+                <strong id="porcentajeMOE">
+                    0.00%
+                </strong>
+
+                <span>
+                    del subtotal
+                </span>
+
+                <span class="total-separador">
+                    •
+                </span>
+
+                <span id="cantidadMOE">
+                    0 servicios
+                </span>
+            </div>
+
+            <div
+                class="total-barra"
+                aria-hidden="true"
+            >
+                <div
+                    id="barraMOE"
+                    class="total-barra-valor"
+                ></div>
+            </div>
         </div>
+
+        <!-- =====================================
+             SUBTOTAL GENERAL
+        ====================================== -->
 
         <div class="total-box">
             <div class="total-label">
@@ -204,6 +384,10 @@
             </div>
         </div>
 
+        <!-- =====================================
+             DESCUENTO
+        ====================================== -->
+
         <div class="total-box">
             <div class="total-label">
                 Descuento
@@ -216,7 +400,12 @@
             >
                 <button
                     type="button"
-                    class="descuento-opcion{% if orden.tipo_descuento == 'PORCENTAJE' %} activo{% endif %}"
+                    class="
+                        descuento-opcion
+                        {% if orden.tipo_descuento == 'PORCENTAJE' %}
+                            activo
+                        {% endif %}
+                    "
                     data-tipo="PORCENTAJE"
                     {% if not puede_editar %}
                         disabled
@@ -227,7 +416,12 @@
 
                 <button
                     type="button"
-                    class="descuento-opcion{% if orden.tipo_descuento == 'VALOR_FIJO' %} activo{% endif %}"
+                    class="
+                        descuento-opcion
+                        {% if orden.tipo_descuento == 'VALOR_FIJO' %}
+                            activo
+                        {% endif %}
+                    "
                     data-tipo="VALOR_FIJO"
                     {% if not puede_editar %}
                         disabled
@@ -279,13 +473,17 @@
                 id="descuentoEquivalente"
                 class="descuento-resumen"
             >
-                <strong>Representa:</strong>
+                <strong>
+                    Representa:
+                </strong>
 
                 <span id="descuentoPorcentajeTexto">
                     {{ porcentaje_descuento|default:"0.00"|floatformat:2 }}%
                 </span>
 
-                <span aria-hidden="true"> • </span>
+                <span aria-hidden="true">
+                    •
+                </span>
 
                 <span id="descuentoValorTexto">
                     ${{ orden.valor_descuento|default:"0.00"|floatformat:2 }}
@@ -293,13 +491,20 @@
             </div>
 
             <div
-                class="total-value descuento-total-valor"
+                class="
+                    total-value
+                    descuento-total-valor
+                "
             >
                 -$<span id="descuentoTotal">
                     {{ orden.valor_descuento|default:"0.00"|floatformat:2 }}
                 </span>
             </div>
         </div>
+
+        <!-- =====================================
+             IVA
+        ====================================== -->
 
         <div class="total-box">
             <div class="total-label">
@@ -322,7 +527,12 @@
                     value="0"
                 >
 
-                <label class="iva-checkbox-label editable">
+                <label
+                    class="
+                        iva-checkbox-label
+                        editable
+                    "
+                >
                     <input
                         type="checkbox"
                         name="sumar_iva_al_total"
@@ -337,7 +547,12 @@
                     Sumar IVA al total
                 </label>
             {% else %}
-                <label class="iva-checkbox-label bloqueado">
+                <label
+                    class="
+                        iva-checkbox-label
+                        bloqueado
+                    "
+                >
                     <input
                         type="checkbox"
                         id="sumar_iva_al_total"
@@ -353,10 +568,20 @@
                 <input
                     type="hidden"
                     name="sumar_iva_al_total"
-                    value="{% if orden.sumar_iva_al_total %}1{% else %}0{% endif %}"
+                    value="
+                        {% if orden.sumar_iva_al_total %}
+                            1
+                        {% else %}
+                            0
+                        {% endif %}
+                    "
                 >
             {% endif %}
         </div>
+
+        <!-- =====================================
+             TOTAL FINAL
+        ====================================== -->
 
         <div class="total-box final">
             <div class="total-label">
