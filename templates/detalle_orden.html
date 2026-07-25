@@ -107,27 +107,35 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-function guardarOTDirecto() {
-    const formulario =
-        document.getElementById(
-            'formDetalleOT'
-        );
+    function guardarOTDirecto() {
+    const formulario = document.getElementById(
+        'formDetalleOT'
+    );
 
     if (!formulario) {
+        Swal.fire({
+            title: 'Error',
+            text: 'No se encontró el formulario de la orden.',
+            icon: 'error',
+            confirmButtonColor: '#ff3b30'
+        });
+
         return;
     }
 
     if (
-        typeof mostrarEstadoDescuento ===
-        'function' &&
+        typeof mostrarEstadoDescuento === 'function' &&
         !mostrarEstadoDescuento()
     ) {
+        const mensajeError =
+            document.getElementById(
+                'descuentoError'
+            );
+
         Swal.fire({
             title: 'Descuento inválido',
             text:
-                document.getElementById(
-                    'descuentoError'
-                )?.textContent ||
+                mensajeError?.textContent ||
                 'Revise el descuento ingresado.',
             icon: 'warning',
             confirmButtonColor: '#ff9500'
@@ -153,29 +161,6 @@ function guardarOTDirecto() {
         }
     });
 }
-function mostrarEstadoDescuento() {
-    const campo = document.getElementById(
-        'descuento_ingresado'
-    );
-
-    if (!campo) {
-        return;
-    }
-
-    const validacion = validarDescuento();
-
-    campo.setCustomValidity(
-        validacion.valido
-            ? ''
-            : validacion.mensaje
-    );
-
-    campo.classList.toggle(
-        'is-invalid',
-        !validacion.valido
-    );
-}
-
     function confirmarReabrir(formId) {
         Swal.fire({
             title: '¿Reabrir Orden Histórica?',
@@ -238,7 +223,7 @@ function mostrarEstadoDescuento() {
     );
 </script>
 
-<script src="{% static 'js/detalle_orden/base.js' %}?v=6"></script>
+<script src="{% static 'js/detalle_orden/base.js' %}?v=7"></script>
 <script src="{% static 'js/detalle_orden/recepcion.js' %}"></script>
 <script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
 <script src="{% static 'js/detalle_orden/mano_obra.js' %}?v=4"></script>

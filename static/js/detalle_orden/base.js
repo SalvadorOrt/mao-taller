@@ -151,6 +151,52 @@ function validarDescuento() {
         mensaje: ''
     };
 }
+
+function mostrarEstadoDescuento() {
+    const campo = document.getElementById(
+        'descuento_ingresado'
+    );
+
+    const mensaje = document.getElementById(
+        'descuentoError'
+    );
+
+    if (!campo) {
+        return true;
+    }
+
+    const validacion = validarDescuento();
+
+    campo.setCustomValidity(
+        validacion.valido
+            ? ''
+            : validacion.mensaje
+    );
+
+    campo.classList.toggle(
+        'is-invalid',
+        !validacion.valido
+    );
+
+    campo.setAttribute(
+        'aria-invalid',
+        validacion.valido
+            ? 'false'
+            : 'true'
+    );
+
+    if (mensaje) {
+        mensaje.textContent =
+            validacion.mensaje;
+
+        mensaje.classList.toggle(
+            'visible',
+            !validacion.valido
+        );
+    }
+
+    return validacion.valido;
+}
 function recalcularTotales() {
     const rep = sumarTabla('tablaRepuestos');
     const moi = sumarTabla('tablaMOI');
