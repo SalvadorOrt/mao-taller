@@ -411,30 +411,261 @@ function mostrarEstadoDescuento() {
 
     return validacion.valido;
 }
-function recalcularTotales() {
-    const rep = sumarTabla('tablaRepuestos');
-    const moi = sumarTabla('tablaMOI');
-    const moe = sumarTabla('tablaMOE');
+function contarItemsTabla(idTabla) {
+    const tabla = document.getElementById(
+        idTabla
+    );
 
-    const subtotalSinIva = rep + moi + moe;
-    actualizarComposicionOrden({
-        rep: rep,
-        moi: moi,
-        moe: moe,
-        subtotalSinIva: subtotalSinIva
+    if (!tabla) {
+        return 0;
+    }
+
+    let cantidad = 0;
+
+    tabla.querySelectorAll(
+        'tbody tr'
+    ).forEach(function (fila) {
+        /*
+         * Una fila económica real debe contener
+         * cantidad, precio unitario o valor.
+         *
+         * Esto evita contar filas auxiliares,
+         * procedimientos y mensajes vacíos.
+         */
+        const campoCantidad =
+            fila.querySelector('.cantidad');
+
+        const campoPrecio =
+            fila.querySelector('.pu');
+
+        const campoValor =
+            fila.querySelector('.valor');
+
+        const esFilaEconomica = Boolean(
+            campoCantidad ||
+            campoPrecio ||
+            campoValor
+        );
+
+        if (!esFilaEconomica) {
+            return;
+        }
+
+        /*
+         * No contar filas hijas de procedimientos
+         * de mano de obra interna.
+         */
+        if (
+            fila.classList.contains(
+                'fila-hijas-moi'
+            )
+        ) {
+            return;
+        }
+
+        /*
+         * No contar filas eliminadas u ocultas.
+         */
+        if (
+            fila.hidden ||
+            fila.style.display === 'none'
+        ) {
+            return;
+        }
+
+        cantidad += 1;
     });
+
+    return cantidad;
+}
+
+function calcularPorcentajeComposicion(
+    valor,
+    subtotal
+) {
+    valor = numeroSeguro(valor);
+    subtotal = numeroSeguro(subtotal);
+
+    if (subtotal <= 0) {
+        return 0;
+    }
+
+    return (
+        valor /
+        subtotal
+    ) * 100;
+}
+
+function formarTextoCantidad(
+    cantidad,
+    singular,
+    plural
+) {
+    return cantidad === 1
+        ? `1 ${singular}`
+        : `${cantidad} ${plural}`;
+}
+
+function actualizarDatoComposicion({
+    porcentajeId,
+    cantidadId,
+    barraId,
+    porcentaje,
+    cantidad,
+    singular,
+    plural
+}) {
+    const porcentajeElemento =
+        document.getElementById(
+            porcentajeId
+        );
+
+    const cantidadElemento =
+        document.getElementById(
+            cantidadId
+        );
+
+    const barraElemento =
+        document.getElementById(
+            barraId
+        );
+
+    if (porcentajeElemento) {
+        porcentajeElemento.textContent =
+            `${porcentaje.toFixed(2)}%`;
+    }
+
+    if (cantidadElemento) {
+        cantidadElemento.textContent =
+            formarTextoCantidad(
+                cantidad,
+                singular,
+                plural
+            );
+    }
+
+    if (barraElemento) {
+        const ancho = Math.min(
+            Math.max(porcentaje, 0),
+            100
+        );
+
+        barraElemento.style.width =
+            `${ancho.toFixed(2)}%`;
+    }
+}
+
+function actualizarComposicionOrden(
+    rep,
+    moi,
+    moe,
+    subtotalSinIva
+) {
+    const porcentajeRep =
+        calcularPorcentajeComposicion(
+            rep,
+            subtotalSinIva
+        );
+
+    const porcentajeMOI =
+        calcularPorcentajeComposicion(
+            moi,
+            subtotalSinIva
+        );
+
+    const porcentajeMOE =
+        calcularPorcentajeComposicion(
+            moe,
+            subtotalSinIva
+        );
+
+    const cantidadRep =
+        contarItemsTabla(
+            'tablaRepuestos'
+        );
+
+    const cantidadMOI =
+        contarItemsTabla(
+            'tablaMOI'
+        );
+
+    const cantidadMOE =
+        contarItemsTabla(
+            'tablaMOE'
+        );
+
+    actualizarDatoComposicion({
+        porcentajeId: 'porcentajeRep',
+        cantidadId: 'cantidadRep',
+        barraId: 'barraRep',
+        porcentaje: porcentajeRep,
+        cantidad: cantidadRep,
+        singular: 'producto',
+        plural: 'productos'
+    });
+
+    actualizarDatoComposicion({
+        porcentajeId: 'porcentajeMOI',
+        cantidadId: 'cantidadMOI',
+        barraId: 'barraMOI',
+        porcentaje: porcentajeMOI,
+        cantidad: cantidadMOI,
+        singular: 'servicio',
+        plural: 'servicios'
+    });
+
+    actualizarDatoComposicion({
+        porcentajeId: 'porcentajeMOE',
+        cantidadId: 'cantidadMOE',
+        barraId: 'barraMOE',
+        porcentaje: porcentajeMOE,
+        cantidad: cantidadMOE,
+        singular: 'servicio',
+        plural: 'servicios'
+    });
+}
+function recalcularTotales() {
+    const rep = sumarTabla(
+        'tablaRepuestos'
+    );
+
+    const moi = sumarTabla(
+        'tablaMOI'
+    );
+
+    const moe = sumarTabla(
+        'tablaMOE'
+    );
+
+    const subtotalSinIva =
+        rep + moi + moe;
+
+    actualizarComposicionOrden(
+        rep,
+        moi,
+        moe,
+        subtotalSinIva
+    );
+
     const porcentajeIva = numeroSeguro(
-        document.getElementById('porcentajeIva')?.value
+        document.getElementById(
+            'porcentajeIva'
+        )?.value
     );
 
     const tipoDescuento = (
-        document.getElementById('tipo_descuento')?.value
-        || 'PORCENTAJE'
+        document.getElementById(
+            'tipo_descuento'
+        )?.value ||
+        'PORCENTAJE'
     );
 
-    let descuentoIngresado = numeroSeguro(
-        document.getElementById('descuento_ingresado')?.value
-    );
+    let descuentoIngresado =
+        numeroSeguro(
+            document.getElementById(
+                'descuento_ingresado'
+            )?.value
+        );
 
     if (descuentoIngresado < 0) {
         descuentoIngresado = 0;
@@ -443,37 +674,60 @@ function recalcularTotales() {
     let valorDescuento = 0;
     let porcentajeDescuento = 0;
 
-    if (tipoDescuento === 'VALOR_FIJO') {
-        valorDescuento = descuentoIngresado;
+    if (
+        tipoDescuento ===
+        'VALOR_FIJO'
+    ) {
+        valorDescuento =
+            descuentoIngresado;
 
-        if (valorDescuento > subtotalSinIva) {
-            valorDescuento = subtotalSinIva;
+        if (
+            valorDescuento >
+            subtotalSinIva
+        ) {
+            valorDescuento =
+                subtotalSinIva;
         }
 
-        porcentajeDescuento = subtotalSinIva > 0
-            ? (valorDescuento / subtotalSinIva) * 100
-            : 0;
+        porcentajeDescuento =
+            subtotalSinIva > 0
+                ? (
+                    valorDescuento /
+                    subtotalSinIva
+                ) * 100
+                : 0;
     } else {
-        porcentajeDescuento = descuentoIngresado;
+        porcentajeDescuento =
+            descuentoIngresado;
 
-        if (porcentajeDescuento > 100) {
+        if (
+            porcentajeDescuento >
+            100
+        ) {
             porcentajeDescuento = 100;
         }
 
         valorDescuento = (
-            subtotalSinIva
-            * porcentajeDescuento
-            / 100
+            subtotalSinIva *
+            porcentajeDescuento /
+            100
         );
     }
 
-    let baseImponible = subtotalSinIva - valorDescuento;
+    let baseImponible =
+        subtotalSinIva -
+        valorDescuento;
 
     if (baseImponible < 0) {
         baseImponible = 0;
     }
 
-    const iva = baseImponible * (porcentajeIva / 100);
+    const iva =
+        baseImponible *
+        (
+            porcentajeIva /
+            100
+        );
 
     const sumarIvaAlTotal = (
         document.getElementById(
@@ -481,123 +735,148 @@ function recalcularTotales() {
         )?.checked ?? true
     );
 
-    const totalFinal = sumarIvaAlTotal
-        ? baseImponible + iva
-        : baseImponible;
+    const totalFinal =
+        sumarIvaAlTotal
+            ? baseImponible + iva
+            : baseImponible;
 
-    const subtotalRep = document.getElementById(
-        'subtotalRepuestos'
-    );
+    const subtotalRep =
+        document.getElementById(
+            'subtotalRepuestos'
+        );
 
     if (subtotalRep) {
-        subtotalRep.textContent = rep.toFixed(2);
+        subtotalRep.textContent =
+            rep.toFixed(2);
     }
 
-    const subtotalMOI = document.getElementById(
-        'subtotalMOI'
-    );
+    const subtotalMOI =
+        document.getElementById(
+            'subtotalMOI'
+        );
 
     if (subtotalMOI) {
-        subtotalMOI.textContent = moi.toFixed(2);
+        subtotalMOI.textContent =
+            moi.toFixed(2);
     }
 
-    const subtotalMOE = document.getElementById(
-        'subtotalMOE'
-    );
+    const subtotalMOE =
+        document.getElementById(
+            'subtotalMOE'
+        );
 
     if (subtotalMOE) {
-        subtotalMOE.textContent = moe.toFixed(2);
+        subtotalMOE.textContent =
+            moe.toFixed(2);
     }
 
-    const resumenRep = document.getElementById(
-        'resumenRep'
-    );
+    const resumenRep =
+        document.getElementById(
+            'resumenRep'
+        );
 
     if (resumenRep) {
-        resumenRep.textContent = rep.toFixed(2);
+        resumenRep.textContent =
+            rep.toFixed(2);
     }
 
-    const resumenMOI = document.getElementById(
-        'resumenMOI'
-    );
+    const resumenMOI =
+        document.getElementById(
+            'resumenMOI'
+        );
 
     if (resumenMOI) {
-        resumenMOI.textContent = moi.toFixed(2);
+        resumenMOI.textContent =
+            moi.toFixed(2);
     }
 
-    const resumenMOE = document.getElementById(
-        'resumenMOE'
-    );
+    const resumenMOE =
+        document.getElementById(
+            'resumenMOE'
+        );
 
     if (resumenMOE) {
-        resumenMOE.textContent = moe.toFixed(2);
+        resumenMOE.textContent =
+            moe.toFixed(2);
     }
 
-    const subtotalGeneral = document.getElementById(
-        'subtotalGeneral'
-    );
+    const subtotalGeneral =
+        document.getElementById(
+            'subtotalGeneral'
+        );
 
     if (subtotalGeneral) {
-        subtotalGeneral.textContent = (
-            subtotalSinIva.toFixed(2)
-        );
+        subtotalGeneral.textContent =
+            subtotalSinIva.toFixed(2);
     }
 
-    const descuentoTotal = document.getElementById(
-        'descuentoTotal'
-    );
+    const descuentoTotal =
+        document.getElementById(
+            'descuentoTotal'
+        );
 
     if (descuentoTotal) {
-        descuentoTotal.textContent = (
-            valorDescuento.toFixed(2)
-        );
+        descuentoTotal.textContent =
+            valorDescuento.toFixed(2);
     }
 
-    const descuentoPorcentajeTexto = document.getElementById(
-        'descuentoPorcentajeTexto'
-    );
-
-    if (descuentoPorcentajeTexto) {
-        descuentoPorcentajeTexto.textContent = (
-            `${porcentajeDescuento.toFixed(2)}%`
+    const descuentoPorcentajeTexto =
+        document.getElementById(
+            'descuentoPorcentajeTexto'
         );
+
+    if (
+        descuentoPorcentajeTexto
+    ) {
+        descuentoPorcentajeTexto
+            .textContent =
+            `${porcentajeDescuento
+                .toFixed(2)}%`;
     }
 
-    const descuentoValorTexto = document.getElementById(
-        'descuentoValorTexto'
-    );
+    const descuentoValorTexto =
+        document.getElementById(
+            'descuentoValorTexto'
+        );
 
     if (descuentoValorTexto) {
-        descuentoValorTexto.textContent = (
-            `$${valorDescuento.toFixed(2)}`
-        );
+        descuentoValorTexto.textContent =
+            `$${valorDescuento
+                .toFixed(2)}`;
     }
 
-    const ivaLabel = document.getElementById(
-        'ivaLabel'
-    );
+    const ivaLabel =
+        document.getElementById(
+            'ivaLabel'
+        );
 
     if (ivaLabel) {
-        ivaLabel.textContent = (
-            `IVA ${porcentajeIva.toFixed(2)}%`
-        );
+        ivaLabel.textContent =
+            `IVA ${porcentajeIva
+                .toFixed(2)}%`;
     }
 
-    const ivaTotal = document.getElementById(
-        'ivaTotal'
-    );
+    const ivaTotal =
+        document.getElementById(
+            'ivaTotal'
+        );
 
     if (ivaTotal) {
-        ivaTotal.textContent = iva.toFixed(2);
+        ivaTotal.textContent =
+            iva.toFixed(2);
     }
 
-    const granTotal = document.getElementById(
-        'granTotal'
-    );
+    const granTotal =
+        document.getElementById(
+            'granTotal'
+        );
 
     if (granTotal) {
-        granTotal.textContent = totalFinal.toFixed(2);
+        granTotal.textContent =
+            totalFinal.toFixed(2);
     }
+
+    mostrarEstadoDescuento();
 }
 function eliminarFila(boton) {
 
