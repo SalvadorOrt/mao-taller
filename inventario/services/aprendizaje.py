@@ -9,10 +9,6 @@ from django.utils import timezone
 from inventario.models import (
     AliasProducto,
     AprendizajeProducto,
-    Categoria,
-    CodigoProducto,
-    MarcaRepuesto,
-    Producto,
     SugerenciaProducto,
 )
 
@@ -24,32 +20,62 @@ from .normalizacion import (
 
 CERO = Decimal("0.00")
 CIEN = Decimal("100.00")
+DOS_DECIMALES = Decimal("0.01")
 
 
 class AprendizajeProductoService:
     """
     Registra decisiones confirmadas por el usuario.
 
-    No genera sugerencias. Su responsabilidad es convertir una
-    confirmación humana en memoria reutilizable para el sistema.
+    Este servicio no genera sugerencias.
+
+    Su responsabilidad es convertir una confirmación humana
+    en memoria reutilizable para el sistema mediante:
+
+    - AprendizajeProducto
+    - AliasProducto
+
+    Puede aprender desde:
+
+    - creación individual;
+    - código confirmado;
+    - mostrador;
+    - factura XML;
+    - factura manual;
+    - importación;
+    - corrección de sugerencias.
     """
 
     ORIGENES_VALIDOS = {
         "FACTURA",
         "INDIVIDUAL",
+        "CODIGO",
         "MOSTRADOR",
         "CORRECCION",
         "IMPORTACION",
     }
 
+    # =====================================================
+    # VALIDACIONES BÁSICAS
+    # =====================================================
+
     @staticmethod
     def _decimal_confianza(valor):
+        """
+        Convierte y valida el porcentaje de confianza.
+        """
+
         if valor is None:
             return CIEN
 
         try:
             confianza = Decimal(str(valor))
-        except (InvalidOperation, ValueError, TypeError) as error:
+
+        except (
+            InvalidOperation,
+            ValueError,
+            TypeError,
+        ) as error:
             raise ValidationError(
                 "La confianza debe ser un número válido."
             ) from error
@@ -60,11 +86,15 @@ class AprendizajeProductoService:
             )
 
         return confianza.quantize(
-            Decimal("0.01")
+            DOS_DECIMALES
         )
 
     @classmethod
     def _validar_origen(cls, origen):
+        """
+        Normaliza y valida el origen del aprendizaje.
+        """
+
         origen = str(
             origen or "INDIVIDUAL"
         ).strip().upper()
@@ -76,6 +106,10 @@ class AprendizajeProductoService:
 
         return origen
 
+    # =====================================================
+    # RESOLUCIÓN DE RELACIONES
+    # =====================================================
+
     @staticmethod
     def _resolver_relaciones(
         producto,
@@ -83,16 +117,26 @@ class AprendizajeProductoService:
         codigo_producto=None,
         marca=None,
     ):
+        """
+        Resuelve producto, categoría, código y marca.
+
+        También evita almacenar relaciones inconsistentes.
+        """
+
         if producto is None and codigo_producto is None:
             raise ValidationError(
-                "Debe indicar un producto o un código de producto."
+                "Debe indicar un producto o un código "
+                "de producto."
             )
 
         if codigo_producto is not None:
             if producto is None:
                 producto = codigo_producto.producto
 
-            elif codigo_producto.producto_id != producto.pk:
+            elif (
+                codigo_producto.producto_id
+                != producto.pk
+            ):
                 raise ValidationError(
                     "El código seleccionado no pertenece "
                     "al producto indicado."
@@ -101,19 +145,35 @@ class AprendizajeProductoService:
             if marca is None:
                 marca = codigo_producto.marca
 
-            elif codigo_producto.marca_id != marca.pk:
+            elif (
+                codigo_producto.marca_id
+                != marca.pk
+            ):
                 raise ValidationError(
                     "La marca indicada no coincide con "
                     "la marca del código seleccionado."
                 )
 
+        if producto is None:
+            raise ValidationError(
+                "No fue posible determinar el producto."
+            )
+
         if categoria is None:
             categoria = producto.categoria
 
-        elif producto.categoria_id != categoria.pk:
+        elif (
+            producto.categoria_id
+            != categoria.pk
+        ):
             raise ValidationError(
                 "La categoría indicada no coincide con "
                 "la categoría actual del producto."
+            )
+
+        if categoria is None:
+            raise ValidationError(
+                "El producto debe tener una categoría."
             )
 
         return {
@@ -123,34 +183,158 @@ class AprendizajeProductoService:
             "marca": marca,
         }
 
+    # =====================================================
+    # DATOS DESDE DETALLE XML
+    # =====================================================
+
     @staticmethod
-    def _datos_desde_detalle(detalle_original):
+    def _datos_desde_detalle_original(
+        detalle_original,
+    ):
+        """
+        Obtiene los datos originales de un detalle proveniente
+        de una factura XML.
+        """
+
         if detalle_original is None:
             return {}
 
-        factura = detalle_original.factura
+        factura = getattr(
+            detalle_original,
+            "factura",
+            None,
+        )
+
+        proveedor = (
+            getattr(
+                factura,
+                "proveedor_rel",
+                None,
+            )
+            if factura
+            else None
+        )
 
         return {
             "texto_original": (
-                detalle_original.descripcion_proveedor
+                getattr(
+                    detalle_original,
+                    "descripcion_proveedor",
+                    "",
+                )
                 or ""
             ),
             "codigo_original": (
-                detalle_original.codigo_proveedor
+                getattr(
+                    detalle_original,
+                    "codigo_proveedor",
+                    "",
+                )
                 or ""
             ),
-            "proveedor": factura.proveedor_rel,
+            "proveedor": proveedor,
             "origen": "FACTURA",
+            "detalle_original": detalle_original,
         }
+
+    # =====================================================
+    # DATOS DESDE DETALLE NORMALIZADO
+    # =====================================================
+
+    @staticmethod
+    def _datos_desde_detalle_normalizado(
+        detalle_normalizado,
+    ):
+        """
+        Obtiene los datos desde DetalleFacturaNormalizado.
+
+        Funciona para:
+
+        - facturas XML;
+        - facturas manuales.
+
+        Se utilizan las propiedades:
+
+        - descripcion_original
+        - codigo_original
+        - factura
+        """
+
+        if detalle_normalizado is None:
+            return {}
+
+        factura = getattr(
+            detalle_normalizado,
+            "factura",
+            None,
+        )
+
+        proveedor = (
+            getattr(
+                factura,
+                "proveedor_rel",
+                None,
+            )
+            if factura
+            else None
+        )
+
+        detalle_original = getattr(
+            detalle_normalizado,
+            "detalle_original",
+            None,
+        )
+
+        return {
+            "texto_original": (
+                getattr(
+                    detalle_normalizado,
+                    "descripcion_original",
+                    "",
+                )
+                or ""
+            ),
+            "codigo_original": (
+                getattr(
+                    detalle_normalizado,
+                    "codigo_original",
+                    "",
+                )
+                or ""
+            ),
+            "proveedor": proveedor,
+            "origen": "FACTURA",
+            "detalle_original": detalle_original,
+        }
+
+    # =====================================================
+    # BÚSQUEDA DE APRENDIZAJE EXISTENTE
+    # =====================================================
 
     @staticmethod
     def _buscar_aprendizaje_existente(
+        *,
         texto_normalizado,
         codigo_normalizado,
         proveedor,
         producto,
         codigo_producto,
     ):
+        """
+        Busca un aprendizaje existente para reforzarlo.
+
+        Prioridad:
+
+        1. Código normalizado exacto.
+        2. Texto normalizado exacto.
+
+        También separa los aprendizajes por:
+
+        - proveedor;
+        - producto;
+        - código de producto confirmado.
+        """
+
         queryset = (
             AprendizajeProducto.objects
             .select_for_update()
@@ -175,7 +359,9 @@ class AprendizajeProductoService:
             )
         else:
             queryset = queryset.filter(
-                codigo_producto_confirmado=codigo_producto
+                codigo_producto_confirmado=(
+                    codigo_producto
+                )
             )
 
         # El código exacto es la evidencia más fuerte.
@@ -183,42 +369,73 @@ class AprendizajeProductoService:
             encontrado = (
                 queryset
                 .filter(
-                    codigo_normalizado=codigo_normalizado
+                    codigo_normalizado=(
+                        codigo_normalizado
+                    )
                 )
-                .order_by("-veces_confirmado")
+                .order_by(
+                    "-veces_confirmado",
+                    "-ultima_confirmacion_en",
+                )
                 .first()
             )
 
             if encontrado:
                 return encontrado
 
-        # Si no existe código, o no hubo coincidencia,
+        # Si no existe coincidencia exacta por código,
         # se busca por texto normalizado.
         if texto_normalizado:
             return (
                 queryset
                 .filter(
-                    texto_normalizado=texto_normalizado
+                    texto_normalizado=(
+                        texto_normalizado
+                    )
                 )
-                .order_by("-veces_confirmado")
+                .order_by(
+                    "-veces_confirmado",
+                    "-ultima_confirmacion_en",
+                )
                 .first()
             )
 
         return None
 
+    # =====================================================
+    # PROMEDIO DE CONFIANZA
+    # =====================================================
+
     @staticmethod
     def _actualizar_promedio(
+        *,
         promedio_actual,
         cantidad_actual,
         nueva_confianza,
     ):
+        """
+        Calcula el promedio acumulado de confianza.
+
+        Respeta correctamente el valor 0.00 y no lo reemplaza
+        accidentalmente por 100.
+        """
+
         promedio_actual = Decimal(
-            str(promedio_actual or CIEN)
+            str(
+                CIEN
+                if promedio_actual is None
+                else promedio_actual
+            )
         )
 
         cantidad_actual = int(
-            cantidad_actual or 1
+            1
+            if cantidad_actual is None
+            else cantidad_actual
         )
+
+        if cantidad_actual < 1:
+            cantidad_actual = 1
 
         total_anterior = (
             promedio_actual
@@ -227,15 +444,21 @@ class AprendizajeProductoService:
 
         nueva_cantidad = cantidad_actual + 1
 
-        return (
+        promedio = (
             (
                 total_anterior
                 + nueva_confianza
             )
             / Decimal(nueva_cantidad)
-        ).quantize(
-            Decimal("0.01")
         )
+
+        return promedio.quantize(
+            DOS_DECIMALES
+        )
+
+    # =====================================================
+    # REGISTRO DE ALIAS
+    # =====================================================
 
     @classmethod
     def _registrar_alias(
@@ -248,6 +471,21 @@ class AprendizajeProductoService:
         marca,
         origen,
     ):
+        """
+        Crea o refuerza un alias confirmado.
+
+        La búsqueda se realiza primero por la versión normalizada
+        y luego por los alias existentes del producto para evitar
+        duplicados cuando existen normalizadores históricos distintos.
+        """
+
+        texto_original = str(
+            texto_original or ""
+        ).strip()
+
+        if not texto_original:
+            return None
+
         alias_normalizado = normalizar_texto(
             texto_original
         )
@@ -265,11 +503,34 @@ class AprendizajeProductoService:
             .first()
         )
 
+        # Compatibilidad con alias históricos creados con otra
+        # versión de la función de normalización.
+        if alias is None:
+            alias_candidatos = (
+                AliasProducto.objects
+                .select_for_update()
+                .filter(
+                    producto=producto,
+                )
+            )
+
+            for candidato in alias_candidatos:
+                candidato_normalizado = normalizar_texto(
+                    candidato.alias_original
+                )
+
+                if candidato_normalizado == alias_normalizado:
+                    alias = candidato
+                    break
+
         if alias:
-            alias.veces_confirmado += 1
+            alias.veces_confirmado = (
+                int(alias.veces_confirmado or 0)
+                + 1
+            )
+
             alias.activo = True
 
-            # Completa relaciones que antes podían estar vacías.
             if not alias.categoria_id:
                 alias.categoria = categoria
 
@@ -279,29 +540,43 @@ class AprendizajeProductoService:
             ):
                 alias.codigo_producto = codigo_producto
 
-            if marca is not None and not alias.marca_id:
+            if (
+                marca is not None
+                and not alias.marca_id
+            ):
                 alias.marca = marca
 
             alias.save()
 
             return alias
 
-        return AliasProducto.objects.create(
+        origen_alias = (
+            "FACTURA"
+            if origen == "FACTURA"
+            else "APRENDIZAJE"
+        )
+
+        alias = AliasProducto(
             producto=producto,
             categoria=categoria,
-            alias_original=str(
-                texto_original
-            ).strip(),
+            alias_original=texto_original,
             codigo_producto=codigo_producto,
             marca=marca,
-            origen=(
-                "FACTURA"
-                if origen == "FACTURA"
-                else "APRENDIZAJE"
-            ),
+            origen=origen_alias,
             veces_confirmado=1,
             activo=True,
         )
+
+        # Se asigna explícitamente para que la consulta y el modelo
+        # utilicen exactamente el mismo valor.
+        alias.alias_normalizado = alias_normalizado
+        alias.save()
+
+        return alias
+
+    # =====================================================
+    # REGISTRO PRINCIPAL
+    # =====================================================
 
     @classmethod
     @transaction.atomic
@@ -316,6 +591,7 @@ class AprendizajeProductoService:
         marca=None,
         proveedor=None,
         detalle_original=None,
+        detalle_normalizado=None,
         origen="INDIVIDUAL",
         usuario=None,
         confianza=100,
@@ -325,30 +601,99 @@ class AprendizajeProductoService:
         """
         Registra o refuerza un aprendizaje confirmado.
 
-        Puede usarse tanto en creación individual como desde factura.
+        Puede utilizarse desde:
+
+        - creación individual;
+        - factura XML;
+        - factura manual;
+        - código;
+        - mostrador;
+        - importación;
+        - corrección.
+
+        Importante:
+        Este método debe llamarse únicamente después de una
+        confirmación humana.
         """
 
-        datos_detalle = cls._datos_desde_detalle(
-            detalle_original
-        )
+        if (
+            detalle_original is not None
+            and detalle_normalizado is not None
+        ):
+            detalle_normalizado_original = getattr(
+                detalle_normalizado,
+                "detalle_original",
+                None,
+            )
 
-        if detalle_original is not None:
+            if (
+                detalle_normalizado_original is not None
+                and detalle_normalizado_original.pk
+                != detalle_original.pk
+            ):
+                raise ValidationError(
+                    "El detalle original no coincide con "
+                    "el detalle normalizado indicado."
+                )
+
+        datos_detalle = {}
+
+        if detalle_normalizado is not None:
+            datos_detalle = (
+                cls._datos_desde_detalle_normalizado(
+                    detalle_normalizado
+                )
+            )
+
+        elif detalle_original is not None:
+            datos_detalle = (
+                cls._datos_desde_detalle_original(
+                    detalle_original
+                )
+            )
+
+        if datos_detalle:
             texto_original = (
                 texto_original
-                or datos_detalle["texto_original"]
+                or datos_detalle.get(
+                    "texto_original",
+                    "",
+                )
             )
 
             codigo_original = (
                 codigo_original
-                or datos_detalle["codigo_original"]
+                or datos_detalle.get(
+                    "codigo_original",
+                    "",
+                )
             )
 
             proveedor = (
                 proveedor
-                or datos_detalle["proveedor"]
+                or datos_detalle.get(
+                    "proveedor"
+                )
             )
 
-            origen = "FACTURA"
+            # Si el detalle normalizado proviene de XML,
+            # conservar el FK al detalle original.
+            if detalle_original is None:
+                detalle_original = (
+                    datos_detalle.get(
+                        "detalle_original"
+                    )
+                )
+
+            # No sobrescribir CORRECCION, IMPORTACION,
+            # CODIGO u otro origen indicado explícitamente.
+            if (
+                str(origen or "")
+                .strip()
+                .upper()
+                == "INDIVIDUAL"
+            ):
+                origen = "FACTURA"
 
         origen = cls._validar_origen(
             origen
@@ -362,10 +707,13 @@ class AprendizajeProductoService:
             codigo_original or ""
         ).strip().upper()
 
-        if not texto_original:
+        if (
+            not texto_original
+            and not codigo_original
+        ):
             raise ValidationError(
-                "El texto original es obligatorio "
-                "para registrar aprendizaje."
+                "Debe indicar una descripción o un código "
+                "para registrar el aprendizaje."
             )
 
         relaciones = cls._resolver_relaciones(
@@ -396,13 +744,19 @@ class AprendizajeProductoService:
 
         aprendizaje = (
             cls._buscar_aprendizaje_existente(
-                texto_normalizado=texto_normalizado,
-                codigo_normalizado=codigo_normalizado,
+                texto_normalizado=(
+                    texto_normalizado
+                ),
+                codigo_normalizado=(
+                    codigo_normalizado
+                ),
                 proveedor=proveedor,
                 producto=producto,
                 codigo_producto=codigo_producto,
             )
         )
+
+        fue_creado = False
 
         if aprendizaje:
             promedio = cls._actualizar_promedio(
@@ -415,21 +769,60 @@ class AprendizajeProductoService:
                 nueva_confianza=confianza,
             )
 
-            aprendizaje.veces_confirmado += 1
-            aprendizaje.confianza_promedio = promedio
+            aprendizaje.veces_confirmado = (
+                int(
+                    aprendizaje.veces_confirmado
+                    or 0
+                )
+                + 1
+            )
+
+            aprendizaje.confianza_promedio = (
+                promedio
+            )
+
             aprendizaje.ultima_confirmacion_en = (
                 timezone.now()
             )
+
             aprendizaje.confirmado_por = (
                 usuario
                 or aprendizaje.confirmado_por
             )
+
             aprendizaje.activo = True
 
+            # Si ahora existe un detalle XML, se conserva.
             if detalle_original is not None:
                 aprendizaje.detalle_original = (
                     detalle_original
                 )
+
+            # Completar relaciones que antes podían
+            # estar vacías.
+            if (
+                not aprendizaje.categoria_confirmada_id
+            ):
+                aprendizaje.categoria_confirmada = (
+                    categoria
+                )
+
+            if (
+                codigo_producto is not None
+                and not (
+                    aprendizaje
+                    .codigo_producto_confirmado_id
+                )
+            ):
+                aprendizaje.codigo_producto_confirmado = (
+                    codigo_producto
+                )
+
+            if (
+                marca is not None
+                and not aprendizaje.marca_confirmada_id
+            ):
+                aprendizaje.marca_confirmada = marca
 
             if observacion:
                 aprendizaje.observacion = (
@@ -439,18 +832,24 @@ class AprendizajeProductoService:
             aprendizaje.save()
 
         else:
+            fue_creado = True
+
             aprendizaje = (
                 AprendizajeProducto.objects.create(
                     detalle_original=detalle_original,
                     proveedor=proveedor,
                     origen=origen,
                     texto_original=texto_original,
-                    texto_normalizado=texto_normalizado,
+                    texto_normalizado=(
+                        texto_normalizado
+                    ),
                     codigo_original=(
-                        codigo_original or None
+                        codigo_original
+                        or None
                     ),
                     codigo_normalizado=(
-                        codigo_normalizado or ""
+                        codigo_normalizado
+                        or ""
                     ),
                     producto_confirmado=producto,
                     categoria_confirmada=categoria,
@@ -488,8 +887,12 @@ class AprendizajeProductoService:
         return {
             "aprendizaje": aprendizaje,
             "alias": alias,
-            "creado": aprendizaje.veces_confirmado == 1,
+            "creado": fue_creado,
         }
+
+    # =====================================================
+    # CONFIRMACIÓN O CORRECCIÓN DE SUGERENCIA
+    # =====================================================
 
     @classmethod
     @transaction.atomic
@@ -504,10 +907,14 @@ class AprendizajeProductoService:
         usuario=None,
         corregida=False,
         motivo=None,
+        detalle_normalizado=None,
     ):
         """
         Confirma o corrige una SugerenciaProducto y registra
         el aprendizaje resultante.
+
+        detalle_normalizado puede enviarse cuando la sugerencia
+        corresponde a un detalle manual o normalizado de compras.
         """
 
         if not isinstance(
@@ -515,13 +922,16 @@ class AprendizajeProductoService:
             SugerenciaProducto,
         ):
             raise ValidationError(
-                "Debe proporcionar una SugerenciaProducto válida."
+                "Debe proporcionar una "
+                "SugerenciaProducto válida."
             )
 
         sugerencia = (
             SugerenciaProducto.objects
             .select_for_update()
-            .get(pk=sugerencia.pk)
+            .get(
+                pk=sugerencia.pk
+            )
         )
 
         if sugerencia.estado in {
@@ -543,13 +953,19 @@ class AprendizajeProductoService:
             or (
                 producto.categoria
                 if producto
-                else sugerencia.categoria_sugerida
+                else (
+                    sugerencia
+                    .categoria_sugerida
+                )
             )
         )
 
         codigo_producto = (
             codigo_producto
-            or sugerencia.codigo_producto_sugerido
+            or (
+                sugerencia
+                .codigo_producto_sugerido
+            )
         )
 
         marca = (
@@ -571,33 +987,44 @@ class AprendizajeProductoService:
         ]
         marca = relaciones["marca"]
 
-        realmente_corregida = corregida or any([
-            sugerencia.producto_sugerido_id
-            != producto.pk,
-
-            sugerencia.categoria_sugerida_id
-            != categoria.pk,
-
-            sugerencia.codigo_producto_sugerido_id
-            != (
-                codigo_producto.pk
-                if codigo_producto
-                else None
-            ),
-
-            sugerencia.marca_sugerida_id
-            != (
-                marca.pk
-                if marca
-                else None
-            ),
-        ])
+        realmente_corregida = (
+            corregida
+            or any([
+                (
+                    sugerencia.producto_sugerido_id
+                    != producto.pk
+                ),
+                (
+                    sugerencia.categoria_sugerida_id
+                    != categoria.pk
+                ),
+                (
+                    sugerencia
+                    .codigo_producto_sugerido_id
+                    != (
+                        codigo_producto.pk
+                        if codigo_producto
+                        else None
+                    )
+                ),
+                (
+                    sugerencia.marca_sugerida_id
+                    != (
+                        marca.pk
+                        if marca
+                        else None
+                    )
+                ),
+            ])
+        )
 
         sugerencia.producto_confirmado = producto
         sugerencia.categoria_confirmada = categoria
+
         sugerencia.codigo_producto_confirmado = (
             codigo_producto
         )
+
         sugerencia.marca_confirmada = marca
 
         sugerencia.estado = (
@@ -608,6 +1035,7 @@ class AprendizajeProductoService:
 
         sugerencia.revisado_por = usuario
         sugerencia.revisado_en = timezone.now()
+
         sugerencia.motivo_revision = (
             str(motivo).strip()
             if motivo
@@ -623,22 +1051,31 @@ class AprendizajeProductoService:
         )
 
         resultado = cls.registrar(
-            texto_original=sugerencia.texto_entrada,
-            codigo_original=sugerencia.codigo_entrada,
+            texto_original=(
+                sugerencia.texto_entrada
+            ),
+            codigo_original=(
+                sugerencia.codigo_entrada
+            ),
             producto=producto,
             categoria=categoria,
             codigo_producto=codigo_producto,
             marca=marca,
             proveedor=sugerencia.proveedor,
-            detalle_original=sugerencia.detalle_original,
+            detalle_original=(
+                sugerencia.detalle_original
+            ),
+            detalle_normalizado=(
+                detalle_normalizado
+            ),
             origen=origen_aprendizaje,
             usuario=usuario,
             confianza=sugerencia.confianza,
             observacion=(
                 motivo
                 or (
-                    "Aprendizaje generado al confirmar "
-                    "una sugerencia."
+                    "Aprendizaje generado al "
+                    "confirmar una sugerencia."
                 )
             ),
             crear_alias=True,
@@ -648,6 +1085,10 @@ class AprendizajeProductoService:
 
         return resultado
 
+    # =====================================================
+    # RECHAZO DE SUGERENCIA
+    # =====================================================
+
     @staticmethod
     @transaction.atomic
     def rechazar_sugerencia(
@@ -656,32 +1097,46 @@ class AprendizajeProductoService:
         usuario=None,
         motivo=None,
     ):
+        """
+        Rechaza una sugerencia pendiente.
+
+        Una sugerencia rechazada no genera aprendizaje positivo.
+        """
+
         if not isinstance(
             sugerencia,
             SugerenciaProducto,
         ):
             raise ValidationError(
-                "Debe proporcionar una SugerenciaProducto válida."
+                "Debe proporcionar una "
+                "SugerenciaProducto válida."
             )
 
         sugerencia = (
             SugerenciaProducto.objects
             .select_for_update()
-            .get(pk=sugerencia.pk)
+            .get(
+                pk=sugerencia.pk
+            )
         )
 
         if sugerencia.estado != "PENDIENTE":
             raise ValidationError(
-                "Solo se pueden rechazar sugerencias pendientes."
+                "Solo se pueden rechazar "
+                "sugerencias pendientes."
             )
 
         sugerencia.estado = "RECHAZADA"
         sugerencia.revisado_por = usuario
         sugerencia.revisado_en = timezone.now()
+
         sugerencia.motivo_revision = (
             str(motivo).strip()
             if motivo
-            else "Sugerencia rechazada por el usuario."
+            else (
+                "Sugerencia rechazada "
+                "por el usuario."
+            )
         )
 
         sugerencia.save()

@@ -207,7 +207,64 @@ class Categoria(models.Model):
 
     def __str__(self):
         return self.nombre
+    
 
+class TerminoCategoria(models.Model):
+    TIPOS = [
+        ("POSITIVO", "Positivo"),
+        ("NEGATIVO", "Negativo"),
+        ("SINONIMO", "Sinónimo"),
+    ]
+
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.CASCADE,
+        related_name="terminos_clasificacion",
+    )
+
+    termino = models.CharField(
+        max_length=150,
+    )
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPOS,
+        default="POSITIVO",
+    )
+
+    peso = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("10.00"),
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    class Meta:
+        ordering = ["categoria", "termino"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["categoria", "termino", "tipo"],
+                name="termino_categoria_unico",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.termino:
+            self.termino = self.termino.strip().upper()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.categoria} - "
+            f"{self.termino} - "
+            f"{self.tipo}"
+        )
 
 # =========================================================
 # MARCAS DE FABRICANTE / PRODUCTO
@@ -1988,7 +2045,10 @@ class SugerenciaProducto(models.Model):
         db_index=True,
     )
 
-    texto_entrada = models.TextField()
+    texto_entrada = models.TextField(
+        blank=True,
+        default="",
+    )
 
     texto_normalizado = models.TextField(
         blank=True,
@@ -2052,13 +2112,17 @@ class SugerenciaProducto(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
     )
-
+    
     puntaje_texto = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
     )
-
+    puntaje_categoria = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
     puntaje_compras = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -2198,18 +2262,23 @@ class SugerenciaProducto(models.Model):
     def clean(self):
         errores = {}
 
-        if (
-            not self.texto_entrada
-            or not self.texto_entrada.strip()
-        ):
+        texto_valido = bool(
+            self.texto_entrada
+            and self.texto_entrada.strip()
+        )
+        codigo_valido = bool(
+                self.codigo_entrada
+                and self.codigo_entrada.strip()
+                )
+        if not texto_valido and not codigo_valido:
             errores["texto_entrada"] = (
-                "El texto de entrada es obligatorio."
+                "Debe ingresar una descripción o un código."
             )
-
         campos_puntaje = [
             "confianza",
             "puntaje_codigo",
             "puntaje_texto",
+            "puntaje_categoria",
             "puntaje_compras",
             "puntaje_aprendizaje",
             "puntaje_alias",

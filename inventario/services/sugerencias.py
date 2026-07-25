@@ -243,14 +243,7 @@ class MotorSugerenciasProducto:
         producto,
         codigo_producto=None,
     ):
-        return (
-            producto.pk,
-            (
-                codigo_producto.pk
-                if codigo_producto
-                else None
-            ),
-        )
+        return producto.pk
 
     @staticmethod
     def _estructura_resultado(
@@ -272,6 +265,7 @@ class MotorSugerenciasProducto:
 
             "puntaje_codigo": CERO,
             "puntaje_texto": CERO,
+            "puntaje_categoria": CERO,
             "puntaje_compras": CERO,
             "puntaje_aprendizaje": CERO,
             "puntaje_alias": CERO,
@@ -327,24 +321,28 @@ class MotorSugerenciasProducto:
             return
 
         codigos = (
-            CodigoProducto.objects
-            .filter(activo=True)
-            .select_related(
-                "producto",
-                "producto__categoria",
-                "marca",
+                CodigoProducto.objects
+                .filter(
+                    activo=True,
+                    producto__activo=True,
+                    producto__descontinuado=False,
+                )
+                .select_related(
+                    "producto",
+                    "producto__categoria",
+                    "marca",
+                )
+                .filter(
+                    Q(
+                        codigo_normalizado=
+                        codigo_normalizado
+                    )
+                    | Q(
+                        codigo_barras=
+                        codigo_normalizado
+                    )
+                )[:self.limite_candidatos]
             )
-            .filter(
-                Q(
-                    codigo_normalizado=
-                    codigo_normalizado
-                )
-                | Q(
-                    codigo_barras=
-                    codigo_normalizado
-                )
-            )[:self.limite_candidatos]
-        )
 
         for codigo_producto in codigos:
             producto = codigo_producto.producto
@@ -606,6 +604,7 @@ class MotorSugerenciasProducto:
         self,
         *,
         texto,
+        codigo_original,
         codigo_normalizado,
         proveedor,
         excluir_detalle=None,
@@ -641,10 +640,10 @@ class MotorSugerenciasProducto:
             ],
         )
 
-        if codigo_normalizado:
+        if codigo_original:
             filtro |= Q(
                 detalle_original__codigo_proveedor__icontains=
-                codigo_normalizado
+                codigo_original
             )
 
         if filtro:
@@ -820,16 +819,28 @@ class MotorSugerenciasProducto:
                     clave,
                     self._estructura_resultado(
                         producto=producto,
+                        codigo_producto=codigo_producto,
                     ),
                 )
-
+                if (
+                    codigo_producto
+                    and (
+                        resultado["codigo_producto"] is None
+                        or puntaje_codigo
+                        > resultado["puntaje_codigo"]
+                    )
+                ):
+                    resultado["codigo_producto"] = codigo_producto
+                    resultado["marca"] = codigo_producto.marca
                 resultado["puntaje_texto"] = max(
-                    resultado["puntaje_texto"],
-                    puntaje_producto,
-                )
+                        resultado["puntaje_texto"],
+                        puntaje_producto,
+                        puntaje_comercial,
+                    )
 
-                resultado["fuentes"].add(
-                    "CATALOGO"
+                resultado["puntaje_codigo"] = max(
+                    resultado["puntaje_codigo"],
+                    puntaje_codigo,
                 )
 
                 continue
@@ -1092,6 +1103,8 @@ class MotorSugerenciasProducto:
     # =====================================================
     # API PRINCIPAL
     # =====================================================
+    
+
     def sugerir(
         self,
         *,
@@ -1103,6 +1116,9 @@ class MotorSugerenciasProducto:
     ):
         origen = self._validar_origen(origen)
 
+        # =====================================================
+        # DATOS PROVENIENTES DE UNA FACTURA
+        # =====================================================
         if detalle_original is not None:
             if not isinstance(
                 detalle_original,
@@ -1129,8 +1145,16 @@ class MotorSugerenciasProducto:
 
             origen = "FACTURA"
 
-        texto_original = str(texto or "").strip()
-        codigo_original = str(codigo or "").strip().upper()
+        # =====================================================
+        # NORMALIZACIÓN DE LA ENTRADA
+        # =====================================================
+        texto_original = str(
+            texto or ""
+        ).strip()
+
+        codigo_original = str(
+            codigo or ""
+        ).strip().upper()
 
         texto_normalizado = normalizar_texto(
             texto_original
@@ -1140,20 +1164,34 @@ class MotorSugerenciasProducto:
             codigo_original
         )
 
-        if not texto_normalizado and not codigo_normalizado:
+        if (
+            not texto_normalizado
+            and not codigo_normalizado
+        ):
             raise ValidationError(
                 "Debe escribir una descripción o un código."
             )
 
         resultados = {}
 
-        # 1. Coincidencias exactas por código.
+        # =====================================================
+        # 1. COINCIDENCIA EXACTA POR CÓDIGO
+        # =====================================================
         self._buscar_por_codigo(
             codigo_normalizado=codigo_normalizado,
             resultados=resultados,
         )
 
-        # 2. Historial de aprendizajes confirmados.
+        # Guardamos este estado inmediatamente después de buscar
+        # el código exacto. En este momento todavía no existen
+        # resultados provenientes de otras fuentes.
+        hay_codigo_exacto_inicial = bool(
+            resultados
+        )
+
+        # =====================================================
+        # 2. APRENDIZAJES CONFIRMADOS
+        # =====================================================
         self._buscar_en_aprendizajes(
             texto=texto_normalizado,
             codigo_normalizado=codigo_normalizado,
@@ -1161,57 +1199,142 @@ class MotorSugerenciasProducto:
             resultados=resultados,
         )
 
-        # 3. Alias confirmados.
-        self._buscar_en_alias(
-            texto=texto_normalizado,
-            resultados=resultados,
-        )
+        # =====================================================
+        # 3. ALIAS CONFIRMADOS
+        # =====================================================
+        # Los alias dependen de una descripción textual.
+        # Si el texto está vacío, no debemos recorrer todos
+        # los alias existentes.
+        if texto_normalizado:
+            self._buscar_en_alias(
+                texto=texto_normalizado,
+                resultados=resultados,
+            )
 
-        # 4. Compras históricas confirmadas.
+        # =====================================================
+        # 4. COMPRAS HISTÓRICAS CONFIRMADAS
+        # =====================================================
         self._buscar_en_compras(
             texto=texto_normalizado,
+            codigo_original=codigo_original,
             codigo_normalizado=codigo_normalizado,
             proveedor=proveedor,
             excluir_detalle=detalle_original,
             resultados=resultados,
         )
 
-        # 5. Catálogo actual.
-        self._buscar_en_catalogo(
-            texto=texto_normalizado,
-            codigo_normalizado=codigo_normalizado,
-            resultados=resultados,
-        )
+        # =====================================================
+        # 5. CATÁLOGO ACTUAL
+        # =====================================================
+        # Consultamos el catálogo completo cuando:
+        #
+        # - existe una descripción para comparar; o
+        # - el código no tuvo una coincidencia exacta.
+        #
+        # Si se recibió solamente un código exacto, no es
+        # necesario comparar ese código contra todo el catálogo.
+        if (
+            texto_normalizado
+            or not hay_codigo_exacto_inicial
+        ):
+            self._buscar_en_catalogo(
+                texto=texto_normalizado,
+                codigo_normalizado=codigo_normalizado,
+                resultados=resultados,
+            )
 
-        # Ordena todos los candidatos, sin limitarlos todavía.
+        # =====================================================
+        # ORDENAMIENTO GENERAL
+        # =====================================================
         todos_los_resultados = self._ordenar_resultados(
             resultados
         )
 
-        # Categorías obtenidas por similitud de productos.
-        categorias_similitud = self._agrupar_categorias(
-            todos_los_resultados
+        # =====================================================
+        # DETECCIÓN FINAL DE CÓDIGOS EXACTOS
+        # =====================================================
+        resultados_codigo_exacto = [
+                item
+                for item in todos_los_resultados
+                if (
+                    item["puntaje_codigo"]
+                    >= Decimal("99.00")
+                    and "CODIGO_EXACTO" in item["fuentes"]
+                )
+            ]
+
+        hay_codigo_exacto = bool(
+            resultados_codigo_exacto
         )
 
-        # Categorías obtenidas por frecuencia y concentración
-        # de los tokens en la propia base de datos.
-        categorias_evidencia = (
-            self.motor_evidencia.analizar(
-                texto_normalizado
+        # =====================================================
+        # RESULTADO CUANDO EXISTE CÓDIGO EXACTO
+        # =====================================================
+        if hay_codigo_exacto:
+            # Conservamos alternativas solamente cuando tienen
+            # evidencia suficientemente fuerte.
+            alternativas_confiables = [
+                item
+                for item in todos_los_resultados
+                if (
+                    item["puntaje_codigo"]
+                    < Decimal("99.00")
+                    and item["confianza"]
+                    >= Decimal("60.00")
+                )
+            ]
+
+            coincidencias = (
+                resultados_codigo_exacto
+                + alternativas_confiables
+            )[:self.limite_resultados]
+
+            # La categoría debe salir de los productos encontrados
+            # por código exacto, no de similitudes débiles.
+            categorias_similitud = (
+                self._agrupar_categorias(
+                    resultados_codigo_exacto
+                )
             )
-        )
 
-        # Combina ambos enfoques.
-        categorias = self._combinar_categorias(
-            categorias_similitud,
-            categorias_evidencia,
-        )
+            # No necesitamos evidencia colectiva de texto para
+            # determinar la categoría de un código exacto.
+            categorias_evidencia = []
 
-        # Solo ahora limitamos los productos que se mostrarán.
-        coincidencias = todos_los_resultados[
-            :self.limite_resultados
-        ]
+            categorias = categorias_similitud
 
+        # =====================================================
+        # RESULTADO CUANDO NO EXISTE CÓDIGO EXACTO
+        # =====================================================
+        else:
+            categorias_similitud = (
+                self._agrupar_categorias(
+                    todos_los_resultados
+                )
+            )
+
+            # El motor de evidencia solo debe ejecutarse cuando
+            # realmente existe texto descriptivo.
+            categorias_evidencia = (
+                self.motor_evidencia.analizar(
+                    texto_normalizado
+                )
+                if texto_normalizado
+                else []
+            )
+
+            categorias = self._combinar_categorias(
+                categorias_similitud,
+                categorias_evidencia,
+            )
+
+            coincidencias = todos_los_resultados[
+                :self.limite_resultados
+            ]
+
+        # =====================================================
+        # MEJORES RESULTADOS
+        # =====================================================
         mejor_producto_resultado = (
             coincidencias[0]
             if coincidencias
@@ -1224,6 +1347,9 @@ class MotorSugerenciasProducto:
             else None
         )
 
+        # =====================================================
+        # RESPUESTA DEL MOTOR
+        # =====================================================
         return {
             "origen": origen,
 
@@ -1243,11 +1369,11 @@ class MotorSugerenciasProducto:
             ),
 
             "mejor_categoria": (
-                mejor_categoria_resultado["categoria"]
-                if mejor_categoria_resultado
+                mejor_producto_resultado["categoria"]
+                if mejor_producto_resultado
                 else (
-                    mejor_producto_resultado["categoria"]
-                    if mejor_producto_resultado
+                    mejor_categoria_resultado["categoria"]
+                    if mejor_categoria_resultado
                     else None
                 )
             ),
@@ -1266,28 +1392,34 @@ class MotorSugerenciasProducto:
                 else None
             ),
 
-            # Confianza del producto individual.
+            # Confianza del mejor producto individual.
             "confianza": (
                 mejor_producto_resultado["confianza"]
                 if mejor_producto_resultado
                 else CERO
             ),
 
-            # Confianza de la categoría combinando similitud
-            # y evidencia colectiva.
+            # Confianza de la categoría.
             "confianza_categoria": (
-                mejor_categoria_resultado["puntaje"]
-                if mejor_categoria_resultado
-                else CERO
+                mejor_producto_resultado["confianza"]
+                if mejor_producto_resultado
+                else (
+                    mejor_categoria_resultado["puntaje"]
+                    if mejor_categoria_resultado
+                    else CERO
+                )
             ),
 
             "coincidencias": coincidencias,
             "categorias": categorias,
 
-            # Útil para depurar y mostrar de dónde salió
-            # la categoría sugerida.
+            # Información útil para depuración.
             "categorias_similitud": categorias_similitud,
             "categorias_evidencia": categorias_evidencia,
+
+            # Indica a la vista o al frontend si la identificación
+            # se resolvió mediante un código exacto.
+            "hay_codigo_exacto": hay_codigo_exacto,
         }
     @staticmethod
     def _combinar_categorias(
@@ -1472,6 +1604,10 @@ class MotorSugerenciasProducto:
                 "puntaje_texto",
                 CERO,
             ),
+            puntaje_categoria=resultado.get(
+                "confianza_categoria",
+                CERO,
+            ),
             puntaje_compras=mejor_resultado.get(
                 "puntaje_compras",
                 CERO,
@@ -1566,21 +1702,23 @@ class MotorSugerenciasProducto:
                     "texto": float(
                         item["puntaje_texto"]
                     ),
+                    "categoria": float(
+                        item.get(
+                            "puntaje_categoria",
+                            item["confianza"],
+                        )
+                    ),
                     "compras": float(
                         item["puntaje_compras"]
                     ),
                     "aprendizaje": float(
-                        item[
-                            "puntaje_aprendizaje"
-                        ]
+                        item["puntaje_aprendizaje"]
                     ),
                     "alias": float(
                         item["puntaje_alias"]
                     ),
                     "proveedor": float(
-                        item[
-                            "puntaje_proveedor"
-                        ]
+                        item["puntaje_proveedor"]
                     ),
                 },
 
@@ -1612,6 +1750,13 @@ class MotorSugerenciasProducto:
                 "codigo_original"
             ],
 
+            "hay_codigo_exacto": bool(
+                resultado.get(
+                    "hay_codigo_exacto",
+                    False,
+                )
+            ),
+
             "confianza": float(
                 resultado["confianza"]
             ),
@@ -1631,7 +1776,7 @@ class MotorSugerenciasProducto:
                     "coincidencias"
                 ]
             ],
-        }
+}
 
         if resultado.get("sugerencia"):
             datos["sugerencia_id"] = (

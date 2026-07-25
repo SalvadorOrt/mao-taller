@@ -10,11 +10,12 @@ from compras.models import (
     DetalleFacturaOriginal,
 )
 from inventario.models import (
+    AliasProducto,
+    AprendizajeProducto,
     Categoria,
     CodigoProducto,
     MarcaRepuesto,
     Producto,
-    SugerenciaProducto,
 )
 
 from .aprendizaje import AprendizajeProductoService
@@ -29,14 +30,16 @@ CERO = Decimal("0.00")
 
 class CreacionProductoService:
     """
-    Crea productos y códigos comerciales desde:
+    Crea productos y códigos comerciales desde diferentes flujos:
 
     - creación individual;
     - detalle de factura;
     - mostrador.
 
-    También registra aprendizaje cuando la información ya fue
-    confirmada por el usuario.
+    El servicio registra aprendizaje únicamente cuando el usuario
+    guarda o vincula una decisión real.
+
+    Consultar sugerencias no genera aprendizaje automáticamente.
     """
 
     ORIGENES_VALIDOS = {
@@ -56,6 +59,12 @@ class CreacionProductoService:
         default=None,
         nombre="valor",
     ):
+        """
+        Convierte un valor a Decimal.
+
+        Si el valor está vacío, devuelve el valor predeterminado.
+        """
+
         if valor in {
             None,
             "",
@@ -64,6 +73,7 @@ class CreacionProductoService:
 
         try:
             resultado = Decimal(str(valor))
+
         except (
             InvalidOperation,
             TypeError,
@@ -105,6 +115,40 @@ class CreacionProductoService:
             )
 
         return marca
+
+    @staticmethod
+    def _validar_producto(producto):
+        if not isinstance(producto, Producto):
+            raise ValidationError(
+                "Debe proporcionar un producto válido."
+            )
+
+        return producto
+
+    @staticmethod
+    def _validar_codigo_producto(codigo_producto):
+        if not isinstance(
+            codigo_producto,
+            CodigoProducto,
+        ):
+            raise ValidationError(
+                "Debe proporcionar un código de producto válido."
+            )
+
+        return codigo_producto
+
+    @staticmethod
+    def _validar_detalle_original(detalle_original):
+        if not isinstance(
+            detalle_original,
+            DetalleFacturaOriginal,
+        ):
+            raise ValidationError(
+                "Debe proporcionar un detalle original "
+                "de factura válido."
+            )
+
+        return detalle_original
 
     @staticmethod
     def _validar_texto(nombre_base):
@@ -151,9 +195,23 @@ class CreacionProductoService:
         codigo,
         marca,
     ):
+        """
+        Busca un código equivalente de la misma marca.
+
+        La búsqueda usa codigo_normalizado, por lo que reconoce
+        variaciones como:
+
+        AFI-22005
+        AFI 22005
+        AFI22005
+        """
+
         codigo_normalizado = normalizar_codigo(
             codigo
         )
+
+        if not codigo_normalizado:
+            return None
 
         return (
             CodigoProducto.objects
@@ -175,9 +233,20 @@ class CreacionProductoService:
         nombre_base,
         categoria,
     ):
+        """
+        Busca un producto con el mismo nombre normalizado
+        dentro de la categoría indicada.
+
+        No realiza similitud aproximada. Las sugerencias y posibles
+        duplicados aproximados pertenecen al motor de sugerencias.
+        """
+
         nombre_normalizado = normalizar_texto(
             nombre_base
         )
+
+        if not nombre_normalizado:
+            return None
 
         productos = (
             Producto.objects
@@ -185,6 +254,7 @@ class CreacionProductoService:
             .filter(
                 categoria=categoria,
                 activo=True,
+                descontinuado=False,
             )
             .only(
                 "id",
@@ -195,12 +265,11 @@ class CreacionProductoService:
         )
 
         for producto in productos:
-            if (
-                normalizar_texto(
-                    producto.nombre_base
-                )
-                == nombre_normalizado
-            ):
+            producto_normalizado = normalizar_texto(
+                producto.nombre_base
+            )
+
+            if producto_normalizado == nombre_normalizado:
                 return producto
 
         return None
@@ -218,7 +287,7 @@ class CreacionProductoService:
             marca=marca,
         )
 
-        if not existente:
+        if existente is None:
             return None
 
         if (
@@ -228,7 +297,7 @@ class CreacionProductoService:
             return existente
 
         raise ValidationError(
-            "Ya existe un código con la misma marca: "
+            "Ya existe un código equivalente con la misma marca: "
             f"{existente.codigo}. Pertenece al producto "
             f"{existente.producto}."
         )
@@ -269,7 +338,7 @@ class CreacionProductoService:
                 )
             )
 
-            if producto_existente:
+            if producto_existente is not None:
                 return producto_existente, False
 
         producto = Producto(
@@ -316,10 +385,9 @@ class CreacionProductoService:
         porcentaje_iva_costo=Decimal("0.00"),
         permitir_codigo_existente=False,
     ):
-        if not isinstance(producto, Producto):
-            raise ValidationError(
-                "Debe proporcionar un producto válido."
-            )
+        producto = cls._validar_producto(
+            producto
+        )
 
         marca = cls._validar_marca(
             marca
@@ -329,13 +397,15 @@ class CreacionProductoService:
             codigo
         )
 
-        existente = cls._validar_codigo_no_asignado_otro_producto(
-            codigo=codigo,
-            marca=marca,
-            producto=producto,
+        existente = (
+            cls._validar_codigo_no_asignado_otro_producto(
+                codigo=codigo,
+                marca=marca,
+                producto=producto,
+            )
         )
 
-        if existente:
+        if existente is not None:
             if permitir_codigo_existente:
                 return existente, False
 
@@ -374,6 +444,35 @@ class CreacionProductoService:
             nombre="El porcentaje de IVA",
         )
 
+        if precio_compra is not None and precio_compra < CERO:
+            raise ValidationError(
+                "El precio de compra no puede ser negativo."
+            )
+
+        if precio_venta is not None and precio_venta < CERO:
+            raise ValidationError(
+                "El precio de venta no puede ser negativo."
+            )
+
+        if (
+            presentacion_cantidad is not None
+            and presentacion_cantidad <= CERO
+        ):
+            raise ValidationError(
+                "La cantidad de presentación debe ser "
+                "mayor que cero."
+            )
+
+        if margen < CERO:
+            raise ValidationError(
+                "El margen de ganancia no puede ser negativo."
+            )
+
+        if porcentaje_iva < CERO:
+            raise ValidationError(
+                "El porcentaje de IVA no puede ser negativo."
+            )
+
         codigo_producto = CodigoProducto(
             producto=producto,
             marca=marca,
@@ -389,9 +488,7 @@ class CreacionProductoService:
                 if nombre_comercial
                 else None
             ),
-            presentacion_cantidad=(
-                presentacion_cantidad
-            ),
+            presentacion_cantidad=presentacion_cantidad,
             presentacion_unidad=(
                 str(presentacion_unidad)
                 .strip()
@@ -430,6 +527,44 @@ class CreacionProductoService:
         sugerencia=None,
         confianza=100,
     ):
+        """
+        Registra memoria solamente después de guardar una decisión.
+
+        Si existe una SugerenciaProducto pendiente, la confirma o
+        corrige. Si no existe, registra directamente el aprendizaje.
+        """
+
+        texto_original = str(
+            texto_original or ""
+        ).strip()
+
+        codigo_original = str(
+            codigo_original or ""
+        ).strip()
+
+        if not texto_original and not codigo_original:
+            return None
+
+        producto = cls._validar_producto(
+            producto
+        )
+
+        codigo_producto = (
+            cls._validar_codigo_producto(
+                codigo_producto
+            )
+        )
+
+        if codigo_producto.producto_id != producto.pk:
+            raise ValidationError(
+                "El código seleccionado no pertenece "
+                "al producto indicado."
+            )
+
+        origen = cls._validar_origen(
+            origen
+        )
+
         if sugerencia is not None:
             return (
                 AprendizajeProductoService
@@ -457,7 +592,7 @@ class CreacionProductoService:
                 origen=origen,
                 usuario=usuario,
                 confianza=confianza,
-                crear_alias=True,
+                crear_alias=bool(texto_original),
             )
         )
 
@@ -474,6 +609,7 @@ class CreacionProductoService:
         nombre_base,
         marca,
         codigo,
+        texto_original=None,
         descripcion=None,
         nombre_comercial=None,
         tipo_codigo="aftermarket",
@@ -494,8 +630,17 @@ class CreacionProductoService:
         """
         Crea un producto desde el formulario individual.
 
-        El aprendizaje se registra únicamente después de que
-        el usuario ha confirmado y guardado la información.
+        Antes de ejecutar este método, la vista puede utilizar
+        MotorSugerenciasProducto.sugerir() para mostrar:
+
+        - productos parecidos;
+        - categoría sugerida;
+        - marca sugerida;
+        - códigos relacionados;
+        - posibles duplicados.
+
+        El aprendizaje se registra solamente cuando el usuario
+        finalmente guarda el producto.
         """
 
         producto, producto_creado = (
@@ -547,9 +692,12 @@ class CreacionProductoService:
 
         if registrar_aprendizaje:
             texto_aprendizaje = (
-                descripcion
-                or nombre_comercial
-                or nombre_base
+                str(texto_original).strip()
+                if texto_original
+                else (
+                    nombre_comercial
+                    or nombre_base
+                )
             )
 
             aprendizaje = (
@@ -604,25 +752,23 @@ class CreacionProductoService:
         vincular_detalle_normalizado=True,
     ):
         """
-        Crea un producto utilizando los datos originales de una
-        línea de factura.
+        Crea un producto usando una línea original de factura.
 
-        No modifica DetalleFacturaOriginal.
+        DetalleFacturaOriginal permanece inmutable. La interpretación
+        del usuario se almacena en DetalleFacturaNormalizado.
         """
 
-        if not isinstance(
-            detalle_original,
-            DetalleFacturaOriginal,
-        ):
-            raise ValidationError(
-                "Debe proporcionar un detalle "
-                "original de factura válido."
+        detalle_original = (
+            cls._validar_detalle_original(
+                detalle_original
             )
+        )
 
-        codigo_final = (
+        codigo_final = str(
             codigo
             or detalle_original.codigo_proveedor
-        )
+            or ""
+        ).strip()
 
         if not codigo_final:
             raise ValidationError(
@@ -630,10 +776,10 @@ class CreacionProductoService:
                 "Debe ingresar un código comercial."
             )
 
-        descripcion_original = (
+        descripcion_original = str(
             detalle_original.descripcion_proveedor
             or ""
-        )
+        ).strip()
 
         producto, producto_creado = (
             cls._crear_producto(
@@ -702,6 +848,12 @@ class CreacionProductoService:
         aprendizaje = None
 
         if registrar_aprendizaje:
+            proveedor = getattr(
+                detalle_original.factura,
+                "proveedor_rel",
+                None,
+            )
+
             aprendizaje = (
                 cls._registrar_aprendizaje(
                     texto_original=descripcion_original,
@@ -710,11 +862,7 @@ class CreacionProductoService:
                     codigo_producto=codigo_producto,
                     origen="FACTURA",
                     usuario=usuario,
-                    proveedor=(
-                        detalle_original
-                        .factura
-                        .proveedor_rel
-                    ),
+                    proveedor=proveedor,
                     detalle_original=detalle_original,
                     sugerencia=sugerencia,
                     confianza=confianza,
@@ -748,29 +896,26 @@ class CreacionProductoService:
         registrar_aprendizaje=True,
     ):
         """
-        Usa un producto que ya existe, sin crear uno nuevo.
+        Vincula una línea de factura con un producto ya existente.
+
+        No crea un nuevo Producto ni un nuevo CodigoProducto.
         """
 
-        if not isinstance(
-            detalle_original,
-            DetalleFacturaOriginal,
-        ):
-            raise ValidationError(
-                "El detalle original no es válido."
+        detalle_original = (
+            cls._validar_detalle_original(
+                detalle_original
             )
+        )
 
-        if not isinstance(producto, Producto):
-            raise ValidationError(
-                "El producto no es válido."
-            )
+        producto = cls._validar_producto(
+            producto
+        )
 
-        if not isinstance(
-            codigo_producto,
-            CodigoProducto,
-        ):
-            raise ValidationError(
-                "El código de producto no es válido."
+        codigo_producto = (
+            cls._validar_codigo_producto(
+                codigo_producto
             )
+        )
 
         if codigo_producto.producto_id != producto.pk:
             raise ValidationError(
@@ -788,6 +933,12 @@ class CreacionProductoService:
         aprendizaje = None
 
         if registrar_aprendizaje:
+            proveedor = getattr(
+                detalle_original.factura,
+                "proveedor_rel",
+                None,
+            )
+
             aprendizaje = (
                 cls._registrar_aprendizaje(
                     texto_original=(
@@ -802,11 +953,7 @@ class CreacionProductoService:
                     codigo_producto=codigo_producto,
                     origen="FACTURA",
                     usuario=usuario,
-                    proveedor=(
-                        detalle_original
-                        .factura
-                        .proveedor_rel
-                    ),
+                    proveedor=proveedor,
                     detalle_original=detalle_original,
                     sugerencia=sugerencia,
                     confianza=confianza,
@@ -831,6 +978,12 @@ class CreacionProductoService:
         producto,
         codigo_producto,
     ):
+        """
+        Crea o actualiza la interpretación de una línea de factura.
+
+        El registro original no se modifica.
+        """
+
         normalizado, _ = (
             DetalleFacturaNormalizado.objects
             .select_for_update()
@@ -877,7 +1030,8 @@ class CreacionProductoService:
             )
         )
 
-        # Si ya existía, actualizamos únicamente la interpretación.
+        # Solo actualizamos la interpretación.
+        # DetalleFacturaOriginal permanece inmutable.
         normalizado.tipo_destino = "INVENTARIO"
         normalizado.aplica_iva = (
             detalle_original.aplica_iva
@@ -914,6 +1068,7 @@ class CreacionProductoService:
             detalle_original.descuento
         )
 
+        normalizado.full_clean()
         normalizado.save()
 
         return normalizado
@@ -930,10 +1085,11 @@ class CreacionProductoService:
         nueva_categoria,
     ):
         """
-        Cambia la categoría del producto.
+        Cambia la categoría de un producto y actualiza todas las
+        referencias derivadas de clasificación.
 
-        El modelo Producto se encarga de regenerar el SKU y de
-        conservar el SKU anterior, según el diseño establecido.
+        El modelo Producto debe encargarse de regenerar el SKU y
+        conservar el SKU anterior, según las reglas del proyecto.
         """
 
         if not isinstance(producto, Producto):
@@ -959,13 +1115,28 @@ class CreacionProductoService:
             return producto
 
         producto.categoria = nueva_categoria
+        producto.full_clean()
         producto.save()
 
-        # Conservamos coherentes los datos normalizados.
+        # Actualizamos interpretaciones de factura.
         DetalleFacturaNormalizado.objects.filter(
             producto_rel=producto,
         ).update(
             categoria_limpia=nueva_categoria.nombre,
+        )
+
+        # Actualizamos alias asociados al producto.
+        AliasProducto.objects.filter(
+            producto=producto,
+        ).update(
+            categoria=nueva_categoria,
+        )
+
+        # Actualizamos aprendizajes confirmados asociados.
+        AprendizajeProducto.objects.filter(
+            producto_confirmado=producto,
+        ).update(
+            categoria_confirmada=nueva_categoria,
         )
 
         return producto

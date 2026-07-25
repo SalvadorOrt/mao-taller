@@ -1271,7 +1271,26 @@ class DetalleFacturaNormalizado(models.Model):
         null=True,
         blank=True,
     )
+    codigo_origen = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text=(
+            "Código exactamente como llegó desde el proveedor "
+            "o como fue digitado manualmente."
+        ),
+    )
 
+    descripcion_origen = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=(
+            "Descripción original del proveedor antes de que "
+            "el usuario la normalice o vincule al inventario."
+        ),
+    )
     tipo_destino = models.CharField(
         max_length=20,
         choices=DESTINO_CHOICES,
@@ -1460,7 +1479,11 @@ class DetalleFacturaNormalizado(models.Model):
                 .descripcion_proveedor
             )
 
-        return "INGRESO MANUAL"
+        return (
+            self.descripcion_origen
+            or "INGRESO MANUAL"
+        )
+
 
     @property
     def codigo_original(self):
@@ -1470,7 +1493,10 @@ class DetalleFacturaNormalizado(models.Model):
                 .codigo_proveedor
             )
 
-        return "MANUAL"
+        return (
+            self.codigo_origen
+            or "SIN CÓDIGO"
+        )
 
     @property
     def importe_bruto(self):
@@ -1532,12 +1558,14 @@ class DetalleFacturaNormalizado(models.Model):
 
         if (
             tiene_factura_manual
-            and self.factura_manual.origen_ingreso
-            != "MANUAL"
+            and (
+                not self.descripcion_origen
+                or not self.descripcion_origen.strip()
+            )
         ):
-            errores["factura_manual"] = (
-                "factura_manual solo puede utilizarse "
-                "con facturas de origen MANUAL."
+            errores["descripcion_origen"] = (
+                "Debe ingresar la descripción original "
+                "del detalle manual."
             )
 
         if (
@@ -1660,6 +1688,19 @@ class DetalleFacturaNormalizado(models.Model):
             raise ValidationError(errores)
 
     def save(self, *args, **kwargs):
+        if self.codigo_origen:
+            self.codigo_origen = (
+                self.codigo_origen
+                .strip()
+                .upper()
+            )
+
+        if self.descripcion_origen:
+            self.descripcion_origen = (
+                self.descripcion_origen
+                .strip()
+            )
+
         if self.codigo_sistema:
             self.codigo_sistema = (
                 self.codigo_sistema
@@ -1669,7 +1710,8 @@ class DetalleFacturaNormalizado(models.Model):
 
         if self.nombre_limpio:
             self.nombre_limpio = (
-                self.nombre_limpio.strip()
+                self.nombre_limpio
+                .strip()
             )
 
         if self.marca_limpia:
@@ -1688,7 +1730,8 @@ class DetalleFacturaNormalizado(models.Model):
 
         if self.codigo_barras:
             self.codigo_barras = (
-                self.codigo_barras.strip()
+                self.codigo_barras
+                .strip()
             )
 
         if self.placa_vehiculo:
@@ -1702,7 +1745,8 @@ class DetalleFacturaNormalizado(models.Model):
 
         if self.observaciones:
             self.observaciones = (
-                self.observaciones.strip()
+                self.observaciones
+                .strip()
             )
 
         if self.tipo_destino in {
