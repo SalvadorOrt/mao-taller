@@ -1,20 +1,52 @@
 {% load l10n %}
 
 <style>
+    .totals-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-items: start;
+    }
+
+    .total-box {
+        min-width: 0;
+        min-height: 0;
+        height: auto;
+        padding: 11px 13px;
+        align-self: start;
+    }
+
+    .total-box.final {
+        grid-column: 1 / -1;
+        width: 100%;
+        padding: 12px 14px;
+    }
+
+    .total-label {
+        margin-bottom: 4px;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    .total-value {
+        font-size: 18px;
+        line-height: 1.2;
+    }
+
     .descuento-segmentado {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 3px;
         padding: 3px;
-        margin-top: 6px;
-        border-radius: 10px;
+        margin-top: 5px;
+        border-radius: 9px;
         background: #ececf1;
     }
 
     .descuento-opcion {
         border: 0;
-        border-radius: 8px;
-        padding: 8px 10px;
+        border-radius: 7px;
+        padding: 7px 8px;
         background: transparent;
         color: #666;
         font-size: 12px;
@@ -37,26 +69,63 @@
         opacity: 0.65;
     }
 
+    #descuento_ingresado {
+        width: 100%;
+        height: 38px;
+        margin-top: 5px;
+        padding: 7px 10px;
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    #descuento_ingresado.is-invalid {
+        border-color: #ff3b30;
+        box-shadow:
+            0 0 0 3px rgba(255, 59, 48, 0.12);
+    }
+
+    .descuento-error {
+        display: none;
+        margin-top: 5px;
+        color: #d70015;
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .descuento-error.visible {
+        display: block;
+    }
+
     .descuento-resumen {
-        margin-top: 8px;
-        padding: 7px 9px;
-        border-radius: 8px;
+        margin-top: 5px;
+        padding: 6px 8px;
+        border-radius: 7px;
         background: rgba(0, 0, 0, 0.035);
         font-size: 12px;
         color: #666;
-        line-height: 1.35;
+        line-height: 1.25;
     }
 
     .descuento-resumen strong {
         color: #333;
     }
 
+    .descuento-total-valor {
+        margin-top: 5px;
+    }
+
     .iva-checkbox-label {
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-top: 8px;
+        margin-top: 6px;
         font-size: 12px;
+        line-height: 1.2;
+    }
+
+    .iva-checkbox-label input {
+        margin: 0;
     }
 
     .iva-checkbox-label.editable {
@@ -67,6 +136,23 @@
         cursor: default;
         opacity: 0.7;
     }
+
+    @media (max-width: 900px) {
+        .totals-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .totals-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .total-box.final {
+            grid-column: auto;
+        }
+    }
 </style>
 
 <div class="ot-card">
@@ -75,6 +161,7 @@
     </div>
 
     <div class="totals-grid">
+
         <div class="total-box">
             <div class="total-label">
                 Sub total repuestos
@@ -164,18 +251,29 @@
                 value="{{ descuento_ingresado_html|default:'0.00' }}"
                 min="0"
                 step="0.01"
+                inputmode="decimal"
                 class="form-control"
-                style="
-                    width: 100%;
-                    margin-top: 6px;
-                "
+                aria-describedby="descuentoError"
                 {% if puede_editar %}
-                    oninput="recalcularTotales()"
-                    onchange="recalcularTotales()"
+                    oninput="
+                        recalcularTotales();
+                        mostrarEstadoDescuento();
+                    "
+                    onchange="
+                        recalcularTotales();
+                        mostrarEstadoDescuento();
+                    "
                 {% else %}
                     readonly
                 {% endif %}
             >
+
+            <div
+                id="descuentoError"
+                class="descuento-error"
+                role="alert"
+                aria-live="polite"
+            ></div>
 
             <div
                 id="descuentoEquivalente"
@@ -195,8 +293,7 @@
             </div>
 
             <div
-                class="total-value"
-                style="margin-top: 6px;"
+                class="total-value descuento-total-valor"
             >
                 -$<span id="descuentoTotal">
                     {{ orden.valor_descuento|default:"0.00"|floatformat:2 }}
@@ -272,43 +369,82 @@
                 </span>
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const campoTipo = document.getElementById(
-            'tipo_descuento'
-        );
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+            const campoTipo =
+                document.getElementById(
+                    'tipo_descuento'
+                );
 
-        const botonesTipo = document.querySelectorAll(
-            '.descuento-opcion'
-        );
+            const botonesTipo =
+                document.querySelectorAll(
+                    '.descuento-opcion'
+                );
 
-        botonesTipo.forEach(function (boton) {
-            boton.addEventListener('click', function () {
-                if (!campoTipo || boton.disabled) {
-                    return;
+            botonesTipo.forEach(
+                function (boton) {
+                    boton.addEventListener(
+                        'click',
+                        function () {
+                            if (
+                                !campoTipo ||
+                                boton.disabled
+                            ) {
+                                return;
+                            }
+
+                            botonesTipo.forEach(
+                                function (otroBoton) {
+                                    otroBoton.classList.remove(
+                                        'activo'
+                                    );
+                                }
+                            );
+
+                            boton.classList.add(
+                                'activo'
+                            );
+
+                            campoTipo.value =
+                                boton.dataset.tipo;
+
+                            if (
+                                typeof recalcularTotales ===
+                                'function'
+                            ) {
+                                recalcularTotales();
+                            }
+
+                            if (
+                                typeof mostrarEstadoDescuento ===
+                                'function'
+                            ) {
+                                mostrarEstadoDescuento();
+                            }
+                        }
+                    );
                 }
+            );
 
-                botonesTipo.forEach(function (otroBoton) {
-                    otroBoton.classList.remove('activo');
-                });
+            if (
+                typeof recalcularTotales ===
+                'function'
+            ) {
+                recalcularTotales();
+            }
 
-                boton.classList.add('activo');
-
-                campoTipo.value = boton.dataset.tipo;
-
-                if (
-                    typeof recalcularTotales === 'function'
-                ) {
-                    recalcularTotales();
-                }
-            });
-        });
-
-        if (typeof recalcularTotales === 'function') {
-            recalcularTotales();
+            if (
+                typeof mostrarEstadoDescuento ===
+                'function'
+            ) {
+                mostrarEstadoDescuento();
+            }
         }
-    });
+    );
 </script>

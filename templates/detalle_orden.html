@@ -107,37 +107,74 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    function guardarOTDirecto() {
-        const formulario = document.getElementById(
+function guardarOTDirecto() {
+    const formulario =
+        document.getElementById(
             'formDetalleOT'
         );
 
-        if (!formulario) {
-            Swal.fire({
-                title: 'Error',
-                text: 'No se encontró el formulario de la orden.',
-                icon: 'error',
-                confirmButtonColor: '#ff3b30'
-            });
-
-            return;
-        }
-
-        Swal.fire({
-            title: 'Guardando...',
-            html: (
-                'Sincronizando repuestos, servicios ' +
-                'y recomendaciones...'
-            ),
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: function () {
-                Swal.showLoading();
-
-                formulario.submit();
-            }
-        });
+    if (!formulario) {
+        return;
     }
+
+    if (
+        typeof mostrarEstadoDescuento ===
+        'function' &&
+        !mostrarEstadoDescuento()
+    ) {
+        Swal.fire({
+            title: 'Descuento inválido',
+            text:
+                document.getElementById(
+                    'descuentoError'
+                )?.textContent ||
+                'Revise el descuento ingresado.',
+            icon: 'warning',
+            confirmButtonColor: '#ff9500'
+        });
+
+        document.getElementById(
+            'descuento_ingresado'
+        )?.focus();
+
+        return;
+    }
+
+    Swal.fire({
+        title: 'Guardando...',
+        html:
+            'Sincronizando repuestos, servicios ' +
+            'y recomendaciones...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: function () {
+            Swal.showLoading();
+            formulario.submit();
+        }
+    });
+}
+function mostrarEstadoDescuento() {
+    const campo = document.getElementById(
+        'descuento_ingresado'
+    );
+
+    if (!campo) {
+        return;
+    }
+
+    const validacion = validarDescuento();
+
+    campo.setCustomValidity(
+        validacion.valido
+            ? ''
+            : validacion.mensaje
+    );
+
+    campo.classList.toggle(
+        'is-invalid',
+        !validacion.valido
+    );
+}
 
     function confirmarReabrir(formId) {
         Swal.fire({

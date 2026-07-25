@@ -60,6 +60,97 @@ function sumarTabla(idTabla) {
 
     return total;
 }
+function validarDescuento() {
+    const tipoCampo = document.getElementById(
+        'tipo_descuento'
+    );
+
+    const descuentoCampo = document.getElementById(
+        'descuento_ingresado'
+    );
+
+    const subtotalElemento = document.getElementById(
+        'subtotalGeneral'
+    );
+
+    if (
+        !tipoCampo ||
+        !descuentoCampo ||
+        !subtotalElemento
+    ) {
+        return {
+            valido: true,
+            mensaje: ''
+        };
+    }
+
+    const tipo = tipoCampo.value;
+    const descuento = Number(
+        String(descuentoCampo.value)
+            .replace(',', '.')
+    );
+
+    const subtotal = Number(
+        String(subtotalElemento.textContent)
+            .replace(',', '.')
+            .trim()
+    );
+
+    if (!Number.isFinite(descuento)) {
+        return {
+            valido: false,
+            mensaje: 'Ingrese un descuento válido.'
+        };
+    }
+
+    if (descuento < 0) {
+        return {
+            valido: false,
+            mensaje: 'El descuento no puede ser negativo.'
+        };
+    }
+
+    if (subtotal <= 0 && descuento > 0) {
+        return {
+            valido: false,
+            mensaje: (
+                'No se puede aplicar un descuento ' +
+                'cuando el subtotal es cero.'
+            )
+        };
+    }
+
+    if (
+        tipo === 'PORCENTAJE' &&
+        descuento > 100
+    ) {
+        return {
+            valido: false,
+            mensaje: (
+                'El descuento porcentual no puede ' +
+                'superar el 100%.'
+            )
+        };
+    }
+
+    if (
+        tipo === 'VALOR_FIJO' &&
+        descuento > subtotal
+    ) {
+        return {
+            valido: false,
+            mensaje: (
+                'El descuento fijo no puede superar ' +
+                'el subtotal de la orden.'
+            )
+        };
+    }
+
+    return {
+        valido: true,
+        mensaje: ''
+    };
+}
 function recalcularTotales() {
     const rep = sumarTabla('tablaRepuestos');
     const moi = sumarTabla('tablaMOI');
