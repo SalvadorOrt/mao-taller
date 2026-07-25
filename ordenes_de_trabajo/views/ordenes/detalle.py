@@ -565,12 +565,12 @@ def guardar_detalle_ot(request, pk):
             ):
                 descuento_ingresado = Decimal("100.00")
 
+            valores_sumar_iva = request.POST.getlist(
+                "sumar_iva_al_total"
+            )
+
             sumar_iva_al_total = (
-                request.POST.get(
-                    "sumar_iva_al_total",
-                    "0",
-                )
-                == "1"
+                "1" in valores_sumar_iva
             )
 
             orden.tipo_descuento = tipo_descuento

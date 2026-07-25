@@ -50,14 +50,35 @@
     .descuento-resumen strong {
         color: #333;
     }
+
+    .iva-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        font-size: 12px;
+    }
+
+    .iva-checkbox-label.editable {
+        cursor: pointer;
+    }
+
+    .iva-checkbox-label.bloqueado {
+        cursor: default;
+        opacity: 0.7;
+    }
 </style>
 
 <div class="ot-card">
-    <div class="section-title">Resumen económico</div>
+    <div class="section-title">
+        Resumen económico
+    </div>
 
     <div class="totals-grid">
         <div class="total-box">
-            <div class="total-label">Sub total repuestos</div>
+            <div class="total-label">
+                Sub total repuestos
+            </div>
 
             <div class="total-value">
                 $<span id="resumenRep">0.00</span>
@@ -65,7 +86,9 @@
         </div>
 
         <div class="total-box">
-            <div class="total-label">Sub total M.O. interna</div>
+            <div class="total-label">
+                Sub total M.O. interna
+            </div>
 
             <div class="total-value">
                 $<span id="resumenMOI">0.00</span>
@@ -73,7 +96,9 @@
         </div>
 
         <div class="total-box">
-            <div class="total-label">Sub total M.O. externa</div>
+            <div class="total-label">
+                Sub total M.O. externa
+            </div>
 
             <div class="total-value">
                 $<span id="resumenMOE">0.00</span>
@@ -81,7 +106,9 @@
         </div>
 
         <div class="total-box">
-            <div class="total-label">Subtotal sin IVA</div>
+            <div class="total-label">
+                Subtotal sin IVA
+            </div>
 
             <div class="total-value">
                 $<span id="subtotalGeneral">
@@ -91,7 +118,9 @@
         </div>
 
         <div class="total-box">
-            <div class="total-label">Descuento</div>
+            <div class="total-label">
+                Descuento
+            </div>
 
             <div
                 class="descuento-segmentado"
@@ -100,12 +129,7 @@
             >
                 <button
                     type="button"
-                    class="
-                        descuento-opcion
-                        {% if orden.tipo_descuento == 'PORCENTAJE' %}
-                            activo
-                        {% endif %}
-                    "
+                    class="descuento-opcion{% if orden.tipo_descuento == 'PORCENTAJE' %} activo{% endif %}"
                     data-tipo="PORCENTAJE"
                     {% if not puede_editar %}
                         disabled
@@ -116,12 +140,7 @@
 
                 <button
                     type="button"
-                    class="
-                        descuento-opcion
-                        {% if orden.tipo_descuento == 'VALOR_FIJO' %}
-                            activo
-                        {% endif %}
-                    "
+                    class="descuento-opcion{% if orden.tipo_descuento == 'VALOR_FIJO' %} activo{% endif %}"
                     data-tipo="VALOR_FIJO"
                     {% if not puede_editar %}
                         disabled
@@ -199,57 +218,53 @@
                 </span>
             </div>
 
-            <input
-                type="hidden"
-                name="sumar_iva_al_total"
-                value="0"
-            >
-
-            <label
-                style="
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    margin-top: 8px;
-                    font-size: 12px;
-                    cursor: pointer;
-                "
-            >
-                <input
-                    type="checkbox"
-                    name="sumar_iva_al_total"
-                    id="sumar_iva_al_total"
-                    value="1"
-                    {% if orden.sumar_iva_al_total %}
-                        checked
-                    {% endif %}
-                    {% if puede_editar %}
-                        onchange="recalcularTotales()"
-                    {% else %}
-                        disabled
-                    {% endif %}
-                >
-
-                Sumar IVA al total
-            </label>
-
-            {% if not puede_editar %}
+            {% if puede_editar %}
                 <input
                     type="hidden"
                     name="sumar_iva_al_total"
-                    value="
+                    value="0"
+                >
+
+                <label class="iva-checkbox-label editable">
+                    <input
+                        type="checkbox"
+                        name="sumar_iva_al_total"
+                        id="sumar_iva_al_total"
+                        value="1"
                         {% if orden.sumar_iva_al_total %}
-                            1
-                        {% else %}
-                            0
+                            checked
                         {% endif %}
-                    "
+                        onchange="recalcularTotales()"
+                    >
+
+                    Sumar IVA al total
+                </label>
+            {% else %}
+                <label class="iva-checkbox-label bloqueado">
+                    <input
+                        type="checkbox"
+                        id="sumar_iva_al_total"
+                        {% if orden.sumar_iva_al_total %}
+                            checked
+                        {% endif %}
+                        disabled
+                    >
+
+                    Sumar IVA al total
+                </label>
+
+                <input
+                    type="hidden"
+                    name="sumar_iva_al_total"
+                    value="{% if orden.sumar_iva_al_total %}1{% else %}0{% endif %}"
                 >
             {% endif %}
         </div>
 
         <div class="total-box final">
-            <div class="total-label">Total a pagar</div>
+            <div class="total-label">
+                Total a pagar
+            </div>
 
             <div class="total-value">
                 $<span id="granTotal">
