@@ -1154,9 +1154,6 @@ class ConfiguracionTributaria(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.porcentaje_iva}%"
-
-
-
 class OrdenTrabajo(models.Model):
     ESTADOS = [
         ("ABIERTA", "En Taller / Abierta"),
@@ -1170,6 +1167,11 @@ class OrdenTrabajo(models.Model):
         ("1/2", "1/2"),
         ("3/4", "3/4"),
         ("F", "Lleno"),
+    ]
+
+    TIPOS_DESCUENTO = [
+        ("PORCENTAJE", "Porcentaje (%)"),
+        ("VALOR_FIJO", "Valor fijo ($)"),
     ]
 
     numero_orden = models.CharField(max_length=50, unique=True)
@@ -1287,22 +1289,48 @@ class OrdenTrabajo(models.Model):
         blank=True,
     )
 
+    sumar_iva_al_total = models.BooleanField(
+        default=True,
+        verbose_name="Sumar IVA al total",
+        help_text=(
+            "El IVA siempre se calcula y se muestra. "
+            "Este campo define si se suma al total final."
+        ),
+    )
+
     subtotal_sin_iva = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
+    tipo_descuento = models.CharField(
+        max_length=15,
+        choices=TIPOS_DESCUENTO,
+        default="PORCENTAJE",
+    )
+
+    descuento_ingresado = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Valor escrito por el usuario, como porcentaje o valor fijo.",
+    )
+
     descuento_porcentaje = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
+        editable=False,
+        help_text="Porcentaje real o equivalente calculado por el sistema.",
     )
 
     valor_descuento = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
+        editable=False,
+        help_text="Valor monetario del descuento calculado por el sistema.",
     )
 
     valor_iva = models.DecimalField(
@@ -1531,16 +1559,28 @@ class OrdenTrabajo(models.Model):
                 break
 
     def calcular_total(self):
-        servicios = self.servicios_detalles.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
-        insumos = self.insumos_detalles.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
-        servicios_historicos = self.servicios_historicos.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
-        insumos_historicos = self.insumos_historicos.aggregate(total=Sum("subtotal"))["total"] or Decimal("0.00")
+        servicios = (
+            self.servicios_detalles.aggregate(total=Sum("subtotal"))["total"]
+            or Decimal("0.00")
+        )
+        insumos = (
+            self.insumos_detalles.aggregate(total=Sum("subtotal"))["total"]
+            or Decimal("0.00")
+        )
+        servicios_historicos = (
+            self.servicios_historicos.aggregate(total=Sum("subtotal"))["total"]
+            or Decimal("0.00")
+        )
+        insumos_historicos = (
+            self.insumos_historicos.aggregate(total=Sum("subtotal"))["total"]
+            or Decimal("0.00")
+        )
 
         subtotal_sin_iva = (
-            servicios +
-            insumos +
-            servicios_historicos +
-            insumos_historicos
+            servicios
+            + insumos
+            + servicios_historicos
+            + insumos_historicos
         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         if self.porcentaje_iva is None:
@@ -1552,31 +1592,79 @@ class OrdenTrabajo(models.Model):
             else:
                 self.porcentaje_iva = Decimal("0.00")
 
-        descuento_porcentaje = self.descuento_porcentaje or Decimal("0.00")
-
-        valor_descuento = (
-            subtotal_sin_iva *
-            Decimal(str(descuento_porcentaje)) /
-            Decimal("100")
+        tipo_descuento = self.tipo_descuento or "PORCENTAJE"
+        descuento_ingresado = Decimal(
+            str(self.descuento_ingresado or Decimal("0.00"))
         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        base_imponible = subtotal_sin_iva - valor_descuento
+        if descuento_ingresado < Decimal("0.00"):
+            raise ValidationError({
+                "descuento_ingresado": "El descuento no puede ser negativo."
+            })
 
-        if base_imponible < Decimal("0.00"):
-            base_imponible = Decimal("0.00")
+        if tipo_descuento == "PORCENTAJE":
+            if descuento_ingresado > Decimal("100.00"):
+                raise ValidationError({
+                    "descuento_ingresado": (
+                        "El descuento porcentual no puede ser mayor al 100%."
+                    )
+                })
+
+            descuento_porcentaje = descuento_ingresado
+            valor_descuento = (
+                subtotal_sin_iva
+                * descuento_porcentaje
+                / Decimal("100")
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        elif tipo_descuento == "VALOR_FIJO":
+            if descuento_ingresado > subtotal_sin_iva:
+                raise ValidationError({
+                    "descuento_ingresado": (
+                        "El descuento fijo no puede superar el subtotal "
+                        "de la orden."
+                    )
+                })
+
+            valor_descuento = descuento_ingresado
+
+            if subtotal_sin_iva > Decimal("0.00"):
+                descuento_porcentaje = (
+                    valor_descuento
+                    * Decimal("100")
+                    / subtotal_sin_iva
+                ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            else:
+                descuento_porcentaje = Decimal("0.00")
+
+        else:
+            raise ValidationError({
+                "tipo_descuento": "El tipo de descuento no es válido."
+            })
+
+        base_imponible = (
+            subtotal_sin_iva - valor_descuento
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         valor_iva = (
-            base_imponible *
-            Decimal(str(self.porcentaje_iva)) /
-            Decimal("100")
+            base_imponible
+            * Decimal(str(self.porcentaje_iva or Decimal("0.00")))
+            / Decimal("100")
         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        total_final = (
-            base_imponible + valor_iva
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if self.sumar_iva_al_total:
+            total_final = (
+                base_imponible + valor_iva
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        else:
+            total_final = base_imponible.quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
 
         self.total_general = subtotal_sin_iva
         self.subtotal_sin_iva = subtotal_sin_iva
+        self.descuento_porcentaje = descuento_porcentaje
         self.valor_descuento = valor_descuento
         self.valor_iva = valor_iva
         self.total_final = total_final
@@ -1586,7 +1674,10 @@ class OrdenTrabajo(models.Model):
                 total_general=subtotal_sin_iva,
                 configuracion_iva=self.configuracion_iva,
                 porcentaje_iva=self.porcentaje_iva,
+                sumar_iva_al_total=self.sumar_iva_al_total,
                 subtotal_sin_iva=subtotal_sin_iva,
+                tipo_descuento=tipo_descuento,
+                descuento_ingresado=descuento_ingresado,
                 descuento_porcentaje=descuento_porcentaje,
                 valor_descuento=valor_descuento,
                 valor_iva=valor_iva,
@@ -1598,31 +1689,71 @@ class OrdenTrabajo(models.Model):
         self.validar_bloqueo_edicion()
 
         if not self.numero_orden or not self.numero_orden.strip():
-            raise ValidationError("El número de orden es obligatorio.")
+            raise ValidationError(
+                "El número de orden es obligatorio."
+            )
 
         if not self.sucursal_id:
-            raise ValidationError({"sucursal": "La sucursal es obligatoria."})
+            raise ValidationError({
+                "sucursal": "La sucursal es obligatoria."
+            })
 
         if not self.es_migrada:
             if not self.placa or not self.placa.strip():
-                raise ValidationError("La placa es obligatoria para órdenes no migradas.")
+                raise ValidationError(
+                    "La placa es obligatoria para órdenes no migradas."
+                )
 
         if self.anio_vehiculo and self.anio_vehiculo < 1900:
-            raise ValidationError("El año del vehículo no es válido.")
+            raise ValidationError(
+                "El año del vehículo no es válido."
+            )
 
         if self.es_migrada and not self.numero_orden_origen:
             raise ValidationError({
-                "numero_orden_origen": "Las OT migradas deben guardar el número original extraído."
+                "numero_orden_origen": (
+                    "Las OT migradas deben guardar "
+                    "el número original extraído."
+                )
             })
 
-        if self.descuento_porcentaje < Decimal("0.00"):
+        descuento_ingresado = Decimal(
+            str(
+                self.descuento_ingresado
+                or Decimal("0.00")
+            )
+        )
+
+        if descuento_ingresado < Decimal("0.00"):
             raise ValidationError({
-                "descuento_porcentaje": "El descuento no puede ser negativo."
+                "descuento_ingresado": (
+                    "El descuento no puede ser negativo."
+                )
             })
 
-        if self.descuento_porcentaje > Decimal("100.00"):
+        if self.tipo_descuento == "PORCENTAJE":
+
+            if descuento_ingresado > Decimal("100.00"):
+                raise ValidationError({
+                    "descuento_ingresado": (
+                        "El descuento porcentual "
+                        "no puede ser mayor al 100%."
+                    )
+                })
+
+        elif self.tipo_descuento == "VALOR_FIJO":
+
+            # No validamos contra subtotal_sin_iva aquí,
+            # porque todavía puede estar desactualizado.
+            # La validación real se realiza en calcular_total(),
+            # donde el subtotal ya fue recalculado.
+            pass
+
+        else:
             raise ValidationError({
-                "descuento_porcentaje": "El descuento no puede ser mayor al 100%."
+                "tipo_descuento": (
+                    "El tipo de descuento no es válido."
+                )
             })
 
     def save(self, *args, **kwargs):

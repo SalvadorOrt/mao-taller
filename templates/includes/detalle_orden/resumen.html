@@ -1,37 +1,87 @@
 {% load l10n %}
+
 <div class="ot-card">
     <div class="section-title">Resumen económico</div>
 
     <div class="totals-grid">
         <div class="total-box">
             <div class="total-label">Sub total repuestos</div>
-            <div class="total-value">$<span id="resumenRep">0.00</span></div>
+            <div class="total-value">
+                $<span id="resumenRep">0.00</span>
+            </div>
         </div>
 
         <div class="total-box">
             <div class="total-label">Sub total M.O. interna</div>
-            <div class="total-value">$<span id="resumenMOI">0.00</span></div>
+            <div class="total-value">
+                $<span id="resumenMOI">0.00</span>
+            </div>
         </div>
 
         <div class="total-box">
             <div class="total-label">Sub total M.O. externa</div>
-            <div class="total-value">$<span id="resumenMOE">0.00</span></div>
+            <div class="total-value">
+                $<span id="resumenMOE">0.00</span>
+            </div>
         </div>
 
         <div class="total-box">
             <div class="total-label">Subtotal sin IVA</div>
-            <span id="subtotalGeneral">{{ orden.subtotal_sin_iva|default:"0.00"|floatformat:2 }}</span>
+
+            <div class="total-value">
+                $<span id="subtotalGeneral">
+                    {{ orden.subtotal_sin_iva|default:"0.00"|floatformat:2 }}
+                </span>
+            </div>
         </div>
 
         <div class="total-box">
-            <div class="total-label">Descuento (%)</div>
+            <div class="total-label">Descuento</div>
+
+            <select
+                name="tipo_descuento"
+                id="tipo_descuento"
+                class="form-control"
+                style="width: 100%; margin-top: 6px;"
+                {% if puede_editar %}
+                    onchange="recalcularTotales()"
+                {% else %}
+                    disabled
+                {% endif %}
+            >
+                <option
+                    value="PORCENTAJE"
+                    {% if orden.tipo_descuento == "PORCENTAJE" %}
+                        selected
+                    {% endif %}
+                >
+                    Porcentaje (%)
+                </option>
+
+                <option
+                    value="VALOR_FIJO"
+                    {% if orden.tipo_descuento == "VALOR_FIJO" %}
+                        selected
+                    {% endif %}
+                >
+                    Valor fijo ($)
+                </option>
+            </select>
+
+            {% if not puede_editar %}
+                <input
+                    type="hidden"
+                    name="tipo_descuento"
+                    value="{{ orden.tipo_descuento }}"
+                >
+            {% endif %}
+
             <input
                 type="number"
-                name="descuento_porcentaje"
-                id="descuento_porcentaje"
-                value="{{ descuento_porcentaje_html }}"
+                name="descuento_ingresado"
+                id="descuento_ingresado"
+                value="{{ descuento_ingresado_html|default:'0.00' }}"
                 min="0"
-                max="100"
                 step="0.01"
                 class="form-control"
                 style="width: 100%; margin-top: 6px;"
@@ -42,27 +92,100 @@
                     readonly
                 {% endif %}
             >
-            <div class="total-value" style="margin-top: 6px;">
-                -$<span id="descuentoTotal">{{ orden.valor_descuento|default:"0.00"|floatformat:2 }}</span>
+
+            <div
+                id="descuentoEquivalente"
+                style="
+                    margin-top: 6px;
+                    font-size: 12px;
+                    color: #666;
+                "
+            >
+                Equivale a
+                {{ porcentaje_descuento|default:"0.00"|floatformat:2 }}%
+            </div>
+
+            <div
+                class="total-value"
+                style="margin-top: 6px;"
+            >
+                -$<span id="descuentoTotal">
+                    {{ orden.valor_descuento|default:"0.00"|floatformat:2 }}
+                </span>
             </div>
         </div>
 
         <div class="total-box">
             <div class="total-label">
-                <span id="ivaLabel">IVA {{ orden.porcentaje_iva|default:"0"|floatformat:2 }}%</span>
+                <span id="ivaLabel">
+                    IVA
+                    {{ orden.porcentaje_iva|default:"0"|floatformat:2 }}%
+                </span>
             </div>
-            <div class="total-value">$<span id="ivaTotal">{{ iva|default:"0.00"|floatformat:2 }}</span></div>
+
+            <div class="total-value">
+                $<span id="ivaTotal">
+                    {{ iva|default:"0.00"|floatformat:2 }}
+                </span>
+            </div>
+
+            <input
+                type="hidden"
+                name="sumar_iva_al_total"
+                value="0"
+            >
+
+            <label
+                style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    cursor: pointer;
+                "
+            >
+                <input
+                    type="checkbox"
+                    name="sumar_iva_al_total"
+                    id="sumar_iva_al_total"
+                    value="1"
+                    {% if orden.sumar_iva_al_total %}
+                        checked
+                    {% endif %}
+                    {% if puede_editar %}
+                        onchange="recalcularTotales()"
+                    {% else %}
+                        disabled
+                    {% endif %}
+                >
+
+                Sumar IVA al total
+            </label>
+
+            {% if not puede_editar %}
+                <input
+                    type="hidden"
+                    name="sumar_iva_al_total"
+                    value="{% if orden.sumar_iva_al_total %}1{% else %}0{% endif %}"
+                >
+            {% endif %}
         </div>
 
         <div class="total-box final">
             <div class="total-label">Total a pagar</div>
-            <span id="granTotal">{{ orden.total_final|default:"0.00"|floatformat:2 }}</span>
+
+            <div class="total-value">
+                $<span id="granTotal">
+                    {{ orden.total_final|default:"0.00"|floatformat:2 }}
+                </span>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         if (typeof recalcularTotales === 'function') {
             recalcularTotales();
         }

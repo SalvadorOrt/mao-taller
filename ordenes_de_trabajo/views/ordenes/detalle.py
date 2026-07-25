@@ -476,7 +476,6 @@ def merge_recomendaciones_manuales(request, orden):
             claves.add(clave)
             orden_item += 1
 
-
 def guardar_detalle_ot(request, pk):
     with transaction.atomic():
         orden = (
@@ -484,67 +483,163 @@ def guardar_detalle_ot(request, pk):
             .select_for_update(of=("self",))
             .get(pk=pk)
         )
-        
+
         if orden.estado != "ABIERTA":
             messages.error(
                 request,
                 "No se puede modificar una orden cerrada o anulada.",
             )
-            return redirect("detalle_orden", pk=orden.pk)
+            return redirect(
+                "detalle_orden",
+                pk=orden.pk,
+            )
 
         version_form = request.POST.get("orden_version")
         version_coincide = True
 
         if version_form and version_form.isdigit():
-            version_coincide = int(version_form) == orden.version
+            version_coincide = (
+                int(version_form) == orden.version
+            )
 
-        merge_repuestos(request, orden)
+        # ==========================================
+        # GUARDAR REPUESTOS, SERVICIOS Y RECOMENDACIONES
+        # ==========================================
 
-        recomendaciones_auto_ids = merge_servicios(request, orden)
+        merge_repuestos(
+            request,
+            orden,
+        )
+
+        recomendaciones_auto_ids = merge_servicios(
+            request,
+            orden,
+        )
 
         merge_recomendaciones_automaticas(
             orden=orden,
             recomendaciones_auto_ids=recomendaciones_auto_ids,
         )
 
-        merge_recomendaciones_manuales(request, orden)
+        merge_recomendaciones_manuales(
+            request,
+            orden,
+        )
+
+        # ==========================================
+        # GUARDAR CABECERA ECONÓMICA
+        # ==========================================
 
         if version_coincide:
-            orden.descuento_porcentaje = parse_decimal(
-                request.POST.get("descuento_porcentaje", "0"),
+            tipo_descuento = (
+                request.POST.get(
+                    "tipo_descuento",
+                    "PORCENTAJE",
+                )
+                .strip()
+                .upper()
+            )
+
+            tipos_descuento_validos = {
+                "PORCENTAJE",
+                "VALOR_FIJO",
+            }
+
+            if tipo_descuento not in tipos_descuento_validos:
+                tipo_descuento = "PORCENTAJE"
+
+            descuento_ingresado = parse_decimal(
+                request.POST.get(
+                    "descuento_ingresado",
+                    "0",
+                ),
                 Decimal("0.00"),
             )
 
-            orden.observaciones_tecnicas = request.POST.get(
-                "observaciones_tecnicas",
-                "",
-            ).strip()
+            if descuento_ingresado < Decimal("0.00"):
+                descuento_ingresado = Decimal("0.00")
+
+            if (
+                tipo_descuento == "PORCENTAJE"
+                and descuento_ingresado > Decimal("100.00")
+            ):
+                descuento_ingresado = Decimal("100.00")
+
+            sumar_iva_al_total = (
+                request.POST.get(
+                    "sumar_iva_al_total",
+                    "0",
+                )
+                == "1"
+            )
+
+            orden.tipo_descuento = tipo_descuento
+            orden.descuento_ingresado = descuento_ingresado
+            orden.sumar_iva_al_total = sumar_iva_al_total
+
+            orden.observaciones_tecnicas = (
+                request.POST.get(
+                    "observaciones_tecnicas",
+                    "",
+                )
+                .strip()
+            )
+
         else:
             messages.warning(
                 request,
-                "La orden fue modificada por otro usuario mientras estaba abierta. "
-                "Se guardaron los detalles enviados, pero no se sobrescribió la cabecera.",
+                "La orden fue modificada por otro usuario mientras "
+                "estaba abierta. Se guardaron los detalles enviados, "
+                "pero no se sobrescribió la cabecera.",
             )
+
+        # ==========================================
+        # ACTUALIZAR VERSIÓN
+        # ==========================================
 
         orden.version += 1
 
         if version_coincide:
-            orden.save(update_fields=[
-                "descuento_porcentaje",
-                "observaciones_tecnicas",
-                "version",
-                "actualizado_en",
-            ])
+            orden.save(
+                update_fields=[
+                    "tipo_descuento",
+                    "descuento_ingresado",
+                    "sumar_iva_al_total",
+                    "observaciones_tecnicas",
+                    "version",
+                    "actualizado_en",
+                ]
+            )
         else:
-            orden.save(update_fields=[
-                "version",
-                "actualizado_en",
-            ])
+            orden.save(
+                update_fields=[
+                    "version",
+                    "actualizado_en",
+                ]
+            )
 
+        # El modelo calcula:
+        # - subtotal sin IVA
+        # - porcentaje de descuento equivalente
+        # - valor monetario del descuento
+        # - valor del IVA
+        # - total final
+        #
+        # El IVA siempre se calcula y se muestra.
+        # Solo se suma al total cuando
+        # sumar_iva_al_total es True.
         orden.calcular_total()
 
-    messages.success(request, "Orden actualizada correctamente.")
-    return redirect("detalle_orden", pk=pk)
+    messages.success(
+        request,
+        "Orden actualizada correctamente.",
+    )
+
+    return redirect(
+        "detalle_orden",
+        pk=pk,
+    )
+
 
 @login_required
 def detalle_orden(request, pk):
@@ -571,17 +666,29 @@ def detalle_orden(request, pk):
 
     url_anterior = request.META.get("HTTP_REFERER")
 
-    if not url_anterior or f"ordenes/{pk}" in url_anterior:
-        url_anterior = reverse("lista_ordenes")
+    if (
+        not url_anterior
+        or f"ordenes/{pk}" in url_anterior
+    ):
+        url_anterior = reverse(
+            "lista_ordenes"
+        )
 
-    es_su_sucursal = puede_operar_orden_desde_sucursal_activa(
-        request,
-        orden,
+    es_su_sucursal = (
+        puede_operar_orden_desde_sucursal_activa(
+            request,
+            orden,
+        )
     )
 
     puede_reabrir = (
-        request.user.has_perm("ordenes_de_trabajo.can_reopen_orden")
-        and orden.estado in ["CERRADA", "ANULADA"]
+        request.user.has_perm(
+            "ordenes_de_trabajo.can_reopen_orden"
+        )
+        and orden.estado in [
+            "CERRADA",
+            "ANULADA",
+        ]
     )
 
     puede_editar = (
@@ -593,36 +700,79 @@ def detalle_orden(request, pk):
         if not puede_editar:
             messages.error(
                 request,
-                "Operación denegada: No tiene permisos para modificar esta orden.",
+                "Operación denegada: No tiene permisos "
+                "para modificar esta orden.",
             )
-            return redirect("detalle_orden", pk=orden.pk)
 
-        return guardar_detalle_ot(request, pk)
+            return redirect(
+                "detalle_orden",
+                pk=orden.pk,
+            )
+
+        return guardar_detalle_ot(
+            request,
+            pk,
+        )
 
     categorias = (
-        Categoria.objects.all().order_by("nombre")
+        Categoria.objects
+        .all()
+        .order_by("nombre")
         if puede_editar
         else []
     )
 
-    tecnicos_disponibles = Tecnico.objects.filter(activo=True)
+    tecnicos_disponibles = (
+        Tecnico.objects
+        .filter(activo=True)
+        .order_by("nombre")
+    )
 
-    croquis = OrdenCroquisDanio.objects.filter(orden=orden).first()
+    croquis = (
+        OrdenCroquisDanio.objects
+        .filter(orden=orden)
+        .first()
+    )
 
     croquis_url = (
         croquis.imagen_generada.url
-        if croquis and croquis.imagen_generada
+        if (
+            croquis
+            and croquis.imagen_generada
+        )
         else ""
     )
 
+    # Recalcula antes de mostrar la pantalla.
     orden.calcular_total()
 
-    subtotal = Decimal(orden.subtotal_sin_iva or 0)
-    descuento = Decimal(orden.valor_descuento or 0)
-    porcentaje_descuento = Decimal(orden.descuento_porcentaje or 0)
-    porcentaje_iva = Decimal(orden.porcentaje_iva or 0)
-    iva = Decimal(orden.valor_iva or 0)
-    total_final = Decimal(orden.total_final or 0)
+    subtotal = Decimal(
+        orden.subtotal_sin_iva or 0
+    )
+
+    descuento = Decimal(
+        orden.valor_descuento or 0
+    )
+
+    porcentaje_descuento = Decimal(
+        orden.descuento_porcentaje or 0
+    )
+
+    descuento_ingresado = Decimal(
+        orden.descuento_ingresado or 0
+    )
+
+    porcentaje_iva = Decimal(
+        orden.porcentaje_iva or 0
+    )
+
+    iva = Decimal(
+        orden.valor_iva or 0
+    )
+
+    total_final = Decimal(
+        orden.total_final or 0
+    )
 
     return render(
         request,
@@ -637,13 +787,33 @@ def detalle_orden(request, pk):
             "puede_editar": puede_editar,
             "puede_reabrir": puede_reabrir,
             "url_anterior": url_anterior,
+
+            # Valores económicos calculados
             "subtotal": subtotal,
             "descuento": descuento,
             "porcentaje_descuento": porcentaje_descuento,
+            "descuento_ingresado": descuento_ingresado,
             "porcentaje_iva": porcentaje_iva,
             "iva": iva,
             "total_final": total_final,
-            "porcentaje_iva_html": str(porcentaje_iva).replace(",", "."),
-            "descuento_porcentaje_html": str(porcentaje_descuento).replace(",", "."),
+
+            # Configuración seleccionada
+            "tipo_descuento": orden.tipo_descuento,
+            "sumar_iva_al_total": (
+                orden.sumar_iva_al_total
+            ),
+
+            # Valores preparados para HTML/JavaScript
+            "porcentaje_iva_html": str(
+                porcentaje_iva
+            ).replace(",", "."),
+
+            "descuento_porcentaje_html": str(
+                porcentaje_descuento
+            ).replace(",", "."),
+
+            "descuento_ingresado_html": str(
+                descuento_ingresado
+            ).replace(",", "."),
         },
     )
