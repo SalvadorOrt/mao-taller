@@ -1,11 +1,64 @@
 {% load l10n %}
 
+<style>
+    .descuento-segmentado {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3px;
+        padding: 3px;
+        margin-top: 6px;
+        border-radius: 10px;
+        background: #ececf1;
+    }
+
+    .descuento-opcion {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: transparent;
+        color: #666;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .descuento-opcion.activo {
+        background: #ffffff;
+        color: #1d1d1f;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+    }
+
+    .descuento-opcion:disabled {
+        cursor: default;
+        opacity: 0.65;
+    }
+
+    .descuento-resumen {
+        margin-top: 8px;
+        padding: 7px 9px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.035);
+        font-size: 12px;
+        color: #666;
+        line-height: 1.35;
+    }
+
+    .descuento-resumen strong {
+        color: #333;
+    }
+</style>
+
 <div class="ot-card">
     <div class="section-title">Resumen económico</div>
 
     <div class="totals-grid">
         <div class="total-box">
             <div class="total-label">Sub total repuestos</div>
+
             <div class="total-value">
                 $<span id="resumenRep">0.00</span>
             </div>
@@ -13,6 +66,7 @@
 
         <div class="total-box">
             <div class="total-label">Sub total M.O. interna</div>
+
             <div class="total-value">
                 $<span id="resumenMOI">0.00</span>
             </div>
@@ -20,6 +74,7 @@
 
         <div class="total-box">
             <div class="total-label">Sub total M.O. externa</div>
+
             <div class="total-value">
                 $<span id="resumenMOE">0.00</span>
             </div>
@@ -38,43 +93,50 @@
         <div class="total-box">
             <div class="total-label">Descuento</div>
 
-            <select
+            <div
+                class="descuento-segmentado"
+                role="group"
+                aria-label="Tipo de descuento"
+            >
+                <button
+                    type="button"
+                    class="
+                        descuento-opcion
+                        {% if orden.tipo_descuento == 'PORCENTAJE' %}
+                            activo
+                        {% endif %}
+                    "
+                    data-tipo="PORCENTAJE"
+                    {% if not puede_editar %}
+                        disabled
+                    {% endif %}
+                >
+                    % Porcentaje
+                </button>
+
+                <button
+                    type="button"
+                    class="
+                        descuento-opcion
+                        {% if orden.tipo_descuento == 'VALOR_FIJO' %}
+                            activo
+                        {% endif %}
+                    "
+                    data-tipo="VALOR_FIJO"
+                    {% if not puede_editar %}
+                        disabled
+                    {% endif %}
+                >
+                    $ Valor fijo
+                </button>
+            </div>
+
+            <input
+                type="hidden"
                 name="tipo_descuento"
                 id="tipo_descuento"
-                class="form-control"
-                style="width: 100%; margin-top: 6px;"
-                {% if puede_editar %}
-                    onchange="recalcularTotales()"
-                {% else %}
-                    disabled
-                {% endif %}
+                value="{{ orden.tipo_descuento|default:'PORCENTAJE' }}"
             >
-                <option
-                    value="PORCENTAJE"
-                    {% if orden.tipo_descuento == "PORCENTAJE" %}
-                        selected
-                    {% endif %}
-                >
-                    Porcentaje (%)
-                </option>
-
-                <option
-                    value="VALOR_FIJO"
-                    {% if orden.tipo_descuento == "VALOR_FIJO" %}
-                        selected
-                    {% endif %}
-                >
-                    Valor fijo ($)
-                </option>
-            </select>
-
-            {% if not puede_editar %}
-                <input
-                    type="hidden"
-                    name="tipo_descuento"
-                    value="{{ orden.tipo_descuento }}"
-                >
-            {% endif %}
 
             <input
                 type="number"
@@ -84,7 +146,10 @@
                 min="0"
                 step="0.01"
                 class="form-control"
-                style="width: 100%; margin-top: 6px;"
+                style="
+                    width: 100%;
+                    margin-top: 6px;
+                "
                 {% if puede_editar %}
                     oninput="recalcularTotales()"
                     onchange="recalcularTotales()"
@@ -95,14 +160,19 @@
 
             <div
                 id="descuentoEquivalente"
-                style="
-                    margin-top: 6px;
-                    font-size: 12px;
-                    color: #666;
-                "
+                class="descuento-resumen"
             >
-                Equivale a
-                {{ porcentaje_descuento|default:"0.00"|floatformat:2 }}%
+                <strong>Representa:</strong>
+
+                <span id="descuentoPorcentajeTexto">
+                    {{ porcentaje_descuento|default:"0.00"|floatformat:2 }}%
+                </span>
+
+                <span aria-hidden="true"> • </span>
+
+                <span id="descuentoValorTexto">
+                    ${{ orden.valor_descuento|default:"0.00"|floatformat:2 }}
+                </span>
             </div>
 
             <div
@@ -167,7 +237,13 @@
                 <input
                     type="hidden"
                     name="sumar_iva_al_total"
-                    value="{% if orden.sumar_iva_al_total %}1{% else %}0{% endif %}"
+                    value="
+                        {% if orden.sumar_iva_al_total %}
+                            1
+                        {% else %}
+                            0
+                        {% endif %}
+                    "
                 >
             {% endif %}
         </div>
@@ -186,6 +262,36 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const campoTipo = document.getElementById(
+            'tipo_descuento'
+        );
+
+        const botonesTipo = document.querySelectorAll(
+            '.descuento-opcion'
+        );
+
+        botonesTipo.forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                if (!campoTipo || boton.disabled) {
+                    return;
+                }
+
+                botonesTipo.forEach(function (otroBoton) {
+                    otroBoton.classList.remove('activo');
+                });
+
+                boton.classList.add('activo');
+
+                campoTipo.value = boton.dataset.tipo;
+
+                if (
+                    typeof recalcularTotales === 'function'
+                ) {
+                    recalcularTotales();
+                }
+            });
+        });
+
         if (typeof recalcularTotales === 'function') {
             recalcularTotales();
         }

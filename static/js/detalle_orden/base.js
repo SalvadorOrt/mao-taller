@@ -59,9 +59,7 @@ function sumarTabla(idTabla) {
     });
 
     return total;
-}
-function recalcularTotales() {
-
+}function recalcularTotales() {
     const rep = sumarTabla('tablaRepuestos');
     const moi = sumarTabla('tablaMOI');
     const moe = sumarTabla('tablaMOE');
@@ -89,7 +87,6 @@ function recalcularTotales() {
     let porcentajeDescuento = 0;
 
     if (tipoDescuento === 'VALOR_FIJO') {
-
         valorDescuento = descuentoIngresado;
 
         if (valorDescuento > subtotalSinIva) {
@@ -101,7 +98,6 @@ function recalcularTotales() {
             : 0;
 
     } else {
-
         porcentajeDescuento = descuentoIngresado;
 
         if (porcentajeDescuento > 100) {
@@ -188,9 +184,7 @@ function recalcularTotales() {
     );
 
     if (subtotalGeneral) {
-        subtotalGeneral.textContent = (
-            subtotalSinIva.toFixed(2)
-        );
+        subtotalGeneral.textContent = subtotalSinIva.toFixed(2);
     }
 
     const descuentoTotal = document.getElementById(
@@ -198,18 +192,26 @@ function recalcularTotales() {
     );
 
     if (descuentoTotal) {
-        descuentoTotal.textContent = (
-            valorDescuento.toFixed(2)
+        descuentoTotal.textContent = valorDescuento.toFixed(2);
+    }
+
+    const descuentoPorcentajeTexto = document.getElementById(
+        'descuentoPorcentajeTexto'
+    );
+
+    if (descuentoPorcentajeTexto) {
+        descuentoPorcentajeTexto.textContent = (
+            `${porcentajeDescuento.toFixed(2)}%`
         );
     }
 
-    const descuentoEquivalente = document.getElementById(
-        'descuentoEquivalente'
+    const descuentoValorTexto = document.getElementById(
+        'descuentoValorTexto'
     );
 
-    if (descuentoEquivalente) {
-        descuentoEquivalente.textContent = (
-            `Equivale a ${porcentajeDescuento.toFixed(2)}%`
+    if (descuentoValorTexto) {
+        descuentoValorTexto.textContent = (
+            `$${valorDescuento.toFixed(2)}`
         );
     }
 
