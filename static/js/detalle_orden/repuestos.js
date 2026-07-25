@@ -2,95 +2,200 @@ let inputActivoBusqueda = null;
 let timeoutBusquedaProducto = null;
 
 const PUEDE_EDITAR_OT =
-    document.querySelector(".ot-wrapper")?.dataset.puedeEditar === "true";
+    document.querySelector(
+        '.ot-wrapper'
+    )?.dataset.puedeEditar === 'true';
 
-const floatingDropdown = document.getElementById("productoFloatingDropdown");
+const floatingDropdown =
+    document.getElementById(
+        'productoFloatingDropdown'
+    );
 
+
+// =====================================================
+// ESCAPAR HTML
+// =====================================================
 function escaparHtml(valor) {
-    return String(valor ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(
+        valor ?? ''
+    )
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
+
 
 // =====================================================
 // AGREGAR FILA REPUESTO
 // =====================================================
-function agregarFilaRepuesto(enfocar = false) {
-    if (!PUEDE_EDITAR_OT) return;
+function agregarFilaRepuesto(
+    enfocar = false
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
 
-    const tbody = document.querySelector("#tablaRepuestos tbody");
-    if (!tbody) return;
+    const tbody =
+        document.querySelector(
+            '#tablaRepuestos tbody'
+        );
+
+    if (!tbody) {
+        return;
+    }
 
     const filaHtml = `
         <tr>
             <td class="producto-cell">
-                <input type="hidden" name="rep_detalle_id[]" value="">
-                <input type="hidden" name="rep_delete[]" value="0">
-                <input type="hidden" name="rep_actualizado_en[]" value="">
+                <input
+                    type="hidden"
+                    name="rep_detalle_id[]"
+                    value=""
+                >
 
-                <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="">
-                <input type="hidden" name="rep_categoria_id[]" value="">
-                <input type="hidden" name="rep_codigo_barras[]" value="">
-                <input type="hidden" name="rep_codigo_empaque[]" value="">
+                <input
+                    type="hidden"
+                    name="rep_delete[]"
+                    value="0"
+                >
+
+                <input
+                    type="hidden"
+                    name="rep_actualizado_en[]"
+                    value=""
+                >
+
+                <input
+                    type="hidden"
+                    name="rep_producto_id[]"
+                    class="producto-id-hidden"
+                    value=""
+                >
+
+                <input
+                    type="hidden"
+                    name="rep_categoria_id[]"
+                    value=""
+                >
+
+                <input
+                    type="hidden"
+                    name="rep_codigo_barras[]"
+                    value=""
+                >
+
+                <input
+                    type="hidden"
+                    name="rep_codigo_empaque[]"
+                    value=""
+                >
 
                 <div class="producto-busqueda-wrap">
-                    <input type="text"
-                           class="form-control-apple producto-busqueda-input"
-                           placeholder="Código / barras / nombre"
-                           autocomplete="off"
-                           oninput="buscarProductoEnFila(this)"
-                           onkeydown="manejarTeclaBusquedaProducto(event, this)"
-                           onfocus="buscarProductoEnFila(this)">
+                    <input
+                        type="text"
+                        class="
+                            form-control-apple
+                            producto-busqueda-input
+                        "
+                        placeholder="
+                            Código / barras / nombre
+                        "
+                        autocomplete="off"
+                        oninput="
+                            buscarProductoEnFila(this)
+                        "
+                        onkeydown="
+                            manejarTeclaBusquedaProducto(
+                                event,
+                                this
+                            )
+                        "
+                        onfocus="
+                            buscarProductoEnFila(this)
+                        "
+                    >
                 </div>
             </td>
 
             <td>
-                <input type="text"
-                       name="rep_descripcion[]"
-                       class="form-control-apple descripcion-manual"
-                       placeholder="Descripción del repuesto">
+                <input
+                    type="text"
+                    name="rep_descripcion[]"
+                    class="
+                        form-control-apple
+                        descripcion-manual
+                    "
+                    placeholder="
+                        Descripción del repuesto
+                    "
+                >
             </td>
 
             <td>
-                <div class="stock-chip stock-view">0</div>
+                <div class="stock-chip stock-view">
+                    0
+                </div>
             </td>
 
             <td>
-                <input type="text"
-                       inputmode="decimal"
-                       name="rep_pu[]"
-                       class="form-control-apple pu"
-                       value="0.00"
-                       oninput="calcularFila(this)">
+                <input
+                    type="text"
+                    inputmode="decimal"
+                    name="rep_pu[]"
+                    class="form-control-apple pu"
+                    value="0.00"
+                    oninput="
+                        calcularFila(this)
+                    "
+                >
             </td>
 
             <td>
-                <input type="text"
-                       inputmode="decimal"
-                       name="rep_cantidad[]"
-                       class="form-control-apple cantidad"
-                       value="1.00"
-                       oninput="calcularFila(this)">
+                <input
+                    type="text"
+                    inputmode="decimal"
+                    name="rep_cantidad[]"
+                    class="
+                        form-control-apple
+                        cantidad
+                    "
+                    value="1.00"
+                    oninput="
+                        calcularFila(this)
+                    "
+                >
             </td>
 
             <td>
-                <input type="text"
-                       inputmode="decimal"
-                       name="rep_valor[]"
-                       class="form-control-apple valor"
-                       value="0.00"
-                       readonly>
+                <input
+                    type="text"
+                    inputmode="decimal"
+                    name="rep_valor[]"
+                    class="
+                        form-control-apple
+                        valor
+                    "
+                    value="0.00"
+                    readonly
+                >
             </td>
 
             <td>
                 <div class="row-controls">
-                    <button type="button"
-                            class="btn-login danger small"
-                            onclick="eliminarFila(this)"
-                            title="Quitar">
+                    <button
+                        type="button"
+                        class="
+                            btn-login
+                            danger
+                            small
+                        "
+                        onclick="
+                            eliminarFilaRepuesto(this)
+                        "
+                        title="Quitar"
+                    >
                         ✕
                     </button>
                 </div>
@@ -98,54 +203,136 @@ function agregarFilaRepuesto(enfocar = false) {
         </tr>
     `;
 
-    tbody.insertAdjacentHTML("beforeend", filaHtml);
+    tbody.insertAdjacentHTML(
+        'beforeend',
+        filaHtml
+    );
 
-    if (enfocar) {
-        setTimeout(() => {
-            const filas = tbody.querySelectorAll("tr:not(.fila-eliminada)");
-            const ultimaFila = filas[filas.length - 1];
-            const input = ultimaFila?.querySelector(".producto-busqueda-input");
-
-            if (input) input.focus();
-        }, 50);
+    if (
+        typeof recalcularTotales ===
+        'function'
+    ) {
+        recalcularTotales();
     }
+
+    if (!enfocar) {
+        return;
+    }
+
+    setTimeout(function () {
+        const filas =
+            tbody.querySelectorAll(
+                'tr:not(.fila-eliminada)'
+            );
+
+        const ultimaFila =
+            filas[
+                filas.length - 1
+            ];
+
+        const input =
+            ultimaFila?.querySelector(
+                '.producto-busqueda-input'
+            );
+
+        if (input) {
+            input.focus();
+        }
+    }, 50);
 }
+
 
 // =====================================================
 // ELIMINAR FILA REPUESTO
 // =====================================================
-function eliminarFila(boton) {
-    if (!PUEDE_EDITAR_OT) return;
+function eliminarFilaRepuesto(
+    boton
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
 
-    const fila = boton.closest("tr");
-    if (!fila) return;
+    const fila =
+        boton?.closest('tr');
 
-    const detalleId = fila.querySelector('input[name="rep_detalle_id[]"]');
-    const deleteInput = fila.querySelector('input[name="rep_delete[]"]');
+    if (!fila) {
+        return;
+    }
 
-    if (detalleId && detalleId.value) {
+    const detalleId =
+        fila.querySelector(
+            'input[name="rep_detalle_id[]"]'
+        );
+
+    const deleteInput =
+        fila.querySelector(
+            'input[name="rep_delete[]"]'
+        );
+
+    const registroGuardado =
+        Boolean(
+            detalleId &&
+            String(
+                detalleId.value || ''
+            ).trim()
+        );
+
+    if (registroGuardado) {
+        /*
+         * La fila ya existe en la base de datos.
+         * Se mantiene en el formulario para que
+         * el backend reciba rep_delete[]=1.
+         */
         if (deleteInput) {
-            deleteInput.value = "1";
+            deleteInput.value = '1';
         }
 
-        fila.classList.add("fila-eliminada");
-        fila.style.display = "none";
+        fila.classList.add(
+            'fila-eliminada'
+        );
+
+        fila.dataset.eliminada = '1';
+        fila.hidden = true;
+        fila.style.display = 'none';
     } else {
+        /*
+         * La fila todavía no existe en la base
+         * de datos y puede retirarse del DOM.
+         */
         fila.remove();
     }
 
-    if (typeof recalcularTotales === "function") {
+    ocultarDropdownFlotante();
+
+    if (
+        typeof recalcularTotales ===
+        'function'
+    ) {
         recalcularTotales();
     }
+
+    if (
+        typeof mostrarEstadoDescuento ===
+        'function'
+    ) {
+        mostrarEstadoDescuento();
+    }
 }
+
 
 // =====================================================
 // BUSCAR PRODUCTO
 // =====================================================
-async function buscarProductoEnFila(input) {
-    if (!PUEDE_EDITAR_OT) return;
+async function buscarProductoEnFila(
+    input
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
 
-    const texto = (input.value || "").trim();
+    const texto = String(
+        input?.value || ''
+    ).trim();
 
     if (texto.length < 2) {
         ocultarDropdownFlotante();
@@ -153,250 +340,655 @@ async function buscarProductoEnFila(input) {
     }
 
     inputActivoBusqueda = input;
-    posicionarDropdownFlotante(input);
 
-    clearTimeout(timeoutBusquedaProducto);
+    posicionarDropdownFlotante(
+        input
+    );
 
-    timeoutBusquedaProducto = setTimeout(async () => {
-        try {
-            const response = await fetch(
-                `/api/buscar-repuestos?q=${encodeURIComponent(texto)}`
+    clearTimeout(
+        timeoutBusquedaProducto
+    );
+
+    timeoutBusquedaProducto =
+        setTimeout(
+            async function () {
+                await ejecutarBusquedaProducto(
+                    texto
+                );
+            },
+            250
+        );
+}
+
+
+// =====================================================
+// EJECUTAR BÚSQUEDA
+// =====================================================
+async function ejecutarBusquedaProducto(
+    texto
+) {
+    try {
+        const response = await fetch(
+            `/api/buscar-repuestos?q=${
+                encodeURIComponent(texto)
+            }`
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        const data =
+            await response.json();
+
+        const resultados =
+            Array.isArray(
+                data.resultados
+            )
+                ? data.resultados
+                : [];
+
+        if (
+            resultados.length === 0
+        ) {
+            mostrarSinResultados();
+            return;
+        }
+
+        const primerResultado =
+            resultados[0];
+
+        if (
+            primerResultado
+                ?.match_exacto === true
+        ) {
+            seleccionarProductoEnFilaDesdeObjeto(
+                primerResultado
             );
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
+            agregarFilaRepuesto(
+                true
+            );
 
-            const data = await response.json();
-            const resultados = data.resultados || [];
-
-            if (resultados.length > 0) {
-                if (resultados[0].match_exacto === true) {
-                    seleccionarProductoEnFilaDesdeObjeto(resultados[0]);
-                    agregarFilaRepuesto(true);
-                    return;
-                }
-
-                renderDropdownFlotante(input, resultados);
-            } else if (floatingDropdown) {
-                floatingDropdown.innerHTML = `
-                    <div class="sin-resultados">
-                        Sin coincidencias en inventario
-                    </div>
-                `;
-
-                floatingDropdown.style.display = "block";
-            }
-
-        } catch (error) {
-            console.error("Error buscando productos:", error);
-            ocultarDropdownFlotante();
+            return;
         }
-    }, 250);
+
+        renderDropdownFlotante(
+            inputActivoBusqueda,
+            resultados
+        );
+    } catch (error) {
+        console.error(
+            'Error buscando productos:',
+            error
+        );
+
+        ocultarDropdownFlotante();
+    }
 }
+
+
+// =====================================================
+// MOSTRAR SIN RESULTADOS
+// =====================================================
+function mostrarSinResultados() {
+    if (!floatingDropdown) {
+        return;
+    }
+
+    floatingDropdown.innerHTML = `
+        <div class="sin-resultados">
+            Sin coincidencias en inventario
+        </div>
+    `;
+
+    floatingDropdown.style.display =
+        'block';
+}
+
 
 // =====================================================
 // RENDER DROPDOWN
 // =====================================================
-function renderDropdownFlotante(input, resultados) {
-    if (!PUEDE_EDITAR_OT) return;
-    if (!floatingDropdown) return;
+function renderDropdownFlotante(
+    input,
+    resultados
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
 
-    floatingDropdown.innerHTML = resultados.map((item, index) => {
-        const precio = item.precio_venta || item.p_u || "0.00";
-        const itemSeguro = escaparHtml(JSON.stringify(item));
+    if (
+        !floatingDropdown ||
+        !input ||
+        !Array.isArray(resultados)
+    ) {
+        return;
+    }
 
-        return `
-            <div class="producto-sugerencia-item ${index === 0 ? "active" : ""}"
-                 data-item="${itemSeguro}"
-                 onclick="seleccionarProductoEnFilaDesdeObjeto(JSON.parse(this.dataset.item))">
+    inputActivoBusqueda = input;
 
-                <div class="producto-sugerencia-codigo">
-                    ${escaparHtml(item.codigo || "")}
-                </div>
+    floatingDropdown.innerHTML =
+        resultados
+            .map(function (
+                item,
+                index
+            ) {
+                const precio =
+                    item.precio_venta ||
+                    item.p_u ||
+                    '0.00';
 
-                <div class="producto-sugerencia-extra">
-                    ${escaparHtml(item.descripcion || "")}
-                    ·
-                    <strong>Stock: ${escaparHtml(item.stock || 0)}</strong>
-                    ·
-                    $${escaparHtml(precio)}
-                </div>
-            </div>
-        `;
-    }).join("");
+                const itemSeguro =
+                    escaparHtml(
+                        JSON.stringify(
+                            item
+                        )
+                    );
 
-    floatingDropdown.style.display = "block";
+                const claseActiva =
+                    index === 0
+                        ? 'active'
+                        : '';
+
+                return `
+                    <div
+                        class="
+                            producto-sugerencia-item
+                            ${claseActiva}
+                        "
+                        data-item="${itemSeguro}"
+                        onclick="
+                            seleccionarProductoEnFilaDesdeObjeto(
+                                JSON.parse(
+                                    this.dataset.item
+                                )
+                            )
+                        "
+                    >
+                        <div
+                            class="
+                                producto-sugerencia-codigo
+                            "
+                        >
+                            ${escaparHtml(
+                                item.codigo || ''
+                            )}
+                        </div>
+
+                        <div
+                            class="
+                                producto-sugerencia-extra
+                            "
+                        >
+                            ${escaparHtml(
+                                item.descripcion || ''
+                            )}
+                            ·
+                            <strong>
+                                Stock:
+                                ${escaparHtml(
+                                    item.stock || 0
+                                )}
+                            </strong>
+                            ·
+                            $${escaparHtml(
+                                precio
+                            )}
+                        </div>
+                    </div>
+                `;
+            })
+            .join('');
+
+    floatingDropdown.style.display =
+        'block';
 }
+
 
 // =====================================================
 // SELECCIONAR PRODUCTO
 // =====================================================
-function seleccionarProductoEnFilaDesdeObjeto(item) {
-    if (!PUEDE_EDITAR_OT) return;
-    if (!inputActivoBusqueda || !item) return;
+function seleccionarProductoEnFilaDesdeObjeto(
+    item
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
 
-    const fila = inputActivoBusqueda.closest("tr");
-    if (!fila) return;
+    if (
+        !inputActivoBusqueda ||
+        !item
+    ) {
+        return;
+    }
 
-    const precio = item.precio_venta || item.p_u || 0;
-    const descripcion = item.descripcion || "";
-    const codigo = item.codigo || "";
+    const fila =
+        inputActivoBusqueda.closest(
+            'tr'
+        );
 
-    const hidden = fila.querySelector(".producto-id-hidden");
-    const inputBusqueda = fila.querySelector(".producto-busqueda-input");
-    const descripcionInput = fila.querySelector(".descripcion-manual");
-    const puInput = fila.querySelector(".pu");
-    const stockView = fila.querySelector(".stock-view");
+    if (!fila) {
+        return;
+    }
 
-    if (hidden) hidden.value = item.id || "";
+    const precio =
+        item.precio_venta ||
+        item.p_u ||
+        0;
+
+    const descripcion =
+        item.descripcion || '';
+
+    const codigo =
+        item.codigo || '';
+
+    const productoId =
+        fila.querySelector(
+            '.producto-id-hidden'
+        );
+
+    const inputBusqueda =
+        fila.querySelector(
+            '.producto-busqueda-input'
+        );
+
+    const descripcionInput =
+        fila.querySelector(
+            '.descripcion-manual'
+        );
+
+    const precioInput =
+        fila.querySelector(
+            '.pu'
+        );
+
+    const stockView =
+        fila.querySelector(
+            '.stock-view'
+        );
+
+    const categoriaInput =
+        fila.querySelector(
+            'input[name="rep_categoria_id[]"]'
+        );
+
+    const codigoBarrasInput =
+        fila.querySelector(
+            'input[name="rep_codigo_barras[]"]'
+        );
+
+    const codigoEmpaqueInput =
+        fila.querySelector(
+            'input[name="rep_codigo_empaque[]"]'
+        );
+
+    if (productoId) {
+        productoId.value =
+            item.id || '';
+    }
+
+    if (categoriaInput) {
+        categoriaInput.value =
+            item.categoria_id || '';
+    }
+
+    if (codigoBarrasInput) {
+        codigoBarrasInput.value =
+            item.codigo_barras || '';
+    }
+
+    if (codigoEmpaqueInput) {
+        codigoEmpaqueInput.value =
+            item.codigo_empaque || '';
+    }
 
     if (inputBusqueda) {
-        const descripcionCorta = descripcion.includes("-")
-            ? descripcion.split("-")[0].trim()
-            : descripcion;
+        const descripcionCorta =
+            descripcion.includes('-')
+                ? descripcion
+                    .split('-')[0]
+                    .trim()
+                : descripcion;
 
-        inputBusqueda.value = `${codigo} - ${descripcionCorta}`.trim();
+        inputBusqueda.value =
+            `${codigo} - ${descripcionCorta}`
+                .trim();
     }
 
     if (descripcionInput) {
-        descripcionInput.value = descripcion;
+        descripcionInput.value =
+            descripcion;
     }
 
-    if (puInput) {
-        puInput.value = Number(precio || 0).toFixed(2);
+    if (precioInput) {
+        precioInput.value =
+            Number(
+                precio || 0
+            ).toFixed(2);
     }
 
     if (stockView) {
-        stockView.textContent = item.stock || 0;
+        stockView.textContent =
+            item.stock ?? 0;
     }
 
     ocultarDropdownFlotante();
 
-    if (typeof recalcularFilaDesdeTr === "function") {
-        recalcularFilaDesdeTr(fila);
+    if (
+        typeof recalcularFilaDesdeTr ===
+        'function'
+    ) {
+        recalcularFilaDesdeTr(
+            fila
+        );
     }
 
-    if (typeof recalcularTotales === "function") {
+    if (
+        typeof recalcularTotales ===
+        'function'
+    ) {
         recalcularTotales();
     }
 }
 
+
 // =====================================================
-// TECLAS
+// MANEJO DE TECLADO
 // =====================================================
-function manejarTeclaBusquedaProducto(event, input) {
-    if (!PUEDE_EDITAR_OT) return;
-    if (!floatingDropdown) return;
+function manejarTeclaBusquedaProducto(
+    event,
+    input
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
+
+    if (!floatingDropdown) {
+        return;
+    }
 
     const items = Array.from(
-        floatingDropdown.querySelectorAll(".producto-sugerencia-item")
+        floatingDropdown.querySelectorAll(
+            '.producto-sugerencia-item'
+        )
     );
 
-    if (event.key === "Enter") {
+    if (event.key === 'Enter') {
         event.preventDefault();
 
-        if (items.length > 0 && floatingDropdown.style.display === "block") {
-            const activeItem =
-                items.find(item => item.classList.contains("active")) || items[0];
+        const dropdownVisible =
+            floatingDropdown
+                .style
+                .display === 'block';
 
-            if (activeItem) {
+        if (
+            items.length > 0 &&
+            dropdownVisible
+        ) {
+            const itemActivo =
+                items.find(function (
+                    item
+                ) {
+                    return item.classList
+                        .contains(
+                            'active'
+                        );
+                }) ||
+                items[0];
+
+            if (itemActivo) {
                 seleccionarProductoEnFilaDesdeObjeto(
-                    JSON.parse(activeItem.dataset.item)
+                    JSON.parse(
+                        itemActivo
+                            .dataset
+                            .item
+                    )
                 );
 
-                agregarFilaRepuesto(true);
+                agregarFilaRepuesto(
+                    true
+                );
             }
         }
 
         return;
     }
 
-    if (!items.length || floatingDropdown.style.display !== "block") return;
+    const dropdownVisible =
+        floatingDropdown
+            .style
+            .display === 'block';
 
-    let activeIndex = items.findIndex(
-        item => item.classList.contains("active")
-    );
-
-    if (activeIndex < 0) activeIndex = 0;
-
-    if (event.key === "ArrowDown") {
-        event.preventDefault();
-        items[activeIndex]?.classList.remove("active");
-        activeIndex = (activeIndex + 1) % items.length;
-        items[activeIndex].classList.add("active");
-        items[activeIndex].scrollIntoView({ block: "nearest" });
+    if (
+        items.length === 0 ||
+        !dropdownVisible
+    ) {
+        return;
     }
 
-    if (event.key === "ArrowUp") {
-        event.preventDefault();
-        items[activeIndex]?.classList.remove("active");
-        activeIndex = (activeIndex - 1 + items.length) % items.length;
-        items[activeIndex].classList.add("active");
-        items[activeIndex].scrollIntoView({ block: "nearest" });
+    let indiceActivo =
+        items.findIndex(
+            function (item) {
+                return item.classList
+                    .contains(
+                        'active'
+                    );
+            }
+        );
+
+    if (indiceActivo < 0) {
+        indiceActivo = 0;
     }
 
-    if (event.key === "Escape") {
+    if (
+        event.key ===
+        'ArrowDown'
+    ) {
+        event.preventDefault();
+
+        items[
+            indiceActivo
+        ]?.classList.remove(
+            'active'
+        );
+
+        indiceActivo = (
+            indiceActivo + 1
+        ) % items.length;
+
+        items[
+            indiceActivo
+        ].classList.add(
+            'active'
+        );
+
+        items[
+            indiceActivo
+        ].scrollIntoView({
+            block: 'nearest'
+        });
+
+        return;
+    }
+
+    if (
+        event.key ===
+        'ArrowUp'
+    ) {
+        event.preventDefault();
+
+        items[
+            indiceActivo
+        ]?.classList.remove(
+            'active'
+        );
+
+        indiceActivo = (
+            indiceActivo -
+            1 +
+            items.length
+        ) % items.length;
+
+        items[
+            indiceActivo
+        ].classList.add(
+            'active'
+        );
+
+        items[
+            indiceActivo
+        ].scrollIntoView({
+            block: 'nearest'
+        });
+
+        return;
+    }
+
+    if (
+        event.key ===
+        'Escape'
+    ) {
         ocultarDropdownFlotante();
     }
 }
 
+
 // =====================================================
-// DROPDOWN HELPERS
+// OCULTAR DROPDOWN
 // =====================================================
 function ocultarDropdownFlotante() {
-    if (!floatingDropdown) return;
+    if (!floatingDropdown) {
+        return;
+    }
 
-    floatingDropdown.style.display = "none";
-    floatingDropdown.innerHTML = "";
+    floatingDropdown.style.display =
+        'none';
+
+    floatingDropdown.innerHTML =
+        '';
 }
 
-function posicionarDropdownFlotante(input) {
-    if (!PUEDE_EDITAR_OT) return;
-    if (!floatingDropdown || !input) return;
 
-    const rect = input.getBoundingClientRect();
+// =====================================================
+// POSICIONAR DROPDOWN
+// =====================================================
+function posicionarDropdownFlotante(
+    input
+) {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
 
-    floatingDropdown.style.top = `${rect.bottom + 4}px`;
-    floatingDropdown.style.left = `${rect.left}px`;
-    floatingDropdown.style.width = `${rect.width}px`;
+    if (
+        !floatingDropdown ||
+        !input
+    ) {
+        return;
+    }
+
+    const rect =
+        input.getBoundingClientRect();
+
+    floatingDropdown.style.top =
+        `${rect.bottom + 4}px`;
+
+    floatingDropdown.style.left =
+        `${rect.left}px`;
+
+    floatingDropdown.style.width =
+        `${rect.width}px`;
 }
 
+
 // =====================================================
-// EVENTOS GLOBALES
+// CLICK GLOBAL
 // =====================================================
-document.addEventListener("click", function (e) {
-    if (
-        floatingDropdown &&
-        !floatingDropdown.contains(e.target) &&
-        !e.target.classList.contains("producto-busqueda-input")
-    ) {
-        ocultarDropdownFlotante();
-    }
-});
+document.addEventListener(
+    'click',
+    function (event) {
+        if (
+            !floatingDropdown
+        ) {
+            return;
+        }
 
-window.addEventListener("resize", function () {
-    if (
-        inputActivoBusqueda &&
-        floatingDropdown &&
-        floatingDropdown.style.display === "block"
-    ) {
-        posicionarDropdownFlotante(inputActivoBusqueda);
-    }
-});
+        const clicEnDropdown =
+            floatingDropdown.contains(
+                event.target
+            );
 
-window.addEventListener("scroll", function () {
-    if (
-        inputActivoBusqueda &&
-        floatingDropdown &&
-        floatingDropdown.style.display === "block"
-    ) {
-        posicionarDropdownFlotante(inputActivoBusqueda);
+        const clicEnInput =
+            event.target
+                .classList
+                ?.contains(
+                    'producto-busqueda-input'
+                );
 
-        const rect = inputActivoBusqueda.getBoundingClientRect();
-
-        if (rect.bottom < 0 || rect.top > window.innerHeight) {
+        if (
+            !clicEnDropdown &&
+            !clicEnInput
+        ) {
             ocultarDropdownFlotante();
         }
     }
-}, true);
+);
+
+
+// =====================================================
+// REDIMENSIONAMIENTO
+// =====================================================
+window.addEventListener(
+    'resize',
+    function () {
+        if (
+            inputActivoBusqueda &&
+            floatingDropdown &&
+            floatingDropdown
+                .style
+                .display === 'block'
+        ) {
+            posicionarDropdownFlotante(
+                inputActivoBusqueda
+            );
+        }
+    }
+);
+
+
+// =====================================================
+// SCROLL
+// =====================================================
+window.addEventListener(
+    'scroll',
+    function () {
+        if (
+            !inputActivoBusqueda ||
+            !floatingDropdown ||
+            floatingDropdown
+                .style
+                .display !== 'block'
+        ) {
+            return;
+        }
+
+        posicionarDropdownFlotante(
+            inputActivoBusqueda
+        );
+
+        const rect =
+            inputActivoBusqueda
+                .getBoundingClientRect();
+
+        if (
+            rect.bottom < 0 ||
+            rect.top >
+                window.innerHeight
+        ) {
+            ocultarDropdownFlotante();
+        }
+    },
+    true
+);

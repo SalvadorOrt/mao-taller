@@ -1,19 +1,39 @@
 function numeroSeguro(valor) {
+    if (
+        valor === null ||
+        valor === undefined ||
+        valor === ''
+    ) {
+        return 0;
+    }
 
-    if (!valor) return 0;
+    const valorNormalizado = String(valor)
+        .trim()
+        .replace(',', '.');
 
-    valor = valor.toString().replace(',', '.');
+    const numero = parseFloat(
+        valorNormalizado
+    );
 
-    const n = parseFloat(valor);
-
-    return isNaN(n) ? 0 : n;
+    return Number.isFinite(numero)
+        ? numero
+        : 0;
 }
 
+
+// =====================================================
+// CÁLCULO POR FILA
+// =====================================================
 function recalcularFilaDesdeTr(fila) {
+    if (!fila) {
+        return;
+    }
 
-    if (!fila) return;
+    if (filaEstaEliminada(fila)) {
+        return;
+    }
 
-    const pu = numeroSeguro(
+    const precioUnitario = numeroSeguro(
         fila.querySelector('.pu')?.value
     );
 
@@ -21,396 +41,168 @@ function recalcularFilaDesdeTr(fila) {
         fila.querySelector('.cantidad')?.value
     );
 
-    const campoValor = fila.querySelector('.valor');
+    const campoValor =
+        fila.querySelector('.valor');
 
-    if (campoValor) {
-        campoValor.value = (
-            pu * cantidad
-        ).toFixed(2);
+    if (!campoValor) {
+        return;
     }
+
+    campoValor.value = (
+        precioUnitario *
+        cantidad
+    ).toFixed(2);
 }
 
+
 function calcularFila(elemento) {
+    if (!elemento) {
+        return;
+    }
+
+    const fila = elemento.closest('tr');
 
     recalcularFilaDesdeTr(
-        elemento.closest('tr')
+        fila
     );
 
     recalcularTotales();
 }
 
+
+// =====================================================
+// FILAS ELIMINADAS
+// =====================================================
+function filaEstaEliminada(fila) {
+    if (!fila) {
+        return true;
+    }
+
+    if (
+        fila.classList.contains(
+            'fila-eliminada'
+        ) ||
+        fila.classList.contains(
+            'eliminado'
+        ) ||
+        fila.dataset.eliminada === '1'
+    ) {
+        return true;
+    }
+
+    if (
+        fila.hidden ||
+        fila.style.display === 'none'
+    ) {
+        return true;
+    }
+
+    /*
+     * Formsets tradicionales de Django:
+     * ejemplo: repuestos-0-DELETE
+     */
+    const campoDeleteFormset =
+        fila.querySelector(
+            'input[name$="-DELETE"]'
+        );
+
+    if (
+        campoDeleteFormset &&
+        campoDeleteFormset.checked
+    ) {
+        return true;
+    }
+
+    /*
+     * Estructura personalizada actual:
+     * rep_delete[]
+     * moi_delete[]
+     * moe_delete[]
+     */
+    const campoDeletePersonalizado =
+        fila.querySelector(
+            [
+                'input[name="rep_delete[]"]',
+                'input[name="moi_delete[]"]',
+                'input[name="moe_delete[]"]',
+                'input[name*="eliminar"]',
+                'input[name*="eliminado"]',
+                'input[data-delete-field]'
+            ].join(',')
+        );
+
+    if (campoDeletePersonalizado) {
+        const valor = String(
+            campoDeletePersonalizado.value ?? ''
+        )
+            .trim()
+            .toLowerCase();
+
+        if (
+            campoDeletePersonalizado.checked ||
+            valor === '1' ||
+            valor === 'true'
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// =====================================================
+// SUMA DE TABLAS
+// =====================================================
 function sumarTabla(idTabla) {
+    const tabla = document.getElementById(
+        idTabla
+    );
+
+    if (!tabla) {
+        return 0;
+    }
 
     let total = 0;
 
-    document.querySelectorAll(
-        `#${idTabla} tbody tr`
-    ).forEach(fila => {
-
-        const valInput = fila.querySelector('.valor');
-
-        if (valInput) {
-
-            total += numeroSeguro(
-                valInput.value
-            );
+    tabla.querySelectorAll(
+        'tbody tr'
+    ).forEach(function (fila) {
+        if (filaEstaEliminada(fila)) {
+            return;
         }
 
-    });
-
-    return total;
-}
-function contarFilasTabla(idTabla) {
-    let cantidad = 0;
-
-    document.querySelectorAll(
-        `#${idTabla} tbody tr`
-    ).forEach(function (fila) {
         /*
-         * Solo contamos filas económicas reales.
-         *
-         * Las filas auxiliares, procedimientos,
-         * mensajes vacíos o filas hijas normalmente
-         * no contienen un campo con clase .valor.
+         * Las filas hijas de procedimientos
+         * no tienen valor económico propio.
          */
-        const campoValor = fila.querySelector(
-            '.valor'
-        );
+        if (
+            fila.classList.contains(
+                'fila-hijas-moi'
+            )
+        ) {
+            return;
+        }
+
+        const campoValor =
+            fila.querySelector('.valor');
 
         if (!campoValor) {
             return;
         }
 
-        /*
-         * No contar filas eliminadas u ocultas.
-         */
-        if (
-            fila.hidden ||
-            fila.style.display === 'none'
-        ) {
-            return;
-        }
-
-        cantidad += 1;
+        total += numeroSeguro(
+            campoValor.value
+        );
     });
 
-    return cantidad;
+    return total;
 }
 
-function calcularPorcentajeParte(
-    valorParte,
-    subtotalGeneral
-) {
-    if (
-        subtotalGeneral <= 0 ||
-        valorParte <= 0
-    ) {
-        return 0;
-    }
 
-    return (
-        valorParte /
-        subtotalGeneral
-    ) * 100;
-}
-
-function textoCantidad(
-    cantidad,
-    singular,
-    plural
-) {
-    return cantidad === 1
-        ? `1 ${singular}`
-        : `${cantidad} ${plural}`;
-}
-
-function actualizarComposicionOrden({
-    rep,
-    moi,
-    moe,
-    subtotalSinIva
-}) {
-    const porcentajeRep =
-        calcularPorcentajeParte(
-            rep,
-            subtotalSinIva
-        );
-
-    const porcentajeMOI =
-        calcularPorcentajeParte(
-            moi,
-            subtotalSinIva
-        );
-
-    const porcentajeMOE =
-        calcularPorcentajeParte(
-            moe,
-            subtotalSinIva
-        );
-
-    const cantidadRep =
-        contarFilasTabla(
-            'tablaRepuestos'
-        );
-
-    const cantidadMOI =
-        contarFilasTabla(
-            'tablaMOI'
-        );
-
-    const cantidadMOE =
-        contarFilasTabla(
-            'tablaMOE'
-        );
-
-    const elementoPorcentajeRep =
-        document.getElementById(
-            'porcentajeRep'
-        );
-
-    if (elementoPorcentajeRep) {
-        elementoPorcentajeRep.textContent =
-            `${porcentajeRep.toFixed(2)}%`;
-    }
-
-    const elementoPorcentajeMOI =
-        document.getElementById(
-            'porcentajeMOI'
-        );
-
-    if (elementoPorcentajeMOI) {
-        elementoPorcentajeMOI.textContent =
-            `${porcentajeMOI.toFixed(2)}%`;
-    }
-
-    const elementoPorcentajeMOE =
-        document.getElementById(
-            'porcentajeMOE'
-        );
-
-    if (elementoPorcentajeMOE) {
-        elementoPorcentajeMOE.textContent =
-            `${porcentajeMOE.toFixed(2)}%`;
-    }
-
-    const elementoCantidadRep =
-        document.getElementById(
-            'cantidadRep'
-        );
-
-    if (elementoCantidadRep) {
-        elementoCantidadRep.textContent =
-            textoCantidad(
-                cantidadRep,
-                'producto',
-                'productos'
-            );
-    }
-
-    const elementoCantidadMOI =
-        document.getElementById(
-            'cantidadMOI'
-        );
-
-    if (elementoCantidadMOI) {
-        elementoCantidadMOI.textContent =
-            textoCantidad(
-                cantidadMOI,
-                'servicio',
-                'servicios'
-            );
-    }
-
-    const elementoCantidadMOE =
-        document.getElementById(
-            'cantidadMOE'
-        );
-
-    if (elementoCantidadMOE) {
-        elementoCantidadMOE.textContent =
-            textoCantidad(
-                cantidadMOE,
-                'servicio',
-                'servicios'
-            );
-    }
-
-    const barraRep =
-        document.getElementById(
-            'barraRep'
-        );
-
-    if (barraRep) {
-        barraRep.style.width =
-            `${Math.min(
-                porcentajeRep,
-                100
-            ).toFixed(2)}%`;
-    }
-
-    const barraMOI =
-        document.getElementById(
-            'barraMOI'
-        );
-
-    if (barraMOI) {
-        barraMOI.style.width =
-            `${Math.min(
-                porcentajeMOI,
-                100
-            ).toFixed(2)}%`;
-    }
-
-    const barraMOE =
-        document.getElementById(
-            'barraMOE'
-        );
-
-    if (barraMOE) {
-        barraMOE.style.width =
-            `${Math.min(
-                porcentajeMOE,
-                100
-            ).toFixed(2)}%`;
-    }
-} 
-function validarDescuento() {
-    const tipoCampo = document.getElementById(
-        'tipo_descuento'
-    );
-
-    const descuentoCampo = document.getElementById(
-        'descuento_ingresado'
-    );
-
-    const subtotalElemento = document.getElementById(
-        'subtotalGeneral'
-    );
-
-    if (
-        !tipoCampo ||
-        !descuentoCampo ||
-        !subtotalElemento
-    ) {
-        return {
-            valido: true,
-            mensaje: ''
-        };
-    }
-
-    const tipo = tipoCampo.value;
-    const descuento = Number(
-        String(descuentoCampo.value)
-            .replace(',', '.')
-    );
-
-    const subtotal = Number(
-        String(subtotalElemento.textContent)
-            .replace(',', '.')
-            .trim()
-    );
-
-    if (!Number.isFinite(descuento)) {
-        return {
-            valido: false,
-            mensaje: 'Ingrese un descuento válido.'
-        };
-    }
-
-    if (descuento < 0) {
-        return {
-            valido: false,
-            mensaje: 'El descuento no puede ser negativo.'
-        };
-    }
-
-    if (subtotal <= 0 && descuento > 0) {
-        return {
-            valido: false,
-            mensaje: (
-                'No se puede aplicar un descuento ' +
-                'cuando el subtotal es cero.'
-            )
-        };
-    }
-
-    if (
-        tipo === 'PORCENTAJE' &&
-        descuento > 100
-    ) {
-        return {
-            valido: false,
-            mensaje: (
-                'El descuento porcentual no puede ' +
-                'superar el 100%.'
-            )
-        };
-    }
-
-    if (
-        tipo === 'VALOR_FIJO' &&
-        descuento > subtotal
-    ) {
-        return {
-            valido: false,
-            mensaje: (
-                'El descuento fijo no puede superar ' +
-                'el subtotal de la orden.'
-            )
-        };
-    }
-
-    return {
-        valido: true,
-        mensaje: ''
-    };
-}
-
-function mostrarEstadoDescuento() {
-    const campo = document.getElementById(
-        'descuento_ingresado'
-    );
-
-    const mensaje = document.getElementById(
-        'descuentoError'
-    );
-
-    if (!campo) {
-        return true;
-    }
-
-    const validacion = validarDescuento();
-
-    campo.setCustomValidity(
-        validacion.valido
-            ? ''
-            : validacion.mensaje
-    );
-
-    campo.classList.toggle(
-        'is-invalid',
-        !validacion.valido
-    );
-
-    campo.setAttribute(
-        'aria-invalid',
-        validacion.valido
-            ? 'false'
-            : 'true'
-    );
-
-    if (mensaje) {
-        mensaje.textContent =
-            validacion.mensaje;
-
-        mensaje.classList.toggle(
-            'visible',
-            !validacion.valido
-        );
-    }
-
-    return validacion.valido;
-}
+// =====================================================
+// CONTEO DE PRODUCTOS Y SERVICIOS
+// =====================================================
 function contarItemsTabla(idTabla) {
     const tabla = document.getElementById(
         idTabla
@@ -425,13 +217,18 @@ function contarItemsTabla(idTabla) {
     tabla.querySelectorAll(
         'tbody tr'
     ).forEach(function (fila) {
-        /*
-         * Una fila económica real debe contener
-         * cantidad, precio unitario o valor.
-         *
-         * Esto evita contar filas auxiliares,
-         * procedimientos y mensajes vacíos.
-         */
+        if (filaEstaEliminada(fila)) {
+            return;
+        }
+
+        if (
+            fila.classList.contains(
+                'fila-hijas-moi'
+            )
+        ) {
+            return;
+        }
+
         const campoCantidad =
             fila.querySelector('.cantidad');
 
@@ -451,50 +248,39 @@ function contarItemsTabla(idTabla) {
             return;
         }
 
-        /*
-         * No contar filas hijas de procedimientos
-         * de mano de obra interna.
-         */
-        if (
-            fila.classList.contains(
-                'fila-hijas-moi'
-            )
-        ) {
-            return;
-        }
-
-        /*
-         * No contar filas eliminadas u ocultas.
-         */
-        if (
-            fila.hidden ||
-            fila.style.display === 'none'
-        ) {
-            return;
-        }
-
         cantidad += 1;
     });
 
     return cantidad;
 }
 
+
+// =====================================================
+// COMPOSICIÓN ECONÓMICA
+// =====================================================
 function calcularPorcentajeComposicion(
     valor,
     subtotal
 ) {
-    valor = numeroSeguro(valor);
-    subtotal = numeroSeguro(subtotal);
+    const valorSeguro =
+        numeroSeguro(valor);
 
-    if (subtotal <= 0) {
+    const subtotalSeguro =
+        numeroSeguro(subtotal);
+
+    if (
+        subtotalSeguro <= 0 ||
+        valorSeguro <= 0
+    ) {
         return 0;
     }
 
     return (
-        valor /
-        subtotal
+        valorSeguro /
+        subtotalSeguro
     ) * 100;
 }
+
 
 function formarTextoCantidad(
     cantidad,
@@ -505,6 +291,7 @@ function formarTextoCantidad(
         ? `1 ${singular}`
         : `${cantidad} ${plural}`;
 }
+
 
 function actualizarDatoComposicion({
     porcentajeId,
@@ -546,7 +333,10 @@ function actualizarDatoComposicion({
 
     if (barraElemento) {
         const ancho = Math.min(
-            Math.max(porcentaje, 0),
+            Math.max(
+                porcentaje,
+                0
+            ),
             100
         );
 
@@ -555,31 +345,32 @@ function actualizarDatoComposicion({
     }
 }
 
+
 function actualizarComposicionOrden(
-    rep,
-    moi,
-    moe,
+    repuestos,
+    manoObraInterna,
+    manoObraExterna,
     subtotalSinIva
 ) {
-    const porcentajeRep =
+    const porcentajeRepuestos =
         calcularPorcentajeComposicion(
-            rep,
+            repuestos,
             subtotalSinIva
         );
 
     const porcentajeMOI =
         calcularPorcentajeComposicion(
-            moi,
+            manoObraInterna,
             subtotalSinIva
         );
 
     const porcentajeMOE =
         calcularPorcentajeComposicion(
-            moe,
+            manoObraExterna,
             subtotalSinIva
         );
 
-    const cantidadRep =
+    const cantidadRepuestos =
         contarItemsTabla(
             'tablaRepuestos'
         );
@@ -598,8 +389,10 @@ function actualizarComposicionOrden(
         porcentajeId: 'porcentajeRep',
         cantidadId: 'cantidadRep',
         barraId: 'barraRep',
-        porcentaje: porcentajeRep,
-        cantidad: cantidadRep,
+        porcentaje:
+            porcentajeRepuestos,
+        cantidad:
+            cantidadRepuestos,
         singular: 'producto',
         plural: 'productos'
     });
@@ -608,8 +401,10 @@ function actualizarComposicionOrden(
         porcentajeId: 'porcentajeMOI',
         cantidadId: 'cantidadMOI',
         barraId: 'barraMOI',
-        porcentaje: porcentajeMOI,
-        cantidad: cantidadMOI,
+        porcentaje:
+            porcentajeMOI,
+        cantidad:
+            cantidadMOI,
         singular: 'servicio',
         plural: 'servicios'
     });
@@ -618,40 +413,233 @@ function actualizarComposicionOrden(
         porcentajeId: 'porcentajeMOE',
         cantidadId: 'cantidadMOE',
         barraId: 'barraMOE',
-        porcentaje: porcentajeMOE,
-        cantidad: cantidadMOE,
+        porcentaje:
+            porcentajeMOE,
+        cantidad:
+            cantidadMOE,
         singular: 'servicio',
         plural: 'servicios'
     });
 }
+
+
+// =====================================================
+// DESCUENTO
+// =====================================================
+function validarDescuento() {
+    const tipoCampo =
+        document.getElementById(
+            'tipo_descuento'
+        );
+
+    const descuentoCampo =
+        document.getElementById(
+            'descuento_ingresado'
+        );
+
+    const subtotalElemento =
+        document.getElementById(
+            'subtotalGeneral'
+        );
+
+    if (
+        !tipoCampo ||
+        !descuentoCampo ||
+        !subtotalElemento
+    ) {
+        return {
+            valido: true,
+            mensaje: ''
+        };
+    }
+
+    const tipo =
+        tipoCampo.value;
+
+    const descuento = Number(
+        String(
+            descuentoCampo.value
+        )
+            .trim()
+            .replace(',', '.')
+    );
+
+    const subtotal = Number(
+        String(
+            subtotalElemento.textContent
+        )
+            .trim()
+            .replace(',', '.')
+    );
+
+    if (
+        !Number.isFinite(
+            descuento
+        )
+    ) {
+        return {
+            valido: false,
+            mensaje:
+                'Ingrese un descuento válido.'
+        };
+    }
+
+    if (descuento < 0) {
+        return {
+            valido: false,
+            mensaje:
+                'El descuento no puede ser negativo.'
+        };
+    }
+
+    if (
+        subtotal <= 0 &&
+        descuento > 0
+    ) {
+        return {
+            valido: false,
+            mensaje:
+                'No se puede aplicar un descuento cuando el subtotal es cero.'
+        };
+    }
+
+    if (
+        tipo === 'PORCENTAJE' &&
+        descuento > 100
+    ) {
+        return {
+            valido: false,
+            mensaje:
+                'El descuento porcentual no puede superar el 100%.'
+        };
+    }
+
+    if (
+        tipo === 'VALOR_FIJO' &&
+        descuento > subtotal
+    ) {
+        return {
+            valido: false,
+            mensaje:
+                'El descuento fijo no puede superar el subtotal de la orden.'
+        };
+    }
+
+    return {
+        valido: true,
+        mensaje: ''
+    };
+}
+
+
+function mostrarEstadoDescuento() {
+    const campo =
+        document.getElementById(
+            'descuento_ingresado'
+        );
+
+    const mensaje =
+        document.getElementById(
+            'descuentoError'
+        );
+
+    if (!campo) {
+        return true;
+    }
+
+    const validacion =
+        validarDescuento();
+
+    campo.setCustomValidity(
+        validacion.valido
+            ? ''
+            : validacion.mensaje
+    );
+
+    campo.classList.toggle(
+        'is-invalid',
+        !validacion.valido
+    );
+
+    campo.setAttribute(
+        'aria-invalid',
+        validacion.valido
+            ? 'false'
+            : 'true'
+    );
+
+    if (mensaje) {
+        mensaje.textContent =
+            validacion.mensaje;
+
+        mensaje.classList.toggle(
+            'visible',
+            !validacion.valido
+        );
+    }
+
+    return validacion.valido;
+}
+
+
+// =====================================================
+// ACTUALIZACIÓN DE ELEMENTOS
+// =====================================================
+function actualizarTextoNumerico(
+    idElemento,
+    valor
+) {
+    const elemento =
+        document.getElementById(
+            idElemento
+        );
+
+    if (!elemento) {
+        return;
+    }
+
+    elemento.textContent =
+        numeroSeguro(valor).toFixed(2);
+}
+
+
+// =====================================================
+// RECÁLCULO GENERAL
+// =====================================================
 function recalcularTotales() {
-    const rep = sumarTabla(
-        'tablaRepuestos'
-    );
+    const repuestos =
+        sumarTabla(
+            'tablaRepuestos'
+        );
 
-    const moi = sumarTabla(
-        'tablaMOI'
-    );
+    const manoObraInterna =
+        sumarTabla(
+            'tablaMOI'
+        );
 
-    const moe = sumarTabla(
-        'tablaMOE'
-    );
+    const manoObraExterna =
+        sumarTabla(
+            'tablaMOE'
+        );
 
     const subtotalSinIva =
-        rep + moi + moe;
+        repuestos +
+        manoObraInterna +
+        manoObraExterna;
 
     actualizarComposicionOrden(
-        rep,
-        moi,
-        moe,
+        repuestos,
+        manoObraInterna,
+        manoObraExterna,
         subtotalSinIva
     );
 
-    const porcentajeIva = numeroSeguro(
-        document.getElementById(
-            'porcentajeIva'
-        )?.value
-    );
+    const porcentajeIva =
+        numeroSeguro(
+            document.getElementById(
+                'porcentajeIva'
+            )?.value
+        );
 
     const tipoDescuento = (
         document.getElementById(
@@ -667,7 +655,9 @@ function recalcularTotales() {
             )?.value
         );
 
-    if (descuentoIngresado < 0) {
+    if (
+        descuentoIngresado < 0
+    ) {
         descuentoIngresado = 0;
     }
 
@@ -722,104 +712,85 @@ function recalcularTotales() {
         baseImponible = 0;
     }
 
-    const iva =
+    const iva = (
         baseImponible *
-        (
-            porcentajeIva /
-            100
-        );
+        porcentajeIva
+    ) / 100;
 
-    const sumarIvaAlTotal = (
+    const checkboxIva =
         document.getElementById(
             'sumar_iva_al_total'
-        )?.checked ?? true
-    );
+        );
+
+    const sumarIvaAlTotal =
+        checkboxIva
+            ? checkboxIva.checked
+            : true;
 
     const totalFinal =
         sumarIvaAlTotal
             ? baseImponible + iva
             : baseImponible;
 
-    const subtotalRep =
-        document.getElementById(
-            'subtotalRepuestos'
-        );
+    /*
+     * Tarjetas principales.
+     */
+    actualizarTextoNumerico(
+        'subtotalRepuestos',
+        repuestos
+    );
 
-    if (subtotalRep) {
-        subtotalRep.textContent =
-            rep.toFixed(2);
-    }
+    actualizarTextoNumerico(
+        'subtotalMOI',
+        manoObraInterna
+    );
 
-    const subtotalMOI =
-        document.getElementById(
-            'subtotalMOI'
-        );
+    actualizarTextoNumerico(
+        'subtotalMOE',
+        manoObraExterna
+    );
 
-    if (subtotalMOI) {
-        subtotalMOI.textContent =
-            moi.toFixed(2);
-    }
+    /*
+     * Resumen adicional.
+     */
+    actualizarTextoNumerico(
+        'resumenRep',
+        repuestos
+    );
 
-    const subtotalMOE =
-        document.getElementById(
-            'subtotalMOE'
-        );
+    actualizarTextoNumerico(
+        'resumenMOI',
+        manoObraInterna
+    );
 
-    if (subtotalMOE) {
-        subtotalMOE.textContent =
-            moe.toFixed(2);
-    }
+    actualizarTextoNumerico(
+        'resumenMOE',
+        manoObraExterna
+    );
 
-    const resumenRep =
-        document.getElementById(
-            'resumenRep'
-        );
+    actualizarTextoNumerico(
+        'subtotalGeneral',
+        subtotalSinIva
+    );
 
-    if (resumenRep) {
-        resumenRep.textContent =
-            rep.toFixed(2);
-    }
+    actualizarTextoNumerico(
+        'descuentoTotal',
+        valorDescuento
+    );
 
-    const resumenMOI =
-        document.getElementById(
-            'resumenMOI'
-        );
+    actualizarTextoNumerico(
+        'ivaTotal',
+        iva
+    );
 
-    if (resumenMOI) {
-        resumenMOI.textContent =
-            moi.toFixed(2);
-    }
+    actualizarTextoNumerico(
+        'granTotal',
+        totalFinal
+    );
 
-    const resumenMOE =
-        document.getElementById(
-            'resumenMOE'
-        );
-
-    if (resumenMOE) {
-        resumenMOE.textContent =
-            moe.toFixed(2);
-    }
-
-    const subtotalGeneral =
-        document.getElementById(
-            'subtotalGeneral'
-        );
-
-    if (subtotalGeneral) {
-        subtotalGeneral.textContent =
-            subtotalSinIva.toFixed(2);
-    }
-
-    const descuentoTotal =
-        document.getElementById(
-            'descuentoTotal'
-        );
-
-    if (descuentoTotal) {
-        descuentoTotal.textContent =
-            valorDescuento.toFixed(2);
-    }
-
+    /*
+     * Texto del descuento.
+     */
     const descuentoPorcentajeTexto =
         document.getElementById(
             'descuentoPorcentajeTexto'
@@ -828,10 +799,8 @@ function recalcularTotales() {
     if (
         descuentoPorcentajeTexto
     ) {
-        descuentoPorcentajeTexto
-            .textContent =
-            `${porcentajeDescuento
-                .toFixed(2)}%`;
+        descuentoPorcentajeTexto.textContent =
+            `${porcentajeDescuento.toFixed(2)}%`;
     }
 
     const descuentoValorTexto =
@@ -839,12 +808,16 @@ function recalcularTotales() {
             'descuentoValorTexto'
         );
 
-    if (descuentoValorTexto) {
+    if (
+        descuentoValorTexto
+    ) {
         descuentoValorTexto.textContent =
-            `$${valorDescuento
-                .toFixed(2)}`;
+            `$${valorDescuento.toFixed(2)}`;
     }
 
+    /*
+     * Etiqueta IVA.
+     */
     const ivaLabel =
         document.getElementById(
             'ivaLabel'
@@ -852,67 +825,34 @@ function recalcularTotales() {
 
     if (ivaLabel) {
         ivaLabel.textContent =
-            `IVA ${porcentajeIva
-                .toFixed(2)}%`;
-    }
-
-    const ivaTotal =
-        document.getElementById(
-            'ivaTotal'
-        );
-
-    if (ivaTotal) {
-        ivaTotal.textContent =
-            iva.toFixed(2);
-    }
-
-    const granTotal =
-        document.getElementById(
-            'granTotal'
-        );
-
-    if (granTotal) {
-        granTotal.textContent =
-            totalFinal.toFixed(2);
+            `IVA ${porcentajeIva.toFixed(2)}%`;
     }
 
     mostrarEstadoDescuento();
 }
-function eliminarFila(boton) {
 
-    const fila = boton.closest('tr');
 
-    if (!fila) return;
-
-    // =========================================
-    // MANO DE OBRA INTERNA
-    // =========================================
-    if (
-        fila.classList.contains('fila-padre-moi')
-    ) {
-
-        const filaHijas = fila.nextElementSibling;
-
-        if (
-            filaHijas &&
-            filaHijas.classList.contains('fila-hijas-moi')
-        ) {
-
-            filaHijas.remove();
-        }
-    }
-
-    fila.remove();
-
-    recalcularTotales();
-}
-
+// =====================================================
+// ESCAPAR HTML
+// =====================================================
 function escaparHTML(valor) {
-
-    return String(valor ?? '')
+    return String(
+        valor ?? ''
+    )
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 }
+
+
+// =====================================================
+// INICIALIZACIÓN
+// =====================================================
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+        recalcularTotales();
+    }
+);

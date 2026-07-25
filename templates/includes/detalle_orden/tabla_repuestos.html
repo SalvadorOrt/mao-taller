@@ -12,154 +12,324 @@
     }
 </style>
 
+
 <div class="ot-card">
-    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
+    <div
+        class="section-title"
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 10px;
+        "
+    >
         <span>Repuestos</span>
 
         {% if puede_editar %}
-            <button type="button" class="btn-login" onclick="abrirModalIngresoRapido()">
+            <button
+                type="button"
+                class="btn-login"
+                onclick="abrirModalIngresoRapido()"
+            >
                 + Ingreso Rápido
             </button>
         {% endif %}
     </div>
 
     <div class="ot-table-wrap">
-        <table class="ot-table" id="tablaRepuestos">
+        <table
+            class="ot-table"
+            id="tablaRepuestos"
+        >
             <thead>
                 <tr>
-                    <th style="width:30%;">Producto inventario</th>
-                    <th style="width:22%;">Descripción</th>
-                    <th style="width:8%;">Stock</th>
-                    <th style="width:10%;">P.U.</th>
-                    <th style="width:8%;">Cantidad</th>
-                    <th style="width:10%;">Valor</th>
-                    <th style="width:12%;">Orden / Acción</th>
+                    <th style="width: 30%;">
+                        Producto inventario
+                    </th>
+
+                    <th style="width: 22%;">
+                        Descripción
+                    </th>
+
+                    <th style="width: 8%;">
+                        Stock
+                    </th>
+
+                    <th style="width: 10%;">
+                        P.U.
+                    </th>
+
+                    <th style="width: 8%;">
+                        Cantidad
+                    </th>
+
+                    <th style="width: 10%;">
+                        Valor
+                    </th>
+
+                    <th style="width: 12%;">
+                        Orden / Acción
+                    </th>
                 </tr>
             </thead>
 
             <tbody id="cuerpoTablaRepuestos">
                 {% if orden.es_migrada %}
+
                     {% for item in orden.insumos_historicos.all %}
                         <tr class="form-readonly">
                             <td class="producto-cell">
-                                <input type="text" class="form-control-apple" value="{{ item.codigo_original|default:'S/C' }}" readonly>
+                                <input
+                                    type="text"
+                                    class="form-control-apple"
+                                    value="{{ item.codigo_original|default:'S/C' }}"
+                                    readonly
+                                >
                             </td>
 
                             <td>
-                                <input type="text" class="form-control-apple" value="{{ item.descripcion_original }}" readonly>
+                                <input
+                                    type="text"
+                                    class="form-control-apple"
+                                    value="{{ item.descripcion_original }}"
+                                    readonly
+                                >
                             </td>
 
                             <td>
-                                <div class="stock-chip stock-view" style="background:transparent; border:none; color:#86868b;">-</div>
+                                <div
+                                    class="stock-chip stock-view"
+                                    style="
+                                        background: transparent;
+                                        border: none;
+                                        color: #86868b;
+                                    "
+                                >
+                                    -
+                                </div>
                             </td>
 
                             <td>
-                                <input type="text" class="form-control-apple pu" value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}" readonly>
+                                <input
+                                    type="text"
+                                    class="form-control-apple pu"
+                                    value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                    readonly
+                                >
                             </td>
 
                             <td>
-                                <input type="text" class="form-control-apple cantidad" value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}0.00{% endif %}" readonly>
+                                <input
+                                    type="text"
+                                    class="form-control-apple cantidad"
+                                    value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                    readonly
+                                >
                             </td>
 
                             <td>
-                                <input type="text" class="form-control-apple valor" value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}" readonly>
+                                <input
+                                    type="text"
+                                    class="form-control-apple valor"
+                                    value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                    readonly
+                                >
                             </td>
 
-                            <td style="text-align:center;">
-                                <span style="background:#fff5cc; color:#ff9500; padding:4px 8px; border-radius:6px; font-weight:700; font-size:9px; border:1px solid #ffcc00;">
+                            <td style="text-align: center;">
+                                <span
+                                    style="
+                                        background: #fff5cc;
+                                        color: #ff9500;
+                                        padding: 4px 8px;
+                                        border-radius: 6px;
+                                        font-weight: 700;
+                                        font-size: 9px;
+                                        border: 1px solid #ffcc00;
+                                    "
+                                >
                                     HISTÓRICO
                                 </span>
                             </td>
                         </tr>
                     {% endfor %}
+
                 {% else %}
+
                     {% for item in orden.insumos_detalles.all %}
                         <tr>
                             <td class="producto-cell">
-                                <input type="hidden" name="rep_detalle_id[]" value="{{ item.id }}">
-                                <input type="hidden" name="rep_delete[]" value="0">
-                                <input type="hidden" name="rep_actualizado_en[]" value="{{ item.actualizado_en|date:'c' }}">
+                                <input
+                                    type="hidden"
+                                    name="rep_detalle_id[]"
+                                    value="{{ item.id }}"
+                                >
 
-                                <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="{{ item.producto.id|default_if_none:'' }}">
-                                <input type="hidden" name="rep_categoria_id[]" value="">
-                                <input type="hidden" name="rep_codigo_barras[]" value="">
-                                <input type="hidden" name="rep_codigo_empaque[]" value="">
+                                <input
+                                    type="hidden"
+                                    name="rep_delete[]"
+                                    value="0"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="rep_actualizado_en[]"
+                                    value="{{ item.actualizado_en|date:'c' }}"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="rep_producto_id[]"
+                                    class="producto-id-hidden"
+                                    value="{{ item.producto.id|default_if_none:'' }}"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="rep_categoria_id[]"
+                                    value=""
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="rep_codigo_barras[]"
+                                    value=""
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="rep_codigo_empaque[]"
+                                    value=""
+                                >
 
                                 <div class="producto-busqueda-wrap">
                                     {% if item.producto %}
-                                        <input type="text"
-                                               class="form-control-apple producto-busqueda-input"
-                                               placeholder="Código / barras / nombre"
-                                               autocomplete="off"
-                                               value="{{ item.producto.codigo }} - {{ item.producto.nombre_comercial|default:item.producto.producto.nombre_base }}"
-                                               {% if puede_editar %}
-                                                   oninput="buscarProductoEnFila(this)"
-                                                   onkeydown="manejarTeclaBusquedaProducto(event, this)"
-                                                   onfocus="buscarProductoEnFila(this)"
-                                               {% else %}
-                                                   readonly
-                                               {% endif %}>
+                                        <input
+                                            type="text"
+                                            class="
+                                                form-control-apple
+                                                producto-busqueda-input
+                                            "
+                                            placeholder="Código / barras / nombre"
+                                            autocomplete="off"
+                                            value="{{ item.producto.codigo }} - {{ item.producto.nombre_comercial|default:item.producto.producto.nombre_base }}"
+                                            {% if puede_editar %}
+                                                oninput="buscarProductoEnFila(this)"
+                                                onkeydown="
+                                                    manejarTeclaBusquedaProducto(
+                                                        event,
+                                                        this
+                                                    )
+                                                "
+                                                onfocus="buscarProductoEnFila(this)"
+                                            {% else %}
+                                                readonly
+                                            {% endif %}
+                                        >
                                     {% else %}
-                                        <input type="text"
-                                               class="form-control-apple"
-                                               value="[ TEXTO LIBRE / MANUAL ]"
-                                               readonly
-                                               style="background-color:#f5f5f7; color:#86868b; font-size:11px; text-align:center; font-weight:bold;">
+                                        <input
+                                            type="text"
+                                            class="form-control-apple"
+                                            value="[ TEXTO LIBRE / MANUAL ]"
+                                            readonly
+                                            style="
+                                                background-color: #f5f5f7;
+                                                color: #86868b;
+                                                font-size: 11px;
+                                                text-align: center;
+                                                font-weight: bold;
+                                            "
+                                        >
                                     {% endif %}
                                 </div>
                             </td>
 
                             <td>
-                                <input type="text"
-                                       name="rep_descripcion[]"
-                                       class="form-control-apple descripcion-manual"
-                                       value="{{ item.descripcion_factura }}"
-                                       placeholder="Descripción del repuesto"
-                                       {% if not puede_editar %}readonly{% endif %}>
+                                <input
+                                    type="text"
+                                    name="rep_descripcion[]"
+                                    class="
+                                        form-control-apple
+                                        descripcion-manual
+                                    "
+                                    value="{{ item.descripcion_factura }}"
+                                    placeholder="Descripción del repuesto"
+                                    {% if not puede_editar %}
+                                        readonly
+                                    {% endif %}
+                                >
                             </td>
 
                             <td>
                                 <div class="stock-chip stock-view">
-                                    {% if item.producto %}{{ item.producto.stock.cantidad|default:0 }}{% else %}-{% endif %}
+                                    {% if item.producto %}
+                                        {{ item.producto.stock.cantidad|default:0 }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </div>
                             </td>
 
                             <td>
-                                <input type="number"
-                                       step="0.01"
-                                       name="rep_pu[]"
-                                       class="form-control-apple pu"
-                                       value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-                                       placeholder="0.00"
-                                       {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    name="rep_pu[]"
+                                    class="form-control-apple pu"
+                                    value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                    placeholder="0.00"
+                                    {% if not puede_editar %}
+                                        readonly
+                                    {% else %}
+                                        oninput="calcularFila(this)"
+                                    {% endif %}
+                                >
                             </td>
 
                             <td>
-                                <input type="number"
-                                       step="1"
-                                       name="rep_cantidad[]"
-                                       class="form-control-apple cantidad"
-                                       value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
-                                       {% if not puede_editar %}readonly{% else %}oninput="calcularFila(this)"{% endif %}>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    name="rep_cantidad[]"
+                                    class="form-control-apple cantidad"
+                                    value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                    {% if not puede_editar %}
+                                        readonly
+                                    {% else %}
+                                        oninput="calcularFila(this)"
+                                    {% endif %}
+                                >
                             </td>
 
                             <td>
-                                <input type="number"
-                                       step="0.01"
-                                       name="rep_valor[]"
-                                       class="form-control-apple valor"
-                                       value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
-                                       placeholder="0.00"
-                                       readonly>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    name="rep_valor[]"
+                                    class="form-control-apple valor"
+                                    value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                    placeholder="0.00"
+                                    readonly
+                                >
                             </td>
 
                             <td>
                                 <div class="row-controls">
                                     {% if puede_editar %}
-                                        <button type="button"
-                                                class="btn-login danger small"
-                                                onclick="eliminarFila(this)"
-                                                title="Quitar">
+                                        <button
+                                            type="button"
+                                            class="
+                                                btn-login
+                                                danger
+                                                small
+                                            "
+                                            onclick="
+                                                eliminarFilaRepuesto(this)
+                                            "
+                                            title="Quitar"
+                                        >
                                             ✕
                                         </button>
                                     {% endif %}
@@ -167,6 +337,7 @@
                             </td>
                         </tr>
                     {% endfor %}
+
                 {% endif %}
             </tbody>
         </table>
@@ -174,7 +345,11 @@
 
     <div class="table-footer-actions">
         {% if puede_editar %}
-            <button type="button" class="btn-login" onclick="agregarFilaRepuesto(true)">
+            <button
+                type="button"
+                class="btn-login"
+                onclick="agregarFilaRepuesto(true)"
+            >
                 + Agregar repuesto
             </button>
         {% else %}
@@ -183,307 +358,974 @@
 
         <div class="subtotal-box">
             <div class="subtotal-pill">
-                Sub total repuestos: $<span id="subtotalRepuestos">0.00</span>
+                Sub total repuestos:
+                $<span id="subtotalRepuestos">0.00</span>
             </div>
         </div>
     </div>
 </div>
 
+
 {% if puede_editar %}
-<div id="modalIngresoRapido"
-     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:flex-start; padding-top:10vh; backdrop-filter:blur(3px);">
+    <div
+        id="modalIngresoRapido"
+        style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 10vh;
+            backdrop-filter: blur(3px);
+        "
+    >
+        <div
+            style="
+                background: #ffffff;
+                padding: 25px;
+                border-radius: 14px;
+                width: 420px;
+                max-width: calc(100vw - 30px);
+                box-shadow:
+                    0 10px 25px
+                    rgba(0, 0, 0, 0.2);
+            "
+        >
+            <h3
+                style="
+                    margin-top: 0;
+                    margin-bottom: 20px;
+                    font-size: 18px;
+                    color: #1d1d1f;
+                    font-weight: 600;
+                "
+            >
+                + Ingreso Rápido de Repuesto
+            </h3>
 
-    <div style="background:#ffffff; padding:25px; border-radius:14px; width:420px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-        <h3 style="margin-top:0; margin-bottom:20px; font-size:18px; color:#1d1d1f; font-weight:600;">
-            + Ingreso Rápido de Repuesto
-        </h3>
-
-        <div style="background:#f5f5f7; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid #e5e5ea;">
-            <label style="font-size:10px; font-weight:700; color:#86868b; display:block; margin-bottom:15px; letter-spacing:0.5px;">
-                DATOS REFERENCIALES / CONSULTA
-            </label>
-
-            <div style="display:flex; align-items:center; margin-bottom:12px; gap:10px;">
-                <label style="font-size:12px; color:#1d1d1f; width:85px; font-weight:500;">
-                    Categoría:
+            <div
+                style="
+                    background: #f5f5f7;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 20px;
+                    border: 1px solid #e5e5ea;
+                "
+            >
+                <label
+                    style="
+                        font-size: 10px;
+                        font-weight: 700;
+                        color: #86868b;
+                        display: block;
+                        margin-bottom: 15px;
+                        letter-spacing: 0.5px;
+                    "
+                >
+                    DATOS REFERENCIALES / CONSULTA
                 </label>
 
-                <div style="position:relative; flex:1;">
-                    <input type="text"
-                           id="ir_categoria_visual"
-                           class="form-control-apple"
-                           style="width:100%;"
-                           autocomplete="off"
-                           onkeyup="filtrarCategoriasModal()"
-                           onclick="mostrarCategoriasModal()">
+                <div
+                    style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 12px;
+                        gap: 10px;
+                    "
+                >
+                    <label
+                        style="
+                            font-size: 12px;
+                            color: #1d1d1f;
+                            width: 85px;
+                            font-weight: 500;
+                        "
+                    >
+                        Categoría:
+                    </label>
 
-                    <input type="hidden" id="ir_categoria_id" value="">
+                    <div
+                        style="
+                            position: relative;
+                            flex: 1;
+                        "
+                    >
+                        <input
+                            type="text"
+                            id="ir_categoria_visual"
+                            class="form-control-apple"
+                            style="width: 100%;"
+                            autocomplete="off"
+                            oninput="filtrarCategoriasModal()"
+                            onfocus="mostrarCategoriasModal()"
+                            onclick="mostrarCategoriasModal()"
+                        >
 
-                    <div id="dropdownCategoriasModal"
-                         style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #d2d2d7; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:140px; overflow-y:auto; z-index:1001; margin-top:4px;">
-                        {% for cat in categorias_inventario %}
-                            <div class="categoria-item"
-                                 data-id="{{ cat.id }}"
-                                 data-nombre="{{ cat.nombre }}"
-                                 style="padding:10px 12px; font-size:12px; color:#1d1d1f; cursor:pointer; border-bottom:1px solid #f5f5f7;"
-                                 onclick="seleccionarCategoriaModal(this)">
-                                {{ cat.nombre }}
+                        <input
+                            type="hidden"
+                            id="ir_categoria_id"
+                            value=""
+                        >
+
+                        <div
+                            id="dropdownCategoriasModal"
+                            style="
+                                display: none;
+                                position: absolute;
+                                top: 100%;
+                                left: 0;
+                                right: 0;
+                                background: #fff;
+                                border: 1px solid #d2d2d7;
+                                border-radius: 8px;
+                                box-shadow:
+                                    0 4px 12px
+                                    rgba(0, 0, 0, 0.15);
+                                max-height: 140px;
+                                overflow-y: auto;
+                                z-index: 1001;
+                                margin-top: 4px;
+                            "
+                        >
+                            {% for cat in categorias_inventario %}
+                                <div
+                                    class="categoria-item"
+                                    data-id="{{ cat.id }}"
+                                    data-nombre="{{ cat.nombre }}"
+                                    style="
+                                        padding: 10px 12px;
+                                        font-size: 12px;
+                                        color: #1d1d1f;
+                                        cursor: pointer;
+                                        border-bottom:
+                                            1px solid #f5f5f7;
+                                    "
+                                    onclick="
+                                        seleccionarCategoriaModal(
+                                            this
+                                        )
+                                    "
+                                >
+                                    {{ cat.nombre }}
+                                </div>
+                            {% endfor %}
+
+                            <div
+                                id="categoriaNoResult"
+                                style="
+                                    display: none;
+                                    padding: 10px 12px;
+                                    font-size: 12px;
+                                    color: #86868b;
+                                    text-align: center;
+                                "
+                            >
+                                Sin coincidencias
                             </div>
-                        {% endfor %}
-
-                        <div id="categoriaNoResult" style="display:none; padding:10px 12px; font-size:12px; color:#86868b; text-align:center;">
-                            Sin coincidencias
                         </div>
                     </div>
                 </div>
+
+                <div
+                    style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 12px;
+                        gap: 10px;
+                    "
+                >
+                    <label
+                        style="
+                            font-size: 12px;
+                            color: #1d1d1f;
+                            width: 85px;
+                            font-weight: 500;
+                        "
+                    >
+                        Empaque:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="ir_empaque"
+                        class="form-control-apple"
+                        style="flex: 1;"
+                    >
+                </div>
+
+                <div
+                    style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 5px;
+                        gap: 10px;
+                    "
+                >
+                    <label
+                        style="
+                            font-size: 12px;
+                            color: #1d1d1f;
+                            width: 85px;
+                            font-weight: 500;
+                        "
+                    >
+                        Cód. Barras:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="ir_barras"
+                        class="form-control-apple"
+                        style="flex: 1;"
+                    >
+                </div>
             </div>
 
-            <div style="display:flex; align-items:center; margin-bottom:12px; gap:10px;">
-                <label style="font-size:12px; color:#1d1d1f; width:85px; font-weight:500;">
-                    Empaque:
-                </label>
-
-                <input type="text" id="ir_empaque" class="form-control-apple" style="flex:1;">
-            </div>
-
-            <div style="display:flex; align-items:center; margin-bottom:5px; gap:10px;">
-                <label style="font-size:12px; color:#1d1d1f; width:85px; font-weight:500;">
-                    Cód. Barras:
-                </label>
-
-                <input type="text" id="ir_barras" class="form-control-apple" style="flex:1;">
-            </div>
-        </div>
-
-        <label style="font-size:10px; font-weight:700; color:#86868b; display:block; margin-bottom:12px; letter-spacing:0.5px;">
-            DATOS PARA LA ORDEN (OBLIGATORIO)
-        </label>
-
-        <div style="margin-bottom:15px;">
-            <label style="font-size:12px; color:#1d1d1f; display:block; margin-bottom:4px; font-weight:500;">
-                Descripción:
+            <label
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: #86868b;
+                    display: block;
+                    margin-bottom: 12px;
+                    letter-spacing: 0.5px;
+                "
+            >
+                DATOS PARA LA ORDEN (OBLIGATORIO)
             </label>
 
-            <input type="text" id="ir_descripcion" class="form-control-apple" style="width:100%;">
-        </div>
-
-        <div style="display:flex; gap:15px; margin-bottom:25px;">
-            <div style="flex:1;">
-                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
-                    Precio Unit. ($)
+            <div style="margin-bottom: 15px;">
+                <label
+                    style="
+                        font-size: 12px;
+                        color: #1d1d1f;
+                        display: block;
+                        margin-bottom: 4px;
+                        font-weight: 500;
+                    "
+                >
+                    Descripción:
                 </label>
 
-                <input type="number" id="ir_precio" class="form-control-apple" style="width:100%;" step="0.01" value="0.00">
+                <input
+                    type="text"
+                    id="ir_descripcion"
+                    class="form-control-apple"
+                    style="width: 100%;"
+                >
             </div>
 
-            <div style="flex:1;">
-                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
-                    Cantidad
-                </label>
+            <div
+                style="
+                    display: flex;
+                    gap: 15px;
+                    margin-bottom: 25px;
+                "
+            >
+                <div style="flex: 1;">
+                    <label
+                        style="
+                            font-size: 12px;
+                            color: #1d1d1f;
+                            margin-bottom: 4px;
+                            display: block;
+                            font-weight: 500;
+                        "
+                    >
+                        Precio Unit. ($)
+                    </label>
 
-                <input type="number" id="ir_cantidad" class="form-control-apple" style="width:100%;" step="1" value="1">
+                    <input
+                        type="number"
+                        id="ir_precio"
+                        class="form-control-apple"
+                        style="width: 100%;"
+                        step="0.01"
+                        min="0"
+                        value="0.00"
+                    >
+                </div>
+
+                <div style="flex: 1;">
+                    <label
+                        style="
+                            font-size: 12px;
+                            color: #1d1d1f;
+                            margin-bottom: 4px;
+                            display: block;
+                            font-weight: 500;
+                        "
+                    >
+                        Cantidad
+                    </label>
+
+                    <input
+                        type="number"
+                        id="ir_cantidad"
+                        class="form-control-apple"
+                        style="width: 100%;"
+                        step="0.01"
+                        min="0.01"
+                        value="1.00"
+                    >
+                </div>
             </div>
-        </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button type="button"
+            <div
+                style="
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                "
+            >
+                <button
+                    type="button"
                     class="btn-login"
-                    style="background:#e5e5ea; border-color:#e5e5ea; color:#1d1d1f;"
-                    onclick="cerrarModalIngresoRapido()">
-                Cancelar
-            </button>
+                    style="
+                        background: #e5e5ea;
+                        border-color: #e5e5ea;
+                        color: #1d1d1f;
+                    "
+                    onclick="cerrarModalIngresoRapido()"
+                >
+                    Cancelar
+                </button>
 
-            <button type="button"
+                <button
+                    type="button"
                     class="btn-login primary"
-                    onclick="confirmarIngresoRapido()">
-                Agregar a la Orden
-            </button>
+                    onclick="confirmarIngresoRapido()"
+                >
+                    Agregar a la Orden
+                </button>
+            </div>
         </div>
     </div>
-</div>
+
+
+    <div
+        id="productoFloatingDropdown"
+        style="
+            display: none;
+            position: fixed;
+            background: #fff;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            box-shadow:
+                0 4px 12px
+                rgba(0, 0, 0, 0.15);
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 99999;
+        "
+    >
+    </div>
 {% endif %}
+
 
 {% if puede_editar %}
-<div id="productoFloatingDropdown"
-     style="display:none; position:fixed; background:#fff; border:1px solid #d2d2d7; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:240px; overflow-y:auto; z-index:99999;">
-</div>
-{% endif %}
-
 <script>
-function numeroSeguro(valor) {
-    if (!valor) return 0;
-    valor = valor.toString().replace(',', '.');
-    const n = parseFloat(valor);
-    return isNaN(n) ? 0 : n;
-}
+    function mostrarCategoriasModal() {
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
 
-function escaparHtml(valor) {
-    return String(valor ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-}
+        if (!dropdown) {
+            return;
+        }
 
-function mostrarCategoriasModal() {
-    document.getElementById('dropdownCategoriasModal').style.display = 'block';
-    filtrarCategoriasModal();
-}
+        dropdown.style.display =
+            'block';
 
-function filtrarCategoriasModal() {
-    const filtro = document.getElementById('ir_categoria_visual').value.toLowerCase();
-    const dropdown = document.getElementById('dropdownCategoriasModal');
-    const items = dropdown.getElementsByClassName('categoria-item');
-    const noResult = document.getElementById('categoriaNoResult');
+        filtrarCategoriasModal();
+    }
 
-    let visibles = 0;
-    dropdown.style.display = 'block';
 
-    for (let i = 0; i < items.length; i++) {
-        const texto = items[i].getAttribute('data-nombre').toLowerCase();
+    function filtrarCategoriasModal() {
+        const input =
+            document.getElementById(
+                'ir_categoria_visual'
+            );
 
-        if (texto.includes(filtro)) {
-            items[i].style.display = 'block';
-            visibles++;
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
+
+        const noResult =
+            document.getElementById(
+                'categoriaNoResult'
+            );
+
+        if (
+            !input ||
+            !dropdown
+        ) {
+            return;
+        }
+
+        const filtro =
+            String(
+                input.value || ''
+            )
+                .trim()
+                .toLowerCase();
+
+        const items =
+            dropdown.querySelectorAll(
+                '.categoria-item'
+            );
+
+        let visibles = 0;
+
+        dropdown.style.display =
+            'block';
+
+        items.forEach(function (
+            item
+        ) {
+            const nombre =
+                String(
+                    item.dataset.nombre ||
+                    ''
+                ).toLowerCase();
+
+            const visible =
+                nombre.includes(
+                    filtro
+                );
+
+            item.style.display =
+                visible
+                    ? 'block'
+                    : 'none';
+
+            if (visible) {
+                visibles += 1;
+            }
+        });
+
+        if (noResult) {
+            noResult.style.display =
+                visibles === 0
+                    ? 'block'
+                    : 'none';
+        }
+    }
+
+
+    function seleccionarCategoriaModal(
+        elemento
+    ) {
+        if (!elemento) {
+            return;
+        }
+
+        const inputVisual =
+            document.getElementById(
+                'ir_categoria_visual'
+            );
+
+        const inputId =
+            document.getElementById(
+                'ir_categoria_id'
+            );
+
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
+
+        if (inputVisual) {
+            inputVisual.value =
+                elemento.dataset.nombre ||
+                '';
+        }
+
+        if (inputId) {
+            inputId.value =
+                elemento.dataset.id ||
+                '';
+        }
+
+        if (dropdown) {
+            dropdown.style.display =
+                'none';
+        }
+    }
+
+
+    function abrirModalIngresoRapido() {
+        const modal =
+            document.getElementById(
+                'modalIngresoRapido'
+            );
+
+        const descripcion =
+            document.getElementById(
+                'ir_descripcion'
+            );
+
+        if (!modal) {
+            return;
+        }
+
+        modal.style.display =
+            'flex';
+
+        if (descripcion) {
+            setTimeout(function () {
+                descripcion.focus();
+            }, 100);
+        }
+    }
+
+
+    function cerrarModalIngresoRapido() {
+        const modal =
+            document.getElementById(
+                'modalIngresoRapido'
+            );
+
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
+
+        if (modal) {
+            modal.style.display =
+                'none';
+        }
+
+        if (dropdown) {
+            dropdown.style.display =
+                'none';
+        }
+
+        const campos = {
+            ir_categoria_visual: '',
+            ir_categoria_id: '',
+            ir_barras: '',
+            ir_empaque: '',
+            ir_descripcion: '',
+            ir_precio: '0.00',
+            ir_cantidad: '1.00'
+        };
+
+        Object.entries(
+            campos
+        ).forEach(function ([
+            id,
+            valor
+        ]) {
+            const elemento =
+                document.getElementById(
+                    id
+                );
+
+            if (elemento) {
+                elemento.value =
+                    valor;
+            }
+        });
+    }
+
+
+    function confirmarIngresoRapido() {
+        const categoriaInput =
+            document.getElementById(
+                'ir_categoria_id'
+            );
+
+        const barrasInput =
+            document.getElementById(
+                'ir_barras'
+            );
+
+        const empaqueInput =
+            document.getElementById(
+                'ir_empaque'
+            );
+
+        const descripcionInput =
+            document.getElementById(
+                'ir_descripcion'
+            );
+
+        const precioInput =
+            document.getElementById(
+                'ir_precio'
+            );
+
+        const cantidadInput =
+            document.getElementById(
+                'ir_cantidad'
+            );
+
+        if (
+            !descripcionInput ||
+            !precioInput ||
+            !cantidadInput
+        ) {
+            return;
+        }
+
+        const categoriaId =
+            categoriaInput?.value || '';
+
+        const barras =
+            String(
+                barrasInput?.value || ''
+            ).trim();
+
+        const empaque =
+            String(
+                empaqueInput?.value || ''
+            ).trim();
+
+        const descripcion =
+            String(
+                descripcionInput.value ||
+                ''
+            ).trim();
+
+        const precio =
+            typeof numeroSeguro ===
+            'function'
+                ? numeroSeguro(
+                    precioInput.value
+                )
+                : Number(
+                    precioInput.value
+                ) || 0;
+
+        const cantidad =
+            typeof numeroSeguro ===
+            'function'
+                ? numeroSeguro(
+                    cantidadInput.value
+                )
+                : Number(
+                    cantidadInput.value
+                ) || 0;
+
+        if (!descripcion) {
+            alert(
+                'La descripción es obligatoria.'
+            );
+
+            descripcionInput.focus();
+            return;
+        }
+
+        if (precio < 0) {
+            alert(
+                'El precio no puede ser negativo.'
+            );
+
+            precioInput.focus();
+            return;
+        }
+
+        if (cantidad <= 0) {
+            alert(
+                'La cantidad debe ser mayor que cero.'
+            );
+
+            cantidadInput.focus();
+            return;
+        }
+
+        const valorTotal = (
+            precio *
+            cantidad
+        ).toFixed(2);
+
+        const codigoVisual =
+            barras ||
+            empaque ||
+            '[ TEXTO LIBRE / MANUAL ]';
+
+        const escapar =
+            typeof escaparHtml ===
+            'function'
+                ? escaparHtml
+                : function (valor) {
+                    return String(
+                        valor ?? ''
+                    );
+                };
+
+        const nuevaFila = `
+            <tr>
+                <td class="producto-cell">
+                    <input
+                        type="hidden"
+                        name="rep_detalle_id[]"
+                        value=""
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_delete[]"
+                        value="0"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_actualizado_en[]"
+                        value=""
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_producto_id[]"
+                        class="producto-id-hidden"
+                        value=""
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_categoria_id[]"
+                        value="${escapar(
+                            categoriaId
+                        )}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_codigo_barras[]"
+                        value="${escapar(
+                            barras
+                        )}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_codigo_empaque[]"
+                        value="${escapar(
+                            empaque
+                        )}"
+                    >
+
+                    <div
+                        class="
+                            producto-busqueda-wrap
+                            producto-manual
+                        "
+                        style="
+                            text-align: center;
+                            background-color: #f5f5f7;
+                            padding: 8px;
+                            border-radius: 6px;
+                            font-weight: bold;
+                            color: #86868b;
+                            font-size: 11px;
+                        "
+                    >
+                        ${escapar(
+                            codigoVisual
+                        )}
+                    </div>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="rep_descripcion[]"
+                        class="
+                            form-control-apple
+                            descripcion-manual
+                        "
+                        value="${escapar(
+                            descripcion
+                        )}"
+                    >
+                </td>
+
+                <td>
+                    <div
+                        class="stock-chip stock-view"
+                    >
+                        -
+                    </div>
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="rep_pu[]"
+                        class="form-control-apple pu"
+                        value="${precio.toFixed(2)}"
+                        oninput="calcularFila(this)"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        name="rep_cantidad[]"
+                        class="
+                            form-control-apple
+                            cantidad
+                        "
+                        value="${cantidad.toFixed(2)}"
+                        oninput="calcularFila(this)"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="rep_valor[]"
+                        class="form-control-apple valor"
+                        value="${valorTotal}"
+                        readonly
+                    >
+                </td>
+
+                <td>
+                    <div class="row-controls">
+                        <button
+                            type="button"
+                            class="
+                                btn-login
+                                danger
+                                small
+                            "
+                            onclick="
+                                eliminarFilaRepuesto(this)
+                            "
+                            title="Quitar"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        const tbody =
+            document.getElementById(
+                'cuerpoTablaRepuestos'
+            );
+
+        if (!tbody) {
+            return;
+        }
+
+        const filas =
+            Array.from(
+                tbody.querySelectorAll(
+                    [
+                        'tr:not(.form-readonly)',
+                        ':not(.fila-eliminada)'
+                    ].join('')
+                )
+            );
+
+        const filaVacia =
+            filas.find(function (
+                fila
+            ) {
+                const descripcionFila =
+                    fila.querySelector(
+                        '.descripcion-manual'
+                    );
+
+                const productoFila =
+                    fila.querySelector(
+                        '.producto-id-hidden'
+                    );
+
+                if (!descripcionFila) {
+                    return false;
+                }
+
+                const sinDescripcion =
+                    descripcionFila.value
+                        .trim() === '';
+
+                const sinProducto =
+                    !productoFila ||
+                    productoFila.value
+                        .trim() === '';
+
+                return (
+                    sinDescripcion &&
+                    sinProducto
+                );
+            });
+
+        if (filaVacia) {
+            filaVacia.insertAdjacentHTML(
+                'beforebegin',
+                nuevaFila
+            );
+
+            filaVacia.remove();
         } else {
-            items[i].style.display = 'none';
+            tbody.insertAdjacentHTML(
+                'beforeend',
+                nuevaFila
+            );
+        }
+
+        cerrarModalIngresoRapido();
+
+        if (
+            typeof recalcularTotales ===
+            'function'
+        ) {
+            recalcularTotales();
         }
     }
 
-    noResult.style.display = visibles === 0 ? 'block' : 'none';
-}
 
-function seleccionarCategoriaModal(elemento) {
-    document.getElementById('ir_categoria_visual').value = elemento.getAttribute('data-nombre');
-    document.getElementById('ir_categoria_id').value = elemento.getAttribute('data-id');
-    document.getElementById('dropdownCategoriasModal').style.display = 'none';
-}
+    document.addEventListener(
+        'click',
+        function (event) {
+            const dropdown =
+                document.getElementById(
+                    'dropdownCategoriasModal'
+                );
 
-function abrirModalIngresoRapido() {
-    document.getElementById('modalIngresoRapido').style.display = 'flex';
-    document.getElementById('ir_descripcion').focus();
-}
+            const input =
+                document.getElementById(
+                    'ir_categoria_visual'
+                );
 
-function cerrarModalIngresoRapido() {
-    document.getElementById('modalIngresoRapido').style.display = 'none';
-    document.getElementById('dropdownCategoriasModal').style.display = 'none';
+            if (
+                !dropdown ||
+                !input
+            ) {
+                return;
+            }
 
-    document.getElementById('ir_categoria_visual').value = '';
-    document.getElementById('ir_categoria_id').value = '';
-    document.getElementById('ir_barras').value = '';
-    document.getElementById('ir_empaque').value = '';
-    document.getElementById('ir_descripcion').value = '';
-    document.getElementById('ir_precio').value = '0.00';
-    document.getElementById('ir_cantidad').value = '1';
-}
+            const clicDentro =
+                dropdown.contains(
+                    event.target
+                ) ||
+                input.contains(
+                    event.target
+                );
 
-function eliminarFila(boton) {
-    const fila = boton.closest('tr');
-
-    if (!fila) return;
-
-    const detalleId = fila.querySelector('input[name="rep_detalle_id[]"]');
-    const deleteInput = fila.querySelector('input[name="rep_delete[]"]');
-
-    if (detalleId && detalleId.value) {
-        if (deleteInput) {
-            deleteInput.value = '1';
+            if (!clicDentro) {
+                dropdown.style.display =
+                    'none';
+            }
         }
-
-        fila.classList.add('fila-eliminada');
-        fila.style.display = 'none';
-    } else {
-        fila.remove();
-    }
-
-    if (typeof recalcularTotales === 'function') {
-        recalcularTotales();
-    }
-}
-
-function confirmarIngresoRapido() {
-    const categoriaId = document.getElementById('ir_categoria_id').value;
-    const barras = document.getElementById('ir_barras').value.trim();
-    const empaque = document.getElementById('ir_empaque').value.trim();
-    const descripcion = document.getElementById('ir_descripcion').value.trim();
-    const precio = numeroSeguro(document.getElementById('ir_precio').value) || 0;
-    const cantidad = numeroSeguro(document.getElementById('ir_cantidad').value) || 1;
-
-    if (!descripcion) {
-        alert('La descripción es obligatoria.');
-        return;
-    }
-
-    const valorTotal = (precio * cantidad).toFixed(2);
-    const codigoVisual = barras || empaque || '[ TEXTO LIBRE / MANUAL ]';
-
-    const nuevaFila = `
-        <tr>
-            <td class="producto-cell">
-                <input type="hidden" name="rep_detalle_id[]" value="">
-                <input type="hidden" name="rep_delete[]" value="0">
-                <input type="hidden" name="rep_actualizado_en[]" value="">
-
-                <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="">
-                <input type="hidden" name="rep_categoria_id[]" value="${escaparHtml(categoriaId)}">
-                <input type="hidden" name="rep_codigo_barras[]" value="${escaparHtml(barras)}">
-                <input type="hidden" name="rep_codigo_empaque[]" value="${escaparHtml(empaque)}">
-
-                <div class="producto-busqueda-wrap" style="text-align:center; background-color:#f5f5f7; padding:8px; border-radius:6px; font-weight:bold; color:#86868b; font-size:11px;">
-                    ${escaparHtml(codigoVisual)}
-                </div>
-            </td>
-
-            <td>
-                <input type="text" name="rep_descripcion[]" class="form-control-apple descripcion-manual" value="${escaparHtml(descripcion)}">
-            </td>
-
-            <td>
-                <div class="stock-chip stock-view">-</div>
-            </td>
-
-            <td>
-                <input type="number" step="0.01" name="rep_pu[]" class="form-control-apple pu" value="${precio.toFixed(2)}" oninput="calcularFila(this)">
-            </td>
-
-            <td>
-                <input type="number" step="1" name="rep_cantidad[]" class="form-control-apple cantidad" value="${cantidad}" oninput="calcularFila(this)">
-            </td>
-
-            <td>
-                <input type="number" step="0.01" name="rep_valor[]" class="form-control-apple valor" value="${valorTotal}" readonly>
-            </td>
-
-            <td>
-                <div class="row-controls">
-                    <button type="button" class="btn-login danger small" onclick="eliminarFila(this)" title="Quitar">✕</button>
-                </div>
-            </td>
-        </tr>
-    `.replace(/>\s+</g, '><');
-
-    const tbody = document.getElementById('cuerpoTablaRepuestos');
-
-    const filaVacia = Array.from(tbody.querySelectorAll('tr:not(.form-readonly):not(.fila-eliminada)')).find(fila => {
-        const descInput = fila.querySelector('.descripcion-manual');
-        const prodInput = fila.querySelector('.producto-id-hidden');
-
-        return descInput &&
-               descInput.value.trim() === '' &&
-               (!prodInput || prodInput.value.trim() === '');
-    });
-
-    if (filaVacia) {
-        filaVacia.insertAdjacentHTML('beforebegin', nuevaFila);
-    } else {
-        tbody.insertAdjacentHTML('beforeend', nuevaFila);
-    }
-
-    cerrarModalIngresoRapido();
-
-    if (typeof recalcularTotales === 'function') {
-        recalcularTotales();
-    }
-}
+    );
 </script>
+{% endif %}
