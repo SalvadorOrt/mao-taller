@@ -580,26 +580,47 @@
     </div>
 
     <div class="totals-wrap">
-        <table class="totals-table">
-            <tr>
-                <td class="total-label">Subtotal general</td>
-                <td class="text-right">${{ subtotal|floatformat:2 }}</td>
-            </tr>
+    <table class="totals-table">
+        <tr>
+            <td class="total-label">Subtotal general</td>
+            <td class="text-right">
+                ${{ subtotal|floatformat:2 }}
+            </td>
+        </tr>
 
-            <tr>
-                <td class="total-label">IVA 15%</td>
-                <td class="text-right">${{ iva|floatformat:2 }}</td>
-            </tr>
+        {% if orden.valor_descuento > 0 %}
+        <tr>
+            <td class="total-label">
+                Descuento
+                {% if orden.tipo_descuento == "PORCENTAJE" %}
+                    ({{ orden.descuento_porcentaje|floatformat:2 }}%)
+                {% endif %}
+            </td>
+            <td class="text-right">
+                -${{ orden.valor_descuento|floatformat:2 }}
+            </td>
+        </tr>
+        {% endif %}
 
-            <tr>
-                <td class="total-label total-final-label">Total a pagar</td>
-                <td class="total-value">${{ total_final|floatformat:2 }}</td>
-            </tr>
-        </table>
+        <tr>
+            <td class="total-label">
+                IVA {{ orden.porcentaje_iva|floatformat:2 }}%
+            </td>
+            <td class="text-right">
+                ${{ iva|floatformat:2 }}
+            </td>
+        </tr>
 
-        <p class="note">
-            Valores expresados en dólares americanos.
-        </p>
+        <tr>
+            <td class="total-label total-final-label">
+                Total a pagar
+            </td>
+            <td class="total-value">
+                ${{ total_final|floatformat:2 }}
+            </td>
+        </tr>
+    </table>
+</div>
     </div>
 {% if recomendaciones %}
 <div class="section">
