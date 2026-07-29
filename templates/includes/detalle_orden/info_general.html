@@ -288,80 +288,62 @@
             </button>
 
             <button
+                        type="button"
+                        onclick="imprimirResumenDirecto(event)"
+                        class="btn-login"
+                        style="
+                            background: #0071e3;
+                            border-color: #0071e3;
+                            color: #ffffff;
+                        "
+                    >
+                        <i
+                            class="bi bi-receipt"
+                            style="margin-right: 4px;"
+                        ></i>
+
+                        Resumen de Orden
+                    </button>
+
+                    {% if puede_editar %}
+
+            <button
                 type="button"
-                onclick="imprimirResumenDirecto(event)"
                 class="btn-login"
                 style="
-                    background: #0071e3;
-                    border-color: #0071e3;
+                    background-color: #ff3b30;
+                    border-color: #ff3b30;
                     color: #ffffff;
                 "
+                onclick="
+                    confirmarAccionNativa(
+                        'anular',
+                        'form_anular_orden'
+                    )
+                "
             >
-                <i
-                    class="bi bi-receipt"
-                    style="margin-right: 4px;"
-                ></i>
-
-                Resumen de Orden
+                Anular
             </button>
 
-            {% if puede_editar %}
+            <button
+                type="button"
+                class="btn-login"
+                style="
+                    background-color: #34c759;
+                    border-color: #34c759;
+                    color: #ffffff;
+                "
+                onclick="
+                    confirmarAccionNativa(
+                        'cerrar',
+                        'form_cerrar_orden'
+                    )
+                "
+            >
+                Completar
+            </button>
 
-                <form
-                    id="form_anular_orden"
-                    method="post"
-                    action="{% url 'anular_orden' orden.id %}"
-                    style="margin: 0;"
-                >
-                    {% csrf_token %}
-
-                    <button
-                        type="button"
-                        class="btn-login"
-                        style="
-                            background-color: #ff3b30;
-                            border-color: #ff3b30;
-                            color: #ffffff;
-                        "
-                        onclick="
-                            confirmarAccionNativa(
-                                'anular',
-                                'form_anular_orden'
-                            )
-                        "
-                    >
-                        Anular
-                    </button>
-                </form>
-
-                <form
-                    id="form_cerrar_orden"
-                    method="post"
-                    action="{% url 'cerrar_orden' orden.id %}"
-                    style="margin: 0;"
-                >
-                    {% csrf_token %}
-
-                    <button
-                        type="button"
-                        class="btn-login"
-                        style="
-                            background-color: #34c759;
-                            border-color: #34c759;
-                            color: #ffffff;
-                        "
-                        onclick="
-                            confirmarAccionNativa(
-                                'cerrar',
-                                'form_cerrar_orden'
-                            )
-                        "
-                    >
-                        Completar
-                    </button>
-                </form>
-
-            {% endif %}
+        {% endif %}
 
             <div
                 style="
@@ -650,64 +632,55 @@
                 <div class="intervalo-mantenimiento-contenedor">
 
     <input
-                    type="number"
-                    id="id_intervalo_mantenimiento_km"
-                    name="intervalo_mantenimiento_km"
-                    class="intervalo-mantenimiento-input"
+    type="number"
+    id="id_intervalo_mantenimiento_km"
+    name="intervalo_mantenimiento_km"
+    class="intervalo-mantenimiento-input"
+    value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
+    min="1"
+    max="100000"
+    step="1"
+    required
+    autocomplete="off"
+    inputmode="numeric"
 
-                    value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
+    oninvalid="
+        this.setCustomValidity(
+            'Ingrese un intervalo de mantenimiento mayor que 0.'
+        );
+    "
 
-                    min="1"
-                    max="100000"
-                    step="1"
+    oninput="
+        this.setCustomValidity('');
 
-                    required
+        this.value = this.value.replace(
+            /[^0-9]/g,
+            ''
+        );
 
-                    autocomplete="off"
-                    inputmode="numeric"
+        if (this.value !== '') {
+            const valor = parseInt(
+                this.value,
+                10
+            );
 
-                    oninput="
-                        this.value = this.value.replace(/[^0-9]/g, '');
+            if (valor < 1) {
+                this.value = 1;
+            }
 
-                        if (this.value !== '') {
+            if (valor > 100000) {
+                this.value = 100000;
+            }
+        }
 
-                            const valor = parseInt(this.value, 10);
-
-                            if (valor < 1) {
-                                this.value = 1;
-                            }
-
-                            if (valor > 100000) {
-                                this.value = 100000;
-                            }
-                        }
-                    "
-
-                    oninvalid="
-                        this.setCustomValidity(
-                            'Ingrese un intervalo de mantenimiento mayor que 0.'
-                        );
-                    "
-
-                    oninput="
-                        this.setCustomValidity('');
-
-                        this.value = this.value.replace(/[^0-9]/g, '');
-
-                        if (this.value !== '') {
-
-                            const valor = parseInt(this.value, 10);
-
-                            if (valor < 1) {
-                                this.value = 1;
-                            }
-
-                            if (valor > 100000) {
-                                this.value = 100000;
-                            }
-                        }
-                    "
-                >
+        if (
+            typeof actualizarProximoMantenimiento ===
+            'function'
+        ) {
+            actualizarProximoMantenimiento();
+        }
+    "
+>
 
                 <span
                     style="
