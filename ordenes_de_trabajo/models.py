@@ -1245,8 +1245,29 @@ class OrdenTrabajo(models.Model):
     )
 
     fecha_origen = models.DateField(null=True, blank=True)
-    kilometraje = models.PositiveIntegerField(null=True, blank=True)
-    proximo_mantenimiento_km = models.PositiveIntegerField(null=True, blank=True)
+
+    kilometraje = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Kilometraje actual",
+    )
+
+    intervalo_mantenimiento_km = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Intervalo de mantenimiento",
+        help_text=(
+            "Cantidad de kilómetros que se sumará al kilometraje "
+            "actual para calcular el próximo mantenimiento."
+        ),
+    )
+
+    proximo_mantenimiento_km = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Próximo mantenimiento",
+    )
 
     observaciones_recepcion = models.TextField(null=True, blank=True)
     sintomas_cliente = models.TextField(null=True, blank=True)
@@ -1558,6 +1579,29 @@ class OrdenTrabajo(models.Model):
                 self.color_hex = hex_code
                 break
 
+    def calcular_proximo_mantenimiento(self):
+        """
+        Calcula el kilometraje del próximo mantenimiento.
+
+        Fórmula:
+            próximo mantenimiento =
+                kilometraje actual + intervalo aplicado
+        """
+        if (
+            self.kilometraje is None
+            or self.intervalo_mantenimiento_km is None
+        ):
+            self.proximo_mantenimiento_km = None
+            return None
+
+        self.proximo_mantenimiento_km = (
+            self.kilometraje
+            + self.intervalo_mantenimiento_km
+        )
+
+        return self.proximo_mantenimiento_km
+
+
     def calcular_total(self):
         servicios = (
             self.servicios_detalles.aggregate(total=Sum("subtotal"))["total"]
@@ -1709,6 +1753,28 @@ class OrdenTrabajo(models.Model):
                 "El año del vehículo no es válido."
             )
 
+        if (
+            self.intervalo_mantenimiento_km is not None
+            and self.intervalo_mantenimiento_km <= 0
+        ):
+            raise ValidationError({
+                "intervalo_mantenimiento_km": (
+                    "El intervalo de mantenimiento debe ser "
+                    "mayor que cero."
+                )
+            })
+
+        if (
+            self.intervalo_mantenimiento_km is not None
+            and self.kilometraje is None
+        ):
+            raise ValidationError({
+                "kilometraje": (
+                    "Debe registrar el kilometraje actual para "
+                    "calcular el próximo mantenimiento."
+                )
+            })
+
         if self.es_migrada and not self.numero_orden_origen:
             raise ValidationError({
                 "numero_orden_origen": (
@@ -1759,6 +1825,20 @@ class OrdenTrabajo(models.Model):
     def save(self, *args, **kwargs):
         self._normalizar_campos_texto()
         self._calcular_color_hex()
+        self.calcular_proximo_mantenimiento()
+
+        update_fields = kwargs.get("update_fields")
+
+        if update_fields is not None:
+            campos = set(update_fields)
+
+            if {
+                "kilometraje",
+                "intervalo_mantenimiento_km",
+            } & campos:
+                campos.add("proximo_mantenimiento_km")
+
+            kwargs["update_fields"] = list(campos)
 
         self.full_clean()
         super().save(*args, **kwargs)

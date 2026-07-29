@@ -531,6 +531,39 @@ def guardar_detalle_ot(request, pk):
         # ==========================================
 
         if version_coincide:
+            # ==========================================
+            # PRÓXIMO MANTENIMIENTO
+            # ==========================================
+
+            kilometraje_str = (
+                request.POST.get("kilometraje", "")
+                .strip()
+            )
+
+            intervalo_str = (
+                request.POST.get(
+                    "intervalo_mantenimiento_km",
+                    "",
+                )
+                .strip()
+            )
+
+            if kilometraje_str.isdigit():
+                orden.kilometraje = int(kilometraje_str)
+            else:
+                orden.kilometraje = None
+
+            if intervalo_str.isdigit():
+                orden.intervalo_mantenimiento_km = int(
+                    intervalo_str
+                )
+            else:
+                orden.intervalo_mantenimiento_km = None
+
+            # ==========================================
+            # DESCUENTO
+            # ==========================================
+
             tipo_descuento = (
                 request.POST.get(
                     "tipo_descuento",
@@ -602,6 +635,9 @@ def guardar_detalle_ot(request, pk):
         if version_coincide:
             orden.save(
                 update_fields=[
+                    "kilometraje",
+                    "intervalo_mantenimiento_km",
+                    "proximo_mantenimiento_km",
                     "tipo_descuento",
                     "descuento_ingresado",
                     "sumar_iva_al_total",
