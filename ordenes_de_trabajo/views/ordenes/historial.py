@@ -42,7 +42,9 @@ def historial_vehiculos(request):
 @login_required
 def detalle_expediente(request, pk):
     expediente = get_object_or_404(
-        ExpedienteVehiculo.objects.select_related("cliente"),
+        ExpedienteVehiculo.objects.select_related(
+            "cliente"
+        ),
         pk=pk,
         activo=True,
     )
@@ -55,7 +57,7 @@ def detalle_expediente(request, pk):
             "usuario_receptor",
         )
         .prefetch_related(
-            "servicios_detalles",
+            "servicios_detalles__procedimientos_detalle",
             "servicios_historicos",
             "insumos_detalles",
             "insumos_historicos",
@@ -70,7 +72,10 @@ def detalle_expediente(request, pk):
 
     kilometraje_anterior = None
 
-    for posicion, orden in enumerate(ordenes, start=1):
+    for posicion, orden in enumerate(
+        ordenes,
+        start=1,
+    ):
         orden.posicion_historial = posicion
         orden.diferencia_km = None
         orden.kilometraje_inconsistente = False
@@ -79,7 +84,10 @@ def detalle_expediente(request, pk):
             continue
 
         if kilometraje_anterior is not None:
-            diferencia = orden.kilometraje - kilometraje_anterior
+            diferencia = (
+                orden.kilometraje
+                - kilometraje_anterior
+            )
 
             if diferencia >= 0:
                 orden.diferencia_km = diferencia

@@ -453,9 +453,34 @@
     }
 
     .orden-summary-list li:last-child {
-        margin-bottom: 0;
-    }
+                margin-bottom: 0;
+            }
+            .servicio-padre {
+            margin-bottom: 9px !important;
+        }
 
+        .servicio-padre-texto {
+            font-weight: 700;
+            color: var(--text, #1d1d1f);
+        }
+
+        .servicios-hijos {
+            margin: 6px 0 0;
+            padding-left: 18px;
+            list-style-type: circle;
+            color: var(--muted, #6e6e73);
+        }
+
+        .servicios-hijos .servicio-hijo {
+            margin-bottom: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .servicios-hijos .servicio-hijo:last-child {
+            margin-bottom: 0;
+        }
     .orden-empty-text {
         margin: 0;
         color: var(--muted, #6e6e73);
@@ -771,9 +796,9 @@
 
                             <h3 class="orden-number">
                                 {% if orden.es_migrada and orden.numero_orden_origen %}
-                                    OT {{ orden.numero_orden_origen }}
+                                    {{ orden.numero_orden_origen }}
                                 {% else %}
-                                    OT {{ orden.numero_orden }}
+                                    {{ orden.numero_orden }}
                                 {% endif %}
                             </h3>
 
@@ -943,10 +968,36 @@
                                 <ul class="orden-summary-list">
 
                                     {% for servicio in orden.servicios_detalles.all|slice:":5" %}
-                                        <li>
-                                            {{ servicio.descripcion_servicio }}
+
+                                        <li class="servicio-padre">
+
+                                            <span class="servicio-padre-texto">
+                                                {{ servicio.descripcion_servicio }}
+                                            </span>
+
+                                            {% with procedimientos=servicio.procedimientos_detalle.all %}
+
+                                                {% if procedimientos %}
+
+                                                    <ul class="servicios-hijos">
+
+                                                        {% for procedimiento in procedimientos %}
+
+                                                            <li class="servicio-hijo">
+                                                                {{ procedimiento.descripcion }}
+                                                            </li>
+
+                                                        {% endfor %}
+
+                                                    </ul>
+
+                                                {% endif %}
+
+                                            {% endwith %}
+
                                         </li>
-                                    {% endfor %}
+
+{% endfor %}
 
                                     {% if not orden.servicios_detalles.all %}
                                         {% for servicio in orden.servicios_historicos.all|slice:":5" %}
