@@ -475,7 +475,6 @@ def merge_recomendaciones_manuales(request, orden):
 
             claves.add(clave)
             orden_item += 1
-
 def guardar_detalle_ot(request, pk):
     with transaction.atomic():
         orden = (
@@ -494,16 +493,24 @@ def guardar_detalle_ot(request, pk):
                 pk=orden.pk,
             )
 
-        version_form = request.POST.get("orden_version")
+        version_form = request.POST.get(
+            "orden_version"
+        )
+
         version_coincide = True
 
-        if version_form and version_form.isdigit():
+        if (
+            version_form
+            and version_form.isdigit()
+        ):
             version_coincide = (
-                int(version_form) == orden.version
+                int(version_form)
+                == orden.version
             )
 
         # ==========================================
-        # GUARDAR REPUESTOS, SERVICIOS Y RECOMENDACIONES
+        # GUARDAR REPUESTOS, SERVICIOS
+        # Y RECOMENDACIONES
         # ==========================================
 
         merge_repuestos(
@@ -511,14 +518,18 @@ def guardar_detalle_ot(request, pk):
             orden,
         )
 
-        recomendaciones_auto_ids = merge_servicios(
-            request,
-            orden,
+        recomendaciones_auto_ids = (
+            merge_servicios(
+                request,
+                orden,
+            )
         )
 
         merge_recomendaciones_automaticas(
             orden=orden,
-            recomendaciones_auto_ids=recomendaciones_auto_ids,
+            recomendaciones_auto_ids=(
+                recomendaciones_auto_ids
+            ),
         )
 
         merge_recomendaciones_manuales(
@@ -527,18 +538,22 @@ def guardar_detalle_ot(request, pk):
         )
 
         # ==========================================
-        # GUARDAR CABECERA ECONÓMICA
+        # GUARDAR CABECERA
         # ==========================================
 
         if version_coincide:
-            # ==========================================
-            # PRÓXIMO MANTENIMIENTO
-            # ==========================================
 
-            kilometraje_str = (
-                request.POST.get("kilometraje", "")
-                .strip()
-            )
+            # ======================================
+            # PRÓXIMO MANTENIMIENTO
+            # ======================================
+            #
+            # El kilometraje NO se modifica aquí.
+            #
+            # Se registra al crear la OT o desde
+            # el modal de edición de recepción.
+            # Esta vista solamente guarda el
+            # intervalo de mantenimiento.
+            # ======================================
 
             intervalo_str = (
                 request.POST.get(
@@ -548,21 +563,27 @@ def guardar_detalle_ot(request, pk):
                 .strip()
             )
 
-            if kilometraje_str.isdigit():
-                orden.kilometraje = int(kilometraje_str)
-            else:
-                orden.kilometraje = None
-
             if intervalo_str.isdigit():
-                orden.intervalo_mantenimiento_km = int(
+                intervalo = int(
                     intervalo_str
                 )
-            else:
-                orden.intervalo_mantenimiento_km = None
 
-            # ==========================================
+                if intervalo > 0:
+                    orden.intervalo_mantenimiento_km = (
+                        intervalo
+                    )
+                else:
+                    orden.intervalo_mantenimiento_km = (
+                        None
+                    )
+            else:
+                orden.intervalo_mantenimiento_km = (
+                    None
+                )
+
+            # ======================================
             # DESCUENTO
-            # ==========================================
+            # ======================================
 
             tipo_descuento = (
                 request.POST.get(
@@ -578,37 +599,63 @@ def guardar_detalle_ot(request, pk):
                 "VALOR_FIJO",
             }
 
-            if tipo_descuento not in tipos_descuento_validos:
-                tipo_descuento = "PORCENTAJE"
+            if (
+                tipo_descuento
+                not in tipos_descuento_validos
+            ):
+                tipo_descuento = (
+                    "PORCENTAJE"
+                )
 
-            descuento_ingresado = parse_decimal(
-                request.POST.get(
-                    "descuento_ingresado",
-                    "0",
-                ),
-                Decimal("0.00"),
+            descuento_ingresado = (
+                parse_decimal(
+                    request.POST.get(
+                        "descuento_ingresado",
+                        "0",
+                    ),
+                    Decimal("0.00"),
+                )
             )
 
-            if descuento_ingresado < Decimal("0.00"):
-                descuento_ingresado = Decimal("0.00")
+            if (
+                descuento_ingresado
+                < Decimal("0.00")
+            ):
+                descuento_ingresado = (
+                    Decimal("0.00")
+                )
 
             if (
-                tipo_descuento == "PORCENTAJE"
-                and descuento_ingresado > Decimal("100.00")
+                tipo_descuento
+                == "PORCENTAJE"
+                and descuento_ingresado
+                > Decimal("100.00")
             ):
-                descuento_ingresado = Decimal("100.00")
+                descuento_ingresado = (
+                    Decimal("100.00")
+                )
 
-            valores_sumar_iva = request.POST.getlist(
-                "sumar_iva_al_total"
+            valores_sumar_iva = (
+                request.POST.getlist(
+                    "sumar_iva_al_total"
+                )
             )
 
             sumar_iva_al_total = (
                 "1" in valores_sumar_iva
             )
 
-            orden.tipo_descuento = tipo_descuento
-            orden.descuento_ingresado = descuento_ingresado
-            orden.sumar_iva_al_total = sumar_iva_al_total
+            orden.tipo_descuento = (
+                tipo_descuento
+            )
+
+            orden.descuento_ingresado = (
+                descuento_ingresado
+            )
+
+            orden.sumar_iva_al_total = (
+                sumar_iva_al_total
+            )
 
             orden.observaciones_tecnicas = (
                 request.POST.get(
@@ -635,7 +682,6 @@ def guardar_detalle_ot(request, pk):
         if version_coincide:
             orden.save(
                 update_fields=[
-                    "kilometraje",
                     "intervalo_mantenimiento_km",
                     "proximo_mantenimiento_km",
                     "tipo_descuento",
@@ -664,6 +710,7 @@ def guardar_detalle_ot(request, pk):
         # El IVA siempre se calcula y se muestra.
         # Solo se suma al total cuando
         # sumar_iva_al_total es True.
+
         orden.calcular_total()
 
     messages.success(
@@ -679,7 +726,11 @@ def guardar_detalle_ot(request, pk):
 
 @login_required
 def detalle_orden(request, pk):
-    sucursal_activa = obtener_sucursal_activa(request)
+    sucursal_activa = (
+        obtener_sucursal_activa(
+            request
+        )
+    )
 
     orden = get_object_or_404(
         OrdenTrabajo.objects
@@ -694,13 +745,16 @@ def detalle_orden(request, pk):
             "servicios_historicos",
             "insumos_detalles",
             "servicios_detalles",
+            "servicios_detalles__procedimientos_detalle",
             "recomendaciones_items",
             "tecnicos",
         ),
         pk=pk,
     )
 
-    url_anterior = request.META.get("HTTP_REFERER")
+    url_anterior = request.META.get(
+        "HTTP_REFERER"
+    )
 
     if (
         not url_anterior
@@ -721,7 +775,8 @@ def detalle_orden(request, pk):
         request.user.has_perm(
             "ordenes_de_trabajo.can_reopen_orden"
         )
-        and orden.estado in [
+        and orden.estado
+        in [
             "CERRADA",
             "ANULADA",
         ]
@@ -760,13 +815,19 @@ def detalle_orden(request, pk):
 
     tecnicos_disponibles = (
         Tecnico.objects
-        .filter(activo=True)
-        .order_by("nombre")
+        .filter(
+            activo=True
+        )
+        .order_by(
+            "nombre"
+        )
     )
 
     croquis = (
         OrdenCroquisDanio.objects
-        .filter(orden=orden)
+        .filter(
+            orden=orden
+        )
         .first()
     )
 
@@ -779,35 +840,43 @@ def detalle_orden(request, pk):
         else ""
     )
 
-    # Recalcula antes de mostrar la pantalla.
+    # Recalcula antes de mostrar
+    # la pantalla.
     orden.calcular_total()
 
     subtotal = Decimal(
-        orden.subtotal_sin_iva or 0
+        orden.subtotal_sin_iva
+        or 0
     )
 
     descuento = Decimal(
-        orden.valor_descuento or 0
+        orden.valor_descuento
+        or 0
     )
 
     porcentaje_descuento = Decimal(
-        orden.descuento_porcentaje or 0
+        orden.descuento_porcentaje
+        or 0
     )
 
     descuento_ingresado = Decimal(
-        orden.descuento_ingresado or 0
+        orden.descuento_ingresado
+        or 0
     )
 
     porcentaje_iva = Decimal(
-        orden.porcentaje_iva or 0
+        orden.porcentaje_iva
+        or 0
     )
 
     iva = Decimal(
-        orden.valor_iva or 0
+        orden.valor_iva
+        or 0
     )
 
     total_final = Decimal(
-        orden.total_final or 0
+        orden.total_final
+        or 0
     )
 
     return render(
@@ -817,39 +886,69 @@ def detalle_orden(request, pk):
             "orden": orden,
             "croquis": croquis,
             "croquis_url": croquis_url,
-            "categorias_inventario": categorias,
-            "tecnicos_disponibles": tecnicos_disponibles,
-            "sucursal_activa": sucursal_activa,
-            "puede_editar": puede_editar,
-            "puede_reabrir": puede_reabrir,
-            "url_anterior": url_anterior,
+            "categorias_inventario": (
+                categorias
+            ),
+            "tecnicos_disponibles": (
+                tecnicos_disponibles
+            ),
+            "sucursal_activa": (
+                sucursal_activa
+            ),
+            "puede_editar": (
+                puede_editar
+            ),
+            "puede_reabrir": (
+                puede_reabrir
+            ),
+            "url_anterior": (
+                url_anterior
+            ),
 
             # Valores económicos calculados
             "subtotal": subtotal,
             "descuento": descuento,
-            "porcentaje_descuento": porcentaje_descuento,
-            "descuento_ingresado": descuento_ingresado,
-            "porcentaje_iva": porcentaje_iva,
+            "porcentaje_descuento": (
+                porcentaje_descuento
+            ),
+            "descuento_ingresado": (
+                descuento_ingresado
+            ),
+            "porcentaje_iva": (
+                porcentaje_iva
+            ),
             "iva": iva,
             "total_final": total_final,
 
             # Configuración seleccionada
-            "tipo_descuento": orden.tipo_descuento,
+            "tipo_descuento": (
+                orden.tipo_descuento
+            ),
             "sumar_iva_al_total": (
                 orden.sumar_iva_al_total
             ),
 
-            # Valores preparados para HTML/JavaScript
+            # Valores preparados para
+            # HTML y JavaScript
             "porcentaje_iva_html": str(
                 porcentaje_iva
-            ).replace(",", "."),
+            ).replace(
+                ",",
+                ".",
+            ),
 
             "descuento_porcentaje_html": str(
                 porcentaje_descuento
-            ).replace(",", "."),
+            ).replace(
+                ",",
+                ".",
+            ),
 
             "descuento_ingresado_html": str(
                 descuento_ingresado
-            ).replace(",", "."),
+            ).replace(
+                ",",
+                ".",
+            ),
         },
     )
