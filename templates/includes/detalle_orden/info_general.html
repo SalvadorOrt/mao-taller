@@ -631,7 +631,7 @@
 
                 <div class="intervalo-mantenimiento-contenedor">
 
-    <input
+<input
     type="number"
     id="id_intervalo_mantenimiento_km"
     name="intervalo_mantenimiento_km"
@@ -644,34 +644,8 @@
     autocomplete="off"
     inputmode="numeric"
 
-    oninvalid="
-        this.setCustomValidity(
-            'Ingrese un intervalo de mantenimiento mayor que 0.'
-        );
-    "
-
     oninput="
         this.setCustomValidity('');
-
-        this.value = this.value.replace(
-            /[^0-9]/g,
-            ''
-        );
-
-        if (this.value !== '') {
-            const valor = parseInt(
-                this.value,
-                10
-            );
-
-            if (valor < 1) {
-                this.value = 1;
-            }
-
-            if (valor > 100000) {
-                this.value = 100000;
-            }
-        }
 
         if (
             typeof actualizarProximoMantenimiento ===
