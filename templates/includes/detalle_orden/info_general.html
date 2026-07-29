@@ -1,18 +1,26 @@
 {% load humanize %}
+
 <style>
     @keyframes fadeInScale {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
-    
-    /* Estilo para el botón de proforma que resalta sin ser invasivo */
+
+    /* Estilo para el botón de proforma */
     .btn-proforma {
         background: #ffffff;
         color: #0071e3;
         border: 1px solid #0071e3;
         transition: all 0.2s ease;
     }
-    
+
     .btn-proforma:hover {
         background: #f5faff;
         color: #005bb7;
@@ -21,34 +29,66 @@
     }
 </style>
 
-<div class="ot-card" style="margin-bottom: 20px; animation: fadeInScale 0.4s ease-out;">
+<div
+    class="ot-card"
+    style="
+        margin-bottom: 20px;
+        animation: fadeInScale 0.4s ease-out;
+    "
+>
 
     <!-- ============================================= -->
     <!-- HEADER -->
     <!-- ============================================= -->
-    <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--border, #d2d2d7);
-        padding-bottom: 15px;
-        margin-bottom: 20px;">
+    <div
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border, #d2d2d7);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        "
+    >
 
         <div>
-            <div style="
-                font-size: 18px;
-                font-weight: 800;
-                color: var(--text, #1d1d1f);">
+            <div
+                style="
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: var(--text, #1d1d1f);
+                "
+            >
                 Orden de Trabajo {{ orden.numero_orden }}
             </div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px; display: flex; align-items: center; gap: 5px;">
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                "
+            >
                 <i class="bi bi-calendar-event"></i>
-                <span>Ingresada el: {{ orden.fecha_ingreso|date:"d/m/Y" }} a las {{ orden.fecha_ingreso|time:"H:i" }}</span>
+
+                <span>
+                    Ingresada el:
+                    {{ orden.fecha_ingreso|date:"d/m/Y" }}
+                    a las
+                    {{ orden.fecha_ingreso|time:"H:i" }}
+                </span>
             </div>
-            <p style="
-                font-size: 11px;
-                color: var(--muted, #6e6e73);
-                margin: 0;">
+
+            <p
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin: 0;
+                "
+            >
                 Detalle operativo de la orden
             </p>
         </div>
@@ -56,72 +96,126 @@
         <div class="d-flex align-items-center gap-2">
 
             {% if puede_editar %}
+
                 <!-- ============================================= -->
-                <!-- BOTÓN DINÁMICO: CREAR O CONTINUAR PROFORMA -->
+                <!-- CREAR O CONTINUAR PROFORMA -->
                 <!-- ============================================= -->
                 {% if orden.cotizacion_vinculada %}
-                    <!-- Si ya existe, mostramos "Ver / Continuar" -->
-                    <a href="{% url 'nueva_cotizacion_desde_ot' orden.id %}" 
-                    class="btn-login btn-proforma"
-                    style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: #f5faff; border-color: #0071e3;">
-                        <i class="bi bi-file-earmark-check" style="margin-right: 4px;"></i>
+
+                    <a
+                        href="{% url 'nueva_cotizacion_desde_ot' orden.id %}"
+                        class="btn-login btn-proforma"
+                        style="
+                            text-decoration: none;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: #f5faff;
+                            border-color: #0071e3;
+                        "
+                    >
+                        <i
+                            class="bi bi-file-earmark-check"
+                            style="margin-right: 4px;"
+                        ></i>
+
                         Continuar Proforma
                     </a>
+
                 {% else %}
-                    <!-- Si no existe, mostramos "Nueva" -->
-                    <a href="{% url 'nueva_cotizacion_desde_ot' orden.id %}" 
-                    class="btn-login btn-proforma"
-                    style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-file-earmark-plus" style="margin-right: 4px;"></i>
+
+                    <a
+                        href="{% url 'nueva_cotizacion_desde_ot' orden.id %}"
+                        class="btn-login btn-proforma"
+                        style="
+                            text-decoration: none;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                        "
+                    >
+                        <i
+                            class="bi bi-file-earmark-plus"
+                            style="margin-right: 4px;"
+                        ></i>
+
                         Nueva Proforma
                     </a>
+
                 {% endif %}
+
             {% endif %}
 
             <!-- ============================================= -->
             <!-- IMPRIMIR FICHA -->
             <!-- ============================================= -->
-            <button type="button"
-                    onclick="imprimirFichaDirecto()"
-                    class="btn-login"
-                    style="
-                        background: #f5f5f7;
-                        color: #1d1d1f;
-                        border-color: #d2d2d7;">
-                <i class="bi bi-tools" style="margin-right: 4px;"></i>
+            <button
+                type="button"
+                onclick="imprimirFichaDirecto(event)"
+                class="btn-login"
+                style="
+                    background: #f5f5f7;
+                    color: #1d1d1f;
+                    border-color: #d2d2d7;
+                "
+            >
+                <i
+                    class="bi bi-tools"
+                    style="margin-right: 4px;"
+                ></i>
+
                 Imprimir Ficha
             </button>
 
             <!-- ============================================= -->
             <!-- RESUMEN -->
             <!-- ============================================= -->
-            <button type="button"
-                    onclick="imprimirResumenDirecto()"
-                    class="btn-login"
-                    style="
-                        background: #0071e3;
-                        border-color: #0071e3;
-                        color: #fff;">
-                <i class="bi bi-receipt" style="margin-right: 4px;"></i>
+            <button
+                type="button"
+                onclick="imprimirResumenDirecto(event)"
+                class="btn-login"
+                style="
+                    background: #0071e3;
+                    border-color: #0071e3;
+                    color: #ffffff;
+                "
+            >
+                <i
+                    class="bi bi-receipt"
+                    style="margin-right: 4px;"
+                ></i>
+
                 Resumen de Orden
             </button>
 
             {% if puede_editar %}
+
                 <!-- ============================================= -->
                 <!-- ANULAR -->
                 <!-- ============================================= -->
-                <form id="form_anular_orden"
-                      method="post"
-                      action="{% url 'anular_orden' orden.id %}"
-                      style="margin: 0;">
+                <form
+                    id="form_anular_orden"
+                    method="post"
+                    action="{% url 'anular_orden' orden.id %}"
+                    style="margin: 0;"
+                >
                     {% csrf_token %}
-                    <button type="button"
-                            class="btn-login"
-                            style="
-                                background-color: #ff3b30;
-                                border-color: #ff3b30;
-                                color: #ffffff;"
-                            onclick="confirmarAccionNativa('anular', 'form_anular_orden')">
+
+                    <button
+                        type="button"
+                        class="btn-login"
+                        style="
+                            background-color: #ff3b30;
+                            border-color: #ff3b30;
+                            color: #ffffff;
+                        "
+                        onclick="
+                            confirmarAccionNativa(
+                                'anular',
+                                'form_anular_orden'
+                            )
+                        "
+                    >
                         Anular
                     </button>
                 </form>
@@ -129,297 +223,447 @@
                 <!-- ============================================= -->
                 <!-- CERRAR -->
                 <!-- ============================================= -->
-                <form id="form_cerrar_orden"
-                      method="post"
-                      action="{% url 'cerrar_orden' orden.id %}"
-                      style="margin: 0;">
+                <form
+                    id="form_cerrar_orden"
+                    method="post"
+                    action="{% url 'cerrar_orden' orden.id %}"
+                    style="margin: 0;"
+                >
                     {% csrf_token %}
-                    <button type="button"
-                            class="btn-login"
-                            style="
-                                background-color: #34c759;
-                                border-color: #34c759;
-                                color: #ffffff;"
-                            onclick="confirmarAccionNativa('cerrar', 'form_cerrar_orden')">
+
+                    <button
+                        type="button"
+                        class="btn-login"
+                        style="
+                            background-color: #34c759;
+                            border-color: #34c759;
+                            color: #ffffff;
+                        "
+                        onclick="
+                            confirmarAccionNativa(
+                                'cerrar',
+                                'form_cerrar_orden'
+                            )
+                        "
+                    >
                         Completar
                     </button>
                 </form>
+
             {% endif %}
 
             <!-- ============================================= -->
             <!-- ESTADO -->
             <!-- ============================================= -->
-            <div style="
-                background: #f2f2f7;
-                border-radius: 8px;
-                padding: 6px 12px;
-                font-size: 11px;
-                color: var(--text, #1d1d1f);
-                border: 1px solid #d2d2d7;
-                margin-left: 5px;">
-                <span style="color: var(--muted, #6e6e73);">Estado:</span>
+            <div
+                style="
+                    background: #f2f2f7;
+                    border-radius: 8px;
+                    padding: 6px 12px;
+                    font-size: 11px;
+                    color: var(--text, #1d1d1f);
+                    border: 1px solid #d2d2d7;
+                    margin-left: 5px;
+                "
+            >
+                <span
+                    style="
+                        color: var(--muted, #6e6e73);
+                    "
+                >
+                    Estado:
+                </span>
+
                 <strong style="margin-left: 4px;">
                     {{ orden.get_estado_display|upper }}
                 </strong>
             </div>
+
         </div>
     </div>
 
     <!-- ============================================= -->
     <!-- TARJETAS DE INFORMACIÓN -->
     <!-- ============================================= -->
-    <div style="
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 15px;">
+    <div
+        style="
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        "
+    >
 
+        <!-- ============================================= -->
         <!-- CLIENTE -->
-<div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
+        <!-- ============================================= -->
+        <div
+            style="
+                background: #fbfbfd;
+                border: 1px solid #efeff2;
+                border-radius: 12px;
+                padding: 12px;
+            "
+        >
 
-    <div
-        style="
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--muted, #6e6e73);
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        "
-    >
-        Cliente
-    </div>
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--muted, #6e6e73);
+                    text-transform: uppercase;
+                    margin-bottom: 5px;
+                "
+            >
+                Cliente
+            </div>
 
-    <div
-        style="
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text, #1d1d1f);
-        "
-    >
-        {{ orden.nombre_cliente_final|upper }}
-    </div>
+            <div
+                style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text, #1d1d1f);
+                "
+            >
+                {{ orden.nombre_cliente_final|upper }}
+            </div>
 
-    <div
-        style="
-            font-size: 11px;
-            color: var(--muted, #6e6e73);
-            margin-top: 4px;
-        "
-    >
-        C.I./RUC:
-        {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
-    </div>
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+                C.I./RUC:
+                {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
+            </div>
 
-    <div style="font-size:11px; color:#6e6e73; margin-top:4px;">
-    Celular:
+            <div
+                style="
+                    font-size: 11px;
+                    color: #6e6e73;
+                    margin-top: 4px;
+                "
+            >
+                Celular:
 
-    <a
-        href="https://wa.me/593{{ orden.cliente.telefono|slice:'1:' }}"
-        target="_blank"
-        style="color:#25D366; text-decoration:none;"
-    >
-        <i class="bi bi-whatsapp"></i>
-        {{ orden.cliente.telefono }}
-    </a>
-</div>
+                {% if orden.cliente and orden.cliente.telefono %}
 
-    <div
-        style="
-            font-size: 11px;
-            color: var(--muted, #6e6e73);
-            margin-top: 4px;
-        "
-    >
-        Correo:
-        {% if orden.cliente and orden.cliente.email %}
-            {{ orden.cliente.email|lower }}
-        {% else %}
-            NO REGISTRADO
-        {% endif %}
-    </div>
+                    <a
+                        href="https://wa.me/593{{ orden.cliente.telefono|slice:'1:' }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style="
+                            color: #25d366;
+                            text-decoration: none;
+                        "
+                    >
+                        <i class="bi bi-whatsapp"></i>
+                        {{ orden.cliente.telefono }}
+                    </a>
 
-</div>
+                {% else %}
 
-        <!-- VEHÍCULO -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase; margin-bottom: 5px;">Vehículo</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text, #1d1d1f);">{{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}</div>
-            <div style="font-size: 11px; color: var(--muted, #6e6e73); margin-top: 4px;">Año: {{ orden.anio_vehiculo|default:"-" }} | Color: {{ orden.color|upper|default:"-" }}</div>
-            
-            
-                <div style="font-size: 12px; font-weight: 800; color: #0071e3; margin-top: 6px; display: inline-block; padding: 2px 6px; background: rgba(0,113,227,0.1); border-radius: 4px;">
-                    <i class="bi bi-key-fill"></i> Clave: {{ orden.clave_encendido }}
-                </div>
-            
+                    NO REGISTRADO
+
+                {% endif %}
+            </div>
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+                Correo:
+
+                {% if orden.cliente and orden.cliente.email %}
+                    {{ orden.cliente.email|lower }}
+                {% else %}
+                    NO REGISTRADO
+                {% endif %}
+            </div>
+
         </div>
 
-        <!-- PLACA Y MANTENIMIENTO -->
-        <div style="
-            background: #fbfbfd;
-            border: 1px solid #efeff2;
-            border-radius: 12px;
-            padding: 12px;
-        ">
+        <!-- ============================================= -->
+        <!-- VEHÍCULO -->
+        <!-- ============================================= -->
+        <div
+            style="
+                background: #fbfbfd;
+                border: 1px solid #efeff2;
+                border-radius: 12px;
+                padding: 12px;
+            "
+        >
 
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                text-transform: uppercase;
-                margin-bottom: 5px;
-            ">
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--muted, #6e6e73);
+                    text-transform: uppercase;
+                    margin-bottom: 5px;
+                "
+            >
+                Vehículo
+            </div>
+
+            <div
+                style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text, #1d1d1f);
+                "
+            >
+                {{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}
+            </div>
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+                Año:
+                {{ orden.anio_vehiculo|default:"-" }}
+
+                |
+
+                Color:
+                {{ orden.color|upper|default:"-" }}
+            </div>
+
+            <div
+                style="
+                    font-size: 12px;
+                    font-weight: 800;
+                    color: #0071e3;
+                    margin-top: 6px;
+                    display: inline-block;
+                    padding: 2px 6px;
+                    background: rgba(0, 113, 227, 0.1);
+                    border-radius: 4px;
+                "
+            >
+                <i class="bi bi-key-fill"></i>
+
+                Clave:
+                {{ orden.clave_encendido|default:"-" }}
+            </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- PLACA Y PRÓXIMO MANTENIMIENTO -->
+        <!-- ============================================= -->
+        <div
+            style="
+                background: #fbfbfd;
+                border: 1px solid #efeff2;
+                border-radius: 12px;
+                padding: 12px;
+            "
+        >
+
+            <!-- PLACA -->
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--muted, #6e6e73);
+                    text-transform: uppercase;
+                    margin-bottom: 5px;
+                "
+            >
                 Placa
             </div>
 
-            <div style="
-                font-size: 16px;
-                font-weight: 800;
-                color: #0071e3;
-                letter-spacing: 1px;
-            ">
+            <div
+                style="
+                    font-size: 16px;
+                    font-weight: 800;
+                    color: #0071e3;
+                    letter-spacing: 1px;
+                "
+            >
                 {{ orden.placa|upper|default:"S/P" }}
             </div>
 
             <!-- KILOMETRAJE ACTUAL -->
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                margin-top: 12px;
-                margin-bottom: 4px;
-                text-transform: uppercase;
-            ">
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 8px;
+                    text-transform: uppercase;
+                "
+            >
                 Kilometraje actual
             </div>
 
-            {% if puede_editar %}
-                <input
-                    type="number"
-                    id="id_kilometraje"
-                    name="kilometraje"
-                    min="0"
-                    step="1"
-                    value="{{ orden.kilometraje|default_if_none:'' }}"
-                    placeholder="Ej. 125000"
-                    style="
-                        width: 100%;
-                        padding: 7px 9px;
-                        border: 1px solid #d2d2d7;
-                        border-radius: 7px;
-                        font-size: 13px;
-                        font-weight: 600;
-                        background: #ffffff;
-                        color: #1d1d1f;
-                        box-sizing: border-box;
-                    "
-                >
-            {% else %}
-                <div style="
+            <div
+                style="
                     font-size: 15px;
                     font-weight: 800;
                     color: #1d1d1f;
-                ">
-                    {% if orden.kilometraje is not None %}
-                        {{ orden.kilometraje|intcomma }} km
-                    {% else %}
-                        NO REGISTRADO
-                    {% endif %}
-                </div>
-            {% endif %}
+                    margin-top: 2px;
+                "
+            >
+                {% if orden.kilometraje is not None %}
+                    {{ orden.kilometraje|intcomma }} km
+                {% else %}
+                    NO REGISTRADO
+                {% endif %}
+            </div>
 
-            <!-- INTERVALO -->
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                margin-top: 12px;
-                margin-bottom: 4px;
-                text-transform: uppercase;
-            ">
-                Intervalo de mantenimiento
+            <!--
+                Se usa solo para que JavaScript lea el kilometraje.
+                No tiene name, por lo que no se envía al servidor.
+            -->
+            <input
+                type="hidden"
+                id="id_kilometraje"
+                value="{{ orden.kilometraje|default_if_none:'' }}"
+            >
+
+            <!-- INTERVALO MANUAL -->
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 12px;
+                    margin-bottom: 5px;
+                    text-transform: uppercase;
+                "
+            >
+                Próximo mantenimiento en
             </div>
 
             {% if puede_editar %}
-                <select
-                    id="id_intervalo_mantenimiento_km"
-                    name="intervalo_mantenimiento_km"
+
+                <div
                     style="
-                        width: 100%;
-                        padding: 7px 9px;
-                        border: 1px solid #d2d2d7;
-                        border-radius: 7px;
-                        font-size: 13px;
-                        font-weight: 600;
-                        background: #ffffff;
-                        color: #1d1d1f;
-                        box-sizing: border-box;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
                     "
                 >
-                    <option value="">
-                        Sin definir
-                    </option>
-
-                    <option
-                        value="5000"
-                        {% if orden.intervalo_mantenimiento_km == 5000 %}selected{% endif %}
+                    <input
+                        type="number"
+                        id="id_intervalo_mantenimiento_km"
+                        name="intervalo_mantenimiento_km"
+                        min="1"
+                        step="1"
+                        value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
+                        placeholder="Ej. 5000"
+                        autocomplete="off"
+                        inputmode="numeric"
+                        style="
+                            width: 100%;
+                            min-width: 0;
+                            padding: 7px 9px;
+                            border: 1px solid #d2d2d7;
+                            border-radius: 7px;
+                            font-size: 13px;
+                            font-weight: 600;
+                            background: #ffffff;
+                            color: #1d1d1f;
+                            box-sizing: border-box;
+                            outline: none;
+                        "
+                        onfocus="
+                            this.style.borderColor='#0071e3';
+                            this.style.boxShadow=
+                                '0 0 0 3px rgba(0,113,227,0.12)';
+                        "
+                        onblur="
+                            this.style.borderColor='#d2d2d7';
+                            this.style.boxShadow='none';
+                        "
                     >
-                        5.000 km
-                    </option>
 
-                    <option
-                        value="7500"
-                        {% if orden.intervalo_mantenimiento_km == 7500 %}selected{% endif %}
+                    <span
+                        style="
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: var(--muted, #6e6e73);
+                            white-space: nowrap;
+                        "
                     >
-                        7.500 km
-                    </option>
+                        km
+                    </span>
+                </div>
 
-                    <option
-                        value="10000"
-                        {% if orden.intervalo_mantenimiento_km == 10000 %}selected{% endif %}
-                    >
-                        10.000 km
-                    </option>
+                <div
+                    style="
+                        font-size: 9px;
+                        color: var(--muted, #6e6e73);
+                        margin-top: 4px;
+                    "
+                >
+                    Distancia hasta el siguiente mantenimiento.
+                </div>
 
-                    <option
-                        value="15000"
-                        {% if orden.intervalo_mantenimiento_km == 15000 %}selected{% endif %}
-                    >
-                        15.000 km
-                    </option>
-                </select>
             {% else %}
-                <div style="
-                    font-size: 13px;
-                    font-weight: 700;
-                    color: #1d1d1f;
-                ">
+
+                <div
+                    style="
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: #1d1d1f;
+                    "
+                >
                     {% if orden.intervalo_mantenimiento_km is not None %}
                         {{ orden.intervalo_mantenimiento_km|intcomma }} km
                     {% else %}
                         NO DEFINIDO
                     {% endif %}
                 </div>
+
             {% endif %}
 
             <!-- PRÓXIMO MANTENIMIENTO -->
-            <div style="
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--muted, #6e6e73);
-                margin-top: 12px;
-                margin-bottom: 4px;
-                text-transform: uppercase;
-            ">
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 12px;
+                    margin-bottom: 5px;
+                    text-transform: uppercase;
+                "
+            >
                 Próximo mantenimiento
             </div>
 
-            <div style="
-                padding: 7px 9px;
-                border-radius: 7px;
-                background: rgba(52, 199, 89, 0.1);
-                color: #1d1d1f;
-                font-size: 14px;
-                font-weight: 800;
-            ">
+            <div
+                style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 7px 9px;
+                    border-radius: 7px;
+                    background: rgba(52, 199, 89, 0.1);
+                    border: 1px solid rgba(52, 199, 89, 0.15);
+                    color: #1d1d1f;
+                    font-size: 14px;
+                    font-weight: 800;
+                "
+            >
+                <i
+                    class="bi bi-speedometer2"
+                    style="
+                        color: #34c759;
+                        font-size: 13px;
+                    "
+                ></i>
+
                 <span id="id_proximo_mantenimiento_km">
                     {% if orden.proximo_mantenimiento_km is not None %}
                         {{ orden.proximo_mantenimiento_km|intcomma }}
@@ -427,94 +671,219 @@
                         -
                     {% endif %}
                 </span>
-                km
+
+                <span>km</span>
             </div>
 
         </div>
 
+        <!-- ============================================= -->
         <!-- COMBUSTIBLE -->
-        <div style="background: #fbfbfd; border: 1px solid #efeff2; border-radius: 12px; padding: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div style="font-size: 10px; font-weight: 700; color: var(--muted, #6e6e73); text-transform: uppercase;">Combustible</div>
-                <div style="font-size: 11px; font-weight: 700; background: #e5e5e7; padding: 2px 6px; border-radius: 4px;">{{ orden.get_nivel_combustible_display|default:"-" }}</div>
+        <!-- ============================================= -->
+        <div
+            style="
+                background: #fbfbfd;
+                border: 1px solid #efeff2;
+                border-radius: 12px;
+                padding: 12px;
+            "
+        >
+
+            <div
+                style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                "
+            >
+                <div
+                    style="
+                        font-size: 10px;
+                        font-weight: 700;
+                        color: var(--muted, #6e6e73);
+                        text-transform: uppercase;
+                    "
+                >
+                    Combustible
+                </div>
+
+                <div
+                    style="
+                        font-size: 11px;
+                        font-weight: 700;
+                        background: #e5e5e7;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                    "
+                >
+                    {{ orden.get_nivel_combustible_display|default:"-" }}
+                </div>
             </div>
+
         </div>
+
     </div>
 
-  <!-- ============================================= -->
-<!-- REPORTE DEL CLIENTE Y TRABAJOS SOLICITADOS -->
-<!-- ============================================= -->
-<div
-    style="
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 12px;
-        margin-top: 15px;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #e5e5ea;
-    "
->
-
-    <!-- ========================================= -->
-    <!-- REPORTE DEL CLIENTE -->
-    <!-- ========================================= -->
+    <!-- ============================================= -->
+    <!-- REPORTE Y TRABAJOS SOLICITADOS -->
+    <!-- ============================================= -->
     <div
         style="
-            padding: 12px;
-            background: #f5f5f7;
-            border-left: 4px solid #0071e3;
-            border-radius: 4px 8px 8px 4px;
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(300px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e5ea;
         "
     >
+
+        <!-- ========================================= -->
+        <!-- REPORTE DEL CLIENTE -->
+        <!-- ========================================= -->
         <div
             style="
-                font-size: 9px;
-                font-weight: 700;
-                color: #6e6e73;
-                text-transform: uppercase;
-                letter-spacing: .6px;
-                margin-bottom: 8px;
+                padding: 12px;
+                background: #f5f5f7;
+                border-left: 4px solid #0071e3;
+                border-radius: 4px 8px 8px 4px;
             "
         >
-            REPORTE DEL CLIENTE
+
+            <div
+                style="
+                    font-size: 9px;
+                    font-weight: 700;
+                    color: #6e6e73;
+                    text-transform: uppercase;
+                    letter-spacing: 0.6px;
+                    margin-bottom: 8px;
+                "
+            >
+                REPORTE DEL CLIENTE
+            </div>
+
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 400;
+                    color: #1d1d1f;
+                    line-height: 1.35;
+                "
+            >
+
+                {% if orden.sintomas_cliente %}
+
+                    {{ orden.sintomas_cliente|upper }}
+
+                {% else %}
+
+                    {% for sintoma in orden.sintomas_items.all %}
+
+                        <div
+                            style="
+                                display: flex;
+                                align-items: flex-start;
+                                gap: 6px;
+                                margin-bottom: 3px;
+                            "
+                        >
+                            <strong
+                                style="
+                                    min-width: 16px;
+                                    font-size: 9px;
+                                "
+                            >
+                                {{ forloop.counter }}.
+                            </strong>
+
+                            <span>
+                                {{ sintoma.descripcion|upper }}
+                            </span>
+                        </div>
+
+                    {% empty %}
+
+                        <span
+                            style="
+                                color: #86868b;
+                                font-style: italic;
+                            "
+                        >
+                            REVISIÓN TÉCNICA GENERAL
+                        </span>
+
+                    {% endfor %}
+
+                {% endif %}
+
+            </div>
         </div>
 
+        <!-- ========================================= -->
+        <!-- TRABAJOS SOLICITADOS -->
+        <!-- ========================================= -->
         <div
             style="
-                font-size: 10px;
-                font-weight: 400;
-                color: #1d1d1f;
-                line-height: 1.35;
+                padding: 12px;
+                background: #f5f5f7;
+                border-left: 4px solid #34c759;
+                border-radius: 4px 8px 8px 4px;
             "
         >
-            {% if orden.sintomas_cliente %}
 
-                {{ orden.sintomas_cliente|upper }}
+            <div
+                style="
+                    font-size: 9px;
+                    font-weight: 700;
+                    color: #6e6e73;
+                    text-transform: uppercase;
+                    letter-spacing: 0.6px;
+                    margin-bottom: 8px;
+                "
+            >
+                TRABAJOS SOLICITADOS
+            </div>
 
-            {% else %}
+            <div
+                style="
+                    font-size: 10px;
+                    font-weight: 400;
+                    color: #1d1d1f;
+                    line-height: 1.35;
+                "
+            >
 
-                {% for sintoma in orden.sintomas_items.all %}
+                {% for trabajo in orden.trabajos_solicitados_items.all %}
 
                     <div
                         style="
-                            display:flex;
-                            align-items:flex-start;
-                            gap:6px;
-                            margin-bottom:3px;
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 6px;
+                            margin-bottom: 3px;
                         "
                     >
                         <strong
                             style="
-                                min-width:16px;
-                                font-size:9px;
+                                min-width: 16px;
+                                font-size: 9px;
                             "
                         >
                             {{ forloop.counter }}.
                         </strong>
 
                         <span>
-                            {{ sintoma.descripcion|upper }}
+                            {% if trabajo.trabajo_catalogo %}
+                                {{ trabajo.trabajo_catalogo.nombre|upper }}
+                            {% elif trabajo.descripcion_manual %}
+                                {{ trabajo.descripcion_manual|upper }}
+                            {% else %}
+                                TRABAJO SIN DESCRIPCIÓN
+                            {% endif %}
                         </span>
                     </div>
 
@@ -522,197 +891,170 @@
 
                     <span
                         style="
-                            color:#86868b;
-                            font-style:italic;
+                            color: #86868b;
+                            font-style: italic;
                         "
                     >
-                        REVISIÓN TÉCNICA GENERAL
+                        NO HAY TRABAJOS SOLICITADOS
                     </span>
 
                 {% endfor %}
 
-            {% endif %}
-        </div>
-    </div>
-
-
-    <!-- ========================================= -->
-    <!-- TRABAJOS SOLICITADOS -->
-    <!-- ========================================= -->
-    <div
-        style="
-            padding: 12px;
-            background: #f5f5f7;
-            border-left: 4px solid #34c759;
-            border-radius: 4px 8px 8px 4px;
-        "
-    >
-        <div
-            style="
-                font-size: 9px;
-                font-weight: 700;
-                color: #6e6e73;
-                text-transform: uppercase;
-                letter-spacing: .6px;
-                margin-bottom: 8px;
-            "
-        >
-            TRABAJOS SOLICITADOS
+            </div>
         </div>
 
-        <div
-            style="
-                font-size: 10px;
-                font-weight: 400;
-                color: #1d1d1f;
-                line-height: 1.35;
-            "
-        >
-            {% for trabajo in orden.trabajos_solicitados_items.all %}
-
-                <div
-                    style="
-                        display:flex;
-                        align-items:flex-start;
-                        gap:6px;
-                        margin-bottom:3px;
-                    "
-                >
-                    <strong
-                        style="
-                            min-width:16px;
-                            font-size:9px;
-                        "
-                    >
-                        {{ forloop.counter }}.
-                    </strong>
-
-                    <span>
-                        {% if trabajo.trabajo_catalogo %}
-                            {{ trabajo.trabajo_catalogo.nombre|upper }}
-                        {% elif trabajo.descripcion_manual %}
-                            {{ trabajo.descripcion_manual|upper }}
-                        {% else %}
-                            TRABAJO SIN DESCRIPCIÓN
-                        {% endif %}
-                    </span>
-
-                </div>
-
-            {% empty %}
-
-                <span
-                    style="
-                        color:#86868b;
-                        font-style:italic;
-                    "
-                >
-                    NO HAY TRABAJOS SOLICITADOS
-                </span>
-
-            {% endfor %}
-        </div>
     </div>
 
 </div>
 
-    
-    <script>
-        
-        function confirmarAccionNativa(accion, formId) {
-            let titulo = '';
-            let texto = '';
-            let icono = '';
-            let colorBoton = '';
+<script>
+    function confirmarAccionNativa(accion, formId) {
+        let titulo = '';
+        let texto = '';
+        let icono = '';
+        let colorBoton = '';
 
-            if (accion === 'anular') {
-                titulo = '¿Anular Orden?';
-                texto = 'Esta acción cancelará la orden y no se podrá deshacer.';
-                icono = 'warning';
-                colorBoton = '#ff3b30';
-            } else if (accion === 'cerrar') {
-                titulo = '¿Completar Orden?';
-                texto = 'El vehículo pasará a estado cerrado y estará listo para facturación.';
-                icono = 'question';
-                colorBoton = '#34c759';
-            }
-
-            Swal.fire({
-                title: titulo,
-                text: texto,
-                icon: icono,
-                showCancelButton: true,
-                confirmButtonColor: colorBoton,
-                cancelButtonColor: '#6e6e73',
-                confirmButtonText: 'Sí, continuar',
-                cancelButtonText: 'Cancelar',
-                customClass: { popup: 'swal-mao-popup', title: 'swal-mao-title', htmlContainer: 'swal-mao-html' }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById(formId).submit();
-                }
-            });
+        if (accion === 'anular') {
+            titulo = '¿Anular Orden?';
+            texto =
+                'Esta acción cancelará la orden y no se podrá deshacer.';
+            icono = 'warning';
+            colorBoton = '#ff3b30';
+        } else if (accion === 'cerrar') {
+            titulo = '¿Completar Orden?';
+            texto =
+                'El vehículo pasará a estado cerrado y estará listo para facturación.';
+            icono = 'question';
+            colorBoton = '#34c759';
         }
 
-        function imprimirFichaDirecto() {
-            const btn = event.currentTarget;
-            if (btn.disabled) return; 
-            
-            const textoOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cargando...';
-
-            var viejoIframe = document.getElementById('iframeImpresionDinamico');
-            if (viejoIframe) {
-                viejoIframe.remove();
+        Swal.fire({
+            title: titulo,
+            text: texto,
+            icon: icono,
+            showCancelButton: true,
+            confirmButtonColor: colorBoton,
+            cancelButtonColor: '#6e6e73',
+            confirmButtonText: 'Sí, continuar',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'swal-mao-popup',
+                title: 'swal-mao-title',
+                htmlContainer: 'swal-mao-html'
+            }
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
             }
 
-            var iframe = document.createElement('iframe');
-            iframe.id = 'iframeImpresionDinamico';
-            iframe.style.position = 'absolute';
-            iframe.style.top = '-10000px';
-            iframe.style.left = '-10000px';
-            iframe.style.width = '1000px';
-            iframe.style.height = '1000px';
-            iframe.style.border = 'none';
+            const formulario = document.getElementById(
+                formId
+            );
 
-            document.body.appendChild(iframe);
-            iframe.src = "{% url 'imprimir_tecnico' orden.id %}";
-
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }, 2000);
-        }
-
-        function imprimirResumenDirecto() {
-            const btn = event.currentTarget;
-            if (btn.disabled) return; 
-            
-            const textoOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando PDF...';
-
-            var viejoIframe = document.getElementById('iframeImpresionResumen');
-            if (viejoIframe) {
-                viejoIframe.remove();
+            if (formulario) {
+                formulario.submit();
             }
+        });
+    }
 
-            var iframe = document.createElement('iframe');
-            iframe.id = 'iframeImpresionResumen';
-            iframe.style.position = 'absolute';
-            iframe.style.top = '-10000px';
-            iframe.style.left = '-10000px';
-            iframe.style.width = '1000px';
-            iframe.style.height = '1000px';
-            iframe.style.border = 'none';
 
-            document.body.appendChild(iframe);
-            iframe.src = "{% url 'imprimir_resumen' orden.id %}";
+    function imprimirFichaDirecto(evento) {
+        const boton = evento.currentTarget;
 
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }, 2000);
+        if (!boton || boton.disabled) {
+            return;
         }
-    </script>
+
+        const textoOriginal = boton.innerHTML;
+
+        boton.disabled = true;
+        boton.innerHTML =
+            '<i class="bi bi-hourglass-split"></i> Cargando...';
+
+        const iframeAnterior =
+            document.getElementById(
+                'iframeImpresionDinamico'
+            );
+
+        if (iframeAnterior) {
+            iframeAnterior.remove();
+        }
+
+        const iframe =
+            document.createElement('iframe');
+
+        iframe.id =
+            'iframeImpresionDinamico';
+
+        iframe.style.position = 'absolute';
+        iframe.style.top = '-10000px';
+        iframe.style.left = '-10000px';
+        iframe.style.width = '1000px';
+        iframe.style.height = '1000px';
+        iframe.style.border = 'none';
+
+        document.body.appendChild(
+            iframe
+        );
+
+        iframe.src =
+            "{% url 'imprimir_tecnico' orden.id %}";
+
+        window.setTimeout(function () {
+            boton.disabled = false;
+            boton.innerHTML =
+                textoOriginal;
+        }, 2000);
+    }
+
+
+    function imprimirResumenDirecto(evento) {
+        const boton = evento.currentTarget;
+
+        if (!boton || boton.disabled) {
+            return;
+        }
+
+        const textoOriginal =
+            boton.innerHTML;
+
+        boton.disabled = true;
+        boton.innerHTML =
+            '<i class="bi bi-hourglass-split"></i> Generando PDF...';
+
+        const iframeAnterior =
+            document.getElementById(
+                'iframeImpresionResumen'
+            );
+
+        if (iframeAnterior) {
+            iframeAnterior.remove();
+        }
+
+        const iframe =
+            document.createElement('iframe');
+
+        iframe.id =
+            'iframeImpresionResumen';
+
+        iframe.style.position = 'absolute';
+        iframe.style.top = '-10000px';
+        iframe.style.left = '-10000px';
+        iframe.style.width = '1000px';
+        iframe.style.height = '1000px';
+        iframe.style.border = 'none';
+
+        document.body.appendChild(
+            iframe
+        );
+
+        iframe.src =
+            "{% url 'imprimir_resumen' orden.id %}";
+
+        window.setTimeout(function () {
+            boton.disabled = false;
+            boton.innerHTML =
+                textoOriginal;
+        }, 2000);
+    }
+</script>
