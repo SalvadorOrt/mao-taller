@@ -3,7 +3,7 @@ function inicializarProximoMantenimiento() {
         'id_kilometraje'
     );
 
-    const intervaloSelect = document.getElementById(
+    const intervaloInput = document.getElementById(
         'id_intervalo_mantenimiento_km'
     );
 
@@ -13,7 +13,7 @@ function inicializarProximoMantenimiento() {
 
     if (
         !kilometrajeInput ||
-        !intervaloSelect ||
+        !intervaloInput ||
         !proximoElemento
     ) {
         return;
@@ -26,14 +26,37 @@ function inicializarProximoMantenimiento() {
         );
 
         const intervalo = Number.parseInt(
-            intervaloSelect.value,
+            intervaloInput.value,
             10
         );
 
+        intervaloInput.setCustomValidity('');
+
+        if (intervaloInput.value.trim() === '') {
+            proximoElemento.textContent = '-';
+            return;
+        }
+
+        if (
+            Number.isNaN(intervalo) ||
+            intervalo <= 0
+        ) {
+            intervaloInput.setCustomValidity(
+                'El intervalo debe ser mayor que cero.'
+            );
+
+            proximoElemento.textContent = '-';
+            return;
+        }
+
         if (
             Number.isNaN(kilometraje) ||
-            Number.isNaN(intervalo)
+            kilometraje < 0
         ) {
+            intervaloInput.setCustomValidity(
+                'La orden no tiene un kilometraje actual válido.'
+            );
+
             proximoElemento.textContent = '-';
             return;
         }
@@ -41,25 +64,41 @@ function inicializarProximoMantenimiento() {
         const proximoMantenimiento =
             kilometraje + intervalo;
 
+        if (
+            proximoMantenimiento <= kilometraje
+        ) {
+            intervaloInput.setCustomValidity(
+                'El próximo mantenimiento debe ser mayor que el kilometraje actual.'
+            );
+
+            proximoElemento.textContent = '-';
+            return;
+        }
+
         proximoElemento.textContent =
             proximoMantenimiento.toLocaleString(
                 'es-EC'
             );
     }
 
-    kilometrajeInput.addEventListener(
+    intervaloInput.addEventListener(
         'input',
         calcularProximoMantenimiento
     );
 
-    intervaloSelect.addEventListener(
-        'change',
-        calcularProximoMantenimiento
+    intervaloInput.addEventListener(
+        'blur',
+        function () {
+            calcularProximoMantenimiento();
+
+            if (!intervaloInput.checkValidity()) {
+                intervaloInput.reportValidity();
+            }
+        }
     );
 
     calcularProximoMantenimiento();
 }
-
 
 document.addEventListener('DOMContentLoaded', function () {
 

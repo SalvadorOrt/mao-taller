@@ -1586,7 +1586,11 @@ class OrdenTrabajo(models.Model):
         Fórmula:
             próximo mantenimiento =
                 kilometraje actual + intervalo aplicado
+
+        Si los datos no son válidos, el próximo mantenimiento
+        se establece en None.
         """
+
         if (
             self.kilometraje is None
             or self.intervalo_mantenimiento_km is None
@@ -1594,10 +1598,27 @@ class OrdenTrabajo(models.Model):
             self.proximo_mantenimiento_km = None
             return None
 
-        self.proximo_mantenimiento_km = (
+        # El kilometraje no puede ser negativo
+        if self.kilometraje < 0:
+            self.proximo_mantenimiento_km = None
+            return None
+
+        # El intervalo debe ser mayor que cero
+        if self.intervalo_mantenimiento_km <= 0:
+            self.proximo_mantenimiento_km = None
+            return None
+
+        proximo = (
             self.kilometraje
             + self.intervalo_mantenimiento_km
         )
+
+        # Validación de seguridad
+        if proximo <= self.kilometraje:
+            self.proximo_mantenimiento_km = None
+            return None
+
+        self.proximo_mantenimiento_km = proximo
 
         return self.proximo_mantenimiento_km
 
@@ -1732,57 +1753,118 @@ class OrdenTrabajo(models.Model):
         self._normalizar_campos_texto()
         self.validar_bloqueo_edicion()
 
+        errores = {}
+
+        # =====================================================
+        # DATOS GENERALES
+        # =====================================================
         if not self.numero_orden or not self.numero_orden.strip():
-            raise ValidationError(
+            errores["numero_orden"] = (
                 "El número de orden es obligatorio."
             )
 
         if not self.sucursal_id:
-            raise ValidationError({
-                "sucursal": "La sucursal es obligatoria."
-            })
+            errores["sucursal"] = (
+                "La sucursal es obligatoria."
+            )
 
         if not self.es_migrada:
             if not self.placa or not self.placa.strip():
-                raise ValidationError(
-                    "La placa es obligatoria para órdenes no migradas."
+                errores["placa"] = (
+                    "La placa es obligatoria para órdenes "
+                    "no migradas."
                 )
 
-        if self.anio_vehiculo and self.anio_vehiculo < 1900:
-            raise ValidationError(
+        if (
+            self.anio_vehiculo is not None
+            and self.anio_vehiculo < 1900
+        ):
+            errores["anio_vehiculo"] = (
                 "El año del vehículo no es válido."
             )
 
+        # =====================================================
+        # KILOMETRAJE Y PRÓXIMO MANTENIMIENTO
+        # =====================================================
         if (
-            self.intervalo_mantenimiento_km is not None
-            and self.intervalo_mantenimiento_km <= 0
+            self.kilometraje is not None
+            and self.kilometraje < 0
         ):
-            raise ValidationError({
-                "intervalo_mantenimiento_km": (
+            errores["kilometraje"] = (
+                "El kilometraje actual no puede ser negativo."
+            )
+
+        if self.intervalo_mantenimiento_km is not None:
+
+            if self.intervalo_mantenimiento_km <= 0:
+                errores["intervalo_mantenimiento_km"] = (
                     "El intervalo de mantenimiento debe ser "
                     "mayor que cero."
                 )
-            })
 
-        if (
-            self.intervalo_mantenimiento_km is not None
-            and self.kilometraje is None
-        ):
-            raise ValidationError({
-                "kilometraje": (
+            if self.kilometraje is None:
+                errores["intervalo_mantenimiento_km"] = (
                     "Debe registrar el kilometraje actual para "
                     "calcular el próximo mantenimiento."
                 )
-            })
 
-        if self.es_migrada and not self.numero_orden_origen:
-            raise ValidationError({
-                "numero_orden_origen": (
-                    "Las OT migradas deben guardar "
-                    "el número original extraído."
+        if self.proximo_mantenimiento_km is not None:
+
+            if self.proximo_mantenimiento_km < 0:
+                errores["proximo_mantenimiento_km"] = (
+                    "El próximo mantenimiento no puede ser negativo."
                 )
-            })
 
+            if self.kilometraje is None:
+                errores["proximo_mantenimiento_km"] = (
+                    "No se puede registrar un próximo mantenimiento "
+                    "sin kilometraje actual."
+                )
+
+            elif (
+                self.proximo_mantenimiento_km
+                <= self.kilometraje
+            ):
+                errores["proximo_mantenimiento_km"] = (
+                    "El próximo mantenimiento debe ser mayor "
+                    "que el kilometraje actual."
+                )
+
+        if (
+            self.kilometraje is not None
+            and self.intervalo_mantenimiento_km is not None
+            and self.intervalo_mantenimiento_km > 0
+        ):
+            proximo_esperado = (
+                self.kilometraje
+                + self.intervalo_mantenimiento_km
+            )
+
+            if (
+                self.proximo_mantenimiento_km is not None
+                and self.proximo_mantenimiento_km
+                != proximo_esperado
+            ):
+                errores["proximo_mantenimiento_km"] = (
+                    "El próximo mantenimiento no coincide con "
+                    "el kilometraje actual más el intervalo."
+                )
+
+        # =====================================================
+        # ÓRDENES MIGRADAS
+        # =====================================================
+        if (
+            self.es_migrada
+            and not self.numero_orden_origen
+        ):
+            errores["numero_orden_origen"] = (
+                "Las OT migradas deben guardar "
+                "el número original extraído."
+            )
+
+        # =====================================================
+        # DESCUENTOS
+        # =====================================================
         descuento_ingresado = Decimal(
             str(
                 self.descuento_ingresado
@@ -1791,36 +1873,39 @@ class OrdenTrabajo(models.Model):
         )
 
         if descuento_ingresado < Decimal("0.00"):
-            raise ValidationError({
-                "descuento_ingresado": (
-                    "El descuento no puede ser negativo."
-                )
-            })
+            errores["descuento_ingresado"] = (
+                "El descuento no puede ser negativo."
+            )
 
         if self.tipo_descuento == "PORCENTAJE":
 
             if descuento_ingresado > Decimal("100.00"):
-                raise ValidationError({
-                    "descuento_ingresado": (
-                        "El descuento porcentual "
-                        "no puede ser mayor al 100%."
-                    )
-                })
+                errores["descuento_ingresado"] = (
+                    "El descuento porcentual "
+                    "no puede ser mayor al 100%."
+                )
 
         elif self.tipo_descuento == "VALOR_FIJO":
 
-            # No validamos contra subtotal_sin_iva aquí,
-            # porque todavía puede estar desactualizado.
-            # La validación real se realiza en calcular_total(),
-            # donde el subtotal ya fue recalculado.
+            # No se valida contra subtotal_sin_iva aquí,
+            # porque el subtotal todavía puede estar
+            # desactualizado.
+            #
+            # La validación definitiva debe realizarse
+            # en calcular_total(), cuando el subtotal ya
+            # haya sido recalculado.
             pass
 
         else:
-            raise ValidationError({
-                "tipo_descuento": (
-                    "El tipo de descuento no es válido."
-                )
-            })
+            errores["tipo_descuento"] = (
+                "El tipo de descuento no es válido."
+            )
+
+        # =====================================================
+        # RESULTADO FINAL
+        # =====================================================
+        if errores:
+            raise ValidationError(errores)
 
     def save(self, *args, **kwargs):
         self._normalizar_campos_texto()
