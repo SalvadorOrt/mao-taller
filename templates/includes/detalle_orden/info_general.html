@@ -13,7 +13,6 @@
         }
     }
 
-    /* Estilo para el botón de proforma */
     .btn-proforma {
         background: #ffffff;
         color: #0071e3;
@@ -26,6 +25,133 @@
         color: #005bb7;
         border-color: #005bb7;
         transform: translateY(-1px);
+    }
+
+    .info-general-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .info-general-card {
+        background: #fbfbfd;
+        border: 1px solid #efeff2;
+        border-radius: 12px;
+        padding: 12px;
+        min-width: 0;
+    }
+
+    .info-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--muted, #6e6e73);
+        text-transform: uppercase;
+    }
+
+    .vehiculo-operacion-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .vehiculo-operacion-item {
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+        border-radius: 8px;
+        padding: 8px 9px;
+        min-width: 0;
+    }
+
+    .vehiculo-operacion-label {
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--muted, #6e6e73);
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+
+    .vehiculo-operacion-valor {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1d1d1f;
+        line-height: 1.2;
+    }
+
+    .intervalo-mantenimiento-contenedor {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .intervalo-mantenimiento-input {
+        width: 100%;
+        min-width: 0;
+        padding: 7px 9px;
+        border: 1px solid #d2d2d7;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        background: #ffffff;
+        color: #1d1d1f;
+        box-sizing: border-box;
+        outline: none;
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .intervalo-mantenimiento-input:focus {
+        border-color: #0071e3;
+        box-shadow:
+            0 0 0 3px rgba(0, 113, 227, 0.12);
+    }
+
+    .proximo-mantenimiento-resultado {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 9px;
+        border-radius: 7px;
+        background: rgba(52, 199, 89, 0.1);
+        border: 1px solid rgba(52, 199, 89, 0.15);
+        color: #1d1d1f;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    @media (max-width: 1050px) {
+        .info-general-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .info-general-card-mantenimiento {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .info-general-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-general-card-mantenimiento {
+            grid-column: auto;
+        }
+
+        .vehiculo-operacion-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .vehiculo-operacion-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -97,9 +223,6 @@
 
             {% if puede_editar %}
 
-                <!-- ============================================= -->
-                <!-- CREAR O CONTINUAR PROFORMA -->
-                <!-- ============================================= -->
                 {% if orden.cotizacion_vinculada %}
 
                     <a
@@ -146,9 +269,6 @@
 
             {% endif %}
 
-            <!-- ============================================= -->
-            <!-- IMPRIMIR FICHA -->
-            <!-- ============================================= -->
             <button
                 type="button"
                 onclick="imprimirFichaDirecto(event)"
@@ -167,9 +287,6 @@
                 Imprimir Ficha
             </button>
 
-            <!-- ============================================= -->
-            <!-- RESUMEN -->
-            <!-- ============================================= -->
             <button
                 type="button"
                 onclick="imprimirResumenDirecto(event)"
@@ -190,9 +307,6 @@
 
             {% if puede_editar %}
 
-                <!-- ============================================= -->
-                <!-- ANULAR -->
-                <!-- ============================================= -->
                 <form
                     id="form_anular_orden"
                     method="post"
@@ -220,9 +334,6 @@
                     </button>
                 </form>
 
-                <!-- ============================================= -->
-                <!-- CERRAR -->
-                <!-- ============================================= -->
                 <form
                     id="form_cerrar_orden"
                     method="post"
@@ -252,9 +363,6 @@
 
             {% endif %}
 
-            <!-- ============================================= -->
-            <!-- ESTADO -->
-            <!-- ============================================= -->
             <div
                 style="
                     background: #f2f2f7;
@@ -285,35 +393,16 @@
     <!-- ============================================= -->
     <!-- TARJETAS DE INFORMACIÓN -->
     <!-- ============================================= -->
-    <div
-        style="
-            display: grid;
-            grid-template-columns:
-                repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-        "
-    >
+    <div class="info-general-grid">
 
         <!-- ============================================= -->
         <!-- CLIENTE -->
         <!-- ============================================= -->
-        <div
-            style="
-                background: #fbfbfd;
-                border: 1px solid #efeff2;
-                border-radius: 12px;
-                padding: 12px;
-            "
-        >
+        <div class="info-general-card">
 
             <div
-                style="
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--muted, #6e6e73);
-                    text-transform: uppercase;
-                    margin-bottom: 5px;
-                "
+                class="info-label"
+                style="margin-bottom: 5px;"
             >
                 Cliente
             </div>
@@ -364,9 +453,7 @@
                     </a>
 
                 {% else %}
-
                     NO REGISTRADO
-
                 {% endif %}
             </div>
 
@@ -391,23 +478,11 @@
         <!-- ============================================= -->
         <!-- VEHÍCULO -->
         <!-- ============================================= -->
-        <div
-            style="
-                background: #fbfbfd;
-                border: 1px solid #efeff2;
-                border-radius: 12px;
-                padding: 12px;
-            "
-        >
+        <div class="info-general-card">
 
             <div
-                style="
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--muted, #6e6e73);
-                    text-transform: uppercase;
-                    margin-bottom: 5px;
-                "
+                class="info-label"
+                style="margin-bottom: 5px;"
             >
                 Vehículo
             </div>
@@ -459,26 +534,19 @@
         </div>
 
         <!-- ============================================= -->
-        <!-- PLACA Y PRÓXIMO MANTENIMIENTO -->
+        <!-- VEHÍCULO: PLACA, KM, COMBUSTIBLE Y MANTENIMIENTO -->
         <!-- ============================================= -->
         <div
-            style="
-                background: #fbfbfd;
-                border: 1px solid #efeff2;
-                border-radius: 12px;
-                padding: 12px;
+            class="
+                info-general-card
+                info-general-card-mantenimiento
             "
         >
 
             <!-- PLACA -->
             <div
-                style="
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--muted, #6e6e73);
-                    text-transform: uppercase;
-                    margin-bottom: 5px;
-                "
+                class="info-label"
+                style="margin-bottom: 5px;"
             >
                 Placa
             </div>
@@ -494,52 +562,84 @@
                 {{ orden.placa|upper|default:"S/P" }}
             </div>
 
-            <!-- KILOMETRAJE ACTUAL -->
-            <div
-                style="
-                    font-size: 11px;
-                    color: var(--muted, #6e6e73);
-                    margin-top: 8px;
-                    text-transform: uppercase;
-                "
-            >
-                Kilometraje actual
+            <!-- KILOMETRAJE Y COMBUSTIBLE -->
+            <div class="vehiculo-operacion-grid">
+
+                <div class="vehiculo-operacion-item">
+
+                    <div class="vehiculo-operacion-label">
+                        Kilometraje actual
+                    </div>
+
+                    <div class="vehiculo-operacion-valor">
+                        {% if orden.kilometraje is not None %}
+                            {{ orden.kilometraje|intcomma }}
+                            <span
+                                style="
+                                    font-size: 10px;
+                                    color: #6e6e73;
+                                "
+                            >
+                                km
+                            </span>
+                        {% else %}
+                            <span
+                                style="
+                                    font-size: 11px;
+                                    color: #86868b;
+                                "
+                            >
+                                NO REGISTRADO
+                            </span>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="vehiculo-operacion-item">
+
+                    <div class="vehiculo-operacion-label">
+                        Combustible
+                    </div>
+
+                    <div
+                        class="vehiculo-operacion-valor"
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        "
+                    >
+                        <i
+                            class="bi bi-fuel-pump-fill"
+                            style="
+                                color: #ff9500;
+                                font-size: 12px;
+                            "
+                        ></i>
+
+                        <span>
+                            {{ orden.get_nivel_combustible_display|default:"-" }}
+                        </span>
+                    </div>
+
+                </div>
+
             </div>
 
-            <div
-                style="
-                    font-size: 15px;
-                    font-weight: 800;
-                    color: #1d1d1f;
-                    margin-top: 2px;
-                "
-            >
-                {% if orden.kilometraje is not None %}
-                    {{ orden.kilometraje|intcomma }} km
-                {% else %}
-                    NO REGISTRADO
-                {% endif %}
-            </div>
-
-            <!--
-                Se usa solo para que JavaScript lea el kilometraje.
-                No tiene name, por lo que no se envía al servidor.
-            -->
+            <!-- Valor oculto para JavaScript -->
             <input
                 type="hidden"
                 id="id_kilometraje"
                 value="{{ orden.kilometraje|default_if_none:'' }}"
             >
 
-            <!-- INTERVALO MANUAL -->
+            <!-- INTERVALO -->
             <div
+                class="info-label"
                 style="
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--muted, #6e6e73);
-                    margin-top: 12px;
+                    margin-top: 11px;
                     margin-bottom: 5px;
-                    text-transform: uppercase;
                 "
             >
                 Próximo mantenimiento en
@@ -547,45 +647,19 @@
 
             {% if puede_editar %}
 
-                <div
-                    style="
-                        display: flex;
-                        align-items: center;
-                        gap: 6px;
-                    "
-                >
+                <div class="intervalo-mantenimiento-contenedor">
+
                     <input
                         type="number"
                         id="id_intervalo_mantenimiento_km"
                         name="intervalo_mantenimiento_km"
+                        class="intervalo-mantenimiento-input"
                         min="1"
                         step="1"
                         value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
                         placeholder="Ej. 5000"
                         autocomplete="off"
                         inputmode="numeric"
-                        style="
-                            width: 100%;
-                            min-width: 0;
-                            padding: 7px 9px;
-                            border: 1px solid #d2d2d7;
-                            border-radius: 7px;
-                            font-size: 13px;
-                            font-weight: 600;
-                            background: #ffffff;
-                            color: #1d1d1f;
-                            box-sizing: border-box;
-                            outline: none;
-                        "
-                        onfocus="
-                            this.style.borderColor='#0071e3';
-                            this.style.boxShadow=
-                                '0 0 0 3px rgba(0,113,227,0.12)';
-                        "
-                        onblur="
-                            this.style.borderColor='#d2d2d7';
-                            this.style.boxShadow='none';
-                        "
                     >
 
                     <span
@@ -598,16 +672,7 @@
                     >
                         km
                     </span>
-                </div>
 
-                <div
-                    style="
-                        font-size: 9px;
-                        color: var(--muted, #6e6e73);
-                        margin-top: 4px;
-                    "
-                >
-                    Distancia hasta el siguiente mantenimiento.
                 </div>
 
             {% else %}
@@ -628,34 +693,19 @@
 
             {% endif %}
 
-            <!-- PRÓXIMO MANTENIMIENTO -->
+            <!-- PRÓXIMO MANTENIMIENTO CALCULADO -->
             <div
+                class="info-label"
                 style="
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--muted, #6e6e73);
-                    margin-top: 12px;
+                    margin-top: 11px;
                     margin-bottom: 5px;
-                    text-transform: uppercase;
                 "
             >
                 Próximo mantenimiento
             </div>
 
-            <div
-                style="
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 7px 9px;
-                    border-radius: 7px;
-                    background: rgba(52, 199, 89, 0.1);
-                    border: 1px solid rgba(52, 199, 89, 0.15);
-                    color: #1d1d1f;
-                    font-size: 14px;
-                    font-weight: 800;
-                "
-            >
+            <div class="proximo-mantenimiento-resultado">
+
                 <i
                     class="bi bi-speedometer2"
                     style="
@@ -673,52 +723,7 @@
                 </span>
 
                 <span>km</span>
-            </div>
 
-        </div>
-
-        <!-- ============================================= -->
-        <!-- COMBUSTIBLE -->
-        <!-- ============================================= -->
-        <div
-            style="
-                background: #fbfbfd;
-                border: 1px solid #efeff2;
-                border-radius: 12px;
-                padding: 12px;
-            "
-        >
-
-            <div
-                style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 8px;
-                "
-            >
-                <div
-                    style="
-                        font-size: 10px;
-                        font-weight: 700;
-                        color: var(--muted, #6e6e73);
-                        text-transform: uppercase;
-                    "
-                >
-                    Combustible
-                </div>
-
-                <div
-                    style="
-                        font-size: 11px;
-                        font-weight: 700;
-                        background: #e5e5e7;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                    "
-                >
-                    {{ orden.get_nivel_combustible_display|default:"-" }}
-                </div>
             </div>
 
         </div>
@@ -741,9 +746,7 @@
         "
     >
 
-        <!-- ========================================= -->
         <!-- REPORTE DEL CLIENTE -->
-        <!-- ========================================= -->
         <div
             style="
                 padding: 12px;
@@ -823,9 +826,7 @@
             </div>
         </div>
 
-        <!-- ========================================= -->
         <!-- TRABAJOS SOLICITADOS -->
-        <!-- ========================================= -->
         <div
             style="
                 padding: 12px;
@@ -947,9 +948,8 @@
                 return;
             }
 
-            const formulario = document.getElementById(
-                formId
-            );
+            const formulario =
+                document.getElementById(formId);
 
             if (formulario) {
                 formulario.submit();
@@ -993,17 +993,14 @@
         iframe.style.height = '1000px';
         iframe.style.border = 'none';
 
-        document.body.appendChild(
-            iframe
-        );
+        document.body.appendChild(iframe);
 
         iframe.src =
             "{% url 'imprimir_tecnico' orden.id %}";
 
         window.setTimeout(function () {
             boton.disabled = false;
-            boton.innerHTML =
-                textoOriginal;
+            boton.innerHTML = textoOriginal;
         }, 2000);
     }
 
@@ -1015,8 +1012,7 @@
             return;
         }
 
-        const textoOriginal =
-            boton.innerHTML;
+        const textoOriginal = boton.innerHTML;
 
         boton.disabled = true;
         boton.innerHTML =
@@ -1044,17 +1040,14 @@
         iframe.style.height = '1000px';
         iframe.style.border = 'none';
 
-        document.body.appendChild(
-            iframe
-        );
+        document.body.appendChild(iframe);
 
         iframe.src =
             "{% url 'imprimir_resumen' orden.id %}";
 
         window.setTimeout(function () {
             boton.disabled = false;
-            boton.innerHTML =
-                textoOriginal;
+            boton.innerHTML = textoOriginal;
         }, 2000);
     }
 </script>
