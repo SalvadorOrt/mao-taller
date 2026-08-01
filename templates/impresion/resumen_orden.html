@@ -1,12 +1,20 @@
 {% load static %}
 {% load l10n %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Resumen de Orden - {{ orden.numero_orden }}</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>
+        Resumen de Orden - {{ orden.numero_orden }}
+    </title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
     <style>
         :root {
             --primary: #123b7a;
@@ -30,25 +38,41 @@
             padding: 0;
         }
 
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+        }
+
         body {
             background: #e5e7eb;
             color: var(--text);
-            font-family: 'Inter', Arial, sans-serif;
+            font-family: "Inter", Arial, sans-serif;
             font-size: 10.3px;
             line-height: 1.45;
+
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
+        /*
+         * CONTENEDOR GENERAL
+         *
+         * No se utiliza overflow:hidden porque ocultaba el contenido
+         * que superaba la primera página.
+         */
         .page {
             width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
-            background: #fff;
             padding: 9mm 10mm;
-            overflow: hidden;
+            background: #fff;
+            overflow: visible;
         }
 
+        /*
+         * ENCABEZADO
+         */
         .top-table {
             width: 100%;
             table-layout: fixed;
@@ -74,6 +98,7 @@
         }
 
         .logo img {
+            display: block;
             max-width: 150px;
             max-height: 62px;
             object-fit: contain;
@@ -87,16 +112,17 @@
             font-weight: 500;
         }
 
-       .doc-title {
-    font-family: "Montserrat", "Helvetica Neue", Arial, sans-serif;
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: 0.8px;
-    color: #1d4f91;
-    text-transform: uppercase;
-}
+        .doc-title {
+            font-family: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0.8px;
+            color: #1d4f91;
+            text-transform: uppercase;
+        }
 
         .doc-number {
+            display: inline-block;
             margin-top: 6px;
             padding: 5px 9px;
             border: 1px solid var(--line);
@@ -105,7 +131,6 @@
             color: var(--danger);
             font-size: 9.5px;
             font-weight: 900;
-            display: inline-block;
         }
 
         .doc-date {
@@ -115,8 +140,11 @@
             font-weight: 700;
         }
 
+        /*
+         * INFORMACIÓN DEL CLIENTE Y VEHÍCULO
+         */
         .info-grid {
-            width: 100%;
+            width: calc(100% + 12px);
             table-layout: fixed;
             border-collapse: separate;
             border-spacing: 6px;
@@ -129,6 +157,7 @@
             background: #fff;
             padding: 7px 8px;
             vertical-align: top;
+            overflow-wrap: anywhere;
         }
 
         .label {
@@ -138,7 +167,7 @@
             font-weight: 800;
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: .06em;
+            letter-spacing: 0.06em;
         }
 
         .value {
@@ -146,9 +175,14 @@
             font-size: 10.2px;
             font-weight: 800;
             color: var(--dark);
+            overflow-wrap: anywhere;
         }
 
+        /*
+         * SECCIONES
+         */
         .section {
+            width: 100%;
             margin-top: 11px;
         }
 
@@ -161,7 +195,7 @@
             font-weight: 900;
             color: var(--primary);
             text-transform: uppercase;
-            letter-spacing: .08em;
+            letter-spacing: 0.08em;
         }
 
         .section-title::after {
@@ -169,18 +203,21 @@
             flex: 1;
             height: 1px;
             background: var(--primary);
-            opacity: .24;
+            opacity: 0.24;
         }
 
+        /*
+         * TABLAS DE DETALLE
+         */
         .detail-table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: separate;
             border-spacing: 0;
-            table-layout: fixed;
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            overflow: hidden;
             margin-bottom: 5px;
+            background: #fff;
         }
 
         .detail-table th {
@@ -190,8 +227,9 @@
             font-size: 8px;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: .05em;
+            letter-spacing: 0.05em;
             text-align: left;
+            vertical-align: middle;
         }
 
         .detail-table td {
@@ -203,6 +241,7 @@
             vertical-align: top;
             color: var(--text);
             overflow-wrap: anywhere;
+            word-break: normal;
         }
 
         .detail-table tbody tr:last-child td {
@@ -214,11 +253,11 @@
         }
 
         .text-right {
-            text-align: right;
+            text-align: right !important;
         }
 
         .text-center {
-            text-align: center;
+            text-align: center !important;
         }
 
         .muted {
@@ -237,6 +276,11 @@
             font-weight: 500;
         }
 
+        .procedimiento-item {
+            display: block;
+            margin-bottom: 1px;
+        }
+
         .empty-row td {
             color: var(--muted);
             font-style: italic;
@@ -245,6 +289,9 @@
             font-size: 9.5px;
         }
 
+        /*
+         * SUBTOTALES
+         */
         .section-subtotal {
             width: 100%;
             text-align: right;
@@ -260,6 +307,9 @@
             font-size: 10.5px;
         }
 
+        /*
+         * TOTALES
+         */
         .totals-wrap {
             width: 100%;
             margin-top: 14px;
@@ -272,7 +322,6 @@
             border-spacing: 0;
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            overflow: hidden;
             background: #fff;
         }
 
@@ -312,13 +361,21 @@
             font-size: 7.8px;
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: .04em;
+            letter-spacing: 0.04em;
             font-weight: 600;
         }
 
+        /*
+         * CONFIGURACIÓN DE IMPRESIÓN
+         */
         @media print {
+            html,
             body {
+                width: auto;
+                min-height: auto;
                 background: #fff;
+                margin: 0;
+                padding: 0;
             }
 
             .page {
@@ -326,12 +383,78 @@
                 min-height: auto;
                 margin: 0;
                 padding: 0;
+                overflow: visible;
                 box-shadow: none;
             }
 
+            /*
+             * El encabezado y los datos generales se mantienen juntos.
+             */
+            .top-table,
+            .info-grid {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /*
+             * Las secciones y tablas grandes sí pueden continuar
+             * en la página siguiente.
+             */
             .section,
             .detail-table,
-            .totals-wrap {
+            .detail-table tbody {
+                page-break-inside: auto;
+                break-inside: auto;
+            }
+
+            /*
+             * Repetir encabezados de tabla cuando la tabla continúa
+             * en una página nueva.
+             */
+            .detail-table thead {
+                display: table-header-group;
+            }
+
+            .detail-table tbody {
+                display: table-row-group;
+            }
+
+            /*
+             * No dividir una fila individual entre dos páginas.
+             */
+            .detail-table tr {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            .detail-table th,
+            .detail-table td {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /*
+             * Evitar que el título quede solo al final de una página.
+             */
+            .section-title {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+
+            /*
+             * Evitar que el subtotal se separe de la última parte
+             * de la tabla cuando sea posible.
+             */
+            .section-subtotal {
+                page-break-before: avoid;
+                break-before: avoid;
+            }
+
+            /*
+             * Mantener completa la tabla de totales.
+             */
+            .totals-wrap,
+            .totals-table {
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
@@ -343,66 +466,135 @@
 
 <div class="page">
 
+    <!-- ===================================================== -->
+    <!-- ENCABEZADO -->
+    <!-- ===================================================== -->
+
     <table class="top-table">
-        <tr>
-            <td class="top-left">
-                <div class="logo">
-                    {% if empresa and empresa.logo %}
-                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
-                    {% else %}
-                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
-                    {% endif %}
-                </div>
+        <tbody>
+            <tr>
+                <td class="top-left">
+                    <div class="logo">
+                        {% if empresa and empresa.logo %}
+                            <img
+                                src="{{ empresa.logo.url }}"
+                                alt="Logo Empresa"
+                            >
+                        {% else %}
+                            <img
+                                src="{% static 'logo.png' %}"
+                                alt="Logo MAO"
+                            >
+                        {% endif %}
+                    </div>
 
-                <div class="company">
-                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
-                    {{ empresa.direccion|default:"Quito, Ecuador" }}
-                </div>
-            </td>
+                    <div class="company">
+                        RUC:
+                        {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
+                        <br>
 
-            <td class="top-right">
-                <div class="doc-title">Resumen de Orden</div>
-                <div class="doc-number">OT N° {{ orden.numero_orden }}</div>
-                <div class="doc-date">
-                    Fecha ingreso: {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
-                </div>
-            </td>
-        </tr>
+                        {{ empresa.direccion|default:"Quito, Ecuador" }}
+                    </div>
+                </td>
+
+                <td class="top-right">
+                    <div class="doc-title">
+                        Resumen de Orden
+                    </div>
+
+                    <div class="doc-number">
+                        OT N° {{ orden.numero_orden }}
+                    </div>
+
+                    <div class="doc-date">
+                        Fecha ingreso:
+                        {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+                    </div>
+                </td>
+            </tr>
+        </tbody>
     </table>
+
+    <!-- ===================================================== -->
+    <!-- DATOS DEL CLIENTE Y VEHÍCULO -->
+    <!-- ===================================================== -->
 
     <table class="info-grid">
-        <tr>
-            <td>
-                <span class="label">Cliente</span>
-                <span class="value">{{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}</span>
-            </td>
-            <td>
-                <span class="label">C.I. / RUC</span>
-                <span class="value">{{ orden.cliente.identificacion|default:"-" }}</span>
-            </td>
-            <td>
-                <span class="label">Placa</span>
-                <span class="value">{{ orden.placa|upper|default:"S/P" }}</span>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <span class="label">Vehículo</span>
-                <span class="value">{{ orden.vehiculo|upper|default:"-" }}</span>
-            </td>
-            <td>
-                <span class="label">Año</span>
-                <span class="value">{{ orden.anio_vehiculo|default:"-" }}</span>
-            </td>
-            <td>
-                <span class="label">Kilometraje</span>
-                <span class="value">{{ orden.kilometraje|default:"0" }} km</span>
-            </td>
-        </tr>
+        <tbody>
+            <tr>
+                <td>
+                    <span class="label">
+                        Cliente
+                    </span>
+
+                    <span class="value">
+                        {{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="label">
+                        C.I. / RUC
+                    </span>
+
+                    <span class="value">
+                        {{ orden.cliente.identificacion|default:"-" }}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="label">
+                        Placa
+                    </span>
+
+                    <span class="value">
+                        {{ orden.placa|upper|default:"S/P" }}
+                    </span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <span class="label">
+                        Vehículo
+                    </span>
+
+                    <span class="value">
+                        {{ orden.vehiculo|upper|default:"-" }}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="label">
+                        Año
+                    </span>
+
+                    <span class="value">
+                        {{ orden.anio_vehiculo|default:"-" }}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="label">
+                        Kilometraje
+                    </span>
+
+                    <span class="value">
+                        {{ orden.kilometraje|default:"0" }} km
+                    </span>
+                </td>
+            </tr>
+        </tbody>
     </table>
 
+    <!-- ===================================================== -->
+    <!-- REPUESTOS -->
+    <!-- ===================================================== -->
+
     <div class="section">
-        <div class="section-title">1. Repuestos e Insumos</div>
+        <div class="section-title">
+            1. Repuestos e Insumos
+        </div>
 
         <table class="detail-table">
             <colgroup>
@@ -411,39 +603,77 @@
                 <col style="width: 15%;">
                 <col style="width: 15%;">
             </colgroup>
+
             <thead>
                 <tr>
-                    <th class="text-center">Cant.</th>
-                    <th>Descripción</th>
-                    <th class="text-right">P.U.</th>
-                    <th class="text-right">Valor</th>
+                    <th class="text-center">
+                        Cant.
+                    </th>
+
+                    <th>
+                        Descripción
+                    </th>
+
+                    <th class="text-right">
+                        P.U.
+                    </th>
+
+                    <th class="text-right">
+                        Valor
+                    </th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for rep in repuestos %}
                     <tr>
-                        <td class="text-center">{{ rep.cantidad|floatformat:2 }}</td>
-                        <td>{{ rep.descripcion_factura }}</td>
-                        <td class="text-right">${{ rep.precio_unitario|floatformat:2 }}</td>
-                        <td class="text-right">${{ rep.subtotal|floatformat:2 }}</td>
+                        <td class="text-center">
+                            {{ rep.cantidad|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            {{ rep.descripcion_factura|default:"-" }}
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep.precio_unitario|floatformat:2 }}
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep.subtotal|floatformat:2 }}
+                        </td>
                     </tr>
                 {% endfor %}
 
                 {% for rep_hist in repuestos_historicos %}
                     <tr>
-                        <td class="text-center">{{ rep_hist.cantidad|floatformat:2 }}</td>
-                        <td>
-                            {{ rep_hist.descripcion_original }}
-                            <span class="muted">(Migrado)</span>
+                        <td class="text-center">
+                            {{ rep_hist.cantidad|floatformat:2 }}
                         </td>
-                        <td class="text-right">${{ rep_hist.precio_unitario|floatformat:2 }}</td>
-                        <td class="text-right">${{ rep_hist.subtotal|floatformat:2 }}</td>
+
+                        <td>
+                            {{ rep_hist.descripcion_original|default:"-" }}
+
+                            <span class="muted">
+                                (Migrado)
+                            </span>
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep_hist.precio_unitario|floatformat:2 }}
+                        </td>
+
+                        <td class="text-right">
+                            ${{ rep_hist.subtotal|floatformat:2 }}
+                        </td>
                     </tr>
                 {% endfor %}
 
                 {% if not repuestos and not repuestos_historicos %}
                     <tr class="empty-row">
-                        <td colspan="4">No existen repuestos registrados.</td>
+                        <td colspan="4">
+                            No existen repuestos registrados.
+                        </td>
                     </tr>
                 {% endif %}
             </tbody>
@@ -451,12 +681,21 @@
 
         <div class="section-subtotal">
             Subtotal repuestos:
-            <span>${{ subtotal_repuestos|floatformat:2 }}</span>
+
+            <span>
+                ${{ subtotal_repuestos|floatformat:2 }}
+            </span>
         </div>
     </div>
 
+    <!-- ===================================================== -->
+    <!-- MANO DE OBRA INTERNA -->
+    <!-- ===================================================== -->
+
     <div class="section">
-        <div class="section-title">2. Mano de Obra Interna</div>
+        <div class="section-title">
+            2. Mano de Obra Interna
+        </div>
 
         <table class="detail-table">
             <colgroup>
@@ -465,60 +704,114 @@
                 <col style="width: 15%;">
                 <col style="width: 15%;">
             </colgroup>
+
             <thead>
                 <tr>
-                    <th class="text-center">Cant.</th>
-                    <th>Descripción del Trabajo</th>
-                    <th class="text-right">P.U.</th>
-                    <th class="text-right">Valor</th>
+                    <th class="text-center">
+                        Cant.
+                    </th>
+
+                    <th>
+                        Descripción del Trabajo
+                    </th>
+
+                    <th class="text-right">
+                        P.U.
+                    </th>
+
+                    <th class="text-right">
+                        Valor
+                    </th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for serv in servicios %}
-                    {% if serv.servicio.categoria != 'EXT' and serv.tipo_servicio != 'EXT' %}
+                    {% if serv.servicio.categoria != "EXT" and serv.tipo_servicio != "EXT" %}
                         <tr>
-                            <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                            <td class="text-center">
+                                {{ serv.cantidad|floatformat:1 }}
+                            </td>
+
                             <td>
-                                {{ serv.descripcion_servicio }}
+                                {{ serv.descripcion_servicio|default:"-" }}
 
                                 {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.procedimientos_detalle.all %}
-                                            &bull; {{ proc.descripcion }}<br>
+                                            <span class="procedimiento-item">
+                                                &bull;
+                                                {{ proc.descripcion }}
+                                            </span>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </td>
-                            <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+
+                            <td class="text-right">
+                                ${{ serv.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
 
                 {% for serv_hist in servicios_historicos %}
-                    {% if serv_hist.tipo == 'MO' %}
+                    {% if serv_hist.tipo == "MO" %}
                         <tr>
-                            <td class="text-center">{{ serv_hist.cantidad|floatformat:1 }}</td>
-                            <td>
-                                {{ serv_hist.descripcion_original }}
-                                <span class="muted">(Migrado)</span>
+                            <td class="text-center">
+                                {{ serv_hist.cantidad|floatformat:1 }}
                             </td>
-                            <td class="text-right">${{ serv_hist.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv_hist.subtotal|floatformat:2 }}</td>
+
+                            <td>
+                                {{ serv_hist.descripcion_original|default:"-" }}
+
+                                <span class="muted">
+                                    (Migrado)
+                                </span>
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
+
+                {% if not servicios and not servicios_historicos %}
+                    <tr class="empty-row">
+                        <td colspan="4">
+                            No existen trabajos internos registrados.
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
 
         <div class="section-subtotal">
             Subtotal M.O. interna:
-            <span>${{ subtotal_moi|floatformat:2 }}</span>
+
+            <span>
+                ${{ subtotal_moi|floatformat:2 }}
+            </span>
         </div>
     </div>
 
+    <!-- ===================================================== -->
+    <!-- SERVICIOS EXTERNOS -->
+    <!-- ===================================================== -->
+
     <div class="section">
-        <div class="section-title">3. Trabajos y Servicios Externos</div>
+        <div class="section-title">
+            3. Trabajos y Servicios Externos
+        </div>
 
         <table class="detail-table">
             <colgroup>
@@ -527,138 +820,212 @@
                 <col style="width: 15%;">
                 <col style="width: 15%;">
             </colgroup>
+
             <thead>
                 <tr>
-                    <th class="text-center">Cant.</th>
-                    <th>Descripción del Proveedor / Trabajo</th>
-                    <th class="text-right">P.U.</th>
-                    <th class="text-right">Valor</th>
+                    <th class="text-center">
+                        Cant.
+                    </th>
+
+                    <th>
+                        Descripción del Proveedor / Trabajo
+                    </th>
+
+                    <th class="text-right">
+                        P.U.
+                    </th>
+
+                    <th class="text-right">
+                        Valor
+                    </th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for serv in servicios %}
-                    {% if serv.servicio.categoria == 'EXT' or serv.tipo_servicio == 'EXT' %}
+                    {% if serv.servicio.categoria == "EXT" or serv.tipo_servicio == "EXT" %}
                         <tr>
-                            <td class="text-center">{{ serv.cantidad|floatformat:1 }}</td>
+                            <td class="text-center">
+                                {{ serv.cantidad|floatformat:1 }}
+                            </td>
+
                             <td>
-                                {{ serv.descripcion_servicio }}
+                                {{ serv.descripcion_servicio|default:"-" }}
 
                                 {% if serv.procedimientos_detalle.all %}
                                     <div class="procedimientos-list">
                                         {% for proc in serv.procedimientos_detalle.all %}
-                                            &bull; {{ proc.descripcion }}<br>
+                                            <span class="procedimiento-item">
+                                                &bull;
+                                                {{ proc.descripcion }}
+                                            </span>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </td>
-                            <td class="text-right">${{ serv.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv.subtotal|floatformat:2 }}</td>
+
+                            <td class="text-right">
+                                ${{ serv.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
 
                 {% for serv_hist in servicios_historicos %}
-                    {% if serv_hist.tipo == 'MOE' %}
+                    {% if serv_hist.tipo == "MOE" %}
                         <tr>
-                            <td class="text-center">{{ serv_hist.cantidad|floatformat:1 }}</td>
-                            <td>
-                                {{ serv_hist.descripcion_original }}
-                                <span class="muted">(Migrado)</span>
+                            <td class="text-center">
+                                {{ serv_hist.cantidad|floatformat:1 }}
                             </td>
-                            <td class="text-right">${{ serv_hist.precio_unitario|floatformat:2 }}</td>
-                            <td class="text-right">${{ serv_hist.subtotal|floatformat:2 }}</td>
+
+                            <td>
+                                {{ serv_hist.descripcion_original|default:"-" }}
+
+                                <span class="muted">
+                                    (Migrado)
+                                </span>
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td class="text-right">
+                                ${{ serv_hist.subtotal|floatformat:2 }}
+                            </td>
                         </tr>
                     {% endif %}
                 {% endfor %}
+
+                {% if not servicios and not servicios_historicos %}
+                    <tr class="empty-row">
+                        <td colspan="4">
+                            No existen trabajos externos registrados.
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
 
         <div class="section-subtotal">
             Subtotal M.O. externa:
-            <span>${{ subtotal_moe|floatformat:2 }}</span>
+
+            <span>
+                ${{ subtotal_moe|floatformat:2 }}
+            </span>
         </div>
     </div>
 
+    <!-- ===================================================== -->
+    <!-- TOTALES -->
+    <!-- ===================================================== -->
+
     <div class="totals-wrap">
-    <table class="totals-table">
-        <tr>
-            <td class="total-label">Subtotal general</td>
-            <td class="text-right">
-                ${{ subtotal|floatformat:2 }}
-            </td>
-        </tr>
-
-        {% if orden.valor_descuento > 0 %}
-        <tr>
-            <td class="total-label">
-                Descuento
-                {% if orden.tipo_descuento == "PORCENTAJE" %}
-                    ({{ orden.descuento_porcentaje|floatformat:2 }}%)
-                {% endif %}
-            </td>
-            <td class="text-right">
-                -${{ orden.valor_descuento|floatformat:2 }}
-            </td>
-        </tr>
-        {% endif %}
-
-        <tr>
-            <td class="total-label">
-                IVA {{ orden.porcentaje_iva|floatformat:2 }}%
-            </td>
-            <td class="text-right">
-                ${{ iva|floatformat:2 }}
-            </td>
-        </tr>
-
-        <tr>
-            <td class="total-label total-final-label">
-                Total a pagar
-            </td>
-            <td class="total-value">
-                ${{ total_final|floatformat:2 }}
-            </td>
-        </tr>
-    </table>
-</div>
-    </div>
-{% if recomendaciones %}
-<div class="section">
-    <div class="section-title">
-        4. Recomendaciones Técnicas
-    </div>
-
-    <table class="detail-table">
-        <colgroup>
-            <col style="width: 28%;">
-            <col style="width: 72%;">
-        </colgroup>
-
-        <thead>
-            <tr>
-                <th>Título</th>
-                <th>Recomendación</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for rec in recomendaciones %}
+        <table class="totals-table">
+            <tbody>
                 <tr>
-                    <td>
-                        <strong>
-                            {{ rec.titulo|upper }}
-                        </strong>
+                    <td class="total-label">
+                        Subtotal general
                     </td>
 
-                    <td>
-                        {{ rec.texto|linebreaksbr }}
+                    <td class="text-right">
+                        ${{ subtotal|floatformat:2 }}
                     </td>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+
+                {% if orden.valor_descuento > 0 %}
+                    <tr>
+                        <td class="total-label">
+                            Descuento
+
+                            {% if orden.tipo_descuento == "PORCENTAJE" %}
+                                (
+                                {{ orden.descuento_porcentaje|floatformat:2 }}
+                                %)
+                            {% endif %}
+                        </td>
+
+                        <td class="text-right">
+                            -${{ orden.valor_descuento|floatformat:2 }}
+                        </td>
+                    </tr>
+                {% endif %}
+
+                <tr>
+                    <td class="total-label">
+                        IVA
+                        {{ orden.porcentaje_iva|floatformat:2 }}%
+                    </td>
+
+                    <td class="text-right">
+                        ${{ iva|floatformat:2 }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="total-label total-final-label">
+                        Total a pagar
+                    </td>
+
+                    <td class="total-value">
+                        ${{ total_final|floatformat:2 }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- RECOMENDACIONES -->
+    <!-- ===================================================== -->
+
+    {% if recomendaciones %}
+        <div class="section">
+            <div class="section-title">
+                4. Recomendaciones Técnicas
+            </div>
+
+            <table class="detail-table">
+                <colgroup>
+                    <col style="width: 28%;">
+                    <col style="width: 72%;">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>
+                            Título
+                        </th>
+
+                        <th>
+                            Recomendación
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for rec in recomendaciones %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ rec.titulo|upper|default:"RECOMENDACIÓN" }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ rec.texto|linebreaksbr }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
 </div>
 
 </body>
