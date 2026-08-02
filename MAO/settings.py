@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'facturacion',
     'servicios',
     'cotizaciones',
-
+    "avaluos",
 ]
 
 # =========================

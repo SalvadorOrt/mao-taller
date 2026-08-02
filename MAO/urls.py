@@ -3,28 +3,72 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Importamos las vistas de autenticación
 from django.contrib.auth import views as auth_views
-# IMPORTANTE: Importamos RedirectView para manejar la raíz
-from django.views.generic import RedirectView 
+from django.views.generic import RedirectView
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('login/', auth_views.LoginView.as_view(
-        template_name='login.html', 
-        redirect_authenticated_user=True
-    ), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path(
+        "admin/",
+        admin.site.urls,
+    ),
 
-    path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
+    path(
+        "login/",
+        auth_views.LoginView.as_view(
+            template_name="login.html",
+            redirect_authenticated_user=True,
+        ),
+        name="login",
+    ),
 
-    # Rutas de tus aplicaciones
-    path('', include('ordenes_de_trabajo.urls')),
-    
-   
-    path('inventario/', include('inventario.urls')), 
+    path(
+        "logout/",
+        auth_views.LogoutView.as_view(
+            next_page="login",
+        ),
+        name="logout",
+    ),
+
+    # =====================================================
+    # RAÍZ DEL SISTEMA
+    # =====================================================
+    path(
+        "",
+        RedirectView.as_view(
+            url="/dashboard/",
+            permanent=False,
+        ),
+    ),
+
+    # =====================================================
+    # ÓRDENES DE TRABAJO
+    # =====================================================
+    path(
+        "",
+        include("ordenes_de_trabajo.urls"),
+    ),
+
+    # =====================================================
+    # AVALÚOS
+    # =====================================================
+    path(
+        "avaluos/",
+        include("avaluos.urls"),
+    ),
+
+    # =====================================================
+    # INVENTARIO
+    # =====================================================
+    path(
+        "inventario/",
+        include("inventario.urls"),
+    ),
 ]
 
-# Servir archivos multimedia (Fotos y Firmas) durante el desarrollo
+
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )

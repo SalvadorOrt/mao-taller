@@ -59,19 +59,30 @@ class UsuarioManager(BaseUserManager):
 
         return self._create_user(username, email, password, **extra_fields)
 
-
 # =========================================================
 # 👤 USUARIO PERSONALIZADO
 # =========================================================
 class Usuario(AbstractUser):
     ROLES = [
-        ("ADMIN", "Administrador (Dueño)"),
-        ("BODEGA", "Bodeguero (Maneja IA y Compras)"),
-        ("CAJA", "Cajera (Maneja OTs y Pagos)"),
+        ("ADMIN", "Administrador"),
+        ("BODEGA", "Bodeguero"),
+        ("CAJA", "Cajera"),
+        ("TECNICO", "Técnico"),
     ]
 
-    rol = models.CharField(max_length=15, choices=ROLES, default="CAJA")
-    cedula = models.CharField(max_length=15, unique=True, null=True, blank=True)
+    rol = models.CharField(
+        max_length=15,
+        choices=ROLES,
+        default="CAJA",
+    )
+
+    cedula = models.CharField(
+        max_length=15,
+        unique=True,
+        null=True,
+        blank=True,
+    )
+
     es_administrador = models.BooleanField(default=False)
 
     sucursal = models.ForeignKey(
@@ -80,26 +91,23 @@ class Usuario(AbstractUser):
         related_name="usuarios",
         null=True,
         blank=True,
-       
     )
 
     puede_cambiar_sucursal = models.BooleanField(
         default=False,
-       
     )
 
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="inventario_usuario_groups",
         blank=True,
-       
         verbose_name="grupos",
     )
+
     user_permissions = models.ManyToManyField(
         "auth.Permission",
         related_name="inventario_usuario_permissions",
         blank=True,
-        
         verbose_name="permisos de usuario",
     )
 
@@ -155,6 +163,7 @@ class Usuario(AbstractUser):
 
         elif self.rol == "ADMIN":
             self.es_administrador = True
+            self.is_superuser = False
             self.is_staff = True
             self.puede_cambiar_sucursal = True
 
@@ -162,6 +171,12 @@ class Usuario(AbstractUser):
             self.es_administrador = False
             self.is_superuser = False
             self.is_staff = True
+            self.puede_cambiar_sucursal = False
+
+        elif self.rol == "TECNICO":
+            self.es_administrador = False
+            self.is_superuser = False
+            self.is_staff = False
             self.puede_cambiar_sucursal = False
 
         else:  # CAJA
@@ -176,8 +191,12 @@ class Usuario(AbstractUser):
 
     def __str__(self):
         sucursal = self.sucursal.codigo if self.sucursal else "SIN SUCURSAL"
-        return f"{self.username} - {self.get_rol_display()} - {sucursal}"
 
+        return (
+            f"{self.username} - "
+            f"{self.get_rol_display()} - "
+            f"{sucursal}"
+        )
 # =========================================================
 # CATEGORÍAS
 # =========================================================

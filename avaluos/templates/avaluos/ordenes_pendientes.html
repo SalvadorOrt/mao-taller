@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Órdenes pendientes de avalúo | MAO{% endblock %}
+{% block page_title %}Avalúos mecánicos{% endblock %}
+{% block page_subtitle %}Órdenes abiertas disponibles para evaluación{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+
+<style>
+    .lista-avaluos-wrapper {
+        padding-top: 8px;
+        padding-bottom: 18px;
+    }
+
+    /* =====================================================
+       FILTROS
+    ===================================================== */
+
+    .lista-avaluos-filter-form {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        margin: 0;
+    }
+
+    .lista-avaluos-field {
+        min-width: 145px;
+    }
+
+    .lista-avaluos-field.search {
+        flex: 1;
+        min-width: 270px;
+    }
+
+    .lista-avaluos-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .lista-avaluos-input {
+        width: 100%;
+        height: 36px;
+        min-height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 500;
+        outline: none;
+        box-shadow: none;
+        transition: all 0.15s ease;
+    }
+
+    .lista-avaluos-input::placeholder {
+        color: #a1a1a6;
+        font-weight: 400;
+    }
+
+    .lista-avaluos-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+    }
+
+    /* =====================================================
+       RESUMEN
+    ===================================================== */
+
+    .lista-avaluos-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+    }
+
+    .lista-avaluos-summary-main {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .lista-avaluos-summary-sub {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    /* =====================================================
+       TABLA
+    ===================================================== */
+
+    .lista-avaluos-table-wrap {
+        max-height: 620px;
+        overflow: auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .lista-avaluos-table {
+        width: 100%;
+        min-width: 1100px;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+    }
+
+    .lista-avaluos-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(247, 248, 250, 0.96);
+        backdrop-filter: blur(8px);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    .lista-avaluos-table tbody td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--border-soft);
+        vertical-align: middle;
+        color: var(--text);
+    }
+
+    .lista-avaluos-table tbody tr {
+        cursor: default;
+        transition: background 0.15s ease;
+    }
+
+    .lista-avaluos-table tbody tr:hover {
+        background: #fbfbfd;
+    }
+
+    .lista-avaluos-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    /* =====================================================
+       DATOS DE LA ORDEN
+    ===================================================== */
+
+    .lista-avaluos-numero {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .lista-avaluos-meta {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.25;
+    }
+
+    .lista-avaluos-placa {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 3px 9px;
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        background: #fbfbfd;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .lista-avaluos-cliente {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .lista-avaluos-vehiculo {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.25;
+    }
+
+    .lista-avaluos-km {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .lista-avaluos-tecnicos {
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+    /* =====================================================
+       ESTADO
+    ===================================================== */
+
+    .lista-avaluos-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 85px;
+        min-height: 23px;
+        padding: 4px 10px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    .lista-avaluos-badge.pendiente {
+        border-color: #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    /* =====================================================
+       ACCIONES
+    ===================================================== */
+
+    .lista-avaluos-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .lista-avaluos-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .lista-avaluos-action-btn:hover {
+        background: #f5f5f7;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .lista-avaluos-action-btn.view {
+        border-color: rgba(0, 113, 227, 0.25);
+        background: #f5faff;
+        color: var(--accent);
+    }
+
+    .lista-avaluos-action-btn.view:hover {
+        background: #edf6ff;
+    }
+
+    .lista-avaluos-action-btn.evaluate {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+    }
+
+    .lista-avaluos-action-btn.evaluate:hover {
+        background: #0062c3;
+        color: #fff;
+    }
+
+    /* =====================================================
+       SIN RESULTADOS
+    ===================================================== */
+
+    .lista-avaluos-empty {
+        padding: 60px 20px !important;
+        background: #fafafa;
+        text-align: center;
+    }
+
+    .lista-avaluos-empty-icon {
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 2.4rem;
+        opacity: 0.3;
+    }
+
+    .lista-avaluos-empty-title {
+        margin: 0 0 5px;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .lista-avaluos-empty-text {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 768px) {
+        .lista-avaluos-wrapper {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .lista-avaluos-field,
+        .lista-avaluos-field.search {
+            width: 100%;
+            min-width: 100%;
+        }
+
+        .lista-avaluos-filter-actions {
+            display: flex;
+            width: 100%;
+        }
+
+        .lista-avaluos-filter-actions .btn-login {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .lista-avaluos-summary {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="container lista-avaluos-wrapper">
+
+    <!-- =====================================================
+         FILTROS
+    ====================================================== -->
+
+    <div class="ot-card" style="margin-bottom: 15px; padding: 15px;">
+        <div class="section-title">
+            Buscar órdenes pendientes
+        </div>
+
+        <form method="GET"
+              action="{% url 'avaluos:ordenes_pendientes' %}"
+              class="lista-avaluos-filter-form">
+
+            <div class="lista-avaluos-field search">
+                <label class="lista-avaluos-label">
+                    Buscar
+                </label>
+
+                <input type="text"
+                       name="q"
+                       value="{{ q|default:'' }}"
+                       class="lista-avaluos-input"
+                       placeholder="Orden, placa, cliente o vehículo">
+            </div>
+
+            <div class="lista-avaluos-field" style="min-width: 145px;">
+                <label class="lista-avaluos-label">
+                    Desde
+                </label>
+
+                <input type="date"
+                       name="fecha_inicio"
+                       value="{{ fecha_inicio|default:'' }}"
+                       class="lista-avaluos-input">
+            </div>
+
+            <div class="lista-avaluos-field" style="min-width: 145px;">
+                <label class="lista-avaluos-label">
+                    Hasta
+                </label>
+
+                <input type="date"
+                       name="fecha_fin"
+                       value="{{ fecha_fin|default:'' }}"
+                       class="lista-avaluos-input">
+            </div>
+
+            <div class="lista-avaluos-filter-actions"
+                 style="display: flex; gap: 8px;">
+
+                <button type="submit" class="btn-login primary">
+                    <i class="bi bi-search" style="margin-right: 6px;"></i>
+                    Buscar
+                </button>
+
+                <a href="{% url 'avaluos:ordenes_pendientes' %}"
+                   class="btn-login">
+                    Limpiar
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- =====================================================
+         LISTADO
+    ====================================================== -->
+
+    <div class="ot-card" style="padding: 15px;">
+
+        <div class="section-title">
+            Órdenes pendientes de avalúo
+        </div>
+
+        <div class="lista-avaluos-summary">
+            <div>
+                <div class="lista-avaluos-summary-main">
+                    {{ ordenes|length }}
+                    orden{{ ordenes|length|pluralize:"es" }}
+                    disponible{{ ordenes|length|pluralize }}
+                </div>
+
+                <div class="lista-avaluos-summary-sub">
+                    Solo se muestran órdenes abiertas que todavía no tienen avalúo.
+                </div>
+            </div>
+
+            <div class="lista-avaluos-summary-sub">
+                <i class="bi bi-building" style="margin-right: 4px;"></i>
+
+                {% if request.user.rol == "ADMIN" %}
+                    Todas las sucursales
+                {% else %}
+                    {{ request.user.sucursal.nombre|default:"Sin sucursal asignada" }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="lista-avaluos-table-wrap">
+
+            <table class="lista-avaluos-table"
+                   id="tablaOrdenesPendientes">
+
+                <thead>
+                    <tr>
+                        <th style="width: 13%;">
+                            N.º Orden
+                        </th>
+
+                        <th style="width: 12%;">
+                            Fecha
+                        </th>
+
+                        <th style="width: 11%;">
+                            Placa
+                        </th>
+
+                        <th style="width: 25%;">
+                            Cliente / Vehículo
+                        </th>
+
+                        <th style="width: 10%; text-align: right;">
+                            Kilometraje
+                        </th>
+
+                        <th style="width: 13%;">
+                            Técnicos
+                        </th>
+
+                        <th style="width: 8%; text-align: center;">
+                            Estado
+                        </th>
+
+                        <th style="width: 15%; text-align: center;">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for orden in ordenes %}
+
+                        <tr>
+
+                            <!-- NÚMERO DE ORDEN -->
+                            <td>
+                                <div class="lista-avaluos-numero">
+                                    {{ orden.numero_orden }}
+                                </div>
+
+                                <div class="lista-avaluos-meta">
+                                    {{ orden.sucursal.codigo|default:"SIN SUCURSAL" }}
+                                </div>
+                            </td>
+
+                            <!-- FECHA -->
+                            <td>
+                                <div class="lista-avaluos-meta">
+                                    {{ orden.fecha_ingreso|date:"d/m/Y" }}
+                                </div>
+
+                                <div class="lista-avaluos-meta">
+                                    {{ orden.fecha_ingreso|date:"H:i" }}
+                                </div>
+                            </td>
+
+                            <!-- PLACA -->
+                            <td>
+                                <span class="lista-avaluos-placa">
+                                    {{ orden.placa|default:"S/P" }}
+                                </span>
+                            </td>
+
+                            <!-- CLIENTE Y VEHÍCULO -->
+                            <td>
+                                <div class="lista-avaluos-cliente">
+                                    {{ orden.nombre_cliente_final|default:"SIN CLIENTE"|truncatechars:38|upper }}
+                                </div>
+
+                                <div class="lista-avaluos-vehiculo">
+                                    {{ orden.vehiculo|default:"SIN VEHÍCULO"|truncatechars:42 }}
+                                </div>
+
+                                {% if orden.anio_vehiculo %}
+                                    <div class="lista-avaluos-meta">
+                                        Año {{ orden.anio_vehiculo }}
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <!-- KILOMETRAJE -->
+                            <td style="text-align: right;">
+                                {% if orden.kilometraje is not None %}
+                                    <div class="lista-avaluos-km">
+                                        {{ orden.kilometraje }}
+                                    </div>
+
+                                    <div class="lista-avaluos-meta">
+                                        km
+                                    </div>
+                                {% else %}
+                                    <div class="lista-avaluos-meta">
+                                        Sin registrar
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <!-- TÉCNICOS -->
+                            <td>
+                                <div class="lista-avaluos-tecnicos">
+
+                                    {% for tecnico in orden.tecnicos.all %}
+
+                                        <div>
+                                            <i class="bi bi-person-gear"
+                                               style="margin-right: 4px;"></i>
+
+                                            {{ tecnico.nombre }}
+                                        </div>
+
+                                    {% empty %}
+
+                                        <span class="lista-avaluos-meta">
+                                            Sin técnico asignado
+                                        </span>
+
+                                    {% endfor %}
+
+                                </div>
+                            </td>
+
+                            <!-- ESTADO -->
+                            <td style="text-align: center;">
+                                <span class="lista-avaluos-badge pendiente">
+                                    Pendiente
+                                </span>
+                            </td>
+
+                            <!-- ACCIONES -->
+                            <td>
+                                <div class="lista-avaluos-actions">
+
+                                    {% if request.user.rol != "TECNICO" %}
+                                        <a href="{% url 'detalle_orden' orden.id %}"
+                                           class="lista-avaluos-action-btn view"
+                                           title="Ver orden de trabajo">
+
+                                            <i class="bi bi-eye"></i>
+                                            Ver OT
+                                        </a>
+                                    {% endif %}
+
+                                    <a href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
+                                       class="lista-avaluos-action-btn evaluate"
+                                       title="Iniciar avalúo mecánico">
+
+                                        <i class="bi bi-clipboard2-check"></i>
+                                        Evaluar
+                                    </a>
+
+                                </div>
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="8"
+                                class="lista-avaluos-empty">
+
+                                <div class="lista-avaluos-empty-icon">
+                                    <i class="bi bi-clipboard2-check"></i>
+                                </div>
+
+                                <h5 class="lista-avaluos-empty-title">
+                                    No hay órdenes pendientes de avalúo
+                                </h5>
+
+                                <p class="lista-avaluos-empty-text">
+                                    No existen órdenes abiertas sin evaluar para esta sucursal.
+                                </p>
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
