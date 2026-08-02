@@ -1,0 +1,451 @@
+<!-- =====================================================
+     PASO 5: PRUEBA DE RUTA
+====================================================== -->
+
+<style>
+    .ruta-alerta {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 12px;
+        border: 1px solid #ffe08a;
+        border-radius: 12px;
+        background: #fff9e6;
+        color: #8a5a00;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+    .ruta-alerta i {
+        margin-top: 1px;
+        font-size: 16px;
+    }
+
+    .ruta-leyenda {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .ruta-leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 8px 10px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .ruta-leyenda-codigo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        min-height: 25px;
+        padding: 3px 7px;
+        border-radius: 7px;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .ruta-leyenda-codigo.pendiente {
+        border: 1px solid var(--border);
+        background: #f5f5f7;
+        color: var(--muted);
+    }
+
+    .ruta-leyenda-codigo.si {
+        border: 1px solid #ff9f97;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .ruta-leyenda-codigo.no {
+        border: 1px solid #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .ruta-leyenda-codigo.na {
+        border: 1px solid #b9dcff;
+        background: #edf6ff;
+        color: #0066cc;
+    }
+
+    .ruta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .ruta-item {
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fff;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .ruta-item:focus-within {
+        border-color: rgba(0, 113, 227, 0.35);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.06);
+    }
+
+    .ruta-item-header {
+        padding: 12px;
+        border-bottom: 1px solid var(--border-soft);
+        background: #fbfbfd;
+    }
+
+    .ruta-item-title {
+        margin-bottom: 9px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+
+    .ruta-item-code {
+        margin-left: 5px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+    .ruta-options {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .ruta-option {
+        position: relative;
+        min-width: 0;
+    }
+
+    .ruta-option input {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .ruta-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        margin: 0;
+        padding: 6px 5px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .ruta-option label:hover {
+        background: #f5f5f7;
+    }
+
+    .ruta-option input[value="NO_REVISADO"]:checked + label {
+        border-color: #b8b8bd;
+        background: #f1f1f3;
+        color: #66666b;
+    }
+
+    .ruta-option input[value="SI"]:checked + label {
+        border-color: #ff6961;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .ruta-option input[value="NO"]:checked + label {
+        border-color: #34c759;
+        background: #eafbea;
+        color: #1f8939;
+    }
+
+    .ruta-option input[value="NO_APLICA"]:checked + label {
+        border-color: #0071e3;
+        background: #edf6ff;
+        color: #0066cc;
+    }
+
+    .ruta-detail {
+        padding: 12px;
+    }
+
+    .ruta-textarea {
+        min-height: 85px;
+        resize: vertical;
+    }
+
+    .ruta-empty {
+        padding: 45px 20px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fafafa;
+        color: var(--muted);
+        text-align: center;
+    }
+
+    .ruta-empty i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 2rem;
+        opacity: 0.35;
+    }
+
+    @media (max-width: 900px) {
+        .ruta-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ruta-leyenda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ruta-leyenda {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .ruta-options {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ruta-option label {
+            min-height: 43px;
+            font-size: 11px;
+        }
+    }
+</style>
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Prueba de ruta
+    </div>
+
+    <p class="avaluo-section-description">
+        Evalúa el comportamiento del vehículo durante la conducción.
+        En preguntas relacionadas con fallas, “Sí” significa que la
+        novedad fue detectada.
+    </p>
+
+    <div class="ruta-alerta">
+        <i class="bi bi-exclamation-triangle"></i>
+
+        <div>
+            Realiza esta prueba únicamente cuando el vehículo esté en
+            condiciones seguras y exista autorización para conducirlo.
+        </div>
+    </div>
+
+    <div class="ruta-leyenda">
+
+        <div class="ruta-leyenda-item">
+            <span class="ruta-leyenda-codigo pendiente">
+                NR
+            </span>
+
+            <span>No revisado</span>
+        </div>
+
+        <div class="ruta-leyenda-item">
+            <span class="ruta-leyenda-codigo si">
+                Sí
+            </span>
+
+            <span>La condición ocurrió</span>
+        </div>
+
+        <div class="ruta-leyenda-item">
+            <span class="ruta-leyenda-codigo no">
+                No
+            </span>
+
+            <span>La condición no ocurrió</span>
+        </div>
+
+        <div class="ruta-leyenda-item">
+            <span class="ruta-leyenda-codigo na">
+                N/A
+            </span>
+
+            <span>No aplica</span>
+        </div>
+
+    </div>
+
+</div>
+
+{% if resultados_ruta %}
+
+    <div class="ruta-grid">
+
+        {% for resultado in resultados_ruta %}
+
+            <div class="ruta-item">
+
+                <div class="ruta-item-header">
+
+                    <div class="ruta-item-title">
+
+                        {{ resultado.item.pregunta }}
+
+                        {% if resultado.item.codigo %}
+                            <span class="ruta-item-code">
+                                {{ resultado.item.codigo }}
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="ruta-options">
+
+                        <div class="ruta-option">
+
+                            <input
+                                type="radio"
+                                id="ruta_{{ resultado.item_id }}_no_revisado"
+                                name="ruta_{{ resultado.item_id }}_respuesta"
+                                value="NO_REVISADO"
+                                {% if resultado.respuesta == "NO_REVISADO" %}checked{% endif %}
+                                {% if not puede_editar %}disabled{% endif %}
+                            >
+
+                            <label
+                                for="ruta_{{ resultado.item_id }}_no_revisado"
+                            >
+                                No revisado
+                            </label>
+
+                        </div>
+
+                        <div class="ruta-option">
+
+                            <input
+                                type="radio"
+                                id="ruta_{{ resultado.item_id }}_si"
+                                name="ruta_{{ resultado.item_id }}_respuesta"
+                                value="SI"
+                                {% if resultado.respuesta == "SI" %}checked{% endif %}
+                                {% if not puede_editar %}disabled{% endif %}
+                            >
+
+                            <label
+                                for="ruta_{{ resultado.item_id }}_si"
+                            >
+                                Sí
+                            </label>
+
+                        </div>
+
+                        <div class="ruta-option">
+
+                            <input
+                                type="radio"
+                                id="ruta_{{ resultado.item_id }}_no"
+                                name="ruta_{{ resultado.item_id }}_respuesta"
+                                value="NO"
+                                {% if resultado.respuesta == "NO" %}checked{% endif %}
+                                {% if not puede_editar %}disabled{% endif %}
+                            >
+
+                            <label
+                                for="ruta_{{ resultado.item_id }}_no"
+                            >
+                                No
+                            </label>
+
+                        </div>
+
+                        <div class="ruta-option">
+
+                            <input
+                                type="radio"
+                                id="ruta_{{ resultado.item_id }}_no_aplica"
+                                name="ruta_{{ resultado.item_id }}_respuesta"
+                                value="NO_APLICA"
+                                {% if resultado.respuesta == "NO_APLICA" %}checked{% endif %}
+                                {% if not puede_editar %}disabled{% endif %}
+                            >
+
+                            <label
+                                for="ruta_{{ resultado.item_id }}_no_aplica"
+                            >
+                                No aplica
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% if resultado.item.permite_observacion %}
+
+                    <div class="ruta-detail">
+
+                        <label
+                            for="ruta_{{ resultado.item_id }}_observacion"
+                            class="avaluo-label"
+                        >
+                            Observación
+                        </label>
+
+                        <textarea
+                            id="ruta_{{ resultado.item_id }}_observacion"
+                            name="ruta_{{ resultado.item_id }}_observacion"
+                            class="avaluo-input ruta-textarea"
+                            placeholder="Describe dónde, cuándo o cómo se presentó la condición"
+                            {% if not puede_editar %}readonly{% endif %}
+                        >{{ resultado.observacion|default:'' }}</textarea>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="ot-card avaluo-section-card">
+
+        <div class="ruta-empty">
+
+            <i class="bi bi-sign-turn-right"></i>
+
+            <strong>
+                No existen preguntas de prueba de ruta configuradas
+            </strong>
+
+            <div style="margin-top: 5px;">
+                Debes cargar primero las preguntas activas del catálogo.
+            </div>
+
+        </div>
+
+    </div>
+
+{% endif %}

@@ -123,7 +123,7 @@ def crear_resultados_iniciales(avaluo):
 def iniciar_avaluo(request, orden_id):
     orden = get_object_or_404(
         OrdenTrabajo.objects
-        .select_for_update()
+        .select_for_update(of=("self",))
         .select_related(
             "sucursal",
             "cliente",
