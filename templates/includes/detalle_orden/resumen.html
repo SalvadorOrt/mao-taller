@@ -382,6 +382,10 @@
                     {{ orden.subtotal_sin_iva|default:"0.00"|floatformat:2 }}
                 </span>
             </div>
+
+            <div class="total-meta">
+                Total después del descuento y antes del IVA
+            </div>
         </div>
 
         <!-- =====================================
@@ -566,16 +570,10 @@
                 </label>
 
                 <input
-                    type="hidden"
-                    name="sumar_iva_al_total"
-                    value="
-                        {% if orden.sumar_iva_al_total %}
-                            1
-                        {% else %}
-                            0
-                        {% endif %}
-                    "
-                >
+                type="hidden"
+                name="sumar_iva_al_total"
+                value="{% if orden.sumar_iva_al_total %}1{% else %}0{% endif %}"
+            >
             {% endif %}
         </div>
 

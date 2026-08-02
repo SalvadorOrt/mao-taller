@@ -770,7 +770,7 @@ function recalcularTotales() {
 
     actualizarTextoNumerico(
         'subtotalGeneral',
-        subtotalSinIva
+        baseImponible
     );
 
     actualizarTextoNumerico(
