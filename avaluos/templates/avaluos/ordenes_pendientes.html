@@ -238,11 +238,21 @@
     }
 
     .lista-avaluos-badge.pendiente {
-        border-color: #b7efc5;
-        background: #e5fbe4;
-        color: #1f8939;
+            border-color: #b7efc5;
+            background: #e5fbe4;
+            color: #1f8939;
+        }
+        .lista-avaluos-badge.warning {
+        background: #fff5d8;
+        color: #b56a00;
+        border-color: #ffd27d;
     }
 
+    .lista-avaluos-badge.success {
+        background: #e7f9ed;
+        color: #198754;
+        border-color: #b8ebc6;
+    }
     /* =====================================================
        ACCIONES
     ===================================================== */
@@ -448,7 +458,7 @@
                 </div>
 
                 <div class="lista-avaluos-summary-sub">
-                    Solo se muestran órdenes abiertas que todavía no tienen avalúo.
+                    Se muestran todas las órdenes abiertas. Puedes iniciar, continuar o consultar su avalúo.
                 </div>
             </div>
 
@@ -599,9 +609,37 @@
 
                             <!-- ESTADO -->
                             <td style="text-align: center;">
-                                <span class="lista-avaluos-badge pendiente">
-                                    Pendiente
-                                </span>
+
+                                {% if orden.avaluo_mecanico %}
+
+                                    {% if orden.avaluo_mecanico.estado == "BORRADOR" %}
+
+                                        <span class="lista-avaluos-badge warning">
+                                            En proceso
+                                        </span>
+
+                                    {% elif orden.avaluo_mecanico.estado == "FINALIZADO" %}
+
+                                        <span class="lista-avaluos-badge success">
+                                            Finalizado
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="lista-avaluos-badge">
+                                            {{ orden.avaluo_mecanico.get_estado_display }}
+                                        </span>
+
+                                    {% endif %}
+
+                                {% else %}
+
+                                    <span class="lista-avaluos-badge pendiente">
+                                        Pendiente
+                                    </span>
+
+                                {% endif %}
+
                             </td>
 
                             <!-- ACCIONES -->
@@ -618,13 +656,36 @@
                                         </a>
                                     {% endif %}
 
-                                    <a href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
-                                       class="lista-avaluos-action-btn evaluate"
-                                       title="Iniciar avalúo mecánico">
+                                    {% if orden.avaluo_mecanico %}
 
-                                        <i class="bi bi-clipboard2-check"></i>
-                                        Evaluar
-                                    </a>
+                        <a href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
+                        class="lista-avaluos-action-btn evaluate">
+
+                            {% if orden.avaluo_mecanico.estado == "BORRADOR" %}
+
+                                <i class="bi bi-pencil-square"></i>
+                                Continuar
+
+                            {% else %}
+
+                                <i class="bi bi-eye"></i>
+                                Ver avalúo
+
+                            {% endif %}
+
+                        </a>
+
+                    {% else %}
+
+                        <a href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
+                        class="lista-avaluos-action-btn evaluate">
+
+                            <i class="bi bi-clipboard2-check"></i>
+                            Evaluar
+
+                        </a>
+
+                    {% endif %}
 
                                 </div>
                             </td>

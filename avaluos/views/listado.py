@@ -11,12 +11,12 @@ def ordenes_pendientes(request):
         OrdenTrabajo.objects
         .filter(
             estado="ABIERTA",
-            avaluo_mecanico__isnull=True,
         )
         .select_related(
             "sucursal",
             "cliente",
             "expediente",
+            "avaluo_mecanico",
         )
         .prefetch_related(
             "tecnicos",
@@ -27,8 +27,8 @@ def ordenes_pendientes(request):
         )
     )
 
-    # ADMIN puede ver todas las sucursales.
-    # Los demás usuarios solo ven su sucursal.
+    # ADMIN ve todas las sucursales.
+    # Los demás usuarios solamente ven la suya.
     if request.user.rol != "ADMIN":
         if not request.user.sucursal_id:
             ordenes = ordenes.none()
@@ -36,10 +36,6 @@ def ordenes_pendientes(request):
             ordenes = ordenes.filter(
                 sucursal_id=request.user.sucursal_id,
             )
-
-    # =====================================================
-    # FILTROS
-    # =====================================================
 
     q = request.GET.get(
         "q",
@@ -58,21 +54,11 @@ def ordenes_pendientes(request):
 
     if q:
         ordenes = ordenes.filter(
-            Q(
-                numero_orden__icontains=q,
-            )
-            | Q(
-                placa__icontains=q,
-            )
-            | Q(
-                vehiculo__icontains=q,
-            )
-            | Q(
-                cliente__nombre_completo__icontains=q,
-            )
-            | Q(
-                cliente_respaldo__icontains=q,
-            )
+            Q(numero_orden__icontains=q)
+            | Q(placa__icontains=q)
+            | Q(vehiculo__icontains=q)
+            | Q(cliente__nombre_completo__icontains=q)
+            | Q(cliente_respaldo__icontains=q)
         )
 
     if fecha_inicio:
