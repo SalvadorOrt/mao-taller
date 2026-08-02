@@ -437,15 +437,9 @@ function validarDescuento() {
             'descuento_ingresado'
         );
 
-    const subtotalElemento =
-        document.getElementById(
-            'subtotalGeneral'
-        );
-
     if (
         !tipoCampo ||
-        !descuentoCampo ||
-        !subtotalElemento
+        !descuentoCampo
     ) {
         return {
             valido: true,
@@ -456,21 +450,19 @@ function validarDescuento() {
     const tipo =
         tipoCampo.value;
 
-    const descuento = Number(
-        String(
+    const descuento =
+        numeroSeguro(
             descuentoCampo.value
-        )
-            .trim()
-            .replace(',', '.')
-    );
+        );
 
-    const subtotal = Number(
-        String(
-            subtotalElemento.textContent
-        )
-            .trim()
-            .replace(',', '.')
-    );
+    /*
+     * El subtotal original debe obtenerse directamente
+     * de las tablas, antes de aplicar el descuento.
+     */
+    const subtotalOriginal =
+        sumarTabla('tablaRepuestos') +
+        sumarTabla('tablaMOI') +
+        sumarTabla('tablaMOE');
 
     if (
         !Number.isFinite(
@@ -493,7 +485,7 @@ function validarDescuento() {
     }
 
     if (
-        subtotal <= 0 &&
+        subtotalOriginal <= 0 &&
         descuento > 0
     ) {
         return {
@@ -516,7 +508,7 @@ function validarDescuento() {
 
     if (
         tipo === 'VALOR_FIJO' &&
-        descuento > subtotal
+        descuento > subtotalOriginal
     ) {
         return {
             valido: false,
@@ -530,7 +522,6 @@ function validarDescuento() {
         mensaje: ''
     };
 }
-
 
 function mostrarEstadoDescuento() {
     const campo =
