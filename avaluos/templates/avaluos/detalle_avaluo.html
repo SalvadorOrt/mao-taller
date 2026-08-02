@@ -321,22 +321,39 @@
         background: #f7f7f9;
     }
 
-    .avaluo-choice input[value="SI"]:checked + label {
+    /* =====================================================
+    OPCIONES SELECCIONADAS
+    ===================================================== */
+
+    /* Sí tiene / Funciona */
+    .avaluo-choice input[value="SI"]:checked + label,
+    .avaluo-choice input[value="FUNCIONA"]:checked + label {
         border-color: #34c759;
         background: #eafbea;
         color: #1f8939;
     }
 
-    .avaluo-choice input[value="NO"]:checked + label {
+    /* No tiene / No funciona */
+    .avaluo-choice input[value="NO"]:checked + label,
+    .avaluo-choice input[value="NO_FUNCIONA"]:checked + label {
         border-color: #ff9f97;
         background: #fff0ef;
         color: #d92d20;
     }
 
+    /* No revisado */
+    .avaluo-choice input[value="NO_REVISADO"]:checked + label,
     .avaluo-choice input[value=""]:checked + label {
         border-color: rgba(0, 113, 227, 0.3);
         background: #edf6ff;
         color: var(--accent);
+    }
+
+    /* Controles deshabilitados */
+    .avaluo-choice input:disabled + label {
+        opacity: 0.48;
+        cursor: not-allowed;
+        background: #f7f7f9;
     }
 
     /* =====================================================
