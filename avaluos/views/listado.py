@@ -219,7 +219,7 @@ def ordenes_pendientes(request):
         sucursales = (
             Sucursal.objects
             .filter(
-                activo=True,
+                activa=True,
             )
             .order_by(
                 "nombre",
@@ -230,12 +230,12 @@ def ordenes_pendientes(request):
             Sucursal.objects
             .filter(
                 pk=request.user.sucursal_id,
-                activo=True,
+                activa=True,
             )
             .order_by(
                 "nombre",
             )
-        )
+    )
 
     # =====================================================
     # RENDER
