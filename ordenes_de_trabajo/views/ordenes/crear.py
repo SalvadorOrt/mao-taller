@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.utils import timezone
+from decimal import Decimal
 from ..api import clasificar_vehiculo_con_ia
 from ...models import (
     Cliente,
     OrdenTrabajo,
+    ConfiguracionTributaria,
     FotoRecepcionVehiculo,
     OrdenChecklistRecepcion,
     OrdenCroquisDanio,
@@ -24,7 +26,6 @@ from ..utils import (
 @login_required
 def crear_orden(request):
     import uuid
-    from django.db import transaction
     
     sucursal_activa = obtener_sucursal_activa(request)
 
@@ -218,6 +219,22 @@ def crear_orden(request):
             if expediente_modificado:
                 expediente.save()
 
+            # =====================================================
+            # CONFIGURACIÓN TRIBUTARIA VIGENTE
+            # =====================================================
+            configuracion_iva = (
+                ConfiguracionTributaria.objects
+                .filter(activa=True)
+                .order_by("-fecha_inicio", "-id")
+                .first()
+            )
+
+            porcentaje_iva = (
+                configuracion_iva.porcentaje_iva
+                if configuracion_iva
+                else Decimal("0.00")
+            )
+
             # Crear la orden
             nueva_orden = OrdenTrabajo.objects.create(
                 numero_orden=generar_numero_orden(),
@@ -238,7 +255,9 @@ def crear_orden(request):
                 estado="ABIERTA",
                 tipo_tarifa_vehiculo=tipo_tarifa_vehiculo,
                 gama_vehiculo=gama_vehiculo,
-                clave_encendido=clave_encendido,  
+                clave_encendido=clave_encendido,
+                configuracion_iva=configuracion_iva,
+                porcentaje_iva=porcentaje_iva,
             )
 
             archivo_firma = procesar_imagen_base64(firma_base64)
