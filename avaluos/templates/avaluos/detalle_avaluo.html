@@ -571,17 +571,19 @@
         </div>
 
         <div class="avaluo-header-actions">
-                <a
-                    href="{% url 'avaluos:imprimir_avaluo' avaluo.pk %}"
+                <button
+                    type="button"
+                    onclick="imprimirAvaluoDirecto(event)"
                     class="btn-login primary"
+                    id="btnImprimirAvaluo"
                 >
                     <i
                         class="bi bi-printer"
-                        style="margin-right:5px;"
+                        style="margin-right: 5px;"
                     ></i>
 
                     Imprimir
-                </a>
+                </button>
             {% if request.user.rol != "TECNICO" %}
 
                 <a
@@ -1254,6 +1256,105 @@
             });
         });
     }
+
+    /*
+     * =====================================================
+     * IMPRESIÓN DIRECTA DEL AVALÚO
+     * =====================================================
+     */
+
+    function imprimirAvaluoDirecto(evento) {
+        const boton = evento.currentTarget;
+
+        if (!boton || boton.disabled) {
+            return;
+        }
+
+        const contenidoOriginal =
+            boton.innerHTML;
+
+        boton.disabled = true;
+
+        boton.innerHTML =
+            '<i class="bi bi-hourglass-split" ' +
+            'style="margin-right: 5px;"></i>' +
+            'Preparando...';
+
+        const iframeAnterior =
+            document.getElementById(
+                "iframeImpresionAvaluo"
+            );
+
+        if (iframeAnterior) {
+            iframeAnterior.remove();
+        }
+
+        const iframe =
+            document.createElement(
+                "iframe"
+            );
+
+        iframe.id =
+            "iframeImpresionAvaluo";
+
+        iframe.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        iframe.style.position =
+            "absolute";
+
+        iframe.style.top =
+            "-10000px";
+
+        iframe.style.left =
+            "-10000px";
+
+        iframe.style.width =
+            "1000px";
+
+        iframe.style.height =
+            "1000px";
+
+        iframe.style.border =
+            "none";
+
+        iframe.style.visibility =
+            "hidden";
+
+        document.body.appendChild(
+            iframe
+        );
+
+        iframe.src =
+            "{% url 'avaluos:imprimir_avaluo' avaluo.pk %}";
+
+        const restaurarBoton = function () {
+            boton.disabled = false;
+            boton.innerHTML =
+                contenidoOriginal;
+        };
+
+        iframe.addEventListener(
+            "load",
+            function () {
+                window.setTimeout(
+                    restaurarBoton,
+                    900
+                );
+            },
+            {
+                once: true
+            }
+        );
+
+        window.setTimeout(
+            restaurarBoton,
+            4000
+        );
+    }
+
 </script>
 
 {% endblock %}
