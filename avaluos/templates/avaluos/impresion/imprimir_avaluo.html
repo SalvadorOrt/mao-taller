@@ -1,0 +1,1724 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        Avalúo {{ avaluo.numero_avaluo|default:"Mecánico" }} - MAO
+    </title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+        :root {
+            --primary: #000000;
+            --text: #000000;
+            --muted: #000000;
+            --line: #000000;
+            --soft: #f2f2f2;
+            --white: #ffffff;
+            --border-radius: 6px;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 7mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            background: #ffffff;
+            color: var(--text);
+            font-family: "Roboto", Arial, sans-serif;
+            font-size: 9px;
+            line-height: 1.25;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            padding: 0;
+        }
+
+        .page {
+            position: relative;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 8mm 10mm;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .page + .page {
+            page-break-before: always;
+            break-before: page;
+        }
+
+        /* =====================================================
+           CABECERA
+        ===================================================== */
+
+        .top-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 9px;
+        }
+
+        .top-table td {
+            border: none;
+            vertical-align: top;
+            padding: 0 0 7px;
+        }
+
+        .top-left {
+            width: 35%;
+            padding-right: 8px !important;
+        }
+
+        .top-center {
+            width: 35%;
+            text-align: center;
+            padding: 0 6px !important;
+        }
+
+        .top-right {
+            width: 30%;
+            text-align: right;
+        }
+
+        .logo img {
+            display: block;
+            max-width: 145px;
+            max-height: 58px;
+            object-fit: contain;
+        }
+
+        .company {
+            margin-top: 4px;
+            font-size: 7.5px;
+            line-height: 1.35;
+        }
+
+        .company strong {
+            font-family: "Montserrat", sans-serif;
+            font-weight: 800;
+        }
+
+        .document-title {
+            margin-top: 3px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 18px;
+            font-style: italic;
+            font-weight: 900;
+            line-height: 1.05;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .document-subtitle {
+            margin-top: 4px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 8px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .document-number {
+            padding: 4px 5px;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 8px;
+            font-weight: 800;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+
+        .document-state {
+            margin-top: 5px;
+            padding: 4px 5px;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            font-size: 7px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .print-date {
+            margin-top: 5px;
+            font-size: 7px;
+            text-align: center;
+        }
+
+        .draft-watermark {
+            position: fixed;
+            top: 45%;
+            left: 14%;
+            z-index: 0;
+            color: rgba(0, 0, 0, 0.06);
+            font-family: "Montserrat", sans-serif;
+            font-size: 68px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            pointer-events: none;
+            transform: rotate(-27deg);
+        }
+
+        /* =====================================================
+           SECCIONES
+        ===================================================== */
+
+        .section {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            border-top: 1px solid var(--line);
+        }
+
+        .panel {
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            background: #ffffff;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .label {
+            margin-bottom: 2px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 6.5px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .value {
+            min-height: 21px;
+            padding: 4px 6px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: #ffffff;
+            font-size: 8.5px;
+            font-weight: 500;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .value.large {
+            min-height: 44px;
+            white-space: pre-wrap;
+        }
+
+        .value.money {
+            font-family: "Montserrat", sans-serif;
+            font-weight: 800;
+            text-align: right;
+        }
+
+        /* =====================================================
+           TABLAS
+        ===================================================== */
+
+        .report-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .report-table th,
+        .report-table td {
+            border-right: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            padding: 3px 4px;
+            vertical-align: middle;
+            background: #ffffff;
+            font-size: 7px;
+            overflow-wrap: anywhere;
+        }
+
+        .report-table th:last-child,
+        .report-table td:last-child {
+            border-right: none;
+        }
+
+        .report-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-table thead th {
+            background: var(--primary);
+            color: #ffffff;
+            font-family: "Montserrat", sans-serif;
+            font-size: 6.4px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .report-table .subhead {
+            background: var(--soft);
+            color: var(--text);
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .item-name {
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            min-height: 15px;
+            padding: 2px 4px;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 5.8px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .status.selected {
+            color: #ffffff;
+            background: #000000;
+        }
+
+        .status.muted {
+            color: #666666;
+            border-color: #777777;
+        }
+
+        /* =====================================================
+           RESUMEN
+        ===================================================== */
+
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 5px;
+        }
+
+        .summary-box {
+            padding: 5px;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .summary-box span {
+            display: block;
+            font-family: "Montserrat", sans-serif;
+            font-size: 6px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-top: 2px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        /* =====================================================
+           FOTOS
+        ===================================================== */
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .photo-card {
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .photo-card img {
+            display: block;
+            width: 100%;
+            height: 48mm;
+            object-fit: cover;
+        }
+
+        .photo-info {
+            min-height: 23px;
+            padding: 4px;
+            border-top: 1px solid var(--line);
+            font-size: 6.5px;
+            line-height: 1.25;
+        }
+
+        /* =====================================================
+           FIRMAS
+        ===================================================== */
+
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 35px;
+            margin-top: 31px;
+        }
+
+        .signature {
+            position: relative;
+            min-height: 40px;
+            padding-top: 6px;
+            border-top: 1.4px solid var(--line);
+            text-align: center;
+        }
+
+        .signature img {
+            position: absolute;
+            bottom: 23px;
+            left: 50%;
+            max-width: 75%;
+            max-height: 50px;
+            transform: translateX(-50%);
+        }
+
+        .signature-title {
+            font-family: "Montserrat", sans-serif;
+            font-size: 7px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .signature-name {
+            margin-top: 3px;
+            font-size: 7px;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 4px;
+            margin-top: 6px;
+            font-family: "Montserrat", sans-serif;
+            font-size: 6.2px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .footer-note {
+            margin-top: 7px;
+            font-size: 6px;
+            line-height: 1.3;
+            text-align: justify;
+        }
+
+        .no-data {
+            padding: 12px;
+            border: 1px dashed var(--line);
+            text-align: center;
+            font-size: 7px;
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+            }
+
+            .page {
+                width: auto;
+                min-height: auto;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                overflow: visible;
+            }
+
+            .section,
+            .panel,
+            .report-table,
+            .photo-card,
+            .signatures {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+{% if es_borrador %}
+    <div class="draft-watermark">
+        BORRADOR
+    </div>
+{% endif %}
+
+<!-- =====================================================
+     PÁGINA 1: IDENTIFICACIÓN Y RESUMEN
+====================================================== -->
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img
+                            src="{{ empresa.logo.url }}"
+                            alt="Logo Empresa"
+                        >
+                    {% else %}
+                        <img
+                            src="{% static 'logo.png' %}"
+                            alt="Logo MAO"
+                        >
+                    {% endif %}
+                </div>
+
+                <div class="company">
+                    <strong>
+                        {{ empresa.nombre_comercial|default:"MANTENIMIENTO AUTOMOTRIZ ORTEGA" }}
+                    </strong>
+                    <br>
+                    RUC:
+                    {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
+                    <br>
+                    {{ empresa.direccion|default:"Quito, Ecuador" }}
+                </div>
+
+            </td>
+
+            <td class="top-center">
+                <div class="document-title">
+                    Avalúo mecánico
+                </div>
+
+                <div class="document-subtitle">
+                    Inspección técnica del vehículo
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="document-number">
+                    N.º {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
+                </div>
+
+                <div class="document-state">
+                    {{ avaluo.get_estado_display|default:avaluo.estado }}
+                </div>
+
+                <div class="print-date">
+                    Impreso:
+                    {% now "d/m/Y H:i" %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section">
+        <div class="section-title">
+            Identificación
+        </div>
+
+        <div class="panel">
+            <div class="grid-4">
+
+                <div class="field">
+                    <div class="label">Orden de trabajo</div>
+                    <div class="value">
+                        {{ orden.numero_orden|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">Fecha avalúo</div>
+                    <div class="value">
+                        {{ avaluo.fecha_avaluo|date:"d/m/Y"|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">Sucursal</div>
+                    <div class="value">
+                        {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">Solicitado por</div>
+                    <div class="value">
+                        {{ avaluo.solicitado_por|upper|default:"-" }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Cliente y vehículo
+        </div>
+
+        <div class="panel">
+
+            <div class="grid-2">
+
+                <div>
+                    <div class="field">
+                        <div class="label">
+                            Cliente / propietario
+                        </div>
+
+                        <div class="value">
+                            {{ orden.nombre_cliente_final|upper|default:"-" }}
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+
+                        <div class="field">
+                            <div class="label">
+                                Identificación
+                            </div>
+
+                            <div class="value">
+                                {{ orden.cliente.identificacion|default:"-" }}
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">
+                                Teléfono
+                            </div>
+
+                            <div class="value">
+                                {{ orden.cliente.telefono|default:"-" }}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div>
+                    <div class="grid-3">
+
+                        <div class="field">
+                            <div class="label">Placa</div>
+                            <div class="value">
+                                {{ avaluo.placa_respaldo|default:orden.placa|upper|default:"S/P" }}
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Año</div>
+                            <div class="value">
+                                {{ avaluo.anio_modelo_respaldo|default:orden.anio_vehiculo|default:"-" }}
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Kilometraje</div>
+                            <div class="value">
+                                {{ avaluo.kilometraje_respaldo|default:orden.kilometraje|default:"-" }} KM
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="grid-2">
+
+                        <div class="field">
+                            <div class="label">
+                                Marca / modelo
+                            </div>
+
+                            <div class="value">
+                                {{ avaluo.marca_respaldo|default:orden.expediente.marca_api|upper|default:"-" }}
+                                /
+                                {{ avaluo.vehiculo_respaldo|default:orden.vehiculo|upper|default:"-" }}
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">
+                                Color
+                            </div>
+
+                            <div class="value">
+                                {{ avaluo.color_respaldo|default:orden.color|upper|default:"-" }}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="grid-3" style="margin-top: 6px;">
+
+                <div class="field">
+                    <div class="label">
+                        Chasis / VIN
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.chasis_respaldo|default:orden.expediente.numero_chasis|upper|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Número de motor
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.numero_motor|upper|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Transmisión
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.get_tipo_transmision_display|default:"-" }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="grid-2" style="margin-top: 6px;">
+
+                <div class="field">
+                    <div class="label">
+                        Motor
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.motor|upper|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Cilindraje
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.cilindraje|upper|default:"-" }}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Resultado general
+        </div>
+
+        <div class="panel">
+
+            <div class="grid-3">
+
+                <div class="field">
+                    <div class="label">
+                        Resultado
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.get_resultado_general_display|default:"SIN DEFINIR" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Avalúo comercial
+                    </div>
+
+                    <div class="value money">
+                        $ {{ avaluo.avaluo_comercial|default:"0.00" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Costo total estimado
+                    </div>
+
+                    <div class="value money">
+                        $ {{ avaluo.costo_total|default:"0.00" }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="summary-strip" style="margin-top: 6px;">
+
+                <div class="summary-box">
+                    <span>NRR</span>
+                    <strong>{{ resumen.total_nrr|default:"0" }}</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>RRM</span>
+                    <strong>{{ resumen.total_rrm|default:"0" }}</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>RRT</span>
+                    <strong>{{ resumen.total_rrt|default:"0" }}</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>Equip. no funciona</span>
+                    <strong>
+                        {{ resumen.equipamientos_no_funcionan|default:"0" }}
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Diagnóstico general
+        </div>
+
+        <div class="panel">
+            <div class="value large">
+                {{ avaluo.diagnostico_general|default:"SIN DIAGNÓSTICO REGISTRADO" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Reparaciones recomendadas
+        </div>
+
+        <div class="panel">
+            <div class="value large">
+                {{ avaluo.reparaciones_recomendadas|default:"SIN REPARACIONES REGISTRADAS" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Observaciones generales
+        </div>
+
+        <div class="panel">
+            <div class="value large">
+                {{ avaluo.observaciones_generales|default:"SIN OBSERVACIONES" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="signatures">
+
+        <div class="signature">
+
+            {% if avaluo.evaluador and avaluo.evaluador.firma %}
+                <img
+                    src="{{ avaluo.evaluador.firma.url }}"
+                    alt="Firma evaluador"
+                >
+            {% endif %}
+
+            <div class="signature-title">
+                Evaluador del taller
+            </div>
+
+            <div class="signature-name">
+                {% if avaluo.evaluador %}
+                    {{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username|upper }}
+                {% else %}
+                    SIN ASIGNAR
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="signature">
+
+            {% if avaluo.responsable_taller and avaluo.responsable_taller.firma %}
+                <img
+                    src="{{ avaluo.responsable_taller.firma.url }}"
+                    alt="Firma responsable"
+                >
+            {% endif %}
+
+            <div class="signature-title">
+                Responsable del taller
+            </div>
+
+            <div class="signature-name">
+                {% if avaluo.responsable_taller %}
+                    {{ avaluo.responsable_taller.get_full_name|default:avaluo.responsable_taller.username|upper }}
+                {% else %}
+                    SIN ASIGNAR
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     PÁGINA 2: APARIENCIA
+====================================================== -->
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+            </td>
+
+            <td class="top-center">
+                <div class="document-title">
+                    Avalúo mecánico
+                </div>
+                <div class="document-subtitle">
+                    Apariencia exterior e interior
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="document-number">
+                    {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    {% for grupo in grupos_inspeccion %}
+
+        {% if grupo.codigo == "EXTERIOR" or grupo.codigo == "INTERIOR" %}
+
+            <div class="section">
+
+                <div class="section-title">
+                    {{ grupo.nombre }}
+                </div>
+
+                <table class="report-table">
+                    <colgroup>
+                        <col style="width: 35%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 25%;">
+                        <col style="width: 16%;">
+                    </colgroup>
+
+                    <thead>
+                        <tr>
+                            <th>Elemento</th>
+                            <th>NRR</th>
+                            <th>RRM</th>
+                            <th>RRT</th>
+                            <th>Diagnóstico / daño</th>
+                            <th>Costo estimado</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for resultado in grupo.resultados %}
+
+                            <tr>
+                                <td class="item-name">
+                                    {{ resultado.item.nombre|upper }}
+                                </td>
+
+                                <td class="center">
+                                    <span class="status {% if resultado.estado == 'NRR' %}selected{% endif %}">
+                                        {% if resultado.estado == "NRR" %}✓{% endif %}
+                                    </span>
+                                </td>
+
+                                <td class="center">
+                                    <span class="status {% if resultado.estado == 'RRM' %}selected{% endif %}">
+                                        {% if resultado.estado == "RRM" %}✓{% endif %}
+                                    </span>
+                                </td>
+
+                                <td class="center">
+                                    <span class="status {% if resultado.estado == 'RRT' %}selected{% endif %}">
+                                        {% if resultado.estado == "RRT" %}✓{% endif %}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ resultado.diagnostico|default:resultado.observacion|default:"-" }}
+                                </td>
+
+                                <td class="right">
+                                    {% if resultado.costo_estimado %}
+                                        $ {{ resultado.costo_estimado }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="6" class="center">
+                                    Sin resultados.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+
+            </div>
+
+        {% endif %}
+
+    {% empty %}
+
+        <div class="no-data">
+            No existen resultados de apariencia.
+        </div>
+
+    {% endfor %}
+
+    <div class="legend">
+        <div>NRR: NO REQUIERE REPARACIÓN</div>
+        <div>RRM: REPARACIÓN MENOR</div>
+        <div>RRT: REPARACIÓN TOTAL</div>
+    </div>
+
+</div>
+
+<!-- =====================================================
+     PÁGINA 3: MOTOR Y MECÁNICA
+====================================================== -->
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+            </td>
+
+            <td class="top-center">
+                <div class="document-title">
+                    Avalúo mecánico
+                </div>
+                <div class="document-subtitle">
+                    Motor y revisión mecánica
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="document-number">
+                    {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section">
+        <div class="section-title">
+            Compresión del motor
+        </div>
+
+        <table class="report-table">
+            <thead>
+                <tr>
+                    {% for compresion in compresiones %}
+                        <th>
+                            Cil. {{ compresion.numero_cilindro }}
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    {% for compresion in compresiones %}
+                        <td class="center">
+                            {% if compresion.valor is not None %}
+                                {{ compresion.valor }} {{ compresion.unidad }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Ruidos en motor u otros
+        </div>
+
+        <div class="panel">
+            <div class="value large">
+                {{ avaluo.ruido_motor_otros|default:"SIN RUIDOS REGISTRADOS" }}
+            </div>
+        </div>
+    </div>
+
+    {% for grupo in grupos_revision %}
+
+        <div class="section">
+
+            <div class="section-title">
+                {{ grupo.nombre }}
+            </div>
+
+            <table class="report-table">
+                <colgroup>
+                    <col style="width: 70%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                    <col style="width: 10%;">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>Revisión</th>
+                        <th>Sí</th>
+                        <th>No</th>
+                        <th>N/R</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for resultado in grupo.resultados %}
+
+                        <tr>
+                            <td class="item-name">
+                                {{ resultado.item.nombre|upper }}
+                            </td>
+
+                            <td class="center">
+                                {% if resultado.respuesta == "SI" %}
+                                    ✓
+                                {% endif %}
+                            </td>
+
+                            <td class="center">
+                                {% if resultado.respuesta == "NO" %}
+                                    ✓
+                                {% endif %}
+                            </td>
+
+                            <td class="center">
+                                {% if resultado.respuesta == "NO_REVISADO" %}
+                                    ✓
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+        </div>
+
+    {% endfor %}
+
+    {% for grupo in grupos_inspeccion %}
+
+        {% if grupo.codigo == "MECANICA" or grupo.codigo == "ELECTRICO" or grupo.codigo == "FRENOS" or grupo.codigo == "OTROS" %}
+
+            <div class="section">
+
+                <div class="section-title">
+                    {{ grupo.nombre }}
+                </div>
+
+                <table class="report-table">
+                    <colgroup>
+                        <col style="width: 34%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 26%;">
+                        <col style="width: 16%;">
+                    </colgroup>
+
+                    <thead>
+                        <tr>
+                            <th>Elemento</th>
+                            <th>NRR</th>
+                            <th>RRM</th>
+                            <th>RRT</th>
+                            <th>Diagnóstico</th>
+                            <th>Costo</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for resultado in grupo.resultados %}
+
+                            <tr>
+                                <td class="item-name">
+                                    {{ resultado.item.nombre|upper }}
+                                </td>
+
+                                <td class="center">
+                                    {% if resultado.estado == "NRR" %}✓{% endif %}
+                                </td>
+
+                                <td class="center">
+                                    {% if resultado.estado == "RRM" %}✓{% endif %}
+                                </td>
+
+                                <td class="center">
+                                    {% if resultado.estado == "RRT" %}✓{% endif %}
+                                </td>
+
+                                <td>
+                                    {{ resultado.diagnostico|default:resultado.observacion|default:"-" }}
+                                </td>
+
+                                <td class="right">
+                                    {% if resultado.costo_estimado %}
+                                        $ {{ resultado.costo_estimado }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+
+            </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+</div>
+
+<!-- =====================================================
+     PÁGINA 4: EQUIPAMIENTO Y PRUEBA DE RUTA
+====================================================== -->
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+            </td>
+
+            <td class="top-center">
+                <div class="document-title">
+                    Avalúo mecánico
+                </div>
+                <div class="document-subtitle">
+                    Equipamiento y prueba de ruta
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="document-number">
+                    {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    {% for grupo in grupos_equipamiento %}
+
+        <div class="section">
+
+            <div class="section-title">
+                {{ grupo.categoria.nombre }}
+            </div>
+
+            <table class="report-table">
+                <colgroup>
+                    <col style="width: 31%;">
+                    <col style="width: 12%;">
+                    <col style="width: 15%;">
+                    <col style="width: 42%;">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>Equipamiento</th>
+                        <th>Tiene</th>
+                        <th>Funcionamiento</th>
+                        <th>Observación</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for resultado in grupo.resultados %}
+
+                        <tr>
+                            <td class="item-name">
+                                {{ resultado.equipamiento.nombre|upper }}
+                            </td>
+
+                            <td class="center">
+                                {{ resultado.get_presencia_display }}
+                            </td>
+
+                            <td class="center">
+                                {{ resultado.get_funcionamiento_display }}
+                            </td>
+
+                            <td>
+                                {{ resultado.observacion|default:"-" }}
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+        </div>
+
+    {% empty %}
+
+        <div class="no-data">
+            No existen equipamientos configurados.
+        </div>
+
+    {% endfor %}
+
+    <div class="section">
+        <div class="section-title">
+            Prueba de ruta
+        </div>
+
+        <table class="report-table">
+            <colgroup>
+                <col style="width: 53%;">
+                <col style="width: 8%;">
+                <col style="width: 8%;">
+                <col style="width: 8%;">
+                <col style="width: 23%;">
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th>Pregunta</th>
+                    <th>Sí</th>
+                    <th>No</th>
+                    <th>N/R</th>
+                    <th>Observación</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for resultado in resultados_ruta %}
+
+                    <tr>
+                        <td class="item-name">
+                            {{ resultado.item.pregunta|upper }}
+                        </td>
+
+                        <td class="center">
+                            {% if resultado.respuesta == "SI" %}✓{% endif %}
+                        </td>
+
+                        <td class="center">
+                            {% if resultado.respuesta == "NO" %}✓{% endif %}
+                        </td>
+
+                        <td class="center">
+                            {% if resultado.respuesta == "NO_REVISADO" %}✓{% endif %}
+                        </td>
+
+                        <td>
+                            {{ resultado.observacion|default:"-" }}
+                        </td>
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="5" class="center">
+                            Sin resultados de prueba de ruta.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- =====================================================
+     PÁGINA 5: VALORES, USO INTERNO Y FOTOS
+====================================================== -->
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+            </td>
+
+            <td class="top-center">
+                <div class="document-title">
+                    Avalúo mecánico
+                </div>
+                <div class="document-subtitle">
+                    Valores, matrícula y respaldo fotográfico
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="document-number">
+                    {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section">
+        <div class="section-title">
+            Uso interno de vehículos usados
+        </div>
+
+        <div class="panel">
+
+            <div class="grid-2">
+
+                <div class="field">
+                    <div class="label">
+                        Se recibe como parte de pago de
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.parte_pago_de|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Vendedor que solicita
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.vendedor_solicita|default:"-" }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Datos de matrícula
+        </div>
+
+        <div class="panel">
+
+            <div class="grid-4">
+
+                <div class="field">
+                    <div class="label">
+                        Año matrícula
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.anio_matricula|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Año modelo
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.anio_modelo_matricula|default:avaluo.anio_modelo_respaldo|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Cilindraje
+                    </div>
+
+                    <div class="value">
+                        {{ avaluo.cilindraje_matricula|default:avaluo.cilindraje|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        Reserva de dominio
+                    </div>
+
+                    <div class="value">
+                        {% if avaluo.reserva_dominio is True %}
+                            SÍ
+                        {% elif avaluo.reserva_dominio is False %}
+                            NO
+                        {% else %}
+                            NO DEFINIDO
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="grid-2" style="margin-top: 6px;">
+
+                <div class="field">
+                    <div class="label">Propietario</div>
+                    <div class="value">
+                        {{ avaluo.propietario_matricula|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">Teléfono</div>
+                    <div class="value">
+                        {{ avaluo.telefono_propietario|default:"-" }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="field" style="margin-top: 6px;">
+                <div class="label">Dirección</div>
+                <div class="value">
+                    {{ avaluo.direccion_propietario|default:"-" }}
+                </div>
+            </div>
+
+            <div class="field" style="margin-top: 6px;">
+                <div class="label">
+                    Cédula / identidad del propietario
+                </div>
+                <div class="value">
+                    {{ avaluo.identidad_propietario|default:"-" }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Valores
+        </div>
+
+        <table class="report-table">
+            <colgroup>
+                <col style="width: 60%;">
+                <col style="width: 40%;">
+            </colgroup>
+
+            <tbody>
+                <tr>
+                    <td class="item-name">Avalúo comercial</td>
+                    <td class="right">$ {{ avaluo.avaluo_comercial|default:"0.00" }}</td>
+                </tr>
+
+                <tr>
+                    <td class="item-name">Precio de recepción</td>
+                    <td class="right">$ {{ avaluo.precio_recepcion|default:"0.00" }}</td>
+                </tr>
+
+                <tr>
+                    <td class="item-name">Costo de reparación</td>
+                    <td class="right">$ {{ avaluo.costo_reparacion|default:"0.00" }}</td>
+                </tr>
+
+                <tr>
+                    <td class="item-name">Costo total</td>
+                    <td class="right">$ {{ avaluo.costo_total|default:"0.00" }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">
+            Fotografías
+        </div>
+
+        {% if fotografias %}
+
+            <div class="photos-grid">
+
+                {% for foto in fotografias %}
+
+                    <div class="photo-card">
+                        <img
+                            src="{{ foto.imagen.url }}"
+                            alt="{{ foto.descripcion|default:'Fotografía del avalúo' }}"
+                        >
+
+                        <div class="photo-info">
+                            <strong>
+                                {{ foto.get_tipo_display|default:"Fotografía" }}
+                            </strong>
+                            <br>
+                            {{ foto.descripcion|default:"Sin descripción" }}
+                        </div>
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="no-data">
+                No existen fotografías registradas.
+            </div>
+
+        {% endif %}
+    </div>
+
+    <div class="footer-note">
+        Este documento refleja el estado observado del vehículo durante la
+        inspección. Los valores estimados pueden variar cuando se desmonten
+        componentes o se detecten daños internos no visibles durante el avalúo.
+    </div>
+
+</div>
+
+<script>
+    window.onload = function () {
+        setTimeout(
+            function () {
+                window.focus();
+                window.print();
+            },
+            800
+        );
+    };
+</script>
+
+</body>
+</html>

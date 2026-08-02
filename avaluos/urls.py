@@ -3,9 +3,9 @@ from django.urls import path
 from .views import (
     crear,
     detalle,
+    impresion,
     listado,
 )
-
 
 app_name = "avaluos"
 
@@ -56,5 +56,14 @@ urlpatterns = [
         "foto/<int:foto_id>/eliminar/",
         detalle.eliminar_foto_avaluo,
         name="eliminar_foto_avaluo",
+    ),
+    # =========================================================
+    # IMPRESIÓN
+    # =========================================================
+
+    path(
+        "avaluo/<int:pk>/imprimir/",
+        impresion.imprimir_avaluo,
+        name="imprimir_avaluo",
     ),
 ]

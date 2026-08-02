@@ -571,7 +571,23 @@
         </div>
 
         <div class="avaluo-header-actions">
+                <a
+                    href="{% url 'avaluos:imprimir_avaluo' avaluo.pk %}"
+                    class="btn-login"
+                    target="_blank"
+                    rel="noopener"
+                    style="
+                        background: #f5f5f7;
+                        color: var(--text);
+                    "
+                >
+                    <i
+                        class="bi bi-printer"
+                        style="margin-right: 5px;"
+                    ></i>
 
+                    Imprimir
+                </a>
             {% if request.user.rol != "TECNICO" %}
 
                 <a
