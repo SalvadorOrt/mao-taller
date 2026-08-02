@@ -24,6 +24,19 @@ class RespuestaSiNo(models.TextChoices):
     NO_APLICA = "NO_APLICA", "No aplica"
 
 
+class PresenciaEquipamiento(models.TextChoices):
+    NO_REVISADO = "NO_REVISADO", "No revisado"
+    SI = "SI", "Sí tiene"
+    NO = "NO", "No tiene"
+
+
+class FuncionamientoEquipamiento(models.TextChoices):
+    NO_REVISADO = "NO_REVISADO", "No revisado"
+    FUNCIONA = "FUNCIONA", "Funciona"
+    NO_FUNCIONA = "NO_FUNCIONA", "No funciona"
+    NO_APLICA = "NO_APLICA", "No aplica"
+
+
 class EstadoAvaluo(models.TextChoices):
     BORRADOR = "BORRADOR", "Borrador"
     FINALIZADO = "FINALIZADO", "Finalizado"
@@ -244,36 +257,6 @@ class AvaluoMecanico(models.Model):
         max_length=20,
         choices=TIPOS_TRANSMISION,
         default="NO_DEFINIDA",
-    )
-
-    aire_acondicionado = models.BooleanField(
-        null=True,
-        blank=True,
-    )
-
-    vidrios_electricos = models.BooleanField(
-        null=True,
-        blank=True,
-    )
-
-    alarma = models.BooleanField(
-        null=True,
-        blank=True,
-    )
-
-    aros = models.BooleanField(
-        null=True,
-        blank=True,
-    )
-
-    radio = models.BooleanField(
-        null=True,
-        blank=True,
-    )
-
-    cierre_centralizado = models.BooleanField(
-        null=True,
-        blank=True,
     )
 
     ruido_motor_otros = models.TextField(
@@ -738,6 +721,378 @@ class AvaluoMecanico(models.Model):
         placa = self.placa_respaldo or "SIN PLACA"
 
         return f"{numero} | OT {orden} | {placa}"
+
+# =========================================================
+# CATEGORÍAS DE EQUIPAMIENTO
+# =========================================================
+
+class CategoriaEquipamientoAvaluo(models.Model):
+    codigo = models.CharField(
+        max_length=50,
+        unique=True,
+        db_index=True,
+    )
+
+    nombre = models.CharField(
+        max_length=120,
+        unique=True,
+    )
+
+    descripcion = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    orden_visual = models.PositiveIntegerField(
+        default=1,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "orden_visual",
+            "nombre",
+        ]
+
+        verbose_name = "Categoría de equipamiento"
+        verbose_name_plural = "Categorías de equipamiento"
+
+        indexes = [
+            models.Index(
+                fields=["activo", "orden_visual"],
+                name="aval_cat_equip_act_ord_idx",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.codigo:
+            self.codigo = (
+                self.codigo
+                .strip()
+                .upper()
+                .replace(" ", "_")
+            )
+
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip()
+
+        errores = {}
+
+        if not self.codigo:
+            errores["codigo"] = (
+                "El código de la categoría es obligatorio."
+            )
+
+        if not self.nombre:
+            errores["nombre"] = (
+                "El nombre de la categoría es obligatorio."
+            )
+
+        if errores:
+            raise ValidationError(errores)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nombre
+
+
+# =========================================================
+# CATÁLOGO DE EQUIPAMIENTO
+# =========================================================
+
+class EquipamientoAvaluo(models.Model):
+    categoria = models.ForeignKey(
+        CategoriaEquipamientoAvaluo,
+        on_delete=models.PROTECT,
+        related_name="equipamientos",
+    )
+
+    codigo = models.CharField(
+        max_length=60,
+        unique=True,
+        db_index=True,
+    )
+
+    nombre = models.CharField(
+        max_length=150,
+    )
+
+    descripcion = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    permite_observacion = models.BooleanField(
+        default=True,
+    )
+
+    orden_visual = models.PositiveIntegerField(
+        default=1,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "categoria__orden_visual",
+            "categoria__nombre",
+            "orden_visual",
+            "nombre",
+        ]
+
+        verbose_name = "Equipamiento de avalúo"
+        verbose_name_plural = "Equipamientos de avalúo"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "categoria",
+                    "nombre",
+                ],
+                name="aval_equip_categoria_nombre_unico",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "categoria",
+                    "activo",
+                    "orden_visual",
+                ],
+                name="aval_equip_cat_act_ord_idx",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.codigo:
+            self.codigo = (
+                self.codigo
+                .strip()
+                .upper()
+                .replace(" ", "_")
+            )
+
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip()
+
+        errores = {}
+
+        if not self.categoria_id:
+            errores["categoria"] = (
+                "La categoría es obligatoria."
+            )
+
+        if not self.codigo:
+            errores["codigo"] = (
+                "El código del equipamiento es obligatorio."
+            )
+
+        if not self.nombre:
+            errores["nombre"] = (
+                "El nombre del equipamiento es obligatorio."
+            )
+
+        if errores:
+            raise ValidationError(errores)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.categoria.nombre} | "
+            f"{self.nombre}"
+        )
+
+
+# =========================================================
+# RESULTADO DEL EQUIPAMIENTO POR AVALÚO
+# =========================================================
+
+class ResultadoEquipamientoAvaluo(models.Model):
+    avaluo = models.ForeignKey(
+        AvaluoMecanico,
+        on_delete=models.CASCADE,
+        related_name="resultados_equipamiento",
+    )
+
+    equipamiento = models.ForeignKey(
+        EquipamientoAvaluo,
+        on_delete=models.PROTECT,
+        related_name="resultados",
+    )
+
+    presencia = models.CharField(
+        max_length=15,
+        choices=PresenciaEquipamiento.choices,
+        default=PresenciaEquipamiento.NO_REVISADO,
+        db_index=True,
+    )
+
+    funcionamiento = models.CharField(
+        max_length=15,
+        choices=FuncionamientoEquipamiento.choices,
+        default=FuncionamientoEquipamiento.NO_REVISADO,
+        db_index=True,
+    )
+
+    observacion = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "equipamiento__categoria__orden_visual",
+            "equipamiento__categoria__nombre",
+            "equipamiento__orden_visual",
+            "equipamiento__nombre",
+        ]
+
+        verbose_name = "Resultado de equipamiento"
+        verbose_name_plural = "Resultados de equipamiento"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "avaluo",
+                    "equipamiento",
+                ],
+                name="aval_resultado_equipamiento_unico",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "avaluo",
+                    "presencia",
+                ],
+                name="aval_res_equip_pres_idx",
+            ),
+            models.Index(
+                fields=[
+                    "avaluo",
+                    "funcionamiento",
+                ],
+                name="aval_res_equip_func_idx",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.observacion:
+            self.observacion = (
+                self.observacion.strip()
+                or None
+            )
+
+        errores = {}
+
+        if not self.avaluo_id:
+            errores["avaluo"] = (
+                "El avalúo es obligatorio."
+            )
+
+        if not self.equipamiento_id:
+            errores["equipamiento"] = (
+                "El equipamiento es obligatorio."
+            )
+
+        # Si no tiene el equipamiento, no se puede evaluar
+        # su funcionamiento.
+        if self.presencia == PresenciaEquipamiento.NO:
+            self.funcionamiento = (
+                FuncionamientoEquipamiento.NO_APLICA
+            )
+
+        # Si todavía no se ha definido si lo tiene,
+        # tampoco puede marcarse como funcionando.
+        elif (
+            self.presencia
+            == PresenciaEquipamiento.NO_REVISADO
+        ):
+            self.funcionamiento = (
+                FuncionamientoEquipamiento.NO_REVISADO
+            )
+
+        # Solo cuando sí tiene el equipamiento se puede
+        # registrar si funciona o no.
+        elif (
+            self.presencia == PresenciaEquipamiento.SI
+            and self.funcionamiento
+            == FuncionamientoEquipamiento.NO_APLICA
+        ):
+            errores["funcionamiento"] = (
+                "Cuando el vehículo tiene el equipamiento, "
+                "el funcionamiento no puede ser «No aplica»."
+            )
+
+        if (
+            self.equipamiento_id
+            and not self.equipamiento.permite_observacion
+        ):
+            self.observacion = None
+
+        if errores:
+            raise ValidationError(errores)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.avaluo.numero_avaluo} | "
+            f"{self.equipamiento.nombre} | "
+            f"{self.get_presencia_display()} | "
+            f"{self.get_funcionamiento_display()}"
+        )
 
 
 # =========================================================

@@ -6,18 +6,24 @@ from django.shortcuts import get_object_or_404, redirect
 from avaluos.models import (
     AvaluoMecanico,
     CompresionCilindro,
+    EquipamientoAvaluo,
     EstadoRevision,
+    FuncionamientoEquipamiento,
     ItemInspeccionAvaluo,
     ItemPruebaRuta,
     ItemRevisionSiNo,
+    PresenciaEquipamiento,
     RespuestaSiNo,
+    ResultadoEquipamientoAvaluo,
     ResultadoInspeccionAvaluo,
     ResultadoPruebaRuta,
     ResultadoRevisionSiNo,
 )
 from ordenes_de_trabajo.models import OrdenTrabajo
 
-
+# =========================================================
+# CREAR RESULTADOS INICIALES
+# =========================================================
 # =========================================================
 # CREAR RESULTADOS INICIALES
 # =========================================================
@@ -26,9 +32,17 @@ def crear_resultados_iniciales(avaluo):
     """
     Crea únicamente los resultados que todavía no existen.
 
-    Esta función puede ejecutarse varias veces sin duplicar datos,
+    Puede ejecutarse varias veces sin duplicar registros,
     gracias a las restricciones únicas de los modelos y al uso de
     ignore_conflicts=True.
+
+    Crea resultados para:
+
+    - Inspección NRR / RRM / RRT.
+    - Revisiones Sí / No.
+    - Prueba de ruta.
+    - Equipamiento dinámico.
+    - Compresión del motor.
     """
 
     # =====================================================
@@ -38,20 +52,25 @@ def crear_resultados_iniciales(avaluo):
     items_inspeccion = list(
         ItemInspeccionAvaluo.objects.filter(
             activo=True,
+        ).order_by(
+            "seccion",
+            "orden_visual",
+            "nombre",
         )
     )
 
-    ResultadoInspeccionAvaluo.objects.bulk_create(
-        [
-            ResultadoInspeccionAvaluo(
-                avaluo=avaluo,
-                item=item,
-                estado=EstadoRevision.NO_REVISADO,
-            )
-            for item in items_inspeccion
-        ],
-        ignore_conflicts=True,
-    )
+    if items_inspeccion:
+        ResultadoInspeccionAvaluo.objects.bulk_create(
+            [
+                ResultadoInspeccionAvaluo(
+                    avaluo=avaluo,
+                    item=item,
+                    estado=EstadoRevision.NO_REVISADO,
+                )
+                for item in items_inspeccion
+            ],
+            ignore_conflicts=True,
+        )
 
     # =====================================================
     # REVISIONES SÍ / NO
@@ -60,20 +79,25 @@ def crear_resultados_iniciales(avaluo):
     items_revision = list(
         ItemRevisionSiNo.objects.filter(
             activo=True,
+        ).order_by(
+            "seccion",
+            "orden_visual",
+            "nombre",
         )
     )
 
-    ResultadoRevisionSiNo.objects.bulk_create(
-        [
-            ResultadoRevisionSiNo(
-                avaluo=avaluo,
-                item=item,
-                respuesta=RespuestaSiNo.NO_REVISADO,
-            )
-            for item in items_revision
-        ],
-        ignore_conflicts=True,
-    )
+    if items_revision:
+        ResultadoRevisionSiNo.objects.bulk_create(
+            [
+                ResultadoRevisionSiNo(
+                    avaluo=avaluo,
+                    item=item,
+                    respuesta=RespuestaSiNo.NO_REVISADO,
+                )
+                for item in items_revision
+            ],
+            ignore_conflicts=True,
+        )
 
     # =====================================================
     # PRUEBA DE RUTA
@@ -82,20 +106,62 @@ def crear_resultados_iniciales(avaluo):
     items_ruta = list(
         ItemPruebaRuta.objects.filter(
             activo=True,
+        ).order_by(
+            "orden_visual",
+            "pregunta",
         )
     )
 
-    ResultadoPruebaRuta.objects.bulk_create(
-        [
-            ResultadoPruebaRuta(
-                avaluo=avaluo,
-                item=item,
-                respuesta=RespuestaSiNo.NO_REVISADO,
-            )
-            for item in items_ruta
-        ],
-        ignore_conflicts=True,
+    if items_ruta:
+        ResultadoPruebaRuta.objects.bulk_create(
+            [
+                ResultadoPruebaRuta(
+                    avaluo=avaluo,
+                    item=item,
+                    respuesta=RespuestaSiNo.NO_REVISADO,
+                )
+                for item in items_ruta
+            ],
+            ignore_conflicts=True,
+        )
+
+    # =====================================================
+    # EQUIPAMIENTO DINÁMICO DEL VEHÍCULO
+    # =====================================================
+
+    equipamientos = list(
+        EquipamientoAvaluo.objects.filter(
+            activo=True,
+            categoria__activo=True,
+        )
+        .select_related(
+            "categoria",
+        )
+        .order_by(
+            "categoria__orden_visual",
+            "categoria__nombre",
+            "orden_visual",
+            "nombre",
+        )
     )
+
+    if equipamientos:
+        ResultadoEquipamientoAvaluo.objects.bulk_create(
+            [
+                ResultadoEquipamientoAvaluo(
+                    avaluo=avaluo,
+                    equipamiento=equipamiento,
+                    presencia=(
+                        PresenciaEquipamiento.NO_REVISADO
+                    ),
+                    funcionamiento=(
+                        FuncionamientoEquipamiento.NO_REVISADO
+                    ),
+                )
+                for equipamiento in equipamientos
+            ],
+            ignore_conflicts=True,
+        )
 
     # =====================================================
     # COMPRESIÓN DEL MOTOR
@@ -112,7 +178,6 @@ def crear_resultados_iniciales(avaluo):
         ],
         ignore_conflicts=True,
     )
-
 
 # =========================================================
 # INICIAR AVALÚO DESDE ORDEN DE TRABAJO

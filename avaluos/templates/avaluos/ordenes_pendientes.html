@@ -1,13 +1,24 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Órdenes pendientes de avalúo | MAO{% endblock %}
-{% block page_title %}Avalúos mecánicos{% endblock %}
-{% block page_subtitle %}Órdenes abiertas disponibles para evaluación{% endblock %}
+{% block title %}
+    Órdenes para avalúo | MAO
+{% endblock %}
+
+{% block page_title %}
+    Avalúos mecánicos
+{% endblock %}
+
+{% block page_subtitle %}
+    Órdenes abiertas y estado de sus avalúos
+{% endblock %}
 
 {% block content %}
 
-<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
 
 <style>
     .lista-avaluos-wrapper {
@@ -20,20 +31,22 @@
     ===================================================== */
 
     .lista-avaluos-filter-form {
-        display: flex;
+        display: grid;
+        grid-template-columns:
+            minmax(260px, 1fr)
+            repeat(5, minmax(145px, 180px))
+            auto;
         gap: 12px;
-        flex-wrap: wrap;
-        align-items: flex-end;
+        align-items: end;
         margin: 0;
     }
 
     .lista-avaluos-field {
-        min-width: 145px;
+        min-width: 0;
     }
 
     .lista-avaluos-field.search {
-        flex: 1;
-        min-width: 270px;
+        min-width: 260px;
     }
 
     .lista-avaluos-label {
@@ -59,7 +72,10 @@
         font-weight: 500;
         outline: none;
         box-shadow: none;
-        transition: all 0.15s ease;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease,
+            background 0.15s ease;
     }
 
     .lista-avaluos-input::placeholder {
@@ -69,7 +85,16 @@
 
     .lista-avaluos-input:focus {
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+        box-shadow:
+            0 0 0 3px rgba(0, 113, 227, 0.08);
+    }
+
+    .lista-avaluos-filter-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+        white-space: nowrap;
     }
 
     /* =====================================================
@@ -101,6 +126,16 @@
         font-weight: 600;
     }
 
+    .lista-avaluos-summary-sucursal {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
     /* =====================================================
        TABLA
     ===================================================== */
@@ -115,7 +150,7 @@
 
     .lista-avaluos-table {
         width: 100%;
-        min-width: 1100px;
+        min-width: 1160px;
         border-collapse: separate;
         border-spacing: 0;
         background: #fff;
@@ -219,7 +254,7 @@
     }
 
     /* =====================================================
-       ESTADO
+       ESTADOS
     ===================================================== */
 
     .lista-avaluos-badge {
@@ -238,21 +273,35 @@
     }
 
     .lista-avaluos-badge.pendiente {
-            border-color: #b7efc5;
-            background: #e5fbe4;
-            color: #1f8939;
-        }
-        .lista-avaluos-badge.warning {
+        border-color: #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .lista-avaluos-badge.warning {
+        border-color: #ffd27d;
         background: #fff5d8;
         color: #b56a00;
-        border-color: #ffd27d;
     }
 
     .lista-avaluos-badge.success {
+        border-color: #b8ebc6;
         background: #e7f9ed;
         color: #198754;
-        border-color: #b8ebc6;
     }
+
+    .lista-avaluos-badge.danger {
+        border-color: #ffc7c7;
+        background: #fff0f0;
+        color: #c62828;
+    }
+
+    .lista-avaluos-badge.neutral {
+        border-color: #d7d7dc;
+        background: #f5f5f7;
+        color: #6e6e73;
+    }
+
     /* =====================================================
        ACCIONES
     ===================================================== */
@@ -262,6 +311,7 @@
         justify-content: center;
         align-items: center;
         gap: 6px;
+        flex-wrap: wrap;
     }
 
     .lista-avaluos-action-btn {
@@ -280,7 +330,10 @@
         font-weight: 700;
         text-decoration: none;
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition:
+            background 0.15s ease,
+            border-color 0.15s ease,
+            color 0.15s ease;
     }
 
     .lista-avaluos-action-btn:hover {
@@ -344,10 +397,43 @@
        RESPONSIVE
     ===================================================== */
 
+    @media (max-width: 1500px) {
+        .lista-avaluos-filter-form {
+            grid-template-columns:
+                minmax(260px, 1fr)
+                repeat(3, minmax(145px, 1fr));
+        }
+
+        .lista-avaluos-filter-actions {
+            justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .lista-avaluos-filter-form {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .lista-avaluos-field.search {
+            grid-column: 1 / -1;
+        }
+
+        .lista-avaluos-filter-actions {
+            grid-column: 1 / -1;
+        }
+    }
+
     @media (max-width: 768px) {
         .lista-avaluos-wrapper {
             padding-left: 0;
             padding-right: 0;
+        }
+
+        .lista-avaluos-filter-form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .lista-avaluos-field,
@@ -370,6 +456,10 @@
             align-items: flex-start;
             flex-direction: column;
         }
+
+        .lista-avaluos-summary-sucursal {
+            white-space: normal;
+        }
     }
 </style>
 
@@ -379,59 +469,196 @@
          FILTROS
     ====================================================== -->
 
-    <div class="ot-card" style="margin-bottom: 15px; padding: 15px;">
+    <div
+        class="ot-card"
+        style="
+            margin-bottom: 15px;
+            padding: 15px;
+        "
+    >
         <div class="section-title">
-            Buscar órdenes pendientes
+            Buscar órdenes para avalúo
         </div>
 
-        <form method="GET"
-              action="{% url 'avaluos:ordenes_pendientes' %}"
-              class="lista-avaluos-filter-form">
+        <form
+            method="GET"
+            action="{% url 'avaluos:ordenes_pendientes' %}"
+            class="lista-avaluos-filter-form"
+        >
 
+            <!-- BÚSQUEDA GENERAL -->
             <div class="lista-avaluos-field search">
                 <label class="lista-avaluos-label">
                     Buscar
                 </label>
 
-                <input type="text"
-                       name="q"
-                       value="{{ q|default:'' }}"
-                       class="lista-avaluos-input"
-                       placeholder="Orden, placa, cliente o vehículo">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q|default:'' }}"
+                    class="lista-avaluos-input"
+                    placeholder="Orden, avalúo, placa, cliente, vehículo o evaluador"
+                >
             </div>
 
-            <div class="lista-avaluos-field" style="min-width: 145px;">
+            <!-- DESDE -->
+            <div class="lista-avaluos-field">
                 <label class="lista-avaluos-label">
                     Desde
                 </label>
 
-                <input type="date"
-                       name="fecha_inicio"
-                       value="{{ fecha_inicio|default:'' }}"
-                       class="lista-avaluos-input">
+                <input
+                    type="date"
+                    name="fecha_inicio"
+                    value="{{ fecha_inicio|default:'' }}"
+                    class="lista-avaluos-input"
+                >
             </div>
 
-            <div class="lista-avaluos-field" style="min-width: 145px;">
+            <!-- HASTA -->
+            <div class="lista-avaluos-field">
                 <label class="lista-avaluos-label">
                     Hasta
                 </label>
 
-                <input type="date"
-                       name="fecha_fin"
-                       value="{{ fecha_fin|default:'' }}"
-                       class="lista-avaluos-input">
+                <input
+                    type="date"
+                    name="fecha_fin"
+                    value="{{ fecha_fin|default:'' }}"
+                    class="lista-avaluos-input"
+                >
             </div>
 
-            <div class="lista-avaluos-filter-actions"
-                 style="display: flex; gap: 8px;">
+            <!-- ESTADO DEL AVALÚO -->
+            <div class="lista-avaluos-field">
+                <label class="lista-avaluos-label">
+                    Estado del avalúo
+                </label>
 
-                <button type="submit" class="btn-login primary">
-                    <i class="bi bi-search" style="margin-right: 6px;"></i>
+                <select
+                    name="estado_avaluo"
+                    class="lista-avaluos-input"
+                >
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option
+                        value="PENDIENTE"
+                        {% if estado_avaluo == "PENDIENTE" %}
+                            selected
+                        {% endif %}
+                    >
+                        Pendiente
+                    </option>
+
+                    <option
+                        value="BORRADOR"
+                        {% if estado_avaluo == "BORRADOR" %}
+                            selected
+                        {% endif %}
+                    >
+                        En proceso
+                    </option>
+
+                    <option
+                        value="FINALIZADO"
+                        {% if estado_avaluo == "FINALIZADO" %}
+                            selected
+                        {% endif %}
+                    >
+                        Finalizado
+                    </option>
+
+                    <option
+                        value="ANULADO"
+                        {% if estado_avaluo == "ANULADO" %}
+                            selected
+                        {% endif %}
+                    >
+                        Anulado
+                    </option>
+                </select>
+            </div>
+
+            <!-- TÉCNICO -->
+            <div class="lista-avaluos-field">
+                <label class="lista-avaluos-label">
+                    Técnico
+                </label>
+
+                <select
+                    name="tecnico"
+                    class="lista-avaluos-input"
+                >
+                    <option value="">
+                        Todos
+                    </option>
+
+                    {% for tecnico in tecnicos %}
+                        <option
+                            value="{{ tecnico.id }}"
+                            {% if tecnico_id == tecnico.id|stringformat:"s" %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ tecnico.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- SUCURSAL -->
+            <div class="lista-avaluos-field">
+                <label class="lista-avaluos-label">
+                    Sucursal
+                </label>
+
+                <select
+                    name="sucursal"
+                    class="lista-avaluos-input"
+                >
+                    {% if puede_ver_todas_sucursales %}
+                        <option value="">
+                            Todas las sucursales
+                        </option>
+                    {% endif %}
+
+                    {% for sucursal in sucursales %}
+                        <option
+                            value="{{ sucursal.id }}"
+                            {% if sucursal_id == sucursal.id|stringformat:"s" %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ sucursal.nombre }}
+                        </option>
+                    {% empty %}
+                        <option value="">
+                            Sin sucursales disponibles
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- ACCIONES -->
+            <div class="lista-avaluos-filter-actions">
+                <button
+                    type="submit"
+                    class="btn-login primary"
+                >
+                    <i
+                        class="bi bi-search"
+                        style="margin-right: 6px;"
+                    ></i>
+
                     Buscar
                 </button>
 
-                <a href="{% url 'avaluos:ordenes_pendientes' %}"
-                   class="btn-login">
+                <a
+                    href="{% url 'avaluos:ordenes_pendientes' %}"
+                    class="btn-login"
+                >
                     Limpiar
                 </a>
             </div>
@@ -443,40 +670,57 @@
          LISTADO
     ====================================================== -->
 
-    <div class="ot-card" style="padding: 15px;">
+    <div
+        class="ot-card"
+        style="padding: 15px;"
+    >
 
         <div class="section-title">
-            Órdenes pendientes de avalúo
+            Órdenes abiertas para avalúo
         </div>
 
         <div class="lista-avaluos-summary">
+
             <div>
                 <div class="lista-avaluos-summary-main">
                     {{ ordenes|length }}
+
                     orden{{ ordenes|length|pluralize:"es" }}
+
                     disponible{{ ordenes|length|pluralize }}
                 </div>
 
                 <div class="lista-avaluos-summary-sub">
-                    Se muestran todas las órdenes abiertas. Puedes iniciar, continuar o consultar su avalúo.
+                    Puedes iniciar, continuar o consultar el avalúo de cada orden abierta.
                 </div>
             </div>
 
-            <div class="lista-avaluos-summary-sub">
-                <i class="bi bi-building" style="margin-right: 4px;"></i>
+            <div class="lista-avaluos-summary-sucursal">
+                <i class="bi bi-building"></i>
 
-                {% if request.user.rol == "ADMIN" %}
+                {% if sucursal_seleccionada %}
+
+                    {{ sucursal_seleccionada.nombre }}
+
+                {% elif puede_ver_todas_sucursales %}
+
                     Todas las sucursales
+
                 {% else %}
+
                     {{ request.user.sucursal.nombre|default:"Sin sucursal asignada" }}
+
                 {% endif %}
             </div>
+
         </div>
 
         <div class="lista-avaluos-table-wrap">
 
-            <table class="lista-avaluos-table"
-                   id="tablaOrdenesPendientes">
+            <table
+                class="lista-avaluos-table"
+                id="tablaOrdenesPendientes"
+            >
 
                 <thead>
                     <tr>
@@ -484,31 +728,31 @@
                             N.º Orden
                         </th>
 
-                        <th style="width: 12%;">
+                        <th style="width: 11%;">
                             Fecha
                         </th>
 
-                        <th style="width: 11%;">
+                        <th style="width: 10%;">
                             Placa
                         </th>
 
-                        <th style="width: 25%;">
+                        <th style="width: 24%;">
                             Cliente / Vehículo
                         </th>
 
-                        <th style="width: 10%; text-align: right;">
+                        <th style="width: 9%; text-align: right;">
                             Kilometraje
                         </th>
 
-                        <th style="width: 13%;">
+                        <th style="width: 12%;">
                             Técnicos
                         </th>
 
-                        <th style="width: 8%; text-align: center;">
+                        <th style="width: 9%; text-align: center;">
                             Estado
                         </th>
 
-                        <th style="width: 15%; text-align: center;">
+                        <th style="width: 12%; text-align: center;">
                             Acciones
                         </th>
                     </tr>
@@ -529,6 +773,12 @@
                                 <div class="lista-avaluos-meta">
                                     {{ orden.sucursal.codigo|default:"SIN SUCURSAL" }}
                                 </div>
+
+                                {% if orden.avaluo_mecanico.numero_avaluo %}
+                                    <div class="lista-avaluos-meta">
+                                        {{ orden.avaluo_mecanico.numero_avaluo }}
+                                    </div>
+                                {% endif %}
                             </td>
 
                             <!-- FECHA -->
@@ -569,6 +819,7 @@
                             <!-- KILOMETRAJE -->
                             <td style="text-align: right;">
                                 {% if orden.kilometraje is not None %}
+
                                     <div class="lista-avaluos-km">
                                         {{ orden.kilometraje }}
                                     </div>
@@ -576,10 +827,13 @@
                                     <div class="lista-avaluos-meta">
                                         km
                                     </div>
+
                                 {% else %}
+
                                     <div class="lista-avaluos-meta">
                                         Sin registrar
                                     </div>
+
                                 {% endif %}
                             </td>
 
@@ -590,8 +844,10 @@
                                     {% for tecnico in orden.tecnicos.all %}
 
                                         <div>
-                                            <i class="bi bi-person-gear"
-                                               style="margin-right: 4px;"></i>
+                                            <i
+                                                class="bi bi-person-gear"
+                                                style="margin-right: 4px;"
+                                            ></i>
 
                                             {{ tecnico.nombre }}
                                         </div>
@@ -624,9 +880,15 @@
                                             Finalizado
                                         </span>
 
+                                    {% elif orden.avaluo_mecanico.estado == "ANULADO" %}
+
+                                        <span class="lista-avaluos-badge danger">
+                                            Anulado
+                                        </span>
+
                                     {% else %}
 
-                                        <span class="lista-avaluos-badge">
+                                        <span class="lista-avaluos-badge neutral">
                                             {{ orden.avaluo_mecanico.get_estado_display }}
                                         </span>
 
@@ -647,45 +909,52 @@
                                 <div class="lista-avaluos-actions">
 
                                     {% if request.user.rol != "TECNICO" %}
-                                        <a href="{% url 'detalle_orden' orden.id %}"
-                                           class="lista-avaluos-action-btn view"
-                                           title="Ver orden de trabajo">
 
+                                        <a
+                                            href="{% url 'detalle_orden' orden.id %}"
+                                            class="lista-avaluos-action-btn view"
+                                            title="Ver orden de trabajo"
+                                        >
                                             <i class="bi bi-eye"></i>
                                             Ver OT
                                         </a>
+
                                     {% endif %}
 
                                     {% if orden.avaluo_mecanico %}
 
-                        <a href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
-                        class="lista-avaluos-action-btn evaluate">
+                                        <a
+                                            href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
+                                            class="lista-avaluos-action-btn evaluate"
+                                            title="Abrir avalúo mecánico"
+                                        >
 
-                            {% if orden.avaluo_mecanico.estado == "BORRADOR" %}
+                                            {% if orden.avaluo_mecanico.estado == "BORRADOR" %}
 
-                                <i class="bi bi-pencil-square"></i>
-                                Continuar
+                                                <i class="bi bi-pencil-square"></i>
+                                                Continuar
 
-                            {% else %}
+                                            {% else %}
 
-                                <i class="bi bi-eye"></i>
-                                Ver avalúo
+                                                <i class="bi bi-eye"></i>
+                                                Ver avalúo
 
-                            {% endif %}
+                                            {% endif %}
 
-                        </a>
+                                        </a>
 
-                    {% else %}
+                                    {% else %}
 
-                        <a href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
-                        class="lista-avaluos-action-btn evaluate">
+                                        <a
+                                            href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
+                                            class="lista-avaluos-action-btn evaluate"
+                                            title="Iniciar avalúo mecánico"
+                                        >
+                                            <i class="bi bi-clipboard2-check"></i>
+                                            Evaluar
+                                        </a>
 
-                            <i class="bi bi-clipboard2-check"></i>
-                            Evaluar
-
-                        </a>
-
-                    {% endif %}
+                                    {% endif %}
 
                                 </div>
                             </td>
@@ -695,20 +964,23 @@
                     {% empty %}
 
                         <tr>
-                            <td colspan="8"
-                                class="lista-avaluos-empty">
+                            <td
+                                colspan="8"
+                                class="lista-avaluos-empty"
+                            >
 
                                 <div class="lista-avaluos-empty-icon">
                                     <i class="bi bi-clipboard2-check"></i>
                                 </div>
 
                                 <h5 class="lista-avaluos-empty-title">
-                                    No hay órdenes pendientes de avalúo
+                                    No hay órdenes disponibles
                                 </h5>
 
                                 <p class="lista-avaluos-empty-text">
-                                    No existen órdenes abiertas sin evaluar para esta sucursal.
+                                    No existen órdenes abiertas que coincidan con los filtros seleccionados.
                                 </p>
+
                             </td>
                         </tr>
 

@@ -21,12 +21,14 @@ from avaluos.models import (
     EstadoAvaluo,
     EstadoRevision,
     FotoAvaluo,
+    FuncionamientoEquipamiento,
+    PresenciaEquipamiento,
     RespuestaSiNo,
+    ResultadoEquipamientoAvaluo,
     ResultadoInspeccionAvaluo,
     ResultadoPruebaRuta,
     ResultadoRevisionSiNo,
 )
-
 from .crear import crear_resultados_iniciales
 
 
@@ -143,13 +145,17 @@ def validar_acceso_avaluo(
     avaluo,
 ):
     """
-    ADMIN puede acceder a cualquier sucursal.
+    Permite acceder al avalúo cuando:
 
-    Los demás usuarios solamente pueden acceder a
-    avalúos pertenecientes a su sucursal.
+    - El usuario es ADMIN.
+    - Tiene permiso para cambiar de sucursal.
+    - El avalúo pertenece a su sucursal asignada.
     """
 
-    if request.user.rol == "ADMIN":
+    if (
+        request.user.rol == "ADMIN"
+        or request.user.puede_cambiar_sucursal
+    ):
         return True
 
     if not request.user.sucursal_id:
@@ -226,7 +232,124 @@ def nombre_error_validacion(error):
 
     return str(error)
 
+# =========================================================
+# EQUIPAMIENTO DINÁMICO DEL VEHÍCULO
+# =========================================================
 
+def guardar_equipamiento_avaluo(
+    request,
+    avaluo,
+):
+    presencias_validas = {
+        codigo
+        for codigo, _ in PresenciaEquipamiento.choices
+    }
+
+    funcionamientos_validos = {
+        codigo
+        for codigo, _ in
+        FuncionamientoEquipamiento.choices
+    }
+
+    resultados = (
+        ResultadoEquipamientoAvaluo.objects
+        .select_for_update()
+        .filter(
+            avaluo=avaluo,
+            equipamiento__activo=True,
+            equipamiento__categoria__activo=True,
+        )
+        .select_related(
+            "equipamiento",
+            "equipamiento__categoria",
+        )
+    )
+
+    for resultado in resultados:
+        prefijo = (
+            f"equipamiento_{resultado.equipamiento_id}"
+        )
+
+        # =================================================
+        # PRESENCIA
+        # =================================================
+
+        presencia = (
+            request.POST.get(
+                f"{prefijo}_presencia",
+                PresenciaEquipamiento.NO_REVISADO,
+            )
+            .strip()
+            .upper()
+        )
+
+        if presencia not in presencias_validas:
+            presencia = (
+                PresenciaEquipamiento.NO_REVISADO
+            )
+
+        # =================================================
+        # FUNCIONAMIENTO
+        # =================================================
+
+        funcionamiento = (
+            request.POST.get(
+                f"{prefijo}_funcionamiento",
+                FuncionamientoEquipamiento.NO_REVISADO,
+            )
+            .strip()
+            .upper()
+        )
+
+        if funcionamiento not in funcionamientos_validos:
+            funcionamiento = (
+                FuncionamientoEquipamiento.NO_REVISADO
+            )
+
+        # Si no tiene el equipamiento, el funcionamiento
+        # automáticamente queda como No aplica.
+        if presencia == PresenciaEquipamiento.NO:
+            funcionamiento = (
+                FuncionamientoEquipamiento.NO_APLICA
+            )
+
+        # Si todavía no se revisó si lo tiene, tampoco se
+        # puede considerar revisado el funcionamiento.
+        elif (
+            presencia
+            == PresenciaEquipamiento.NO_REVISADO
+        ):
+            funcionamiento = (
+                FuncionamientoEquipamiento.NO_REVISADO
+            )
+
+        # Si sí tiene el equipamiento, No aplica no es válido.
+        elif (
+            presencia == PresenciaEquipamiento.SI
+            and funcionamiento
+            == FuncionamientoEquipamiento.NO_APLICA
+        ):
+            funcionamiento = (
+                FuncionamientoEquipamiento.NO_REVISADO
+            )
+
+        resultado.presencia = presencia
+        resultado.funcionamiento = funcionamiento
+
+        # =================================================
+        # OBSERVACIÓN
+        # =================================================
+
+        if resultado.equipamiento.permite_observacion:
+            resultado.observacion = limpiar_texto(
+                request.POST.get(
+                    f"{prefijo}_observacion",
+                )
+            )
+        else:
+            resultado.observacion = None
+
+        resultado.save()
 # =========================================================
 # PASO 1
 # DATOS GENERALES Y EQUIPAMIENTO
@@ -295,65 +418,15 @@ def guardar_paso_1_datos(
         AvaluoMecanico.TIPOS_TRANSMISION
     }
 
-    if (
-        tipo_transmision
-        not in transmisiones_validas
-    ):
+    if tipo_transmision not in transmisiones_validas:
         tipo_transmision = "NO_DEFINIDA"
 
-    avaluo.tipo_transmision = (
-        tipo_transmision
+    avaluo.tipo_transmision = tipo_transmision
+
+    guardar_equipamiento_avaluo(
+        request=request,
+        avaluo=avaluo,
     )
-
-    avaluo.aire_acondicionado = (
-        convertir_booleano_triestado(
-            request.POST.get(
-                "aire_acondicionado",
-            )
-        )
-    )
-
-    avaluo.vidrios_electricos = (
-        convertir_booleano_triestado(
-            request.POST.get(
-                "vidrios_electricos",
-            )
-        )
-    )
-
-    avaluo.alarma = (
-        convertir_booleano_triestado(
-            request.POST.get(
-                "alarma",
-            )
-        )
-    )
-
-    avaluo.aros = (
-        convertir_booleano_triestado(
-            request.POST.get(
-                "aros",
-            )
-        )
-    )
-
-    avaluo.radio = (
-        convertir_booleano_triestado(
-            request.POST.get(
-                "radio",
-            )
-        )
-    )
-
-    avaluo.cierre_centralizado = (
-        convertir_booleano_triestado(
-            request.POST.get(
-                "cierre_centralizado",
-            )
-        )
-    )
-
-
 # =========================================================
 # PASOS 2 Y 4
 # INSPECCIÓN NRR / RRM / RRT
@@ -990,7 +1063,6 @@ def guardar_paso_7_resumen(
     if not avaluo.evaluador_id:
         avaluo.evaluador = request.user
 
-
 # =========================================================
 # GUARDAR EL PASO ACTUAL
 # =========================================================
@@ -1002,11 +1074,21 @@ def guardar_detalle_avaluo(
     paso,
 ):
     """
-    Guarda el contenido del paso y redirige según la
-    acción seleccionada.
+    Guarda el contenido del paso actual y redirige según
+    la acción seleccionada por el usuario.
+
+    Acciones admitidas:
+
+    - guardar: conserva el paso actual;
+    - anterior: guarda y regresa un paso;
+    - siguiente: guarda y avanza un paso;
+    - finalizar: guarda el paso 7 y finaliza el avalúo.
     """
 
-    # Bloqueamos nuevamente el registro durante el guardado.
+    # =====================================================
+    # BLOQUEAR EL AVALÚO DURANTE EL GUARDADO
+    # =====================================================
+
     avaluo = (
         AvaluoMecanico.objects
         .select_for_update()
@@ -1019,6 +1101,10 @@ def guardar_detalle_avaluo(
         )
     )
 
+    # =====================================================
+    # VALIDAR QUE TODAVÍA SE PUEDA EDITAR
+    # =====================================================
+
     if avaluo.estado != EstadoAvaluo.BORRADOR:
         messages.error(
             request,
@@ -1029,6 +1115,10 @@ def guardar_detalle_avaluo(
             "avaluos:detalle_avaluo",
             pk=avaluo.pk,
         )
+
+    # =====================================================
+    # OBTENER Y VALIDAR LA ACCIÓN
+    # =====================================================
 
     accion = (
         request.POST.get(
@@ -1050,52 +1140,64 @@ def guardar_detalle_avaluo(
         accion = "guardar"
 
     try:
+        # =================================================
+        # GUARDAR EL PASO CORRESPONDIENTE
+        # =================================================
+
         if paso == 1:
             guardar_paso_1_datos(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
         elif paso == 2:
             guardar_paso_2_apariencia(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
         elif paso == 3:
             guardar_paso_3_motor(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
         elif paso == 4:
             guardar_paso_4_mecanica(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
         elif paso == 5:
             guardar_paso_5_ruta(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
         elif paso == 6:
             guardar_paso_6_diagnostico_fotos(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
         elif paso == 7:
             guardar_paso_7_resumen(
-                request,
-                avaluo,
+                request=request,
+                avaluo=avaluo,
             )
 
+        else:
+            raise ValidationError(
+                "El paso solicitado no es válido."
+            )
+
+        # Usuario que realizó la última modificación.
         avaluo.actualizado_por = request.user
 
-        # La finalización se realiza después de guardar
-        # los datos del paso 7.
+        # =================================================
+        # FINALIZAR EL AVALÚO
+        # =================================================
+
         if (
             paso == 7
             and accion == "finalizar"
@@ -1129,13 +1231,9 @@ def guardar_detalle_avaluo(
             if not avaluo.evaluador_id:
                 avaluo.evaluador = request.user
 
-            avaluo.estado = (
-                EstadoAvaluo.FINALIZADO
-            )
-
-            avaluo.finalizado_en = (
-                timezone.now()
-            )
+            avaluo.estado = EstadoAvaluo.FINALIZADO
+            avaluo.finalizado_en = timezone.now()
+            avaluo.actualizado_por = request.user
 
             avaluo.save()
 
@@ -1149,10 +1247,16 @@ def guardar_detalle_avaluo(
                 pk=avaluo.pk,
             )
 
+        # =================================================
+        # GUARDADO NORMAL
+        # =================================================
+
         avaluo.save()
 
     except ValidationError as error:
-        transaction.set_rollback(True)
+        transaction.set_rollback(
+            True
+        )
 
         messages.error(
             request,
@@ -1166,6 +1270,10 @@ def guardar_detalle_avaluo(
             pk=avaluo.pk,
             paso=paso,
         )
+
+    # =====================================================
+    # MENSAJE Y REDIRECCIÓN
+    # =====================================================
 
     messages.success(
         request,
@@ -1182,8 +1290,6 @@ def guardar_detalle_avaluo(
         pk=avaluo.pk,
         paso=paso_destino,
     )
-
-
 # =========================================================
 # RESUMEN DEL AVALÚO
 # =========================================================
@@ -1213,7 +1319,82 @@ def obtener_resumen_avaluo(avaluo):
         )
     )
 
+    resultados_equipamiento = (
+        ResultadoEquipamientoAvaluo.objects
+        .filter(
+            avaluo=avaluo,
+            equipamiento__activo=True,
+            equipamiento__categoria__activo=True,
+        )
+    )
+
+    inspecciones_pendientes = (
+        resultados_inspeccion
+        .filter(
+            estado=EstadoRevision.NO_REVISADO,
+        )
+        .count()
+    )
+
+    revisiones_pendientes = (
+        resultados_revision
+        .filter(
+            respuesta=RespuestaSiNo.NO_REVISADO,
+        )
+        .count()
+    )
+
+    ruta_pendiente = (
+        resultados_ruta
+        .filter(
+            respuesta=RespuestaSiNo.NO_REVISADO,
+        )
+        .count()
+    )
+
+    # Equipamientos en los que todavía no se indicó
+    # si el vehículo los tiene.
+    equipamiento_presencia_pendiente = (
+        resultados_equipamiento
+        .filter(
+            presencia=(
+                PresenciaEquipamiento.NO_REVISADO
+            ),
+        )
+        .count()
+    )
+
+    # Equipamientos que sí existen, pero todavía no se
+    # indicó si funcionan.
+    equipamiento_funcionamiento_pendiente = (
+        resultados_equipamiento
+        .filter(
+            presencia=PresenciaEquipamiento.SI,
+            funcionamiento=(
+                FuncionamientoEquipamiento.NO_REVISADO
+            ),
+        )
+        .count()
+    )
+
+    equipamiento_pendiente = (
+        equipamiento_presencia_pendiente
+        + equipamiento_funcionamiento_pendiente
+    )
+
+    total_fotos = (
+        FotoAvaluo.objects
+        .filter(
+            avaluo=avaluo,
+        )
+        .count()
+    )
+
     return {
+        # =================================================
+        # INSPECCIÓN
+        # =================================================
+
         "total_nrr": (
             resultados_inspeccion
             .filter(
@@ -1239,45 +1420,96 @@ def obtener_resumen_avaluo(avaluo):
         ),
 
         "inspecciones_pendientes": (
-            resultados_inspeccion
-            .filter(
-                estado=(
-                    EstadoRevision.NO_REVISADO
-                ),
-            )
-            .count()
+            inspecciones_pendientes
         ),
+
+        # =================================================
+        # REVISIONES SÍ / NO
+        # =================================================
 
         "revisiones_pendientes": (
-            resultados_revision
-            .filter(
-                respuesta=(
-                    RespuestaSiNo.NO_REVISADO
-                ),
-            )
-            .count()
+            revisiones_pendientes
         ),
+
+        # =================================================
+        # PRUEBA DE RUTA
+        # =================================================
 
         "ruta_pendiente": (
-            resultados_ruta
+            ruta_pendiente
+        ),
+
+        # =================================================
+        # EQUIPAMIENTO
+        # =================================================
+
+        "equipamiento_presencia_pendiente": (
+            equipamiento_presencia_pendiente
+        ),
+
+        "equipamiento_funcionamiento_pendiente": (
+            equipamiento_funcionamiento_pendiente
+        ),
+
+        "equipamiento_pendiente": (
+            equipamiento_pendiente
+        ),
+
+        "equipamiento_con_presencia": (
+            resultados_equipamiento
             .filter(
-                respuesta=(
-                    RespuestaSiNo.NO_REVISADO
+                presencia=PresenciaEquipamiento.SI,
+            )
+            .count()
+        ),
+
+        "equipamiento_sin_presencia": (
+            resultados_equipamiento
+            .filter(
+                presencia=PresenciaEquipamiento.NO,
+            )
+            .count()
+        ),
+
+        "equipamiento_funciona": (
+            resultados_equipamiento
+            .filter(
+                presencia=PresenciaEquipamiento.SI,
+                funcionamiento=(
+                    FuncionamientoEquipamiento.FUNCIONA
                 ),
             )
             .count()
         ),
 
-        "total_fotos": (
-            FotoAvaluo.objects
+        "equipamiento_no_funciona": (
+            resultados_equipamiento
             .filter(
-                avaluo=avaluo,
+                presencia=PresenciaEquipamiento.SI,
+                funcionamiento=(
+                    FuncionamientoEquipamiento.NO_FUNCIONA
+                ),
             )
             .count()
         ),
+
+        # =================================================
+        # FOTOGRAFÍAS
+        # =================================================
+
+        "total_fotos": total_fotos,
+
+        # =================================================
+        # TOTAL GENERAL PENDIENTE
+        # =================================================
+
+        "total_pendientes": (
+            inspecciones_pendientes
+            + revisiones_pendientes
+            + ruta_pendiente
+            + equipamiento_pendiente
+        ),
     }
-
-
 # =========================================================
 # VISTA PRINCIPAL
 # =========================================================
@@ -1415,7 +1647,24 @@ def detalle_avaluo(
             "item__pregunta",
         )
     )
-
+    resultados_equipamiento = (
+        ResultadoEquipamientoAvaluo.objects
+        .filter(
+            avaluo=avaluo,
+            equipamiento__activo=True,
+            equipamiento__categoria__activo=True,
+        )
+        .select_related(
+            "equipamiento",
+            "equipamiento__categoria",
+        )
+        .order_by(
+            "equipamiento__categoria__orden_visual",
+            "equipamiento__categoria__nombre",
+            "equipamiento__orden_visual",
+            "equipamiento__nombre",
+        )
+    )
     compresiones = (
         CompresionCilindro.objects
         .filter(
@@ -1476,32 +1725,16 @@ def detalle_avaluo(
         "total_pasos": TOTAL_PASOS,
         "puede_editar": puede_editar,
 
-        "resultados_apariencia": (
-            resultados_apariencia
-        ),
-
-        "resultados_mecanica": (
-            resultados_mecanica
-        ),
-
-        "resultados_revision": (
-            resultados_revision
-        ),
-
-        "resultados_ruta": (
-            resultados_ruta
-        ),
+        "resultados_apariencia": resultados_apariencia,
+        "resultados_mecanica": resultados_mecanica,
+        "resultados_revision": resultados_revision,
+        "resultados_ruta": resultados_ruta,
+        "resultados_equipamiento": resultados_equipamiento,
 
         "compresiones": compresiones,
         "fotografias": fotografias,
-
-        "tipos_foto": (
-            FotoAvaluo.TIPOS_FOTO
-        ),
-
-        "responsables_disponibles": (
-            responsables_disponibles
-        ),
+        "tipos_foto": FotoAvaluo.TIPOS_FOTO,
+        "responsables_disponibles": responsables_disponibles,
     }
 
     contexto.update(
