@@ -59,12 +59,7 @@ def get_menu_lateral(user):
                     "url_name": "avaluos:ordenes_pendientes",
                     "icon": "bi-clipboard2-pulse",
                 },
-                {
-                    "label": "Avalúos realizados",
-                    "url_name": "avaluos:lista_avaluos",
-                    "icon": "bi-clipboard2-check",
-                },
-            ]
+            ],
         })
 
     # =====================================================
