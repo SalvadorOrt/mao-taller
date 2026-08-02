@@ -1,0 +1,844 @@
+<!-- =====================================================
+     PASO 3: MOTOR, COMPRESIÓN, PARTÍCULAS Y FUGAS
+====================================================== -->
+
+<style>
+    /* =====================================================
+       INFORMACIÓN SUPERIOR
+    ===================================================== */
+
+    .motor-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .motor-info-item {
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+    }
+
+    .motor-info-label {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .motor-info-value {
+        overflow: hidden;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+    }
+
+    /* =====================================================
+       COMPRESIÓN
+    ===================================================== */
+
+    .motor-compresion-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .motor-compresion-card {
+        padding: 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fff;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .motor-compresion-card:focus-within {
+        border-color: rgba(0, 113, 227, 0.35);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.06);
+    }
+
+    .motor-compresion-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .motor-compresion-numero {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .motor-compresion-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 31px;
+        min-height: 25px;
+        padding: 3px 7px;
+        border: 1px solid rgba(0, 113, 227, 0.22);
+        border-radius: 7px;
+        background: #edf6ff;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .motor-compresion-fields {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 82px;
+        gap: 7px;
+    }
+
+    .motor-compresion-observacion {
+        margin-top: 8px;
+    }
+
+    /* =====================================================
+       REVISIONES SÍ / NO
+    ===================================================== */
+
+    .motor-revision-group {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .motor-revision-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .motor-revision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .motor-revision-item {
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fff;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .motor-revision-item:focus-within {
+        border-color: rgba(0, 113, 227, 0.35);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.06);
+    }
+
+    .motor-revision-header {
+        padding: 12px;
+        border-bottom: 1px solid var(--border-soft);
+        background: #fbfbfd;
+    }
+
+    .motor-revision-title {
+        margin-bottom: 9px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .motor-revision-code {
+        margin-left: 5px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+    .motor-revision-options {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .motor-revision-option {
+        position: relative;
+        min-width: 0;
+    }
+
+    .motor-revision-option input {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .motor-revision-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        margin: 0;
+        padding: 6px 5px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .motor-revision-option label:hover {
+        background: #f5f5f7;
+    }
+
+    .motor-revision-option input[value="NO_REVISADO"]:checked + label {
+        border-color: #b8b8bd;
+        background: #f1f1f3;
+        color: #66666b;
+    }
+
+    .motor-revision-option input[value="SI"]:checked + label {
+        border-color: #ff6961;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .motor-revision-option input[value="NO"]:checked + label {
+        border-color: #34c759;
+        background: #eafbea;
+        color: #1f8939;
+    }
+
+    .motor-revision-option input[value="NO_APLICA"]:checked + label {
+        border-color: #b9dcff;
+        background: #edf6ff;
+        color: #0066cc;
+    }
+
+    .motor-revision-detail {
+        padding: 12px;
+    }
+
+    .motor-textarea {
+        min-height: 85px;
+        resize: vertical;
+    }
+
+    /* =====================================================
+       LEYENDA
+    ===================================================== */
+
+    .motor-legend {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .motor-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 8px 10px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+        color: var(--text);
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .motor-legend-dot {
+        width: 10px;
+        height: 10px;
+        flex: 0 0 10px;
+        border-radius: 50%;
+    }
+
+    .motor-legend-dot.pending {
+        background: #8e8e93;
+    }
+
+    .motor-legend-dot.yes {
+        background: #ff3b30;
+    }
+
+    .motor-legend-dot.no {
+        background: #34c759;
+    }
+
+    .motor-legend-dot.na {
+        background: #0071e3;
+    }
+
+    /* =====================================================
+       SIN RESULTADOS
+    ===================================================== */
+
+    .motor-empty {
+        padding: 45px 20px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fafafa;
+        color: var(--muted);
+        text-align: center;
+    }
+
+    .motor-empty i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 2rem;
+        opacity: 0.35;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 1000px) {
+        .motor-compresion-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .motor-info-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 800px) {
+        .motor-revision-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .motor-legend {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .motor-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .motor-compresion-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .motor-compresion-fields {
+            grid-template-columns: minmax(0, 1fr) 75px;
+        }
+
+        .motor-revision-options {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .motor-revision-option label {
+            min-height: 43px;
+            font-size: 11px;
+        }
+
+        .motor-legend {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 410px) {
+        .motor-compresion-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- =====================================================
+     INFORMACIÓN TÉCNICA DEL MOTOR
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Información del motor
+    </div>
+
+    <p class="avaluo-section-description">
+        Revisa los datos técnicos registrados en el paso anterior antes
+        de realizar las pruebas de compresión, partículas, fugas y fluidos.
+    </p>
+
+    <div class="motor-info-grid">
+
+        <div class="motor-info-item">
+            <div class="motor-info-label">
+                Motor
+            </div>
+
+            <div class="motor-info-value">
+                {{ avaluo.motor|default:"Sin registrar" }}
+            </div>
+        </div>
+
+        <div class="motor-info-item">
+            <div class="motor-info-label">
+                Número de motor
+            </div>
+
+            <div class="motor-info-value">
+                {{ avaluo.numero_motor|default:"Sin registrar" }}
+            </div>
+        </div>
+
+        <div class="motor-info-item">
+            <div class="motor-info-label">
+                Cilindraje
+            </div>
+
+            <div class="motor-info-value">
+                {{ avaluo.cilindraje|default:"Sin registrar" }}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     COMPRESIÓN DEL MOTOR
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Compresión del motor
+    </div>
+
+    <p class="avaluo-section-description">
+        Registra el resultado de cada cilindro y selecciona la unidad
+        utilizada. Los cilindros que no correspondan al vehículo pueden
+        dejarse sin valor.
+    </p>
+
+    {% if compresiones %}
+
+        <div class="motor-compresion-grid">
+
+            {% for compresion in compresiones %}
+
+                <div class="motor-compresion-card">
+
+                    <div class="motor-compresion-title">
+
+                        <span class="motor-compresion-numero">
+                            Cilindro {{ compresion.numero_cilindro }}
+                        </span>
+
+                        <span class="motor-compresion-badge">
+                            C{{ compresion.numero_cilindro }}
+                        </span>
+
+                    </div>
+
+                    <div class="motor-compresion-fields">
+
+                        <div class="avaluo-field">
+
+                            <label
+                                for="compresion_{{ compresion.numero_cilindro }}_valor"
+                                class="avaluo-label"
+                            >
+                                Valor
+                            </label>
+
+                            <input
+                                type="number"
+                                id="compresion_{{ compresion.numero_cilindro }}_valor"
+                                name="compresion_{{ compresion.numero_cilindro }}_valor"
+                                class="avaluo-input"
+                                value="{% if compresion.valor is not None %}{{ compresion.valor|stringformat:'s' }}{% endif %}"
+                                min="0"
+                                step="0.01"
+                                inputmode="decimal"
+                                placeholder="0.00"
+                                {% if not puede_editar %}readonly{% endif %}
+                            >
+
+                        </div>
+
+                        <div class="avaluo-field">
+
+                            <label
+                                for="compresion_{{ compresion.numero_cilindro }}_unidad"
+                                class="avaluo-label"
+                            >
+                                Unidad
+                            </label>
+
+                            <select
+                                id="compresion_{{ compresion.numero_cilindro }}_unidad"
+                                name="compresion_{{ compresion.numero_cilindro }}_unidad"
+                                class="avaluo-input"
+                                {% if not puede_editar %}disabled{% endif %}
+                            >
+                                {% for valor, etiqueta in compresion.UNIDADES %}
+
+                                    <option
+                                        value="{{ valor }}"
+                                        {% if compresion.unidad == valor %}selected{% endif %}
+                                    >
+                                        {{ etiqueta }}
+                                    </option>
+
+                                {% endfor %}
+                            </select>
+
+                            {% if not puede_editar %}
+                                <input
+                                    type="hidden"
+                                    name="compresion_{{ compresion.numero_cilindro }}_unidad"
+                                    value="{{ compresion.unidad }}"
+                                >
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                    <div class="motor-compresion-observacion">
+
+                        <label
+                            for="compresion_{{ compresion.numero_cilindro }}_observacion"
+                            class="avaluo-label"
+                        >
+                            Observación
+                        </label>
+
+                        <input
+                            type="text"
+                            id="compresion_{{ compresion.numero_cilindro }}_observacion"
+                            name="compresion_{{ compresion.numero_cilindro }}_observacion"
+                            class="avaluo-input"
+                            value="{{ compresion.observacion|default:'' }}"
+                            placeholder="Opcional"
+                            maxlength="255"
+                            {% if not puede_editar %}readonly{% endif %}
+                        >
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="motor-empty">
+
+            <i class="bi bi-speedometer"></i>
+
+            <strong>
+                No existen cilindros configurados
+            </strong>
+
+            <div style="margin-top: 5px;">
+                Al iniciar el avalúo deben crearse los registros de
+                compresión del motor.
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+<!-- =====================================================
+     RUIDOS DEL MOTOR
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Ruidos y novedades del motor
+    </div>
+
+    <p class="avaluo-section-description">
+        Registra cualquier ruido, vibración o comportamiento anormal
+        detectado durante la inspección.
+    </p>
+
+    <div class="avaluo-field">
+
+        <label
+            for="ruido_motor_otros"
+            class="avaluo-label"
+        >
+            Ruido del motor u otras observaciones
+        </label>
+
+        <textarea
+            id="ruido_motor_otros"
+            name="ruido_motor_otros"
+            class="avaluo-input motor-textarea"
+            placeholder="Describe ruidos, vibraciones, golpeteos, humo o cualquier otra novedad"
+            {% if not puede_editar %}readonly{% endif %}
+        >{{ avaluo.ruido_motor_otros|default:'' }}</textarea>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     LEYENDA DE RESPUESTAS
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Partículas, fugas y fluidos
+    </div>
+
+    <p class="avaluo-section-description">
+        En preguntas relacionadas con fallas, la respuesta “Sí” indica
+        que la novedad fue encontrada. Añade una observación cuando sea
+        necesario.
+    </p>
+
+    <div class="motor-legend">
+
+        <div class="motor-legend-item">
+            <span class="motor-legend-dot pending"></span>
+            No revisado
+        </div>
+
+        <div class="motor-legend-item">
+            <span class="motor-legend-dot yes"></span>
+            Sí se encontró
+        </div>
+
+        <div class="motor-legend-item">
+            <span class="motor-legend-dot no"></span>
+            No se encontró
+        </div>
+
+        <div class="motor-legend-item">
+            <span class="motor-legend-dot na"></span>
+            No aplica
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     REVISIONES AGRUPADAS POR SECCIÓN
+====================================================== -->
+
+{% regroup resultados_revision by item.seccion as grupos_revision %}
+
+{% for grupo in grupos_revision %}
+
+    <div class="ot-card motor-revision-group">
+
+        <div class="section-title">
+
+            {% if grupo.grouper == "PARTICULAS_FUGAS" %}
+
+                <i
+                    class="bi bi-droplet-half"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Partículas y fugas
+
+            {% elif grupo.grouper == "MOTOR" %}
+
+                <i
+                    class="bi bi-gear-wide-connected"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Revisión del motor
+
+            {% elif grupo.grouper == "FLUIDOS" %}
+
+                <i
+                    class="bi bi-moisture"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Revisión de fluidos
+
+            {% else %}
+
+                <i
+                    class="bi bi-clipboard2-check"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Otras comprobaciones
+
+            {% endif %}
+
+        </div>
+
+        <div class="motor-revision-grid">
+
+            {% for resultado in grupo.list %}
+
+                <div class="motor-revision-item">
+
+                    <div class="motor-revision-header">
+
+                        <div class="motor-revision-title">
+
+                            {{ resultado.item.nombre }}
+
+                            {% if resultado.item.codigo %}
+                                <span class="motor-revision-code">
+                                    {{ resultado.item.codigo }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                        <div class="motor-revision-options">
+
+                            <!-- NO REVISADO -->
+                            <div class="motor-revision-option">
+
+                                <input
+                                    type="radio"
+                                    id="revision_{{ resultado.item_id }}_no_revisado"
+                                    name="revision_{{ resultado.item_id }}_respuesta"
+                                    value="NO_REVISADO"
+                                    {% if resultado.respuesta == "NO_REVISADO" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                >
+
+                                <label
+                                    for="revision_{{ resultado.item_id }}_no_revisado"
+                                >
+                                    No revisado
+                                </label>
+
+                            </div>
+
+                            <!-- SÍ -->
+                            <div class="motor-revision-option">
+
+                                <input
+                                    type="radio"
+                                    id="revision_{{ resultado.item_id }}_si"
+                                    name="revision_{{ resultado.item_id }}_respuesta"
+                                    value="SI"
+                                    {% if resultado.respuesta == "SI" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                >
+
+                                <label
+                                    for="revision_{{ resultado.item_id }}_si"
+                                >
+                                    Sí
+                                </label>
+
+                            </div>
+
+                            <!-- NO -->
+                            <div class="motor-revision-option">
+
+                                <input
+                                    type="radio"
+                                    id="revision_{{ resultado.item_id }}_no"
+                                    name="revision_{{ resultado.item_id }}_respuesta"
+                                    value="NO"
+                                    {% if resultado.respuesta == "NO" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                >
+
+                                <label
+                                    for="revision_{{ resultado.item_id }}_no"
+                                >
+                                    No
+                                </label>
+
+                            </div>
+
+                            <!-- NO APLICA -->
+                            <div class="motor-revision-option">
+
+                                <input
+                                    type="radio"
+                                    id="revision_{{ resultado.item_id }}_no_aplica"
+                                    name="revision_{{ resultado.item_id }}_respuesta"
+                                    value="NO_APLICA"
+                                    {% if resultado.respuesta == "NO_APLICA" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                >
+
+                                <label
+                                    for="revision_{{ resultado.item_id }}_no_aplica"
+                                >
+                                    No aplica
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="motor-revision-detail">
+
+                        <label
+                            for="revision_{{ resultado.item_id }}_observacion"
+                            class="avaluo-label"
+                        >
+                            Observación
+                        </label>
+
+                        <textarea
+                            id="revision_{{ resultado.item_id }}_observacion"
+                            name="revision_{{ resultado.item_id }}_observacion"
+                            class="avaluo-input motor-textarea"
+                            placeholder="Describe la ubicación, intensidad o condición encontrada"
+                            {% if not puede_editar %}readonly{% endif %}
+                        >{{ resultado.observacion|default:'' }}</textarea>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+{% empty %}
+
+    <div class="ot-card avaluo-section-card">
+
+        <div class="motor-empty">
+
+            <i class="bi bi-clipboard-x"></i>
+
+            <strong>
+                No existen revisiones de motor configuradas
+            </strong>
+
+            <div style="margin-top: 5px;">
+                Debes cargar los ítems de partículas, fugas y fluidos
+                antes de realizar esta sección.
+            </div>
+
+        </div>
+
+    </div>
+
+{% endfor %}

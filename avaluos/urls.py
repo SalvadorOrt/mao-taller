@@ -1,6 +1,10 @@
 from django.urls import path
 
-from .views import avaluos
+from .views import (
+    crear,
+    detalle,
+    listado,
+)
 
 
 app_name = "avaluos"
@@ -8,11 +12,11 @@ app_name = "avaluos"
 
 urlpatterns = [
     # ==========================================================
-    # ÓRDENES ABIERTAS PENDIENTES
+    # ÓRDENES PENDIENTES
     # ==========================================================
     path(
         "",
-        avaluos.ordenes_pendientes,
+        listado.ordenes_pendientes,
         name="ordenes_pendientes",
     ),
 
@@ -21,7 +25,7 @@ urlpatterns = [
     # ==========================================================
     path(
         "orden/<int:orden_id>/iniciar/",
-        avaluos.iniciar_avaluo,
+        crear.iniciar_avaluo,
         name="iniciar_avaluo",
     ),
 
@@ -30,7 +34,7 @@ urlpatterns = [
     # ==========================================================
     path(
         "<int:pk>/",
-        avaluos.detalle_avaluo,
+        detalle.detalle_avaluo,
         name="detalle_avaluo",
     ),
 ]

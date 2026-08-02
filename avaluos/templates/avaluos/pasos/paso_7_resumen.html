@@ -1,0 +1,663 @@
+<!-- =====================================================
+     PASO 7: RESUMEN Y FINALIZACIÓN
+====================================================== -->
+
+<style>
+    .resumen-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .resumen-card {
+        padding: 14px;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fbfbfd;
+    }
+
+    .resumen-card-label {
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .resumen-card-value {
+        color: var(--text);
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .resumen-card-sub {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.35;
+    }
+
+    .resumen-card.nrr {
+        border-color: #b7efc5;
+        background: #eefbef;
+    }
+
+    .resumen-card.nrr .resumen-card-value {
+        color: #1f8939;
+    }
+
+    .resumen-card.rrm {
+        border-color: #ffe08a;
+        background: #fff8e3;
+    }
+
+    .resumen-card.rrm .resumen-card-value {
+        color: #a45f00;
+    }
+
+    .resumen-card.rrt {
+        border-color: #ffd6d6;
+        background: #fff1ef;
+    }
+
+    .resumen-card.rrt .resumen-card-value {
+        color: #d92d20;
+    }
+
+    .resumen-card.pendiente {
+        border-color: #d6d6da;
+        background: #f5f5f7;
+    }
+
+    .resumen-alerta {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 15px;
+        padding: 12px;
+        border: 1px solid #ffe08a;
+        border-radius: 12px;
+        background: #fff9e6;
+        color: #8a5a00;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+    .resumen-alerta.error {
+        border-color: #ffd6d6;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .resumen-alerta.ok {
+        border-color: #b7efc5;
+        background: #eafbea;
+        color: #1f8939;
+    }
+
+    .resumen-datos-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .resumen-dato {
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+    }
+
+    .resumen-dato-label {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .resumen-dato-value {
+        overflow: hidden;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+    }
+
+    .resultado-general-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .resultado-general-option {
+        position: relative;
+    }
+
+    .resultado-general-option input {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .resultado-general-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        margin: 0;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.3;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .resultado-general-option label:hover {
+        background: #f7f7f9;
+    }
+
+    .resultado-general-option input:checked + label {
+        border-color: var(--accent);
+        background: #edf6ff;
+        color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.06);
+    }
+
+    .resumen-text-block {
+        padding: 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+    }
+
+    .resumen-text-title {
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .resumen-text-content {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    .resumen-finalizar-box {
+        padding: 15px;
+        border: 1px solid rgba(0, 113, 227, 0.22);
+        border-radius: 12px;
+        background: #f5faff;
+    }
+
+    .resumen-finalizar-title {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .resumen-finalizar-text {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    .resumen-finalizar-check {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-top: 13px;
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+    .resumen-finalizar-check input {
+        margin-top: 2px;
+        width: 17px;
+        height: 17px;
+    }
+
+    @media (max-width: 900px) {
+        .resumen-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .resumen-datos-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .resultado-general-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .resumen-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .resumen-datos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .resultado-general-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- =====================================================
+     RESUMEN GENERAL
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Resumen de la evaluación
+    </div>
+
+    <p class="avaluo-section-description">
+        Revisa los resultados antes de finalizar el avalúo. Una vez
+        finalizado, el registro quedará bloqueado para edición normal.
+    </p>
+
+    <div class="resumen-grid">
+
+        <div class="resumen-card nrr">
+            <div class="resumen-card-label">
+                NRR
+            </div>
+
+            <div class="resumen-card-value">
+                {{ total_nrr|default:0 }}
+            </div>
+
+            <div class="resumen-card-sub">
+                No requieren reparación
+            </div>
+        </div>
+
+        <div class="resumen-card rrm">
+            <div class="resumen-card-label">
+                RRM
+            </div>
+
+            <div class="resumen-card-value">
+                {{ total_rrm|default:0 }}
+            </div>
+
+            <div class="resumen-card-sub">
+                Reparaciones menores
+            </div>
+        </div>
+
+        <div class="resumen-card rrt">
+            <div class="resumen-card-label">
+                RRT
+            </div>
+
+            <div class="resumen-card-value">
+                {{ total_rrt|default:0 }}
+            </div>
+
+            <div class="resumen-card-sub">
+                Reparaciones totales
+            </div>
+        </div>
+
+        <div class="resumen-card pendiente">
+            <div class="resumen-card-label">
+                Pendientes
+            </div>
+
+            <div class="resumen-card-value">
+                {{ inspecciones_pendientes|default:0 }}
+            </div>
+
+            <div class="resumen-card-sub">
+                Ítems sin revisar
+            </div>
+        </div>
+
+    </div>
+
+    {% if inspecciones_pendientes or revisiones_pendientes or ruta_pendiente %}
+
+        <div class="resumen-alerta error">
+
+            <i class="bi bi-exclamation-circle"></i>
+
+            <div>
+                Existen elementos pendientes:
+                {{ inspecciones_pendientes|default:0 }} inspecciones,
+                {{ revisiones_pendientes|default:0 }} revisiones de motor
+                y {{ ruta_pendiente|default:0 }} preguntas de ruta.
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <div class="resumen-alerta ok">
+
+            <i class="bi bi-check-circle"></i>
+
+            <div>
+                Todas las secciones técnicas fueron revisadas.
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+<!-- =====================================================
+     DATOS DEL VEHÍCULO
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Datos principales
+    </div>
+
+    <div class="resumen-datos-grid">
+
+        <div class="resumen-dato">
+            <div class="resumen-dato-label">
+                Avalúo
+            </div>
+
+            <div class="resumen-dato-value">
+                {{ avaluo.numero_avaluo }}
+            </div>
+        </div>
+
+        <div class="resumen-dato">
+            <div class="resumen-dato-label">
+                Orden
+            </div>
+
+            <div class="resumen-dato-value">
+                {{ orden.numero_orden }}
+            </div>
+        </div>
+
+        <div class="resumen-dato">
+            <div class="resumen-dato-label">
+                Placa
+            </div>
+
+            <div class="resumen-dato-value">
+                {{ orden.placa|default:"SIN PLACA" }}
+            </div>
+        </div>
+
+        <div class="resumen-dato">
+            <div class="resumen-dato-label">
+                Vehículo
+            </div>
+
+            <div class="resumen-dato-value">
+                {{ orden.vehiculo|default:"Sin vehículo" }}
+            </div>
+        </div>
+
+        <div class="resumen-dato">
+            <div class="resumen-dato-label">
+                Cliente
+            </div>
+
+            <div class="resumen-dato-value">
+                {{ orden.nombre_cliente_final }}
+            </div>
+        </div>
+
+        <div class="resumen-dato">
+            <div class="resumen-dato-label">
+                Fotografías
+            </div>
+
+            <div class="resumen-dato-value">
+                {{ total_fotos|default:0 }}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     DIAGNÓSTICO
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Diagnóstico registrado
+    </div>
+
+    <div class="avaluo-grid">
+
+        <div class="avaluo-col-12">
+
+            <div class="resumen-text-block">
+
+                <div class="resumen-text-title">
+                    Diagnóstico general
+                </div>
+
+                <div class="resumen-text-content">
+                    {{ avaluo.diagnostico_general|default:"Sin diagnóstico registrado." }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="avaluo-col-6">
+
+            <div class="resumen-text-block">
+
+                <div class="resumen-text-title">
+                    Reparaciones recomendadas
+                </div>
+
+                <div class="resumen-text-content">
+                    {{ avaluo.reparaciones_recomendadas|default:"Sin recomendaciones registradas." }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="avaluo-col-6">
+
+            <div class="resumen-text-block">
+
+                <div class="resumen-text-title">
+                    Observaciones generales
+                </div>
+
+                <div class="resumen-text-content">
+                    {{ avaluo.observaciones_generales|default:"Sin observaciones registradas." }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     RESULTADO GENERAL
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Resultado general
+    </div>
+
+    <p class="avaluo-section-description">
+        Selecciona la conclusión principal del avalúo.
+    </p>
+
+    <div class="resultado-general-grid">
+
+        {% for valor, etiqueta in avaluo.RESULTADOS_GENERALES %}
+
+            <div class="resultado-general-option">
+
+                <input
+                    type="radio"
+                    id="resultado_general_{{ valor }}"
+                    name="resultado_general"
+                    value="{{ valor }}"
+                    {% if avaluo.resultado_general == valor %}checked{% endif %}
+                    {% if not puede_editar %}disabled{% endif %}
+                >
+
+                <label for="resultado_general_{{ valor }}">
+                    {{ etiqueta }}
+                </label>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     RESPONSABLES
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Responsables
+    </div>
+
+    <div class="avaluo-grid">
+
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Evaluador
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{% if avaluo.evaluador %}{{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username }}{% elif request.user.rol == 'TECNICO' %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Sin asignar{% endif %}"
+                readonly
+            >
+
+        </div>
+
+        <div class="avaluo-field avaluo-col-6">
+
+            <label
+                for="responsable_taller"
+                class="avaluo-label"
+            >
+                Responsable del taller
+            </label>
+
+            <select
+                id="responsable_taller"
+                name="responsable_taller"
+                class="avaluo-input"
+                {% if not puede_editar %}disabled{% endif %}
+            >
+                <option value="">
+                    Seleccionar responsable
+                </option>
+
+                {% for usuario in responsables_disponibles %}
+
+                    <option
+                        value="{{ usuario.id }}"
+                        {% if avaluo.responsable_taller_id == usuario.id %}selected{% endif %}
+                    >
+                        {{ usuario.get_full_name|default:usuario.username }}
+                    </option>
+
+                {% endfor %}
+            </select>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     FINALIZACIÓN
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Finalizar avalúo
+    </div>
+
+    <div class="resumen-finalizar-box">
+
+        <div class="resumen-finalizar-title">
+            Confirmación final
+        </div>
+
+        <div class="resumen-finalizar-text">
+            Al finalizar, el avalúo quedará registrado como definitivo.
+            Solo un administrador podrá reabrirlo posteriormente.
+        </div>
+
+        {% if puede_editar %}
+
+            <label class="resumen-finalizar-check">
+
+                <input
+                    type="checkbox"
+                    id="confirmar_finalizacion"
+                    name="confirmar_finalizacion"
+                    value="1"
+                >
+
+                <span>
+                    Confirmo que revisé la información y que el avalúo
+                    está listo para finalizar.
+                </span>
+
+            </label>
+
+        {% endif %}
+
+    </div>
+
+</div>

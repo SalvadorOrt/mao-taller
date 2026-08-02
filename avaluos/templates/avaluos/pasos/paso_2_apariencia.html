@@ -1,0 +1,660 @@
+<!-- =====================================================
+     PASO 2: APARIENCIA EXTERIOR E INTERIOR
+====================================================== -->
+
+<style>
+    .apariencia-leyenda {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .apariencia-leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 8px 10px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .apariencia-leyenda-codigo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        min-height: 25px;
+        padding: 3px 7px;
+        border-radius: 7px;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .apariencia-leyenda-codigo.nrr {
+        border: 1px solid #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .apariencia-leyenda-codigo.rrm {
+        border: 1px solid #ffe08a;
+        background: #fff7d6;
+        color: #b26a00;
+    }
+
+    .apariencia-leyenda-codigo.rrt {
+        border: 1px solid #ffd6d6;
+        background: #ffebe9;
+        color: #d92d20;
+    }
+
+    .apariencia-leyenda-codigo.nr {
+        border: 1px solid var(--border);
+        background: #f5f5f7;
+        color: var(--muted);
+    }
+
+    .apariencia-grupo {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .apariencia-grupo:last-child {
+        margin-bottom: 0;
+    }
+
+    .apariencia-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .apariencia-item {
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fff;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .apariencia-item:focus-within {
+        border-color: rgba(0, 113, 227, 0.35);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.06);
+    }
+
+    .apariencia-item-header {
+        padding: 12px;
+        background: #fbfbfd;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .apariencia-item-title {
+        margin-bottom: 9px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .apariencia-item-code {
+        margin-left: 5px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+    .apariencia-options {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .apariencia-option {
+        position: relative;
+        min-width: 0;
+    }
+
+    .apariencia-option input {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .apariencia-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        margin: 0;
+        padding: 6px 5px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .apariencia-option label:hover {
+        background: #f5f5f7;
+    }
+
+    .apariencia-option input[value="NO_REVISADO"]:checked + label {
+        border-color: #b8b8bd;
+        background: #f1f1f3;
+        color: #66666b;
+    }
+
+    .apariencia-option input[value="NRR"]:checked + label {
+        border-color: #34c759;
+        background: #eafbea;
+        color: #1f8939;
+    }
+
+    .apariencia-option input[value="RRM"]:checked + label {
+        border-color: #ffbf47;
+        background: #fff7dd;
+        color: #a45f00;
+    }
+
+    .apariencia-option input[value="RRT"]:checked + label {
+        border-color: #ff6961;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .apariencia-item-details {
+        display: none;
+        padding: 12px;
+        background: #fff;
+    }
+
+    .apariencia-item-details.visible {
+        display: block;
+    }
+
+    .apariencia-details-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .apariencia-detail-observacion {
+        grid-column: span 12;
+    }
+
+    .apariencia-detail-diagnostico {
+        grid-column: span 8;
+    }
+
+    .apariencia-detail-costo {
+        grid-column: span 4;
+    }
+
+    .apariencia-textarea {
+        min-height: 82px;
+        resize: vertical;
+    }
+
+    .apariencia-money-wrap {
+        position: relative;
+    }
+
+    .apariencia-money-symbol {
+        position: absolute;
+        top: 50%;
+        left: 11px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .apariencia-money-input {
+        padding-left: 27px;
+    }
+
+    .apariencia-empty {
+        padding: 45px 20px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fafafa;
+        color: var(--muted);
+        text-align: center;
+    }
+
+    .apariencia-empty i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 2rem;
+        opacity: 0.35;
+    }
+
+    @media (max-width: 900px) {
+        .apariencia-leyenda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .apariencia-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .apariencia-leyenda {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .apariencia-options {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .apariencia-option label {
+            min-height: 42px;
+            font-size: 11px;
+        }
+
+        .apariencia-detail-observacion,
+        .apariencia-detail-diagnostico,
+        .apariencia-detail-costo {
+            grid-column: span 12;
+        }
+    }
+</style>
+
+<!-- =====================================================
+     EXPLICACIÓN DE ESTADOS
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Apariencia exterior e interior
+    </div>
+
+    <p class="avaluo-section-description">
+        Revisa cada componente y selecciona un solo estado. Cuando el
+        elemento requiera reparación menor o total, registra el daño,
+        el diagnóstico y el costo estimado.
+    </p>
+
+    <div class="apariencia-leyenda">
+
+        <div class="apariencia-leyenda-item">
+            <span class="apariencia-leyenda-codigo nr">
+                NR
+            </span>
+
+            <span>
+                No revisado
+            </span>
+        </div>
+
+        <div class="apariencia-leyenda-item">
+            <span class="apariencia-leyenda-codigo nrr">
+                NRR
+            </span>
+
+            <span>
+                No requiere reparación
+            </span>
+        </div>
+
+        <div class="apariencia-leyenda-item">
+            <span class="apariencia-leyenda-codigo rrm">
+                RRM
+            </span>
+
+            <span>
+                Reparación menor
+            </span>
+        </div>
+
+        <div class="apariencia-leyenda-item">
+            <span class="apariencia-leyenda-codigo rrt">
+                RRT
+            </span>
+
+            <span>
+                Reparación total
+            </span>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     AGRUPAR RESULTADOS POR SECCIÓN
+====================================================== -->
+
+{% regroup resultados_apariencia by item.seccion as grupos_apariencia %}
+
+{% for grupo in grupos_apariencia %}
+
+    <div class="ot-card apariencia-grupo">
+
+        <div class="section-title">
+
+            {% if grupo.grouper == "EXTERIOR" %}
+
+                <i
+                    class="bi bi-car-front"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Apariencia exterior
+
+            {% elif grupo.grouper == "INTERIOR" %}
+
+                <i
+                    class="bi bi-car-front-fill"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Apariencia interior
+
+            {% else %}
+
+                {{ grupo.grouper }}
+
+            {% endif %}
+
+        </div>
+
+        <div class="apariencia-grid">
+
+            {% for resultado in grupo.list %}
+
+                <div
+                    class="apariencia-item"
+                    data-inspeccion-item="{{ resultado.item_id }}"
+                >
+
+                    <div class="apariencia-item-header">
+
+                        <div class="apariencia-item-title">
+                            {{ resultado.item.nombre }}
+
+                            {% if resultado.item.codigo %}
+                                <span class="apariencia-item-code">
+                                    {{ resultado.item.codigo }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="apariencia-options">
+
+                            <!-- NO REVISADO -->
+                            <div class="apariencia-option">
+
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_no_revisado"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="NO_REVISADO"
+                                    {% if resultado.estado == "NO_REVISADO" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-inspeccion
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_no_revisado"
+                                    title="No revisado"
+                                >
+                                    No revisado
+                                </label>
+
+                            </div>
+
+                            <!-- NRR -->
+                            <div class="apariencia-option">
+
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_nrr"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="NRR"
+                                    {% if resultado.estado == "NRR" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-inspeccion
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_nrr"
+                                    title="No requiere reparación"
+                                >
+                                    NRR
+                                </label>
+
+                            </div>
+
+                            <!-- RRM -->
+                            <div class="apariencia-option">
+
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_rrm"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="RRM"
+                                    {% if resultado.estado == "RRM" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-inspeccion
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_rrm"
+                                    title="Requiere reparación menor"
+                                >
+                                    RRM
+                                </label>
+
+                            </div>
+
+                            <!-- RRT -->
+                            <div class="apariencia-option">
+
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_rrt"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="RRT"
+                                    {% if resultado.estado == "RRT" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-inspeccion
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_rrt"
+                                    title="Requiere reparación total"
+                                >
+                                    RRT
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =========================================
+                         DATOS DE LA REPARACIÓN
+                    ========================================== -->
+
+                    <div
+                        class="apariencia-item-details
+                        {% if resultado.estado == 'RRM' or resultado.estado == 'RRT' %}visible{% endif %}"
+                        data-detalle-inspeccion
+                    >
+
+                        <div class="apariencia-details-grid">
+
+                            <div class="apariencia-field apariencia-detail-observacion">
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_observacion"
+                                    class="avaluo-label"
+                                >
+                                    Daño u observación encontrada
+                                </label>
+
+                                <textarea
+                                    id="inspeccion_{{ resultado.item_id }}_observacion"
+                                    name="inspeccion_{{ resultado.item_id }}_observacion"
+                                    class="avaluo-input apariencia-textarea"
+                                    placeholder="Describe golpes, rayones, roturas, desgaste u otra novedad"
+                                    {% if not puede_editar %}readonly{% endif %}
+                                >{{ resultado.observacion|default:'' }}</textarea>
+
+                            </div>
+
+                            <div class="apariencia-field apariencia-detail-diagnostico">
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_diagnostico"
+                                    class="avaluo-label"
+                                >
+                                    Diagnóstico o reparación necesaria
+                                </label>
+
+                                <textarea
+                                    id="inspeccion_{{ resultado.item_id }}_diagnostico"
+                                    name="inspeccion_{{ resultado.item_id }}_diagnostico"
+                                    class="avaluo-input apariencia-textarea"
+                                    placeholder="Indica qué trabajo debe realizarse"
+                                    {% if not puede_editar %}readonly{% endif %}
+                                >{{ resultado.diagnostico|default:'' }}</textarea>
+
+                            </div>
+
+                            <div class="apariencia-field apariencia-detail-costo">
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_costo"
+                                    class="avaluo-label"
+                                >
+                                    Costo estimado
+                                </label>
+
+                                <div class="apariencia-money-wrap">
+
+                                    <span class="apariencia-money-symbol">
+                                        $
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        id="inspeccion_{{ resultado.item_id }}_costo"
+                                        name="inspeccion_{{ resultado.item_id }}_costo"
+                                        class="avaluo-input apariencia-money-input"
+                                        value="{% if resultado.costo_estimado is not None %}{{ resultado.costo_estimado|stringformat:'s' }}{% endif %}"
+                                        min="0"
+                                        step="0.01"
+                                        inputmode="decimal"
+                                        placeholder="0.00"
+                                        {% if not puede_editar %}readonly{% endif %}
+                                    >
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+{% empty %}
+
+    <div class="ot-card avaluo-section-card">
+
+        <div class="apariencia-empty">
+
+            <i class="bi bi-clipboard-x"></i>
+
+            <strong>
+                No existen puntos de apariencia configurados
+            </strong>
+
+            <div style="margin-top: 5px;">
+                Debes cargar primero los ítems activos de apariencia
+                exterior e interior.
+            </div>
+
+        </div>
+
+    </div>
+
+{% endfor %}
+
+<script>
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const items = document.querySelectorAll(
+                "[data-inspeccion-item]"
+            );
+
+            items.forEach(function (contenedor) {
+                const opciones = contenedor.querySelectorAll(
+                    "[data-estado-inspeccion]"
+                );
+
+                const detalle = contenedor.querySelector(
+                    "[data-detalle-inspeccion]"
+                );
+
+                if (!detalle) {
+                    return;
+                }
+
+                function actualizarDetalle() {
+                    const seleccionada = contenedor.querySelector(
+                        "[data-estado-inspeccion]:checked"
+                    );
+
+                    const requiereReparacion = (
+                        seleccionada &&
+                        (
+                            seleccionada.value === "RRM" ||
+                            seleccionada.value === "RRT"
+                        )
+                    );
+
+                    detalle.classList.toggle(
+                        "visible",
+                        requiereReparacion
+                    );
+                }
+
+                opciones.forEach(function (opcion) {
+                    opcion.addEventListener(
+                        "change",
+                        actualizarDetalle
+                    );
+                });
+
+                actualizarDetalle();
+            });
+        }
+    );
+</script>

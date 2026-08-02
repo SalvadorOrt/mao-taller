@@ -1,0 +1,642 @@
+<!-- =====================================================
+     PASO 4: REVISIÓN MECÁNICA, ELÉCTRICA Y FRENOS
+====================================================== -->
+
+<style>
+    .mecanica-leyenda {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .mecanica-leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 8px 10px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .mecanica-leyenda-codigo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        min-height: 25px;
+        padding: 3px 7px;
+        border-radius: 7px;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .mecanica-leyenda-codigo.no-revisado {
+        border: 1px solid var(--border);
+        background: #f5f5f7;
+        color: var(--muted);
+    }
+
+    .mecanica-leyenda-codigo.nrr {
+        border: 1px solid #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .mecanica-leyenda-codigo.rrm {
+        border: 1px solid #ffe08a;
+        background: #fff7d6;
+        color: #b26a00;
+    }
+
+    .mecanica-leyenda-codigo.rrt {
+        border: 1px solid #ffd6d6;
+        background: #ffebe9;
+        color: #d92d20;
+    }
+
+    .mecanica-grupo {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .mecanica-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .mecanica-item {
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fff;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .mecanica-item:focus-within {
+        border-color: rgba(0, 113, 227, 0.35);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.06);
+    }
+
+    .mecanica-item-header {
+        padding: 12px;
+        border-bottom: 1px solid var(--border-soft);
+        background: #fbfbfd;
+    }
+
+    .mecanica-item-title {
+        margin-bottom: 9px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .mecanica-item-code {
+        margin-left: 5px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+    .mecanica-options {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .mecanica-option {
+        position: relative;
+        min-width: 0;
+    }
+
+    .mecanica-option input {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .mecanica-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        margin: 0;
+        padding: 6px 5px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .mecanica-option label:hover {
+        background: #f5f5f7;
+    }
+
+    .mecanica-option input[value="NO_REVISADO"]:checked + label {
+        border-color: #b8b8bd;
+        background: #f1f1f3;
+        color: #66666b;
+    }
+
+    .mecanica-option input[value="NRR"]:checked + label {
+        border-color: #34c759;
+        background: #eafbea;
+        color: #1f8939;
+    }
+
+    .mecanica-option input[value="RRM"]:checked + label {
+        border-color: #ffbf47;
+        background: #fff7dd;
+        color: #a45f00;
+    }
+
+    .mecanica-option input[value="RRT"]:checked + label {
+        border-color: #ff6961;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .mecanica-item-details {
+        display: none;
+        padding: 12px;
+        background: #fff;
+    }
+
+    .mecanica-item-details.visible {
+        display: block;
+    }
+
+    .mecanica-details-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .mecanica-observacion {
+        grid-column: span 12;
+    }
+
+    .mecanica-diagnostico {
+        grid-column: span 8;
+    }
+
+    .mecanica-costo {
+        grid-column: span 4;
+    }
+
+    .mecanica-textarea {
+        min-height: 82px;
+        resize: vertical;
+    }
+
+    .mecanica-money-wrap {
+        position: relative;
+    }
+
+    .mecanica-money-symbol {
+        position: absolute;
+        top: 50%;
+        left: 11px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .mecanica-money-input {
+        padding-left: 27px;
+    }
+
+    .mecanica-empty {
+        padding: 45px 20px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fafafa;
+        color: var(--muted);
+        text-align: center;
+    }
+
+    .mecanica-empty i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 2rem;
+        opacity: 0.35;
+    }
+
+    @media (max-width: 900px) {
+        .mecanica-leyenda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .mecanica-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .mecanica-leyenda {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .mecanica-options {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .mecanica-option label {
+            min-height: 43px;
+            font-size: 11px;
+        }
+
+        .mecanica-observacion,
+        .mecanica-diagnostico,
+        .mecanica-costo {
+            grid-column: span 12;
+        }
+    }
+</style>
+
+<!-- =====================================================
+     LEYENDA
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Revisión mecánica
+    </div>
+
+    <p class="avaluo-section-description">
+        Evalúa cada componente mecánico, eléctrico y de frenos.
+        Si seleccionas reparación menor o total, registra el problema,
+        el trabajo requerido y el costo estimado.
+    </p>
+
+    <div class="mecanica-leyenda">
+
+        <div class="mecanica-leyenda-item">
+            <span class="mecanica-leyenda-codigo no-revisado">
+                NR
+            </span>
+
+            <span>No revisado</span>
+        </div>
+
+        <div class="mecanica-leyenda-item">
+            <span class="mecanica-leyenda-codigo nrr">
+                NRR
+            </span>
+
+            <span>No requiere reparación</span>
+        </div>
+
+        <div class="mecanica-leyenda-item">
+            <span class="mecanica-leyenda-codigo rrm">
+                RRM
+            </span>
+
+            <span>Reparación menor</span>
+        </div>
+
+        <div class="mecanica-leyenda-item">
+            <span class="mecanica-leyenda-codigo rrt">
+                RRT
+            </span>
+
+            <span>Reparación total</span>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     RESULTADOS AGRUPADOS
+====================================================== -->
+
+{% regroup resultados_mecanica by item.seccion as grupos_mecanica %}
+
+{% for grupo in grupos_mecanica %}
+
+    <div class="ot-card mecanica-grupo">
+
+        <div class="section-title">
+
+            {% if grupo.grouper == "MECANICA" %}
+
+                <i
+                    class="bi bi-gear-wide-connected"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Sistema mecánico
+
+            {% elif grupo.grouper == "ELECTRICO" %}
+
+                <i
+                    class="bi bi-lightning-charge"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Sistema eléctrico
+
+            {% elif grupo.grouper == "FRENOS" %}
+
+                <i
+                    class="bi bi-disc"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Sistema de frenos
+
+            {% else %}
+
+                <i
+                    class="bi bi-tools"
+                    style="margin-right: 6px;"
+                ></i>
+
+                Otros componentes
+
+            {% endif %}
+
+        </div>
+
+        <div class="mecanica-grid">
+
+            {% for resultado in grupo.list %}
+
+                <div
+                    class="mecanica-item"
+                    data-mecanica-item="{{ resultado.item_id }}"
+                >
+
+                    <div class="mecanica-item-header">
+
+                        <div class="mecanica-item-title">
+                            {{ resultado.item.nombre }}
+
+                            {% if resultado.item.codigo %}
+                                <span class="mecanica-item-code">
+                                    {{ resultado.item.codigo }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="mecanica-options">
+
+                            <div class="mecanica-option">
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_no_revisado"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="NO_REVISADO"
+                                    {% if resultado.estado == "NO_REVISADO" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-mecanica
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_no_revisado"
+                                >
+                                    No revisado
+                                </label>
+                            </div>
+
+                            <div class="mecanica-option">
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_nrr"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="NRR"
+                                    {% if resultado.estado == "NRR" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-mecanica
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_nrr"
+                                >
+                                    NRR
+                                </label>
+                            </div>
+
+                            <div class="mecanica-option">
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_rrm"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="RRM"
+                                    {% if resultado.estado == "RRM" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-mecanica
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_rrm"
+                                >
+                                    RRM
+                                </label>
+                            </div>
+
+                            <div class="mecanica-option">
+                                <input
+                                    type="radio"
+                                    id="inspeccion_{{ resultado.item_id }}_rrt"
+                                    name="inspeccion_{{ resultado.item_id }}_estado"
+                                    value="RRT"
+                                    {% if resultado.estado == "RRT" %}checked{% endif %}
+                                    {% if not puede_editar %}disabled{% endif %}
+                                    data-estado-mecanica
+                                >
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_rrt"
+                                >
+                                    RRT
+                                </label>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="mecanica-item-details
+                        {% if resultado.estado == 'RRM' or resultado.estado == 'RRT' %}visible{% endif %}"
+                        data-detalle-mecanica
+                    >
+
+                        <div class="mecanica-details-grid">
+
+                            <div class="mecanica-observacion">
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_observacion"
+                                    class="avaluo-label"
+                                >
+                                    Daño u observación
+                                </label>
+
+                                <textarea
+                                    id="inspeccion_{{ resultado.item_id }}_observacion"
+                                    name="inspeccion_{{ resultado.item_id }}_observacion"
+                                    class="avaluo-input mecanica-textarea"
+                                    placeholder="Describe desgaste, fuga, ruido, juego, falla o daño encontrado"
+                                    {% if not puede_editar %}readonly{% endif %}
+                                >{{ resultado.observacion|default:'' }}</textarea>
+
+                            </div>
+
+                            <div class="mecanica-diagnostico">
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_diagnostico"
+                                    class="avaluo-label"
+                                >
+                                    Diagnóstico o reparación requerida
+                                </label>
+
+                                <textarea
+                                    id="inspeccion_{{ resultado.item_id }}_diagnostico"
+                                    name="inspeccion_{{ resultado.item_id }}_diagnostico"
+                                    class="avaluo-input mecanica-textarea"
+                                    placeholder="Indica el trabajo, ajuste o reemplazo necesario"
+                                    {% if not puede_editar %}readonly{% endif %}
+                                >{{ resultado.diagnostico|default:'' }}</textarea>
+
+                            </div>
+
+                            <div class="mecanica-costo">
+
+                                <label
+                                    for="inspeccion_{{ resultado.item_id }}_costo"
+                                    class="avaluo-label"
+                                >
+                                    Costo estimado
+                                </label>
+
+                                <div class="mecanica-money-wrap">
+
+                                    <span class="mecanica-money-symbol">
+                                        $
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        id="inspeccion_{{ resultado.item_id }}_costo"
+                                        name="inspeccion_{{ resultado.item_id }}_costo"
+                                        class="avaluo-input mecanica-money-input"
+                                        value="{% if resultado.costo_estimado is not None %}{{ resultado.costo_estimado|stringformat:'s' }}{% endif %}"
+                                        min="0"
+                                        step="0.01"
+                                        inputmode="decimal"
+                                        placeholder="0.00"
+                                        {% if not puede_editar %}readonly{% endif %}
+                                    >
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+{% empty %}
+
+    <div class="ot-card avaluo-section-card">
+
+        <div class="mecanica-empty">
+
+            <i class="bi bi-tools"></i>
+
+            <strong>
+                No existen ítems mecánicos configurados
+            </strong>
+
+            <div style="margin-top: 5px;">
+                Debes cargar primero los elementos activos de mecánica,
+                electricidad y frenos.
+            </div>
+
+        </div>
+
+    </div>
+
+{% endfor %}
+
+<script>
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const items = document.querySelectorAll(
+                "[data-mecanica-item]"
+            );
+
+            items.forEach(function (contenedor) {
+                const opciones = contenedor.querySelectorAll(
+                    "[data-estado-mecanica]"
+                );
+
+                const detalle = contenedor.querySelector(
+                    "[data-detalle-mecanica]"
+                );
+
+                if (!detalle) {
+                    return;
+                }
+
+                function actualizarDetalle() {
+                    const seleccionada = contenedor.querySelector(
+                        "[data-estado-mecanica]:checked"
+                    );
+
+                    const requiereReparacion = (
+                        seleccionada &&
+                        (
+                            seleccionada.value === "RRM" ||
+                            seleccionada.value === "RRT"
+                        )
+                    );
+
+                    detalle.classList.toggle(
+                        "visible",
+                        requiereReparacion
+                    );
+                }
+
+                opciones.forEach(function (opcion) {
+                    opcion.addEventListener(
+                        "change",
+                        actualizarDetalle
+                    );
+                });
+
+                actualizarDetalle();
+            });
+        }
+    );
+</script>

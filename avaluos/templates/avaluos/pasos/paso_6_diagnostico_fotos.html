@@ -1,0 +1,1492 @@
+<!-- =====================================================
+     PASO 6: DIAGNÓSTICO, VALORES Y FOTOGRAFÍAS
+====================================================== -->
+
+<style>
+    /* =====================================================
+       CAMPOS DE TEXTO
+    ===================================================== */
+
+    .diagnostico-textarea {
+        min-height: 125px;
+        resize: vertical;
+    }
+
+    .diagnostico-textarea.grande {
+        min-height: 160px;
+    }
+
+    /* =====================================================
+       VEHÍCULO USADO
+    ===================================================== */
+
+    .usado-toggle-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 14px;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fbfbfd;
+    }
+
+    .usado-toggle-info {
+        min-width: 0;
+    }
+
+    .usado-toggle-title {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .usado-toggle-text {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .usado-switch {
+        position: relative;
+        display: inline-flex;
+        flex: 0 0 auto;
+        width: 50px;
+        height: 29px;
+    }
+
+    .usado-switch input {
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+
+    .usado-switch-slider {
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: #d1d1d6;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .usado-switch-slider::before {
+        position: absolute;
+        width: 23px;
+        height: 23px;
+        left: 3px;
+        top: 3px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+        content: "";
+        transition: 0.2s ease;
+    }
+
+    .usado-switch input:checked + .usado-switch-slider {
+        background: var(--accent);
+    }
+
+    .usado-switch input:checked + .usado-switch-slider::before {
+        transform: translateX(21px);
+    }
+
+    .usado-contenido {
+        display: none;
+        margin-top: 15px;
+    }
+
+    .usado-contenido.visible {
+        display: block;
+    }
+
+    /* =====================================================
+       VALORES ECONÓMICOS
+    ===================================================== */
+
+    .valor-money-wrap {
+        position: relative;
+    }
+
+    .valor-money-symbol {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        z-index: 2;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .valor-money-input {
+        padding-left: 29px;
+        text-align: right;
+        font-weight: 700;
+    }
+
+    .valor-resumen {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .valor-resumen-item {
+        padding: 11px 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+    }
+
+    .valor-resumen-label {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .valor-resumen-numero {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    /* =====================================================
+       FOTOGRAFÍAS
+    ===================================================== */
+
+    .foto-upload-area {
+        position: relative;
+        padding: 22px;
+        border: 2px dashed #c8c8cc;
+        border-radius: 14px;
+        background: #fafafa;
+        text-align: center;
+        transition:
+            border-color 0.15s ease,
+            background 0.15s ease;
+    }
+
+    .foto-upload-area:hover,
+    .foto-upload-area.dragover {
+        border-color: var(--accent);
+        background: #f5faff;
+    }
+
+    .foto-upload-icon {
+        margin-bottom: 8px;
+        color: var(--accent);
+        font-size: 2rem;
+    }
+
+    .foto-upload-title {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .foto-upload-text {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .foto-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+    }
+
+    .foto-upload-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 13px;
+    }
+
+    .foto-preview-list {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .foto-preview-card {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #f5f5f7;
+    }
+
+    .foto-preview-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .foto-preview-remove {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 27px;
+        height: 27px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.68);
+        color: #fff;
+        cursor: pointer;
+    }
+
+    /* =====================================================
+       GALERÍA GUARDADA
+    ===================================================== */
+
+    .foto-gallery {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .foto-gallery-card {
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .foto-gallery-image {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        background: #f5f5f7;
+    }
+
+    .foto-gallery-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.18s ease;
+    }
+
+    .foto-gallery-card:hover img {
+        transform: scale(1.025);
+    }
+
+    .foto-gallery-type {
+        position: absolute;
+        left: 7px;
+        bottom: 7px;
+        padding: 4px 8px;
+        border-radius: 7px;
+        background: rgba(0, 0, 0, 0.68);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .foto-gallery-body {
+        padding: 10px;
+    }
+
+    .foto-gallery-description {
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .foto-gallery-meta {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 9px;
+    }
+
+    .foto-gallery-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    .foto-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 8px;
+        border: 1px solid #ffd6d6;
+        border-radius: 8px;
+        background: #fff0ef;
+        color: #d92d20;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .foto-empty {
+        padding: 45px 20px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fafafa;
+        color: var(--muted);
+        text-align: center;
+    }
+
+    .foto-empty i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 2rem;
+        opacity: 0.35;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 1000px) {
+        .foto-preview-list {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .foto-gallery {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .valor-resumen {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .foto-preview-list {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .foto-gallery {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .usado-toggle-card {
+            align-items: flex-start;
+        }
+
+        .foto-upload-area {
+            padding: 18px 12px;
+        }
+
+        .foto-upload-buttons {
+            flex-direction: column;
+        }
+
+        .foto-upload-buttons .btn-login {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .foto-preview-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .foto-gallery {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .valor-resumen {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .foto-gallery {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- =====================================================
+     DIAGNÓSTICO GENERAL
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Diagnóstico general
+    </div>
+
+    <p class="avaluo-section-description">
+        Resume el estado técnico del vehículo y explica las principales
+        novedades encontradas durante la evaluación.
+    </p>
+
+    <div class="avaluo-grid">
+
+        <div class="avaluo-field avaluo-col-12">
+
+            <label
+                for="diagnostico_general"
+                class="avaluo-label"
+            >
+                Diagnóstico del vehículo
+            </label>
+
+            <textarea
+                id="diagnostico_general"
+                name="diagnostico_general"
+                class="avaluo-input diagnostico-textarea grande"
+                placeholder="Describe el estado general del vehículo, fallas detectadas y conclusiones técnicas"
+                {% if not puede_editar %}readonly{% endif %}
+            >{{ avaluo.diagnostico_general|default:'' }}</textarea>
+
+        </div>
+
+        <div class="avaluo-field avaluo-col-6">
+
+            <label
+                for="reparaciones_recomendadas"
+                class="avaluo-label"
+            >
+                Reparaciones recomendadas
+            </label>
+
+            <textarea
+                id="reparaciones_recomendadas"
+                name="reparaciones_recomendadas"
+                class="avaluo-input diagnostico-textarea"
+                placeholder="Indica los trabajos, ajustes o reemplazos recomendados"
+                {% if not puede_editar %}readonly{% endif %}
+            >{{ avaluo.reparaciones_recomendadas|default:'' }}</textarea>
+
+        </div>
+
+        <div class="avaluo-field avaluo-col-6">
+
+            <label
+                for="observaciones_generales"
+                class="avaluo-label"
+            >
+                Observaciones generales
+            </label>
+
+            <textarea
+                id="observaciones_generales"
+                name="observaciones_generales"
+                class="avaluo-input diagnostico-textarea"
+                placeholder="Incluye aclaraciones, limitaciones de la revisión u otras novedades"
+                {% if not puede_editar %}readonly{% endif %}
+            >{{ avaluo.observaciones_generales|default:'' }}</textarea>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     USO INTERNO / PARTE DE PAGO
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Información comercial del vehículo
+    </div>
+
+    <p class="avaluo-section-description">
+        Activa esta sección solamente cuando el vehículo sea evaluado
+        para recepción, compra o parte de pago.
+    </p>
+
+    <div class="usado-toggle-card">
+
+        <div class="usado-toggle-info">
+
+            <div class="usado-toggle-title">
+                Vehículo usado o recibido como parte de pago
+            </div>
+
+            <div class="usado-toggle-text">
+                Al activar esta opción se habilitarán los datos del
+                propietario y los valores comerciales.
+            </div>
+
+        </div>
+
+        <label class="usado-switch">
+
+            <input
+                type="checkbox"
+                id="aplica_vehiculo_usado"
+                name="aplica_vehiculo_usado"
+                value="1"
+                {% if avaluo.aplica_vehiculo_usado %}checked{% endif %}
+                {% if not puede_editar %}disabled{% endif %}
+            >
+
+            <span class="usado-switch-slider"></span>
+
+        </label>
+
+    </div>
+
+    <div
+        id="contenidoVehiculoUsado"
+        class="usado-contenido
+        {% if avaluo.aplica_vehiculo_usado %}visible{% endif %}"
+    >
+
+        <div class="avaluo-grid">
+
+            <div class="avaluo-field avaluo-col-6">
+
+                <label
+                    for="recibido_como_parte_pago_de"
+                    class="avaluo-label"
+                >
+                    Se recibe como parte de pago de
+                </label>
+
+                <input
+                    type="text"
+                    id="recibido_como_parte_pago_de"
+                    name="recibido_como_parte_pago_de"
+                    class="avaluo-input"
+                    value="{{ avaluo.recibido_como_parte_pago_de|default:'' }}"
+                    placeholder="Vehículo, negociación o referencia"
+                    maxlength="250"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-6">
+
+                <label
+                    for="vendedor_que_solicita"
+                    class="avaluo-label"
+                >
+                    Vendedor que solicita
+                </label>
+
+                <input
+                    type="text"
+                    id="vendedor_que_solicita"
+                    name="vendedor_que_solicita"
+                    class="avaluo-input"
+                    value="{{ avaluo.vendedor_que_solicita|default:'' }}"
+                    placeholder="Nombre del vendedor o responsable"
+                    maxlength="200"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="anio_matricula"
+                    class="avaluo-label"
+                >
+                    Año matrícula
+                </label>
+
+                <input
+                    type="number"
+                    id="anio_matricula"
+                    name="anio_matricula"
+                    class="avaluo-input"
+                    value="{{ avaluo.anio_matricula|default:'' }}"
+                    min="1900"
+                    max="2100"
+                    inputmode="numeric"
+                    placeholder="Ej. 2026"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="anio_modelo_usado"
+                    class="avaluo-label"
+                >
+                    Año modelo
+                </label>
+
+                <input
+                    type="number"
+                    id="anio_modelo_usado"
+                    name="anio_modelo_usado"
+                    class="avaluo-input"
+                    value="{{ avaluo.anio_modelo_usado|default:'' }}"
+                    min="1900"
+                    max="2100"
+                    inputmode="numeric"
+                    placeholder="Ej. 2025"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="cilindraje_usado"
+                    class="avaluo-label"
+                >
+                    Cilindraje
+                </label>
+
+                <input
+                    type="text"
+                    id="cilindraje_usado"
+                    name="cilindraje_usado"
+                    class="avaluo-input"
+                    value="{{ avaluo.cilindraje_usado|default:'' }}"
+                    placeholder="Ej. 1600 cc"
+                    maxlength="50"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="color_usado"
+                    class="avaluo-label"
+                >
+                    Color
+                </label>
+
+                <input
+                    type="text"
+                    id="color_usado"
+                    name="color_usado"
+                    class="avaluo-input"
+                    value="{{ avaluo.color_usado|default:'' }}"
+                    placeholder="Color del vehículo"
+                    maxlength="50"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-6">
+
+                <label class="avaluo-label">
+                    Reserva de dominio
+                </label>
+
+                <div class="avaluo-choice-group">
+
+                    <div class="avaluo-choice">
+
+                        <input
+                            type="radio"
+                            id="reserva_dominio_si"
+                            name="reserva_dominio"
+                            value="SI"
+                            {% if avaluo.reserva_dominio is True %}checked{% endif %}
+                            {% if not puede_editar %}disabled{% endif %}
+                        >
+
+                        <label for="reserva_dominio_si">
+                            Sí
+                        </label>
+
+                    </div>
+
+                    <div class="avaluo-choice">
+
+                        <input
+                            type="radio"
+                            id="reserva_dominio_no"
+                            name="reserva_dominio"
+                            value="NO"
+                            {% if avaluo.reserva_dominio is False %}checked{% endif %}
+                            {% if not puede_editar %}disabled{% endif %}
+                        >
+
+                        <label for="reserva_dominio_no">
+                            No
+                        </label>
+
+                    </div>
+
+                    <div class="avaluo-choice">
+
+                        <input
+                            type="radio"
+                            id="reserva_dominio_nd"
+                            name="reserva_dominio"
+                            value=""
+                            {% if avaluo.reserva_dominio is None %}checked{% endif %}
+                            {% if not puede_editar %}disabled{% endif %}
+                        >
+
+                        <label for="reserva_dominio_nd">
+                            No definido
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-6">
+
+                <label
+                    for="propietario"
+                    class="avaluo-label"
+                >
+                    Propietario
+                </label>
+
+                <input
+                    type="text"
+                    id="propietario"
+                    name="propietario"
+                    class="avaluo-input"
+                    value="{{ avaluo.propietario|default:'' }}"
+                    placeholder="Nombre completo del propietario"
+                    maxlength="200"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-4">
+
+                <label
+                    for="identificacion_propietario"
+                    class="avaluo-label"
+                >
+                    Cédula / identificación
+                </label>
+
+                <input
+                    type="text"
+                    id="identificacion_propietario"
+                    name="identificacion_propietario"
+                    class="avaluo-input"
+                    value="{{ avaluo.identificacion_propietario|default:'' }}"
+                    placeholder="Número de identificación"
+                    maxlength="30"
+                    inputmode="numeric"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-4">
+
+                <label
+                    for="telefono_propietario"
+                    class="avaluo-label"
+                >
+                    Teléfono
+                </label>
+
+                <input
+                    type="tel"
+                    id="telefono_propietario"
+                    name="telefono_propietario"
+                    class="avaluo-input"
+                    value="{{ avaluo.telefono_propietario|default:'' }}"
+                    placeholder="Teléfono del propietario"
+                    maxlength="50"
+                    inputmode="tel"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-4">
+
+                <label
+                    for="direccion_propietario"
+                    class="avaluo-label"
+                >
+                    Dirección
+                </label>
+
+                <input
+                    type="text"
+                    id="direccion_propietario"
+                    name="direccion_propietario"
+                    class="avaluo-input"
+                    value="{{ avaluo.direccion_propietario|default:'' }}"
+                    placeholder="Dirección del propietario"
+                    {% if not puede_editar %}readonly{% endif %}
+                >
+
+            </div>
+
+        </div>
+
+        <!-- =============================================
+             VALORES
+        ============================================== -->
+
+        <div
+            class="section-title"
+            style="margin-top: 20px;"
+        >
+            Valores del avalúo
+        </div>
+
+        <div class="avaluo-grid">
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="avaluo_comercial"
+                    class="avaluo-label"
+                >
+                    Avalúo comercial
+                </label>
+
+                <div class="valor-money-wrap">
+
+                    <span class="valor-money-symbol">
+                        $
+                    </span>
+
+                    <input
+                        type="number"
+                        id="avaluo_comercial"
+                        name="avaluo_comercial"
+                        class="avaluo-input valor-money-input"
+                        value="{% if avaluo.avaluo_comercial is not None %}{{ avaluo.avaluo_comercial|stringformat:'s' }}{% endif %}"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                        {% if not puede_editar %}readonly{% endif %}
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="precio_recepcion"
+                    class="avaluo-label"
+                >
+                    Precio de recepción
+                </label>
+
+                <div class="valor-money-wrap">
+
+                    <span class="valor-money-symbol">
+                        $
+                    </span>
+
+                    <input
+                        type="number"
+                        id="precio_recepcion"
+                        name="precio_recepcion"
+                        class="avaluo-input valor-money-input"
+                        value="{% if avaluo.precio_recepcion is not None %}{{ avaluo.precio_recepcion|stringformat:'s' }}{% endif %}"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                        {% if not puede_editar %}readonly{% endif %}
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="costo_reparacion"
+                    class="avaluo-label"
+                >
+                    Costo de reparación
+                </label>
+
+                <div class="valor-money-wrap">
+
+                    <span class="valor-money-symbol">
+                        $
+                    </span>
+
+                    <input
+                        type="number"
+                        id="costo_reparacion"
+                        name="costo_reparacion"
+                        class="avaluo-input valor-money-input"
+                        value="{% if avaluo.costo_reparacion is not None %}{{ avaluo.costo_reparacion|stringformat:'s' }}{% endif %}"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                        {% if not puede_editar %}readonly{% endif %}
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-3">
+
+                <label
+                    for="costo_total"
+                    class="avaluo-label"
+                >
+                    Costo total
+                </label>
+
+                <div class="valor-money-wrap">
+
+                    <span class="valor-money-symbol">
+                        $
+                    </span>
+
+                    <input
+                        type="number"
+                        id="costo_total"
+                        name="costo_total"
+                        class="avaluo-input valor-money-input"
+                        value="{% if avaluo.costo_total is not None %}{{ avaluo.costo_total|stringformat:'s' }}{% endif %}"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                        {% if not puede_editar %}readonly{% endif %}
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     SUBIR FOTOGRAFÍAS
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Fotografías del avalúo
+    </div>
+
+    <p class="avaluo-section-description">
+        Puedes tomar fotografías desde el celular o seleccionar varias
+        imágenes guardadas en el dispositivo.
+    </p>
+
+    {% if puede_editar %}
+
+        <div class="avaluo-grid">
+
+            <div class="avaluo-field avaluo-col-4">
+
+                <label
+                    for="tipo_foto"
+                    class="avaluo-label"
+                >
+                    Tipo de fotografía
+                </label>
+
+                <select
+                    id="tipo_foto"
+                    name="tipo_foto"
+                    class="avaluo-input"
+                >
+
+                    {% for valor, etiqueta in tipos_foto %}
+
+                        <option value="{{ valor }}">
+                            {{ etiqueta }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <div class="avaluo-field avaluo-col-8">
+
+                <label
+                    for="descripcion_foto"
+                    class="avaluo-label"
+                >
+                    Descripción
+                </label>
+
+                <input
+                    type="text"
+                    id="descripcion_foto"
+                    name="descripcion_foto"
+                    class="avaluo-input"
+                    placeholder="Describe el daño, ubicación o contenido de las fotografías"
+                    maxlength="255"
+                >
+
+            </div>
+
+        </div>
+
+        <div
+            id="fotoUploadArea"
+            class="foto-upload-area"
+            style="margin-top: 13px;"
+        >
+
+            <div class="foto-upload-icon">
+                <i class="bi bi-camera"></i>
+            </div>
+
+            <div class="foto-upload-title">
+                Agregar fotografías
+            </div>
+
+            <div class="foto-upload-text">
+                Puedes seleccionar varias imágenes. En celular también
+                puedes abrir directamente la cámara.
+            </div>
+
+            <input
+                type="file"
+                id="fotografias"
+                name="fotografias"
+                class="foto-file-input"
+                accept="image/*"
+                multiple
+            >
+
+            <input
+                type="file"
+                id="fotografiaCamara"
+                class="foto-file-input"
+                accept="image/*"
+                capture="environment"
+            >
+
+            <div class="foto-upload-buttons">
+
+                <button
+                    type="button"
+                    id="btnSeleccionarFotos"
+                    class="btn-login primary"
+                >
+                    <i
+                        class="bi bi-images"
+                        style="margin-right: 6px;"
+                    ></i>
+
+                    Seleccionar fotos
+                </button>
+
+                <button
+                    type="button"
+                    id="btnAbrirCamara"
+                    class="btn-login"
+                >
+                    <i
+                        class="bi bi-camera-fill"
+                        style="margin-right: 6px;"
+                    ></i>
+
+                    Tomar foto
+                </button>
+
+            </div>
+
+        </div>
+
+        <div
+            id="fotoPreviewList"
+            class="foto-preview-list"
+        ></div>
+
+    {% endif %}
+
+</div>
+
+<!-- =====================================================
+     GALERÍA DE FOTOGRAFÍAS GUARDADAS
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Fotografías registradas
+    </div>
+
+    {% if fotografias %}
+
+        <div class="foto-gallery">
+
+            {% for foto in fotografias %}
+
+                <div class="foto-gallery-card">
+
+                    <a
+                        href="{{ foto.imagen.url }}"
+                        target="_blank"
+                        class="foto-gallery-image"
+                    >
+
+                        <img
+                            src="{{ foto.imagen.url }}"
+                            alt="{{ foto.descripcion|default:foto.get_tipo_foto_display }}"
+                            loading="lazy"
+                        >
+
+                        <span class="foto-gallery-type">
+                            {{ foto.get_tipo_foto_display }}
+                        </span>
+
+                    </a>
+
+                    <div class="foto-gallery-body">
+
+                        <div class="foto-gallery-description">
+                            {{ foto.descripcion|default:"Sin descripción" }}
+                        </div>
+
+                        <div class="foto-gallery-meta">
+                            {{ foto.fecha_subida|date:"d/m/Y H:i" }}
+
+                            {% if foto.subida_por %}
+                                · {{ foto.subida_por.username }}
+                            {% endif %}
+                        </div>
+
+                        {% if puede_editar %}
+
+                            <div class="foto-gallery-actions">
+
+                                <button
+                                    type="button"
+                                    class="foto-delete-btn"
+                                    onclick="confirmarEliminarFoto(
+                                        '{{ foto.id }}',
+                                        '{{ foto.get_tipo_foto_display|escapejs }}'
+                                    )"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                    Eliminar
+                                </button>
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="foto-empty">
+
+            <i class="bi bi-images"></i>
+
+            <strong>
+                Todavía no hay fotografías registradas
+            </strong>
+
+            <div style="margin-top: 5px;">
+                Agrega fotografías del vehículo, daños encontrados,
+                motor, chasis, tablero o documentos.
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const toggleUsado = document.getElementById(
+                "aplica_vehiculo_usado"
+            );
+
+            const contenidoUsado = document.getElementById(
+                "contenidoVehiculoUsado"
+            );
+
+            function actualizarVehiculoUsado() {
+                if (!toggleUsado || !contenidoUsado) {
+                    return;
+                }
+
+                contenidoUsado.classList.toggle(
+                    "visible",
+                    toggleUsado.checked
+                );
+            }
+
+            toggleUsado?.addEventListener(
+                "change",
+                actualizarVehiculoUsado
+            );
+
+            actualizarVehiculoUsado();
+
+
+            /* =============================================
+               SELECCIÓN Y PREVISUALIZACIÓN DE FOTOS
+            ============================================== */
+
+            const inputFotos = document.getElementById(
+                "fotografias"
+            );
+
+            const inputCamara = document.getElementById(
+                "fotografiaCamara"
+            );
+
+            const btnSeleccionar = document.getElementById(
+                "btnSeleccionarFotos"
+            );
+
+            const btnCamara = document.getElementById(
+                "btnAbrirCamara"
+            );
+
+            const previewList = document.getElementById(
+                "fotoPreviewList"
+            );
+
+            const uploadArea = document.getElementById(
+                "fotoUploadArea"
+            );
+
+            let archivosSeleccionados = [];
+
+            btnSeleccionar?.addEventListener(
+                "click",
+                function () {
+                    inputFotos?.click();
+                }
+            );
+
+            btnCamara?.addEventListener(
+                "click",
+                function () {
+                    inputCamara?.click();
+                }
+            );
+
+            inputFotos?.addEventListener(
+                "change",
+                function () {
+                    agregarArchivos(
+                        Array.from(inputFotos.files || [])
+                    );
+                }
+            );
+
+            inputCamara?.addEventListener(
+                "change",
+                function () {
+                    agregarArchivos(
+                        Array.from(inputCamara.files || [])
+                    );
+
+                    inputCamara.value = "";
+                }
+            );
+
+            uploadArea?.addEventListener(
+                "dragover",
+                function (event) {
+                    event.preventDefault();
+                    uploadArea.classList.add("dragover");
+                }
+            );
+
+            uploadArea?.addEventListener(
+                "dragleave",
+                function () {
+                    uploadArea.classList.remove("dragover");
+                }
+            );
+
+            uploadArea?.addEventListener(
+                "drop",
+                function (event) {
+                    event.preventDefault();
+                    uploadArea.classList.remove("dragover");
+
+                    agregarArchivos(
+                        Array.from(
+                            event.dataTransfer.files || []
+                        )
+                    );
+                }
+            );
+
+            function agregarArchivos(archivos) {
+                archivos.forEach(function (archivo) {
+                    if (!archivo.type.startsWith("image/")) {
+                        return;
+                    }
+
+                    const duplicado = archivosSeleccionados.some(
+                        function (existente) {
+                            return (
+                                existente.name === archivo.name &&
+                                existente.size === archivo.size &&
+                                existente.lastModified ===
+                                    archivo.lastModified
+                            );
+                        }
+                    );
+
+                    if (!duplicado) {
+                        archivosSeleccionados.push(archivo);
+                    }
+                });
+
+                sincronizarInput();
+                renderizarPreviews();
+            }
+
+            function sincronizarInput() {
+                if (!inputFotos) {
+                    return;
+                }
+
+                const transferencia = new DataTransfer();
+
+                archivosSeleccionados.forEach(
+                    function (archivo) {
+                        transferencia.items.add(archivo);
+                    }
+                );
+
+                inputFotos.files = transferencia.files;
+            }
+
+            function renderizarPreviews() {
+                if (!previewList) {
+                    return;
+                }
+
+                previewList.innerHTML = "";
+
+                archivosSeleccionados.forEach(
+                    function (archivo, indice) {
+                        const lector = new FileReader();
+
+                        lector.onload = function (evento) {
+                            const tarjeta = document.createElement(
+                                "div"
+                            );
+
+                            tarjeta.className = "foto-preview-card";
+
+                            const imagen = document.createElement(
+                                "img"
+                            );
+
+                            imagen.src = evento.target.result;
+                            imagen.alt = archivo.name;
+
+                            const boton = document.createElement(
+                                "button"
+                            );
+
+                            boton.type = "button";
+                            boton.className =
+                                "foto-preview-remove";
+                            boton.innerHTML =
+                                '<i class="bi bi-x-lg"></i>';
+                            boton.title = "Quitar fotografía";
+
+                            boton.addEventListener(
+                                "click",
+                                function () {
+                                    archivosSeleccionados.splice(
+                                        indice,
+                                        1
+                                    );
+
+                                    sincronizarInput();
+                                    renderizarPreviews();
+                                }
+                            );
+
+                            tarjeta.appendChild(imagen);
+                            tarjeta.appendChild(boton);
+                            previewList.appendChild(tarjeta);
+                        };
+
+                        lector.readAsDataURL(archivo);
+                    }
+                );
+            }
+        }
+    );
+
+
+    function confirmarEliminarFoto(
+        fotoId,
+        descripcion
+    ) {
+        Swal.fire({
+            title: "¿Eliminar fotografía?",
+            text:
+                "Se eliminará la fotografía: " +
+                descripcion,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#ff3b30",
+            cancelButtonColor: "#6e6e73",
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        }).then(function (resultado) {
+            if (!resultado.isConfirmed) {
+                return;
+            }
+
+            const formulario = document.getElementById(
+                "formEliminarFoto_" + fotoId
+            );
+
+            if (formulario) {
+                formulario.submit();
+            }
+        });
+    }
+</script>

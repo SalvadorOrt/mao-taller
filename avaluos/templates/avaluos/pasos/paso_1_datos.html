@@ -1,0 +1,781 @@
+<!-- =====================================================
+     RESUMEN DE LA ORDEN
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Información de la orden
+    </div>
+
+    <p class="avaluo-section-description">
+        Estos datos se obtienen automáticamente de la orden de trabajo
+        y se conservan como respaldo dentro del avalúo.
+    </p>
+
+    <div class="avaluo-vehicle-summary">
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Orden
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.numero_orden }}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Sucursal
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.sucursal.nombre|default:"Sin sucursal" }}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Placa
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.placa|default:"SIN PLACA" }}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Kilometraje
+            </div>
+
+            <div class="avaluo-summary-value">
+                {% if orden.kilometraje is not None %}
+                    {{ orden.kilometraje }} km
+                {% else %}
+                    Sin registrar
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Cliente
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.nombre_cliente_final }}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Vehículo
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.vehiculo|default:"Sin vehículo" }}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Año
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.anio_vehiculo|default:"Sin registrar" }}
+            </div>
+        </div>
+
+        <div class="avaluo-summary-item">
+            <div class="avaluo-summary-label">
+                Color
+            </div>
+
+            <div class="avaluo-summary-value">
+                {{ orden.color|default:"Sin registrar" }}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     DATOS DE IDENTIFICACIÓN
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Identificación del avalúo
+    </div>
+
+    <p class="avaluo-section-description">
+        Registra quién solicitó la evaluación y la fecha en que se
+        realizó la inspección.
+    </p>
+
+    <div class="avaluo-grid">
+
+        <div class="avaluo-field avaluo-col-6">
+            <label
+                for="solicitado_por"
+                class="avaluo-label"
+            >
+                Solicitado por
+            </label>
+
+            <input
+                type="text"
+                id="solicitado_por"
+                name="solicitado_por"
+                class="avaluo-input"
+                value="{{ avaluo.solicitado_por|default:'' }}"
+                placeholder="Nombre de quien solicita el avalúo"
+                maxlength="200"
+                {% if not puede_editar %}readonly{% endif %}
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label
+                for="fecha_avaluo"
+                class="avaluo-label"
+            >
+                Fecha del avalúo
+            </label>
+
+            <input
+                type="date"
+                id="fecha_avaluo"
+                name="fecha_avaluo"
+                class="avaluo-input"
+                value="{{ avaluo.fecha_avaluo|date:'Y-m-d' }}"
+                {% if not puede_editar %}readonly{% endif %}
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Evaluador
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{% if avaluo.evaluador %}{{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username }}{% elif request.user.rol == 'TECNICO' %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Por asignar{% endif %}"
+                readonly
+            >
+
+            <div class="avaluo-help">
+                El técnico conectado se asignará automáticamente.
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     DATOS DEL VEHÍCULO
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Datos del vehículo
+    </div>
+
+    <p class="avaluo-section-description">
+        Los datos provenientes de la orden se muestran únicamente como
+        referencia y no se modifican desde esta pantalla.
+    </p>
+
+    <div class="avaluo-grid">
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Marca
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{{ avaluo.marca_respaldo|default:orden.expediente.marca_api|default:'' }}"
+                placeholder="Sin marca registrada"
+                readonly
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-6">
+            <label class="avaluo-label">
+                Modelo / vehículo
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{{ avaluo.vehiculo_respaldo|default:orden.vehiculo|default:'' }}"
+                placeholder="Sin vehículo registrado"
+                readonly
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Placa
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{{ avaluo.placa_respaldo|default:orden.placa|default:'' }}"
+                readonly
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Año
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{{ avaluo.anio_modelo_respaldo|default:orden.anio_vehiculo|default:'' }}"
+                readonly
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Color
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{{ avaluo.color_respaldo|default:orden.color|default:'' }}"
+                readonly
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Kilometraje
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{% if avaluo.kilometraje_respaldo is not None %}{{ avaluo.kilometraje_respaldo }} km{% elif orden.kilometraje is not None %}{{ orden.kilometraje }} km{% endif %}"
+                readonly
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-3">
+            <label class="avaluo-label">
+                Chasis / VIN
+            </label>
+
+            <input
+                type="text"
+                class="avaluo-input"
+                value="{{ avaluo.chasis_respaldo|default:orden.expediente.numero_chasis|default:'' }}"
+                placeholder="Sin chasis registrado"
+                readonly
+            >
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     INFORMACIÓN TÉCNICA
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Información técnica
+    </div>
+
+    <p class="avaluo-section-description">
+        Completa los datos técnicos que no constan en la recepción de
+        la orden de trabajo.
+    </p>
+
+    <div class="avaluo-grid">
+
+        <div class="avaluo-field avaluo-col-4">
+            <label
+                for="numero_motor"
+                class="avaluo-label"
+            >
+                Número de motor
+            </label>
+
+            <input
+                type="text"
+                id="numero_motor"
+                name="numero_motor"
+                class="avaluo-input"
+                value="{{ avaluo.numero_motor|default:'' }}"
+                placeholder="Número o código del motor"
+                maxlength="100"
+                autocomplete="off"
+                {% if not puede_editar %}readonly{% endif %}
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-4">
+            <label
+                for="motor"
+                class="avaluo-label"
+            >
+                Motor
+            </label>
+
+            <input
+                type="text"
+                id="motor"
+                name="motor"
+                class="avaluo-input"
+                value="{{ avaluo.motor|default:'' }}"
+                placeholder="Ejemplo: 1.6 L, 4 cilindros"
+                maxlength="100"
+                autocomplete="off"
+                {% if not puede_editar %}readonly{% endif %}
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-4">
+            <label
+                for="cilindraje"
+                class="avaluo-label"
+            >
+                Cilindraje
+            </label>
+
+            <input
+                type="text"
+                id="cilindraje"
+                name="cilindraje"
+                class="avaluo-input"
+                value="{{ avaluo.cilindraje|default:'' }}"
+                placeholder="Ejemplo: 1600 cc"
+                maxlength="50"
+                autocomplete="off"
+                {% if not puede_editar %}readonly{% endif %}
+            >
+        </div>
+
+        <div class="avaluo-field avaluo-col-6">
+            <label
+                for="tipo_transmision"
+                class="avaluo-label"
+            >
+                Tipo de transmisión
+            </label>
+
+            <select
+                id="tipo_transmision"
+                name="tipo_transmision"
+                class="avaluo-input"
+                {% if not puede_editar %}disabled{% endif %}
+            >
+                {% for valor, etiqueta in avaluo.TIPOS_TRANSMISION %}
+                    <option
+                        value="{{ valor }}"
+                        {% if avaluo.tipo_transmision == valor %}selected{% endif %}
+                    >
+                        {{ etiqueta }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            {% if not puede_editar %}
+                <input
+                    type="hidden"
+                    name="tipo_transmision"
+                    value="{{ avaluo.tipo_transmision }}"
+                >
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     EQUIPAMIENTO DEL VEHÍCULO
+====================================================== -->
+
+<div class="ot-card avaluo-section-card">
+
+    <div class="section-title">
+        Equipamiento del vehículo
+    </div>
+
+    <p class="avaluo-section-description">
+        Selecciona una sola respuesta por elemento. “No definido”
+        permite dejar el dato pendiente sin marcarlo incorrectamente.
+    </p>
+
+    <div class="avaluo-grid">
+
+        <!-- AIRE ACONDICIONADO -->
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Aire acondicionado
+            </label>
+
+            <div class="avaluo-choice-group">
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="aire_acondicionado_si"
+                        name="aire_acondicionado"
+                        value="SI"
+                        {% if avaluo.aire_acondicionado is True %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="aire_acondicionado_si">
+                        Sí
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="aire_acondicionado_no"
+                        name="aire_acondicionado"
+                        value="NO"
+                        {% if avaluo.aire_acondicionado is False %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="aire_acondicionado_no">
+                        No
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="aire_acondicionado_nd"
+                        name="aire_acondicionado"
+                        value=""
+                        {% if avaluo.aire_acondicionado is None %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="aire_acondicionado_nd">
+                        No definido
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- VIDRIOS ELÉCTRICOS -->
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Vidrios eléctricos
+            </label>
+
+            <div class="avaluo-choice-group">
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="vidrios_electricos_si"
+                        name="vidrios_electricos"
+                        value="SI"
+                        {% if avaluo.vidrios_electricos is True %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="vidrios_electricos_si">
+                        Sí
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="vidrios_electricos_no"
+                        name="vidrios_electricos"
+                        value="NO"
+                        {% if avaluo.vidrios_electricos is False %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="vidrios_electricos_no">
+                        No
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="vidrios_electricos_nd"
+                        name="vidrios_electricos"
+                        value=""
+                        {% if avaluo.vidrios_electricos is None %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="vidrios_electricos_nd">
+                        No definido
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ALARMA -->
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Alarma
+            </label>
+
+            <div class="avaluo-choice-group">
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="alarma_si"
+                        name="alarma"
+                        value="SI"
+                        {% if avaluo.alarma is True %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="alarma_si">
+                        Sí
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="alarma_no"
+                        name="alarma"
+                        value="NO"
+                        {% if avaluo.alarma is False %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="alarma_no">
+                        No
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="alarma_nd"
+                        name="alarma"
+                        value=""
+                        {% if avaluo.alarma is None %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="alarma_nd">
+                        No definido
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AROS -->
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Aros
+            </label>
+
+            <div class="avaluo-choice-group">
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="aros_si"
+                        name="aros"
+                        value="SI"
+                        {% if avaluo.aros is True %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="aros_si">
+                        Sí
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="aros_no"
+                        name="aros"
+                        value="NO"
+                        {% if avaluo.aros is False %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="aros_no">
+                        No
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="aros_nd"
+                        name="aros"
+                        value=""
+                        {% if avaluo.aros is None %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="aros_nd">
+                        No definido
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RADIO -->
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Radio
+            </label>
+
+            <div class="avaluo-choice-group">
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="radio_si"
+                        name="radio"
+                        value="SI"
+                        {% if avaluo.radio is True %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="radio_si">
+                        Sí
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="radio_no"
+                        name="radio"
+                        value="NO"
+                        {% if avaluo.radio is False %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="radio_no">
+                        No
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="radio_nd"
+                        name="radio"
+                        value=""
+                        {% if avaluo.radio is None %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="radio_nd">
+                        No definido
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- CIERRE CENTRALIZADO -->
+        <div class="avaluo-field avaluo-col-6">
+
+            <label class="avaluo-label">
+                Cierre centralizado
+            </label>
+
+            <div class="avaluo-choice-group">
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="cierre_centralizado_si"
+                        name="cierre_centralizado"
+                        value="SI"
+                        {% if avaluo.cierre_centralizado is True %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="cierre_centralizado_si">
+                        Sí
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="cierre_centralizado_no"
+                        name="cierre_centralizado"
+                        value="NO"
+                        {% if avaluo.cierre_centralizado is False %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="cierre_centralizado_no">
+                        No
+                    </label>
+                </div>
+
+                <div class="avaluo-choice">
+                    <input
+                        type="radio"
+                        id="cierre_centralizado_nd"
+                        name="cierre_centralizado"
+                        value=""
+                        {% if avaluo.cierre_centralizado is None %}checked{% endif %}
+                        {% if not puede_editar %}disabled{% endif %}
+                    >
+
+                    <label for="cierre_centralizado_nd">
+                        No definido
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

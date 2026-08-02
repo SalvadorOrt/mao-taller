@@ -1,44 +1,1130 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ avaluo.numero_avaluo }} | MAO{% endblock %}
-{% block page_title %}Avalúo mecánico{% endblock %}
+{% block title %}
+    Avalúo {{ avaluo.numero_avaluo|default:"Nuevo" }} | MAO
+{% endblock %}
+
+{% block page_title %}
+    Avalúo {{ avaluo.numero_avaluo|default:"en creación" }}
+{% endblock %}
+
 {% block page_subtitle %}
     OT {{ orden.numero_orden }} · {{ orden.placa|default:"SIN PLACA" }}
 {% endblock %}
 
 {% block content %}
 
-<div class="container">
-    <div class="ot-card" style="padding: 20px;">
-        <div class="section-title">
-            {{ avaluo.numero_avaluo|default:"Avalúo en creación" }}
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
+
+<style>
+    /* =====================================================
+       CONTENEDOR GENERAL
+    ===================================================== */
+
+    .avaluo-wrapper {
+        padding-top: 8px;
+        padding-bottom: 105px;
+    }
+
+    /* =====================================================
+       CABECERA
+    ===================================================== */
+
+    .avaluo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .avaluo-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .avaluo-header-label {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .avaluo-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .avaluo-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 25px;
+        padding: 4px 11px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .avaluo-badge.borrador {
+        border-color: #b9dcff;
+        background: #edf6ff;
+        color: #0066cc;
+    }
+
+    .avaluo-badge.finalizado {
+        border-color: #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .avaluo-badge.anulado {
+        border-color: #ffd6d6;
+        background: #ffebe9;
+        color: var(--danger);
+    }
+
+    .avaluo-badge.paso {
+        border-color: #dddde2;
+        background: #f5f5f7;
+        color: var(--muted);
+    }
+
+    /* =====================================================
+       PROGRESO
+    ===================================================== */
+
+    .avaluo-progress-card {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .avaluo-progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .avaluo-progress-title {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .avaluo-progress-number {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .avaluo-progress-track {
+        width: 100%;
+        height: 7px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e9e9ed;
+    }
+
+    .avaluo-progress-bar {
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+        transition: width 0.25s ease;
+    }
+
+    .avaluo-steps {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 12px;
+    }
+
+    .avaluo-step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 6px;
+        border: 1px solid var(--border-soft);
+        border-radius: 9px;
+        background: #fbfbfd;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .avaluo-step:hover {
+        background: #f5f5f7;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .avaluo-step.active {
+        border-color: rgba(0, 113, 227, 0.25);
+        background: #edf6ff;
+        color: var(--accent);
+    }
+
+    /* =====================================================
+       FORMULARIO GENERAL
+    ===================================================== */
+
+    .avaluo-section-card {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .avaluo-section-description {
+        margin: -5px 0 16px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .avaluo-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 13px;
+    }
+
+    .avaluo-col-12 {
+        grid-column: span 12;
+    }
+
+    .avaluo-col-8 {
+        grid-column: span 8;
+    }
+
+    .avaluo-col-6 {
+        grid-column: span 6;
+    }
+
+    .avaluo-col-4 {
+        grid-column: span 4;
+    }
+
+    .avaluo-col-3 {
+        grid-column: span 3;
+    }
+
+    .avaluo-field {
+        min-width: 0;
+    }
+
+    .avaluo-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .avaluo-input {
+        width: 100%;
+        min-height: 40px;
+        padding: 9px 11px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        outline: none;
+        background: #fff;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 500;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .avaluo-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+    }
+
+    .avaluo-input[readonly],
+    .avaluo-input:disabled {
+        border-color: var(--border-soft);
+        background: #f7f7f9;
+        color: #55555a;
+        cursor: default;
+    }
+
+    .avaluo-input::placeholder {
+        color: #a1a1a6;
+        font-weight: 400;
+    }
+
+    .avaluo-help {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.35;
+    }
+
+    /* =====================================================
+       OPCIONES SÍ / NO / NO DEFINIDO
+    ===================================================== */
+
+    .avaluo-choice-group {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .avaluo-choice {
+        position: relative;
+    }
+
+    .avaluo-choice input {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .avaluo-choice label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        margin: 0;
+        padding: 7px 8px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .avaluo-choice label:hover {
+        background: #f7f7f9;
+    }
+
+    .avaluo-choice input[value="SI"]:checked + label {
+        border-color: #34c759;
+        background: #eafbea;
+        color: #1f8939;
+    }
+
+    .avaluo-choice input[value="NO"]:checked + label {
+        border-color: #ff9f97;
+        background: #fff0ef;
+        color: #d92d20;
+    }
+
+    .avaluo-choice input[value=""]:checked + label {
+        border-color: rgba(0, 113, 227, 0.3);
+        background: #edf6ff;
+        color: var(--accent);
+    }
+
+    /* =====================================================
+       RESUMEN DE VEHÍCULO
+    ===================================================== */
+
+    .avaluo-vehicle-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .avaluo-summary-item {
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: #fbfbfd;
+    }
+
+    .avaluo-summary-label {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .avaluo-summary-value {
+        overflow: hidden;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+    }
+
+    /* =====================================================
+       ACCIONES INFERIORES
+    ===================================================== */
+
+    .avaluo-sticky-actions {
+        position: sticky;
+        bottom: 10px;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.10);
+        backdrop-filter: blur(14px);
+    }
+
+    .avaluo-sticky-left,
+    .avaluo-sticky-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 900px) {
+        .avaluo-steps {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .avaluo-vehicle-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .avaluo-col-8,
+        .avaluo-col-6,
+        .avaluo-col-4,
+        .avaluo-col-3 {
+            grid-column: span 6;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .avaluo-wrapper {
+            padding-left: 4px;
+            padding-right: 4px;
+            padding-bottom: 120px;
+        }
+
+        .avaluo-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .avaluo-header-actions {
+            width: 100%;
+        }
+
+        .avaluo-header-actions .btn-login {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .avaluo-progress-header {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .avaluo-steps {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+        }
+
+        .avaluo-step {
+            min-width: 120px;
+        }
+
+        .avaluo-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .avaluo-col-12,
+        .avaluo-col-8,
+        .avaluo-col-6,
+        .avaluo-col-4,
+        .avaluo-col-3 {
+            grid-column: span 1;
+        }
+
+        .avaluo-vehicle-summary {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .avaluo-choice-group {
+            grid-template-columns: repeat(3, minmax(80px, 1fr));
+        }
+
+        .avaluo-sticky-actions {
+            position: fixed;
+            right: 8px;
+            bottom: 8px;
+            left: 8px;
+            margin: 0;
+            padding: 9px;
+        }
+
+        .avaluo-sticky-left,
+        .avaluo-sticky-right {
+            flex: 1;
+        }
+
+        .avaluo-sticky-actions .btn-login {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .avaluo-sticky-right .guardar-texto,
+        .avaluo-sticky-left .volver-texto {
+            display: none;
+        }
+    }
+</style>
+
+<div
+    class="container ot-wrapper avaluo-wrapper"
+    data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
+    data-paso="{{ paso }}"
+>
+
+    <!-- =====================================================
+         ESTADO Y ACCIONES SUPERIORES
+    ====================================================== -->
+
+    <div class="ot-card avaluo-header">
+
+        <div class="avaluo-header-left">
+
+            <span class="avaluo-header-label">
+                Estado del avalúo:
+            </span>
+
+            {% if avaluo.estado == "BORRADOR" %}
+
+                <span class="avaluo-badge borrador">
+                    Borrador
+                </span>
+
+            {% elif avaluo.estado == "FINALIZADO" %}
+
+                <span class="avaluo-badge finalizado">
+                    Finalizado
+                </span>
+
+            {% else %}
+
+                <span class="avaluo-badge anulado">
+                    Anulado
+                </span>
+
+            {% endif %}
+
+            <span class="avaluo-badge paso">
+                Paso {{ paso }} de 7
+            </span>
+
         </div>
 
-        <p>
-            <strong>Orden:</strong>
-            {{ orden.numero_orden }}
-        </p>
+        <div class="avaluo-header-actions">
 
-        <p>
-            <strong>Placa:</strong>
-            {{ orden.placa|default:"SIN PLACA" }}
-        </p>
+            {% if request.user.rol != "TECNICO" %}
 
-        <p>
-            <strong>Vehículo:</strong>
-            {{ orden.vehiculo|default:"SIN VEHÍCULO" }}
-        </p>
+                <a
+                    href="{% url 'detalle_orden' orden.pk %}"
+                    class="btn-login"
+                    style="
+                        background: #f5f5f7;
+                        color: var(--text);
+                    "
+                >
+                    <i
+                        class="bi bi-eye"
+                        style="margin-right: 5px;"
+                    ></i>
 
-        <p>
-            <strong>Cliente:</strong>
-            {{ orden.nombre_cliente_final }}
-        </p>
+                    Ver OT
+                </a>
 
-        <p>
-            <strong>Estado:</strong>
-            {{ avaluo.get_estado_display }}
-        </p>
+            {% endif %}
+
+            <a
+                href="{% url 'avaluos:ordenes_pendientes' %}"
+                class="btn-login"
+                style="
+                    background: #f5f5f7;
+                    color: var(--text);
+                "
+            >
+                <i
+                    class="bi bi-list-ul"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Pendientes
+            </a>
+
+        </div>
+
     </div>
+
+    <!-- =====================================================
+         PROGRESO
+    ====================================================== -->
+
+    <div class="ot-card avaluo-progress-card">
+
+        <div class="avaluo-progress-header">
+
+            <div class="avaluo-progress-title">
+
+                {% if paso == 1 %}
+                    Datos generales del vehículo
+
+                {% elif paso == 2 %}
+                    Apariencia exterior e interior
+
+                {% elif paso == 3 %}
+                    Motor, compresión, partículas y fugas
+
+                {% elif paso == 4 %}
+                    Revisión mecánica, eléctrica y frenos
+
+                {% elif paso == 5 %}
+                    Prueba de ruta
+
+                {% elif paso == 6 %}
+                    Diagnóstico, valores y fotografías
+
+                {% elif paso == 7 %}
+                    Resumen y finalización
+
+                {% endif %}
+
+            </div>
+
+            <div class="avaluo-progress-number">
+
+                {% if paso == 1 %}
+                    14% completado
+                {% elif paso == 2 %}
+                    29% completado
+                {% elif paso == 3 %}
+                    43% completado
+                {% elif paso == 4 %}
+                    57% completado
+                {% elif paso == 5 %}
+                    71% completado
+                {% elif paso == 6 %}
+                    86% completado
+                {% else %}
+                    100% completado
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="avaluo-progress-track">
+
+            <div
+                class="avaluo-progress-bar"
+                style="
+                    {% if paso == 1 %}
+                        width: 14.28%;
+                    {% elif paso == 2 %}
+                        width: 28.57%;
+                    {% elif paso == 3 %}
+                        width: 42.85%;
+                    {% elif paso == 4 %}
+                        width: 57.14%;
+                    {% elif paso == 5 %}
+                        width: 71.42%;
+                    {% elif paso == 6 %}
+                        width: 85.71%;
+                    {% else %}
+                        width: 100%;
+                    {% endif %}
+                "
+            ></div>
+
+        </div>
+
+        <div class="avaluo-steps">
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 1 %}"
+                class="avaluo-step {% if paso == 1 %}active{% endif %}"
+            >
+                1. Datos
+            </a>
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 2 %}"
+                class="avaluo-step {% if paso == 2 %}active{% endif %}"
+            >
+                2. Apariencia
+            </a>
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 3 %}"
+                class="avaluo-step {% if paso == 3 %}active{% endif %}"
+            >
+                3. Motor
+            </a>
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 4 %}"
+                class="avaluo-step {% if paso == 4 %}active{% endif %}"
+            >
+                4. Mecánica
+            </a>
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 5 %}"
+                class="avaluo-step {% if paso == 5 %}active{% endif %}"
+            >
+                5. Ruta
+            </a>
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 6 %}"
+                class="avaluo-step {% if paso == 6 %}active{% endif %}"
+            >
+                6. Diagnóstico
+            </a>
+
+            <a
+                href="{% url 'avaluos:detalle_avaluo_paso' avaluo.pk 7 %}"
+                class="avaluo-step {% if paso == 7 %}active{% endif %}"
+            >
+                7. Resumen
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         FORMULARIO PRINCIPAL
+
+         No debe existir ningún otro <form> dentro.
+    ====================================================== -->
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+        id="formAvaluo"
+        novalidate
+    >
+        {% csrf_token %}
+
+        <input
+            type="hidden"
+            name="paso"
+            value="{{ paso }}"
+        >
+
+        <!-- =================================================
+             CONTENIDO DINÁMICO DEL PASO
+        ================================================== -->
+
+        {% if paso == 1 %}
+
+            {% include "avaluos/pasos/paso_1_datos.html" %}
+
+        {% elif paso == 2 %}
+
+            {% include "avaluos/pasos/paso_2_apariencia.html" %}
+
+        {% elif paso == 3 %}
+
+            {% include "avaluos/pasos/paso_3_motor.html" %}
+
+        {% elif paso == 4 %}
+
+            {% include "avaluos/pasos/paso_4_mecanica.html" %}
+
+        {% elif paso == 5 %}
+
+            {% include "avaluos/pasos/paso_5_ruta.html" %}
+
+        {% elif paso == 6 %}
+
+            {% include "avaluos/pasos/paso_6_diagnostico_fotos.html" %}
+
+        {% elif paso == 7 %}
+
+            {% include "avaluos/pasos/paso_7_resumen.html" %}
+
+        {% endif %}
+
+        <!-- =================================================
+             ACCIONES INFERIORES
+        ================================================== -->
+
+        <div class="avaluo-sticky-actions">
+
+            <div class="avaluo-sticky-left">
+
+                {% if paso > 1 %}
+
+                    <button
+                        type="submit"
+                        name="accion"
+                        value="anterior"
+                        class="btn-login"
+                        id="btnPasoAnterior"
+                        style="
+                            background: #e5e5ea;
+                            border-color: #e5e5ea;
+                            color: var(--text);
+                        "
+                    >
+                        <i
+                            class="bi bi-arrow-left"
+                            style="margin-right: 6px;"
+                        ></i>
+
+                        <span class="volver-texto">
+                            Anterior
+                        </span>
+                    </button>
+
+                {% else %}
+
+                    <a
+                        href="{% url 'avaluos:ordenes_pendientes' %}"
+                        class="btn-login"
+                        style="
+                            background: #e5e5ea;
+                            border-color: #e5e5ea;
+                            color: var(--text);
+                        "
+                    >
+                        <i
+                            class="bi bi-arrow-left"
+                            style="margin-right: 6px;"
+                        ></i>
+
+                        <span class="volver-texto">
+                            Volver
+                        </span>
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+            {% if puede_editar %}
+
+                <div class="avaluo-sticky-right">
+
+                    <button
+                        type="submit"
+                        name="accion"
+                        value="guardar"
+                        class="btn-login"
+                        id="btnGuardarBorrador"
+                    >
+                        <i
+                            class="bi bi-save"
+                            style="margin-right: 5px;"
+                        ></i>
+
+                        <span class="guardar-texto">
+                            Guardar borrador
+                        </span>
+                    </button>
+
+                    {% if paso < 7 %}
+
+                        <button
+                            type="submit"
+                            name="accion"
+                            value="siguiente"
+                            class="btn-login primary"
+                            id="btnGuardarContinuar"
+                        >
+                            Guardar y continuar
+
+                            <i
+                                class="bi bi-arrow-right"
+                                style="margin-left: 6px;"
+                            ></i>
+                        </button>
+
+                    {% else %}
+
+                        <button
+                            type="submit"
+                            name="accion"
+                            value="finalizar"
+                            class="btn-login primary"
+                            id="btnFinalizarAvaluo"
+                        >
+                            <i
+                                class="bi bi-check-circle"
+                                style="margin-right: 6px;"
+                            ></i>
+
+                            Finalizar avalúo
+                        </button>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </form>
+
+    <!-- =====================================================
+         FORMULARIOS INDEPENDIENTES PARA ELIMINAR FOTOGRAFÍAS
+
+         Deben estar fuera del formulario principal.
+    ====================================================== -->
+
+    {% if paso == 6 and fotografias %}
+
+        {% for foto in fotografias %}
+
+            <form
+                id="formEliminarFoto_{{ foto.id }}"
+                method="post"
+                action="{% url 'avaluos:eliminar_foto_avaluo' foto.id %}"
+                style="display: none;"
+            >
+                {% csrf_token %}
+            </form>
+
+        {% endfor %}
+
+    {% endif %}
+
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const formulario = document.getElementById(
+                "formAvaluo"
+            );
+
+            const botonFinalizar = document.getElementById(
+                "btnFinalizarAvaluo"
+            );
+
+            const confirmarFinalizacion = document.getElementById(
+                "confirmar_finalizacion"
+            );
+
+            let envioPermitido = false;
+
+            if (formulario) {
+                formulario.addEventListener(
+                    "submit",
+                    function (event) {
+                        const botonUsado = event.submitter;
+
+                        const accion = botonUsado
+                            ? botonUsado.value
+                            : "";
+
+                        if (
+                            accion === "finalizar" &&
+                            !confirmarFinalizacion?.checked
+                        ) {
+                            event.preventDefault();
+
+                            Swal.fire({
+                                title: "Confirmación requerida",
+                                text:
+                                    "Debes confirmar que revisaste " +
+                                    "la información antes de finalizar.",
+                                icon: "warning",
+                                confirmButtonColor: "#ff9500"
+                            });
+
+                            return;
+                        }
+
+                        if (envioPermitido) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        const botonesSubmit = formulario.querySelectorAll(
+                            'button[type="submit"]'
+                        );
+
+                        Swal.fire({
+                            title:
+                                accion === "finalizar"
+                                    ? "Finalizando avalúo..."
+                                    : "Guardando...",
+                            text:
+                                accion === "finalizar"
+                                    ? "Validando y registrando el avalúo."
+                                    : "Registrando los cambios del paso actual.",
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+
+                            didOpen: function () {
+                                Swal.showLoading();
+
+                                botonesSubmit.forEach(
+                                    function (boton) {
+                                        boton.disabled = true;
+                                    }
+                                );
+
+                                envioPermitido = true;
+
+                                /*
+                                 * requestSubmit conserva el botón utilizado,
+                                 * incluido su name="accion" y su value.
+                                 */
+                                if (
+                                    typeof formulario.requestSubmit ===
+                                    "function"
+                                ) {
+                                    formulario.requestSubmit(
+                                        botonUsado
+                                    );
+                                } else {
+                                    formulario.submit();
+                                }
+                            }
+                        });
+                    }
+                );
+            }
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    {% if message.tags == "success" %}
+
+                        Swal.fire({
+                            title: "¡Guardado!",
+                            text: "{{ message|escapejs }}",
+                            icon: "success",
+                            confirmButtonColor: "#34c759",
+                            confirmButtonText: "Entendido",
+                            timer: 2200
+                        });
+
+                    {% elif message.tags == "error" %}
+
+                        Swal.fire({
+                            title: "Error",
+                            text: "{{ message|escapejs }}",
+                            icon: "error",
+                            confirmButtonColor: "#ff3b30"
+                        });
+
+                    {% elif message.tags == "warning" %}
+
+                        Swal.fire({
+                            title: "Advertencia",
+                            text: "{{ message|escapejs }}",
+                            icon: "warning",
+                            confirmButtonColor: "#ff9500"
+                        });
+
+                    {% elif message.tags == "info" %}
+
+                        Swal.fire({
+                            title: "Información",
+                            text: "{{ message|escapejs }}",
+                            icon: "info",
+                            confirmButtonColor: "#0071e3"
+                        });
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% endif %}
+        }
+    );
+
+
+    function confirmarEliminarFoto(
+        fotoId,
+        descripcion
+    ) {
+        Swal.fire({
+            title: "¿Eliminar fotografía?",
+            text:
+                "Se eliminará la fotografía: " +
+                descripcion,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#ff3b30",
+            cancelButtonColor: "#6e6e73",
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        }).then(function (resultado) {
+            if (!resultado.isConfirmed) {
+                return;
+            }
+
+            const formulario = document.getElementById(
+                "formEliminarFoto_" + fotoId
+            );
+
+            if (!formulario) {
+                Swal.fire({
+                    title: "Error",
+                    text:
+                        "No se encontró el formulario para eliminar " +
+                        "la fotografía.",
+                    icon: "error",
+                    confirmButtonColor: "#ff3b30"
+                });
+
+                return;
+            }
+
+            formulario.submit();
+        });
+    }
+</script>
 
 {% endblock %}
