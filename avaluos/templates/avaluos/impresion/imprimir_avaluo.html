@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
 
     <title>
-        Avalúo {{ avaluo.numero_avaluo|default:"Mecánico" }} - MAO
+        Avalúo {{ avaluo.numero_avaluo|default:"Vehicular" }} - MAO
     </title>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
         rel="stylesheet"
     >
 
@@ -19,7 +19,7 @@
             --text: #000000;
             --muted: #000000;
             --line: #000000;
-            --soft: #f2f2f2;
+            --soft: #f3f3f3;
             --white: #ffffff;
             --border-radius: 6px;
         }
@@ -46,12 +46,7 @@
             print-color-adjust: exact !important;
         }
 
-        body {
-            padding: 0;
-        }
-
         .page {
-            position: relative;
             width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
@@ -74,109 +69,80 @@
             table-layout: fixed;
             border-collapse: collapse;
             border-bottom: 2px solid var(--primary);
-            margin-bottom: 9px;
+            margin-bottom: 10px;
         }
 
         .top-table td {
             border: none;
             vertical-align: top;
             padding: 0 0 7px;
+            background: #ffffff;
         }
 
         .top-left {
-            width: 35%;
+            width: 34%;
             padding-right: 8px !important;
         }
 
-        .top-center {
-            width: 35%;
-            text-align: center;
-            padding: 0 6px !important;
-        }
-
         .top-right {
-            width: 30%;
+            width: 66%;
             text-align: right;
         }
 
         .logo img {
             display: block;
-            max-width: 145px;
-            max-height: 58px;
+            max-width: 150px;
+            max-height: 62px;
             object-fit: contain;
         }
 
-        .company {
-            margin-top: 4px;
-            font-size: 7.5px;
-            line-height: 1.35;
-        }
-
-        .company strong {
-            font-family: "Montserrat", sans-serif;
-            font-weight: 800;
-        }
-
         .document-title {
-            margin-top: 3px;
-            font-family: "Montserrat", sans-serif;
-            font-size: 18px;
-            font-style: italic;
+            width: 100%;
+            font-size: 15px;
             font-weight: 900;
-            line-height: 1.05;
-            text-align: center;
+            line-height: 1.1;
+            text-align: right;
             text-transform: uppercase;
-        }
-
-        .document-subtitle {
-            margin-top: 4px;
-            font-family: "Montserrat", sans-serif;
-            font-size: 8px;
-            font-weight: 800;
-            text-align: center;
-            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .document-number {
-            padding: 4px 5px;
+            width: 100%;
+            margin-top: 5px;
+            padding: 4px 6px;
             border: 1px solid var(--line);
             border-radius: 5px;
-            font-family: "Montserrat", sans-serif;
             font-size: 8px;
-            font-weight: 800;
-            text-align: center;
+            font-weight: 900;
+            text-align: right;
             overflow-wrap: anywhere;
         }
 
-        .document-state {
-            margin-top: 5px;
-            padding: 4px 5px;
+        .meta-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 4px 0;
+            margin-top: 6px;
+        }
+
+        .meta-table td {
             border: 1px solid var(--line);
             border-radius: 5px;
-            font-size: 7px;
-            font-weight: 800;
+            padding: 4px;
             text-align: center;
+            font-size: 7px;
+            background: #ffffff;
+            overflow-wrap: anywhere;
+        }
+
+        .meta-table span {
+            display: block;
+            margin-bottom: 1px;
+            font-size: 6px;
+            font-weight: 700;
             text-transform: uppercase;
-        }
-
-        .print-date {
-            margin-top: 5px;
-            font-size: 7px;
-            text-align: center;
-        }
-
-        .draft-watermark {
-            position: fixed;
-            top: 45%;
-            left: 14%;
-            z-index: 0;
-            color: rgba(0, 0, 0, 0.06);
-            font-family: "Montserrat", sans-serif;
-            font-size: 68px;
-            font-weight: 900;
-            letter-spacing: 0.12em;
-            pointer-events: none;
-            transform: rotate(-27deg);
+            letter-spacing: 0.04em;
         }
 
         /* =====================================================
@@ -184,8 +150,6 @@
         ===================================================== */
 
         .section {
-            position: relative;
-            z-index: 1;
             margin-bottom: 8px;
         }
 
@@ -193,12 +157,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 4px;
-            font-family: "Montserrat", sans-serif;
+            margin-bottom: 5px;
             font-size: 8.5px;
-            font-weight: 800;
-            letter-spacing: 0.10em;
+            font-weight: 900;
             text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
 
         .section-title::after {
@@ -208,7 +171,7 @@
         }
 
         .panel {
-            padding: 6px;
+            padding: 7px;
             border: 1px solid var(--line);
             border-radius: var(--border-radius);
             background: #ffffff;
@@ -217,19 +180,19 @@
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 6px;
+            gap: 7px;
         }
 
         .grid-3 {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 6px;
+            gap: 7px;
         }
 
         .grid-4 {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 6px;
+            gap: 7px;
         }
 
         .field {
@@ -238,15 +201,14 @@
 
         .label {
             margin-bottom: 2px;
-            font-family: "Montserrat", sans-serif;
             font-size: 6.5px;
-            font-weight: 800;
-            letter-spacing: 0.05em;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
         .value {
-            min-height: 21px;
+            min-height: 22px;
             padding: 4px 6px;
             border: 1px solid var(--line);
             border-radius: 4px;
@@ -258,13 +220,13 @@
         }
 
         .value.large {
-            min-height: 44px;
+            min-height: 48px;
             white-space: pre-wrap;
+            line-height: 1.4;
         }
 
         .value.money {
-            font-family: "Montserrat", sans-serif;
-            font-weight: 800;
+            font-weight: 900;
             text-align: right;
         }
 
@@ -291,6 +253,7 @@
             background: #ffffff;
             font-size: 7px;
             overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .report-table th:last-child,
@@ -305,17 +268,11 @@
         .report-table thead th {
             background: var(--primary);
             color: #ffffff;
-            font-family: "Montserrat", sans-serif;
-            font-size: 6.4px;
-            font-weight: 800;
+            font-size: 6.3px;
+            font-weight: 900;
             text-align: center;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .report-table .subhead {
-            background: var(--soft);
-            color: var(--text);
+            letter-spacing: 0.03em;
         }
 
         .center {
@@ -330,30 +287,10 @@
             font-weight: 700;
         }
 
-        .status {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 34px;
-            min-height: 15px;
-            padding: 2px 4px;
-            border: 1px solid var(--line);
-            border-radius: 3px;
-            font-family: "Montserrat", sans-serif;
-            font-size: 5.8px;
-            font-weight: 800;
+        .check-cell {
+            font-size: 10px !important;
+            font-weight: 900;
             text-align: center;
-            text-transform: uppercase;
-        }
-
-        .status.selected {
-            color: #ffffff;
-            background: #000000;
-        }
-
-        .status.muted {
-            color: #666666;
-            border-color: #777777;
         }
 
         /* =====================================================
@@ -375,18 +312,26 @@
 
         .summary-box span {
             display: block;
-            font-family: "Montserrat", sans-serif;
             font-size: 6px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
         }
 
         .summary-box strong {
             display: block;
             margin-top: 2px;
-            font-family: "Montserrat", sans-serif;
             font-size: 12px;
             font-weight: 900;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 4px;
+            margin-top: 6px;
+            font-size: 6px;
+            font-weight: 700;
+            text-align: center;
         }
 
         /* =====================================================
@@ -409,12 +354,12 @@
         .photo-card img {
             display: block;
             width: 100%;
-            height: 48mm;
+            height: 50mm;
             object-fit: cover;
         }
 
         .photo-info {
-            min-height: 23px;
+            min-height: 25px;
             padding: 4px;
             border-top: 1px solid var(--line);
             font-size: 6.5px;
@@ -428,31 +373,30 @@
         .signatures {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 35px;
-            margin-top: 31px;
+            gap: 38px;
+            margin-top: 34px;
         }
 
         .signature {
             position: relative;
-            min-height: 40px;
-            padding-top: 6px;
+            min-height: 42px;
+            padding-top: 7px;
             border-top: 1.4px solid var(--line);
             text-align: center;
         }
 
         .signature img {
             position: absolute;
-            bottom: 23px;
+            bottom: 24px;
             left: 50%;
             max-width: 75%;
-            max-height: 50px;
+            max-height: 52px;
             transform: translateX(-50%);
         }
 
         .signature-title {
-            font-family: "Montserrat", sans-serif;
             font-size: 7px;
-            font-weight: 800;
+            font-weight: 900;
             text-transform: uppercase;
         }
 
@@ -461,27 +405,17 @@
             font-size: 7px;
         }
 
-        .legend {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 4px;
-            margin-top: 6px;
-            font-family: "Montserrat", sans-serif;
-            font-size: 6.2px;
-            font-weight: 800;
-            text-align: center;
-        }
-
         .footer-note {
             margin-top: 7px;
             font-size: 6px;
-            line-height: 1.3;
+            line-height: 1.35;
             text-align: justify;
         }
 
         .no-data {
             padding: 12px;
             border: 1px dashed var(--line);
+            border-radius: 5px;
             text-align: center;
             font-size: 7px;
         }
@@ -496,8 +430,8 @@
                 min-height: auto;
                 margin: 0;
                 padding: 0;
-                box-shadow: none;
                 overflow: visible;
+                box-shadow: none;
             }
 
             .section,
@@ -514,14 +448,8 @@
 
 <body>
 
-{% if es_borrador %}
-    <div class="draft-watermark">
-        BORRADOR
-    </div>
-{% endif %}
-
 <!-- =====================================================
-     PÁGINA 1: IDENTIFICACIÓN Y RESUMEN
+     PÁGINA 1: RESUMEN PRINCIPAL
 ====================================================== -->
 
 <div class="page">
@@ -529,7 +457,6 @@
     <table class="top-table">
         <tr>
             <td class="top-left">
-
                 <div class="logo">
                     {% if empresa and empresa.logo %}
                         <img
@@ -543,43 +470,35 @@
                         >
                     {% endif %}
                 </div>
-
-                <div class="company">
-                    <strong>
-                        {{ empresa.nombre_comercial|default:"MANTENIMIENTO AUTOMOTRIZ ORTEGA" }}
-                    </strong>
-                    <br>
-                    RUC:
-                    {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
-                    <br>
-                    {{ empresa.direccion|default:"Quito, Ecuador" }}
-                </div>
-
-            </td>
-
-            <td class="top-center">
-                <div class="document-title">
-                    Avalúo mecánico
-                </div>
-
-                <div class="document-subtitle">
-                    Inspección técnica del vehículo
-                </div>
             </td>
 
             <td class="top-right">
+                <div class="document-title">
+                    Avalúo vehicular
+                </div>
+
                 <div class="document-number">
                     N.º {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
                 </div>
 
-                <div class="document-state">
-                    {{ avaluo.get_estado_display|default:avaluo.estado }}
-                </div>
+                <table class="meta-table">
+                    <tr>
+                        <td>
+                            <span>Sucursal</span>
+                            {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+                        </td>
 
-                <div class="print-date">
-                    Impreso:
-                    {% now "d/m/Y H:i" %}
-                </div>
+                        <td>
+                            <span>Fecha</span>
+                            {{ avaluo.fecha_avaluo|date:"d/m/Y"|default:"-" }}
+                        </td>
+
+                        <td>
+                            <span>Estado</span>
+                            {{ avaluo.get_estado_display|default:avaluo.estado }}
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
@@ -600,16 +519,9 @@
                 </div>
 
                 <div class="field">
-                    <div class="label">Fecha avalúo</div>
+                    <div class="label">Placa</div>
                     <div class="value">
-                        {{ avaluo.fecha_avaluo|date:"d/m/Y"|default:"-" }}
-                    </div>
-                </div>
-
-                <div class="field">
-                    <div class="label">Sucursal</div>
-                    <div class="value">
-                        {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+                        {{ avaluo.placa_respaldo|default:orden.placa|upper|default:"S/P" }}
                     </div>
                 </div>
 
@@ -617,6 +529,17 @@
                     <div class="label">Solicitado por</div>
                     <div class="value">
                         {{ avaluo.solicitado_por|upper|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">Evaluador</div>
+                    <div class="value">
+                        {% if avaluo.evaluador %}
+                            {{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username|upper }}
+                        {% else %}
+                            SIN ASIGNAR
+                        {% endif %}
                     </div>
                 </div>
 
@@ -635,49 +558,31 @@
 
                 <div>
                     <div class="field">
-                        <div class="label">
-                            Cliente / propietario
-                        </div>
-
+                        <div class="label">Cliente / propietario</div>
                         <div class="value">
                             {{ orden.nombre_cliente_final|upper|default:"-" }}
                         </div>
                     </div>
 
                     <div class="grid-2">
-
                         <div class="field">
-                            <div class="label">
-                                Identificación
-                            </div>
-
+                            <div class="label">Identificación</div>
                             <div class="value">
                                 {{ orden.cliente.identificacion|default:"-" }}
                             </div>
                         </div>
 
                         <div class="field">
-                            <div class="label">
-                                Teléfono
-                            </div>
-
+                            <div class="label">Teléfono</div>
                             <div class="value">
                                 {{ orden.cliente.telefono|default:"-" }}
                             </div>
                         </div>
-
                     </div>
                 </div>
 
                 <div>
                     <div class="grid-3">
-
-                        <div class="field">
-                            <div class="label">Placa</div>
-                            <div class="value">
-                                {{ avaluo.placa_respaldo|default:orden.placa|upper|default:"S/P" }}
-                            </div>
-                        </div>
 
                         <div class="field">
                             <div class="label">Año</div>
@@ -693,29 +598,28 @@
                             </div>
                         </div>
 
+                        <div class="field">
+                            <div class="label">Color</div>
+                            <div class="value">
+                                {{ avaluo.color_respaldo|default:orden.color|upper|default:"-" }}
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="grid-2">
 
                         <div class="field">
-                            <div class="label">
-                                Marca / modelo
-                            </div>
-
+                            <div class="label">Marca</div>
                             <div class="value">
                                 {{ avaluo.marca_respaldo|default:orden.expediente.marca_api|upper|default:"-" }}
-                                /
-                                {{ avaluo.vehiculo_respaldo|default:orden.vehiculo|upper|default:"-" }}
                             </div>
                         </div>
 
                         <div class="field">
-                            <div class="label">
-                                Color
-                            </div>
-
+                            <div class="label">Modelo / vehículo</div>
                             <div class="value">
-                                {{ avaluo.color_respaldo|default:orden.color|upper|default:"-" }}
+                                {{ avaluo.vehiculo_respaldo|default:orden.vehiculo|upper|default:"-" }}
                             </div>
                         </div>
 
@@ -724,33 +628,24 @@
 
             </div>
 
-            <div class="grid-3" style="margin-top: 6px;">
+            <div class="grid-3" style="margin-top: 7px;">
 
                 <div class="field">
-                    <div class="label">
-                        Chasis / VIN
-                    </div>
-
+                    <div class="label">Chasis / VIN</div>
                     <div class="value">
                         {{ avaluo.chasis_respaldo|default:orden.expediente.numero_chasis|upper|default:"-" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Número de motor
-                    </div>
-
+                    <div class="label">Número de motor</div>
                     <div class="value">
                         {{ avaluo.numero_motor|upper|default:"-" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Transmisión
-                    </div>
-
+                    <div class="label">Transmisión</div>
                     <div class="value">
                         {{ avaluo.get_tipo_transmision_display|default:"-" }}
                     </div>
@@ -758,23 +653,17 @@
 
             </div>
 
-            <div class="grid-2" style="margin-top: 6px;">
+            <div class="grid-2" style="margin-top: 7px;">
 
                 <div class="field">
-                    <div class="label">
-                        Motor
-                    </div>
-
+                    <div class="label">Motor</div>
                     <div class="value">
                         {{ avaluo.motor|upper|default:"-" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Cilindraje
-                    </div>
-
+                    <div class="label">Cilindraje</div>
                     <div class="value">
                         {{ avaluo.cilindraje|upper|default:"-" }}
                     </div>
@@ -795,30 +684,21 @@
             <div class="grid-3">
 
                 <div class="field">
-                    <div class="label">
-                        Resultado
-                    </div>
-
+                    <div class="label">Resultado</div>
                     <div class="value">
                         {{ avaluo.get_resultado_general_display|default:"SIN DEFINIR" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Avalúo comercial
-                    </div>
-
+                    <div class="label">Avalúo comercial</div>
                     <div class="value money">
                         $ {{ avaluo.avaluo_comercial|default:"0.00" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Costo total estimado
-                    </div>
-
+                    <div class="label">Costo total estimado</div>
                     <div class="value money">
                         $ {{ avaluo.costo_total|default:"0.00" }}
                     </div>
@@ -826,7 +706,7 @@
 
             </div>
 
-            <div class="summary-strip" style="margin-top: 6px;">
+            <div class="summary-strip" style="margin-top: 7px;">
 
                 <div class="summary-box">
                     <span>NRR</span>
@@ -844,7 +724,7 @@
                 </div>
 
                 <div class="summary-box">
-                    <span>Equip. no funciona</span>
+                    <span>No funcionan</span>
                     <strong>
                         {{ resumen.equipamientos_no_funcionan|default:"0" }}
                     </strong>
@@ -894,7 +774,6 @@
     <div class="signatures">
 
         <div class="signature">
-
             {% if avaluo.evaluador and avaluo.evaluador.firma %}
                 <img
                     src="{{ avaluo.evaluador.firma.url }}"
@@ -913,11 +792,9 @@
                     SIN ASIGNAR
                 {% endif %}
             </div>
-
         </div>
 
         <div class="signature">
-
             {% if avaluo.responsable_taller and avaluo.responsable_taller.firma %}
                 <img
                     src="{{ avaluo.responsable_taller.firma.url }}"
@@ -936,7 +813,6 @@
                     SIN ASIGNAR
                 {% endif %}
             </div>
-
         </div>
 
     </div>
@@ -961,16 +837,11 @@
                 </div>
             </td>
 
-            <td class="top-center">
-                <div class="document-title">
-                    Avalúo mecánico
-                </div>
-                <div class="document-subtitle">
-                    Apariencia exterior e interior
-                </div>
-            </td>
-
             <td class="top-right">
+                <div class="document-title">
+                    Apariencia
+                </div>
+
                 <div class="document-number">
                     {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
                 </div>
@@ -983,7 +854,6 @@
         {% if grupo.codigo == "EXTERIOR" or grupo.codigo == "INTERIOR" %}
 
             <div class="section">
-
                 <div class="section-title">
                     {{ grupo.nombre }}
                 </div>
@@ -1018,22 +888,16 @@
                                     {{ resultado.item.nombre|upper }}
                                 </td>
 
-                                <td class="center">
-                                    <span class="status {% if resultado.estado == 'NRR' %}selected{% endif %}">
-                                        {% if resultado.estado == "NRR" %}✓{% endif %}
-                                    </span>
+                                <td class="check-cell">
+                                    {% if resultado.estado == "NRR" %}✓{% endif %}
                                 </td>
 
-                                <td class="center">
-                                    <span class="status {% if resultado.estado == 'RRM' %}selected{% endif %}">
-                                        {% if resultado.estado == "RRM" %}✓{% endif %}
-                                    </span>
+                                <td class="check-cell">
+                                    {% if resultado.estado == "RRM" %}✓{% endif %}
                                 </td>
 
-                                <td class="center">
-                                    <span class="status {% if resultado.estado == 'RRT' %}selected{% endif %}">
-                                        {% if resultado.estado == "RRT" %}✓{% endif %}
-                                    </span>
+                                <td class="check-cell">
+                                    {% if resultado.estado == "RRT" %}✓{% endif %}
                                 </td>
 
                                 <td>
@@ -1061,7 +925,6 @@
 
                     </tbody>
                 </table>
-
             </div>
 
         {% endif %}
@@ -1100,16 +963,11 @@
                 </div>
             </td>
 
-            <td class="top-center">
-                <div class="document-title">
-                    Avalúo mecánico
-                </div>
-                <div class="document-subtitle">
-                    Motor y revisión mecánica
-                </div>
-            </td>
-
             <td class="top-right">
+                <div class="document-title">
+                    Motor y mecánica
+                </div>
+
                 <div class="document-number">
                     {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
                 </div>
@@ -1164,7 +1022,6 @@
     {% for grupo in grupos_revision %}
 
         <div class="section">
-
             <div class="section-title">
                 {{ grupo.nombre }}
             </div>
@@ -1187,38 +1044,27 @@
                 </thead>
 
                 <tbody>
-
                     {% for resultado in grupo.resultados %}
-
                         <tr>
                             <td class="item-name">
                                 {{ resultado.item.nombre|upper }}
                             </td>
 
-                            <td class="center">
-                                {% if resultado.respuesta == "SI" %}
-                                    ✓
-                                {% endif %}
+                            <td class="check-cell">
+                                {% if resultado.respuesta == "SI" %}✓{% endif %}
                             </td>
 
-                            <td class="center">
-                                {% if resultado.respuesta == "NO" %}
-                                    ✓
-                                {% endif %}
+                            <td class="check-cell">
+                                {% if resultado.respuesta == "NO" %}✓{% endif %}
                             </td>
 
-                            <td class="center">
-                                {% if resultado.respuesta == "NO_REVISADO" %}
-                                    ✓
-                                {% endif %}
+                            <td class="check-cell">
+                                {% if resultado.respuesta == "NO_REVISADO" %}✓{% endif %}
                             </td>
                         </tr>
-
                     {% endfor %}
-
                 </tbody>
             </table>
-
         </div>
 
     {% endfor %}
@@ -1228,7 +1074,6 @@
         {% if grupo.codigo == "MECANICA" or grupo.codigo == "ELECTRICO" or grupo.codigo == "FRENOS" or grupo.codigo == "OTROS" %}
 
             <div class="section">
-
                 <div class="section-title">
                     {{ grupo.nombre }}
                 </div>
@@ -1263,15 +1108,15 @@
                                     {{ resultado.item.nombre|upper }}
                                 </td>
 
-                                <td class="center">
+                                <td class="check-cell">
                                     {% if resultado.estado == "NRR" %}✓{% endif %}
                                 </td>
 
-                                <td class="center">
+                                <td class="check-cell">
                                     {% if resultado.estado == "RRM" %}✓{% endif %}
                                 </td>
 
-                                <td class="center">
+                                <td class="check-cell">
                                     {% if resultado.estado == "RRT" %}✓{% endif %}
                                 </td>
 
@@ -1292,7 +1137,6 @@
 
                     </tbody>
                 </table>
-
             </div>
 
         {% endif %}
@@ -1302,7 +1146,7 @@
 </div>
 
 <!-- =====================================================
-     PÁGINA 4: EQUIPAMIENTO Y PRUEBA DE RUTA
+     PÁGINA 4: EQUIPAMIENTO Y RUTA
 ====================================================== -->
 
 <div class="page">
@@ -1319,16 +1163,11 @@
                 </div>
             </td>
 
-            <td class="top-center">
-                <div class="document-title">
-                    Avalúo mecánico
-                </div>
-                <div class="document-subtitle">
-                    Equipamiento y prueba de ruta
-                </div>
-            </td>
-
             <td class="top-right">
+                <div class="document-title">
+                    Equipamiento y ruta
+                </div>
+
                 <div class="document-number">
                     {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
                 </div>
@@ -1339,7 +1178,6 @@
     {% for grupo in grupos_equipamiento %}
 
         <div class="section">
-
             <div class="section-title">
                 {{ grupo.categoria.nombre }}
             </div>
@@ -1387,7 +1225,6 @@
 
                 </tbody>
             </table>
-
         </div>
 
     {% empty %}
@@ -1431,15 +1268,15 @@
                             {{ resultado.item.pregunta|upper }}
                         </td>
 
-                        <td class="center">
+                        <td class="check-cell">
                             {% if resultado.respuesta == "SI" %}✓{% endif %}
                         </td>
 
-                        <td class="center">
+                        <td class="check-cell">
                             {% if resultado.respuesta == "NO" %}✓{% endif %}
                         </td>
 
-                        <td class="center">
+                        <td class="check-cell">
                             {% if resultado.respuesta == "NO_REVISADO" %}✓{% endif %}
                         </td>
 
@@ -1465,7 +1302,7 @@
 </div>
 
 <!-- =====================================================
-     PÁGINA 5: VALORES, USO INTERNO Y FOTOS
+     PÁGINA 5: VALORES Y FOTOGRAFÍAS
 ====================================================== -->
 
 <div class="page">
@@ -1482,16 +1319,11 @@
                 </div>
             </td>
 
-            <td class="top-center">
-                <div class="document-title">
-                    Avalúo mecánico
-                </div>
-                <div class="document-subtitle">
-                    Valores, matrícula y respaldo fotográfico
-                </div>
-            </td>
-
             <td class="top-right">
+                <div class="document-title">
+                    Valores y fotografías
+                </div>
+
                 <div class="document-number">
                     {{ avaluo.numero_avaluo|default:"SIN NÚMERO" }}
                 </div>
@@ -1501,11 +1333,10 @@
 
     <div class="section">
         <div class="section-title">
-            Uso interno de vehículos usados
+            Uso interno
         </div>
 
         <div class="panel">
-
             <div class="grid-2">
 
                 <div class="field">
@@ -1542,40 +1373,28 @@
             <div class="grid-4">
 
                 <div class="field">
-                    <div class="label">
-                        Año matrícula
-                    </div>
-
+                    <div class="label">Año matrícula</div>
                     <div class="value">
                         {{ avaluo.anio_matricula|default:"-" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Año modelo
-                    </div>
-
+                    <div class="label">Año modelo</div>
                     <div class="value">
                         {{ avaluo.anio_modelo_matricula|default:avaluo.anio_modelo_respaldo|default:"-" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Cilindraje
-                    </div>
-
+                    <div class="label">Cilindraje</div>
                     <div class="value">
                         {{ avaluo.cilindraje_matricula|default:avaluo.cilindraje|default:"-" }}
                     </div>
                 </div>
 
                 <div class="field">
-                    <div class="label">
-                        Reserva de dominio
-                    </div>
-
+                    <div class="label">Reserva de dominio</div>
                     <div class="value">
                         {% if avaluo.reserva_dominio is True %}
                             SÍ
@@ -1589,7 +1408,7 @@
 
             </div>
 
-            <div class="grid-2" style="margin-top: 6px;">
+            <div class="grid-2" style="margin-top: 7px;">
 
                 <div class="field">
                     <div class="label">Propietario</div>
@@ -1607,17 +1426,15 @@
 
             </div>
 
-            <div class="field" style="margin-top: 6px;">
+            <div class="field" style="margin-top: 7px;">
                 <div class="label">Dirección</div>
                 <div class="value">
                     {{ avaluo.direccion_propietario|default:"-" }}
                 </div>
             </div>
 
-            <div class="field" style="margin-top: 6px;">
-                <div class="label">
-                    Cédula / identidad del propietario
-                </div>
+            <div class="field" style="margin-top: 7px;">
+                <div class="label">Identidad del propietario</div>
                 <div class="value">
                     {{ avaluo.identidad_propietario|default:"-" }}
                 </div>
@@ -1640,22 +1457,30 @@
             <tbody>
                 <tr>
                     <td class="item-name">Avalúo comercial</td>
-                    <td class="right">$ {{ avaluo.avaluo_comercial|default:"0.00" }}</td>
+                    <td class="right">
+                        $ {{ avaluo.avaluo_comercial|default:"0.00" }}
+                    </td>
                 </tr>
 
                 <tr>
                     <td class="item-name">Precio de recepción</td>
-                    <td class="right">$ {{ avaluo.precio_recepcion|default:"0.00" }}</td>
+                    <td class="right">
+                        $ {{ avaluo.precio_recepcion|default:"0.00" }}
+                    </td>
                 </tr>
 
                 <tr>
                     <td class="item-name">Costo de reparación</td>
-                    <td class="right">$ {{ avaluo.costo_reparacion|default:"0.00" }}</td>
+                    <td class="right">
+                        $ {{ avaluo.costo_reparacion|default:"0.00" }}
+                    </td>
                 </tr>
 
                 <tr>
                     <td class="item-name">Costo total</td>
-                    <td class="right">$ {{ avaluo.costo_total|default:"0.00" }}</td>
+                    <td class="right">
+                        $ {{ avaluo.costo_total|default:"0.00" }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -1702,8 +1527,8 @@
 
     <div class="footer-note">
         Este documento refleja el estado observado del vehículo durante la
-        inspección. Los valores estimados pueden variar cuando se desmonten
-        componentes o se detecten daños internos no visibles durante el avalúo.
+        inspección. Los valores estimados pueden variar si posteriormente se
+        desmontan componentes o se detectan daños internos no visibles.
     </div>
 
 </div>
