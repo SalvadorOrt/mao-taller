@@ -932,7 +932,6 @@
     {% endif %}
 
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -943,97 +942,160 @@
                 "formAvaluo"
             );
 
-            const botonFinalizar = document.getElementById(
-                "btnFinalizarAvaluo"
-            );
+            const confirmarFinalizacion =
+                document.getElementById(
+                    "confirmar_finalizacion"
+                );
 
-            const confirmarFinalizacion = document.getElementById(
-                "confirmar_finalizacion"
-            );
-
-            let envioPermitido = false;
+            let formularioEnviandose = false;
 
             if (formulario) {
                 formulario.addEventListener(
                     "submit",
                     function (event) {
+                        event.preventDefault();
+
+                        if (formularioEnviandose) {
+                            return;
+                        }
+
                         const botonUsado = event.submitter;
 
                         const accion = botonUsado
                             ? botonUsado.value
-                            : "";
+                            : "guardar";
 
+                        /*
+                         * Validación especial del Paso 7.
+                         */
                         if (
                             accion === "finalizar" &&
                             !confirmarFinalizacion?.checked
                         ) {
-                            event.preventDefault();
-
                             Swal.fire({
                                 title: "Confirmación requerida",
                                 text:
                                     "Debes confirmar que revisaste " +
                                     "la información antes de finalizar.",
                                 icon: "warning",
-                                confirmButtonColor: "#ff9500"
+                                confirmButtonColor: "#ff9500",
+                                confirmButtonText: "Entendido"
                             });
 
                             return;
                         }
 
-                        if (envioPermitido) {
-                            return;
+                        /*
+                         * Se crea un input oculto con la acción.
+                         *
+                         * Esto evita que se pierda:
+                         *
+                         * accion=guardar
+                         * accion=anterior
+                         * accion=siguiente
+                         * accion=finalizar
+                         *
+                         * cuando se deshabilitan los botones.
+                         */
+                        let inputAccion =
+                            formulario.querySelector(
+                                "input[data-accion-envio]"
+                            );
+
+                        if (!inputAccion) {
+                            inputAccion =
+                                document.createElement(
+                                    "input"
+                                );
+
+                            inputAccion.type = "hidden";
+                            inputAccion.name = "accion";
+
+                            inputAccion.dataset.accionEnvio =
+                                "true";
+
+                            formulario.appendChild(
+                                inputAccion
+                            );
                         }
 
-                        event.preventDefault();
+                        inputAccion.value = accion;
 
-                        const botonesSubmit = formulario.querySelectorAll(
-                            'button[type="submit"]'
+                        /*
+                         * Evita que los botones envíen otro
+                         * valor de name="accion".
+                         *
+                         * La acción válida será únicamente la
+                         * del input oculto.
+                         */
+                        const botonesSubmit =
+                            formulario.querySelectorAll(
+                                'button[type="submit"]'
+                            );
+
+                        botonesSubmit.forEach(
+                            function (boton) {
+                                boton.removeAttribute(
+                                    "name"
+                                );
+
+                                boton.disabled = true;
+                            }
                         );
 
+                        formularioEnviandose = true;
+
+                        let titulo = "Guardando...";
+                        let texto =
+                            "Registrando los cambios del paso actual.";
+
+                        if (accion === "finalizar") {
+                            titulo =
+                                "Finalizando avalúo...";
+
+                            texto =
+                                "Validando y registrando el avalúo.";
+                        } else if (accion === "siguiente") {
+                            titulo =
+                                "Guardando y continuando...";
+
+                            texto =
+                                "Registrando los cambios y abriendo el siguiente paso.";
+                        } else if (accion === "anterior") {
+                            titulo =
+                                "Guardando cambios...";
+
+                            texto =
+                                "Registrando los cambios y regresando al paso anterior.";
+                        }
+
                         Swal.fire({
-                            title:
-                                accion === "finalizar"
-                                    ? "Finalizando avalúo..."
-                                    : "Guardando...",
-                            text:
-                                accion === "finalizar"
-                                    ? "Validando y registrando el avalúo."
-                                    : "Registrando los cambios del paso actual.",
+                            title: titulo,
+                            text: texto,
                             allowOutsideClick: false,
                             allowEscapeKey: false,
+                            showConfirmButton: false,
 
                             didOpen: function () {
                                 Swal.showLoading();
 
-                                botonesSubmit.forEach(
-                                    function (boton) {
-                                        boton.disabled = true;
-                                    }
-                                );
-
-                                envioPermitido = true;
-
                                 /*
-                                 * requestSubmit conserva el botón utilizado,
-                                 * incluido su name="accion" y su value.
+                                 * submit() envía directamente
+                                 * el formulario.
+                                 *
+                                 * La acción ya está almacenada
+                                 * en el input hidden.
                                  */
-                                if (
-                                    typeof formulario.requestSubmit ===
-                                    "function"
-                                ) {
-                                    formulario.requestSubmit(
-                                        botonUsado
-                                    );
-                                } else {
-                                    formulario.submit();
-                                }
+                                formulario.submit();
                             }
                         });
                     }
                 );
             }
 
+            /*
+             * MENSAJES DE DJANGO
+             */
             {% if messages %}
 
                 {% for message in messages %}
@@ -1042,38 +1104,54 @@
 
                         Swal.fire({
                             title: "¡Guardado!",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "success",
-                            confirmButtonColor: "#34c759",
-                            confirmButtonText: "Entendido",
-                            timer: 2200
+                            confirmButtonColor:
+                                "#34c759",
+                            confirmButtonText:
+                                "Entendido",
+                            timer: 2200,
+                            timerProgressBar: true
                         });
 
                     {% elif message.tags == "error" %}
 
                         Swal.fire({
                             title: "Error",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "error",
-                            confirmButtonColor: "#ff3b30"
+                            confirmButtonColor:
+                                "#ff3b30",
+                            confirmButtonText:
+                                "Entendido"
                         });
 
                     {% elif message.tags == "warning" %}
 
                         Swal.fire({
                             title: "Advertencia",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "warning",
-                            confirmButtonColor: "#ff9500"
+                            confirmButtonColor:
+                                "#ff9500",
+                            confirmButtonText:
+                                "Entendido"
                         });
 
                     {% elif message.tags == "info" %}
 
                         Swal.fire({
                             title: "Información",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "info",
-                            confirmButtonColor: "#0071e3"
+                            confirmButtonColor:
+                                "#0071e3",
+                            confirmButtonText:
+                                "Entendido"
                         });
 
                     {% endif %}
@@ -1084,6 +1162,12 @@
         }
     );
 
+
+    /*
+     * =====================================================
+     * ELIMINAR FOTOGRAFÍA
+     * =====================================================
+     */
 
     function confirmarEliminarFoto(
         fotoId,
@@ -1099,30 +1183,48 @@
             confirmButtonColor: "#ff3b30",
             cancelButtonColor: "#6e6e73",
             confirmButtonText: "Sí, eliminar",
-            cancelButtonText: "Cancelar"
+            cancelButtonText: "Cancelar",
+            reverseButtons: true
         }).then(function (resultado) {
             if (!resultado.isConfirmed) {
                 return;
             }
 
-            const formulario = document.getElementById(
-                "formEliminarFoto_" + fotoId
-            );
+            const formularioEliminar =
+                document.getElementById(
+                    "formEliminarFoto_" + fotoId
+                );
 
-            if (!formulario) {
+            if (!formularioEliminar) {
                 Swal.fire({
                     title: "Error",
                     text:
                         "No se encontró el formulario para eliminar " +
                         "la fotografía.",
                     icon: "error",
-                    confirmButtonColor: "#ff3b30"
+                    confirmButtonColor:
+                        "#ff3b30",
+                    confirmButtonText:
+                        "Entendido"
                 });
 
                 return;
             }
 
-            formulario.submit();
+            Swal.fire({
+                title: "Eliminando fotografía...",
+                text:
+                    "Espera mientras se elimina la imagen.",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+
+                didOpen: function () {
+                    Swal.showLoading();
+
+                    formularioEliminar.submit();
+                }
+            });
         });
     }
 </script>
