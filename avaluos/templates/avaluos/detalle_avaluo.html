@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ avaluo.numero_avaluo }} | MAO{% endblock %}
+{% block page_title %}Avalúo mecánico{% endblock %}
+{% block page_subtitle %}
+    OT {{ orden.numero_orden }} · {{ orden.placa|default:"SIN PLACA" }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="ot-card" style="padding: 20px;">
+        <div class="section-title">
+            {{ avaluo.numero_avaluo|default:"Avalúo en creación" }}
+        </div>
+
+        <p>
+            <strong>Orden:</strong>
+            {{ orden.numero_orden }}
+        </p>
+
+        <p>
+            <strong>Placa:</strong>
+            {{ orden.placa|default:"SIN PLACA" }}
+        </p>
+
+        <p>
+            <strong>Vehículo:</strong>
+            {{ orden.vehiculo|default:"SIN VEHÍCULO" }}
+        </p>
+
+        <p>
+            <strong>Cliente:</strong>
+            {{ orden.nombre_cliente_final }}
+        </p>
+
+        <p>
+            <strong>Estado:</strong>
+            {{ avaluo.get_estado_display }}
+        </p>
+    </div>
+</div>
+
+{% endblock %}
