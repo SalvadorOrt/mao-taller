@@ -774,13 +774,8 @@ function recalcularTotales() {
     );
 
     actualizarTextoNumerico(
-    'descuentoTotal',
-    valorDescuento
-    );
-
-    actualizarTextoNumerico(
-        'baseImponibleTotal',
-        baseImponible
+        'descuentoTotal',
+        valorDescuento
     );
 
     actualizarTextoNumerico(

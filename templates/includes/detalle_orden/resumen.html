@@ -369,22 +369,18 @@
         </div>
 
         <!-- =====================================
-             SUBTOTAL ANTES DEL DESCUENTO
+             SUBTOTAL GENERAL
         ====================================== -->
 
         <div class="total-box">
             <div class="total-label">
-                Subtotal antes de descuento
+                Subtotal sin IVA
             </div>
 
             <div class="total-value">
                 $<span id="subtotalGeneral">
                     {{ orden.subtotal_sin_iva|default:"0.00"|floatformat:2 }}
                 </span>
-            </div>
-
-            <div class="total-meta">
-                Repuestos + M.O. interna + M.O. externa
             </div>
         </div>
 
@@ -507,26 +503,6 @@
         </div>
 
         <!-- =====================================
-             TOTAL SIN IVA / BASE IMPONIBLE
-        ====================================== -->
-
-        <div class="total-box">
-            <div class="total-label">
-                Total sin IVA
-            </div>
-
-            <div class="total-value">
-                $<span id="baseImponibleTotal">
-                    0.00
-                </span>
-            </div>
-
-            <div class="total-meta">
-                Subtotal menos descuento
-            </div>
-        </div>
-
-        <!-- =====================================
              IVA
         ====================================== -->
 
@@ -592,7 +568,13 @@
                 <input
                     type="hidden"
                     name="sumar_iva_al_total"
-                    value="{% if orden.sumar_iva_al_total %}1{% else %}0{% endif %}"
+                    value="
+                        {% if orden.sumar_iva_al_total %}
+                            1
+                        {% else %}
+                            0
+                        {% endif %}
+                    "
                 >
             {% endif %}
         </div>
