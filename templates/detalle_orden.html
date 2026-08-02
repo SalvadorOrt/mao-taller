@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-
+{% load l10n %}
 {% block title %}
     Detalle OT | MAO
 {% endblock %}
@@ -199,7 +199,7 @@
         <input
             type="hidden"
             id="porcentajeIva"
-            value="{{ orden.porcentaje_iva|default_if_none:'0.00' }}"
+            value="{{ orden.porcentaje_iva|default_if_none:'0.00'|unlocalize }}"
         >
 
         <!-- Información general -->
@@ -526,7 +526,7 @@
 </script>
 
 <script
-    src="{% static 'js/detalle_orden/base.js' %}?v=19"
+    src="{% static 'js/detalle_orden/base.js' %}?v=20"
 ></script>
 
 <script
