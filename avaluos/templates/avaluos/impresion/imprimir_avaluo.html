@@ -819,7 +819,7 @@
                         </span>
 
                         <span class="value money">
-                            $ {{ avaluo.avaluo_comercial|default:"0.00" }}
+                            $ {{ avaluo_comercial_calculado|floatformat:2 }}
                         </span>
                     </td>
 
@@ -829,7 +829,7 @@
                         </span>
 
                         <span class="value money">
-                            $ {{ avaluo.costo_total|default:"0.00" }}
+                            $ {{ costo_total_calculado|floatformat:2 }}
                         </span>
                     </td>
                 </tr>
@@ -1512,7 +1512,7 @@
                     </td>
 
                     <td class="text-right money">
-                        $ {{ avaluo.avaluo_comercial|default:"0.00" }}
+                        $ {{ avaluo_comercial_calculado|floatformat:2 }}
                     </td>
                 </tr>
 
@@ -1522,7 +1522,27 @@
                     </td>
 
                     <td class="text-right money">
-                        $ {{ avaluo.precio_recepcion|default:"0.00" }}
+                        $ {{ precio_recepcion_calculado|floatformat:2 }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="item-name">
+                        Reparaciones de apariencia
+                    </td>
+
+                    <td class="text-right money">
+                        $ {{ subtotal_apariencia|floatformat:2 }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="item-name">
+                        Reparaciones mecánicas
+                    </td>
+
+                    <td class="text-right money">
+                        $ {{ subtotal_mecanica|floatformat:2 }}
                     </td>
                 </tr>
 
@@ -1532,7 +1552,7 @@
                     </td>
 
                     <td class="text-right money">
-                        $ {{ avaluo.costo_reparacion|default:"0.00" }}
+                        $ {{ costo_reparacion_calculado|floatformat:2 }}
                     </td>
                 </tr>
 
@@ -1542,7 +1562,7 @@
                     </td>
 
                     <td class="text-right money">
-                        $ {{ avaluo.costo_total|default:"0.00" }}
+                        $ {{ costo_total_calculado|floatformat:2 }}
                     </td>
                 </tr>
             </tbody>

@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -373,6 +374,43 @@ def imprimir_avaluo(request, pk):
     ]
 
     # =====================================================
+    # COSTOS CALCULADOS
+    # =====================================================
+
+    subtotal_apariencia = sum(
+        (
+            Decimal(str(resultado.costo_estimado or 0))
+            for resultado in resultados_apariencia
+        ),
+        Decimal("0.00"),
+    )
+
+    subtotal_mecanica = sum(
+        (
+            Decimal(str(resultado.costo_estimado or 0))
+            for resultado in resultados_mecanica
+        ),
+        Decimal("0.00"),
+    )
+
+    costo_reparacion_calculado = (
+        subtotal_apariencia
+        + subtotal_mecanica
+    )
+
+    avaluo_comercial_calculado = Decimal(
+        str(avaluo.avaluo_comercial or 0)
+    )
+
+    precio_recepcion_calculado = Decimal(
+        str(avaluo.precio_recepcion or 0)
+    )
+
+    costo_total_calculado = (
+        costo_reparacion_calculado
+    )
+
+    # =====================================================
     # REVISIONES SÍ / NO
     # =====================================================
 
@@ -539,6 +577,21 @@ def imprimir_avaluo(request, pk):
             ),
             "grupos_equipamiento": (
                 grupos_equipamiento
+            ),
+
+            "subtotal_apariencia": subtotal_apariencia,
+            "subtotal_mecanica": subtotal_mecanica,
+            "costo_reparacion_calculado": (
+                costo_reparacion_calculado
+            ),
+            "costo_total_calculado": (
+                costo_total_calculado
+            ),
+            "avaluo_comercial_calculado": (
+                avaluo_comercial_calculado
+            ),
+            "precio_recepcion_calculado": (
+                precio_recepcion_calculado
             ),
 
             "compresiones": compresiones,
