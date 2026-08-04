@@ -1,0 +1,340 @@
+
+<div class="page">
+
+    <table class="top-table">
+        <tr>
+            <td class="top-left">
+                <div class="logo">
+                    {% if empresa and empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+                    {% else %}
+                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+                    {% endif %}
+                </div>
+
+                <div class="company">
+                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+                    {{ empresa.direccion|default:"Quito, Ecuador" }}
+                </div>
+            </td>
+
+            <td class="top-right">
+                <div class="titulo-ot">Orden de Trabajo</div>
+                <div class="numero-ot">N° {{ orden.numero_orden|default:"000000" }}</div>
+
+                <table class="meta-table">
+                    <tr>
+                        <td>
+                            <span>Sucursal</span>
+                            {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+                        </td>
+                        <td>
+                            <span>Fecha impresión</span>
+                            {% now "d/m/Y H:i" %}
+                        </td>
+                        <td>
+                            <span>Estado</span>
+                            {{ orden.get_estado_display|default:"ABIERTA" }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section">
+        <div class="section-title">Cliente y vehículo</div>
+
+        <div class="panel">
+            <div class="grid-2">
+                <div>
+                    <div class="field">
+                        <div class="label">Cliente / Razón social</div>
+                        <div class="value">
+                            {{ orden.cliente.nombre_completo|upper|default:orden.cliente_respaldo|upper|default:"CLIENTE MOSTRADOR" }}
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <div class="label">RUC / C.I.</div>
+                            <div class="value">{{ orden.cliente.identificacion|default:"-" }}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Teléfono</div>
+                            <div class="value">{{ orden.cliente.telefono|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="grid-3">
+                        <div class="field">
+                            <div class="label">Placa</div>
+                            <div class="value">{{ orden.placa|upper|default:"S/P" }}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Kilometraje</div>
+                            <div class="value">{{ orden.kilometraje|default:"0" }} KM</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Clave / PIN</div>
+                            <div class="value">
+                                {{ orden.clave_encendido|default:"-" }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <div class="label">Marca / Modelo</div>
+                            <div class="value">{{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Color / Año</div>
+                            <div class="value">
+                                {{ orden.color|upper|default:"-" }} / {{ orden.anio_vehiculo|default:"-" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Estado del vehículo al ingreso</div>
+
+        <div class="panel">
+            <div class="vehicle-row">
+
+                <div class="sketch-box">
+                    <img src="{% static 'base_autos.svg' %}?v=4" class="img-auto-base" alt="Croquis vehículo">
+
+                    {% if croquis and croquis.imagen_generada %}
+                        <img src="{{ croquis.imagen_generada.url }}" class="img-croquis-danios" alt="Daños registrados">
+                    {% endif %}
+                </div>
+
+                <div class="fuel-box">
+                    <div class="field">
+                        <div class="label">Combustible</div>
+                        <div class="value">{{ orden.get_nivel_combustible_display|default:"1/2" }}</div>
+                    </div>
+
+                    <div class="field">
+                        <div class="label">Ingreso</div>
+                        <div class="value">
+                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vehicle-checks">
+                    <div class="grid-3">
+                        <div class="check-card">
+                            <div class="check-title">Exterior</div>
+                            <ul class="check-list">
+                                <li><span class="check-box {% if chk.tapacubos %}checked{% endif %}"></span> Tapacubos</li>
+                                <li><span class="check-box {% if chk.plumas %}checked{% endif %}"></span> Plumas</li>
+                                <li><span class="check-box {% if chk.antena %}checked{% endif %}"></span> Antena</li>
+                                <li><span class="check-box {% if chk.faros_lunas %}checked{% endif %}"></span> Faros</li>
+                            </ul>
+                        </div>
+
+                        <div class="check-card">
+                            <div class="check-title">Interior</div>
+                            <ul class="check-list">
+                                <li><span class="check-box {% if chk.radio %}checked{% endif %}"></span> Radio / LCD</li>
+                                <li><span class="check-box {% if chk.encendedor_cig %}checked{% endif %}"></span> Encendedor</li>
+                                <li><span class="check-box {% if chk.matricula %}checked{% endif %}"></span> Matrícula</li>
+                                <li><span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}"></span> Tuerca Seg.</li>
+                            </ul>
+                        </div>
+
+                        <div class="check-card">
+                            <div class="check-title">Baúl</div>
+                            <ul class="check-list">
+                                <li><span class="check-box {% if chk.gata %}checked{% endif %}"></span> Gata</li>
+                                <li><span class="check-box {% if chk.herramientas %}checked{% endif %}"></span> Herr.</li>
+                                <li><span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}"></span> Llanta E.</li>
+                                <li><span class="check-box {% if chk.triangulos %}checked{% endif %}"></span> Triángulos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-top: 7px; margin-bottom: 0;">
+                    <div class="label">Objetos adicionales</div>
+                    <div class="value">
+                        {% for obj in orden.ordenobjetoadicional_set.all %}
+                            {{ obj.cantidad }}x {{ obj.descripcion|upper }}{% if obj.observacion %} ({{ obj.observacion }}){% endif %}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            NINGUNO REPORTADO
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Reporte del cliente / motivo de ingreso</div>
+
+        <div class="report">
+            {% if orden.sintomas_cliente %}
+                {{ orden.sintomas_cliente|upper }}
+            {% else %}
+                {% for s in orden.sintomas_items.all %}
+                    • {{ s.descripcion|upper }}<br>
+                {% empty %}
+                    REVISIÓN TÉCNICA GENERAL / NO ESPECIFICADO
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Trabajos a realizar</div>
+
+        <table class="trabajos-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;" class="center">#</th>
+                    <th>Descripción de las Operaciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in orden.trabajos_solicitados_items.all %}
+                    <tr>
+                        <td class="center">{{ forloop.counter }}</td>
+                        <td>{{ t.descripcion_manual|upper }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% for s in orden.servicios_detalles.all %}
+                    <tr>
+                        <td class="center">-</td>
+                        <td>{{ s.servicio.descripcion|upper }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% for i in "1"|make_list %}
+                    <tr>
+                        <td style="height: 18px;"></td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- =========================================================
+         AUTORIZACIÓN Y RECIBÍ CONFORME — PRIMERA HOJA
+    ========================================================== -->
+    <div class="legal-grid">
+
+        <div class="legal-card">
+            <div class="legal-title">Autorización del cliente (ingreso)</div>
+
+            <div class="legal-body">
+                <div class="legal-text">
+                    Autorizo a <strong>MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)</strong>
+                    a realizar la revisión, diagnóstico, comprobación y los trabajos descritos
+                    en esta orden de trabajo. También autorizo el desmontaje de componentes,
+                    las pruebas de funcionamiento y la movilización del vehículo dentro o fuera
+                    de las instalaciones cuando sea necesaria para el diagnóstico o la verificación
+                    de la reparación. Declaro que los datos, objetos, accesorios, nivel de combustible,
+                    kilometraje y estado exterior registrados corresponden a las condiciones del
+                    vehículo al momento de su ingreso.
+                </div>
+
+                <div class="parking-warning">
+                    Vehículo no retirado en la fecha indicada: se cobrará $4,00 de parqueadero diario.
+                </div>
+
+                <div class="legal-signatures">
+                    <div>
+                        <div class="legal-signature digital-signature-wrap">
+                            {% if orden.firma_cliente %}
+                                <img
+                                    src="{{ orden.firma_cliente.url }}"
+                                    class="img-firma"
+                                    alt="Firma del cliente"
+                                >
+                            {% endif %}
+                            <div class="legal-signature-label">Entregado por / cliente</div>
+                        </div>
+
+                        <div class="legal-name">
+                            Nombre:
+                            <span class="legal-name-line">
+                                {{ orden.cliente.nombre_completo|default:orden.cliente_respaldo|default:"" }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="legal-signature">
+                            <div class="legal-signature-label">Recibido por / MAO</div>
+                        </div>
+
+                        <div class="legal-name">
+                            Nombre: <span class="legal-name-line"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legal-card">
+            <div class="legal-title">Recibí conforme (entrega)</div>
+
+            <div class="legal-body">
+                <div class="legal-text">
+                    Declaro haber revisado las condiciones de entrega del vehículo, las reparaciones,
+                    servicios y trabajos efectuados. Recibo el vehículo a satisfacción y sin reclamos
+                    pendientes visibles al momento de la entrega. Se recomienda realizar cualquier
+                    observación relacionada con la reparación dentro de los <strong>15 días</strong>
+                    posteriores a la entrega. Declaro también haber recibido los repuestos reemplazados,
+                    cuando hayan sido solicitados y se encuentren disponibles.
+                </div>
+
+                <div class="legal-signatures">
+                    <div>
+                        <div class="legal-signature">
+                            <div class="legal-signature-label">Entregado por / MAO</div>
+                        </div>
+
+                        <div class="legal-name">
+                            Nombre: <span class="legal-name-line"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="legal-signature">
+                            <div class="legal-signature-label">Recibido por / cliente</div>
+                        </div>
+
+                        <div class="legal-name">
+                            Nombre: <span class="legal-name-line"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="delivery-meta">
+                    <div><strong>Fecha:</strong></div>
+                    <div><strong>Hora:</strong></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
