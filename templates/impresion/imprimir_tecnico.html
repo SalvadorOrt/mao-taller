@@ -55,8 +55,8 @@
             border-collapse: collapse;
             border: none;
             border-bottom: 2px solid var(--primary);
-            margin-bottom: 6px;
-            padding-bottom: 5px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .top-table td {
@@ -150,7 +150,7 @@
         }
 
         .section {
-            margin-bottom: 6px;
+            margin-bottom: 9px;
         }
 
         .section-title {
@@ -174,7 +174,7 @@
             border: 1px solid var(--line);
             border-radius: var(--border-radius);
             background: #ffffff;
-            padding: 6px;
+            padding: 8px;
         }
 
         .grid-2 {
@@ -373,7 +373,7 @@
 
         /* =========================================================
            AUTORIZACIÓN DE INGRESO Y RECIBÍ CONFORME
-           Ambos bloques permanecen en la PRIMERA HOJA.
+           Ambos bloques permanecen en la primera hoja.
         ========================================================= */
         .legal-grid {
             display: grid;
@@ -760,7 +760,6 @@
     ========================================================== -->
     <div class="legal-grid">
 
-        <!-- AUTORIZACIÓN DEL CLIENTE AL INGRESO -->
         <div class="legal-card">
             <div class="legal-title">Autorización del cliente (ingreso)</div>
 
@@ -792,6 +791,7 @@
                             {% endif %}
                             <div class="legal-signature-label">Entregado por / cliente</div>
                         </div>
+
                         <div class="legal-name">
                             Nombre:
                             <span class="legal-name-line">
@@ -804,6 +804,7 @@
                         <div class="legal-signature">
                             <div class="legal-signature-label">Recibido por / MAO</div>
                         </div>
+
                         <div class="legal-name">
                             Nombre: <span class="legal-name-line"></span>
                         </div>
@@ -812,7 +813,6 @@
             </div>
         </div>
 
-        <!-- RECIBÍ CONFORME AL MOMENTO DE LA ENTREGA -->
         <div class="legal-card">
             <div class="legal-title">Recibí conforme (entrega)</div>
 
@@ -831,6 +831,7 @@
                         <div class="legal-signature">
                             <div class="legal-signature-label">Entregado por / MAO</div>
                         </div>
+
                         <div class="legal-name">
                             Nombre: <span class="legal-name-line"></span>
                         </div>
@@ -840,6 +841,7 @@
                         <div class="legal-signature">
                             <div class="legal-signature-label">Recibido por / cliente</div>
                         </div>
+
                         <div class="legal-name">
                             Nombre: <span class="legal-name-line"></span>
                         </div>
@@ -856,19 +858,6 @@
     </div>
 
 </div>
-
-<script>
-    window.addEventListener("load", function () {
-        setTimeout(function () {
-            window.focus();
-            window.print();
-        }, 800);
-    });
-</script>
-
-</body>
-</html>
-
 <div class="page page-back">
 
 <style>
@@ -1241,12 +1230,37 @@
 </div>
 </div>
 <script>
-    window.onload = function() {
-        setTimeout(function() {
-            window.focus();
-            window.print();
-        }, 800);
-    };
+    (function () {
+        "use strict";
+
+        if (window.__maoPrintStarted) {
+            return;
+        }
+
+        window.__maoPrintStarted = true;
+
+        function abrirImpresionUnaVez() {
+            window.setTimeout(function () {
+                window.print();
+            }, 500);
+        }
+
+        function esperarRecursos() {
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready
+                    .then(abrirImpresionUnaVez)
+                    .catch(abrirImpresionUnaVez);
+            } else {
+                abrirImpresionUnaVez();
+            }
+        }
+
+        if (document.readyState === "complete") {
+            esperarRecursos();
+        } else {
+            window.addEventListener("load", esperarRecursos, { once: true });
+        }
+    })();
 </script>
 
 </body>
