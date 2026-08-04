@@ -55,8 +55,8 @@
             border-collapse: collapse;
             border: none;
             border-bottom: 2px solid var(--primary);
-            margin-bottom: 10px;
-            padding-bottom: 8px;
+            margin-bottom: 6px;
+            padding-bottom: 5px;
         }
 
         .top-table td {
@@ -150,7 +150,7 @@
         }
 
         .section {
-            margin-bottom: 9px;
+            margin-bottom: 6px;
         }
 
         .section-title {
@@ -174,7 +174,7 @@
             border: 1px solid var(--line);
             border-radius: var(--border-radius);
             background: #ffffff;
-            padding: 8px;
+            padding: 6px;
         }
 
         .grid-2 {
@@ -345,7 +345,7 @@
 
         .trabajos-table th {
             font-family: 'Montserrat', sans-serif;
-            padding: 8px;
+            padding: 5px 6px;
             text-align: left;
             font-size: 10px;
             font-weight: 700;
@@ -355,8 +355,8 @@
 
         .trabajos-table td {
             border-bottom: 1px solid var(--line);
-            padding: 8px;
-            font-size: 11px;
+            padding: 5px 6px;
+            font-size: 9px;
             vertical-align: middle;
             font-weight: 400;
             background: #ffffff;
@@ -371,43 +371,125 @@
             text-align: center;
         }
 
-        .signatures {
-            display: flex;
-            justify-content: center;
-            margin-top: 38px;
+        /* =========================================================
+           AUTORIZACIÓN DE INGRESO Y RECIBÍ CONFORME
+           Ambos bloques permanecen en la PRIMERA HOJA.
+        ========================================================= */
+        .legal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            margin-top: 6px;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
-        .signature {
-            position: relative;
-            width: 50%;
-            text-align: center;
-            border-top: 1.5px solid var(--dark);
-            padding-top: 8px;
-            min-height: 40px;
+        .legal-card {
+            border: 1px solid var(--line);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: #ffffff;
+            min-width: 0;
         }
 
-        .signature-title {
+        .legal-title {
+            padding: 4px 6px;
+            background: var(--primary);
+            color: #ffffff;
             font-family: 'Montserrat', sans-serif;
-             font-size: 8.5px;
+            font-size: 7.2px;
             font-weight: 800;
+            text-align: center;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--dark);
+            letter-spacing: 0.08em;
         }
 
-        .signature-subtitle {
-            margin-top: 3px;
-            font-size: 8px; 
-            color: var(--muted);
+        .legal-body {
+            padding: 5px 6px 4px;
+        }
+
+        .legal-text {
+            font-size: 6.4px;
+            line-height: 1.18;
+            text-align: justify;
+        }
+
+        .parking-warning {
+            margin-top: 4px;
+            padding: 3px 4px;
+            border: 1px solid var(--line);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 6.4px;
+            font-weight: 800;
+            line-height: 1.15;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .legal-signatures {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 7px;
+            margin-top: 5px;
+        }
+
+        .legal-signature {
+            position: relative;
+            min-height: 34px;
+            padding-top: 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .legal-signature-label {
+            position: absolute;
+            left: 0;
+            bottom: 2px;
+            width: 100%;
+            font-size: 5.8px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .legal-name {
+            margin-top: 4px;
+            font-size: 5.8px;
+            line-height: 1.25;
+        }
+
+        .legal-name-line {
+            display: inline-block;
+            width: calc(100% - 31px);
+            min-height: 9px;
+            border-bottom: 1px dotted var(--line);
+            vertical-align: bottom;
+        }
+
+        .delivery-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 5.8px;
+        }
+
+        .delivery-meta div {
+            min-height: 11px;
+            border-bottom: 1px dotted var(--line);
+        }
+
+        .digital-signature-wrap {
+            position: relative;
         }
 
         .img-firma {
             position: absolute;
-            bottom: 28px;
             left: 50%;
+            bottom: 12px;
             transform: translateX(-50%);
-            max-height: 55px;
-            width: auto;
+            max-width: 90%;
+            max-height: 32px;
+            object-fit: contain;
         }
 
         @media print {
@@ -663,7 +745,7 @@
                     </tr>
                 {% endfor %}
 
-                {% for i in "123"|make_list %}
+                {% for i in "1"|make_list %}
                     <tr>
                         <td style="height: 18px;"></td>
                         <td></td>
@@ -673,18 +755,120 @@
         </table>
     </div>
 
-    <div class="signatures">
-        <div class="signature">
-            {% if orden.firma_cliente %}
-                <img src="{{ orden.firma_cliente.url }}" class="img-firma" alt="Firma cliente">
-            {% endif %}
+    <!-- =========================================================
+         AUTORIZACIÓN Y RECIBÍ CONFORME — PRIMERA HOJA
+    ========================================================== -->
+    <div class="legal-grid">
 
-            <div class="signature-title">Firma del cliente / responsable</div>
-            <div class="signature-subtitle">Acepto las condiciones de ingreso del vehículo.</div>
+        <!-- AUTORIZACIÓN DEL CLIENTE AL INGRESO -->
+        <div class="legal-card">
+            <div class="legal-title">Autorización del cliente (ingreso)</div>
+
+            <div class="legal-body">
+                <div class="legal-text">
+                    Autorizo a <strong>MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)</strong>
+                    a realizar la revisión, diagnóstico, comprobación y los trabajos descritos
+                    en esta orden de trabajo. También autorizo el desmontaje de componentes,
+                    las pruebas de funcionamiento y la movilización del vehículo dentro o fuera
+                    de las instalaciones cuando sea necesaria para el diagnóstico o la verificación
+                    de la reparación. Declaro que los datos, objetos, accesorios, nivel de combustible,
+                    kilometraje y estado exterior registrados corresponden a las condiciones del
+                    vehículo al momento de su ingreso.
+                </div>
+
+                <div class="parking-warning">
+                    Vehículo no retirado en la fecha indicada: se cobrará $4,00 de parqueadero diario.
+                </div>
+
+                <div class="legal-signatures">
+                    <div>
+                        <div class="legal-signature digital-signature-wrap">
+                            {% if orden.firma_cliente %}
+                                <img
+                                    src="{{ orden.firma_cliente.url }}"
+                                    class="img-firma"
+                                    alt="Firma del cliente"
+                                >
+                            {% endif %}
+                            <div class="legal-signature-label">Entregado por / cliente</div>
+                        </div>
+                        <div class="legal-name">
+                            Nombre:
+                            <span class="legal-name-line">
+                                {{ orden.cliente.nombre_completo|default:orden.cliente_respaldo|default:"" }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="legal-signature">
+                            <div class="legal-signature-label">Recibido por / MAO</div>
+                        </div>
+                        <div class="legal-name">
+                            Nombre: <span class="legal-name-line"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- RECIBÍ CONFORME AL MOMENTO DE LA ENTREGA -->
+        <div class="legal-card">
+            <div class="legal-title">Recibí conforme (entrega)</div>
+
+            <div class="legal-body">
+                <div class="legal-text">
+                    Declaro haber revisado las condiciones de entrega del vehículo, las reparaciones,
+                    servicios y trabajos efectuados. Recibo el vehículo a satisfacción y sin reclamos
+                    pendientes visibles al momento de la entrega. Se recomienda realizar cualquier
+                    observación relacionada con la reparación dentro de los <strong>15 días</strong>
+                    posteriores a la entrega. Declaro también haber recibido los repuestos reemplazados,
+                    cuando hayan sido solicitados y se encuentren disponibles.
+                </div>
+
+                <div class="legal-signatures">
+                    <div>
+                        <div class="legal-signature">
+                            <div class="legal-signature-label">Entregado por / MAO</div>
+                        </div>
+                        <div class="legal-name">
+                            Nombre: <span class="legal-name-line"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="legal-signature">
+                            <div class="legal-signature-label">Recibido por / cliente</div>
+                        </div>
+                        <div class="legal-name">
+                            Nombre: <span class="legal-name-line"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="delivery-meta">
+                    <div><strong>Fecha:</strong></div>
+                    <div><strong>Hora:</strong></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 </div>
+
+<script>
+    window.addEventListener("load", function () {
+        setTimeout(function () {
+            window.focus();
+            window.print();
+        }, 800);
+    });
+</script>
+
+</body>
+</html>
+
 <div class="page page-back">
 
 <style>
