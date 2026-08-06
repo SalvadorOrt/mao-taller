@@ -186,6 +186,16 @@ function agregarFilaRepuesto(
                 <div class="row-controls">
                     <button
                         type="button"
+                        class="repuesto-drag-handle"
+                        draggable="true"
+                        title="Mantén presionado y arrastra"
+                        aria-label="Mover repuesto"
+                    >
+                        ⠿
+                    </button>
+
+                    <button
+                        type="button"
                         class="
                             btn-login
                             danger
@@ -992,3 +1002,381 @@ window.addEventListener(
     },
     true
 );
+
+// =====================================================
+// ORDENAR REPUESTOS ARRASTRANDO FILAS
+// =====================================================
+let filaRepuestoArrastrada = null;
+
+
+// =====================================================
+// VALIDAR FILA ORDENABLE
+// =====================================================
+function esFilaRepuestoOrdenable(
+    fila
+) {
+    if (!fila) {
+        return false;
+    }
+
+    if (
+        fila.classList.contains(
+            'form-readonly'
+        )
+    ) {
+        return false;
+    }
+
+    if (
+        fila.classList.contains(
+            'fila-eliminada'
+        )
+    ) {
+        return false;
+    }
+
+    if (
+        fila.dataset.eliminada === '1'
+    ) {
+        return false;
+    }
+
+    return Boolean(
+        fila.querySelector(
+            '.repuesto-drag-handle'
+        )
+    );
+}
+
+
+// =====================================================
+// FINALIZAR ARRASTRE
+// =====================================================
+function finalizarArrastreRepuesto() {
+    if (filaRepuestoArrastrada) {
+        filaRepuestoArrastrada
+            .classList
+            .remove(
+                'repuesto-arrastrando'
+            );
+    }
+
+    filaRepuestoArrastrada = null;
+
+    document.body.classList.remove(
+        'ordenando-repuestos'
+    );
+}
+
+
+// =====================================================
+// INICIALIZAR ORDENAMIENTO
+// =====================================================
+function inicializarOrdenamientoRepuestos() {
+    if (!PUEDE_EDITAR_OT) {
+        return;
+    }
+
+    const tbody =
+        document.getElementById(
+            'cuerpoTablaRepuestos'
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    /*
+     * Evita registrar los eventos más de una vez.
+     */
+    if (
+        tbody.dataset
+            .ordenamientoInicializado === '1'
+    ) {
+        return;
+    }
+
+    tbody.dataset
+        .ordenamientoInicializado = '1';
+
+
+    // =============================================
+    // INICIAR ARRASTRE
+    // =============================================
+    tbody.addEventListener(
+        'dragstart',
+        function (event) {
+            const asa =
+                event.target.closest(
+                    '.repuesto-drag-handle'
+                );
+
+            if (!asa) {
+                return;
+            }
+
+            const fila =
+                asa.closest('tr');
+
+            if (
+                !esFilaRepuestoOrdenable(
+                    fila
+                )
+            ) {
+                event.preventDefault();
+                return;
+            }
+
+            filaRepuestoArrastrada =
+                fila;
+
+            fila.classList.add(
+                'repuesto-arrastrando'
+            );
+
+            document.body.classList.add(
+                'ordenando-repuestos'
+            );
+
+            /*
+             * Cierra el buscador flotante para
+             * que no interfiera con el arrastre.
+             */
+            ocultarDropdownFlotante();
+
+            if (event.dataTransfer) {
+                event.dataTransfer
+                    .effectAllowed = 'move';
+
+                event.dataTransfer.setData(
+                    'text/plain',
+                    'reordenar-repuesto'
+                );
+            }
+        }
+    );
+
+
+    // =============================================
+    // MOVER FILA DURANTE EL ARRASTRE
+    // =============================================
+    tbody.addEventListener(
+        'dragover',
+        function (event) {
+            if (
+                !filaRepuestoArrastrada
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (event.dataTransfer) {
+                event.dataTransfer
+                    .dropEffect = 'move';
+            }
+
+            const filaObjetivo =
+                event.target.closest(
+                    'tr'
+                );
+
+            if (
+                !esFilaRepuestoOrdenable(
+                    filaObjetivo
+                )
+            ) {
+                return;
+            }
+
+            if (
+                filaObjetivo ===
+                filaRepuestoArrastrada
+            ) {
+                return;
+            }
+
+            const rect =
+                filaObjetivo
+                    .getBoundingClientRect();
+
+            const mitadVertical =
+                rect.top +
+                (
+                    rect.height /
+                    2
+                );
+
+            const insertarDespues =
+                event.clientY >
+                mitadVertical;
+
+            if (insertarDespues) {
+                const siguienteFila =
+                    filaObjetivo
+                        .nextElementSibling;
+
+                if (
+                    siguienteFila !==
+                    filaRepuestoArrastrada
+                ) {
+                    tbody.insertBefore(
+                        filaRepuestoArrastrada,
+                        siguienteFila
+                    );
+                }
+            } else {
+                const anteriorFila =
+                    filaObjetivo
+                        .previousElementSibling;
+
+                if (
+                    anteriorFila !==
+                    filaRepuestoArrastrada
+                ) {
+                    tbody.insertBefore(
+                        filaRepuestoArrastrada,
+                        filaObjetivo
+                    );
+                }
+            }
+        }
+    );
+
+
+    // =============================================
+    // SOLTAR FILA
+    // =============================================
+    tbody.addEventListener(
+        'drop',
+        function (event) {
+            if (
+                !filaRepuestoArrastrada
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+
+            finalizarArrastreRepuesto();
+        }
+    );
+
+
+    // =============================================
+    // TERMINAR O CANCELAR ARRASTRE
+    // =============================================
+    tbody.addEventListener(
+        'dragend',
+        function () {
+            finalizarArrastreRepuesto();
+        }
+    );
+
+
+    // =============================================
+    // MOVER CON FLECHAS DEL TECLADO
+    // =============================================
+    tbody.addEventListener(
+        'keydown',
+        function (event) {
+            const asa =
+                event.target.closest(
+                    '.repuesto-drag-handle'
+                );
+
+            if (!asa) {
+                return;
+            }
+
+            if (
+                event.key !== 'ArrowUp' &&
+                event.key !== 'ArrowDown'
+            ) {
+                return;
+            }
+
+            const fila =
+                asa.closest('tr');
+
+            if (
+                !esFilaRepuestoOrdenable(
+                    fila
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const filasOrdenables =
+                Array.from(
+                    tbody.querySelectorAll(
+                        'tr'
+                    )
+                ).filter(
+                    esFilaRepuestoOrdenable
+                );
+
+            const indiceActual =
+                filasOrdenables.indexOf(
+                    fila
+                );
+
+            if (
+                event.key ===
+                    'ArrowUp' &&
+                indiceActual > 0
+            ) {
+                const filaAnterior =
+                    filasOrdenables[
+                        indiceActual - 1
+                    ];
+
+                tbody.insertBefore(
+                    fila,
+                    filaAnterior
+                );
+
+                asa.focus();
+            }
+
+            if (
+                event.key ===
+                    'ArrowDown' &&
+                indiceActual >= 0 &&
+                indiceActual <
+                    filasOrdenables.length - 1
+            ) {
+                const filaSiguiente =
+                    filasOrdenables[
+                        indiceActual + 1
+                    ];
+
+                tbody.insertBefore(
+                    fila,
+                    filaSiguiente
+                        .nextElementSibling
+                );
+
+                asa.focus();
+            }
+        }
+    );
+}
+
+
+// =====================================================
+// EJECUTAR INICIALIZACIÓN
+// =====================================================
+if (
+    document.readyState ===
+    'loading'
+) {
+    document.addEventListener(
+        'DOMContentLoaded',
+        inicializarOrdenamientoRepuestos
+    );
+} else {
+    inicializarOrdenamientoRepuestos();
+}
