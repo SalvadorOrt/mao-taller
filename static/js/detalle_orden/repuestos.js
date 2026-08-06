@@ -1,10 +1,40 @@
 let inputActivoBusqueda = null;
 let timeoutBusquedaProducto = null;
 
-const PUEDE_EDITAR_OT =
-    document.querySelector(
-        '.ot-wrapper'
-    )?.dataset.puedeEditar === 'true';
+let PUEDE_EDITAR_OT = false;
+
+
+function actualizarPermisoEdicionOT() {
+    const wrapper =
+        document.querySelector(
+            '.ot-wrapper'
+        );
+
+    const valor =
+        String(
+            wrapper?.dataset
+                ?.puedeEditar || ''
+        )
+            .trim()
+            .toLowerCase();
+
+    PUEDE_EDITAR_OT =
+        valor === 'true' ||
+        valor === '1';
+}
+
+
+actualizarPermisoEdicionOT();
+
+if (
+    document.readyState ===
+    'loading'
+) {
+    document.addEventListener(
+        'DOMContentLoaded',
+        actualizarPermisoEdicionOT
+    );
+}
 
 const floatingDropdown =
     document.getElementById(
@@ -1002,11 +1032,11 @@ window.addEventListener(
     },
     true
 );
-
 // =====================================================
 // ORDENAR REPUESTOS ARRASTRANDO FILAS
 // =====================================================
 let filaRepuestoArrastrada = null;
+let filaRepuestoPreparada = null;
 
 
 // =====================================================
@@ -1050,7 +1080,7 @@ function esFilaRepuestoOrdenable(
 
 
 // =====================================================
-// FINALIZAR ARRASTRE
+// LIMPIAR ARRASTRE
 // =====================================================
 function finalizarArrastreRepuesto() {
     if (filaRepuestoArrastrada) {
@@ -1059,9 +1089,26 @@ function finalizarArrastreRepuesto() {
             .remove(
                 'repuesto-arrastrando'
             );
+
+        filaRepuestoArrastrada
+            .removeAttribute(
+                'draggable'
+            );
+    }
+
+    if (
+        filaRepuestoPreparada &&
+        filaRepuestoPreparada !==
+            filaRepuestoArrastrada
+    ) {
+        filaRepuestoPreparada
+            .removeAttribute(
+                'draggable'
+            );
     }
 
     filaRepuestoArrastrada = null;
+    filaRepuestoPreparada = null;
 
     document.body.classList.remove(
         'ordenando-repuestos'
@@ -1073,6 +1120,8 @@ function finalizarArrastreRepuesto() {
 // INICIALIZAR ORDENAMIENTO
 // =====================================================
 function inicializarOrdenamientoRepuestos() {
+    actualizarPermisoEdicionOT();
+
     if (!PUEDE_EDITAR_OT) {
         return;
     }
@@ -1086,12 +1135,10 @@ function inicializarOrdenamientoRepuestos() {
         return;
     }
 
-    /*
-     * Evita registrar los eventos más de una vez.
-     */
     if (
         tbody.dataset
-            .ordenamientoInicializado === '1'
+            .ordenamientoInicializado ===
+        '1'
     ) {
         return;
     }
@@ -1101,10 +1148,10 @@ function inicializarOrdenamientoRepuestos() {
 
 
     // =============================================
-    // INICIAR ARRASTRE
+    // PREPARAR FILA AL PRESIONAR EL ASA
     // =============================================
     tbody.addEventListener(
-        'dragstart',
+        'pointerdown',
         function (event) {
             const asa =
                 event.target.closest(
@@ -1119,6 +1166,47 @@ function inicializarOrdenamientoRepuestos() {
                 asa.closest('tr');
 
             if (
+                !esFilaRepuestoOrdenable(
+                    fila
+                )
+            ) {
+                return;
+            }
+
+            /*
+             * El botón no se arrastra.
+             * Se arrastra la fila completa.
+             */
+            asa.draggable = false;
+
+            filaRepuestoPreparada =
+                fila;
+
+            fila.setAttribute(
+                'draggable',
+                'true'
+            );
+
+            ocultarDropdownFlotante();
+        }
+    );
+
+
+    // =============================================
+    // INICIAR ARRASTRE
+    // =============================================
+    tbody.addEventListener(
+        'dragstart',
+        function (event) {
+            const fila =
+                event.target.closest(
+                    'tr'
+                );
+
+            if (
+                !fila ||
+                fila !==
+                    filaRepuestoPreparada ||
                 !esFilaRepuestoOrdenable(
                     fila
                 )
@@ -1138,15 +1226,12 @@ function inicializarOrdenamientoRepuestos() {
                 'ordenando-repuestos'
             );
 
-            /*
-             * Cierra el buscador flotante para
-             * que no interfiera con el arrastre.
-             */
             ocultarDropdownFlotante();
 
             if (event.dataTransfer) {
                 event.dataTransfer
-                    .effectAllowed = 'move';
+                    .effectAllowed =
+                    'move';
 
                 event.dataTransfer.setData(
                     'text/plain',
@@ -1158,7 +1243,7 @@ function inicializarOrdenamientoRepuestos() {
 
 
     // =============================================
-    // MOVER FILA DURANTE EL ARRASTRE
+    // MOVER FILA
     // =============================================
     tbody.addEventListener(
         'dragover',
@@ -1173,7 +1258,8 @@ function inicializarOrdenamientoRepuestos() {
 
             if (event.dataTransfer) {
                 event.dataTransfer
-                    .dropEffect = 'move';
+                    .dropEffect =
+                    'move';
             }
 
             const filaObjetivo =
@@ -1200,45 +1286,45 @@ function inicializarOrdenamientoRepuestos() {
                 filaObjetivo
                     .getBoundingClientRect();
 
-            const mitadVertical =
+            const mitad =
                 rect.top +
-                (
-                    rect.height /
-                    2
-                );
+                rect.height / 2;
 
-            const insertarDespues =
-                event.clientY >
-                mitadVertical;
+            const colocarDespues =
+                event.clientY > mitad;
 
-            if (insertarDespues) {
-                const siguienteFila =
+            if (colocarDespues) {
+                const siguiente =
                     filaObjetivo
                         .nextElementSibling;
 
                 if (
-                    siguienteFila !==
+                    siguiente ===
                     filaRepuestoArrastrada
                 ) {
-                    tbody.insertBefore(
-                        filaRepuestoArrastrada,
-                        siguienteFila
-                    );
+                    return;
                 }
+
+                tbody.insertBefore(
+                    filaRepuestoArrastrada,
+                    siguiente
+                );
             } else {
-                const anteriorFila =
+                const anterior =
                     filaObjetivo
                         .previousElementSibling;
 
                 if (
-                    anteriorFila !==
+                    anterior ===
                     filaRepuestoArrastrada
                 ) {
-                    tbody.insertBefore(
-                        filaRepuestoArrastrada,
-                        filaObjetivo
-                    );
+                    return;
                 }
+
+                tbody.insertBefore(
+                    filaRepuestoArrastrada,
+                    filaObjetivo
+                );
             }
         }
     );
@@ -1264,7 +1350,7 @@ function inicializarOrdenamientoRepuestos() {
 
 
     // =============================================
-    // TERMINAR O CANCELAR ARRASTRE
+    // TERMINAR ARRASTRE
     // =============================================
     tbody.addEventListener(
         'dragend',
@@ -1275,94 +1361,28 @@ function inicializarOrdenamientoRepuestos() {
 
 
     // =============================================
-    // MOVER CON FLECHAS DEL TECLADO
+    // CANCELAR SI SOLO SE HIZO CLIC
     // =============================================
-    tbody.addEventListener(
-        'keydown',
-        function (event) {
-            const asa =
-                event.target.closest(
-                    '.repuesto-drag-handle'
-                );
-
-            if (!asa) {
-                return;
-            }
-
+    document.addEventListener(
+        'pointerup',
+        function () {
             if (
-                event.key !== 'ArrowUp' &&
-                event.key !== 'ArrowDown'
+                filaRepuestoPreparada &&
+                !filaRepuestoArrastrada
             ) {
-                return;
-            }
+                filaRepuestoPreparada
+                    .removeAttribute(
+                        'draggable'
+                    );
 
-            const fila =
-                asa.closest('tr');
-
-            if (
-                !esFilaRepuestoOrdenable(
-                    fila
-                )
-            ) {
-                return;
-            }
-
-            event.preventDefault();
-
-            const filasOrdenables =
-                Array.from(
-                    tbody.querySelectorAll(
-                        'tr'
-                    )
-                ).filter(
-                    esFilaRepuestoOrdenable
-                );
-
-            const indiceActual =
-                filasOrdenables.indexOf(
-                    fila
-                );
-
-            if (
-                event.key ===
-                    'ArrowUp' &&
-                indiceActual > 0
-            ) {
-                const filaAnterior =
-                    filasOrdenables[
-                        indiceActual - 1
-                    ];
-
-                tbody.insertBefore(
-                    fila,
-                    filaAnterior
-                );
-
-                asa.focus();
-            }
-
-            if (
-                event.key ===
-                    'ArrowDown' &&
-                indiceActual >= 0 &&
-                indiceActual <
-                    filasOrdenables.length - 1
-            ) {
-                const filaSiguiente =
-                    filasOrdenables[
-                        indiceActual + 1
-                    ];
-
-                tbody.insertBefore(
-                    fila,
-                    filaSiguiente
-                        .nextElementSibling
-                );
-
-                asa.focus();
+                filaRepuestoPreparada =
+                    null;
             }
         }
     );
+
+
+    
 }
 
 
