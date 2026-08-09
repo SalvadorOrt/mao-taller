@@ -66,7 +66,7 @@ def merge_repuestos(request, orden):
     barras_list = request.POST.getlist("rep_codigo_barras[]")
     empaques = request.POST.getlist("rep_codigo_empaque[]")
     deletes = request.POST.getlist("rep_delete[]")
-
+    marcados = request.POST.getlist("rep_marcado[]")
     total = max(
         len(detalle_ids),
         len(producto_ids),
@@ -77,6 +77,7 @@ def merge_repuestos(request, orden):
         len(barras_list),
         len(empaques),
         len(deletes),
+        len(marcados),
         0,
     )
 
@@ -95,6 +96,7 @@ def merge_repuestos(request, orden):
         barras = item(barras_list, i)
         empaque = item(empaques, i)
         eliminar = item(deletes, i) == "1"
+        marcado = item(marcados, i) == "1"
 
         if not detalle_id and not producto_id and not descripcion:
             continue
@@ -131,6 +133,7 @@ def merge_repuestos(request, orden):
             detalle.codigo_barras_referencia = None if producto else (barras or None)
             detalle.codigo_empaque_referencia = None if producto else (empaque or None)
             detalle.orden_item = i + 1
+            detalle.marcado = marcado
             detalle.save()
 
         else:
@@ -161,6 +164,7 @@ def merge_repuestos(request, orden):
                 codigo_barras_referencia=None if producto else (barras or None),
                 codigo_empaque_referencia=None if producto else (empaque or None),
                 orden_item=i + 1,
+                marcado=marcado,
             )
 
 

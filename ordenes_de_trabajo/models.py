@@ -2489,7 +2489,10 @@ class OrdenInsumoDetalle(models.Model):
     )
 
     orden_item = models.PositiveIntegerField(default=1)
-
+    marcado = models.BooleanField(
+            default=False,
+            verbose_name="Marcado visual",
+        )
     categoria_referencia = models.ForeignKey(
         "inventario.Categoria",
         on_delete=models.SET_NULL,

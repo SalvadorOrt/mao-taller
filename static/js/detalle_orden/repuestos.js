@@ -77,7 +77,7 @@ function agregarFilaRepuesto(
     }
 
     const filaHtml = `
-        <tr>
+        <tr class="fila-repuesto">
             <td class="producto-cell">
                 <input
                     type="hidden"
@@ -90,7 +90,12 @@ function agregarFilaRepuesto(
                     name="rep_delete[]"
                     value="0"
                 >
-
+                <input
+                    type="hidden"
+                    name="rep_marcado[]"
+                    class="rep-marcado-input"
+                    value="0"
+                >
                 <input
                     type="hidden"
                     name="rep_actualizado_en[]"
@@ -214,30 +219,44 @@ function agregarFilaRepuesto(
 
             <td>
                 <div class="row-controls">
-                    <button
-                        type="button"
-                        class="repuesto-drag-handle"
-                        draggable="true"
-                        title="Mantén presionado y arrastra"
-                        aria-label="Mover repuesto"
-                    >
-                        ⠿
-                    </button>
+                    <div class="row-controls">
 
-                    <button
-                        type="button"
-                        class="
-                            btn-login
-                            danger
-                            small
-                        "
-                        onclick="
-                            eliminarFilaRepuesto(this)
-                        "
-                        title="Quitar"
-                    >
-                        ✕
-                    </button>
+                        <button
+                            type="button"
+                            class="repuesto-marcar-btn"
+                            onclick="marcarRepuesto(this)"
+                            title="Marcar repuesto"
+                            aria-label="Marcar repuesto"
+                        >
+                            ✓
+                        </button>
+
+                        <button
+                            type="button"
+                            class="repuesto-drag-handle"
+                            draggable="true"
+                            title="Mantén presionado y arrastra"
+                            aria-label="Mover repuesto"
+                        >
+                            ⠿
+                        </button>
+
+                        <button
+                            type="button"
+                            class="
+                                btn-login
+                                danger
+                                small
+                            "
+                            onclick="
+                                eliminarFilaRepuesto(this)
+                            "
+                            title="Quitar"
+                        >
+                            ✕
+                        </button>
+
+                    </div>
                 </div>
             </td>
         </tr>

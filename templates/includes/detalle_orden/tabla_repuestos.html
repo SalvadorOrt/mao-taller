@@ -83,9 +83,49 @@
     }
 
     @media print {
-        .repuesto-drag-handle {
+        .repuesto-drag-handle,
+        .repuesto-marcar-btn {
             display: none !important;
         }
+    }
+    #cuerpoTablaRepuestos > tr.repuesto-marcado > td {
+    background: rgba(52, 199, 89, 0.10);
+    }
+
+    .repuesto-marcar-btn {
+        width: 30px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid #d2d2d7;
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        color: #86868b;
+
+        font-size: 15px;
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition:
+            background 0.15s ease,
+            border-color 0.15s ease,
+            color 0.15s ease;
+    }
+
+    .repuesto-marcar-btn:hover {
+        background: rgba(52, 199, 89, 0.10);
+        border-color: #34c759;
+        color: #248a3d;
+    }
+
+    .repuesto-marcar-btn.activo {
+        background: #34c759;
+        border-color: #34c759;
+        color: #ffffff;
     }
 </style>
 
@@ -234,7 +274,7 @@
                 {% else %}
 
                     {% for item in orden.insumos_detalles.all %}
-                        <tr class="fila-repuesto">
+                        <tr class="fila-repuesto {% if puede_editar and item.marcado %}repuesto-marcado{% endif %}">
                             <td class="producto-cell">
                                 <input
                                     type="hidden"
@@ -247,7 +287,12 @@
                                     name="rep_delete[]"
                                     value="0"
                                 >
-
+                                <input
+                                    type="hidden"
+                                    name="rep_marcado[]"
+                                    class="rep-marcado-input"
+                                    value="{% if item.marcado %}1{% else %}0{% endif %}"
+                                >       
                                 <input
                                     type="hidden"
                                     name="rep_actualizado_en[]"
@@ -396,6 +441,15 @@
                                 <div class="row-controls">
                                     {% if puede_editar %}
                                         <button
+                                                type="button"
+                                                class="repuesto-marcar-btn {% if item.marcado %}activo{% endif %}"
+                                                onclick="marcarRepuesto(this)"
+                                                title="Marcar repuesto"
+                                                aria-label="Marcar repuesto"
+                                            >
+                                                ✓
+                                            </button>
+                                        <button
                                             type="button"
                                             class="repuesto-drag-handle"
                                             draggable="true"
@@ -404,17 +458,11 @@
                                         >
                                             ⠿
                                         </button>
-
+                                        
                                         <button
                                             type="button"
-                                            class="
-                                                btn-login
-                                                danger
-                                                small
-                                            "
-                                            onclick="
-                                                eliminarFilaRepuesto(this)
-                                            "
+                                            class="btn-login danger small"
+                                            onclick="eliminarFilaRepuesto(this)"
                                             title="Quitar"
                                         >
                                             ✕
@@ -1163,7 +1211,12 @@
                         name="rep_delete[]"
                         value="0"
                     >
-
+                    <input
+                            type="hidden"
+                            name="rep_marcado[]"
+                            class="rep-marcado-input"
+                            value="0"
+                        >
                     <input
                         type="hidden"
                         name="rep_actualizado_en[]"
@@ -1284,6 +1337,17 @@
 
                 <td>
                     <div class="row-controls">
+
+                        <button
+                            type="button"
+                            class="repuesto-marcar-btn"
+                            onclick="marcarRepuesto(this)"
+                            title="Marcar repuesto"
+                            aria-label="Marcar repuesto"
+                        >
+                            ✓
+                        </button>
+
                         <button
                             type="button"
                             class="repuesto-drag-handle"
@@ -1296,18 +1360,13 @@
 
                         <button
                             type="button"
-                            class="
-                                btn-login
-                                danger
-                                small
-                            "
-                            onclick="
-                                eliminarFilaRepuesto(this)
-                            "
+                            class="btn-login danger small"
+                            onclick="eliminarFilaRepuesto(this)"
                             title="Quitar"
                         >
                             ✕
                         </button>
+
                     </div>
                 </td>
             </tr>
@@ -1424,5 +1483,36 @@
             }
         }
     );
+    function marcarRepuesto(boton) {
+    const fila = boton.closest('.fila-repuesto');
+
+    if (!fila) {
+        return;
+    }
+
+    const input = fila.querySelector(
+        '.rep-marcado-input'
+    );
+
+    if (!input) {
+        return;
+    }
+
+    const marcar =
+        input.value !== '1';
+
+    input.value =
+        marcar ? '1' : '0';
+
+    fila.classList.toggle(
+        'repuesto-marcado',
+        marcar
+    );
+
+    boton.classList.toggle(
+        'activo',
+        marcar
+    );
+}
 </script>
 {% endif %}
