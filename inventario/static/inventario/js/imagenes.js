@@ -1,202 +1,157 @@
-// =========================================================
-// IMÁGENES DEL PRODUCTO
-// =========================================================
-//
-// Funciones:
-// - Seleccionar varias imágenes.
-// - Agregar imágenes en varias selecciones sin perder anteriores.
-// - Evitar duplicados.
-// - Carrusel anterior / siguiente.
-// - Contador.
-// - Indicadores.
-// - Miniaturas.
-// - Eliminar una imagen antes de guardar.
-// - Sincronizar los archivos reales con <input type="file">.
-// - Validar tipo y tamaño.
-// =========================================================
+(function () {
+    "use strict";
 
+    // =========================================================
+    // CONFIGURACIÓN
+    // =========================================================
 
-// =========================================================
-// CONFIGURACIÓN
-// =========================================================
+    const MAX_MB = 10;
+    const MAX_BYTES = MAX_MB * 1024 * 1024;
 
-const IMAGEN_PRODUCTO_MAX_MB = 10;
-
-const IMAGEN_PRODUCTO_MAX_BYTES =
-    IMAGEN_PRODUCTO_MAX_MB * 1024 * 1024;
-
-
-// =========================================================
-// ESTADO
-// =========================================================
-
-const imagenesProductoEstado = {
-    archivos: [],
-    indiceActual: 0,
-    urlsTemporales: [],
-    inicializado: false,
-};
-
-
-// =========================================================
-// ELEMENTOS
-// =========================================================
-
-function obtenerElementosImagenesProducto() {
-    return {
-        input: document.getElementById(
-            "imagenesProducto"
-        ),
-
-        contenedor: document.getElementById(
-            "previewImagenesProducto"
-        ),
-
-        vacio: document.getElementById(
-            "imagenesEmptyState"
-        ),
-
-        visor: document.getElementById(
-            "imagenesCarouselViewer"
-        ),
-
-        imagen: document.getElementById(
-            "imagenCarouselActual"
-        ),
-
-        botonAnterior: document.getElementById(
-            "imagenAnterior"
-        ),
-
-        botonSiguiente: document.getElementById(
-            "imagenSiguiente"
-        ),
-
-        botonEliminar: document.getElementById(
-            "eliminarImagenActual"
-        ),
-
-        numeroActual: document.getElementById(
-            "imagenActualNumero"
-        ),
-
-        total: document.getElementById(
-            "imagenesTotal"
-        ),
-
-        puntos: document.getElementById(
-            "imagenesCarouselDots"
-        ),
-
-        miniaturas: document.getElementById(
-            "imagenesMiniaturas"
-        ),
+    const estado = {
+        archivos: [],
+        urls: [],
+        indice: 0,
+        zoom: 1,
+        zoomMin: 0.5,
+        zoomMax: 4,
+        zoomPaso: 0.25,
+        inicializado: false
     };
-}
 
 
-// =========================================================
-// INICIALIZACIÓN
-// =========================================================
+    // =========================================================
+    // ELEMENTOS
+    // =========================================================
 
-function inicializarImagenes(contexto = document) {
-    const input = contexto.querySelector(
-        "#imagenesProducto"
-    );
+    function obtenerElementos() {
+        return {
+            input:
+                document.getElementById(
+                    "imagenesProducto"
+                ),
 
-    if (!input) {
-        return;
+            vacio:
+                document.getElementById(
+                    "imagenesEmptyState"
+                ),
+
+            visor:
+                document.getElementById(
+                    "imagenesCarouselViewer"
+                ),
+
+            imagen:
+                document.getElementById(
+                    "imagenCarouselActual"
+                ),
+
+            anterior:
+                document.getElementById(
+                    "imagenAnterior"
+                ),
+
+            siguiente:
+                document.getElementById(
+                    "imagenSiguiente"
+                ),
+
+            eliminar:
+                document.getElementById(
+                    "eliminarImagenActual"
+                ),
+
+            ampliar:
+                document.getElementById(
+                    "ampliarImagenActual"
+                ),
+
+            numero:
+                document.getElementById(
+                    "imagenActualNumero"
+                ),
+
+            total:
+                document.getElementById(
+                    "imagenesTotal"
+                ),
+
+            puntos:
+                document.getElementById(
+                    "imagenesCarouselDots"
+                ),
+
+            miniaturas:
+                document.getElementById(
+                    "imagenesMiniaturas"
+                ),
+
+            fullscreen:
+                document.getElementById(
+                    "imagenFullscreen"
+                ),
+
+            fullscreenImg:
+                document.getElementById(
+                    "imagenFullscreenImg"
+                ),
+
+            fullscreenNombre:
+                document.getElementById(
+                    "imagenFullscreenNombre"
+                ),
+
+            fullscreenContador:
+                document.getElementById(
+                    "imagenFullscreenContador"
+                ),
+
+            fullscreenAnterior:
+                document.getElementById(
+                    "imagenFullscreenAnterior"
+                ),
+
+            fullscreenSiguiente:
+                document.getElementById(
+                    "imagenFullscreenSiguiente"
+                ),
+
+            fullscreenCerrar:
+                document.getElementById(
+                    "cerrarImagenFullscreen"
+                ),
+
+            zoomMas:
+                document.getElementById(
+                    "imagenZoomMas"
+                ),
+
+            zoomMenos:
+                document.getElementById(
+                    "imagenZoomMenos"
+                ),
+
+            zoomReset:
+                document.getElementById(
+                    "imagenZoomReset"
+                ),
+
+            zoomNivel:
+                document.getElementById(
+                    "imagenZoomNivel"
+                )
+        };
     }
 
-    if (input.dataset.inicializado === "1") {
-        return;
-    }
 
-    input.dataset.inicializado = "1";
+    // =========================================================
+    // VALIDAR ARCHIVO
+    // =========================================================
 
-    imagenesProductoEstado.inicializado = true;
-
-    // -----------------------------------------------------
-    // CAMBIO DE ARCHIVOS
-    // -----------------------------------------------------
-
-    input.addEventListener(
-        "change",
-        function () {
-            agregarImagenesSeleccionadas(
-                this.files
-            );
+    function archivoValido(archivo) {
+        if (!archivo) {
+            return false;
         }
-    );
-
-
-    // -----------------------------------------------------
-    // BOTONES DEL CARRUSEL
-    // -----------------------------------------------------
-
-    const elementos =
-        obtenerElementosImagenesProducto();
-
-
-    if (elementos.botonAnterior) {
-        elementos.botonAnterior.addEventListener(
-            "click",
-            function () {
-                imagenAnteriorProducto();
-            }
-        );
-    }
-
-
-    if (elementos.botonSiguiente) {
-        elementos.botonSiguiente.addEventListener(
-            "click",
-            function () {
-                imagenSiguienteProducto();
-            }
-        );
-    }
-
-
-    if (elementos.botonEliminar) {
-        elementos.botonEliminar.addEventListener(
-            "click",
-            function () {
-                eliminarImagenProductoActual();
-            }
-        );
-    }
-
-
-    // -----------------------------------------------------
-    // ESTADO INICIAL
-    // -----------------------------------------------------
-
-    renderizarCarruselImagenes();
-}
-
-
-// =========================================================
-// AGREGAR IMÁGENES
-// =========================================================
-
-function agregarImagenesSeleccionadas(fileList) {
-    const nuevosArchivos = Array.from(
-        fileList || []
-    );
-
-    if (nuevosArchivos.length === 0) {
-        sincronizarInputImagenes();
-        return;
-    }
-
-    let imagenesAgregadas = 0;
-
-    for (const archivo of nuevosArchivos) {
-
-        // -------------------------------------------------
-        // VALIDAR TIPO
-        // -------------------------------------------------
 
         if (
             !archivo.type ||
@@ -206,842 +161,1209 @@ function agregarImagenesSeleccionadas(fileList) {
                 `"${archivo.name}" no es una imagen válida.`
             );
 
-            continue;
+            return false;
         }
 
-
-        // -------------------------------------------------
-        // VALIDAR PESO
-        // -------------------------------------------------
-
-        if (
-            archivo.size >
-            IMAGEN_PRODUCTO_MAX_BYTES
-        ) {
+        if (archivo.size > MAX_BYTES) {
             alert(
-                `"${archivo.name}" supera los ` +
-                `${IMAGEN_PRODUCTO_MAX_MB} MB.`
+                `"${archivo.name}" supera los ${MAX_MB} MB.`
             );
 
-            continue;
+            return false;
         }
 
+        return true;
+    }
 
-        // -------------------------------------------------
-        // EVITAR DUPLICADOS
-        // -------------------------------------------------
 
-        const yaExiste =
-            imagenesProductoEstado.archivos.some(
-                function (existente) {
-                    return archivosSonIguales(
-                        existente,
-                        archivo
-                    );
+    // =========================================================
+    // DUPLICADOS
+    // =========================================================
+
+    function archivoDuplicado(archivo) {
+        return estado.archivos.some(
+            function (existente) {
+                return (
+                    existente.name === archivo.name &&
+                    existente.size === archivo.size &&
+                    existente.lastModified ===
+                        archivo.lastModified
+                );
+            }
+        );
+    }
+
+
+    // =========================================================
+    // URLS
+    // =========================================================
+
+    function liberarUrls() {
+        estado.urls.forEach(
+            function (url) {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    // Ignorar
                 }
-            );
-
-        if (yaExiste) {
-            continue;
-        }
-
-
-        imagenesProductoEstado.archivos.push(
-            archivo
-        );
-
-        imagenesAgregadas += 1;
-    }
-
-
-    // =====================================================
-    // MOSTRAR LA ÚLTIMA IMAGEN NUEVA
-    // =====================================================
-
-    if (imagenesAgregadas > 0) {
-        imagenesProductoEstado.indiceActual =
-            imagenesProductoEstado.archivos.length - 1;
-    }
-
-
-    sincronizarInputImagenes();
-
-    regenerarUrlsImagenes();
-
-    renderizarCarruselImagenes();
-}
-
-
-// =========================================================
-// COMPARAR ARCHIVOS
-// =========================================================
-
-function archivosSonIguales(
-    archivoA,
-    archivoB
-) {
-    if (!archivoA || !archivoB) {
-        return false;
-    }
-
-    return (
-        archivoA.name === archivoB.name &&
-        archivoA.size === archivoB.size &&
-        archivoA.lastModified ===
-            archivoB.lastModified
-    );
-}
-
-
-// =========================================================
-// SINCRONIZAR INPUT REAL
-// =========================================================
-//
-// Muy importante:
-//
-// Django recibe:
-// request.FILES.getlist("imagenes_producto")
-//
-// Por eso, si eliminamos una imagen visualmente,
-// también debemos quitarla de input.files.
-// =========================================================
-
-function sincronizarInputImagenes() {
-    const input =
-        document.getElementById(
-            "imagenesProducto"
-        );
-
-    if (!input) {
-        return;
-    }
-
-    try {
-        const dataTransfer =
-            new DataTransfer();
-
-        imagenesProductoEstado.archivos.forEach(
-            function (archivo) {
-                dataTransfer.items.add(
-                    archivo
-                );
             }
         );
 
-        input.files =
-            dataTransfer.files;
-
-    } catch (error) {
-        console.error(
-            "No se pudo sincronizar el input de imágenes:",
-            error
-        );
+        estado.urls = [];
     }
-}
 
 
-// =========================================================
-// URLS TEMPORALES
-// =========================================================
+    function generarUrls() {
+        liberarUrls();
 
-function liberarUrlsImagenes() {
-    imagenesProductoEstado.urlsTemporales.forEach(
-        function (url) {
-            try {
-                URL.revokeObjectURL(
-                    url
-                );
-            } catch (error) {
-                // No hacemos nada.
-            }
-        }
-    );
-
-    imagenesProductoEstado.urlsTemporales = [];
-}
-
-
-function regenerarUrlsImagenes() {
-    liberarUrlsImagenes();
-
-    imagenesProductoEstado.urlsTemporales =
-        imagenesProductoEstado.archivos.map(
+        estado.urls = estado.archivos.map(
             function (archivo) {
                 return URL.createObjectURL(
                     archivo
                 );
             }
         );
-}
+    }
 
 
-// =========================================================
-// RENDER PRINCIPAL
-// =========================================================
+    // =========================================================
+    // SINCRONIZAR INPUT
+    // =========================================================
 
-function renderizarCarruselImagenes() {
-    const elementos =
-        obtenerElementosImagenesProducto();
+    function sincronizarInput() {
+        const input =
+            document.getElementById(
+                "imagenesProducto"
+            );
 
-    const total =
-        imagenesProductoEstado.archivos.length;
-
-
-    // =====================================================
-    // SIN IMÁGENES
-    // =====================================================
-
-    if (total === 0) {
-        imagenesProductoEstado.indiceActual = 0;
-
-        if (elementos.vacio) {
-            elementos.vacio.style.display =
-                "flex";
+        if (!input) {
+            return;
         }
 
-        if (elementos.visor) {
-            elementos.visor.style.display =
+        /*
+         * DataTransfer permite reconstruir input.files
+         * después de eliminar/agregar fotografías.
+         */
+        try {
+            const transferencia =
+                new DataTransfer();
+
+            estado.archivos.forEach(
+                function (archivo) {
+                    transferencia.items.add(
+                        archivo
+                    );
+                }
+            );
+
+            input.files =
+                transferencia.files;
+
+        } catch (error) {
+            console.error(
+                "Error sincronizando imágenes:",
+                error
+            );
+        }
+    }
+
+
+    // =========================================================
+    // AGREGAR
+    // =========================================================
+
+    function agregarArchivos(fileList) {
+        const nuevos =
+            Array.from(
+                fileList || []
+            );
+
+        if (nuevos.length === 0) {
+            return;
+        }
+
+        let cantidadAgregada = 0;
+
+        nuevos.forEach(
+            function (archivo) {
+
+                if (!archivoValido(archivo)) {
+                    return;
+                }
+
+                if (archivoDuplicado(archivo)) {
+                    return;
+                }
+
+                estado.archivos.push(
+                    archivo
+                );
+
+                cantidadAgregada += 1;
+            }
+        );
+
+
+        if (cantidadAgregada === 0) {
+            sincronizarInput();
+            return;
+        }
+
+
+        estado.indice =
+            estado.archivos.length - 1;
+
+
+        generarUrls();
+
+        sincronizarInput();
+
+        renderizar();
+    }
+
+
+    // =========================================================
+    // RENDER PRINCIPAL
+    // =========================================================
+
+    function renderizar() {
+        const e =
+            obtenerElementos();
+
+        const total =
+            estado.archivos.length;
+
+
+        // -----------------------------------------------------
+        // VACÍO
+        // -----------------------------------------------------
+
+        if (total === 0) {
+
+            estado.indice = 0;
+
+            if (e.vacio) {
+                e.vacio.style.display =
+                    "flex";
+            }
+
+            if (e.visor) {
+                e.visor.style.display =
+                    "none";
+            }
+
+            if (e.imagen) {
+                e.imagen.removeAttribute(
+                    "src"
+                );
+            }
+
+            if (e.puntos) {
+                e.puntos.innerHTML =
+                    "";
+            }
+
+            if (e.miniaturas) {
+                e.miniaturas.innerHTML =
+                    "";
+            }
+
+            cerrarFullscreen();
+
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // ÍNDICE
+        // -----------------------------------------------------
+
+        if (estado.indice < 0) {
+            estado.indice =
+                total - 1;
+        }
+
+        if (estado.indice >= total) {
+            estado.indice = 0;
+        }
+
+
+        const archivo =
+            estado.archivos[
+                estado.indice
+            ];
+
+        const url =
+            estado.urls[
+                estado.indice
+            ];
+
+
+        // -----------------------------------------------------
+        // MOSTRAR VISOR
+        // -----------------------------------------------------
+
+        if (e.vacio) {
+            e.vacio.style.display =
                 "none";
         }
 
-        if (elementos.imagen) {
-            elementos.imagen.removeAttribute(
-                "src"
-            );
+        if (e.visor) {
+            e.visor.style.display =
+                "flex";
         }
 
-        if (elementos.puntos) {
-            elementos.puntos.innerHTML =
-                "";
+
+        // -----------------------------------------------------
+        // IMAGEN
+        // -----------------------------------------------------
+
+        if (e.imagen) {
+            e.imagen.src =
+                url;
+
+            e.imagen.alt =
+                archivo.name;
         }
 
-        if (elementos.miniaturas) {
-            elementos.miniaturas.innerHTML =
-                "";
+
+        // -----------------------------------------------------
+        // CONTADOR
+        // -----------------------------------------------------
+
+        if (e.numero) {
+            e.numero.textContent =
+                String(
+                    estado.indice + 1
+                );
         }
 
-        return;
+        if (e.total) {
+            e.total.textContent =
+                String(total);
+        }
+
+
+        actualizarFlechas();
+
+        renderizarPuntos();
+
+        renderizarMiniaturas();
+
+
+        if (fullscreenAbierto()) {
+            actualizarFullscreen();
+        }
     }
 
 
-    // =====================================================
-    // CORREGIR ÍNDICE
-    // =====================================================
+    // =========================================================
+    // MOSTRAR IMAGEN
+    // =========================================================
 
-    if (
-        imagenesProductoEstado.indiceActual <
-        0
-    ) {
-        imagenesProductoEstado.indiceActual =
-            total - 1;
-    }
+    function mostrarImagen(indice) {
+        const total =
+            estado.archivos.length;
 
-    if (
-        imagenesProductoEstado.indiceActual >=
-        total
-    ) {
-        imagenesProductoEstado.indiceActual =
-            0;
-    }
+        if (total === 0) {
+            return;
+        }
 
+        if (indice < 0) {
+            indice =
+                total - 1;
+        }
 
-    const indice =
-        imagenesProductoEstado.indiceActual;
+        if (indice >= total) {
+            indice = 0;
+        }
 
-    const archivo =
-        imagenesProductoEstado.archivos[
-            indice
-        ];
+        estado.indice =
+            indice;
 
-    const url =
-        imagenesProductoEstado.urlsTemporales[
-            indice
-        ];
-
-
-    // =====================================================
-    // MOSTRAR VISOR
-    // =====================================================
-
-    if (elementos.vacio) {
-        elementos.vacio.style.display =
-            "none";
-    }
-
-    if (elementos.visor) {
-        elementos.visor.style.display =
-            "flex";
+        renderizar();
     }
 
 
-    // =====================================================
-    // IMAGEN
-    // =====================================================
-
-    if (
-        elementos.imagen &&
-        url
-    ) {
-        elementos.imagen.src =
-            url;
-
-        elementos.imagen.alt =
-            archivo?.name ||
-            "Imagen del producto";
+    function anterior() {
+        mostrarImagen(
+            estado.indice - 1
+        );
     }
 
 
-    // =====================================================
-    // CONTADOR
-    // =====================================================
-
-    if (elementos.numeroActual) {
-        elementos.numeroActual.textContent =
-            String(
-                indice + 1
-            );
-    }
-
-    if (elementos.total) {
-        elementos.total.textContent =
-            String(
-                total
-            );
+    function siguiente() {
+        mostrarImagen(
+            estado.indice + 1
+        );
     }
 
 
-    // =====================================================
+    // =========================================================
     // FLECHAS
-    // =====================================================
+    // =========================================================
 
-    actualizarFlechasImagenes();
+    function actualizarFlechas() {
+        const e =
+            obtenerElementos();
+
+        const deshabilitar =
+            estado.archivos.length <= 1;
+
+        if (e.anterior) {
+            e.anterior.disabled =
+                deshabilitar;
+        }
+
+        if (e.siguiente) {
+            e.siguiente.disabled =
+                deshabilitar;
+        }
+
+        if (e.fullscreenAnterior) {
+            e.fullscreenAnterior.disabled =
+                deshabilitar;
+        }
+
+        if (e.fullscreenSiguiente) {
+            e.fullscreenSiguiente.disabled =
+                deshabilitar;
+        }
+    }
 
 
-    // =====================================================
-    // INDICADORES
-    // =====================================================
+    // =========================================================
+    // PUNTOS
+    // =========================================================
 
-    renderizarPuntosImagenes();
+    function renderizarPuntos() {
+        const contenedor =
+            document.getElementById(
+                "imagenesCarouselDots"
+            );
+
+        if (!contenedor) {
+            return;
+        }
+
+        contenedor.innerHTML = "";
+
+        if (
+            estado.archivos.length <= 1
+        ) {
+            return;
+        }
 
 
-    // =====================================================
+        estado.archivos.forEach(
+            function (
+                archivo,
+                indice
+            ) {
+
+                const punto =
+                    document.createElement(
+                        "button"
+                    );
+
+                punto.type =
+                    "button";
+
+                punto.className =
+                    "producto-carousel-dot";
+
+                punto.title =
+                    archivo.name;
+
+                punto.setAttribute(
+                    "aria-label",
+                    `Ver imagen ${indice + 1}`
+                );
+
+
+                if (
+                    indice ===
+                    estado.indice
+                ) {
+                    punto.classList.add(
+                        "active"
+                    );
+                }
+
+
+                punto.addEventListener(
+                    "click",
+                    function () {
+                        mostrarImagen(
+                            indice
+                        );
+                    }
+                );
+
+
+                contenedor.appendChild(
+                    punto
+                );
+            }
+        );
+    }
+
+
+    // =========================================================
     // MINIATURAS
-    // =====================================================
+    // =========================================================
 
-    renderizarMiniaturasImagenes();
-}
-
-
-// =========================================================
-// MOSTRAR UNA IMAGEN ESPECÍFICA
-// =========================================================
-
-function mostrarImagenProducto(indice) {
-    const total =
-        imagenesProductoEstado.archivos.length;
-
-    if (total === 0) {
-        return;
-    }
-
-    if (indice < 0) {
-        indice = total - 1;
-    }
-
-    if (indice >= total) {
-        indice = 0;
-    }
-
-    imagenesProductoEstado.indiceActual =
-        indice;
-
-    renderizarCarruselImagenes();
-}
-
-
-// =========================================================
-// ANTERIOR
-// =========================================================
-
-function imagenAnteriorProducto() {
-    mostrarImagenProducto(
-        imagenesProductoEstado.indiceActual - 1
-    );
-}
-
-
-// =========================================================
-// SIGUIENTE
-// =========================================================
-
-function imagenSiguienteProducto() {
-    mostrarImagenProducto(
-        imagenesProductoEstado.indiceActual + 1
-    );
-}
-
-
-// =========================================================
-// ACTUALIZAR FLECHAS
-// =========================================================
-
-function actualizarFlechasImagenes() {
-    const elementos =
-        obtenerElementosImagenesProducto();
-
-    const deshabilitar =
-        imagenesProductoEstado.archivos.length <= 1;
-
-    if (elementos.botonAnterior) {
-        elementos.botonAnterior.disabled =
-            deshabilitar;
-    }
-
-    if (elementos.botonSiguiente) {
-        elementos.botonSiguiente.disabled =
-            deshabilitar;
-    }
-}
-
-
-// =========================================================
-// PUNTOS DEL CARRUSEL
-// =========================================================
-
-function renderizarPuntosImagenes() {
-    const contenedor =
-        document.getElementById(
-            "imagenesCarouselDots"
-        );
-
-    if (!contenedor) {
-        return;
-    }
-
-    contenedor.innerHTML = "";
-
-    const total =
-        imagenesProductoEstado.archivos.length;
-
-    if (total <= 1) {
-        return;
-    }
-
-
-    imagenesProductoEstado.archivos.forEach(
-        function (
-            archivo,
-            indice
-        ) {
-            const punto =
-                document.createElement(
-                    "button"
-                );
-
-            punto.type =
-                "button";
-
-            punto.className =
-                "producto-carousel-dot";
-
-            punto.setAttribute(
-                "aria-label",
-                `Ver imagen ${indice + 1}`
+    function renderizarMiniaturas() {
+        const contenedor =
+            document.getElementById(
+                "imagenesMiniaturas"
             );
 
-            punto.title =
-                archivo.name;
+        if (!contenedor) {
+            return;
+        }
+
+        contenedor.innerHTML = "";
 
 
-            if (
-                indice ===
-                imagenesProductoEstado.indiceActual
+        estado.archivos.forEach(
+            function (
+                archivo,
+                indice
             ) {
-                punto.classList.add(
-                    "active"
-                );
-            }
+
+                const boton =
+                    document.createElement(
+                        "button"
+                    );
+
+                boton.type =
+                    "button";
+
+                boton.className =
+                    "producto-carousel-thumbnail";
+
+                boton.title =
+                    archivo.name;
 
 
-            punto.addEventListener(
-                "click",
-                function () {
-                    mostrarImagenProducto(
-                        indice
+                if (
+                    indice ===
+                    estado.indice
+                ) {
+                    boton.classList.add(
+                        "active"
                     );
                 }
-            );
 
 
-            contenedor.appendChild(
-                punto
-            );
-        }
-    );
-}
+                const imagen =
+                    document.createElement(
+                        "img"
+                    );
+
+                imagen.src =
+                    estado.urls[
+                        indice
+                    ];
+
+                imagen.alt =
+                    archivo.name;
 
 
-// =========================================================
-// MINIATURAS
-// =========================================================
-
-function renderizarMiniaturasImagenes() {
-    const contenedor =
-        document.getElementById(
-            "imagenesMiniaturas"
-        );
-
-    if (!contenedor) {
-        return;
-    }
-
-    contenedor.innerHTML = "";
-
-
-    imagenesProductoEstado.archivos.forEach(
-        function (
-            archivo,
-            indice
-        ) {
-
-            const boton =
-                document.createElement(
-                    "button"
+                boton.appendChild(
+                    imagen
                 );
 
-            boton.type =
-                "button";
 
-            boton.className =
-                "producto-carousel-thumbnail";
+                boton.addEventListener(
+                    "click",
+                    function () {
+                        mostrarImagen(
+                            indice
+                        );
+                    }
+                );
 
-            boton.title =
-                archivo.name;
 
-
-            if (
-                indice ===
-                imagenesProductoEstado.indiceActual
-            ) {
-                boton.classList.add(
-                    "active"
+                contenedor.appendChild(
+                    boton
                 );
             }
+        );
+    }
 
 
-            // =============================================
-            // IMAGEN
-            // =============================================
+    // =========================================================
+    // ELIMINAR
+    // =========================================================
 
-            const imagen =
-                document.createElement(
-                    "img"
-                );
-
-            imagen.src =
-                imagenesProductoEstado.urlsTemporales[
-                    indice
-                ];
-
-            imagen.alt =
-                archivo.name;
-
-
-            // =============================================
-            // BOTÓN
-            // =============================================
-
-            boton.appendChild(
-                imagen
-            );
-
-            boton.addEventListener(
-                "click",
-                function () {
-                    mostrarImagenProducto(
-                        indice
-                    );
-                }
-            );
-
-
-            contenedor.appendChild(
-                boton
-            );
+    function eliminarActual() {
+        if (
+            estado.archivos.length === 0
+        ) {
+            return;
         }
-    );
 
 
-    // =====================================================
-    // ASEGURAR QUE LA ACTIVA SEA VISIBLE
-    // =====================================================
-
-    const activa =
-        contenedor.querySelector(
-            ".producto-carousel-thumbnail.active"
+        estado.archivos.splice(
+            estado.indice,
+            1
         );
 
-    if (activa) {
-        activa.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-            inline: "nearest",
-        });
-    }
-}
+
+        if (
+            estado.indice >=
+            estado.archivos.length
+        ) {
+            estado.indice =
+                Math.max(
+                    estado.archivos.length - 1,
+                    0
+                );
+        }
 
 
-// =========================================================
-// ELIMINAR IMAGEN ACTUAL
-// =========================================================
+        generarUrls();
 
-function eliminarImagenProductoActual() {
-    const total =
-        imagenesProductoEstado.archivos.length;
+        sincronizarInput();
 
-    if (total === 0) {
-        return;
+        renderizar();
     }
 
 
-    imagenesProductoEstado.archivos.splice(
-        imagenesProductoEstado.indiceActual,
-        1
-    );
+    // =========================================================
+    // FULLSCREEN
+    // =========================================================
+
+    function fullscreenAbierto() {
+        const fullscreen =
+            document.getElementById(
+                "imagenFullscreen"
+            );
+
+        return Boolean(
+            fullscreen &&
+            fullscreen.classList.contains(
+                "activo"
+            )
+        );
+    }
 
 
-    // =====================================================
-    // CORREGIR ÍNDICE
-    // =====================================================
+    function abrirFullscreen() {
+        if (
+            estado.archivos.length === 0
+        ) {
+            return;
+        }
 
-    if (
-        imagenesProductoEstado.indiceActual >=
-        imagenesProductoEstado.archivos.length
-    ) {
-        imagenesProductoEstado.indiceActual =
+        const e =
+            obtenerElementos();
+
+        if (!e.fullscreen) {
+            return;
+        }
+
+
+        e.fullscreen.classList.add(
+            "activo"
+        );
+
+        e.fullscreen.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        document.body.classList.add(
+            "imagen-fullscreen-abierto"
+        );
+
+
+        estado.zoom = 1;
+
+        actualizarFullscreen();
+    }
+
+
+    function cerrarFullscreen() {
+        const fullscreen =
+            document.getElementById(
+                "imagenFullscreen"
+            );
+
+        if (!fullscreen) {
+            return;
+        }
+
+        fullscreen.classList.remove(
+            "activo"
+        );
+
+        fullscreen.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        document.body.classList.remove(
+            "imagen-fullscreen-abierto"
+        );
+
+        estado.zoom = 1;
+
+        aplicarZoom();
+    }
+
+
+    function actualizarFullscreen() {
+        if (
+            estado.archivos.length === 0
+        ) {
+            return;
+        }
+
+        const e =
+            obtenerElementos();
+
+        const archivo =
+            estado.archivos[
+                estado.indice
+            ];
+
+        const url =
+            estado.urls[
+                estado.indice
+            ];
+
+
+        if (e.fullscreenImg) {
+            e.fullscreenImg.src =
+                url;
+
+            e.fullscreenImg.alt =
+                archivo.name;
+        }
+
+        if (e.fullscreenNombre) {
+            e.fullscreenNombre.textContent =
+                archivo.name;
+        }
+
+        if (e.fullscreenContador) {
+            e.fullscreenContador.textContent =
+                `${estado.indice + 1} de ${estado.archivos.length}`;
+        }
+
+
+        estado.zoom = 1;
+
+        aplicarZoom();
+
+        actualizarFlechas();
+    }
+
+
+    // =========================================================
+    // ZOOM
+    // =========================================================
+
+    function aplicarZoom() {
+        const e =
+            obtenerElementos();
+
+        if (e.fullscreenImg) {
+            e.fullscreenImg.style.transform =
+                `scale(${estado.zoom})`;
+        }
+
+        if (e.zoomNivel) {
+            e.zoomNivel.textContent =
+                `${Math.round(
+                    estado.zoom * 100
+                )}%`;
+        }
+    }
+
+
+    function cambiarZoom(cambio) {
+        let nuevo =
+            estado.zoom + cambio;
+
+        nuevo =
             Math.max(
-                imagenesProductoEstado.archivos.length - 1,
-                0
+                estado.zoomMin,
+                nuevo
             );
+
+        nuevo =
+            Math.min(
+                estado.zoomMax,
+                nuevo
+            );
+
+        estado.zoom =
+            nuevo;
+
+        aplicarZoom();
     }
 
 
-    sincronizarInputImagenes();
+    function resetZoom() {
+        estado.zoom = 1;
 
-    regenerarUrlsImagenes();
-
-    renderizarCarruselImagenes();
-}
-
-
-// =========================================================
-// COMPATIBILIDAD CON FUNCIÓN ANTERIOR
-// =========================================================
-//
-// Si otro archivo llama:
-// mostrarPreviewImagenesProducto(input)
-//
-// seguirá funcionando.
-// =========================================================
-
-function mostrarPreviewImagenesProducto(input) {
-    if (!input) {
-        return;
+        aplicarZoom();
     }
 
-    /*
-     * Si el input ya es el oficial, usamos la misma
-     * lógica de acumulación.
-     */
-    agregarImagenesSeleccionadas(
-        input.files
-    );
-}
+
+    // =========================================================
+    // VALIDACIÓN
+    // =========================================================
+
+    function validarImagenesProducto() {
+        for (
+            const archivo
+            of estado.archivos
+        ) {
+
+            if (
+                !archivo.type ||
+                !archivo.type.startsWith(
+                    "image/"
+                )
+            ) {
+                alert(
+                    `"${archivo.name}" no es una imagen válida.`
+                );
+
+                return false;
+            }
+
+            if (
+                archivo.size >
+                MAX_BYTES
+            ) {
+                alert(
+                    `"${archivo.name}" supera los ${MAX_MB} MB.`
+                );
+
+                return false;
+            }
+        }
+
+        return true;
+    }
 
 
-// =========================================================
-// LIMPIAR TODAS LAS IMÁGENES
-// =========================================================
+    // =========================================================
+    // API COMPATIBLE
+    // =========================================================
 
-function limpiarImagenesProducto() {
-    imagenesProductoEstado.archivos = [];
-    imagenesProductoEstado.indiceActual = 0;
+    function limpiarImagenesProducto() {
+        estado.archivos = [];
+        estado.indice = 0;
 
-    liberarUrlsImagenes();
+        liberarUrls();
 
-    sincronizarInputImagenes();
+        sincronizarInput();
 
-    renderizarCarruselImagenes();
-}
-
-
-// =========================================================
-// CONTADOR
-// =========================================================
-
-function cantidadImagenesProducto() {
-    return (
-        imagenesProductoEstado.archivos.length
-    );
-}
+        renderizar();
+    }
 
 
-// =========================================================
-// OBTENER IMÁGENES
-// =========================================================
-
-function obtenerImagenesProducto() {
-    return Array.from(
-        imagenesProductoEstado.archivos
-    );
-}
+    function cantidadImagenesProducto() {
+        return estado.archivos.length;
+    }
 
 
-// =========================================================
-// TAMAÑO DE ARCHIVO
-// =========================================================
+    function obtenerImagenesProducto() {
+        return Array.from(
+            estado.archivos
+        );
+    }
 
-function formatearTamanoArchivo(bytes) {
-    if (
-        bytes === null ||
-        bytes === undefined
+
+    function mostrarPreviewImagenesProducto(
+        input
     ) {
-        return "0 B";
+        if (!input) {
+            return;
+        }
+
+        agregarArchivos(
+            input.files
+        );
     }
 
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
 
-    if (
-        bytes <
-        1024 * 1024
+    function formatearTamanoArchivo(
+        bytes
     ) {
+        if (bytes < 1024) {
+            return `${bytes} B`;
+        }
+
+        if (
+            bytes <
+            1024 * 1024
+        ) {
+            return (
+                (bytes / 1024)
+                    .toFixed(1) +
+                " KB"
+            );
+        }
+
         return (
-            (bytes / 1024).toFixed(1) +
-            " KB"
+            (
+                bytes /
+                1024 /
+                1024
+            ).toFixed(2) +
+            " MB"
         );
     }
 
-    return (
-        (
-            bytes /
-            1024 /
-            1024
-        ).toFixed(2) +
-        " MB"
-    );
-}
+
+    // Exponer funciones por compatibilidad
+    window.validarImagenesProducto =
+        validarImagenesProducto;
+
+    window.limpiarImagenesProducto =
+        limpiarImagenesProducto;
+
+    window.cantidadImagenesProducto =
+        cantidadImagenesProducto;
+
+    window.obtenerImagenesProducto =
+        obtenerImagenesProducto;
+
+    window.mostrarPreviewImagenesProducto =
+        mostrarPreviewImagenesProducto;
+
+    window.formatearTamanoArchivo =
+        formatearTamanoArchivo;
 
 
-// =========================================================
-// VALIDAR
-// =========================================================
+    // =========================================================
+    // INICIALIZAR
+    // =========================================================
 
-function validarImagenesProducto() {
-    const archivos =
-        obtenerImagenesProducto();
+    function inicializar() {
+        if (estado.inicializado) {
+            return;
+        }
 
-    for (
-        const archivo
-        of archivos
-    ) {
+        const e =
+            obtenerElementos();
 
-        if (
-            !archivo.type ||
-            !archivo.type.startsWith("image/")
-        ) {
-            alert(
-                `"${archivo.name}" no es una imagen válida.`
+
+        if (!e.input) {
+            console.error(
+                "[IMÁGENES] No se encontró #imagenesProducto"
             );
 
-            return false;
+            return;
         }
 
 
-        if (
-            archivo.size >
-            IMAGEN_PRODUCTO_MAX_BYTES
-        ) {
-            alert(
-                `"${archivo.name}" supera los ` +
-                `${IMAGEN_PRODUCTO_MAX_MB} MB.`
+        if (!e.visor) {
+            console.error(
+                "[IMÁGENES] No se encontró #imagenesCarouselViewer"
             );
-
-            return false;
         }
-    }
-
-    return true;
-}
 
 
-// =========================================================
-// VALIDACIÓN ANTES DE ENVIAR EL FORMULARIO
-// =========================================================
+        if (!e.imagen) {
+            console.error(
+                "[IMÁGENES] No se encontró #imagenCarouselActual"
+            );
+        }
 
-function inicializarValidacionFormularioImagenes() {
-    const formulario =
-        document.getElementById(
-            "catalogoForm"
+
+        estado.inicializado = true;
+
+
+        // -----------------------------------------------------
+        // INPUT
+        // -----------------------------------------------------
+
+        e.input.addEventListener(
+            "change",
+            function (event) {
+
+                /*
+                 * Copiamos los archivos ANTES de modificar
+                 * input.files.
+                 */
+                const seleccion =
+                    Array.from(
+                        event.target.files ||
+                        []
+                    );
+
+                agregarArchivos(
+                    seleccion
+                );
+            }
         );
 
-    if (!formulario) {
-        return;
+
+        // -----------------------------------------------------
+        // CARRUSEL
+        // -----------------------------------------------------
+
+        if (e.anterior) {
+            e.anterior.addEventListener(
+                "click",
+                anterior
+            );
+        }
+
+
+        if (e.siguiente) {
+            e.siguiente.addEventListener(
+                "click",
+                siguiente
+            );
+        }
+
+
+        if (e.eliminar) {
+            e.eliminar.addEventListener(
+                "click",
+                eliminarActual
+            );
+        }
+
+
+        if (e.ampliar) {
+            e.ampliar.addEventListener(
+                "click",
+                abrirFullscreen
+            );
+        }
+
+
+        if (e.imagen) {
+            e.imagen.addEventListener(
+                "click",
+                abrirFullscreen
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // FULLSCREEN
+        // -----------------------------------------------------
+
+        if (e.fullscreenCerrar) {
+            e.fullscreenCerrar.addEventListener(
+                "click",
+                cerrarFullscreen
+            );
+        }
+
+
+        if (e.fullscreenAnterior) {
+            e.fullscreenAnterior.addEventListener(
+                "click",
+                anterior
+            );
+        }
+
+
+        if (e.fullscreenSiguiente) {
+            e.fullscreenSiguiente.addEventListener(
+                "click",
+                siguiente
+            );
+        }
+
+
+        if (e.zoomMas) {
+            e.zoomMas.addEventListener(
+                "click",
+                function () {
+                    cambiarZoom(
+                        estado.zoomPaso
+                    );
+                }
+            );
+        }
+
+
+        if (e.zoomMenos) {
+            e.zoomMenos.addEventListener(
+                "click",
+                function () {
+                    cambiarZoom(
+                        -estado.zoomPaso
+                    );
+                }
+            );
+        }
+
+
+        if (e.zoomReset) {
+            e.zoomReset.addEventListener(
+                "click",
+                resetZoom
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // RUEDA DEL MOUSE
+        // -----------------------------------------------------
+
+        if (e.fullscreenImg) {
+
+            e.fullscreenImg.addEventListener(
+                "wheel",
+                function (event) {
+
+                    event.preventDefault();
+
+                    if (event.deltaY < 0) {
+                        cambiarZoom(
+                            estado.zoomPaso
+                        );
+                    } else {
+                        cambiarZoom(
+                            -estado.zoomPaso
+                        );
+                    }
+
+                },
+                {
+                    passive: false
+                }
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // FORMULARIO
+        // -----------------------------------------------------
+
+        const formulario =
+            document.getElementById(
+                "catalogoForm"
+            );
+
+        if (formulario) {
+
+            formulario.addEventListener(
+                "submit",
+                function (event) {
+
+                    if (
+                        !validarImagenesProducto()
+                    ) {
+                        event.preventDefault();
+
+                        event.stopPropagation();
+                    }
+
+                }
+            );
+        }
+
+
+        renderizar();
     }
 
 
-    if (
-        formulario.dataset.imagenesValidacion ===
-        "1"
-    ) {
-        return;
-    }
+    // =========================================================
+    // TECLADO
+    // =========================================================
 
-
-    formulario.dataset.imagenesValidacion =
-        "1";
-
-
-    formulario.addEventListener(
-        "submit",
+    document.addEventListener(
+        "keydown",
         function (event) {
 
-            if (
-                !validarImagenesProducto()
-            ) {
-                event.preventDefault();
-                event.stopPropagation();
+            if (!fullscreenAbierto()) {
+                return;
             }
 
+
+            if (event.key === "Escape") {
+                cerrarFullscreen();
+
+                return;
+            }
+
+
+            if (event.key === "ArrowLeft") {
+                anterior();
+
+                return;
+            }
+
+
+            if (event.key === "ArrowRight") {
+                siguiente();
+
+                return;
+            }
+
+
+            if (
+                event.key === "+" ||
+                event.key === "="
+            ) {
+                cambiarZoom(
+                    estado.zoomPaso
+                );
+
+                return;
+            }
+
+
+            if (event.key === "-") {
+                cambiarZoom(
+                    -estado.zoomPaso
+                );
+
+                return;
+            }
+
+
+            if (event.key === "0") {
+                resetZoom();
+            }
         }
     );
-}
 
 
-// =========================================================
-// LIMPIEZA AL SALIR
-// =========================================================
+    // =========================================================
+    // LIMPIEZA
+    // =========================================================
 
-window.addEventListener(
-    "beforeunload",
-    function () {
-        liberarUrlsImagenes();
+    window.addEventListener(
+        "beforeunload",
+        liberarUrls
+    );
+
+
+    // =========================================================
+    // ARRANQUE
+    // =========================================================
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            inicializar
+        );
+
+    } else {
+
+        inicializar();
+
     }
-);
 
-
-// =========================================================
-// INICIALIZACIÓN GENERAL
-// =========================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        inicializarImagenes();
-
-        inicializarValidacionFormularioImagenes();
-
-    }
-);
+})();
