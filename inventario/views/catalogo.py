@@ -199,7 +199,7 @@ def catalogo_crear(request):
 
         if producto_form.is_valid() and codigo_formset.is_valid() and atributo_formset.is_valid():
             producto = producto_form.save(commit=False)
-            producto.origen = "BODEGA"
+            producto.origen = "INDIVIDUAL"
             producto.save()
 
             imagenes_producto = request.FILES.getlist("imagenes_producto")
