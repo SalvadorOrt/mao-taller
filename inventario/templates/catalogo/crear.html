@@ -1,107 +1,916 @@
 {% extends "base.html" %}
 {% load static %}
 
+
 {% block title %}
+Nuevo Repuesto | MAO
+{% endblock %}
+
+
+{% block page_title %}
 Nuevo Repuesto
 {% endblock %}
 
+
+{% block page_subtitle %}
+Registro de producto, atributos técnicos, imágenes y códigos comerciales
+{% endblock %}
+
+
 {% block extra_css %}
 
-<link rel="stylesheet" href="{% static 'inventario/css/catalogo_form.css' %}">
+<link
+    rel="stylesheet"
+    href="{% static 'inventario/css/catalogo_form.css' %}"
+>
+
+<style>
+
+    /* =====================================================
+       CONTENEDOR GENERAL
+    ===================================================== */
+
+    .catalogo-crear-wrapper {
+        padding-top: 8px;
+        padding-bottom: 25px;
+    }
+
+
+    /* =====================================================
+       CABECERA
+    ===================================================== */
+
+    .catalogo-crear-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .catalogo-crear-top-info {
+        min-width: 0;
+    }
+
+    .catalogo-crear-top-title {
+        margin: 0;
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .catalogo-crear-top-text {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .catalogo-crear-top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+
+    /* =====================================================
+       INDICADOR DE FLUJO
+    ===================================================== */
+
+    .catalogo-crear-flow {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .catalogo-crear-step {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 58px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 11px;
+        background: #fbfbfd;
+    }
+
+    .catalogo-crear-step-number {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-radius: 8px;
+        background: #f0f6ff;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .catalogo-crear-step-title {
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .catalogo-crear-step-sub {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 500;
+        line-height: 1.25;
+    }
+
+
+    /* =====================================================
+       FORMULARIO
+    ===================================================== */
+
+    .catalogo-crear-form {
+        margin: 0;
+    }
+
+    .catalogo-crear-section {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    .catalogo-crear-section:last-of-type {
+        margin-bottom: 0;
+    }
+
+    .catalogo-crear-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 13px;
+    }
+
+    .catalogo-crear-section-description {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 500;
+        line-height: 1.35;
+    }
+
+
+    /* =====================================================
+       ERRORES
+    ===================================================== */
+
+    .catalogo-error-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border: 1px solid #ffd6d6;
+        border-radius: 10px;
+        background: #ffebe9;
+        color: var(--danger);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .catalogo-error-box i {
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+
+    .catalogo-error-box ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+
+    /* =====================================================
+       INPUTS GENERALES
+
+       Estos estilos también ordenan los campos que llegan
+       desde _producto, _atributos y _codigos.
+    ===================================================== */
+
+    .catalogo-crear-wrapper label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+    }
+
+    .catalogo-crear-wrapper input[type="text"],
+    .catalogo-crear-wrapper input[type="number"],
+    .catalogo-crear-wrapper input[type="email"],
+    .catalogo-crear-wrapper input[type="date"],
+    .catalogo-crear-wrapper input[type="file"],
+    .catalogo-crear-wrapper input[type="search"],
+    .catalogo-crear-wrapper select,
+    .catalogo-crear-wrapper textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 500;
+        outline: none;
+        box-shadow: none;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease,
+            background 0.15s ease;
+    }
+
+    .catalogo-crear-wrapper input[type="text"],
+    .catalogo-crear-wrapper input[type="number"],
+    .catalogo-crear-wrapper input[type="email"],
+    .catalogo-crear-wrapper input[type="date"],
+    .catalogo-crear-wrapper input[type="search"],
+    .catalogo-crear-wrapper select {
+        min-height: 36px;
+        padding: 0 10px;
+    }
+
+    .catalogo-crear-wrapper textarea {
+        min-height: 82px;
+        padding: 9px 10px;
+        resize: vertical;
+    }
+
+    .catalogo-crear-wrapper input:focus,
+    .catalogo-crear-wrapper select:focus,
+    .catalogo-crear-wrapper textarea:focus {
+        border-color: var(--accent);
+        box-shadow:
+            0 0 0 3px
+            rgba(0, 113, 227, 0.08);
+    }
+
+    .catalogo-crear-wrapper input::placeholder,
+    .catalogo-crear-wrapper textarea::placeholder {
+        color: #a1a1a6;
+        font-weight: 400;
+    }
+
+
+    /* =====================================================
+       TABLAS
+
+       IMPORTANTE:
+       Esto mejora las tablas que estén dentro de los
+       partials sin obligarnos a cambiar todavía su HTML.
+    ===================================================== */
+
+    .catalogo-crear-wrapper table {
+        width: 100%;
+        min-width: 780px;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+    }
+
+    .catalogo-crear-wrapper table thead th {
+        padding: 10px 10px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(247, 248, 250, 0.96);
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: left;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .catalogo-crear-wrapper table tbody td {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--border-soft);
+        color: var(--text);
+        font-size: 11px;
+        vertical-align: middle;
+        background: #fff;
+    }
+
+    .catalogo-crear-wrapper table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .catalogo-crear-wrapper table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .catalogo-crear-wrapper table tbody tr:hover td {
+        background: #fbfbfd;
+    }
+
+    /*
+       Si tus partials tienen una tabla metida dentro de un
+       div cualquiera, prevenimos que rompa el ancho.
+    */
+
+    .catalogo-crear-wrapper .table-responsive,
+    .catalogo-crear-wrapper .table-wrapper,
+    .catalogo-crear-wrapper .table-container,
+    .catalogo-crear-wrapper .formset-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: #fff;
+    }
+
+
+    /* =====================================================
+       CELDAS DE FORMULARIOS
+
+       Evita inputs enormes o desalineados dentro de tabla.
+    ===================================================== */
+
+    .catalogo-crear-wrapper table input,
+    .catalogo-crear-wrapper table select {
+        min-width: 105px;
+        height: 34px;
+        min-height: 34px;
+        font-size: 11px;
+        border-radius: 8px;
+    }
+
+    .catalogo-crear-wrapper table textarea {
+        min-width: 160px;
+        min-height: 55px;
+        font-size: 11px;
+        border-radius: 8px;
+    }
+
+
+    /* =====================================================
+       BOTONES PEQUEÑOS DE PARTIALS
+    ===================================================== */
+
+    .catalogo-crear-wrapper button:not(.btn-login),
+    .catalogo-crear-wrapper .btn-add,
+    .catalogo-crear-wrapper .btn-remove {
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 700;
+        transition: all 0.15s ease;
+    }
+
+    .catalogo-crear-wrapper button:not(.btn-login):hover,
+    .catalogo-crear-wrapper .btn-add:hover,
+    .catalogo-crear-wrapper .btn-remove:hover {
+        background: #f5f5f7;
+    }
+
+
+    /* =====================================================
+       ZONA INFERIOR / GUARDADO
+    ===================================================== */
+
+    .catalogo-crear-footer {
+        position: sticky;
+        bottom: 10px;
+        z-index: 20;
+        margin-top: 15px;
+        padding: 12px 15px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background:
+            rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(12px);
+        box-shadow:
+            0 8px 30px
+            rgba(0, 0, 0, 0.08);
+    }
+
+    .catalogo-crear-footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .catalogo-crear-footer-info {
+        min-width: 0;
+    }
+
+    .catalogo-crear-footer-title {
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .catalogo-crear-footer-text {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    .catalogo-crear-footer-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+    }
+
+
+    /* =====================================================
+       BOTONES
+    ===================================================== */
+
+    .catalogo-back-btn {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 700;
+        transition: all 0.15s ease;
+    }
+
+    .catalogo-back-btn:hover {
+        background: #f5f5f7;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 900px) {
+
+        .catalogo-crear-flow {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+    @media (max-width: 700px) {
+
+        .catalogo-crear-top {
+            align-items: stretch;
+        }
+
+        .catalogo-crear-top-actions {
+            width: 100%;
+        }
+
+        .catalogo-back-btn {
+            width: 100%;
+        }
+
+        .catalogo-crear-footer-inner {
+            align-items: stretch;
+        }
+
+        .catalogo-crear-footer-actions {
+            width: 100%;
+        }
+
+        .catalogo-crear-footer-actions > * {
+            flex: 1;
+        }
+
+    }
+
+</style>
 
 {% endblock %}
 
+
+
 {% block content %}
 
-<div class="page-header">
 
-    <div>
+<div class="container catalogo-crear-wrapper">
 
-        <h2>Nuevo Repuesto</h2>
 
-        <p>
-            Crear producto, imágenes, atributos técnicos y códigos comerciales.
-        </p>
+    <!-- ==================================================
+         CABECERA
+    =================================================== -->
+
+    <div
+        class="ot-card"
+        style="
+            padding: 15px;
+            margin-bottom: 15px;
+        "
+    >
+
+        <div class="catalogo-crear-top">
+
+            <div class="catalogo-crear-top-info">
+
+                <div class="section-title">
+                    Crear nuevo repuesto
+                </div>
+
+                <div class="catalogo-crear-top-text">
+                    Registra primero la información general,
+                    luego los atributos técnicos y finalmente
+                    los códigos comerciales del repuesto.
+                </div>
+
+            </div>
+
+
+            <div class="catalogo-crear-top-actions">
+
+                <a
+                    href="{% url 'inventario_catalogo' %}"
+                    class="catalogo-back-btn"
+                >
+                    <i class="bi bi-arrow-left"></i>
+                    Volver al catálogo
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==============================================
+             PASOS
+        =============================================== -->
+
+        <div class="catalogo-crear-flow">
+
+
+            <div class="catalogo-crear-step">
+
+                <div class="catalogo-crear-step-number">
+                    1
+                </div>
+
+                <div>
+
+                    <div class="catalogo-crear-step-title">
+                        Producto
+                    </div>
+
+                    <div class="catalogo-crear-step-sub">
+                        Nombre, categoría, descripción e imágenes
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="catalogo-crear-step">
+
+                <div class="catalogo-crear-step-number">
+                    2
+                </div>
+
+                <div>
+
+                    <div class="catalogo-crear-step-title">
+                        Atributos
+                    </div>
+
+                    <div class="catalogo-crear-step-sub">
+                        Características y especificaciones técnicas
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="catalogo-crear-step">
+
+                <div class="catalogo-crear-step-number">
+                    3
+                </div>
+
+                <div>
+
+                    <div class="catalogo-crear-step-title">
+                        Códigos comerciales
+                    </div>
+
+                    <div class="catalogo-crear-step-sub">
+                        Marca, código, costos, precios y presentación
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
 
     </div>
 
-    <div>
-
-        <a href="{% url 'inventario_catalogo' %}"
-           class="btn-login">
-            Volver
-        </a>
-
-    </div>
-
-</div>
 
 
-<div class="form-card">
+    <!-- ==================================================
+         FORMULARIO
+    =================================================== -->
 
     <form
         method="POST"
         enctype="multipart/form-data"
         id="catalogoForm"
+        class="catalogo-crear-form"
 
         data-url-categoria-rapida="{% url 'categoria_crear_rapida' %}"
         data-url-marca-rapida="{% url 'marca_crear_rapida' %}"
-        data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}">
+        data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}"
+    >
 
         {% csrf_token %}
 
         {{ codigo_formset.management_form }}
         {{ atributo_formset.management_form }}
 
+
+        <!-- ==============================================
+             ERRORES GENERALES
+        =============================================== -->
+
         {% if producto_form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ producto_form.non_field_errors }}
+
+            <div class="catalogo-error-box">
+
+                <i class="bi bi-exclamation-triangle"></i>
+
+                <div>
+                    {{ producto_form.non_field_errors }}
+                </div>
+
             </div>
+
         {% endif %}
+
 
         {% if codigo_formset.non_form_errors %}
-            <div class="alert alert-danger">
-                {{ codigo_formset.non_form_errors }}
+
+            <div class="catalogo-error-box">
+
+                <i class="bi bi-exclamation-triangle"></i>
+
+                <div>
+                    {{ codigo_formset.non_form_errors }}
+                </div>
+
             </div>
+
         {% endif %}
+
 
         {% if atributo_formset.non_form_errors %}
-            <div class="alert alert-danger">
-                {{ atributo_formset.non_form_errors }}
+
+            <div class="catalogo-error-box">
+
+                <i class="bi bi-exclamation-triangle"></i>
+
+                <div>
+                    {{ atributo_formset.non_form_errors }}
+                </div>
+
             </div>
+
         {% endif %}
 
-        {% include "catalogo/partials/_producto.html" %}
-        {% include "catalogo/partials/_atributos.html" %}
-        {% include "catalogo/partials/_codigos.html" %}
-        {% include "catalogo/partials/_modales.html" %}
 
-        <hr>
 
-        <div class="form-actions">
+        <!-- ==================================================
+             1. PRODUCTO
+        =================================================== -->
 
-            <a href="{% url 'inventario_catalogo' %}"
-               class="btn-login">
-                Cancelar
-            </a>
+        <div
+            class="
+                ot-card
+                catalogo-crear-section
+            "
+        >
 
-            <button
-                type="submit"
-                class="btn-login primary">
+            <div class="catalogo-crear-section-header">
 
-                Guardar Repuesto
+                <div>
 
-            </button>
+                    <div
+                        class="section-title"
+                        style="margin-bottom: 0;"
+                    >
+                        1. Información del repuesto
+                    </div>
+
+                    <div class="catalogo-crear-section-description">
+                        Información principal que identifica
+                        al producto dentro del catálogo.
+                    </div>
+
+                </div>
+
+                <div
+                    class="catalogo-crear-step-number"
+                    title="Información general"
+                >
+                    <i class="bi bi-box"></i>
+                </div>
+
+            </div>
+
+
+            {% include "catalogo/partials/_producto.html" %}
 
         </div>
 
+
+
+        <!-- ==================================================
+             2. ATRIBUTOS
+        =================================================== -->
+
+        <div
+            class="
+                ot-card
+                catalogo-crear-section
+            "
+        >
+
+            <div class="catalogo-crear-section-header">
+
+                <div>
+
+                    <div
+                        class="section-title"
+                        style="margin-bottom: 0;"
+                    >
+                        2. Atributos técnicos
+                    </div>
+
+                    <div class="catalogo-crear-section-description">
+                        Registra medidas, viscosidades,
+                        capacidades u otras características
+                        que ayuden a identificar el producto.
+                    </div>
+
+                </div>
+
+                <div
+                    class="catalogo-crear-step-number"
+                    title="Atributos técnicos"
+                >
+                    <i class="bi bi-sliders"></i>
+                </div>
+
+            </div>
+
+
+            {% include "catalogo/partials/_atributos.html" %}
+
+        </div>
+
+
+
+        <!-- ==================================================
+             3. CÓDIGOS COMERCIALES
+        =================================================== -->
+
+        <div
+            class="
+                ot-card
+                catalogo-crear-section
+            "
+        >
+
+            <div class="catalogo-crear-section-header">
+
+                <div>
+
+                    <div
+                        class="section-title"
+                        style="margin-bottom: 0;"
+                    >
+                        3. Códigos comerciales
+                    </div>
+
+                    <div class="catalogo-crear-section-description">
+                        Cada código representa una referencia
+                        comercial concreta de este mismo repuesto.
+                        Debes registrar al menos uno.
+                    </div>
+
+                </div>
+
+                <div
+                    class="catalogo-crear-step-number"
+                    title="Códigos comerciales"
+                >
+                    <i class="bi bi-upc-scan"></i>
+                </div>
+
+            </div>
+
+
+            {% include "catalogo/partials/_codigos.html" %}
+
+        </div>
+
+
+
+        <!-- ==================================================
+             MODALES
+        =================================================== -->
+
+        {% include "catalogo/partials/_modales.html" %}
+
+
+
+        <!-- ==================================================
+             GUARDAR
+        =================================================== -->
+
+        <div class="catalogo-crear-footer">
+
+            <div class="catalogo-crear-footer-inner">
+
+
+                <div class="catalogo-crear-footer-info">
+
+                    <div class="catalogo-crear-footer-title">
+                        Guardar nuevo repuesto
+                    </div>
+
+                    <div class="catalogo-crear-footer-text">
+                        Revisa la información antes de guardar.
+                        El SKU interno se generará automáticamente.
+                    </div>
+
+                </div>
+
+
+                <div class="catalogo-crear-footer-actions">
+
+                    <a
+                        href="{% url 'inventario_catalogo' %}"
+                        class="btn-login"
+                    >
+                        Cancelar
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn-login primary"
+                    >
+                        <i
+                            class="bi bi-check-lg"
+                            style="margin-right: 6px;"
+                        ></i>
+
+                        Guardar Repuesto
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
     </form>
+
 
 </div>
 
-{% endblock %}
-{% block extra_js %}
 
+{% endblock %}
+
+
+
+{% block extra_js %}
 
 <script src="{% static 'inventario/js/utilidades.js' %}"></script>
 <script src="{% static 'inventario/js/dropdowns.js' %}"></script>
