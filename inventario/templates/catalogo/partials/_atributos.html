@@ -1,3 +1,7 @@
+<!-- =====================================================
+     ATRIBUTOS TÉCNICOS
+===================================================== -->
+
 <div
     class="section-title"
     style="
@@ -18,11 +22,21 @@
         class="btn-login catalogo-section-action"
         onclick="agregarAtributo()"
     >
-        + Agregar atributo
+        <i
+            class="bi bi-plus-lg"
+            style="margin-right:4px;"
+        ></i>
+
+        Agregar atributo
     </button>
 
 </div>
 
+
+
+<!-- =====================================================
+     TABLA
+===================================================== -->
 
 <div class="ot-table-wrap">
 
@@ -43,7 +57,12 @@
                     Valor
                 </th>
 
-                <th style="width:5%; text-align:center;">
+                <th
+                    style="
+                        width:5%;
+                        text-align:center;
+                    "
+                >
                     Acción
                 </th>
 
@@ -52,25 +71,46 @@
         </thead>
 
 
+
+        <!-- =================================================
+             FILAS EXISTENTES DEL FORMSET
+        ================================================== -->
+
         <tbody id="atributosContainer">
 
             {% for form in atributo_formset %}
 
                 <tr class="atributo-form">
 
+
+                    <!-- CAMPOS OCULTOS DEL FORMSET -->
+
                     {% for hidden in form.hidden_fields %}
+
                         {{ hidden }}
+
                     {% endfor %}
 
+
+
+                    <!-- =====================================
+                         ATRIBUTO
+                    ====================================== -->
 
                     <td>
 
                         <div class="field-with-action">
 
+
+                            <!-- DROPDOWN -->
+
                             <div
                                 class="apple-dropdown"
                                 data-dropdown-tipo="atributo"
                             >
+
+
+                                <!-- BUSCADOR VISUAL -->
 
                                 <input
                                     type="text"
@@ -82,6 +122,9 @@
                                     autocomplete="off"
                                 >
 
+
+                                <!-- ID REAL QUE SE ENVÍA A DJANGO -->
+
                                 <input
                                     type="hidden"
                                     name="{{ form.atributo.html_name }}"
@@ -89,19 +132,47 @@
                                     value="{{ form.atributo.value|default:'' }}"
                                 >
 
+
+
+                                <!-- OPCIONES -->
+
                                 <div class="apple-dropdown-menu">
 
-                                    {% for atributo in form.atributo.field.queryset %}
+
+                                    {% for atributo in atributos_catalogo %}
 
                                         <div
                                             class="apple-dropdown-item"
                                             data-id="{{ atributo.id }}"
-                                            data-nombre="{{ atributo }}"
+                                            data-nombre="{{ atributo.nombre }}"
                                         >
-                                            {{ atributo }}
+
+                                            <span>
+                                                {{ atributo.nombre }}
+                                            </span>
+
+
+                                            {% if atributo.unidad %}
+
+                                                <span
+                                                    style="
+                                                        color:#86868b;
+                                                        margin-left:4px;
+                                                        font-size:8px;
+                                                    "
+                                                >
+                                                    ({{ atributo.unidad }})
+                                                </span>
+
+                                            {% endif %}
+
                                         </div>
 
                                     {% endfor %}
+
+
+
+                                    <!-- SIN RESULTADOS -->
 
                                     <div class="apple-dropdown-no-result">
                                         Sin coincidencias
@@ -112,34 +183,58 @@
                             </div>
 
 
+
+                            <!-- CREAR NUEVO ATRIBUTO -->
+
                             <button
                                 type="button"
                                 class="btn-login btn-mini"
                                 onclick="abrirModalBootstrap('modalAtributo')"
+                                title="Crear nuevo atributo"
                             >
-                                +
+                                <i class="bi bi-plus-lg"></i>
                             </button>
 
                         </div>
+
+
+                        <!-- ERRORES -->
 
                         {{ form.atributo.errors }}
 
                     </td>
 
 
+
+                    <!-- =====================================
+                         VALOR
+                    ====================================== -->
+
                     <td>
 
                         {{ form.valor }}
+
                         {{ form.valor.errors }}
 
                     </td>
 
 
+
+                    <!-- =====================================
+                         ELIMINAR
+                    ====================================== -->
+
                     <td style="text-align:center;">
 
+
+                        <!-- DELETE REAL DEL FORMSET -->
+
                         <div style="display:none;">
+
                             {{ form.DELETE }}
+
                         </div>
+
 
                         <button
                             type="button"
@@ -150,11 +245,14 @@
                                 catalogo-delete-btn
                             "
                             onclick="eliminarAtributo(this)"
+                            title="Eliminar atributo"
+                            aria-label="Eliminar atributo"
                         >
-                            ✕
+                            <i class="bi bi-trash3"></i>
                         </button>
 
                     </td>
+
 
                 </tr>
 
@@ -167,23 +265,43 @@
 </div>
 
 
+
+<!-- =====================================================
+     TEMPLATE PARA NUEVAS FILAS
+===================================================== -->
+
 <template id="atributoEmptyFormTemplate">
+
 
     <tr class="atributo-form">
 
+
+        <!-- CAMPOS OCULTOS -->
+
         {% for hidden in atributo_formset.empty_form.hidden_fields %}
+
             {{ hidden }}
+
         {% endfor %}
 
+
+
+        <!-- =================================================
+             ATRIBUTO
+        ================================================== -->
 
         <td>
 
             <div class="field-with-action">
 
+
                 <div
                     class="apple-dropdown"
                     data-dropdown-tipo="atributo"
                 >
+
+
+                    <!-- BUSCADOR -->
 
                     <input
                         type="text"
@@ -195,25 +313,55 @@
                         autocomplete="off"
                     >
 
+
+                    <!-- ID REAL -->
+
                     <input
                         type="hidden"
                         name="{{ atributo_formset.empty_form.atributo.html_name }}"
                         class="apple-dropdown-hidden"
+                        value=""
                     >
+
+
+
+                    <!-- CATÁLOGO -->
 
                     <div class="apple-dropdown-menu">
 
-                        {% for atributo in atributo_formset.empty_form.atributo.field.queryset %}
+
+                        {% for atributo in atributos_catalogo %}
 
                             <div
                                 class="apple-dropdown-item"
                                 data-id="{{ atributo.id }}"
-                                data-nombre="{{ atributo }}"
+                                data-nombre="{{ atributo.nombre }}"
                             >
-                                {{ atributo }}
+
+                                <span>
+                                    {{ atributo.nombre }}
+                                </span>
+
+
+                                {% if atributo.unidad %}
+
+                                    <span
+                                        style="
+                                            color:#86868b;
+                                            margin-left:4px;
+                                            font-size:8px;
+                                        "
+                                    >
+                                        ({{ atributo.unidad }})
+                                    </span>
+
+                                {% endif %}
+
                             </div>
 
                         {% endfor %}
+
+
 
                         <div class="apple-dropdown-no-result">
                             Sin coincidencias
@@ -224,12 +372,16 @@
                 </div>
 
 
+
+                <!-- CREAR ATRIBUTO RÁPIDO -->
+
                 <button
                     type="button"
                     class="btn-login btn-mini"
                     onclick="abrirModalBootstrap('modalAtributo')"
+                    title="Crear nuevo atributo"
                 >
-                    +
+                    <i class="bi bi-plus-lg"></i>
                 </button>
 
             </div>
@@ -237,16 +389,32 @@
         </td>
 
 
+
+        <!-- =================================================
+             VALOR
+        ================================================== -->
+
         <td>
+
             {{ atributo_formset.empty_form.valor }}
+
         </td>
 
 
+
+        <!-- =================================================
+             ELIMINAR
+        ================================================== -->
+
         <td style="text-align:center;">
 
+
             <div style="display:none;">
+
                 {{ atributo_formset.empty_form.DELETE }}
+
             </div>
+
 
             <button
                 type="button"
@@ -257,11 +425,14 @@
                     catalogo-delete-btn
                 "
                 onclick="eliminarAtributo(this)"
+                title="Eliminar atributo"
+                aria-label="Eliminar atributo"
             >
-                ✕
+                <i class="bi bi-trash3"></i>
             </button>
 
         </td>
+
 
     </tr>
 

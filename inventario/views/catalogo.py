@@ -19,8 +19,8 @@ from inventario.models import (
     StockSucursal,
     ImagenProducto,
     ValorAtributoProducto,
+    Atributo,
 )
-
 
 @login_required
 def catalogo_lista(request):
@@ -182,8 +182,42 @@ def catalogo_detalle(request, codigo_id):
 @login_required
 @transaction.atomic
 def catalogo_crear(request):
+
+    # =========================================================
+    # CATÁLOGO DE ATRIBUTOS
+    # =========================================================
+    #
+    # Estos son los atributos disponibles para mostrar
+    # en los dropdowns del formulario.
+    #
+    # Ejemplo:
+    # - DIÁMETRO
+    # - ALTURA
+    # - ANCHO
+    # - MATERIAL
+    # etc.
+    # =========================================================
+
+    atributos_catalogo = (
+        Atributo.objects
+        .all()
+        .order_by(
+            "nombre",
+            "unidad",
+        )
+    )
+
+
+    # =========================================================
+    # POST
+    # =========================================================
+
     if request.method == "POST":
-        producto_form = ProductoForm(request.POST)
+
+        producto_form = ProductoForm(
+            request.POST
+        )
+
 
         codigo_formset = CodigoProductoFormSet(
             request.POST,
@@ -191,83 +225,290 @@ def catalogo_crear(request):
             prefix="codigos",
         )
 
+
         atributo_formset = ValorAtributoProductoFormSet(
             request.POST,
             queryset=ValorAtributoProducto.objects.none(),
             prefix="atributos",
         )
 
-        if producto_form.is_valid() and codigo_formset.is_valid() and atributo_formset.is_valid():
-            producto = producto_form.save(commit=False)
-            producto.origen = "INDIVIDUAL"
-            producto.save()
 
-            imagenes_producto = request.FILES.getlist("imagenes_producto")
+        # =====================================================
+        # VALIDACIÓN GENERAL
+        # =====================================================
 
-            for imagen in imagenes_producto:
-                ImagenProducto.objects.create(
-                    producto=producto,
-                    imagen=imagen,
-                    descripcion=f"Imagen de {producto.nombre_base}",
-                )
+        formularios_validos = (
+            producto_form.is_valid()
+            and codigo_formset.is_valid()
+            and atributo_formset.is_valid()
+        )
 
-            codigos_creados = []
+
+        if formularios_validos:
+
+            # =================================================
+            # COMPROBAR QUE EXISTA AL MENOS UN CÓDIGO
+            # =================================================
+            #
+            # Lo hacemos ANTES de guardar el producto.
+            # Así evitamos crear un Producto sin referencias.
+            # =================================================
+
+            codigos_validos = []
 
             for codigo_form in codigo_formset:
+
                 if not codigo_form.cleaned_data:
                     continue
 
-                if codigo_form.cleaned_data.get("DELETE"):
+                if codigo_form.cleaned_data.get(
+                    "DELETE"
+                ):
                     continue
 
-                codigo = codigo_form.save(commit=False)
-                codigo.producto = producto
-                codigo.save()
+                codigo_ingresado = (
+                    codigo_form.cleaned_data.get(
+                        "codigo"
+                    )
+                )
 
-                codigos_creados.append(codigo)
+                marca_ingresada = (
+                    codigo_form.cleaned_data.get(
+                        "marca"
+                    )
+                )
 
-            for atributo_form in atributo_formset:
-                if not atributo_form.cleaned_data:
-                    continue
+                nombre_comercial = (
+                    codigo_form.cleaned_data.get(
+                        "nombre_comercial"
+                    )
+                )
 
-                if atributo_form.cleaned_data.get("DELETE"):
-                    continue
 
-                atributo_valor = atributo_form.save(commit=False)
-                atributo_valor.producto = producto
-                atributo_valor.save()
+                # ---------------------------------------------
+                # Consideramos que la fila realmente contiene
+                # información si tiene alguno de estos datos.
+                # ---------------------------------------------
 
-            if not codigos_creados:
-                messages.error(request, "Debe agregar al menos un código comercial.")
-                raise ValidationError("Debe agregar al menos un código comercial.")
+                if (
+                    codigo_ingresado
+                    or marca_ingresada
+                    or nombre_comercial
+                ):
+                    codigos_validos.append(
+                        codigo_form
+                    )
 
-            messages.success(request, "Producto creado correctamente.")
 
-            return redirect(
-                "inventario_catalogo_detalle",
-                codigo_id=codigos_creados[0].id,
+            # =================================================
+            # SIN CÓDIGOS
+            # =================================================
+
+            if not codigos_validos:
+
+                messages.error(
+                    request,
+                    "Debe agregar al menos un código comercial.",
+                )
+
+
+            # =================================================
+            # GUARDAR PRODUCTO
+            # =================================================
+
+            else:
+
+                producto = producto_form.save(
+                    commit=False
+                )
+
+                producto.origen = (
+                    "INDIVIDUAL"
+                )
+
+                producto.save()
+
+
+                # =============================================
+                # IMÁGENES
+                # =============================================
+
+                imagenes_producto = (
+                    request.FILES.getlist(
+                        "imagenes_producto"
+                    )
+                )
+
+
+                for imagen in imagenes_producto:
+
+                    ImagenProducto.objects.create(
+                        producto=producto,
+                        imagen=imagen,
+                        descripcion=(
+                            f"Imagen de "
+                            f"{producto.nombre_base}"
+                        ),
+                    )
+
+
+                # =============================================
+                # CÓDIGOS COMERCIALES
+                # =============================================
+
+                codigos_creados = []
+
+
+                for codigo_form in codigos_validos:
+
+                    codigo = codigo_form.save(
+                        commit=False
+                    )
+
+                    codigo.producto = producto
+
+                    codigo.save()
+
+
+                    codigos_creados.append(
+                        codigo
+                    )
+
+
+                # =============================================
+                # ATRIBUTOS TÉCNICOS
+                # =============================================
+
+                for atributo_form in atributo_formset:
+
+                    if not atributo_form.cleaned_data:
+                        continue
+
+
+                    if atributo_form.cleaned_data.get(
+                        "DELETE"
+                    ):
+                        continue
+
+
+                    atributo_seleccionado = (
+                        atributo_form.cleaned_data.get(
+                            "atributo"
+                        )
+                    )
+
+                    valor_ingresado = (
+                        atributo_form.cleaned_data.get(
+                            "valor"
+                        )
+                    )
+
+
+                    # -----------------------------------------
+                    # Ignorar filas completamente vacías
+                    # -----------------------------------------
+
+                    if (
+                        not atributo_seleccionado
+                        and not valor_ingresado
+                    ):
+                        continue
+
+
+                    atributo_valor = (
+                        atributo_form.save(
+                            commit=False
+                        )
+                    )
+
+
+                    atributo_valor.producto = (
+                        producto
+                    )
+
+
+                    atributo_valor.save()
+
+
+                # =============================================
+                # MENSAJE
+                # =============================================
+
+                messages.success(
+                    request,
+                    "Producto creado correctamente.",
+                )
+
+
+                # =============================================
+                # REDIRECCIÓN
+                # =============================================
+
+                return redirect(
+                    "inventario_catalogo_detalle",
+                    codigo_id=(
+                        codigos_creados[0].id
+                    ),
+                )
+
+
+        else:
+
+            messages.error(
+                request,
+                "Revise los datos ingresados.",
             )
 
-        messages.error(request, "Revise los datos ingresados.")
+
+    # =========================================================
+    # GET
+    # =========================================================
 
     else:
+
         producto_form = ProductoForm()
+
 
         codigo_formset = CodigoProductoFormSet(
             queryset=CodigoProducto.objects.none(),
             prefix="codigos",
         )
 
+
         atributo_formset = ValorAtributoProductoFormSet(
             queryset=ValorAtributoProducto.objects.none(),
             prefix="atributos",
         )
 
-    return render(request, "catalogo/crear.html", {
-        "producto_form": producto_form,
-        "codigo_formset": codigo_formset,
-        "atributo_formset": atributo_formset,
-    })
+
+    # =========================================================
+    # RENDER
+    # =========================================================
+
+    return render(
+        request,
+        "catalogo/crear.html",
+        {
+            "producto_form": producto_form,
+
+            "codigo_formset": (
+                codigo_formset
+            ),
+
+            "atributo_formset": (
+                atributo_formset
+            ),
+
+            # ---------------------------------------------
+            # NUEVO:
+            # listado completo para el dropdown
+            # ---------------------------------------------
+            "atributos_catalogo": (
+                atributos_catalogo
+            ),
+        },
+    )
+
 @login_required
 @transaction.atomic
 def catalogo_editar_codigo(request, codigo_id):
