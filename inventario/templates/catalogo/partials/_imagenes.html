@@ -1,0 +1,245 @@
+<!-- =====================================================
+     IMÁGENES DEL PRODUCTO
+===================================================== -->
+
+<div class="producto-imagenes">
+
+
+    <!-- ==================================================
+         CABECERA
+    =================================================== -->
+
+    <div class="producto-imagenes-header">
+
+        <div>
+
+            <div class="producto-imagenes-titulo">
+                Imágenes del producto
+            </div>
+
+            <div class="producto-imagenes-subtitulo">
+                Agrega una o varias fotografías para identificar el repuesto.
+            </div>
+
+        </div>
+
+
+        <label
+            for="imagenesProducto"
+            class="btn-login imagenes-agregar-btn"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Agregar imágenes
+        </label>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         INPUT REAL DE ARCHIVOS
+
+         Se mantiene:
+         name="imagenes_producto"
+
+         porque catalogo_crear() usa:
+         request.FILES.getlist("imagenes_producto")
+    =================================================== -->
+
+    <input
+        type="file"
+        id="imagenesProducto"
+        name="imagenes_producto"
+        accept="image/*"
+        multiple
+        hidden
+    >
+
+
+
+    <!-- ==================================================
+         CARRUSEL
+    =================================================== -->
+
+    <div
+        id="previewImagenesProducto"
+        class="producto-carousel"
+    >
+
+
+        <!-- ==============================================
+             ESTADO VACÍO
+        =============================================== -->
+
+        <div
+            id="imagenesEmptyState"
+            class="producto-carousel-empty"
+        >
+
+            <div class="producto-carousel-empty-icon">
+                <i class="bi bi-images"></i>
+            </div>
+
+
+            <div class="producto-carousel-empty-title">
+                Sin imágenes
+            </div>
+
+
+            <div class="producto-carousel-empty-text">
+                Selecciona fotografías del repuesto para
+                facilitar su identificación en el catálogo.
+            </div>
+
+
+            <label
+                for="imagenesProducto"
+                class="btn-login producto-carousel-select-btn"
+            >
+                <i
+                    class="bi bi-camera"
+                    style="margin-right:5px;"
+                ></i>
+
+                Seleccionar imágenes
+            </label>
+
+        </div>
+
+
+
+        <!-- ==============================================
+             VISOR PRINCIPAL
+        =============================================== -->
+
+        <div
+            id="imagenesCarouselViewer"
+            class="producto-carousel-viewer"
+            style="display:none;"
+        >
+
+
+            <!-- ==========================================
+                 ANTERIOR
+            =========================================== -->
+
+            <button
+                type="button"
+                id="imagenAnterior"
+                class="
+                    producto-carousel-arrow
+                    producto-carousel-arrow-left
+                "
+                title="Imagen anterior"
+                aria-label="Imagen anterior"
+            >
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+
+
+            <!-- ==========================================
+                 IMAGEN PRINCIPAL
+            =========================================== -->
+
+            <div class="producto-carousel-stage">
+
+
+                <img
+                    id="imagenCarouselActual"
+                    class="producto-carousel-main-image"
+                    src=""
+                    alt="Vista previa del producto"
+                >
+
+
+
+                <!-- ======================================
+                     CONTADOR
+                ======================================= -->
+
+                <div class="producto-carousel-counter">
+
+                    <span id="imagenActualNumero">
+                        1
+                    </span>
+
+                    <span>
+                        /
+                    </span>
+
+                    <span id="imagenesTotal">
+                        1
+                    </span>
+
+                </div>
+
+
+
+                <!-- ======================================
+                     ELIMINAR IMAGEN ACTUAL
+                ======================================= -->
+
+                <button
+                    type="button"
+                    id="eliminarImagenActual"
+                    class="producto-carousel-delete"
+                    title="Eliminar imagen"
+                    aria-label="Eliminar imagen"
+                >
+                    <i class="bi bi-trash3"></i>
+                </button>
+
+
+            </div>
+
+
+
+            <!-- ==========================================
+                 SIGUIENTE
+            =========================================== -->
+
+            <button
+                type="button"
+                id="imagenSiguiente"
+                class="
+                    producto-carousel-arrow
+                    producto-carousel-arrow-right
+                "
+                title="Imagen siguiente"
+                aria-label="Imagen siguiente"
+            >
+                <i class="bi bi-chevron-right"></i>
+            </button>
+
+
+        </div>
+
+
+
+        <!-- ==============================================
+             INDICADORES
+        =============================================== -->
+
+        <div
+            id="imagenesCarouselDots"
+            class="producto-carousel-dots"
+        >
+        </div>
+
+
+
+        <!-- ==============================================
+             MINIATURAS
+        =============================================== -->
+
+        <div
+            id="imagenesMiniaturas"
+            class="producto-carousel-thumbnails"
+        >
+        </div>
+
+
+    </div>
+
+</div>

@@ -1,7 +1,9 @@
 <div class="producto-compact-grid">
 
 
-    <!-- CATEGORÍA -->
+    <!-- ==================================================
+         CATEGORÍA
+    =================================================== -->
 
     <div class="producto-field">
 
@@ -18,7 +20,10 @@
 
                 <input
                     type="text"
-                    class="form-control-apple apple-dropdown-input"
+                    class="
+                        form-control-apple
+                        apple-dropdown-input
+                    "
                     placeholder="Buscar categoría..."
                     autocomplete="off"
                 >
@@ -57,8 +62,9 @@
                 type="button"
                 class="btn-login btn-mini"
                 onclick="abrirModalBootstrap('modalCategoria')"
+                title="Crear nueva categoría"
             >
-                +
+                <i class="bi bi-plus-lg"></i>
             </button>
 
         </div>
@@ -69,7 +75,9 @@
 
 
 
-    <!-- NOMBRE -->
+    <!-- ==================================================
+         NOMBRE BASE
+    =================================================== -->
 
     <div class="producto-field">
 
@@ -85,7 +93,9 @@
 
 
 
-    <!-- DESCRIPCIÓN -->
+    <!-- ==================================================
+         DESCRIPCIÓN
+    =================================================== -->
 
     <div class="producto-field producto-full">
 
@@ -101,61 +111,61 @@
 
 
 
-    <!-- PARTE INFERIOR -->
+    <!-- ==================================================
+         ESTADO DEL PRODUCTO
+    =================================================== -->
 
-    <div class="producto-bottom">
+    <div class="producto-field producto-full">
 
+        <label class="field-label">
+            Estado
+        </label>
 
-        <div>
+        <div class="producto-estados">
 
-            <label class="field-label">
-                Imágenes
-            </label>
+            <label class="producto-estado-item">
 
-            <input
-                type="file"
-                id="imagenesProducto"
-                name="imagenes_producto"
-                class="form-control-apple imagen-input"
-                accept="image/*"
-                multiple
-            >
+                {{ producto_form.activo }}
 
-            <div
-                id="previewImagenesProducto"
-                class="preview-imagenes"
-            ></div>
-
-        </div>
-
-
-        <div>
-
-            <label class="field-label">
-                Estado
-            </label>
-
-            <div class="producto-estados">
-
-                <label class="producto-estado-item">
-                    {{ producto_form.activo }}
+                <span>
                     Activo
-                </label>
+                </span>
 
-                <label class="producto-estado-item">
-                    {{ producto_form.datos_incompletos }}
-                    Incompleto
-                </label>
+            </label>
 
-                <label class="producto-estado-item">
-                    {{ producto_form.descontinuado }}
+
+            <label class="producto-estado-item">
+
+                {{ producto_form.datos_incompletos }}
+
+                <span>
+                    Datos incompletos
+                </span>
+
+            </label>
+
+
+            <label class="producto-estado-item">
+
+                {{ producto_form.descontinuado }}
+
+                <span>
                     Descontinuado
-                </label>
+                </span>
 
-            </div>
+            </label>
 
         </div>
 
     </div>
+
+
+
+    <div class="producto-field producto-full">
+
+        {% include "catalogo/partials/_imagenes.html" %}
+
+    </div>
+
 
 </div>

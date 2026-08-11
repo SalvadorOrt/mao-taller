@@ -1,0 +1,824 @@
+/* =========================================================
+   IMÁGENES DEL PRODUCTO
+========================================================= */
+
+.producto-imagenes {
+    width: 100%;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: #fbfbfd;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   CABECERA
+========================================================= */
+
+.producto-imagenes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 9px 11px;
+
+    border-bottom: 1px solid var(--border-soft);
+
+    background: #fff;
+}
+
+
+.producto-imagenes-titulo {
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+
+.producto-imagenes-subtitulo {
+    margin-top: 2px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   AGREGAR IMÁGENES
+========================================================= */
+
+.imagenes-agregar-btn {
+    width: auto !important;
+
+    min-height: 29px !important;
+
+    padding: 0 9px !important;
+
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    font-size: 9px !important;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   CARRUSEL
+========================================================= */
+
+.producto-carousel {
+    position: relative;
+
+    width: 100%;
+
+    padding: 10px;
+}
+
+
+/* =========================================================
+   ESTADO VACÍO
+========================================================= */
+
+.producto-carousel-empty {
+    min-height: 175px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 18px;
+
+    text-align: center;
+}
+
+
+.producto-carousel-empty-icon {
+    width: 40px;
+    height: 40px;
+
+    margin-bottom: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #eef6ff;
+    color: var(--accent);
+
+    font-size: 18px;
+}
+
+
+.producto-carousel-empty-title {
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+
+.producto-carousel-empty-text {
+    max-width: 310px;
+
+    margin-top: 3px;
+    margin-bottom: 11px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+
+    line-height: 1.45;
+}
+
+
+.producto-carousel-select-btn {
+    min-height: 29px !important;
+
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    font-size: 9px !important;
+}
+
+
+/* =========================================================
+   VISOR NORMAL
+========================================================= */
+
+.producto-carousel-viewer {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+}
+
+
+/* =========================================================
+   ESCENARIO
+========================================================= */
+
+.producto-carousel-stage {
+    position: relative;
+
+    flex: 1;
+
+    min-width: 0;
+
+    height: 250px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+
+    background: #f5f5f7;
+
+    overflow: hidden;
+}
+
+
+.producto-carousel-main-image {
+    display: block;
+
+    max-width: 100%;
+    max-height: 100%;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    user-select: none;
+
+    cursor: zoom-in;
+}
+
+
+/* =========================================================
+   FLECHAS
+========================================================= */
+
+.producto-carousel-arrow {
+    width: 31px;
+    min-width: 31px;
+
+    height: 31px;
+    min-height: 31px;
+
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: #fff;
+    color: var(--text);
+
+    font-size: 11px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+
+.producto-carousel-arrow:hover {
+    background: #eef6ff;
+
+    border-color: #9bc9ff;
+
+    color: var(--accent);
+}
+
+
+.producto-carousel-arrow:disabled {
+    opacity: 0.3;
+
+    cursor: default;
+
+    background: #f5f5f7;
+}
+
+
+/* =========================================================
+   CONTADOR
+========================================================= */
+
+.producto-carousel-counter {
+    position: absolute;
+
+    left: 8px;
+    bottom: 8px;
+
+    min-height: 23px;
+
+    padding: 3px 8px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 3px;
+
+    border-radius: 7px;
+
+    background: rgba(0, 0, 0, 0.66);
+
+    color: #fff;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    backdrop-filter: blur(6px);
+}
+
+
+/* =========================================================
+   ACCIONES SOBRE IMAGEN
+========================================================= */
+
+.producto-carousel-stage-actions {
+    position: absolute;
+
+    top: 8px;
+    right: 8px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+}
+
+
+.producto-carousel-action {
+    width: 30px;
+    height: 30px;
+
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 8px;
+
+    background: rgba(0, 0, 0, 0.58);
+    color: #fff;
+
+    font-size: 11px;
+
+    cursor: pointer;
+
+    backdrop-filter: blur(7px);
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+.producto-carousel-action:hover {
+    background: rgba(0, 0, 0, 0.78);
+
+    transform: translateY(-1px);
+}
+
+
+.producto-carousel-delete:hover {
+    background: #ff3b30;
+}
+
+
+/* =========================================================
+   PUNTOS
+========================================================= */
+
+.producto-carousel-dots {
+    min-height: 14px;
+
+    margin-top: 7px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+}
+
+
+.producto-carousel-dot {
+    width: 6px;
+    height: 6px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: #d2d2d7;
+
+    cursor: pointer;
+
+    transition:
+        width 0.15s ease,
+        background 0.15s ease;
+}
+
+
+.producto-carousel-dot.active {
+    width: 16px;
+
+    border-radius: 999px;
+
+    background: var(--accent);
+}
+
+
+/* =========================================================
+   MINIATURAS
+========================================================= */
+
+.producto-carousel-thumbnails {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    margin-top: 7px;
+
+    padding: 2px 1px 4px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+
+.producto-carousel-thumbnail {
+    width: 58px;
+    min-width: 58px;
+
+    height: 48px;
+
+    padding: 2px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    background: #fff;
+
+    cursor: pointer;
+
+    overflow: hidden;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+.producto-carousel-thumbnail:hover {
+    border-color: #9bc9ff;
+
+    transform: translateY(-1px);
+}
+
+
+.producto-carousel-thumbnail.active {
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 2px
+        rgba(0, 113, 227, 0.10);
+}
+
+
+.producto-carousel-thumbnail img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    border-radius: 4px;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   VISOR AMPLIADO
+========================================================= */
+
+.imagen-fullscreen {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 999999;
+
+    background: rgba(0, 0, 0, 0.92);
+
+    backdrop-filter: blur(8px);
+}
+
+
+.imagen-fullscreen.activo {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   CABECERA FULLSCREEN
+========================================================= */
+
+.imagen-fullscreen-header {
+    min-height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 8px 14px;
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.12);
+}
+
+
+.imagen-fullscreen-info {
+    min-width: 0;
+
+    color: #fff;
+}
+
+
+.imagen-fullscreen-nombre {
+    max-width: 500px;
+
+    overflow: hidden;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+.imagen-fullscreen-contador {
+    margin-top: 2px;
+
+    color: rgba(255, 255, 255, 0.58);
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   BOTONES FULLSCREEN
+========================================================= */
+
+.imagen-fullscreen-controles {
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+}
+
+
+.imagen-fullscreen-btn {
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    border-radius: 8px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    color: #fff;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+.imagen-fullscreen-btn:hover {
+    background:
+        rgba(255, 255, 255, 0.18);
+
+    transform: translateY(-1px);
+}
+
+
+.imagen-fullscreen-cerrar:hover {
+    background: #ff3b30;
+}
+
+
+/* =========================================================
+   CUERPO FULLSCREEN
+========================================================= */
+
+.imagen-fullscreen-body {
+    position: relative;
+
+    flex: 1;
+
+    min-height: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   IMAGEN FULLSCREEN
+========================================================= */
+
+.imagen-fullscreen-stage {
+    width: calc(100% - 120px);
+    height: calc(100% - 30px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    cursor: grab;
+}
+
+
+.imagen-fullscreen-stage:active {
+    cursor: grabbing;
+}
+
+
+.imagen-fullscreen-img {
+    max-width: 90%;
+    max-height: 90%;
+
+    object-fit: contain;
+
+    user-select: none;
+    -webkit-user-drag: none;
+
+    transform-origin: center center;
+
+    transition:
+        transform 0.15s ease;
+}
+
+
+/* =========================================================
+   FLECHAS FULLSCREEN
+========================================================= */
+
+.imagen-fullscreen-arrow {
+    position: absolute;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.15);
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    color: #fff;
+
+    font-size: 17px;
+
+    cursor: pointer;
+
+    z-index: 3;
+}
+
+
+.imagen-fullscreen-arrow:hover {
+    background:
+        rgba(255, 255, 255, 0.18);
+}
+
+
+.imagen-fullscreen-arrow:disabled {
+    opacity: 0.25;
+
+    cursor: default;
+}
+
+
+.imagen-fullscreen-arrow-left {
+    left: 16px;
+}
+
+
+.imagen-fullscreen-arrow-right {
+    right: 16px;
+}
+
+
+/* =========================================================
+   INDICADOR ZOOM
+========================================================= */
+
+.imagen-fullscreen-zoom {
+    min-width: 46px;
+
+    color: #fff;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   EVITAR SCROLL DEL BODY
+========================================================= */
+
+body.imagen-fullscreen-abierto {
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .producto-imagenes-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .producto-carousel-stage {
+        height: 200px;
+    }
+
+
+    .producto-carousel-arrow {
+        width: 28px;
+        min-width: 28px;
+
+        height: 28px;
+    }
+
+
+    .imagen-fullscreen-header {
+        padding: 7px 8px;
+    }
+
+
+    .imagen-fullscreen-nombre {
+        max-width: 180px;
+    }
+
+
+    .imagen-fullscreen-stage {
+        width: calc(100% - 80px);
+    }
+
+
+    .imagen-fullscreen-arrow {
+        width: 34px;
+        height: 34px;
+    }
+
+
+    .imagen-fullscreen-arrow-left {
+        left: 8px;
+    }
+
+
+    .imagen-fullscreen-arrow-right {
+        right: 8px;
+    }
+
+
+    .imagen-fullscreen-btn {
+        width: 31px;
+        height: 31px;
+    }
+
+}

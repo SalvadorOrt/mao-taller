@@ -16,6 +16,10 @@ Crear una nueva referencia en el inventario
 
 {% block content %}
 
+<!-- =====================================================
+     ESTILOS GENERALES
+===================================================== -->
+
 <link
     rel="stylesheet"
     href="{% static 'css/detalle_orden.css' %}"
@@ -24,6 +28,15 @@ Crear una nueva referencia en el inventario
 <link
     rel="stylesheet"
     href="{% static 'inventario/css/catalogo_form.css' %}"
+>
+
+<!--
+    Las imágenes tienen su propio archivo.
+    Aquí solamente lo cargamos.
+-->
+<link
+    rel="stylesheet"
+    href="{% static 'inventario/css/imagenes_producto.css' %}"
 >
 
 
@@ -47,7 +60,9 @@ Crear una nueva referencia en el inventario
         display: flex;
         justify-content: space-between;
         align-items: center;
+
         gap: 12px;
+
         margin-bottom: 15px;
         padding: 15px;
     }
@@ -60,14 +75,16 @@ Crear una nueva referencia en el inventario
 
     .catalogo-header-subtitle {
         margin-top: 3px;
+
         font-size: 10px;
         font-weight: 500;
+
         color: var(--muted);
     }
 
 
     /* =====================================================
-       TARJETAS
+       SECCIONES
     ===================================================== */
 
     .catalogo-section {
@@ -78,6 +95,7 @@ Crear una nueva referencia en el inventario
         display: flex;
         align-items: center;
         justify-content: space-between;
+
         gap: 10px;
     }
 
@@ -88,29 +106,37 @@ Crear una nueva referencia en el inventario
 
     .producto-compact-grid {
         display: grid;
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-        gap: 10px 14px;
-        padding: 12px 15px 15px;
-    }
 
-    .producto-full {
-        grid-column: 1 / -1;
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px 14px;
+
+        padding: 12px 15px 15px;
     }
 
     .producto-field {
         min-width: 0;
     }
 
+    .producto-full {
+        grid-column: 1 / -1;
+    }
+
     .producto-bottom {
         grid-column: 1 / -1;
 
         display: grid;
+
         grid-template-columns:
             minmax(0, 1.5fr)
             minmax(280px, 0.8fr);
 
         gap: 14px;
+
         align-items: end;
     }
 
@@ -135,7 +161,7 @@ Crear una nueva referencia en el inventario
 
 
     /* =====================================================
-       INPUTS
+       INPUTS GENERALES
     ===================================================== */
 
     .catalogo-crear-wrapper input[type="text"],
@@ -162,7 +188,6 @@ Crear una nueva referencia en el inventario
     }
 
     .catalogo-crear-wrapper textarea {
-
         width: 100%;
 
         min-height: 60px;
@@ -194,38 +219,19 @@ Crear una nueva referencia en el inventario
 
 
     /* =====================================================
-       INPUT FILE
-    ===================================================== */
-
-    .catalogo-crear-wrapper input[type="file"] {
-
-        width: 100%;
-
-        min-height: 34px;
-
-        padding: 4px;
-
-        border: 1px solid var(--border);
-        border-radius: 7px;
-
-        background: #fff;
-
-        font-size: 9px;
-    }
-
-
-    /* =====================================================
        CAMPO + BOTÓN
     ===================================================== */
 
     .field-with-action {
         display: flex;
         align-items: center;
+
         gap: 6px;
     }
 
     .field-with-action .apple-dropdown {
         position: relative;
+
         flex: 1;
         min-width: 0;
     }
@@ -248,7 +254,7 @@ Crear una nueva referencia en el inventario
 
 
     /* =====================================================
-       ESTADOS
+       ESTADOS DEL PRODUCTO
     ===================================================== */
 
     .producto-estados {
@@ -256,6 +262,7 @@ Crear una nueva referencia en el inventario
 
         display: flex;
         align-items: center;
+
         gap: 12px;
         flex-wrap: wrap;
 
@@ -270,6 +277,7 @@ Crear una nueva referencia en el inventario
     .producto-estado-item {
         display: inline-flex !important;
         align-items: center;
+
         gap: 5px;
 
         margin: 0 !important;
@@ -283,12 +291,13 @@ Crear una nueva referencia en el inventario
     .producto-estado-item input {
         width: 13px;
         height: 13px;
+
         margin: 0;
     }
 
 
     /* =====================================================
-       BARRA DE SECCIÓN
+       ACCIÓN DE SECCIÓN
     ===================================================== */
 
     .catalogo-section-action {
@@ -298,6 +307,7 @@ Crear una nueva referencia en el inventario
 
         display: inline-flex;
         align-items: center;
+
         gap: 5px;
 
         border-radius: 7px;
@@ -307,7 +317,7 @@ Crear una nueva referencia en el inventario
 
 
     /* =====================================================
-       TABLAS
+       TABLAS GENERALES
     ===================================================== */
 
     .catalogo-crear-wrapper .ot-table-wrap {
@@ -319,8 +329,7 @@ Crear una nueva referencia en el inventario
     }
 
     .catalogo-crear-wrapper .ot-table thead th {
-
-        padding: 7px 7px;
+        padding: 7px;
 
         font-size: 8px;
         line-height: 1.15;
@@ -329,7 +338,6 @@ Crear una nueva referencia en el inventario
     }
 
     .catalogo-crear-wrapper .ot-table tbody td {
-
         padding: 6px 7px;
 
         vertical-align: middle;
@@ -359,67 +367,10 @@ Crear una nueva referencia en el inventario
 
 
     /* =====================================================
-       TABLA CÓDIGOS
-    ===================================================== */
-
-    #tablaCodigos {
-        min-width: 1420px;
-    }
-
-    #tablaCodigos th:nth-child(1) {
-        min-width: 190px;
-    }
-
-    #tablaCodigos th:nth-child(2) {
-        min-width: 95px;
-    }
-
-    #tablaCodigos th:nth-child(3) {
-        min-width: 105px;
-    }
-
-    #tablaCodigos th:nth-child(4) {
-        min-width: 115px;
-    }
-
-    #tablaCodigos th:nth-child(5) {
-        min-width: 145px;
-    }
-
-    #tablaCodigos th:nth-child(6) {
-        min-width: 75px;
-    }
-
-    #tablaCodigos th:nth-child(7) {
-        min-width: 80px;
-    }
-
-    #tablaCodigos th:nth-child(8),
-    #tablaCodigos th:nth-child(9),
-    #tablaCodigos th:nth-child(11),
-    #tablaCodigos th:nth-child(12) {
-        min-width: 85px;
-    }
-
-    #tablaCodigos th:nth-child(10) {
-        min-width: 90px;
-    }
-
-    #tablaCodigos th:nth-child(13) {
-        min-width: 60px;
-    }
-
-    #tablaCodigos th:nth-child(14) {
-        min-width: 45px;
-    }
-
-
-    /* =====================================================
-       ELIMINAR
+       ELIMINAR FILAS
     ===================================================== */
 
     .catalogo-delete-btn {
-
         width: 28px !important;
         min-width: 28px !important;
 
@@ -441,7 +392,6 @@ Crear una nueva referencia en el inventario
     ===================================================== */
 
     .errorlist {
-
         margin: 3px 0 0;
         padding: 0;
 
@@ -455,6 +405,270 @@ Crear una nueva referencia en el inventario
 
 
     /* =====================================================
+       CÓDIGOS COMERCIALES
+    ===================================================== */
+
+    .catalogo-codigos-info {
+        padding: 8px 10px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 500;
+
+        border-bottom:
+            1px solid
+            var(--border-soft);
+    }
+
+
+    /* =====================================================
+       CONTENEDOR TABLA CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-wrap {
+        width: 100%;
+
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    .catalogo-codigos-table {
+        width: 100%;
+
+        min-width: 1260px !important;
+
+        table-layout: fixed;
+    }
+
+
+    /* =====================================================
+       CABECERA TABLA CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-table thead th {
+        padding: 7px 6px !important;
+
+        color: var(--muted);
+
+        font-size: 8px !important;
+        font-weight: 700 !important;
+
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+
+        vertical-align: middle;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       FILAS TABLA CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-table tbody tr {
+        height: 42px;
+    }
+
+    .catalogo-codigos-table tbody td {
+        padding: 6px 5px !important;
+
+        vertical-align: middle !important;
+
+        background: #fff;
+    }
+
+    .catalogo-codigos-table tbody tr:hover td {
+        background: #fbfbfd;
+    }
+
+
+    /* =====================================================
+       INPUTS TABLA CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-table input[type="text"],
+    .catalogo-codigos-table input[type="number"],
+    .catalogo-codigos-table select {
+
+        display: block;
+
+        width: 100% !important;
+
+        min-width: 0 !important;
+
+        height: 29px !important;
+        min-height: 29px !important;
+
+        margin: 0 !important;
+
+        padding: 0 6px !important;
+
+        border:
+            1px solid
+            var(--border) !important;
+
+        border-radius: 6px !important;
+
+        font-size: 9px !important;
+    }
+
+
+    /* =====================================================
+       CHECKBOX TABLA CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-table
+    input[type="checkbox"] {
+
+        display: inline-block !important;
+
+        width: 14px !important;
+        min-width: 14px !important;
+
+        height: 14px !important;
+        min-height: 14px !important;
+
+        margin: 0 !important;
+
+        accent-color: var(--accent);
+    }
+
+
+    /* =====================================================
+       MARCA
+    ===================================================== */
+
+    .codigo-marca-wrap {
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+    }
+
+    .codigo-marca-wrap .apple-dropdown {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .codigo-marca-wrap .btn-mini {
+        width: 29px !important;
+        min-width: 29px !important;
+
+        height: 29px !important;
+        min-height: 29px !important;
+
+        padding: 0 !important;
+    }
+
+
+    /* =====================================================
+       ANCHO COLUMNAS CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-table .col-marca {
+        width: 175px;
+    }
+
+    .catalogo-codigos-table .col-tipo {
+        width: 90px;
+    }
+
+    .catalogo-codigos-table .col-codigo {
+        width: 110px;
+    }
+
+    .catalogo-codigos-table .col-barras {
+        width: 125px;
+    }
+
+    .catalogo-codigos-table .col-nombre {
+        width: 150px;
+    }
+
+    .catalogo-codigos-table .col-cantidad {
+        width: 75px;
+    }
+
+    .catalogo-codigos-table .col-unidad {
+        width: 75px;
+    }
+
+    .catalogo-codigos-table .col-compra {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-venta {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-margen {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-iva {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-secreto {
+        width: 95px;
+    }
+
+    .catalogo-codigos-table .col-activo {
+        width: 55px;
+
+        text-align: center;
+    }
+
+    .catalogo-codigos-table .col-accion {
+        width: 42px;
+    }
+
+
+    /* =====================================================
+       BOTÓN ELIMINAR CÓDIGO
+    ===================================================== */
+
+    .catalogo-codigos-table
+    .catalogo-delete-btn {
+
+        width: 28px !important;
+        min-width: 28px !important;
+
+        height: 28px !important;
+        min-height: 28px !important;
+
+        margin: 0 auto !important;
+
+        padding: 0 !important;
+
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 6px !important;
+    }
+
+
+    /* =====================================================
+       PRECIO SECRETO
+    ===================================================== */
+
+    .catalogo-codigos-table
+    input[readonly] {
+
+        background:
+            #f5f5f7 !important;
+
+        color:
+            var(--muted) !important;
+
+        font-weight: 600;
+    }
+
+
+    /* =====================================================
        ACCIONES INFERIORES
     ===================================================== */
 
@@ -463,6 +677,7 @@ Crear una nueva referencia en el inventario
         display: flex;
         justify-content: flex-end;
         align-items: center;
+
         gap: 8px;
 
         position: sticky;
@@ -474,16 +689,26 @@ Crear una nueva referencia en el inventario
         margin-top: 15px;
         padding: 10px 12px;
 
-        border: 1px solid var(--border);
+        border:
+            1px solid
+            var(--border);
+
         border-radius: 10px;
 
-        background: rgba(255,255,255,0.95);
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.95
+            );
 
-        backdrop-filter: blur(10px);
+        backdrop-filter:
+            blur(10px);
 
         box-shadow:
             0 8px 25px
-            rgba(0,0,0,0.08);
+            rgba(0, 0, 0, 0.08);
     }
 
 
@@ -503,274 +728,35 @@ Crear una nueva referencia en el inventario
 
         .producto-bottom {
             grid-column: auto;
+
             grid-template-columns: 1fr;
         }
 
     }
-    /* =========================================================
-   CÓDIGOS COMERCIALES
-========================================================= */
 
-.catalogo-codigos-info {
-    padding: 8px 10px;
-
-    color: var(--muted);
-
-    font-size: 9px;
-    font-weight: 500;
-
-    border-bottom: 1px solid var(--border-soft);
-}
-
-
-/* Scroll solamente dentro de esta tabla */
-.catalogo-codigos-wrap {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: visible;
-}
-
-
-/* Ancho controlado */
-.catalogo-codigos-table {
-    width: 100%;
-    min-width: 1260px !important;
-
-    table-layout: fixed;
-}
-
-
-/* =========================================================
-   CABECERAS
-========================================================= */
-
-.catalogo-codigos-table thead th {
-    padding: 7px 6px !important;
-
-    color: var(--muted);
-
-    font-size: 8px !important;
-    font-weight: 700 !important;
-
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-
-    vertical-align: middle;
-
-    white-space: nowrap;
-}
-
-
-/* =========================================================
-   FILAS
-========================================================= */
-
-.catalogo-codigos-table tbody td {
-    padding: 6px 5px !important;
-
-    vertical-align: middle !important;
-
-    background: #fff;
-}
-
-
-/* misma altura visual */
-.catalogo-codigos-table tbody tr {
-    height: 42px;
-}
-
-
-/* =========================================================
-   INPUTS
-========================================================= */
-
-.catalogo-codigos-table input[type="text"],
-.catalogo-codigos-table input[type="number"],
-.catalogo-codigos-table select {
-
-    display: block;
-
-    width: 100% !important;
-
-    min-width: 0 !important;
-
-    height: 29px !important;
-    min-height: 29px !important;
-
-    margin: 0 !important;
-
-    padding: 0 6px !important;
-
-    border: 1px solid var(--border) !important;
-    border-radius: 6px !important;
-
-    font-size: 9px !important;
-}
-
-
-/* Checkbox no debe tomar width 100% */
-.catalogo-codigos-table input[type="checkbox"] {
-
-    display: inline-block !important;
-
-    width: 14px !important;
-    min-width: 14px !important;
-
-    height: 14px !important;
-    min-height: 14px !important;
-
-    margin: 0 !important;
-
-    accent-color: var(--accent);
-}
-
-
-/* =========================================================
-   MARCA
-========================================================= */
-
-.codigo-marca-wrap {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.codigo-marca-wrap .apple-dropdown {
-    flex: 1;
-    min-width: 0;
-}
-
-.codigo-marca-wrap .btn-mini {
-
-    width: 29px !important;
-    min-width: 29px !important;
-
-    height: 29px !important;
-    min-height: 29px !important;
-
-    padding: 0 !important;
-}
-
-
-/* =========================================================
-   ANCHOS
-========================================================= */
-
-.catalogo-codigos-table .col-marca {
-    width: 175px;
-}
-
-.catalogo-codigos-table .col-tipo {
-    width: 90px;
-}
-
-.catalogo-codigos-table .col-codigo {
-    width: 110px;
-}
-
-.catalogo-codigos-table .col-barras {
-    width: 125px;
-}
-
-.catalogo-codigos-table .col-nombre {
-    width: 150px;
-}
-
-.catalogo-codigos-table .col-cantidad {
-    width: 75px;
-}
-
-.catalogo-codigos-table .col-unidad {
-    width: 75px;
-}
-
-.catalogo-codigos-table .col-compra {
-    width: 85px;
-}
-
-.catalogo-codigos-table .col-venta {
-    width: 85px;
-}
-
-.catalogo-codigos-table .col-margen {
-    width: 85px;
-}
-
-.catalogo-codigos-table .col-iva {
-    width: 85px;
-}
-
-.catalogo-codigos-table .col-secreto {
-    width: 95px;
-}
-
-.catalogo-codigos-table .col-activo {
-    width: 55px;
-    text-align: center;
-}
-
-.catalogo-codigos-table .col-accion {
-    width: 42px;
-}
-
-
-/* =========================================================
-   ELIMINAR
-========================================================= */
-
-.catalogo-codigos-table .catalogo-delete-btn {
-
-    width: 28px !important;
-    min-width: 28px !important;
-
-    height: 28px !important;
-    min-height: 28px !important;
-
-    margin: 0 auto !important;
-
-    padding: 0 !important;
-
-    display: inline-flex !important;
-    justify-content: center;
-    align-items: center;
-
-    border-radius: 6px !important;
-}
-
-
-/* =========================================================
-   PRECIO SECRETO
-========================================================= */
-
-.catalogo-codigos-table
-input[readonly] {
-
-    background: #f5f5f7 !important;
-    color: var(--muted) !important;
-
-    font-weight: 600;
-}
-
-
-/* =========================================================
-   HOVER COMO LA OT
-========================================================= */
-
-.catalogo-codigos-table tbody tr:hover td {
-    background: #fbfbfd;
-}
 </style>
 
 
 
-<div class="container ot-wrapper catalogo-crear-wrapper">
+<div
+    class="
+        container
+        ot-wrapper
+        catalogo-crear-wrapper
+    "
+>
 
 
     <!-- ==================================================
          CABECERA
     =================================================== -->
 
-    <div class="ot-card catalogo-header">
+    <div
+        class="
+            ot-card
+            catalogo-header
+        "
+    >
 
         <div>
 
@@ -779,8 +765,8 @@ input[readonly] {
             </div>
 
             <div class="catalogo-header-subtitle">
-                Crear producto y referencias comerciales
-                para el inventario.
+                Crear producto y referencias
+                comerciales para el inventario.
             </div>
 
         </div>
@@ -802,6 +788,10 @@ input[readonly] {
 
 
 
+    <!-- ==================================================
+         FORMULARIO
+    =================================================== -->
+
     <form
         method="POST"
         enctype="multipart/form-data"
@@ -814,9 +804,18 @@ input[readonly] {
 
         {% csrf_token %}
 
+
+        <!-- ==================================================
+             MANAGEMENT FORMS
+        =================================================== -->
+
         {{ codigo_formset.management_form }}
         {{ atributo_formset.management_form }}
 
+
+        <!-- ==================================================
+             ERRORES
+        =================================================== -->
 
         {% if producto_form.non_field_errors %}
 
@@ -850,9 +849,15 @@ input[readonly] {
              PRODUCTO
         =================================================== -->
 
-        <div class="ot-card catalogo-section">
+        <div
+            class="
+                ot-card
+                catalogo-section
+            "
+        >
 
             <div class="section-title">
+
                 <span>
                     Información del producto
                 </span>
@@ -860,11 +865,15 @@ input[readonly] {
                 <i
                     class="bi bi-box"
                     style="
-                        color:var(--accent);
-                        font-size:12px;
+                        color:
+                            var(--accent);
+                        font-size:
+                            12px;
                     "
                 ></i>
+
             </div>
+
 
             {% include "catalogo/partials/_producto.html" %}
 
@@ -876,7 +885,12 @@ input[readonly] {
              ATRIBUTOS
         =================================================== -->
 
-        <div class="ot-card catalogo-section">
+        <div
+            class="
+                ot-card
+                catalogo-section
+            "
+        >
 
             {% include "catalogo/partials/_atributos.html" %}
 
@@ -888,7 +902,12 @@ input[readonly] {
              CÓDIGOS
         =================================================== -->
 
-        <div class="ot-card catalogo-section">
+        <div
+            class="
+                ot-card
+                catalogo-section
+            "
+        >
 
             {% include "catalogo/partials/_codigos.html" %}
 
@@ -896,23 +915,31 @@ input[readonly] {
 
 
 
+        <!-- ==================================================
+             MODALES
+        =================================================== -->
+
         {% include "catalogo/partials/_modales.html" %}
 
 
 
         <!-- ==================================================
-             ACCIONES
+             ACCIONES INFERIORES
         =================================================== -->
 
         <div class="catalogo-sticky-actions">
+
 
             <a
                 href="{% url 'inventario_catalogo' %}"
                 class="btn-login"
                 style="
-                    background:#e5e5ea;
-                    border-color:#e5e5ea;
-                    color:var(--text);
+                    background:
+                        #e5e5ea;
+                    border-color:
+                        #e5e5ea;
+                    color:
+                        var(--text);
                 "
             >
                 Cancelar
@@ -923,12 +950,14 @@ input[readonly] {
                 type="submit"
                 class="btn-login primary"
             >
+
                 <i
                     class="bi bi-check-lg"
                     style="margin-right:5px;"
                 ></i>
 
                 Guardar Repuesto
+
             </button>
 
         </div>
@@ -944,14 +973,39 @@ input[readonly] {
 
 {% block extra_js %}
 
-<script src="{% static 'inventario/js/utilidades.js' %}"></script>
-<script src="{% static 'inventario/js/dropdowns.js' %}"></script>
-<script src="{% static 'inventario/js/imagenes.js' %}"></script>
-<script src="{% static 'inventario/js/atributos.js' %}"></script>
-<script src="{% static 'inventario/js/codigos.js' %}"></script>
-<script src="{% static 'inventario/js/modales.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo_form.js' %}"></script>
-<script src="{% static 'inventario/js/index.js' %}"></script>
+<script
+    src="{% static 'inventario/js/utilidades.js' %}"
+></script>
+
+<script
+    src="{% static 'inventario/js/dropdowns.js' %}"
+></script>
+
+<!--
+    Toda la lógica del carrusel queda en este archivo.
+-->
+<script
+    src="{% static 'inventario/js/imagenes.js' %}"
+></script>
+
+<script
+    src="{% static 'inventario/js/atributos.js' %}"
+></script>
+
+<script
+    src="{% static 'inventario/js/codigos.js' %}"
+></script>
+
+<script
+    src="{% static 'inventario/js/modales.js' %}"
+></script>
+
+<script
+    src="{% static 'inventario/js/catalogo_form.js' %}"
+></script>
+
+<script
+    src="{% static 'inventario/js/index.js' %}"
+></script>
 
 {% endblock %}
-
