@@ -1,28 +1,97 @@
-<div class="partial-toolbar">
-
-    <div class="partial-toolbar-info">
-        Un producto puede tener varias referencias comerciales de diferentes marcas.
-    </div>
+<div
+    class="section-title"
+    style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding-right:10px;
+    "
+>
+    <span>
+        Códigos comerciales
+    </span>
 
     <button
         type="button"
-        class="btn-login partial-add-btn"
+        class="btn-login catalogo-section-action"
         onclick="agregarCodigo()"
     >
-        <i class="bi bi-plus-lg"></i>
-        Agregar código
+        + Agregar código
     </button>
-
 </div>
 
 
+<div class="catalogo-codigos-info">
+    Un producto puede tener varias referencias comerciales de diferentes marcas.
+</div>
 
-<div class="codigos-container-wrap">
+
+<div class="ot-table-wrap catalogo-codigos-wrap">
 
     <table
-        class="codigos-cards-table"
+        class="ot-table catalogo-codigos-table"
         id="tablaCodigos"
     >
+
+        <thead>
+            <tr>
+                <th class="col-marca">
+                    Marca
+                </th>
+
+                <th class="col-tipo">
+                    Tipo
+                </th>
+
+                <th class="col-codigo">
+                    Código
+                </th>
+
+                <th class="col-barras">
+                    Cód. barras
+                </th>
+
+                <th class="col-nombre">
+                    Nombre comercial
+                </th>
+
+                <th class="col-cantidad">
+                    Cant.
+                </th>
+
+                <th class="col-unidad">
+                    Unidad
+                </th>
+
+                <th class="col-compra">
+                    Compra
+                </th>
+
+                <th class="col-venta">
+                    Venta
+                </th>
+
+                <th class="col-margen">
+                    Margen %
+                </th>
+
+                <th class="col-iva">
+                    IVA costo %
+                </th>
+
+                <th class="col-secreto">
+                    Precio secreto
+                </th>
+
+                <th class="col-activo">
+                    Activo
+                </th>
+
+                <th class="col-accion">
+                </th>
+            </tr>
+        </thead>
+
 
         <tbody id="codigosContainer">
 
@@ -35,17 +104,13 @@
                     {% endfor %}
 
 
-                    <!-- =====================================
+                    <!-- =========================
                          MARCA
-                    ====================================== -->
+                    ========================== -->
 
-                    <td class="codigo-field codigo-marca">
+                    <td>
 
-                        <span class="codigo-label">
-                            Marca
-                        </span>
-
-                        <div class="field-with-action">
+                        <div class="field-with-action codigo-marca-wrap">
 
                             <div
                                 class="apple-dropdown"
@@ -54,8 +119,11 @@
 
                                 <input
                                     type="text"
-                                    class="form-control-apple apple-dropdown-input"
-                                    placeholder="Buscar marca..."
+                                    class="
+                                        form-control-apple
+                                        apple-dropdown-input
+                                    "
+                                    placeholder="Buscar..."
                                     autocomplete="off"
                                 >
 
@@ -95,7 +163,7 @@
                                 onclick="abrirModalBootstrap('modalMarca')"
                                 title="Crear marca"
                             >
-                                <i class="bi bi-plus-lg"></i>
+                                +
                             </button>
 
                         </div>
@@ -105,179 +173,94 @@
                     </td>
 
 
-
                     <!-- TIPO -->
 
-                    <td class="codigo-field codigo-tipo">
-
-                        <span class="codigo-label">
-                            Tipo
-                        </span>
-
+                    <td>
                         {{ form.tipo_codigo }}
-
                     </td>
-
 
 
                     <!-- CÓDIGO -->
 
-                    <td class="codigo-field codigo-codigo">
-
-                        <span class="codigo-label">
-                            Código
-                        </span>
-
+                    <td>
                         {{ form.codigo }}
                         {{ form.codigo.errors }}
-
                     </td>
-
 
 
                     <!-- BARRAS -->
 
-                    <td class="codigo-field codigo-barras">
-
-                        <span class="codigo-label">
-                            Código de barras
-                        </span>
-
+                    <td>
                         {{ form.codigo_barras }}
-
                     </td>
 
 
+                    <!-- NOMBRE -->
 
-                    <!-- NOMBRE COMERCIAL -->
-
-                    <td class="codigo-field codigo-nombre">
-
-                        <span class="codigo-label">
-                            Nombre comercial
-                        </span>
-
+                    <td>
                         {{ form.nombre_comercial }}
-
                     </td>
 
 
+                    <!-- CANTIDAD -->
 
-                    <!-- PRESENTACIÓN -->
-
-                    <td class="codigo-field codigo-cantidad">
-
-                        <span class="codigo-label">
-                            Cantidad
-                        </span>
-
+                    <td>
                         {{ form.presentacion_cantidad }}
-
                     </td>
 
 
-                    <td class="codigo-field codigo-unidad">
+                    <!-- UNIDAD -->
 
-                        <span class="codigo-label">
-                            Unidad
-                        </span>
-
+                    <td>
                         {{ form.presentacion_unidad }}
-
                     </td>
-
 
 
                     <!-- COMPRA -->
 
-                    <td class="codigo-field codigo-compra">
-
-                        <span class="codigo-label">
-                            Compra
-                        </span>
-
+                    <td>
                         {{ form.precio_compra }}
-
                     </td>
-
 
 
                     <!-- VENTA -->
 
-                    <td class="codigo-field codigo-venta">
-
-                        <span class="codigo-label">
-                            Venta
-                        </span>
-
+                    <td>
                         {{ form.precio_venta }}
-
                     </td>
-
 
 
                     <!-- MARGEN -->
 
-                    <td class="codigo-field codigo-margen">
-
-                        <span class="codigo-label">
-                            Margen %
-                        </span>
-
+                    <td>
                         {{ form.margen_ganancia_porcentaje }}
-
                     </td>
-
 
 
                     <!-- IVA -->
 
-                    <td class="codigo-field codigo-iva">
-
-                        <span class="codigo-label">
-                            IVA costo %
-                        </span>
-
+                    <td>
                         {{ form.porcentaje_iva_costo }}
-
                     </td>
-
 
 
                     <!-- SECRETO -->
 
-                    <td class="codigo-field codigo-secreto">
-
-                        <span class="codigo-label">
-                            Precio secreto
-                        </span>
-
+                    <td>
                         {{ form.precio_secreto }}
-
                     </td>
-
 
 
                     <!-- ACTIVO -->
 
-                    <td class="codigo-field codigo-activo">
-
-                        <span class="codigo-label">
-                            Estado
-                        </span>
-
-                        <label class="codigo-active-control">
-                            {{ form.activo }}
-                            <span>Activo</span>
-                        </label>
-
+                    <td style="text-align:center;">
+                        {{ form.activo }}
                     </td>
-
 
 
                     <!-- ELIMINAR -->
 
-                    <td class="codigo-field codigo-eliminar">
+                    <td style="text-align:center;">
 
                         <div style="display:none;">
                             {{ form.DELETE }}
@@ -285,7 +268,12 @@
 
                         <button
                             type="button"
-                            class="btn-remove-row"
+                            class="
+                                btn-login
+                                danger
+                                small
+                                catalogo-delete-btn
+                            "
                             onclick="eliminarCodigo(this)"
                             title="Eliminar código"
                         >
@@ -307,7 +295,7 @@
 
 
 <!-- =====================================================
-     TEMPLATE NUEVO CÓDIGO
+     TEMPLATE PARA NUEVAS FILAS
 ===================================================== -->
 
 <template id="codigoEmptyFormTemplate">
@@ -319,13 +307,9 @@
         {% endfor %}
 
 
-        <td class="codigo-field codigo-marca">
+        <td>
 
-            <span class="codigo-label">
-                Marca
-            </span>
-
-            <div class="field-with-action">
+            <div class="field-with-action codigo-marca-wrap">
 
                 <div
                     class="apple-dropdown"
@@ -334,8 +318,11 @@
 
                     <input
                         type="text"
-                        class="form-control-apple apple-dropdown-input"
-                        placeholder="Buscar marca..."
+                        class="
+                            form-control-apple
+                            apple-dropdown-input
+                        "
+                        placeholder="Buscar..."
                         autocomplete="off"
                     >
 
@@ -375,7 +362,7 @@
                     onclick="abrirModalBootstrap('modalMarca')"
                     title="Crear marca"
                 >
-                    <i class="bi bi-plus-lg"></i>
+                    +
                 </button>
 
             </div>
@@ -383,142 +370,56 @@
         </td>
 
 
-        <td class="codigo-field codigo-tipo">
-
-            <span class="codigo-label">
-                Tipo
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.tipo_codigo }}
-
         </td>
 
-
-        <td class="codigo-field codigo-codigo">
-
-            <span class="codigo-label">
-                Código
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.codigo }}
-
         </td>
 
-
-        <td class="codigo-field codigo-barras">
-
-            <span class="codigo-label">
-                Código de barras
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.codigo_barras }}
-
         </td>
 
-
-        <td class="codigo-field codigo-nombre">
-
-            <span class="codigo-label">
-                Nombre comercial
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.nombre_comercial }}
-
         </td>
 
-
-        <td class="codigo-field codigo-cantidad">
-
-            <span class="codigo-label">
-                Cantidad
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.presentacion_cantidad }}
-
         </td>
 
-
-        <td class="codigo-field codigo-unidad">
-
-            <span class="codigo-label">
-                Unidad
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.presentacion_unidad }}
-
         </td>
 
-
-        <td class="codigo-field codigo-compra">
-
-            <span class="codigo-label">
-                Compra
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.precio_compra }}
-
         </td>
 
-
-        <td class="codigo-field codigo-venta">
-
-            <span class="codigo-label">
-                Venta
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.precio_venta }}
-
         </td>
 
-
-        <td class="codigo-field codigo-margen">
-
-            <span class="codigo-label">
-                Margen %
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.margen_ganancia_porcentaje }}
-
         </td>
 
-
-        <td class="codigo-field codigo-iva">
-
-            <span class="codigo-label">
-                IVA costo %
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.porcentaje_iva_costo }}
-
         </td>
 
-
-        <td class="codigo-field codigo-secreto">
-
-            <span class="codigo-label">
-                Precio secreto
-            </span>
-
+        <td>
             {{ codigo_formset.empty_form.precio_secreto }}
+        </td>
 
+        <td style="text-align:center;">
+            {{ codigo_formset.empty_form.activo }}
         </td>
 
 
-        <td class="codigo-field codigo-activo">
-
-            <span class="codigo-label">
-                Estado
-            </span>
-
-            <label class="codigo-active-control">
-                {{ codigo_formset.empty_form.activo }}
-                <span>Activo</span>
-            </label>
-
-        </td>
-
-
-        <td class="codigo-field codigo-eliminar">
+        <td style="text-align:center;">
 
             <div style="display:none;">
                 {{ codigo_formset.empty_form.DELETE }}
@@ -526,7 +427,12 @@
 
             <button
                 type="button"
-                class="btn-remove-row"
+                class="
+                    btn-login
+                    danger
+                    small
+                    catalogo-delete-btn
+                "
                 onclick="eliminarCodigo(this)"
                 title="Eliminar código"
             >
