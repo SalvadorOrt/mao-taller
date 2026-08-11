@@ -1,163 +1,250 @@
-<div class="form-section">
-    <div class="section-header-row">
-        <div>
-            <h4>Atributos técnicos</h4>
-            <p>Características del producto base.</p>
-        </div>
+<div class="partial-toolbar">
 
-        <button
-            type="button"
-            class="btn-login"
-            style="width:auto;"
-            onclick="agregarAtributo()">
-            + Agregar atributo
-        </button>
+    <div class="partial-toolbar-info">
+        Agrega únicamente las características que ayuden a identificar el repuesto.
     </div>
 
-    <div class="ot-table-wrap">
-        <table class="ot-table" id="tablaAtributos">
-            <thead>
-                <tr>
-                    <th style="width:45%;">Atributo</th>
-                    <th style="width:45%;">Valor</th>
-                    <th style="width:10%;">Acción</th>
-                </tr>
-            </thead>
+    <button
+        type="button"
+        class="btn-login partial-add-btn"
+        onclick="agregarAtributo()"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Agregar atributo
+    </button>
 
-            <tbody id="atributosContainer">
-                {% for form in atributo_formset %}
-                    <tr class="atributo-form">
-                        {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
-                        {% endfor %}
+</div>
 
-                        <td>
-                            <div class="field-with-action">
-                                <div class="apple-dropdown" data-dropdown-tipo="atributo">
-                                    <input
-                                        type="text"
-                                        class="form-control-apple apple-dropdown-input"
-                                        placeholder="Buscar atributo..."
-                                        autocomplete="off">
 
-                                    <input
-                                        type="hidden"
-                                        name="{{ form.atributo.html_name }}"
-                                        class="apple-dropdown-hidden"
-                                        value="{{ form.atributo.value|default:'' }}">
+<div class="atributos-table-wrap">
 
-                                    <div class="apple-dropdown-menu">
-                                        {% for atributo in form.atributo.field.queryset %}
-                                            <div
-                                                class="apple-dropdown-item"
-                                                data-id="{{ atributo.id }}"
-                                                data-nombre="{{ atributo }}">
-                                                {{ atributo }}
-                                            </div>
-                                        {% endfor %}
+    <table
+        class="atributos-table"
+        id="tablaAtributos"
+    >
 
-                                        <div class="apple-dropdown-no-result">
-                                            Sin coincidencias
+        <thead>
+
+            <tr>
+                <th>Atributo</th>
+                <th>Valor</th>
+                <th style="width:55px;"></th>
+            </tr>
+
+        </thead>
+
+
+        <tbody id="atributosContainer">
+
+            {% for form in atributo_formset %}
+
+                <tr class="atributo-form">
+
+                    {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+
+
+                    <!-- ATRIBUTO -->
+
+                    <td>
+
+                        <div class="field-with-action">
+
+                            <div
+                                class="apple-dropdown"
+                                data-dropdown-tipo="atributo"
+                            >
+
+                                <input
+                                    type="text"
+                                    class="form-control-apple apple-dropdown-input"
+                                    placeholder="Buscar atributo..."
+                                    autocomplete="off"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="{{ form.atributo.html_name }}"
+                                    class="apple-dropdown-hidden"
+                                    value="{{ form.atributo.value|default:'' }}"
+                                >
+
+                                <div class="apple-dropdown-menu">
+
+                                    {% for atributo in form.atributo.field.queryset %}
+
+                                        <div
+                                            class="apple-dropdown-item"
+                                            data-id="{{ atributo.id }}"
+                                            data-nombre="{{ atributo }}"
+                                        >
+                                            {{ atributo }}
                                         </div>
+
+                                    {% endfor %}
+
+                                    <div class="apple-dropdown-no-result">
+                                        Sin coincidencias
                                     </div>
+
                                 </div>
 
-                                <button
-                                    type="button"
-                                    class="btn-login btn-mini"
-                                    onclick="abrirModalBootstrap('modalAtributo')">
-                                    +
-                                </button>
                             </div>
 
-                            {{ form.atributo.errors }}
-                        </td>
-
-                        <td>
-                            {{ form.valor }}
-                            {{ form.valor.errors }}
-                        </td>
-
-                        <td style="text-align:center;">
-                            <div style="display:none;">
-                                {{ form.DELETE }}
-                            </div>
 
                             <button
                                 type="button"
-                                class="btn-login danger small"
-                                onclick="eliminarAtributo(this)">
-                                ✕
+                                class="btn-login btn-mini"
+                                onclick="abrirModalBootstrap('modalAtributo')"
+                                title="Crear atributo"
+                            >
+                                <i class="bi bi-plus-lg"></i>
                             </button>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+
+                        </div>
+
+                        {{ form.atributo.errors }}
+
+                    </td>
+
+
+                    <!-- VALOR -->
+
+                    <td>
+
+                        {{ form.valor }}
+                        {{ form.valor.errors }}
+
+                    </td>
+
+
+                    <!-- ELIMINAR -->
+
+                    <td class="atributo-action">
+
+                        <div style="display:none;">
+                            {{ form.DELETE }}
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn-remove-row"
+                            onclick="eliminarAtributo(this)"
+                            title="Eliminar atributo"
+                        >
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
 </div>
 
+
+
+<!-- =====================================================
+     TEMPLATE ATRIBUTO
+===================================================== -->
+
 <template id="atributoEmptyFormTemplate">
+
     <tr class="atributo-form">
+
         {% for hidden in atributo_formset.empty_form.hidden_fields %}
             {{ hidden }}
         {% endfor %}
 
+
         <td>
+
             <div class="field-with-action">
-                <div class="apple-dropdown" data-dropdown-tipo="atributo">
+
+                <div
+                    class="apple-dropdown"
+                    data-dropdown-tipo="atributo"
+                >
+
                     <input
                         type="text"
                         class="form-control-apple apple-dropdown-input"
                         placeholder="Buscar atributo..."
-                        autocomplete="off">
+                        autocomplete="off"
+                    >
 
                     <input
                         type="hidden"
                         name="{{ atributo_formset.empty_form.atributo.html_name }}"
                         class="apple-dropdown-hidden"
-                        value="{{ atributo_formset.empty_form.atributo.value|default:'' }}">
+                        value="{{ atributo_formset.empty_form.atributo.value|default:'' }}"
+                    >
 
                     <div class="apple-dropdown-menu">
+
                         {% for atributo in atributo_formset.empty_form.atributo.field.queryset %}
+
                             <div
                                 class="apple-dropdown-item"
                                 data-id="{{ atributo.id }}"
-                                data-nombre="{{ atributo }}">
+                                data-nombre="{{ atributo }}"
+                            >
                                 {{ atributo }}
                             </div>
+
                         {% endfor %}
 
                         <div class="apple-dropdown-no-result">
                             Sin coincidencias
                         </div>
+
                     </div>
+
                 </div>
+
 
                 <button
                     type="button"
                     class="btn-login btn-mini"
-                    onclick="abrirModalBootstrap('modalAtributo')">
-                    +
+                    onclick="abrirModalBootstrap('modalAtributo')"
+                    title="Crear atributo"
+                >
+                    <i class="bi bi-plus-lg"></i>
                 </button>
+
             </div>
+
         </td>
+
 
         <td>
             {{ atributo_formset.empty_form.valor }}
         </td>
 
-        <td style="text-align:center;">
+
+        <td class="atributo-action">
+
             <div style="display:none;">
                 {{ atributo_formset.empty_form.DELETE }}
             </div>
 
             <button
                 type="button"
-                class="btn-login danger small"
-                onclick="eliminarAtributo(this)">
-                ✕
+                class="btn-remove-row"
+                onclick="eliminarAtributo(this)"
+                title="Eliminar atributo"
+            >
+                <i class="bi bi-x-lg"></i>
             </button>
+
         </td>
+
     </tr>
+
 </template>

@@ -678,3 +678,504 @@
 <script src="{% static 'inventario/js/index.js' %}"></script>
 
 {% endblock %}
+/* =========================================================
+   PRODUCTO
+========================================================= */
+
+.producto-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+}
+
+.producto-field {
+    min-width: 0;
+}
+
+.producto-field-full {
+    grid-column: 1 / -1;
+}
+
+.producto-media {
+    min-width: 0;
+}
+
+.producto-status {
+    min-width: 0;
+}
+
+.producto-help {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.producto-checks {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 7px 10px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: #fbfbfd;
+}
+
+.producto-check {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+
+    margin: 0 !important;
+
+    color: var(--text) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+
+    cursor: pointer;
+}
+
+.producto-check input {
+    margin: 0;
+}
+
+
+/* =========================================================
+   INPUT + BOTÓN
+========================================================= */
+
+.field-with-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.field-with-action .apple-dropdown {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+.btn-mini {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+
+    padding: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px !important;
+}
+
+
+/* =========================================================
+   BARRA SUPERIOR DE PARTIALS
+========================================================= */
+
+.partial-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 10px;
+}
+
+.partial-toolbar-info {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.partial-add-btn {
+    width: auto !important;
+    min-height: 32px !important;
+
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+
+    padding: 0 10px !important;
+
+    white-space: nowrap;
+    font-size: 10px !important;
+}
+
+
+/* =========================================================
+   ATRIBUTOS
+========================================================= */
+
+.atributos-table-wrap {
+    overflow: visible;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    background: #fff;
+}
+
+.atributos-table {
+    width: 100%;
+    min-width: 0 !important;
+
+    border: 0 !important;
+    border-radius: 9px;
+
+    overflow: visible;
+}
+
+.atributos-table thead th {
+    padding: 7px 9px !important;
+
+    background: #f7f8fa;
+
+    font-size: 8px !important;
+}
+
+.atributos-table tbody td {
+    padding: 7px 8px !important;
+}
+
+.atributo-action {
+    width: 50px;
+    text-align: center;
+}
+
+
+/* =========================================================
+   ELIMINAR
+========================================================= */
+
+.btn-remove-row {
+    width: 32px;
+    height: 32px;
+
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+
+    background: #fff !important;
+    color: var(--muted) !important;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 !important;
+
+    cursor: pointer;
+
+    transition: 0.15s ease;
+}
+
+.btn-remove-row:hover {
+    border-color: #ffd6d6 !important;
+    background: #fff1f0 !important;
+    color: var(--danger) !important;
+}
+
+
+/* =========================================================
+   CÓDIGOS COMO TARJETAS
+========================================================= */
+
+.codigos-container-wrap {
+    width: 100%;
+}
+
+.codigos-cards-table {
+    display: block;
+
+    width: 100%;
+    min-width: 0 !important;
+
+    border: 0 !important;
+    background: transparent !important;
+}
+
+.codigos-cards-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.codigos-cards-table .codigo-form {
+    position: relative;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(180px, 1.6fr)
+        minmax(120px, 0.9fr)
+        minmax(140px, 1fr)
+        minmax(160px, 1.2fr);
+
+    gap: 10px 12px;
+
+    padding: 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 11px;
+
+    background: #fbfbfd;
+
+    box-shadow: none;
+}
+
+.codigos-cards-table .codigo-form:hover {
+    background: #fbfbfd;
+}
+
+
+/* TD convertido en campo */
+
+.codigos-cards-table .codigo-field {
+    display: block;
+
+    min-width: 0;
+
+    padding: 0 !important;
+
+    border: 0 !important;
+
+    background: transparent !important;
+}
+
+
+/* Labels */
+
+.codigo-label {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+
+/* =========================================================
+   DISTRIBUCIÓN DE CAMPOS
+========================================================= */
+
+/* Primera fila */
+
+.codigo-marca {
+    grid-column: span 1;
+}
+
+.codigo-tipo {
+    grid-column: span 1;
+}
+
+.codigo-codigo {
+    grid-column: span 1;
+}
+
+.codigo-barras {
+    grid-column: span 1;
+}
+
+
+/* Segunda fila */
+
+.codigo-nombre {
+    grid-column: span 2;
+}
+
+.codigo-cantidad {
+    grid-column: span 1;
+}
+
+.codigo-unidad {
+    grid-column: span 1;
+}
+
+
+/* Tercera fila */
+
+.codigo-compra {
+    grid-column: span 1;
+}
+
+.codigo-venta {
+    grid-column: span 1;
+}
+
+.codigo-margen {
+    grid-column: span 1;
+}
+
+.codigo-iva {
+    grid-column: span 1;
+}
+
+
+/* Última fila */
+
+.codigo-secreto {
+    grid-column: span 2;
+}
+
+.codigo-activo {
+    grid-column: span 1;
+}
+
+.codigo-eliminar {
+    grid-column: span 1;
+
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+
+/* =========================================================
+   INPUTS CÓDIGOS
+========================================================= */
+
+.codigo-field input[type="text"],
+.codigo-field input[type="number"],
+.codigo-field select {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    height: 32px !important;
+    min-height: 32px !important;
+
+    font-size: 10px !important;
+
+    border-radius: 7px !important;
+}
+
+.codigo-active-control {
+    height: 32px;
+
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+
+    margin: 0 !important;
+    padding: 0 9px;
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: var(--text) !important;
+
+    font-size: 10px !important;
+    font-weight: 600 !important;
+}
+
+.codigo-active-control input {
+    margin: 0;
+}
+
+
+/* =========================================================
+   ERRORES
+========================================================= */
+
+.errorlist {
+    margin: 4px 0 0;
+    padding: 0;
+
+    list-style: none;
+
+    color: var(--danger);
+
+    font-size: 9px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .codigos-cards-table .codigo-form {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .codigo-nombre,
+    .codigo-secreto {
+        grid-column: span 2;
+    }
+
+    .codigo-marca,
+    .codigo-tipo,
+    .codigo-codigo,
+    .codigo-barras,
+    .codigo-cantidad,
+    .codigo-unidad,
+    .codigo-compra,
+    .codigo-venta,
+    .codigo-margen,
+    .codigo-iva,
+    .codigo-activo,
+    .codigo-eliminar {
+        grid-column: span 1;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .producto-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .producto-field-full {
+        grid-column: auto;
+    }
+
+    .codigos-cards-table .codigo-form {
+        grid-template-columns: 1fr;
+    }
+
+    .codigo-marca,
+    .codigo-tipo,
+    .codigo-codigo,
+    .codigo-barras,
+    .codigo-nombre,
+    .codigo-cantidad,
+    .codigo-unidad,
+    .codigo-compra,
+    .codigo-venta,
+    .codigo-margen,
+    .codigo-iva,
+    .codigo-secreto,
+    .codigo-activo,
+    .codigo-eliminar {
+        grid-column: auto;
+    }
+
+    .partial-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .partial-add-btn {
+        align-self: flex-start;
+    }
+
+}

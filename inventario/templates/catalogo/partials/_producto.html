@@ -1,80 +1,118 @@
-<div class="form-section">
+<div class="producto-grid">
 
-    <h4>Datos del producto base</h4>
+    <!-- ==================================================
+         CATEGORÍA
+    =================================================== -->
 
-    <div class="form-grid-2">
+    <div class="producto-field">
 
-        <div>
-            <label class="field-label">Categoría</label>
+        <label class="field-label">
+            Categoría
+        </label>
 
-            <div class="field-with-action">
+        <div class="field-with-action">
 
-                <div class="apple-dropdown" data-dropdown-tipo="categoria">
+            <div
+                class="apple-dropdown"
+                data-dropdown-tipo="categoria"
+            >
 
-                    <input
-                        type="text"
-                        class="form-control-apple apple-dropdown-input"
-                        placeholder="Buscar categoría..."
-                        autocomplete="off">
+                <input
+                    type="text"
+                    class="form-control-apple apple-dropdown-input"
+                    placeholder="Buscar categoría..."
+                    autocomplete="off"
+                >
 
-                    <input
-                        type="hidden"
-                        name="categoria"
-                        class="apple-dropdown-hidden"
-                        value="{{ producto_form.categoria.value|default:'' }}">
+                <input
+                    type="hidden"
+                    name="categoria"
+                    class="apple-dropdown-hidden"
+                    value="{{ producto_form.categoria.value|default:'' }}"
+                >
 
-                    <div class="apple-dropdown-menu">
-                        {% for categoria in producto_form.categoria.field.queryset %}
-                            <div
-                                class="apple-dropdown-item"
-                                data-id="{{ categoria.id }}"
-                                data-nombre="{{ categoria.nombre }}">
-                                {{ categoria.nombre }}
-                            </div>
-                        {% endfor %}
+                <div class="apple-dropdown-menu">
 
-                        <div class="apple-dropdown-no-result">
-                            Sin coincidencias
+                    {% for categoria in producto_form.categoria.field.queryset %}
+
+                        <div
+                            class="apple-dropdown-item"
+                            data-id="{{ categoria.id }}"
+                            data-nombre="{{ categoria.nombre }}"
+                        >
+                            {{ categoria.nombre }}
                         </div>
+
+                    {% endfor %}
+
+                    <div class="apple-dropdown-no-result">
+                        Sin coincidencias
                     </div>
 
                 </div>
 
-                <button
-                    type="button"
-                    class="btn-login btn-mini"
-                    onclick="abrirModalBootstrap('modalCategoria')">
-                    +
-                </button>
-
             </div>
 
-            {{ producto_form.categoria.errors }}
+
+            <button
+                type="button"
+                class="btn-login btn-mini"
+                onclick="abrirModalBootstrap('modalCategoria')"
+                title="Crear categoría"
+            >
+                <i class="bi bi-plus-lg"></i>
+            </button>
+
         </div>
 
-        <div>
-            <label class="field-label">
-                {{ producto_form.nombre_base.label }}
-            </label>
-
-            {{ producto_form.nombre_base }}
-            {{ producto_form.nombre_base.errors }}
-        </div>
+        {{ producto_form.categoria.errors }}
 
     </div>
 
-    <div style="margin-top:15px;">
+
+
+    <!-- ==================================================
+         NOMBRE
+    =================================================== -->
+
+    <div class="producto-field">
+
+        <label class="field-label">
+            {{ producto_form.nombre_base.label }}
+        </label>
+
+        {{ producto_form.nombre_base }}
+        {{ producto_form.nombre_base.errors }}
+
+    </div>
+
+
+
+    <!-- ==================================================
+         DESCRIPCIÓN
+    =================================================== -->
+
+    <div class="producto-field producto-field-full">
+
         <label class="field-label">
             {{ producto_form.descripcion.label }}
         </label>
 
         {{ producto_form.descripcion }}
         {{ producto_form.descripcion.errors }}
+
     </div>
 
-    <div style="margin-top:20px;">
+
+
+    <!-- ==================================================
+         IMÁGENES
+    =================================================== -->
+
+    <div class="producto-field producto-media">
+
         <label class="field-label">
-            Imágenes del producto
+            Imágenes
         </label>
 
         <input
@@ -83,22 +121,51 @@
             name="imagenes_producto"
             class="form-control-apple imagen-input"
             accept="image/*"
-            multiple>
+            multiple
+        >
 
-        <small class="text-muted">
-            Puede seleccionar una o varias imágenes del producto.
-        </small>
+        <div class="producto-help">
+            Puedes seleccionar una o varias imágenes.
+        </div>
 
         <div
             id="previewImagenesProducto"
-            class="preview-imagenes">
-        </div>
+            class="preview-imagenes"
+        ></div>
+
     </div>
 
-    <div class="checkbox-group">
-        <label>{{ producto_form.activo }} Activo</label>
-        <label>{{ producto_form.datos_incompletos }} Datos incompletos</label>
-        <label>{{ producto_form.descontinuado }} Descontinuado</label>
+
+
+    <!-- ==================================================
+         ESTADO
+    =================================================== -->
+
+    <div class="producto-field producto-status">
+
+        <label class="field-label">
+            Estado del producto
+        </label>
+
+        <div class="producto-checks">
+
+            <label class="producto-check">
+                {{ producto_form.activo }}
+                <span>Activo</span>
+            </label>
+
+            <label class="producto-check">
+                {{ producto_form.datos_incompletos }}
+                <span>Datos incompletos</span>
+            </label>
+
+            <label class="producto-check">
+                {{ producto_form.descontinuado }}
+                <span>Descontinuado</span>
+            </label>
+
+        </div>
+
     </div>
 
 </div>

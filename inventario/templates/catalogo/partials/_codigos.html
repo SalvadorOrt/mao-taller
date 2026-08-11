@@ -1,205 +1,540 @@
-<div class="form-section">
+<div class="partial-toolbar">
 
-    <div class="section-header-row">
-        <div>
-            <h4>Códigos comerciales</h4>
-            <p>Un mismo producto puede tener varios códigos y marcas.</p>
-        </div>
-
-        <button
-            type="button"
-            class="btn-login"
-            style="width:auto;"
-            onclick="agregarCodigo()">
-            + Agregar código
-        </button>
+    <div class="partial-toolbar-info">
+        Un producto puede tener varias referencias comerciales de diferentes marcas.
     </div>
 
-    <div class="ot-table-wrap">
-        <table class="ot-table" id="tablaCodigos">
-            <thead>
-                <tr>
-                    <th>Marca</th>
-                    <th>Tipo</th>
-                    <th>Código</th>
-                    <th>Barras</th>
-                    <th>Nombre comercial</th>
-                    <th>Cant.</th>
-                    <th>Unidad</th>
-                    <th>Compra</th>
-                    <th>Venta</th>
-                    <th>Secreto</th>
-                    <th>Margen %</th>
-                    <th>IVA %</th>
-                    <th>Activo</th>
-                    <th></th>
-                </tr>
-            </thead>
-
-            <tbody id="codigosContainer">
-                {% for form in codigo_formset %}
-                    <tr class="codigo-form">
-                        {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
-                        {% endfor %}
-
-                        <td style="min-width:220px;">
-                            <div class="field-with-action">
-                                <div class="apple-dropdown" data-dropdown-tipo="marca">
-                                    <input
-                                        type="text"
-                                        class="form-control-apple apple-dropdown-input"
-                                        placeholder="Buscar marca..."
-                                        autocomplete="off">
-
-                                    <input
-                                        type="hidden"
-                                        name="{{ form.marca.html_name }}"
-                                        class="apple-dropdown-hidden"
-                                        value="{{ form.marca.value|default:'' }}">
-
-                                    <div class="apple-dropdown-menu">
-                                        {% for marca in form.marca.field.queryset %}
-                                            <div
-                                                class="apple-dropdown-item"
-                                                data-id="{{ marca.id }}"
-                                                data-nombre="{{ marca.nombre }}">
-                                                {{ marca.nombre }}
-                                            </div>
-                                        {% endfor %}
-
-                                        <div class="apple-dropdown-no-result">
-                                            Sin coincidencias
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="btn-login btn-mini"
-                                    onclick="abrirModalBootstrap('modalMarca')">
-                                    +
-                                </button>
-                            </div>
-
-                            {{ form.marca.errors }}
-                        </td>
-
-                        <td>{{ form.tipo_codigo }}</td>
-
-                        <td>
-                            {{ form.codigo }}
-                            {{ form.codigo.errors }}
-                        </td>
-
-                        <td>{{ form.codigo_barras }}</td>
-                        <td>{{ form.nombre_comercial }}</td>
-                        <td>{{ form.presentacion_cantidad }}</td>
-                        <td>{{ form.presentacion_unidad }}</td>
-                        <td>{{ form.precio_compra }}</td>
-                        <td>{{ form.precio_venta }}</td>
-                        <td>{{ form.precio_secreto }}</td>
-                        <td>{{ form.margen_ganancia_porcentaje }}</td>
-                        <td>{{ form.porcentaje_iva_costo }}</td>
-
-                        <td style="text-align:center;">
-                            {{ form.activo }}
-                        </td>
-
-                        <td>
-                            <div style="display:none;">
-                                {{ form.DELETE }}
-                            </div>
-
-                            <button
-                                type="button"
-                                class="btn-login danger small"
-                                onclick="eliminarCodigo(this)">
-                                ✕
-                            </button>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <button
+        type="button"
+        class="btn-login partial-add-btn"
+        onclick="agregarCodigo()"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Agregar código
+    </button>
 
 </div>
 
 
+
+<div class="codigos-container-wrap">
+
+    <table
+        class="codigos-cards-table"
+        id="tablaCodigos"
+    >
+
+        <tbody id="codigosContainer">
+
+            {% for form in codigo_formset %}
+
+                <tr class="codigo-form">
+
+                    {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+
+
+                    <!-- =====================================
+                         MARCA
+                    ====================================== -->
+
+                    <td class="codigo-field codigo-marca">
+
+                        <span class="codigo-label">
+                            Marca
+                        </span>
+
+                        <div class="field-with-action">
+
+                            <div
+                                class="apple-dropdown"
+                                data-dropdown-tipo="marca"
+                            >
+
+                                <input
+                                    type="text"
+                                    class="form-control-apple apple-dropdown-input"
+                                    placeholder="Buscar marca..."
+                                    autocomplete="off"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="{{ form.marca.html_name }}"
+                                    class="apple-dropdown-hidden"
+                                    value="{{ form.marca.value|default:'' }}"
+                                >
+
+                                <div class="apple-dropdown-menu">
+
+                                    {% for marca in form.marca.field.queryset %}
+
+                                        <div
+                                            class="apple-dropdown-item"
+                                            data-id="{{ marca.id }}"
+                                            data-nombre="{{ marca.nombre }}"
+                                        >
+                                            {{ marca.nombre }}
+                                        </div>
+
+                                    {% endfor %}
+
+                                    <div class="apple-dropdown-no-result">
+                                        Sin coincidencias
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="btn-login btn-mini"
+                                onclick="abrirModalBootstrap('modalMarca')"
+                                title="Crear marca"
+                            >
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+
+                        </div>
+
+                        {{ form.marca.errors }}
+
+                    </td>
+
+
+
+                    <!-- TIPO -->
+
+                    <td class="codigo-field codigo-tipo">
+
+                        <span class="codigo-label">
+                            Tipo
+                        </span>
+
+                        {{ form.tipo_codigo }}
+
+                    </td>
+
+
+
+                    <!-- CÓDIGO -->
+
+                    <td class="codigo-field codigo-codigo">
+
+                        <span class="codigo-label">
+                            Código
+                        </span>
+
+                        {{ form.codigo }}
+                        {{ form.codigo.errors }}
+
+                    </td>
+
+
+
+                    <!-- BARRAS -->
+
+                    <td class="codigo-field codigo-barras">
+
+                        <span class="codigo-label">
+                            Código de barras
+                        </span>
+
+                        {{ form.codigo_barras }}
+
+                    </td>
+
+
+
+                    <!-- NOMBRE COMERCIAL -->
+
+                    <td class="codigo-field codigo-nombre">
+
+                        <span class="codigo-label">
+                            Nombre comercial
+                        </span>
+
+                        {{ form.nombre_comercial }}
+
+                    </td>
+
+
+
+                    <!-- PRESENTACIÓN -->
+
+                    <td class="codigo-field codigo-cantidad">
+
+                        <span class="codigo-label">
+                            Cantidad
+                        </span>
+
+                        {{ form.presentacion_cantidad }}
+
+                    </td>
+
+
+                    <td class="codigo-field codigo-unidad">
+
+                        <span class="codigo-label">
+                            Unidad
+                        </span>
+
+                        {{ form.presentacion_unidad }}
+
+                    </td>
+
+
+
+                    <!-- COMPRA -->
+
+                    <td class="codigo-field codigo-compra">
+
+                        <span class="codigo-label">
+                            Compra
+                        </span>
+
+                        {{ form.precio_compra }}
+
+                    </td>
+
+
+
+                    <!-- VENTA -->
+
+                    <td class="codigo-field codigo-venta">
+
+                        <span class="codigo-label">
+                            Venta
+                        </span>
+
+                        {{ form.precio_venta }}
+
+                    </td>
+
+
+
+                    <!-- MARGEN -->
+
+                    <td class="codigo-field codigo-margen">
+
+                        <span class="codigo-label">
+                            Margen %
+                        </span>
+
+                        {{ form.margen_ganancia_porcentaje }}
+
+                    </td>
+
+
+
+                    <!-- IVA -->
+
+                    <td class="codigo-field codigo-iva">
+
+                        <span class="codigo-label">
+                            IVA costo %
+                        </span>
+
+                        {{ form.porcentaje_iva_costo }}
+
+                    </td>
+
+
+
+                    <!-- SECRETO -->
+
+                    <td class="codigo-field codigo-secreto">
+
+                        <span class="codigo-label">
+                            Precio secreto
+                        </span>
+
+                        {{ form.precio_secreto }}
+
+                    </td>
+
+
+
+                    <!-- ACTIVO -->
+
+                    <td class="codigo-field codigo-activo">
+
+                        <span class="codigo-label">
+                            Estado
+                        </span>
+
+                        <label class="codigo-active-control">
+                            {{ form.activo }}
+                            <span>Activo</span>
+                        </label>
+
+                    </td>
+
+
+
+                    <!-- ELIMINAR -->
+
+                    <td class="codigo-field codigo-eliminar">
+
+                        <div style="display:none;">
+                            {{ form.DELETE }}
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn-remove-row"
+                            onclick="eliminarCodigo(this)"
+                            title="Eliminar código"
+                        >
+                            <i class="bi bi-trash3"></i>
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+
+<!-- =====================================================
+     TEMPLATE NUEVO CÓDIGO
+===================================================== -->
+
 <template id="codigoEmptyFormTemplate">
+
     <tr class="codigo-form">
+
         {% for hidden in codigo_formset.empty_form.hidden_fields %}
             {{ hidden }}
         {% endfor %}
 
-        <td style="min-width:220px;">
+
+        <td class="codigo-field codigo-marca">
+
+            <span class="codigo-label">
+                Marca
+            </span>
+
             <div class="field-with-action">
-                <div class="apple-dropdown" data-dropdown-tipo="marca">
+
+                <div
+                    class="apple-dropdown"
+                    data-dropdown-tipo="marca"
+                >
+
                     <input
                         type="text"
                         class="form-control-apple apple-dropdown-input"
                         placeholder="Buscar marca..."
-                        autocomplete="off">
+                        autocomplete="off"
+                    >
 
                     <input
                         type="hidden"
                         name="{{ codigo_formset.empty_form.marca.html_name }}"
                         class="apple-dropdown-hidden"
-                        value="{{ codigo_formset.empty_form.marca.value|default:'' }}">
+                        value="{{ codigo_formset.empty_form.marca.value|default:'' }}"
+                    >
 
                     <div class="apple-dropdown-menu">
+
                         {% for marca in codigo_formset.empty_form.marca.field.queryset %}
+
                             <div
                                 class="apple-dropdown-item"
                                 data-id="{{ marca.id }}"
-                                data-nombre="{{ marca.nombre }}">
+                                data-nombre="{{ marca.nombre }}"
+                            >
                                 {{ marca.nombre }}
                             </div>
+
                         {% endfor %}
 
                         <div class="apple-dropdown-no-result">
                             Sin coincidencias
                         </div>
+
                     </div>
+
                 </div>
+
 
                 <button
                     type="button"
                     class="btn-login btn-mini"
-                    onclick="abrirModalBootstrap('modalMarca')">
-                    +
+                    onclick="abrirModalBootstrap('modalMarca')"
+                    title="Crear marca"
+                >
+                    <i class="bi bi-plus-lg"></i>
                 </button>
+
             </div>
+
         </td>
 
-        <td>{{ codigo_formset.empty_form.tipo_codigo }}</td>
-        <td>{{ codigo_formset.empty_form.codigo }}</td>
-        <td>{{ codigo_formset.empty_form.codigo_barras }}</td>
-        <td>{{ codigo_formset.empty_form.nombre_comercial }}</td>
-        <td>{{ codigo_formset.empty_form.presentacion_cantidad }}</td>
-        <td>{{ codigo_formset.empty_form.presentacion_unidad }}</td>
-        <td>{{ codigo_formset.empty_form.precio_compra }}</td>
-        <td>{{ codigo_formset.empty_form.precio_venta }}</td>
-        <td>{{ codigo_formset.empty_form.precio_secreto }}</td>
-        <td>{{ codigo_formset.empty_form.margen_ganancia_porcentaje }}</td>
-        <td>{{ codigo_formset.empty_form.porcentaje_iva_costo }}</td>
 
-        <td style="text-align:center;">
-            {{ codigo_formset.empty_form.activo }}
+        <td class="codigo-field codigo-tipo">
+
+            <span class="codigo-label">
+                Tipo
+            </span>
+
+            {{ codigo_formset.empty_form.tipo_codigo }}
+
         </td>
 
-        <td>
+
+        <td class="codigo-field codigo-codigo">
+
+            <span class="codigo-label">
+                Código
+            </span>
+
+            {{ codigo_formset.empty_form.codigo }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-barras">
+
+            <span class="codigo-label">
+                Código de barras
+            </span>
+
+            {{ codigo_formset.empty_form.codigo_barras }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-nombre">
+
+            <span class="codigo-label">
+                Nombre comercial
+            </span>
+
+            {{ codigo_formset.empty_form.nombre_comercial }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-cantidad">
+
+            <span class="codigo-label">
+                Cantidad
+            </span>
+
+            {{ codigo_formset.empty_form.presentacion_cantidad }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-unidad">
+
+            <span class="codigo-label">
+                Unidad
+            </span>
+
+            {{ codigo_formset.empty_form.presentacion_unidad }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-compra">
+
+            <span class="codigo-label">
+                Compra
+            </span>
+
+            {{ codigo_formset.empty_form.precio_compra }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-venta">
+
+            <span class="codigo-label">
+                Venta
+            </span>
+
+            {{ codigo_formset.empty_form.precio_venta }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-margen">
+
+            <span class="codigo-label">
+                Margen %
+            </span>
+
+            {{ codigo_formset.empty_form.margen_ganancia_porcentaje }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-iva">
+
+            <span class="codigo-label">
+                IVA costo %
+            </span>
+
+            {{ codigo_formset.empty_form.porcentaje_iva_costo }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-secreto">
+
+            <span class="codigo-label">
+                Precio secreto
+            </span>
+
+            {{ codigo_formset.empty_form.precio_secreto }}
+
+        </td>
+
+
+        <td class="codigo-field codigo-activo">
+
+            <span class="codigo-label">
+                Estado
+            </span>
+
+            <label class="codigo-active-control">
+                {{ codigo_formset.empty_form.activo }}
+                <span>Activo</span>
+            </label>
+
+        </td>
+
+
+        <td class="codigo-field codigo-eliminar">
+
             <div style="display:none;">
                 {{ codigo_formset.empty_form.DELETE }}
             </div>
 
             <button
                 type="button"
-                class="btn-login danger small"
-                onclick="eliminarCodigo(this)">
-                ✕
+                class="btn-remove-row"
+                onclick="eliminarCodigo(this)"
+                title="Eliminar código"
+            >
+                <i class="bi bi-trash3"></i>
             </button>
+
         </td>
+
     </tr>
+
 </template>
