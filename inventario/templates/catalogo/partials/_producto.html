@@ -1,8 +1,7 @@
-<div class="producto-grid">
+<div class="producto-compact-grid">
 
-    <!-- ==================================================
-         CATEGORÍA
-    =================================================== -->
+
+    <!-- CATEGORÍA -->
 
     <div class="producto-field">
 
@@ -58,9 +57,8 @@
                 type="button"
                 class="btn-login btn-mini"
                 onclick="abrirModalBootstrap('modalCategoria')"
-                title="Crear categoría"
             >
-                <i class="bi bi-plus-lg"></i>
+                +
             </button>
 
         </div>
@@ -71,98 +69,90 @@
 
 
 
-    <!-- ==================================================
-         NOMBRE
-    =================================================== -->
+    <!-- NOMBRE -->
 
     <div class="producto-field">
 
         <label class="field-label">
-            {{ producto_form.nombre_base.label }}
+            Nombre base
         </label>
 
         {{ producto_form.nombre_base }}
+
         {{ producto_form.nombre_base.errors }}
 
     </div>
 
 
 
-    <!-- ==================================================
-         DESCRIPCIÓN
-    =================================================== -->
+    <!-- DESCRIPCIÓN -->
 
-    <div class="producto-field producto-field-full">
+    <div class="producto-field producto-full">
 
         <label class="field-label">
-            {{ producto_form.descripcion.label }}
+            Descripción
         </label>
 
         {{ producto_form.descripcion }}
+
         {{ producto_form.descripcion.errors }}
 
     </div>
 
 
 
-    <!-- ==================================================
-         IMÁGENES
-    =================================================== -->
+    <!-- PARTE INFERIOR -->
 
-    <div class="producto-field producto-media">
+    <div class="producto-bottom">
 
-        <label class="field-label">
-            Imágenes
-        </label>
 
-        <input
-            type="file"
-            id="imagenesProducto"
-            name="imagenes_producto"
-            class="form-control-apple imagen-input"
-            accept="image/*"
-            multiple
-        >
+        <div>
 
-        <div class="producto-help">
-            Puedes seleccionar una o varias imágenes.
+            <label class="field-label">
+                Imágenes
+            </label>
+
+            <input
+                type="file"
+                id="imagenesProducto"
+                name="imagenes_producto"
+                class="form-control-apple imagen-input"
+                accept="image/*"
+                multiple
+            >
+
+            <div
+                id="previewImagenesProducto"
+                class="preview-imagenes"
+            ></div>
+
         </div>
 
-        <div
-            id="previewImagenesProducto"
-            class="preview-imagenes"
-        ></div>
 
-    </div>
+        <div>
 
-
-
-    <!-- ==================================================
-         ESTADO
-    =================================================== -->
-
-    <div class="producto-field producto-status">
-
-        <label class="field-label">
-            Estado del producto
-        </label>
-
-        <div class="producto-checks">
-
-            <label class="producto-check">
-                {{ producto_form.activo }}
-                <span>Activo</span>
+            <label class="field-label">
+                Estado
             </label>
 
-            <label class="producto-check">
-                {{ producto_form.datos_incompletos }}
-                <span>Datos incompletos</span>
-            </label>
+            <div class="producto-estados">
 
-            <label class="producto-check">
-                {{ producto_form.descontinuado }}
-                <span>Descontinuado</span>
-            </label>
+                <label class="producto-estado-item">
+                    {{ producto_form.activo }}
+                    Activo
+                </label>
+
+                <label class="producto-estado-item">
+                    {{ producto_form.datos_incompletos }}
+                    Incompleto
+                </label>
+
+                <label class="producto-estado-item">
+                    {{ producto_form.descontinuado }}
+                    Descontinuado
+                </label>
+
+            </div>
 
         </div>
 

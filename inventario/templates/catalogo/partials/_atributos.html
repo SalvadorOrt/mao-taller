@@ -1,34 +1,52 @@
-<div class="partial-toolbar">
+<div
+    class="section-title"
+    style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding-right:10px;
+    "
+>
 
-    <div class="partial-toolbar-info">
-        Agrega únicamente las características que ayuden a identificar el repuesto.
-    </div>
+    <span>
+        Atributos técnicos
+    </span>
+
 
     <button
         type="button"
-        class="btn-login partial-add-btn"
+        class="btn-login catalogo-section-action"
         onclick="agregarAtributo()"
     >
-        <i class="bi bi-plus-lg"></i>
-        Agregar atributo
+        + Agregar atributo
     </button>
 
 </div>
 
 
-<div class="atributos-table-wrap">
+<div class="ot-table-wrap">
 
     <table
-        class="atributos-table"
+        class="ot-table"
         id="tablaAtributos"
     >
 
         <thead>
 
             <tr>
-                <th>Atributo</th>
-                <th>Valor</th>
-                <th style="width:55px;"></th>
+
+                <th style="width:48%;">
+                    Atributo
+                </th>
+
+                <th style="width:47%;">
+                    Valor
+                </th>
+
+                <th style="width:5%; text-align:center;">
+                    Acción
+                </th>
+
             </tr>
 
         </thead>
@@ -45,8 +63,6 @@
                     {% endfor %}
 
 
-                    <!-- ATRIBUTO -->
-
                     <td>
 
                         <div class="field-with-action">
@@ -58,7 +74,10 @@
 
                                 <input
                                     type="text"
-                                    class="form-control-apple apple-dropdown-input"
+                                    class="
+                                        form-control-apple
+                                        apple-dropdown-input
+                                    "
                                     placeholder="Buscar atributo..."
                                     autocomplete="off"
                                 >
@@ -97,9 +116,8 @@
                                 type="button"
                                 class="btn-login btn-mini"
                                 onclick="abrirModalBootstrap('modalAtributo')"
-                                title="Crear atributo"
                             >
-                                <i class="bi bi-plus-lg"></i>
+                                +
                             </button>
 
                         </div>
@@ -109,8 +127,6 @@
                     </td>
 
 
-                    <!-- VALOR -->
-
                     <td>
 
                         {{ form.valor }}
@@ -119,9 +135,7 @@
                     </td>
 
 
-                    <!-- ELIMINAR -->
-
-                    <td class="atributo-action">
+                    <td style="text-align:center;">
 
                         <div style="display:none;">
                             {{ form.DELETE }}
@@ -129,11 +143,15 @@
 
                         <button
                             type="button"
-                            class="btn-remove-row"
+                            class="
+                                btn-login
+                                danger
+                                small
+                                catalogo-delete-btn
+                            "
                             onclick="eliminarAtributo(this)"
-                            title="Eliminar atributo"
                         >
-                            <i class="bi bi-x-lg"></i>
+                            ✕
                         </button>
 
                     </td>
@@ -148,11 +166,6 @@
 
 </div>
 
-
-
-<!-- =====================================================
-     TEMPLATE ATRIBUTO
-===================================================== -->
 
 <template id="atributoEmptyFormTemplate">
 
@@ -174,7 +187,10 @@
 
                     <input
                         type="text"
-                        class="form-control-apple apple-dropdown-input"
+                        class="
+                            form-control-apple
+                            apple-dropdown-input
+                        "
                         placeholder="Buscar atributo..."
                         autocomplete="off"
                     >
@@ -183,7 +199,6 @@
                         type="hidden"
                         name="{{ atributo_formset.empty_form.atributo.html_name }}"
                         class="apple-dropdown-hidden"
-                        value="{{ atributo_formset.empty_form.atributo.value|default:'' }}"
                     >
 
                     <div class="apple-dropdown-menu">
@@ -213,9 +228,8 @@
                     type="button"
                     class="btn-login btn-mini"
                     onclick="abrirModalBootstrap('modalAtributo')"
-                    title="Crear atributo"
                 >
-                    <i class="bi bi-plus-lg"></i>
+                    +
                 </button>
 
             </div>
@@ -228,7 +242,7 @@
         </td>
 
 
-        <td class="atributo-action">
+        <td style="text-align:center;">
 
             <div style="display:none;">
                 {{ atributo_formset.empty_form.DELETE }}
@@ -236,11 +250,15 @@
 
             <button
                 type="button"
-                class="btn-remove-row"
+                class="
+                    btn-login
+                    danger
+                    small
+                    catalogo-delete-btn
+                "
                 onclick="eliminarAtributo(this)"
-                title="Eliminar atributo"
             >
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
 
         </td>

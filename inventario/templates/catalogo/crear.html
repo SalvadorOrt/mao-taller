@@ -1,202 +1,189 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Nuevo Repuesto | MAO{% endblock %}
-{% block page_title %}Nuevo Repuesto{% endblock %}
-{% block page_subtitle %}Crear una nueva referencia en el inventario{% endblock %}
+{% block title %}
+Nuevo Repuesto | MAO
+{% endblock %}
 
-{% block extra_css %}
+{% block page_title %}
+Nuevo Repuesto
+{% endblock %}
+
+{% block page_subtitle %}
+Crear una nueva referencia en el inventario
+{% endblock %}
+
+
+{% block content %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
 
 <link
     rel="stylesheet"
     href="{% static 'inventario/css/catalogo_form.css' %}"
 >
 
+
 <style>
 
     /* =====================================================
-       CONTENEDOR
+       PÁGINA
     ===================================================== */
 
-    .catalogo-form-page {
-        padding-top: 6px;
-        padding-bottom: 20px;
-        max-width: 1180px;
-        margin: 0 auto;
+    .catalogo-crear-wrapper {
+        padding-top: 8px;
+        padding-bottom: 25px;
     }
+
 
     /* =====================================================
        CABECERA
     ===================================================== */
 
-    .catalogo-form-header {
+    .catalogo-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 12px;
-        margin-bottom: 12px;
-        padding: 12px 14px;
+        margin-bottom: 15px;
+        padding: 15px;
     }
 
-    .catalogo-form-header-title {
-        margin: 0;
+    .catalogo-header-title {
         font-size: 14px;
-        line-height: 1.2;
         font-weight: 700;
         color: var(--text);
     }
 
-    .catalogo-form-header-text {
+    .catalogo-header-subtitle {
         margin-top: 3px;
-        color: var(--muted);
         font-size: 10px;
         font-weight: 500;
-    }
-
-    .catalogo-form-back {
-        height: 34px;
-        padding: 0 11px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-
-        border: 1px solid var(--border);
-        border-radius: 9px;
-
-        background: #fff;
-        color: var(--text);
-
-        font-size: 10px;
-        font-weight: 700;
-
-        text-decoration: none;
-        white-space: nowrap;
-
-        transition: 0.15s ease;
-    }
-
-    .catalogo-form-back:hover {
-        background: #f5f5f7;
-        color: var(--text);
-        text-decoration: none;
+        color: var(--muted);
     }
 
 
     /* =====================================================
-       SECCIONES
+       TARJETAS
     ===================================================== */
 
     .catalogo-section {
-        padding: 13px 14px;
-        margin-bottom: 12px;
+        margin-bottom: 15px;
     }
 
-    .catalogo-section-head {
+    .catalogo-section .section-title {
         display: flex;
+        align-items: center;
         justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-
-        padding-bottom: 9px;
-        margin-bottom: 11px;
-
-        border-bottom: 1px solid var(--border-soft);
-    }
-
-    .catalogo-section-title {
-        margin: 0;
-        color: var(--text);
-        font-size: 12px;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-
-    .catalogo-section-description {
-        margin-top: 2px;
-        color: var(--muted);
-        font-size: 9px;
-        font-weight: 500;
-    }
-
-    .catalogo-section-icon {
-        width: 28px;
-        height: 28px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border-radius: 8px;
-
-        background: #f2f8ff;
-        color: var(--accent);
-
-        font-size: 12px;
-        flex-shrink: 0;
+        gap: 10px;
     }
 
 
     /* =====================================================
-       CAMPOS
+       PRODUCTO
     ===================================================== */
 
-    .catalogo-form-page label {
-        display: block;
-        margin-bottom: 4px;
-
-        color: var(--muted);
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
+    .producto-compact-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 10px 14px;
+        padding: 12px 15px 15px;
     }
 
-    .catalogo-form-page input[type="text"],
-    .catalogo-form-page input[type="number"],
-    .catalogo-form-page input[type="email"],
-    .catalogo-form-page input[type="search"],
-    .catalogo-form-page input[type="date"],
-    .catalogo-form-page select,
-    .catalogo-form-page textarea {
+    .producto-full {
+        grid-column: 1 / -1;
+    }
+
+    .producto-field {
+        min-width: 0;
+    }
+
+    .producto-bottom {
+        grid-column: 1 / -1;
+
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.5fr)
+            minmax(280px, 0.8fr);
+
+        gap: 14px;
+        align-items: end;
+    }
+
+
+    /* =====================================================
+       LABELS
+    ===================================================== */
+
+    .catalogo-crear-wrapper .field-label {
+        display: block;
+
+        margin-bottom: 4px;
+
+        font-size: 9px;
+        font-weight: 700;
+
+        color: var(--muted);
+
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+
+    /* =====================================================
+       INPUTS
+    ===================================================== */
+
+    .catalogo-crear-wrapper input[type="text"],
+    .catalogo-crear-wrapper input[type="number"],
+    .catalogo-crear-wrapper input[type="search"],
+    .catalogo-crear-wrapper select {
 
         width: 100%;
 
+        height: 32px;
+        min-height: 32px;
+
+        padding: 0 8px;
+
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: 7px;
 
         background: #fff;
         color: var(--text);
 
-        font-size: 11px;
-        font-weight: 500;
+        font-size: 10px;
 
         outline: none;
-        box-shadow: none;
-
-        transition: 0.15s ease;
     }
 
-    .catalogo-form-page input[type="text"],
-    .catalogo-form-page input[type="number"],
-    .catalogo-form-page input[type="email"],
-    .catalogo-form-page input[type="search"],
-    .catalogo-form-page input[type="date"],
-    .catalogo-form-page select {
+    .catalogo-crear-wrapper textarea {
 
-        height: 34px;
-        min-height: 34px;
-        padding: 0 9px;
-    }
+        width: 100%;
 
-    .catalogo-form-page textarea {
-        min-height: 68px;
-        padding: 8px 9px;
+        min-height: 60px;
+
+        padding: 7px 8px;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #fff;
+        color: var(--text);
+
+        font-size: 10px;
+
         resize: vertical;
+        outline: none;
     }
 
-    .catalogo-form-page input:focus,
-    .catalogo-form-page select:focus,
-    .catalogo-form-page textarea:focus {
+    .catalogo-crear-wrapper input:focus,
+    .catalogo-crear-wrapper select:focus,
+    .catalogo-crear-wrapper textarea:focus {
 
         border-color: var(--accent);
 
@@ -207,116 +194,245 @@
 
 
     /* =====================================================
-       FILE
+       INPUT FILE
     ===================================================== */
 
-    .catalogo-form-page input[type="file"] {
-        width: 100%;
-        min-height: 36px;
+    .catalogo-crear-wrapper input[type="file"] {
 
-        padding: 5px;
+        width: 100%;
+
+        min-height: 34px;
+
+        padding: 4px;
 
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: 7px;
 
         background: #fff;
 
-        font-size: 10px;
+        font-size: 9px;
     }
 
 
     /* =====================================================
-       CHECKBOXES
+       CAMPO + BOTÓN
     ===================================================== */
 
-    .catalogo-form-page input[type="checkbox"] {
-        width: 14px;
-        height: 14px;
-        accent-color: var(--accent);
+    .field-with-action {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .field-with-action .apple-dropdown {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .btn-mini {
+        width: 32px !important;
+        min-width: 32px !important;
+
+        height: 32px !important;
+        min-height: 32px !important;
+
+        padding: 0 !important;
+
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 7px !important;
     }
 
 
     /* =====================================================
-       TABLA DE ATRIBUTOS
+       ESTADOS
     ===================================================== */
 
-    .catalogo-form-page table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+    .producto-estados {
+        min-height: 34px;
 
-        border: 1px solid var(--border-soft);
-        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
 
-        background: #fff;
+        padding: 6px 9px;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #fbfbfd;
     }
 
-    .catalogo-form-page table thead th {
-        padding: 7px 8px;
+    .producto-estado-item {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 5px;
 
-        border-bottom: 1px solid var(--border);
+        margin: 0 !important;
 
-        background: #f7f8fa;
+        color: var(--text) !important;
 
-        color: var(--muted);
+        font-size: 9px !important;
+        font-weight: 600 !important;
+    }
+
+    .producto-estado-item input {
+        width: 13px;
+        height: 13px;
+        margin: 0;
+    }
+
+
+    /* =====================================================
+       BARRA DE SECCIÓN
+    ===================================================== */
+
+    .catalogo-section-action {
+        height: 30px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+
+        border-radius: 7px;
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       TABLAS
+    ===================================================== */
+
+    .catalogo-crear-wrapper .ot-table-wrap {
+        border-radius: 0 0 10px 10px;
+    }
+
+    .catalogo-crear-wrapper .ot-table {
+        font-size: 9px;
+    }
+
+    .catalogo-crear-wrapper .ot-table thead th {
+
+        padding: 7px 7px;
 
         font-size: 8px;
-        font-weight: 700;
-
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
+        line-height: 1.15;
 
         white-space: nowrap;
     }
 
-    .catalogo-form-page table tbody td {
-        padding: 7px 8px;
+    .catalogo-crear-wrapper .ot-table tbody td {
 
-        border-bottom: 1px solid var(--border-soft);
-
-        background: #fff;
+        padding: 6px 7px;
 
         vertical-align: middle;
-
-        font-size: 10px;
     }
 
-    .catalogo-form-page table tbody tr:last-child td {
-        border-bottom: 0;
-    }
+    .catalogo-crear-wrapper .ot-table input,
+    .catalogo-crear-wrapper .ot-table select {
 
-    .catalogo-form-page table input,
-    .catalogo-form-page table select {
-        height: 32px;
-        min-height: 32px;
+        height: 29px;
+        min-height: 29px;
 
-        border-radius: 7px;
+        padding: 0 6px;
 
-        font-size: 10px;
+        border-radius: 6px;
+
+        font-size: 9px;
     }
 
 
     /* =====================================================
-       BOTONES SECUNDARIOS
+       TABLA ATRIBUTOS
     ===================================================== */
 
-    .catalogo-form-page button:not(.btn-login) {
-        min-height: 32px;
-
-        border: 1px solid var(--border);
-        border-radius: 8px;
-
-        background: #fff;
-        color: var(--text);
-
-        font-size: 10px;
-        font-weight: 700;
-
-        transition: 0.15s ease;
+    #tablaAtributos {
+        min-width: 650px;
     }
 
-    .catalogo-form-page button:not(.btn-login):hover {
-        background: #f5f5f7;
+
+    /* =====================================================
+       TABLA CÓDIGOS
+    ===================================================== */
+
+    #tablaCodigos {
+        min-width: 1420px;
+    }
+
+    #tablaCodigos th:nth-child(1) {
+        min-width: 190px;
+    }
+
+    #tablaCodigos th:nth-child(2) {
+        min-width: 95px;
+    }
+
+    #tablaCodigos th:nth-child(3) {
+        min-width: 105px;
+    }
+
+    #tablaCodigos th:nth-child(4) {
+        min-width: 115px;
+    }
+
+    #tablaCodigos th:nth-child(5) {
+        min-width: 145px;
+    }
+
+    #tablaCodigos th:nth-child(6) {
+        min-width: 75px;
+    }
+
+    #tablaCodigos th:nth-child(7) {
+        min-width: 80px;
+    }
+
+    #tablaCodigos th:nth-child(8),
+    #tablaCodigos th:nth-child(9),
+    #tablaCodigos th:nth-child(11),
+    #tablaCodigos th:nth-child(12) {
+        min-width: 85px;
+    }
+
+    #tablaCodigos th:nth-child(10) {
+        min-width: 90px;
+    }
+
+    #tablaCodigos th:nth-child(13) {
+        min-width: 60px;
+    }
+
+    #tablaCodigos th:nth-child(14) {
+        min-width: 45px;
+    }
+
+
+    /* =====================================================
+       ELIMINAR
+    ===================================================== */
+
+    .catalogo-delete-btn {
+
+        width: 28px !important;
+        min-width: 28px !important;
+
+        height: 28px !important;
+        min-height: 28px !important;
+
+        padding: 0 !important;
+
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 6px !important;
     }
 
 
@@ -324,71 +440,50 @@
        ERRORES
     ===================================================== */
 
-    .catalogo-error {
-        margin-bottom: 10px;
-        padding: 9px 11px;
+    .errorlist {
 
-        border: 1px solid #ffd6d6;
-        border-radius: 9px;
+        margin: 3px 0 0;
+        padding: 0;
 
-        background: #ffebe9;
-        color: var(--danger);
+        list-style: none;
 
-        font-size: 10px;
+        font-size: 8px;
         font-weight: 600;
-    }
 
-    .catalogo-error ul {
-        margin: 0;
-        padding-left: 17px;
+        color: var(--danger);
     }
 
 
     /* =====================================================
-       FOOTER
+       ACCIONES INFERIORES
     ===================================================== */
 
-    .catalogo-form-footer {
+    .catalogo-sticky-actions {
+
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+
         position: sticky;
+
         bottom: 8px;
+
         z-index: 50;
 
-        margin-top: 12px;
-        padding: 9px 12px;
+        margin-top: 15px;
+        padding: 10px 12px;
 
         border: 1px solid var(--border);
-        border-radius: 11px;
+        border-radius: 10px;
 
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
+        background: rgba(255,255,255,0.95);
 
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
+        backdrop-filter: blur(10px);
 
-    .catalogo-form-footer-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .catalogo-form-footer-title {
-        color: var(--text);
-        font-size: 10px;
-        font-weight: 700;
-    }
-
-    .catalogo-form-footer-text {
-        margin-top: 2px;
-        color: var(--muted);
-        font-size: 9px;
-        font-weight: 500;
-    }
-
-    .catalogo-form-footer-actions {
-        display: flex;
-        align-items: center;
-        gap: 7px;
+        box-shadow:
+            0 8px 25px
+            rgba(0,0,0,0.08);
     }
 
 
@@ -396,53 +491,45 @@
        RESPONSIVE
     ===================================================== */
 
-    @media (max-width: 750px) {
+    @media (max-width: 800px) {
 
-        .catalogo-form-header {
-            align-items: flex-start;
+        .producto-compact-grid {
+            grid-template-columns: 1fr;
         }
 
-        .catalogo-form-footer-inner {
-            align-items: stretch;
-            flex-direction: column;
+        .producto-full {
+            grid-column: auto;
         }
 
-        .catalogo-form-footer-actions {
-            width: 100%;
-        }
-
-        .catalogo-form-footer-actions > * {
-            flex: 1;
+        .producto-bottom {
+            grid-column: auto;
+            grid-template-columns: 1fr;
         }
 
     }
 
 </style>
 
-{% endblock %}
 
 
-
-{% block content %}
-
-<div class="container catalogo-form-page">
+<div class="container ot-wrapper catalogo-crear-wrapper">
 
 
     <!-- ==================================================
          CABECERA
     =================================================== -->
 
-    <div class="ot-card catalogo-form-header">
+    <div class="ot-card catalogo-header">
 
         <div>
 
-            <div class="catalogo-form-header-title">
+            <div class="catalogo-header-title">
                 Nuevo repuesto
             </div>
 
-            <div class="catalogo-form-header-text">
-                Registra la información necesaria para incorporar
-                una nueva referencia al inventario.
+            <div class="catalogo-header-subtitle">
+                Crear producto y referencias comerciales
+                para el inventario.
             </div>
 
         </div>
@@ -450,19 +537,19 @@
 
         <a
             href="{% url 'inventario_catalogo' %}"
-            class="catalogo-form-back"
+            class="btn-login"
         >
-            <i class="bi bi-arrow-left"></i>
-            Catálogo
+            <i
+                class="bi bi-arrow-left"
+                style="margin-right:5px;"
+            ></i>
+
+            Volver
         </a>
 
     </div>
 
 
-
-    <!-- ==================================================
-         FORMULARIO
-    =================================================== -->
 
     <form
         method="POST"
@@ -480,26 +567,30 @@
         {{ atributo_formset.management_form }}
 
 
-        <!-- ==============================================
-             ERRORES
-        =============================================== -->
-
         {% if producto_form.non_field_errors %}
-            <div class="catalogo-error">
+
+            <div class="alert alert-danger">
                 {{ producto_form.non_field_errors }}
             </div>
+
         {% endif %}
+
 
         {% if codigo_formset.non_form_errors %}
-            <div class="catalogo-error">
+
+            <div class="alert alert-danger">
                 {{ codigo_formset.non_form_errors }}
             </div>
+
         {% endif %}
 
+
         {% if atributo_formset.non_form_errors %}
-            <div class="catalogo-error">
+
+            <div class="alert alert-danger">
                 {{ atributo_formset.non_form_errors }}
             </div>
+
         {% endif %}
 
 
@@ -510,24 +601,18 @@
 
         <div class="ot-card catalogo-section">
 
-            <div class="catalogo-section-head">
+            <div class="section-title">
+                <span>
+                    Información del producto
+                </span>
 
-                <div>
-
-                    <div class="catalogo-section-title">
-                        Información del producto
-                    </div>
-
-                    <div class="catalogo-section-description">
-                        Datos generales que identifican al repuesto.
-                    </div>
-
-                </div>
-
-                <div class="catalogo-section-icon">
-                    <i class="bi bi-box"></i>
-                </div>
-
+                <i
+                    class="bi bi-box"
+                    style="
+                        color:var(--accent);
+                        font-size:12px;
+                    "
+                ></i>
             </div>
 
             {% include "catalogo/partials/_producto.html" %}
@@ -542,27 +627,6 @@
 
         <div class="ot-card catalogo-section">
 
-            <div class="catalogo-section-head">
-
-                <div>
-
-                    <div class="catalogo-section-title">
-                        Atributos técnicos
-                    </div>
-
-                    <div class="catalogo-section-description">
-                        Características adicionales para identificar
-                        correctamente el producto.
-                    </div>
-
-                </div>
-
-                <div class="catalogo-section-icon">
-                    <i class="bi bi-sliders"></i>
-                </div>
-
-            </div>
-
             {% include "catalogo/partials/_atributos.html" %}
 
         </div>
@@ -575,92 +639,53 @@
 
         <div class="ot-card catalogo-section">
 
-            <div class="catalogo-section-head">
-
-                <div>
-
-                    <div class="catalogo-section-title">
-                        Códigos comerciales
-                    </div>
-
-                    <div class="catalogo-section-description">
-                        Referencias, marcas, costos y precios asociados
-                        al producto.
-                    </div>
-
-                </div>
-
-                <div class="catalogo-section-icon">
-                    <i class="bi bi-upc-scan"></i>
-                </div>
-
-            </div>
-
             {% include "catalogo/partials/_codigos.html" %}
 
         </div>
 
 
 
-        <!-- ==================================================
-             MODALES
-        =================================================== -->
-
         {% include "catalogo/partials/_modales.html" %}
 
 
 
         <!-- ==================================================
-             BOTONES
+             ACCIONES
         =================================================== -->
 
-        <div class="catalogo-form-footer">
+        <div class="catalogo-sticky-actions">
 
-            <div class="catalogo-form-footer-inner">
-
-                <div>
-
-                    <div class="catalogo-form-footer-title">
-                        Guardar repuesto
-                    </div>
-
-                    <div class="catalogo-form-footer-text">
-                        El SKU interno se generará automáticamente.
-                    </div>
-
-                </div>
+            <a
+                href="{% url 'inventario_catalogo' %}"
+                class="btn-login"
+                style="
+                    background:#e5e5ea;
+                    border-color:#e5e5ea;
+                    color:var(--text);
+                "
+            >
+                Cancelar
+            </a>
 
 
-                <div class="catalogo-form-footer-actions">
+            <button
+                type="submit"
+                class="btn-login primary"
+            >
+                <i
+                    class="bi bi-check-lg"
+                    style="margin-right:5px;"
+                ></i>
 
-                    <a
-                        href="{% url 'inventario_catalogo' %}"
-                        class="btn-login"
-                    >
-                        Cancelar
-                    </a>
-
-                    <button
-                        type="submit"
-                        class="btn-login primary"
-                    >
-                        <i
-                            class="bi bi-check-lg"
-                            style="margin-right:5px;"
-                        ></i>
-
-                        Guardar
-                    </button>
-
-                </div>
-
-            </div>
+                Guardar Repuesto
+            </button>
 
         </div>
 
     </form>
 
 </div>
+
 
 {% endblock %}
 
@@ -678,504 +703,3 @@
 <script src="{% static 'inventario/js/index.js' %}"></script>
 
 {% endblock %}
-/* =========================================================
-   PRODUCTO
-========================================================= */
-
-.producto-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 14px;
-}
-
-.producto-field {
-    min-width: 0;
-}
-
-.producto-field-full {
-    grid-column: 1 / -1;
-}
-
-.producto-media {
-    min-width: 0;
-}
-
-.producto-status {
-    min-width: 0;
-}
-
-.producto-help {
-    margin-top: 5px;
-    color: var(--muted);
-    font-size: 9px;
-    font-weight: 500;
-}
-
-.producto-checks {
-    min-height: 36px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
-    padding: 7px 10px;
-
-    border: 1px solid var(--border);
-    border-radius: 8px;
-
-    background: #fbfbfd;
-}
-
-.producto-check {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 6px;
-
-    margin: 0 !important;
-
-    color: var(--text) !important;
-    font-size: 10px !important;
-    font-weight: 600 !important;
-
-    cursor: pointer;
-}
-
-.producto-check input {
-    margin: 0;
-}
-
-
-/* =========================================================
-   INPUT + BOTÓN
-========================================================= */
-
-.field-with-action {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.field-with-action .apple-dropdown {
-    flex: 1;
-    min-width: 0;
-    position: relative;
-}
-
-.btn-mini {
-    width: 34px !important;
-    min-width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
-
-    padding: 0 !important;
-
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 8px !important;
-}
-
-
-/* =========================================================
-   BARRA SUPERIOR DE PARTIALS
-========================================================= */
-
-.partial-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-
-    margin-bottom: 10px;
-}
-
-.partial-toolbar-info {
-    color: var(--muted);
-    font-size: 9px;
-    font-weight: 500;
-}
-
-.partial-add-btn {
-    width: auto !important;
-    min-height: 32px !important;
-
-    display: inline-flex !important;
-    align-items: center;
-    gap: 5px;
-
-    padding: 0 10px !important;
-
-    white-space: nowrap;
-    font-size: 10px !important;
-}
-
-
-/* =========================================================
-   ATRIBUTOS
-========================================================= */
-
-.atributos-table-wrap {
-    overflow: visible;
-
-    border: 1px solid var(--border);
-    border-radius: 9px;
-
-    background: #fff;
-}
-
-.atributos-table {
-    width: 100%;
-    min-width: 0 !important;
-
-    border: 0 !important;
-    border-radius: 9px;
-
-    overflow: visible;
-}
-
-.atributos-table thead th {
-    padding: 7px 9px !important;
-
-    background: #f7f8fa;
-
-    font-size: 8px !important;
-}
-
-.atributos-table tbody td {
-    padding: 7px 8px !important;
-}
-
-.atributo-action {
-    width: 50px;
-    text-align: center;
-}
-
-
-/* =========================================================
-   ELIMINAR
-========================================================= */
-
-.btn-remove-row {
-    width: 32px;
-    height: 32px;
-
-    border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
-
-    background: #fff !important;
-    color: var(--muted) !important;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0 !important;
-
-    cursor: pointer;
-
-    transition: 0.15s ease;
-}
-
-.btn-remove-row:hover {
-    border-color: #ffd6d6 !important;
-    background: #fff1f0 !important;
-    color: var(--danger) !important;
-}
-
-
-/* =========================================================
-   CÓDIGOS COMO TARJETAS
-========================================================= */
-
-.codigos-container-wrap {
-    width: 100%;
-}
-
-.codigos-cards-table {
-    display: block;
-
-    width: 100%;
-    min-width: 0 !important;
-
-    border: 0 !important;
-    background: transparent !important;
-}
-
-.codigos-cards-table tbody {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.codigos-cards-table .codigo-form {
-    position: relative;
-
-    display: grid;
-
-    grid-template-columns:
-        minmax(180px, 1.6fr)
-        minmax(120px, 0.9fr)
-        minmax(140px, 1fr)
-        minmax(160px, 1.2fr);
-
-    gap: 10px 12px;
-
-    padding: 12px;
-
-    border: 1px solid var(--border);
-    border-radius: 11px;
-
-    background: #fbfbfd;
-
-    box-shadow: none;
-}
-
-.codigos-cards-table .codigo-form:hover {
-    background: #fbfbfd;
-}
-
-
-/* TD convertido en campo */
-
-.codigos-cards-table .codigo-field {
-    display: block;
-
-    min-width: 0;
-
-    padding: 0 !important;
-
-    border: 0 !important;
-
-    background: transparent !important;
-}
-
-
-/* Labels */
-
-.codigo-label {
-    display: block;
-
-    margin-bottom: 4px;
-
-    color: var(--muted);
-
-    font-size: 8px;
-    font-weight: 700;
-
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-
-/* =========================================================
-   DISTRIBUCIÓN DE CAMPOS
-========================================================= */
-
-/* Primera fila */
-
-.codigo-marca {
-    grid-column: span 1;
-}
-
-.codigo-tipo {
-    grid-column: span 1;
-}
-
-.codigo-codigo {
-    grid-column: span 1;
-}
-
-.codigo-barras {
-    grid-column: span 1;
-}
-
-
-/* Segunda fila */
-
-.codigo-nombre {
-    grid-column: span 2;
-}
-
-.codigo-cantidad {
-    grid-column: span 1;
-}
-
-.codigo-unidad {
-    grid-column: span 1;
-}
-
-
-/* Tercera fila */
-
-.codigo-compra {
-    grid-column: span 1;
-}
-
-.codigo-venta {
-    grid-column: span 1;
-}
-
-.codigo-margen {
-    grid-column: span 1;
-}
-
-.codigo-iva {
-    grid-column: span 1;
-}
-
-
-/* Última fila */
-
-.codigo-secreto {
-    grid-column: span 2;
-}
-
-.codigo-activo {
-    grid-column: span 1;
-}
-
-.codigo-eliminar {
-    grid-column: span 1;
-
-    display: flex !important;
-    align-items: flex-end;
-    justify-content: flex-end;
-}
-
-
-/* =========================================================
-   INPUTS CÓDIGOS
-========================================================= */
-
-.codigo-field input[type="text"],
-.codigo-field input[type="number"],
-.codigo-field select {
-    width: 100% !important;
-    min-width: 0 !important;
-
-    height: 32px !important;
-    min-height: 32px !important;
-
-    font-size: 10px !important;
-
-    border-radius: 7px !important;
-}
-
-.codigo-active-control {
-    height: 32px;
-
-    display: inline-flex !important;
-    align-items: center;
-    gap: 6px;
-
-    margin: 0 !important;
-    padding: 0 9px;
-
-    border: 1px solid var(--border);
-    border-radius: 7px;
-
-    background: #fff;
-
-    color: var(--text) !important;
-
-    font-size: 10px !important;
-    font-weight: 600 !important;
-}
-
-.codigo-active-control input {
-    margin: 0;
-}
-
-
-/* =========================================================
-   ERRORES
-========================================================= */
-
-.errorlist {
-    margin: 4px 0 0;
-    padding: 0;
-
-    list-style: none;
-
-    color: var(--danger);
-
-    font-size: 9px;
-    font-weight: 600;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 950px) {
-
-    .codigos-cards-table .codigo-form {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .codigo-nombre,
-    .codigo-secreto {
-        grid-column: span 2;
-    }
-
-    .codigo-marca,
-    .codigo-tipo,
-    .codigo-codigo,
-    .codigo-barras,
-    .codigo-cantidad,
-    .codigo-unidad,
-    .codigo-compra,
-    .codigo-venta,
-    .codigo-margen,
-    .codigo-iva,
-    .codigo-activo,
-    .codigo-eliminar {
-        grid-column: span 1;
-    }
-
-}
-
-
-@media (max-width: 650px) {
-
-    .producto-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .producto-field-full {
-        grid-column: auto;
-    }
-
-    .codigos-cards-table .codigo-form {
-        grid-template-columns: 1fr;
-    }
-
-    .codigo-marca,
-    .codigo-tipo,
-    .codigo-codigo,
-    .codigo-barras,
-    .codigo-nombre,
-    .codigo-cantidad,
-    .codigo-unidad,
-    .codigo-compra,
-    .codigo-venta,
-    .codigo-margen,
-    .codigo-iva,
-    .codigo-secreto,
-    .codigo-activo,
-    .codigo-eliminar {
-        grid-column: auto;
-    }
-
-    .partial-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .partial-add-btn {
-        align-self: flex-start;
-    }
-
-}
