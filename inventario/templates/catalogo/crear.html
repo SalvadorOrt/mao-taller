@@ -1,468 +1,43 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Nuevo Repuesto | MAO{% endblock %}
-{% block page_title %}Nuevo Repuesto{% endblock %}
-{% block page_subtitle %}Crear una nueva referencia en el inventario{% endblock %}
+{% block title %}
+Nuevo Repuesto
+{% endblock %}
 
 {% block extra_css %}
 
-<link
-    rel="stylesheet"
-    href="{% static 'inventario/css/catalogo_form.css' %}"
->
-
-<style>
-
-    /* =====================================================
-       CONTENEDOR
-    ===================================================== */
-
-    .catalogo-form-page {
-        padding-top: 6px;
-        padding-bottom: 20px;
-        max-width: 1180px;
-        margin: 0 auto;
-    }
-
-    /* =====================================================
-       CABECERA
-    ===================================================== */
-
-    .catalogo-form-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-        padding: 12px 14px;
-    }
-
-    .catalogo-form-header-title {
-        margin: 0;
-        font-size: 14px;
-        line-height: 1.2;
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    .catalogo-form-header-text {
-        margin-top: 3px;
-        color: var(--muted);
-        font-size: 10px;
-        font-weight: 500;
-    }
-
-    .catalogo-form-back {
-        height: 34px;
-        padding: 0 11px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-
-        border: 1px solid var(--border);
-        border-radius: 9px;
-
-        background: #fff;
-        color: var(--text);
-
-        font-size: 10px;
-        font-weight: 700;
-
-        text-decoration: none;
-        white-space: nowrap;
-
-        transition: 0.15s ease;
-    }
-
-    .catalogo-form-back:hover {
-        background: #f5f5f7;
-        color: var(--text);
-        text-decoration: none;
-    }
-
-
-    /* =====================================================
-       SECCIONES
-    ===================================================== */
-
-    .catalogo-section {
-        padding: 13px 14px;
-        margin-bottom: 12px;
-    }
-
-    .catalogo-section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-
-        padding-bottom: 9px;
-        margin-bottom: 11px;
-
-        border-bottom: 1px solid var(--border-soft);
-    }
-
-    .catalogo-section-title {
-        margin: 0;
-        color: var(--text);
-        font-size: 12px;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-
-    .catalogo-section-description {
-        margin-top: 2px;
-        color: var(--muted);
-        font-size: 9px;
-        font-weight: 500;
-    }
-
-    .catalogo-section-icon {
-        width: 28px;
-        height: 28px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border-radius: 8px;
-
-        background: #f2f8ff;
-        color: var(--accent);
-
-        font-size: 12px;
-        flex-shrink: 0;
-    }
-
-
-    /* =====================================================
-       CAMPOS
-    ===================================================== */
-
-    .catalogo-form-page label {
-        display: block;
-        margin-bottom: 4px;
-
-        color: var(--muted);
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-    }
-
-    .catalogo-form-page input[type="text"],
-    .catalogo-form-page input[type="number"],
-    .catalogo-form-page input[type="email"],
-    .catalogo-form-page input[type="search"],
-    .catalogo-form-page input[type="date"],
-    .catalogo-form-page select,
-    .catalogo-form-page textarea {
-
-        width: 100%;
-
-        border: 1px solid var(--border);
-        border-radius: 8px;
-
-        background: #fff;
-        color: var(--text);
-
-        font-size: 11px;
-        font-weight: 500;
-
-        outline: none;
-        box-shadow: none;
-
-        transition: 0.15s ease;
-    }
-
-    .catalogo-form-page input[type="text"],
-    .catalogo-form-page input[type="number"],
-    .catalogo-form-page input[type="email"],
-    .catalogo-form-page input[type="search"],
-    .catalogo-form-page input[type="date"],
-    .catalogo-form-page select {
-
-        height: 34px;
-        min-height: 34px;
-        padding: 0 9px;
-    }
-
-    .catalogo-form-page textarea {
-        min-height: 68px;
-        padding: 8px 9px;
-        resize: vertical;
-    }
-
-    .catalogo-form-page input:focus,
-    .catalogo-form-page select:focus,
-    .catalogo-form-page textarea:focus {
-
-        border-color: var(--accent);
-
-        box-shadow:
-            0 0 0 3px
-            rgba(0, 113, 227, 0.07);
-    }
-
-
-    /* =====================================================
-       FILE
-    ===================================================== */
-
-    .catalogo-form-page input[type="file"] {
-        width: 100%;
-        min-height: 36px;
-
-        padding: 5px;
-
-        border: 1px solid var(--border);
-        border-radius: 8px;
-
-        background: #fff;
-
-        font-size: 10px;
-    }
-
-
-    /* =====================================================
-       CHECKBOXES
-    ===================================================== */
-
-    .catalogo-form-page input[type="checkbox"] {
-        width: 14px;
-        height: 14px;
-        accent-color: var(--accent);
-    }
-
-
-    /* =====================================================
-       TABLA DE ATRIBUTOS
-    ===================================================== */
-
-    .catalogo-form-page table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-
-        border: 1px solid var(--border-soft);
-        border-radius: 9px;
-
-        background: #fff;
-    }
-
-    .catalogo-form-page table thead th {
-        padding: 7px 8px;
-
-        border-bottom: 1px solid var(--border);
-
-        background: #f7f8fa;
-
-        color: var(--muted);
-
-        font-size: 8px;
-        font-weight: 700;
-
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-
-        white-space: nowrap;
-    }
-
-    .catalogo-form-page table tbody td {
-        padding: 7px 8px;
-
-        border-bottom: 1px solid var(--border-soft);
-
-        background: #fff;
-
-        vertical-align: middle;
-
-        font-size: 10px;
-    }
-
-    .catalogo-form-page table tbody tr:last-child td {
-        border-bottom: 0;
-    }
-
-    .catalogo-form-page table input,
-    .catalogo-form-page table select {
-        height: 32px;
-        min-height: 32px;
-
-        border-radius: 7px;
-
-        font-size: 10px;
-    }
-
-
-    /* =====================================================
-       BOTONES SECUNDARIOS
-    ===================================================== */
-
-    .catalogo-form-page button:not(.btn-login) {
-        min-height: 32px;
-
-        border: 1px solid var(--border);
-        border-radius: 8px;
-
-        background: #fff;
-        color: var(--text);
-
-        font-size: 10px;
-        font-weight: 700;
-
-        transition: 0.15s ease;
-    }
-
-    .catalogo-form-page button:not(.btn-login):hover {
-        background: #f5f5f7;
-    }
-
-
-    /* =====================================================
-       ERRORES
-    ===================================================== */
-
-    .catalogo-error {
-        margin-bottom: 10px;
-        padding: 9px 11px;
-
-        border: 1px solid #ffd6d6;
-        border-radius: 9px;
-
-        background: #ffebe9;
-        color: var(--danger);
-
-        font-size: 10px;
-        font-weight: 600;
-    }
-
-    .catalogo-error ul {
-        margin: 0;
-        padding-left: 17px;
-    }
-
-
-    /* =====================================================
-       FOOTER
-    ===================================================== */
-
-    .catalogo-form-footer {
-        position: sticky;
-        bottom: 8px;
-        z-index: 50;
-
-        margin-top: 12px;
-        padding: 9px 12px;
-
-        border: 1px solid var(--border);
-        border-radius: 11px;
-
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
-
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
-
-    .catalogo-form-footer-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .catalogo-form-footer-title {
-        color: var(--text);
-        font-size: 10px;
-        font-weight: 700;
-    }
-
-    .catalogo-form-footer-text {
-        margin-top: 2px;
-        color: var(--muted);
-        font-size: 9px;
-        font-weight: 500;
-    }
-
-    .catalogo-form-footer-actions {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-    }
-
-
-    /* =====================================================
-       RESPONSIVE
-    ===================================================== */
-
-    @media (max-width: 750px) {
-
-        .catalogo-form-header {
-            align-items: flex-start;
-        }
-
-        .catalogo-form-footer-inner {
-            align-items: stretch;
-            flex-direction: column;
-        }
-
-        .catalogo-form-footer-actions {
-            width: 100%;
-        }
-
-        .catalogo-form-footer-actions > * {
-            flex: 1;
-        }
-
-    }
-
-</style>
+<link rel="stylesheet" href="{% static 'inventario/css/catalogo_form.css' %}">
 
 {% endblock %}
 
-
-
 {% block content %}
 
-<div class="container catalogo-form-page">
+<div class="page-header">
 
+    <div>
 
-    <!-- ==================================================
-         CABECERA
-    =================================================== -->
+        <h2>Nuevo Repuesto</h2>
 
-    <div class="ot-card catalogo-form-header">
+        <p>
+            Crear producto, imágenes, atributos técnicos y códigos comerciales.
+        </p>
 
-        <div>
+    </div>
 
-            <div class="catalogo-form-header-title">
-                Nuevo repuesto
-            </div>
+    <div>
 
-            <div class="catalogo-form-header-text">
-                Registra la información necesaria para incorporar
-                una nueva referencia al inventario.
-            </div>
-
-        </div>
-
-
-        <a
-            href="{% url 'inventario_catalogo' %}"
-            class="catalogo-form-back"
-        >
-            <i class="bi bi-arrow-left"></i>
-            Catálogo
+        <a href="{% url 'inventario_catalogo' %}"
+           class="btn-login">
+            Volver
         </a>
 
     </div>
 
+</div>
 
 
-    <!-- ==================================================
-         FORMULARIO
-    =================================================== -->
+<div class="form-card">
 
     <form
         method="POST"
@@ -471,190 +46,52 @@
 
         data-url-categoria-rapida="{% url 'categoria_crear_rapida' %}"
         data-url-marca-rapida="{% url 'marca_crear_rapida' %}"
-        data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}"
-    >
+        data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}">
 
         {% csrf_token %}
 
         {{ codigo_formset.management_form }}
         {{ atributo_formset.management_form }}
 
-
-        <!-- ==============================================
-             ERRORES
-        =============================================== -->
-
         {% if producto_form.non_field_errors %}
-            <div class="catalogo-error">
+            <div class="alert alert-danger">
                 {{ producto_form.non_field_errors }}
             </div>
         {% endif %}
 
         {% if codigo_formset.non_form_errors %}
-            <div class="catalogo-error">
+            <div class="alert alert-danger">
                 {{ codigo_formset.non_form_errors }}
             </div>
         {% endif %}
 
         {% if atributo_formset.non_form_errors %}
-            <div class="catalogo-error">
+            <div class="alert alert-danger">
                 {{ atributo_formset.non_form_errors }}
             </div>
         {% endif %}
 
-
-
-        <!-- ==================================================
-             PRODUCTO
-        =================================================== -->
-
-        <div class="ot-card catalogo-section">
-
-            <div class="catalogo-section-head">
-
-                <div>
-
-                    <div class="catalogo-section-title">
-                        Información del producto
-                    </div>
-
-                    <div class="catalogo-section-description">
-                        Datos generales que identifican al repuesto.
-                    </div>
-
-                </div>
-
-                <div class="catalogo-section-icon">
-                    <i class="bi bi-box"></i>
-                </div>
-
-            </div>
-
-            {% include "catalogo/partials/_producto.html" %}
-
-        </div>
-
-
-
-        <!-- ==================================================
-             ATRIBUTOS
-        =================================================== -->
-
-        <div class="ot-card catalogo-section">
-
-            <div class="catalogo-section-head">
-
-                <div>
-
-                    <div class="catalogo-section-title">
-                        Atributos técnicos
-                    </div>
-
-                    <div class="catalogo-section-description">
-                        Características adicionales para identificar
-                        correctamente el producto.
-                    </div>
-
-                </div>
-
-                <div class="catalogo-section-icon">
-                    <i class="bi bi-sliders"></i>
-                </div>
-
-            </div>
-
-            {% include "catalogo/partials/_atributos.html" %}
-
-        </div>
-
-
-
-        <!-- ==================================================
-             CÓDIGOS
-        =================================================== -->
-
-        <div class="ot-card catalogo-section">
-
-            <div class="catalogo-section-head">
-
-                <div>
-
-                    <div class="catalogo-section-title">
-                        Códigos comerciales
-                    </div>
-
-                    <div class="catalogo-section-description">
-                        Referencias, marcas, costos y precios asociados
-                        al producto.
-                    </div>
-
-                </div>
-
-                <div class="catalogo-section-icon">
-                    <i class="bi bi-upc-scan"></i>
-                </div>
-
-            </div>
-
-            {% include "catalogo/partials/_codigos.html" %}
-
-        </div>
-
-
-
-        <!-- ==================================================
-             MODALES
-        =================================================== -->
-
+        {% include "catalogo/partials/_producto.html" %}
+        {% include "catalogo/partials/_atributos.html" %}
+        {% include "catalogo/partials/_codigos.html" %}
         {% include "catalogo/partials/_modales.html" %}
 
+        <hr>
 
+        <div class="form-actions">
 
-        <!-- ==================================================
-             BOTONES
-        =================================================== -->
+            <a href="{% url 'inventario_catalogo' %}"
+               class="btn-login">
+                Cancelar
+            </a>
 
-        <div class="catalogo-form-footer">
+            <button
+                type="submit"
+                class="btn-login primary">
 
-            <div class="catalogo-form-footer-inner">
+                Guardar Repuesto
 
-                <div>
-
-                    <div class="catalogo-form-footer-title">
-                        Guardar repuesto
-                    </div>
-
-                    <div class="catalogo-form-footer-text">
-                        El SKU interno se generará automáticamente.
-                    </div>
-
-                </div>
-
-
-                <div class="catalogo-form-footer-actions">
-
-                    <a
-                        href="{% url 'inventario_catalogo' %}"
-                        class="btn-login"
-                    >
-                        Cancelar
-                    </a>
-
-                    <button
-                        type="submit"
-                        class="btn-login primary"
-                    >
-                        <i
-                            class="bi bi-check-lg"
-                            style="margin-right:5px;"
-                        ></i>
-
-                        Guardar
-                    </button>
-
-                </div>
-
-            </div>
+            </button>
 
         </div>
 
@@ -663,10 +100,8 @@
 </div>
 
 {% endblock %}
-
-
-
 {% block extra_js %}
+
 
 <script src="{% static 'inventario/js/utilidades.js' %}"></script>
 <script src="{% static 'inventario/js/dropdowns.js' %}"></script>
