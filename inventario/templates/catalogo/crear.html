@@ -507,7 +507,258 @@ Crear una nueva referencia en el inventario
         }
 
     }
+    /* =========================================================
+   CÓDIGOS COMERCIALES
+========================================================= */
 
+.catalogo-codigos-info {
+    padding: 8px 10px;
+
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 500;
+
+    border-bottom: 1px solid var(--border-soft);
+}
+
+
+/* Scroll solamente dentro de esta tabla */
+.catalogo-codigos-wrap {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+
+/* Ancho controlado */
+.catalogo-codigos-table {
+    width: 100%;
+    min-width: 1260px !important;
+
+    table-layout: fixed;
+}
+
+
+/* =========================================================
+   CABECERAS
+========================================================= */
+
+.catalogo-codigos-table thead th {
+    padding: 7px 6px !important;
+
+    color: var(--muted);
+
+    font-size: 8px !important;
+    font-weight: 700 !important;
+
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+
+    vertical-align: middle;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   FILAS
+========================================================= */
+
+.catalogo-codigos-table tbody td {
+    padding: 6px 5px !important;
+
+    vertical-align: middle !important;
+
+    background: #fff;
+}
+
+
+/* misma altura visual */
+.catalogo-codigos-table tbody tr {
+    height: 42px;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.catalogo-codigos-table input[type="text"],
+.catalogo-codigos-table input[type="number"],
+.catalogo-codigos-table select {
+
+    display: block;
+
+    width: 100% !important;
+
+    min-width: 0 !important;
+
+    height: 29px !important;
+    min-height: 29px !important;
+
+    margin: 0 !important;
+
+    padding: 0 6px !important;
+
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+
+    font-size: 9px !important;
+}
+
+
+/* Checkbox no debe tomar width 100% */
+.catalogo-codigos-table input[type="checkbox"] {
+
+    display: inline-block !important;
+
+    width: 14px !important;
+    min-width: 14px !important;
+
+    height: 14px !important;
+    min-height: 14px !important;
+
+    margin: 0 !important;
+
+    accent-color: var(--accent);
+}
+
+
+/* =========================================================
+   MARCA
+========================================================= */
+
+.codigo-marca-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.codigo-marca-wrap .apple-dropdown {
+    flex: 1;
+    min-width: 0;
+}
+
+.codigo-marca-wrap .btn-mini {
+
+    width: 29px !important;
+    min-width: 29px !important;
+
+    height: 29px !important;
+    min-height: 29px !important;
+
+    padding: 0 !important;
+}
+
+
+/* =========================================================
+   ANCHOS
+========================================================= */
+
+.catalogo-codigos-table .col-marca {
+    width: 175px;
+}
+
+.catalogo-codigos-table .col-tipo {
+    width: 90px;
+}
+
+.catalogo-codigos-table .col-codigo {
+    width: 110px;
+}
+
+.catalogo-codigos-table .col-barras {
+    width: 125px;
+}
+
+.catalogo-codigos-table .col-nombre {
+    width: 150px;
+}
+
+.catalogo-codigos-table .col-cantidad {
+    width: 75px;
+}
+
+.catalogo-codigos-table .col-unidad {
+    width: 75px;
+}
+
+.catalogo-codigos-table .col-compra {
+    width: 85px;
+}
+
+.catalogo-codigos-table .col-venta {
+    width: 85px;
+}
+
+.catalogo-codigos-table .col-margen {
+    width: 85px;
+}
+
+.catalogo-codigos-table .col-iva {
+    width: 85px;
+}
+
+.catalogo-codigos-table .col-secreto {
+    width: 95px;
+}
+
+.catalogo-codigos-table .col-activo {
+    width: 55px;
+    text-align: center;
+}
+
+.catalogo-codigos-table .col-accion {
+    width: 42px;
+}
+
+
+/* =========================================================
+   ELIMINAR
+========================================================= */
+
+.catalogo-codigos-table .catalogo-delete-btn {
+
+    width: 28px !important;
+    min-width: 28px !important;
+
+    height: 28px !important;
+    min-height: 28px !important;
+
+    margin: 0 auto !important;
+
+    padding: 0 !important;
+
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 6px !important;
+}
+
+
+/* =========================================================
+   PRECIO SECRETO
+========================================================= */
+
+.catalogo-codigos-table
+input[readonly] {
+
+    background: #f5f5f7 !important;
+    color: var(--muted) !important;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   HOVER COMO LA OT
+========================================================= */
+
+.catalogo-codigos-table tbody tr:hover td {
+    background: #fbfbfd;
+}
 </style>
 
 
@@ -703,3 +954,4 @@ Crear una nueva referencia en el inventario
 <script src="{% static 'inventario/js/index.js' %}"></script>
 
 {% endblock %}
+
