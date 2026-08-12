@@ -440,6 +440,7 @@ def consultar_regcheck(request):
 def serializar_cliente(cliente):
     """Convierte el objeto Cliente a un diccionario compatible con JSON."""
     return {
+        "id": cliente.id,
         "identificacion": cliente.identificacion,
         "tipo_documento": cliente.tipo_documento,
         "nombre_completo": cliente.nombre_completo or "",
