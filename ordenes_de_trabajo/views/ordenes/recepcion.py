@@ -227,10 +227,6 @@ def editar_recepcion_orden(request, pk):
             orden = (
                 OrdenTrabajo.objects
                 .select_for_update()
-                .select_related(
-                    "cliente",
-                    "expediente",
-                )
                 .get(pk=orden.pk)
             )
 
