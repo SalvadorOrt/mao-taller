@@ -102,6 +102,15 @@ class Tecnico(models.Model):
 
     def __str__(self):
         return self.nombre
+import uuid
+
+from datetime import datetime
+
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+
 
 # ==========================================
 # CLIENTE
@@ -442,68 +451,95 @@ class Cliente(models.Model):
         null=True,
         blank=True,
     )
-    def actualizar_campo(self, campo, valor_api):
-        """
-        Actualiza el atributo solo si la API trae un valor válido,
-        preservando lo que ya tenemos en base de datos.
-        """
-        if valor_api not in [None, "", [], {}]:
-            # Si es string, limpiamos espacios, si no, asignamos directo
-            valor = str(valor_api).strip() if isinstance(valor_api, str) else valor_api
-            setattr(self, campo, valor)
-    def actualizar_desde_diccionario(self, data, es_ruc=False, full=False):
-        """
-        Lógica unificada: Solo actualiza campos si la API trae datos 
-        y mantiene los que ya existen si la API devuelve vacío.
-        """
-        if es_ruc:
-            self.cargar_desde_api_ruc(data)
-        else:
-            self.cargar_desde_api_persona(data, full=full)
-        
-        self.fecha_ultima_consulta_api = timezone.now()
-        self.save()
-    def aplicar_datos_api(self, data, es_ruc=False, full=False):
-        """
-        Actualiza solo los campos que están vacíos en la BDD,
-        o que la API trae como valor nuevo.
-        """
-        # Guardamos el estado original para comparar si es necesario
-        if es_ruc:
-            self.cargar_desde_api_ruc(data)
-        else:
-            self.cargar_desde_api_persona(data, full=full)
-            
-        self.fecha_ultima_consulta_api = timezone.now()
-    # En models.py, dentro de tu clase Cliente:
-    def actualizar_datos_inteligente(self, data, es_ruc=False, full=False):
-        """
-        Fusiona datos de API sin sobrescribir información manual crítica.
-        """
-        if es_ruc:
-            self.cargar_desde_api_ruc(data)
-        else:
-            # Usamos los métodos existentes que ya tienen lógica de respaldo
-            self.cargar_desde_api_persona(data, full=full)
-        
-        self.fecha_ultima_consulta_api = timezone.now()
-        if full:
-            self.datos_full_consultados = True
-        self.save()
+
     # ==========================================
     # META
     # ==========================================
     class Meta:
-        ordering = ["nombre_completo"]
+
+        ordering = [
+            "nombre_completo"
+        ]
 
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
 
         indexes = [
-            models.Index(fields=["nombre_completo"]),
-            models.Index(fields=["identificacion"]),
-            models.Index(fields=["tipo_documento"]),
+            models.Index(
+                fields=["nombre_completo"]
+            ),
+            models.Index(
+                fields=["identificacion"]
+            ),
+            models.Index(
+                fields=["tipo_documento"]
+            ),
         ]
+
+    # ==========================================
+    # UTILIDADES PARA NO SOBREESCRIBIR
+    # ==========================================
+    @staticmethod
+    def valor_vacio(valor):
+        """
+        Determina si un valor puede considerarse vacío.
+
+        False y 0 NO se consideran vacíos.
+        """
+
+        if valor is None:
+            return True
+
+        if isinstance(valor, str):
+            return not valor.strip()
+
+        if isinstance(valor, (list, dict)):
+            return len(valor) == 0
+
+        return False
+
+    def actualizar_campo(
+        self,
+        campo,
+        valor_api,
+        sobrescribir=False,
+    ):
+        """
+        Regla central para datos provenientes de API.
+
+        Por defecto:
+        - API llena campos vacíos.
+        - API NO reemplaza datos existentes.
+
+        sobrescribir=True se reserva para una acción
+        explícita y controlada del usuario.
+        """
+
+        if self.valor_vacio(valor_api):
+            return False
+
+        valor_actual = getattr(
+            self,
+            campo,
+            None,
+        )
+
+        if (
+            not sobrescribir
+            and not self.valor_vacio(valor_actual)
+        ):
+            return False
+
+        if isinstance(valor_api, str):
+            valor_api = valor_api.strip()
+
+        setattr(
+            self,
+            campo,
+            valor_api,
+        )
+
+        return True
 
     # ==========================================
     # DETECTAR TIPO DOCUMENTO
@@ -513,7 +549,11 @@ class Cliente(models.Model):
         if not self.identificacion:
             return "S"
 
-        valor = self.identificacion.strip().upper()
+        valor = (
+            self.identificacion
+            .strip()
+            .upper()
+        )
 
         if (
             valor.startswith("PROV-")
@@ -537,15 +577,23 @@ class Cliente(models.Model):
     def normalizar_datos(self):
 
         if self.identificacion:
+
             self.identificacion = (
-                self.identificacion
+                str(self.identificacion)
                 .strip()
                 .upper()
             )
 
         else:
-            uuid_corto = str(uuid.uuid4())[:6].upper()
-            self.identificacion = f"PROV-{uuid_corto}"
+
+            uuid_corto = (
+                str(uuid.uuid4())[:6]
+                .upper()
+            )
+
+            self.identificacion = (
+                f"PROV-{uuid_corto}"
+            )
 
         self.tipo_documento = (
             self.detectar_tipo_documento()
@@ -579,13 +627,21 @@ class Cliente(models.Model):
         ]
 
         for campo in campos_upper:
-            valor = getattr(self, campo, None)
+
+            valor = getattr(
+                self,
+                campo,
+                None,
+            )
 
             if valor:
+
                 setattr(
                     self,
                     campo,
-                    str(valor).strip().upper()
+                    str(valor)
+                    .strip()
+                    .upper()
                 )
 
         telefonos = [
@@ -595,9 +651,15 @@ class Cliente(models.Model):
         ]
 
         for campo in telefonos:
-            valor = getattr(self, campo, None)
+
+            valor = getattr(
+                self,
+                campo,
+                None,
+            )
 
             if valor:
+
                 setattr(
                     self,
                     campo,
@@ -605,6 +667,7 @@ class Cliente(models.Model):
                 )
 
         if self.email:
+
             self.email = (
                 self.email
                 .strip()
@@ -642,17 +705,23 @@ class Cliente(models.Model):
         ):
             return
 
-        if self.tipo_documento in {"C", "R"}:
+        if self.tipo_documento in {
+            "C",
+            "R",
+        }:
 
             if not self.identificacion.isdigit():
+
                 raise ValidationError(
-                    "La identificación debe contener solo números."
+                    "La identificación debe contener "
+                    "solo números."
                 )
 
         if (
             self.tipo_documento == "C"
             and len(self.identificacion) != 10
         ):
+
             raise ValidationError(
                 "La cédula debe tener 10 dígitos."
             )
@@ -661,6 +730,7 @@ class Cliente(models.Model):
             self.tipo_documento == "R"
             and len(self.identificacion) != 13
         ):
+
             raise ValidationError(
                 "El RUC debe tener 13 dígitos."
             )
@@ -669,191 +739,554 @@ class Cliente(models.Model):
             self.tipo_documento == "P"
             and len(self.identificacion) < 3
         ):
+
             raise ValidationError(
                 "Pasaporte inválido."
             )
 
     # ==========================================
-    # CARGAR PERSONA API
+    # PARSEAR FECHAS DE API
     # ==========================================
     def parsear_fecha_api(self, valor):
+
         if not valor:
             return None
 
         valor = str(valor).strip()
 
         try:
+
             if "/" in valor:
-                return datetime.strptime(valor, "%d/%m/%Y").date()
+
+                return datetime.strptime(
+                    valor,
+                    "%d/%m/%Y",
+                ).date()
+
         except Exception:
             return None
 
-        return parse_date(valor)
+        try:
+            return parse_date(valor)
+        except Exception:
+            return None
 
+    # ==========================================
+    # CARGAR PERSONA DESDE API
+    # SIN SOBREESCRIBIR
+    # ==========================================
+    def cargar_desde_api_persona(
+        self,
+        data,
+        full=False,
+        sobrescribir=False,
+    ):
 
-    def cargar_desde_api_persona(self, data, full=False):
-        persona = data.get("persona", data)
-        fechas = persona.get("fechas", {})
-        direccion = persona.get("direccion", {})
-        licencia = data.get("licencia", {})
+        persona = data.get(
+            "persona",
+            data,
+        ) or {}
 
-        self.identificacion = persona.get("cedula") or data.get("cedula") or self.identificacion
-        self.nombre_completo = persona.get("nombre") or data.get("nombre") or self.nombre_completo
+        fechas = persona.get(
+            "fechas",
+            {},
+        ) or {}
 
-        self.telefono = persona.get("celular") or self.telefono
-        self.telefono_trabajo = persona.get("telefono") or self.telefono_trabajo
-        self.email = persona.get("email") or self.email
+        direccion = persona.get(
+            "direccion",
+            {},
+        ) or {}
 
-        self.genero = persona.get("genero") or data.get("genero") or self.genero
-        self.sexo = persona.get("sexo") or data.get("sexo") or self.sexo
-        self.estado_civil = persona.get("estadoCivil") or data.get("estadoCivil") or self.estado_civil
-        self.conyuge = persona.get("conyuge") or data.get("conyuge") or self.conyuge
-        self.nacionalidad = persona.get("nacionalidad") or data.get("nacionalidad") or self.nacionalidad
+        licencia = data.get(
+            "licencia",
+            {},
+        ) or {}
 
-        self.nombre_madre = persona.get("nombreMadre") or data.get("nombreMadre") or self.nombre_madre
-        self.nombre_padre = persona.get("nombrePadre") or data.get("nombrePadre") or self.nombre_padre
+        # ======================================
+        # IDENTIFICACIÓN
+        # ======================================
+        identificacion_api = (
+            persona.get("cedula")
+            or data.get("cedula")
+        )
 
-        self.fecha_nacimiento = self.parsear_fecha_api(
-            fechas.get("nacimiento") or data.get("fechaNacimiento")
-        ) or self.fecha_nacimiento
+        self.actualizar_campo(
+            "identificacion",
+            identificacion_api,
+            sobrescribir=sobrescribir,
+        )
 
-        self.fecha_cedulacion = self.parsear_fecha_api(
-            fechas.get("cedulacion") or data.get("fechaCedulacion")
-        ) or self.fecha_cedulacion
+        # ======================================
+        # NOMBRE
+        # ======================================
+        nombre_api = (
+            persona.get("nombre")
+            or data.get("nombre")
+        )
 
-        self.lugar_nacimiento = persona.get("lugarNacimiento") or data.get("lugarNacimiento") or self.lugar_nacimiento
+        self.actualizar_campo(
+            "nombre_completo",
+            nombre_api,
+            sobrescribir=sobrescribir,
+        )
 
-        self.lugar_domicilio = direccion.get("domicilio") or data.get("lugarDomicilio") or self.lugar_domicilio
-        self.calle_domicilio = direccion.get("calle") or data.get("calleDomicilio") or self.calle_domicilio
-        self.numeracion_domicilio = direccion.get("numeroCasa") or data.get("numeracionDomicilio") or self.numeracion_domicilio
+        # ======================================
+        # CONTACTO
+        # ======================================
+        self.actualizar_campo(
+            "telefono",
+            persona.get("celular"),
+            sobrescribir=sobrescribir,
+        )
 
-        self.provincia = direccion.get("provincia") or self.provincia
-        self.canton = direccion.get("canton") or self.canton
-        self.parroquia = direccion.get("parroquia") or self.parroquia
-        self.otras_direcciones = direccion.get("otrasDirecciones") or self.otras_direcciones
+        self.actualizar_campo(
+            "telefono_trabajo",
+            persona.get("telefono"),
+            sobrescribir=sobrescribir,
+        )
 
-        if not self.direccion:
+        self.actualizar_campo(
+            "email",
+            persona.get("email"),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # DATOS PERSONALES
+        # ======================================
+        self.actualizar_campo(
+            "genero",
+            (
+                persona.get("genero")
+                or data.get("genero")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "sexo",
+            (
+                persona.get("sexo")
+                or data.get("sexo")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "estado_civil",
+            (
+                persona.get("estadoCivil")
+                or data.get("estadoCivil")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "conyuge",
+            (
+                persona.get("conyuge")
+                or data.get("conyuge")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "nacionalidad",
+            (
+                persona.get("nacionalidad")
+                or data.get("nacionalidad")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # PADRES
+        # ======================================
+        self.actualizar_campo(
+            "nombre_madre",
+            (
+                persona.get("nombreMadre")
+                or data.get("nombreMadre")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "nombre_padre",
+            (
+                persona.get("nombrePadre")
+                or data.get("nombrePadre")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # FECHAS
+        # ======================================
+        fecha_nacimiento_api = (
+            self.parsear_fecha_api(
+                fechas.get("nacimiento")
+                or data.get("fechaNacimiento")
+            )
+        )
+
+        self.actualizar_campo(
+            "fecha_nacimiento",
+            fecha_nacimiento_api,
+            sobrescribir=sobrescribir,
+        )
+
+        fecha_cedulacion_api = (
+            self.parsear_fecha_api(
+                fechas.get("cedulacion")
+                or data.get("fechaCedulacion")
+            )
+        )
+
+        self.actualizar_campo(
+            "fecha_cedulacion",
+            fecha_cedulacion_api,
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "lugar_nacimiento",
+            (
+                persona.get("lugarNacimiento")
+                or data.get("lugarNacimiento")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # DOMICILIO
+        # ======================================
+        self.actualizar_campo(
+            "lugar_domicilio",
+            (
+                direccion.get("domicilio")
+                or data.get("lugarDomicilio")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "calle_domicilio",
+            (
+                direccion.get("calle")
+                or data.get("calleDomicilio")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "numeracion_domicilio",
+            (
+                direccion.get("numeroCasa")
+                or data.get("numeracionDomicilio")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "provincia",
+            direccion.get("provincia"),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "canton",
+            direccion.get("canton"),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "parroquia",
+            direccion.get("parroquia"),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "otras_direcciones",
+            direccion.get("otrasDirecciones"),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # DIRECCIÓN GENERAL
+        # ======================================
+        if (
+            sobrescribir
+            or self.valor_vacio(self.direccion)
+        ):
+
             partes = [
                 self.lugar_domicilio,
                 self.calle_domicilio,
                 self.numeracion_domicilio,
             ]
-            self.direccion = " / ".join([p for p in partes if p])
 
-        self.instruccion = persona.get("instruccion") or data.get("instruccion") or self.instruccion
-        self.profesion = persona.get("profesion") or data.get("profesion") or self.profesion
-        self.tipo_sangre = persona.get("tipoSangre") or data.get("tipoSangre") or self.tipo_sangre
+            direccion_generada = " / ".join(
+                str(parte).strip()
+                for parte in partes
+                if not self.valor_vacio(parte)
+            )
 
-        self.licencia_tipo = licencia.get("tipo") or self.licencia_tipo
-        self.licencia_fecha_desde = self.parsear_fecha_api(licencia.get("fechaDesde")) or self.licencia_fecha_desde
-        self.licencia_fecha_hasta = self.parsear_fecha_api(licencia.get("fechaHasta")) or self.licencia_fecha_hasta
-        self.licencia_puntos = licencia.get("puntos") or self.licencia_puntos
-        self.licencia_restricciones = licencia.get("restricciones") or self.licencia_restricciones
-        self.licencia_todos = licencia.get("todos") or self.licencia_todos
+            if direccion_generada:
 
-        self.carnet_conadis = persona.get("carnetConadis") or self.carnet_conadis
+                self.direccion = (
+                    direccion_generada
+                )
+
+        # ======================================
+        # EDUCACIÓN
+        # ======================================
+        self.actualizar_campo(
+            "instruccion",
+            (
+                persona.get("instruccion")
+                or data.get("instruccion")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "profesion",
+            (
+                persona.get("profesion")
+                or data.get("profesion")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "tipo_sangre",
+            (
+                persona.get("tipoSangre")
+                or data.get("tipoSangre")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # LICENCIA
+        # ======================================
+        self.actualizar_campo(
+            "licencia_tipo",
+            licencia.get("tipo"),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "licencia_fecha_desde",
+            self.parsear_fecha_api(
+                licencia.get("fechaDesde")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "licencia_fecha_hasta",
+            self.parsear_fecha_api(
+                licencia.get("fechaHasta")
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "licencia_puntos",
+            licencia.get("puntos"),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "licencia_restricciones",
+            licencia.get("restricciones"),
+            sobrescribir=sobrescribir,
+        )
+
+        self.actualizar_campo(
+            "licencia_todos",
+            licencia.get("todos"),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # DISCAPACIDAD
+        # ======================================
+        self.actualizar_campo(
+            "carnet_conadis",
+            persona.get("carnetConadis"),
+            sobrescribir=sobrescribir,
+        )
 
         if persona.get("discapacidad") is not None:
-            self.discapacidad = persona.get("discapacidad")
 
-        self.porcentaje_discapacidad = persona.get("porcentajeDiscapacidad") or self.porcentaje_discapacidad
+            self.actualizar_campo(
+                "discapacidad",
+                persona.get("discapacidad"),
+                sobrescribir=sobrescribir,
+            )
 
-        self.datos_full_consultados = full or bool(licencia) or self.datos_full_consultados
+        self.actualizar_campo(
+            "porcentaje_discapacidad",
+            persona.get(
+                "porcentajeDiscapacidad"
+            ),
+            sobrescribir=sobrescribir,
+        )
+
+        # ======================================
+        # CONTROL
+        # ======================================
+        if (
+            full
+            or bool(licencia)
+        ):
+            self.datos_full_consultados = True
+
+        # La respuesta de API sí se actualiza.
+        # Esto NO modifica los datos manuales.
         self.datos_api_originales = data
+
         self.normalizar_datos()
 
     # ==========================================
-    # CARGAR RUC API
+    # CARGAR RUC DESDE API
+    # SIN SOBREESCRIBIR
     # ==========================================
-    def cargar_desde_api_ruc(self, data):
+    def cargar_desde_api_ruc(
+        self,
+        data,
+        sobrescribir=False,
+    ):
 
-        self.identificacion = (
-            data.get("numeroRuc")
-            or self.identificacion
+        self.actualizar_campo(
+            "identificacion",
+            data.get("numeroRuc"),
+            sobrescribir=sobrescribir,
         )
 
-        self.nombre_completo = (
-            data.get("razonSocial")
-            or self.nombre_completo
+        self.actualizar_campo(
+            "nombre_completo",
+            data.get("razonSocial"),
+            sobrescribir=sobrescribir,
         )
 
-        self.razon_social = (
-            data.get("razonSocial")
-            or self.razon_social
+        self.actualizar_campo(
+            "razon_social",
+            data.get("razonSocial"),
+            sobrescribir=sobrescribir,
         )
 
-        self.estado_contribuyente_ruc = (
-            data.get("estadoContribuyenteRuc")
-            or self.estado_contribuyente_ruc
+        self.actualizar_campo(
+            "estado_contribuyente_ruc",
+            data.get(
+                "estadoContribuyenteRuc"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.actividad_economica_principal = (
-            data.get("actividadEconomicaPrincipal")
-            or self.actividad_economica_principal
+        self.actualizar_campo(
+            "actividad_economica_principal",
+            data.get(
+                "actividadEconomicaPrincipal"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.tipo_contribuyente = (
-            data.get("tipoContribuyente")
-            or self.tipo_contribuyente
+        self.actualizar_campo(
+            "tipo_contribuyente",
+            data.get(
+                "tipoContribuyente"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.regimen = (
-            data.get("regimen")
-            or self.regimen
+        self.actualizar_campo(
+            "regimen",
+            data.get("regimen"),
+            sobrescribir=sobrescribir,
         )
 
-        self.categoria = (
-            data.get("categoria")
-            or self.categoria
+        self.actualizar_campo(
+            "categoria",
+            data.get("categoria"),
+            sobrescribir=sobrescribir,
         )
 
-        self.obligado_llevar_contabilidad = (
-            data.get("obligadoLlevarContabilidad")
-            or self.obligado_llevar_contabilidad
+        self.actualizar_campo(
+            "obligado_llevar_contabilidad",
+            data.get(
+                "obligadoLlevarContabilidad"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.agente_retencion = (
-            data.get("agenteRetencion")
-            or self.agente_retencion
+        self.actualizar_campo(
+            "agente_retencion",
+            data.get(
+                "agenteRetencion"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.contribuyente_especial = (
-            data.get("contribuyenteEspecial")
-            or self.contribuyente_especial
+        self.actualizar_campo(
+            "contribuyente_especial",
+            data.get(
+                "contribuyenteEspecial"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.contribuyente_fantasma = (
-            data.get("contribuyenteFantasma")
-            or self.contribuyente_fantasma
+        self.actualizar_campo(
+            "contribuyente_fantasma",
+            data.get(
+                "contribuyenteFantasma"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.transacciones_inexistentes = (
-            data.get("transaccionesInexistente")
-            or self.transacciones_inexistentes
+        self.actualizar_campo(
+            "transacciones_inexistentes",
+            data.get(
+                "transaccionesInexistente"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.representantes_legales = (
-            data.get("representantesLegales")
-            or self.representantes_legales
-            or []
+        self.actualizar_campo(
+            "representantes_legales",
+            data.get(
+                "representantesLegales"
+            ),
+            sobrescribir=sobrescribir,
         )
 
-        self.establecimientos = (
-            data.get("establecimientos")
-            or self.establecimientos
-            or []
+        self.actualizar_campo(
+            "establecimientos",
+            data.get(
+                "establecimientos"
+            ),
+            sobrescribir=sobrescribir,
         )
 
         # ======================================
         # DIRECCIÓN MATRIZ
         # ======================================
+        establecimientos_api = (
+            data.get("establecimientos")
+            or []
+        )
+
         matriz = next(
             (
-                est
-                for est in self.establecimientos
-                if est.get("matriz") == "SI"
+                establecimiento
+                for establecimiento
+                in establecimientos_api
+                if establecimiento.get("matriz") == "SI"
             ),
-            None
+            None,
         )
 
         if matriz:
@@ -862,24 +1295,138 @@ class Cliente(models.Model):
                 "direccionCompleta"
             )
 
-            if direccion_matriz:
+            self.actualizar_campo(
+                "direccion",
+                direccion_matriz,
+                sobrescribir=sobrescribir,
+            )
 
-                self.direccion = direccion_matriz
-
+        # ======================================
+        # CONTROL
+        # ======================================
         self.datos_api_originales = data
 
         self.normalizar_datos()
 
     # ==========================================
+    # ACTUALIZAR DESDE DICCIONARIO
+    # ==========================================
+    def actualizar_desde_diccionario(
+        self,
+        data,
+        es_ruc=False,
+        full=False,
+        sobrescribir=False,
+    ):
+
+        if es_ruc:
+
+            self.cargar_desde_api_ruc(
+                data,
+                sobrescribir=sobrescribir,
+            )
+
+        else:
+
+            self.cargar_desde_api_persona(
+                data,
+                full=full,
+                sobrescribir=sobrescribir,
+            )
+
+        self.fecha_ultima_consulta_api = (
+            timezone.now()
+        )
+
+        self.save()
+
+    # ==========================================
+    # APLICAR DATOS API
+    # ==========================================
+    def aplicar_datos_api(
+        self,
+        data,
+        es_ruc=False,
+        full=False,
+        sobrescribir=False,
+    ):
+
+        if es_ruc:
+
+            self.cargar_desde_api_ruc(
+                data,
+                sobrescribir=sobrescribir,
+            )
+
+        else:
+
+            self.cargar_desde_api_persona(
+                data,
+                full=full,
+                sobrescribir=sobrescribir,
+            )
+
+        self.fecha_ultima_consulta_api = (
+            timezone.now()
+        )
+
+    # ==========================================
+    # ACTUALIZACIÓN INTELIGENTE
+    # ==========================================
+    def actualizar_datos_inteligente(
+        self,
+        data,
+        es_ruc=False,
+        full=False,
+        sobrescribir=False,
+    ):
+        """
+        Fusiona datos externos con la ficha del cliente.
+
+        Por defecto NO reemplaza información existente.
+        """
+
+        if es_ruc:
+
+            self.cargar_desde_api_ruc(
+                data,
+                sobrescribir=sobrescribir,
+            )
+
+        else:
+
+            self.cargar_desde_api_persona(
+                data,
+                full=full,
+                sobrescribir=sobrescribir,
+            )
+
+        self.fecha_ultima_consulta_api = (
+            timezone.now()
+        )
+
+        if full:
+            self.datos_full_consultados = True
+
+        self.save()
+
+    # ==========================================
     # SAVE
     # ==========================================
-    def save(self, *args, **kwargs):
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
 
         self.normalizar_datos()
 
         self.full_clean()
 
-        super().save(*args, **kwargs)
+        super().save(
+            *args,
+            **kwargs,
+        )
 
     # ==========================================
     # STRING

@@ -1,46 +1,125 @@
 # ordenes_de_trabajo/views/api.py
 
+import json
+import re
+import requests
+import xml.etree.ElementTree as ET
+
+from datetime import timedelta
+
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+
+from google import genai
+
+from servicios.models import ServicioCatalogo
+from inventario.models import CodigoProducto, StockSucursal
+
+from .utils import obtener_sucursal_activa
+
+from ..models import (
+    Cliente,
+    ExpedienteVehiculo,
+    PlantillaRecomendacion,
+)
+
+
+# =========================================================
+# CONFIGURACIÓN
+# =========================================================
 
 PLACA_API_USERNAME = settings.PLACA_API_USERNAME
 CEDULA_API_TOKEN = settings.CEDULA_API_TOKEN
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 
-import json
-import requests
-import xml.etree.ElementTree as ET
-from google import genai
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from servicios.models import ServicioCatalogo
-from inventario.models import CodigoProducto, StockSucursal
-from .utils import obtener_sucursal_activa
-from ..models import Cliente, ExpedienteVehiculo, PlantillaRecomendacion
-from datetime import timedelta
-from django.utils import timezone
+
+# =========================================================
+# UTILIDADES GENERALES
+# =========================================================
+
+def parametro_booleano(request, nombre, default=False):
+    """
+    Convierte parámetros GET tipo:
+    true / false
+    1 / 0
+    yes / no
+    si / no
+    """
+    valor = request.GET.get(nombre)
+
+    if valor is None:
+        return default
+
+    return str(valor).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "si",
+        "sí",
+        "on",
+    }
+
+
+def valor_vacio(valor):
+    """
+    Determina si un valor proveniente de API está vacío.
+    """
+    if valor is None:
+        return True
+
+    if isinstance(valor, str):
+        return not valor.strip()
+
+    if isinstance(valor, (list, dict)):
+        return len(valor) == 0
+
+    return False
+
+
+def texto_limpio(valor):
+    """
+    Convierte un valor a texto seguro para comparación.
+    """
+    if valor is None:
+        return ""
+
+    return str(valor).strip()
+
 
 # =========================================================
 # IA: CLASIFICAR VEHÍCULO
 # =========================================================
-import json
-import re
-from google import genai
-
 
 def limpiar_json_ia(texto):
+
     if not texto:
         return "{}"
 
     texto = texto.strip()
 
-    # Quitar bloques tipo ```json ... ```
-    texto = texto.replace("```json", "")
-    texto = texto.replace("```", "")
+    texto = texto.replace(
+        "```json",
+        ""
+    )
+
+    texto = texto.replace(
+        "```",
+        ""
+    )
+
     texto = texto.strip()
 
-    # Intentar extraer solo el JSON entre llaves
-    match = re.search(r"\{.*\}", texto, re.DOTALL)
+    match = re.search(
+        r"\{.*\}",
+        texto,
+        re.DOTALL,
+    )
+
     if match:
         return match.group(0).strip()
 
@@ -51,8 +130,9 @@ def clasificar_vehiculo_con_ia(
     marca,
     modelo,
     anio="",
-    descripcion=""
+    descripcion="",
 ):
+
     tipos_validos = {
         "NO_APLICA",
         "AUTO",
@@ -84,24 +164,63 @@ def clasificar_vehiculo_con_ia(
         "motivo": "No se pudo clasificar con IA.",
     }
 
-    print("\n========== INICIO CLASIFICACIÓN IA ==========")
-    print("MARCA RECIBIDA:", marca)
-    print("MODELO RECIBIDO:", modelo)
-    print("AÑO RECIBIDO:", anio)
-    print("DESCRIPCIÓN RECIBIDA:", descripcion)
+    print(
+        "\n========== INICIO CLASIFICACIÓN IA =========="
+    )
+
+    print(
+        "MARCA RECIBIDA:",
+        marca,
+    )
+
+    print(
+        "MODELO RECIBIDO:",
+        modelo,
+    )
+
+    print(
+        "AÑO RECIBIDO:",
+        anio,
+    )
+
+    print(
+        "DESCRIPCIÓN RECIBIDA:",
+        descripcion,
+    )
 
     try:
+
         if not GEMINI_API_KEY:
-            print("ADVERTENCIA: GEMINI_API_KEY no configurada.")
-            resultado_fallback["motivo"] = "GEMINI_API_KEY no configurada."
+
+            print(
+                "ADVERTENCIA: GEMINI_API_KEY no configurada."
+            )
+
+            resultado_fallback["motivo"] = (
+                "GEMINI_API_KEY no configurada."
+            )
+
             return resultado_fallback
 
-        marca = str(marca or "").strip().upper()
-        modelo = str(modelo or "").strip().upper()
-        anio = str(anio or "").strip()
-        descripcion = str(descripcion or "").strip().upper()
+        marca = str(
+            marca or ""
+        ).strip().upper()
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        modelo = str(
+            modelo or ""
+        ).strip().upper()
+
+        anio = str(
+            anio or ""
+        ).strip()
+
+        descripcion = str(
+            descripcion or ""
+        ).strip().upper()
+
+        client = genai.Client(
+            api_key=GEMINI_API_KEY
+        )
 
         prompt = f"""
 Devuelve SOLO JSON válido. No uses markdown. No expliques nada fuera del JSON.
@@ -141,7 +260,7 @@ gama_vehiculo debe ser SOLO uno de:
 Criterio general:
 - AUTO_3P: autos compactos/hatchback/coupé de 3 puertas.
 - AUTO_5P: sedanes, hatchbacks o autos de 5 puertas.
-- SUV_3P: SUV todoterreno pequeño de 3 puertas, ejemplo Grand Vitara 3P.
+- SUV_3P: SUV todoterreno pequeño de 3 puertas.
 - SUV_5P: SUV/crossover familiar de 5 puertas.
 - CAMIONETA_CS: pickup cabina sencilla.
 - CAMIONETA_DC: pickup doble cabina.
@@ -159,86 +278,192 @@ Formato obligatorio exacto:
 }}
 """
 
-        print("\n========== ENVIANDO A GEMINI ==========")
+        print(
+            "\n========== ENVIANDO A GEMINI =========="
+        )
 
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
         )
 
-        texto_respuesta = getattr(response, "text", "") or ""
+        texto_respuesta = (
+            getattr(
+                response,
+                "text",
+                "",
+            )
+            or ""
+        )
 
-        print("\n========== RESPUESTA RAW GEMINI ==========")
-        print(texto_respuesta)
+        print(
+            "\n========== RESPUESTA RAW GEMINI =========="
+        )
 
-        texto_limpio = limpiar_json_ia(texto_respuesta)
+        print(
+            texto_respuesta
+        )
 
-        print("\n========== TEXTO LIMPIO ==========")
-        print(texto_limpio)
+        texto_limpio_ia = limpiar_json_ia(
+            texto_respuesta
+        )
 
-        data = json.loads(texto_limpio)
+        print(
+            "\n========== TEXTO LIMPIO =========="
+        )
 
-        print("\n========== JSON PARSEADO ==========")
-        print(data)
+        print(
+            texto_limpio_ia
+        )
+
+        data = json.loads(
+            texto_limpio_ia
+        )
+
+        print(
+            "\n========== JSON PARSEADO =========="
+        )
+
+        print(
+            data
+        )
 
         tipo_tarifa = str(
-            data.get("tipo_tarifa_vehiculo") or "NO_APLICA"
+            data.get(
+                "tipo_tarifa_vehiculo"
+            )
+            or "NO_APLICA"
         ).strip().upper()
 
         gama = str(
-            data.get("gama_vehiculo") or "NO_APLICA"
+            data.get(
+                "gama_vehiculo"
+            )
+            or "NO_APLICA"
         ).strip().upper()
 
         if tipo_tarifa not in tipos_validos:
-            print("ADVERTENCIA: tipo_tarifa inválido:", tipo_tarifa)
-            tipo_tarifa = "NO_APLICA"
+
+            print(
+                "ADVERTENCIA: tipo_tarifa inválido:",
+                tipo_tarifa,
+            )
+
+            tipo_tarifa = (
+                "NO_APLICA"
+            )
 
         if gama not in gamas_validas:
-            print("ADVERTENCIA: gama inválida:", gama)
-            gama = "NO_APLICA"
+
+            print(
+                "ADVERTENCIA: gama inválida:",
+                gama,
+            )
+
+            gama = (
+                "NO_APLICA"
+            )
 
         try:
-            confianza = float(data.get("confianza", 0.0) or 0.0)
+
+            confianza = float(
+                data.get(
+                    "confianza",
+                    0.0,
+                )
+                or 0.0
+            )
+
         except Exception:
+
             confianza = 0.0
 
-        if confianza < 0:
-            confianza = 0.0
-        if confianza > 1:
-            confianza = 1.0
+        confianza = max(
+            0.0,
+            min(
+                confianza,
+                1.0,
+            ),
+        )
 
         resultado = {
             "tipo_tarifa_vehiculo": tipo_tarifa,
             "gama_vehiculo": gama,
             "confianza": confianza,
-            "motivo": data.get("motivo"),
+            "motivo": data.get(
+                "motivo"
+            ),
         }
 
-        print("\n========== RESULTADO FINAL IA ==========")
-        print("TIPO TARIFA:", resultado["tipo_tarifa_vehiculo"])
-        print("GAMA:", resultado["gama_vehiculo"])
-        print("CONFIANZA:", resultado["confianza"])
-        print("MOTIVO:", resultado["motivo"])
-        print("========================================\n")
+        print(
+            "\n========== RESULTADO FINAL IA =========="
+        )
+
+        print(
+            "TIPO TARIFA:",
+            resultado[
+                "tipo_tarifa_vehiculo"
+            ],
+        )
+
+        print(
+            "GAMA:",
+            resultado[
+                "gama_vehiculo"
+            ],
+        )
+
+        print(
+            "CONFIANZA:",
+            resultado[
+                "confianza"
+            ],
+        )
+
+        print(
+            "MOTIVO:",
+            resultado[
+                "motivo"
+            ],
+        )
+
+        print(
+            "========================================\n"
+        )
 
         return resultado
 
     except json.JSONDecodeError as e:
-        print("\n========== ERROR JSON IA ==========")
-        print("ERROR:", str(e))
-        print("===================================\n")
+
+        print(
+            "\n========== ERROR JSON IA =========="
+        )
+
+        print(
+            "ERROR:",
+            str(e),
+        )
 
         return {
             "tipo_tarifa_vehiculo": "NO_APLICA",
             "gama_vehiculo": "NO_APLICA",
             "confianza": 0.0,
-            "motivo": f"Respuesta IA no era JSON válido: {str(e)}",
+            "motivo": (
+                "Respuesta IA no era JSON válido: "
+                f"{str(e)}"
+            ),
         }
 
     except Exception as e:
-        print("\n========== ERROR CLASIFICACIÓN IA ==========")
-        print("ERROR:", str(e))
-        print("===========================================\n")
+
+        print(
+            "\n========== ERROR CLASIFICACIÓN IA =========="
+        )
+
+        print(
+            "ERROR:",
+            str(e),
+        )
 
         return {
             "tipo_tarifa_vehiculo": "NO_APLICA",
@@ -246,80 +471,211 @@ Formato obligatorio exacto:
             "confianza": 0.0,
             "motivo": str(e),
         }
+
+
 # =========================================================
-# API: CONSULTAR PLACA CON CACHE (CORREGIDA)
+# API: CONSULTAR PLACA
 # =========================================================
-import json
-import requests
-import xml.etree.ElementTree as ET
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+
 @login_required
 def consultar_regcheck(request):
+
     placa = (
-        request.GET.get("placa", "")
+        request.GET
+        .get(
+            "placa",
+            "",
+        )
         .strip()
         .upper()
-        .replace("-", "")
-        .replace(" ", "")
+        .replace(
+            "-",
+            "",
+        )
+        .replace(
+            " ",
+            "",
+        )
     )
 
     if not placa:
+
         return JsonResponse({
             "exito": False,
-            "error": "Placa vacía."
+            "error": "Placa vacía.",
         })
 
-    expediente = ExpedienteVehiculo.objects.filter(
-        placa=placa
-    ).first()
+    expediente = (
+        ExpedienteVehiculo.objects
+        .filter(
+            placa=placa
+        )
+        .order_by(
+            "-id"
+        )
+        .first()
+    )
+
+    # =====================================================
+    # YA EXISTE EN BD
+    # =====================================================
 
     if expediente:
-        ultima_ot = expediente.ordenes.order_by("-fecha_ingreso").first()
-        cliente = expediente.cliente
-        
-        # ====================================================
-        # FILTRO DE CALIDAD PARA CÉDULAS MIGRADAS
-        # ====================================================
+
+        ultima_ot = (
+            expediente
+            .ordenes
+            .order_by(
+                "-fecha_ingreso"
+            )
+            .first()
+        )
+
+        cliente = (
+            expediente.cliente
+        )
+
         cedula_valida = ""
-        if cliente and cliente.identificacion:
-            ced_temp = str(cliente.identificacion).strip()
-            # Si es solo números y tiene 10 o 13 dígitos, la pasamos
-            if ced_temp.isdigit() and len(ced_temp) in [10, 13]:
-                cedula_valida = ced_temp
+
+        if (
+            cliente
+            and cliente.identificacion
+        ):
+
+            ced_temp = str(
+                cliente.identificacion
+            ).strip()
+
+            if (
+                ced_temp.isdigit()
+                and len(
+                    ced_temp
+                ) in [10, 13]
+            ):
+
+                cedula_valida = (
+                    ced_temp
+                )
 
         return JsonResponse({
+
             "exito": True,
             "origen": "bd",
-            "placa": expediente.placa,
-            "vehiculo": expediente.vehiculo or "",
-            "marca": expediente.marca_api or "",
-            "modelo": expediente.modelo_api or "",
-            "descripcion": expediente.descripcion_api or expediente.vehiculo or "",
-            "anio": expediente.anio_vehiculo or "",
-            "tipo": expediente.tipo_vehiculo_api or "",
-            "subtipo": expediente.subtipo_vehiculo_api or "",
-            "numero_chasis": expediente.numero_chasis or "",
-            "imagen_url": expediente.imagen_url_api or "",
 
-            "color": ultima_ot.color if ultima_ot else "",
-            "kilometraje": ultima_ot.kilometraje if ultima_ot else "",
+            "placa": (
+                expediente.placa
+                or ""
+            ),
 
-            "identificacion": cedula_valida, # <--- AHORA PASA POR EL FILTRO
-            "nombre_completo": cliente.nombre_completo if cliente else "",
-            "telefono": cliente.telefono if cliente else "",
-            "email": cliente.email if cliente else "",
-            "direccion": cliente.direccion if cliente else "",
+            "vehiculo": (
+                expediente.vehiculo
+                or ""
+            ),
+
+            "marca": (
+                expediente.marca_api
+                or ""
+            ),
+
+            "modelo": (
+                expediente.modelo_api
+                or ""
+            ),
+
+            "descripcion": (
+                expediente.descripcion_api
+                or expediente.vehiculo
+                or ""
+            ),
+
+            "anio": (
+                expediente.anio_vehiculo
+                or ""
+            ),
+
+            "tipo": (
+                expediente.tipo_vehiculo_api
+                or ""
+            ),
+
+            "subtipo": (
+                expediente.subtipo_vehiculo_api
+                or ""
+            ),
+
+            "numero_chasis": (
+                expediente.numero_chasis
+                or ""
+            ),
+
+            "imagen_url": (
+                expediente.imagen_url_api
+                or ""
+            ),
+
+            "color": (
+                ultima_ot.color
+                if ultima_ot
+                else ""
+            ),
+
+            "kilometraje": (
+                ultima_ot.kilometraje
+                if ultima_ot
+                else ""
+            ),
+
+            # Cliente asociado actualmente a esa placa
+            "cliente_id": (
+                cliente.id
+                if cliente
+                else None
+            ),
+
+            "identificacion": (
+                cedula_valida
+            ),
+
+            "nombre_completo": (
+                cliente.nombre_completo
+                if cliente
+                else ""
+            ),
+
+            "telefono": (
+                cliente.telefono
+                if cliente
+                else ""
+            ),
+
+            "email": (
+                cliente.email
+                if cliente
+                else ""
+            ),
+
+            "direccion": (
+                cliente.direccion
+                if cliente
+                else ""
+            ),
 
             "tipo_tarifa_vehiculo": (
                 ultima_ot.tipo_tarifa_vehiculo
-                if ultima_ot else "NO_APLICA"
+                if ultima_ot
+                else "NO_APLICA"
             ),
+
             "gama_vehiculo": (
                 ultima_ot.gama_vehiculo
-                if ultima_ot else "NO_APLICA"
+                if ultima_ot
+                else "NO_APLICA"
             ),
         })
+
+    # =====================================================
+    # CONSULTAR API EXTERNA
+    # =====================================================
 
     url = (
         "https://www.placaapi.ec/API/reg.asmx/CheckEcuador"
@@ -333,281 +689,1451 @@ def consultar_regcheck(request):
     }
 
     try:
+
         respuesta = requests.get(
             url,
             headers=headers,
-            timeout=20
+            timeout=20,
         )
 
         if respuesta.status_code != 200:
+
             return JsonResponse({
                 "exito": False,
-                "error": f"Error API placa: {respuesta.status_code}"
+                "error": (
+                    "Error API placa: "
+                    f"{respuesta.status_code}"
+                ),
             })
 
-        root = ET.fromstring(respuesta.content)
+        root = ET.fromstring(
+            respuesta.content
+        )
 
         json_text = None
 
         for elem in root.iter():
-            if elem.tag.endswith("vehicleJson"):
-                json_text = elem.text
+
+            if elem.tag.endswith(
+                "vehicleJson"
+            ):
+
+                json_text = (
+                    elem.text
+                )
+
                 break
 
         if not json_text:
+
             return JsonResponse({
                 "exito": False,
-                "error": "Vehículo no encontrado."
+                "error": (
+                    "Vehículo no encontrado."
+                ),
             })
 
-        datos_auto = json.loads(json_text)
+        datos_auto = json.loads(
+            json_text
+        )
 
         def valor_api(campo):
-            valor = datos_auto.get(campo)
 
-            if isinstance(valor, dict):
-                return valor.get("CurrentTextValue", "")
+            valor = datos_auto.get(
+                campo
+            )
 
-            return str(valor or "")
+            if isinstance(
+                valor,
+                dict,
+            ):
+
+                return valor.get(
+                    "CurrentTextValue",
+                    "",
+                )
+
+            return str(
+                valor or ""
+            )
 
         marca = (
-            valor_api("MakeDescription")
-            or valor_api("CarMake")
+            valor_api(
+                "MakeDescription"
+            )
+            or valor_api(
+                "CarMake"
+            )
         ).strip().upper()
 
         if marca == "VW":
             marca = "VOLKSWAGEN"
 
         modelo = (
-            valor_api("ModelDescription")
-            or valor_api("CarModel")
+            valor_api(
+                "ModelDescription"
+            )
+            or valor_api(
+                "CarModel"
+            )
         ).strip().upper()
 
         descripcion = (
-            datos_auto.get("Description")
+            datos_auto.get(
+                "Description"
+            )
             or f"{marca} {modelo}"
         ).strip().upper()
 
-        anio = datos_auto.get("Year")
-        tipo = datos_auto.get("Type", "")
-        subtipo = datos_auto.get("Subtype", "")
-        numero_chasis = datos_auto.get("VehicleIdentificationNumber", "")
-        imagen_url = datos_auto.get("ImageUrl", "")
-
-        clasificacion = clasificar_vehiculo_con_ia(
-            marca=marca,
-            modelo=modelo,
-            anio=anio,
-            descripcion=descripcion,
+        anio = datos_auto.get(
+            "Year"
         )
 
-        expediente = ExpedienteVehiculo(
-            placa=placa
+        tipo = datos_auto.get(
+            "Type",
+            "",
         )
 
-        expediente.cargar_desde_api_placa(datos_auto)
-        expediente.fecha_ultima_consulta_placa = timezone.now()
+        subtipo = datos_auto.get(
+            "Subtype",
+            "",
+        )
+
+        numero_chasis = datos_auto.get(
+            "VehicleIdentificationNumber",
+            "",
+        )
+
+        imagen_url = datos_auto.get(
+            "ImageUrl",
+            "",
+        )
+
+        clasificacion = (
+            clasificar_vehiculo_con_ia(
+                marca=marca,
+                modelo=modelo,
+                anio=anio,
+                descripcion=descripcion,
+            )
+        )
+
+        expediente = (
+            ExpedienteVehiculo(
+                placa=placa
+            )
+        )
+
+        expediente.cargar_desde_api_placa(
+            datos_auto
+        )
+
+        expediente.fecha_ultima_consulta_placa = (
+            timezone.now()
+        )
+
         expediente.save()
 
         return JsonResponse({
+
             "exito": True,
             "origen": "api_guardada",
-            "placa": expediente.placa,
-            "vehiculo": expediente.vehiculo or descripcion,
-            "marca": expediente.marca_api or marca,
-            "modelo": expediente.modelo_api or modelo,
-            "descripcion": expediente.descripcion_api or descripcion,
-            "anio": expediente.anio_vehiculo or "",
-            "tipo": expediente.tipo_vehiculo_api or tipo,
-            "subtipo": expediente.subtipo_vehiculo_api or subtipo,
-            "numero_chasis": expediente.numero_chasis or numero_chasis or "",
-            "imagen_url": expediente.imagen_url_api or imagen_url or "",
 
-            "tipo_tarifa_vehiculo": clasificacion["tipo_tarifa_vehiculo"],
-            "gama_vehiculo": clasificacion["gama_vehiculo"],
-            "confianza": clasificacion["confianza"],
-            "motivo": clasificacion["motivo"],
+            "placa": (
+                expediente.placa
+                or placa
+            ),
+
+            "vehiculo": (
+                expediente.vehiculo
+                or descripcion
+            ),
+
+            "marca": (
+                expediente.marca_api
+                or marca
+            ),
+
+            "modelo": (
+                expediente.modelo_api
+                or modelo
+            ),
+
+            "descripcion": (
+                expediente.descripcion_api
+                or descripcion
+            ),
+
+            "anio": (
+                expediente.anio_vehiculo
+                or ""
+            ),
+
+            "tipo": (
+                expediente.tipo_vehiculo_api
+                or tipo
+            ),
+
+            "subtipo": (
+                expediente.subtipo_vehiculo_api
+                or subtipo
+            ),
+
+            "numero_chasis": (
+                expediente.numero_chasis
+                or numero_chasis
+                or ""
+            ),
+
+            "imagen_url": (
+                expediente.imagen_url_api
+                or imagen_url
+                or ""
+            ),
+
+            "cliente_id": None,
+
+            "tipo_tarifa_vehiculo": (
+                clasificacion[
+                    "tipo_tarifa_vehiculo"
+                ]
+            ),
+
+            "gama_vehiculo": (
+                clasificacion[
+                    "gama_vehiculo"
+                ]
+            ),
+
+            "confianza": (
+                clasificacion[
+                    "confianza"
+                ]
+            ),
+
+            "motivo": (
+                clasificacion[
+                    "motivo"
+                ]
+            ),
         })
 
     except Exception as e:
+
         return JsonResponse({
             "exito": False,
-            "error": f"Error al consultar placa: {str(e)}"
+            "error": (
+                "Error al consultar placa: "
+                f"{str(e)}"
+            ),
         })
+
+
 # =========================================================
-# SERIALIZADOR
+# CLIENTE: SERIALIZADOR
 # =========================================================
+
 def serializar_cliente(cliente):
-    """Convierte el objeto Cliente a un diccionario compatible con JSON."""
+    """
+    Convierte Cliente en datos seguros para JSON.
+    """
+
     return {
+
         "id": cliente.id,
-        "identificacion": cliente.identificacion,
-        "tipo_documento": cliente.tipo_documento,
-        "nombre_completo": cliente.nombre_completo or "",
-        
+
+        "identificacion": (
+            cliente.identificacion
+            or ""
+        ),
+
+        "tipo_documento": (
+            cliente.tipo_documento
+            or ""
+        ),
+
+        "nombre_completo": (
+            cliente.nombre_completo
+            or ""
+        ),
+
+        # =============================================
         # CONTACTO
-        "telefono": cliente.telefono or "",
-        "telefono_secundario": cliente.telefono_secundario or "",
-        "telefono_trabajo": cliente.telefono_trabajo or "",
-        "email": cliente.email or "",
-        "direccion": cliente.direccion or "",
+        # =============================================
 
+        "telefono": (
+            cliente.telefono
+            or ""
+        ),
+
+        "telefono_secundario": (
+            cliente.telefono_secundario
+            or ""
+        ),
+
+        "telefono_trabajo": (
+            cliente.telefono_trabajo
+            or ""
+        ),
+
+        "email": (
+            cliente.email
+            or ""
+        ),
+
+        "direccion": (
+            cliente.direccion
+            or ""
+        ),
+
+        # =============================================
         # PERSONALES
-        "genero": cliente.genero or "",
-        "sexo": cliente.sexo or "",
-        "fecha_nacimiento": cliente.fecha_nacimiento.isoformat() if cliente.fecha_nacimiento else "",
-        "fecha_cedulacion": cliente.fecha_cedulacion.isoformat() if cliente.fecha_cedulacion else "",
-        "estado_civil": cliente.estado_civil or "",
-        "conyuge": cliente.conyuge or "",
-        "nacionalidad": cliente.nacionalidad or "",
-        "nombre_madre": cliente.nombre_madre or "",
-        "nombre_padre": cliente.nombre_padre or "",
-        "lugar_nacimiento": cliente.lugar_nacimiento or "",
+        # =============================================
 
+        "genero": (
+            cliente.genero
+            or ""
+        ),
+
+        "sexo": (
+            cliente.sexo
+            or ""
+        ),
+
+        "fecha_nacimiento": (
+            cliente.fecha_nacimiento.isoformat()
+            if cliente.fecha_nacimiento
+            else ""
+        ),
+
+        "fecha_cedulacion": (
+            cliente.fecha_cedulacion.isoformat()
+            if cliente.fecha_cedulacion
+            else ""
+        ),
+
+        "estado_civil": (
+            cliente.estado_civil
+            or ""
+        ),
+
+        "conyuge": (
+            cliente.conyuge
+            or ""
+        ),
+
+        "nacionalidad": (
+            cliente.nacionalidad
+            or ""
+        ),
+
+        "nombre_madre": (
+            cliente.nombre_madre
+            or ""
+        ),
+
+        "nombre_padre": (
+            cliente.nombre_padre
+            or ""
+        ),
+
+        "lugar_nacimiento": (
+            cliente.lugar_nacimiento
+            or ""
+        ),
+
+        # =============================================
         # DOMICILIO
-        "lugar_domicilio": cliente.lugar_domicilio or "",
-        "calle_domicilio": cliente.calle_domicilio or "",
-        "numeracion_domicilio": cliente.numeracion_domicilio or "",
-        "provincia": cliente.provincia or "",
-        "canton": cliente.canton or "",
-        "parroquia": cliente.parroquia or "",
+        # =============================================
 
+        "lugar_domicilio": (
+            cliente.lugar_domicilio
+            or ""
+        ),
+
+        "calle_domicilio": (
+            cliente.calle_domicilio
+            or ""
+        ),
+
+        "numeracion_domicilio": (
+            cliente.numeracion_domicilio
+            or ""
+        ),
+
+        "provincia": (
+            cliente.provincia
+            or ""
+        ),
+
+        "canton": (
+            cliente.canton
+            or ""
+        ),
+
+        "parroquia": (
+            cliente.parroquia
+            or ""
+        ),
+
+        # =============================================
         # EDUCACIÓN
-        "instruccion": cliente.instruccion or "",
-        "profesion": cliente.profesion or "",
-        "tipo_sangre": cliente.tipo_sangre or "",
+        # =============================================
 
+        "instruccion": (
+            cliente.instruccion
+            or ""
+        ),
+
+        "profesion": (
+            cliente.profesion
+            or ""
+        ),
+
+        "tipo_sangre": (
+            cliente.tipo_sangre
+            or ""
+        ),
+
+        # =============================================
         # LICENCIA
-        "licencia_tipo": cliente.licencia_tipo or "",
-        "licencia_fecha_desde": cliente.licencia_fecha_desde.isoformat() if cliente.licencia_fecha_desde else "",
-        "licencia_fecha_hasta": cliente.licencia_fecha_hasta.isoformat() if cliente.licencia_fecha_hasta else "",
-        "licencia_puntos": cliente.licencia_puntos or "",
-        "licencia_restricciones": cliente.licencia_restricciones or "",
+        # =============================================
 
+        "licencia_tipo": (
+            cliente.licencia_tipo
+            or ""
+        ),
+
+        "licencia_fecha_desde": (
+            cliente.licencia_fecha_desde.isoformat()
+            if cliente.licencia_fecha_desde
+            else ""
+        ),
+
+        "licencia_fecha_hasta": (
+            cliente.licencia_fecha_hasta.isoformat()
+            if cliente.licencia_fecha_hasta
+            else ""
+        ),
+
+        "licencia_puntos": (
+            cliente.licencia_puntos
+            or ""
+        ),
+
+        "licencia_restricciones": (
+            cliente.licencia_restricciones
+            or ""
+        ),
+
+        # =============================================
         # RUC / SRI
-        "razon_social": cliente.razon_social or "",
-        "estado_contribuyente_ruc": cliente.estado_contribuyente_ruc or "",
-        "actividad_economica_principal": cliente.actividad_economica_principal or "",
-        "tipo_contribuyente": cliente.tipo_contribuyente or "",
-        "regimen": cliente.regimen or "",
-        "obligado_llevar_contabilidad": cliente.obligado_llevar_contabilidad or "",
-        "agente_retencion": cliente.agente_retencion or "",
-        "contribuyente_especial": cliente.contribuyente_especial or "",
-        "representantes_legales": cliente.representantes_legales or [],
-        "establecimientos": cliente.establecimientos or [],
+        # =============================================
 
+        "razon_social": (
+            cliente.razon_social
+            or ""
+        ),
+
+        "estado_contribuyente_ruc": (
+            cliente.estado_contribuyente_ruc
+            or ""
+        ),
+
+        "actividad_economica_principal": (
+            cliente.actividad_economica_principal
+            or ""
+        ),
+
+        "tipo_contribuyente": (
+            cliente.tipo_contribuyente
+            or ""
+        ),
+
+        "regimen": (
+            cliente.regimen
+            or ""
+        ),
+
+        "obligado_llevar_contabilidad": (
+            cliente.obligado_llevar_contabilidad
+            or ""
+        ),
+
+        "agente_retencion": (
+            cliente.agente_retencion
+            or ""
+        ),
+
+        "contribuyente_especial": (
+            cliente.contribuyente_especial
+            or ""
+        ),
+
+        "representantes_legales": (
+            cliente.representantes_legales
+            or []
+        ),
+
+        "establecimientos": (
+            cliente.establecimientos
+            or []
+        ),
+
+        # =============================================
         # CONTROL
-        "datos_full_consultados": cliente.datos_full_consultados,
-        "fecha_ultima_consulta_api": cliente.fecha_ultima_consulta_api.isoformat() if cliente.fecha_ultima_consulta_api else "",
+        # =============================================
+
+        "datos_full_consultados": (
+            cliente.datos_full_consultados
+        ),
+
+        "fecha_ultima_consulta_api": (
+            cliente.fecha_ultima_consulta_api.isoformat()
+            if cliente.fecha_ultima_consulta_api
+            else ""
+        ),
     }
+
+
 # =========================================================
-# VISTA API: CONSULTA DE CLIENTES (CÉDULA Y RUC)
+# CLIENTE: EXTRAER DATOS IMPORTANTES DE RESPUESTA API
 # =========================================================
+
+def extraer_datos_cliente_api(
+    data,
+    es_ruc=False,
+):
+    """
+    Extrae de la respuesta externa los valores que nos interesa
+    comparar con lo que ya existe en MAO.
+
+    IMPORTANTE:
+    esta función NO modifica la base de datos.
+    """
+
+    if es_ruc:
+
+        establecimientos = (
+            data.get(
+                "establecimientos"
+            )
+            or []
+        )
+
+        matriz = next(
+            (
+                establecimiento
+                for establecimiento
+                in establecimientos
+                if (
+                    str(
+                        establecimiento.get(
+                            "matriz",
+                            ""
+                        )
+                    )
+                    .strip()
+                    .upper()
+                    == "SI"
+                )
+            ),
+            None,
+        )
+
+        direccion = ""
+
+        if matriz:
+
+            direccion = (
+                matriz.get(
+                    "direccionCompleta"
+                )
+                or ""
+            )
+
+        return {
+
+            "nombre_completo": (
+                data.get(
+                    "razonSocial"
+                )
+                or ""
+            ),
+
+            "telefono": "",
+
+            "telefono_secundario": "",
+
+            "telefono_trabajo": "",
+
+            "email": "",
+
+            "direccion": (
+                direccion
+            ),
+        }
+
+    # =====================================================
+    # PERSONA NATURAL
+    # =====================================================
+
+    persona = (
+        data.get(
+            "persona",
+            data,
+        )
+        or {}
+    )
+
+    direccion_obj = (
+        persona.get(
+            "direccion",
+            {}
+        )
+        or {}
+    )
+
+    lugar = (
+        direccion_obj.get(
+            "domicilio"
+        )
+        or data.get(
+            "lugarDomicilio"
+        )
+        or ""
+    )
+
+    calle = (
+        direccion_obj.get(
+            "calle"
+        )
+        or data.get(
+            "calleDomicilio"
+        )
+        or ""
+    )
+
+    numero = (
+        direccion_obj.get(
+            "numeroCasa"
+        )
+        or data.get(
+            "numeracionDomicilio"
+        )
+        or ""
+    )
+
+    partes_direccion = [
+        texto_limpio(
+            lugar
+        ),
+        texto_limpio(
+            calle
+        ),
+        texto_limpio(
+            numero
+        ),
+    ]
+
+    partes_direccion = [
+        parte
+        for parte
+        in partes_direccion
+        if parte
+    ]
+
+    direccion_completa = (
+        " / ".join(
+            partes_direccion
+        )
+    )
+
+    return {
+
+        "nombre_completo": (
+            persona.get(
+                "nombre"
+            )
+            or data.get(
+                "nombre"
+            )
+            or ""
+        ),
+
+        "telefono": (
+            persona.get(
+                "celular"
+            )
+            or ""
+        ),
+
+        "telefono_secundario": "",
+
+        "telefono_trabajo": (
+            persona.get(
+                "telefono"
+            )
+            or ""
+        ),
+
+        "email": (
+            persona.get(
+                "email"
+            )
+            or ""
+        ),
+
+        "direccion": (
+            direccion_completa
+        ),
+    }
+
+
+# =========================================================
+# CLIENTE: COMPARAR MAO VS API
+# =========================================================
+
+def comparar_cliente_con_api(
+    cliente,
+    datos_api,
+):
+    """
+    Devuelve únicamente diferencias útiles.
+
+    NO aplica ninguna diferencia.
+    """
+
+    campos = {
+
+        "nombre_completo": (
+            "Nombre"
+        ),
+
+        "telefono": (
+            "Celular"
+        ),
+
+        "telefono_secundario": (
+            "Celular secundario"
+        ),
+
+        "telefono_trabajo": (
+            "Teléfono trabajo"
+        ),
+
+        "email": (
+            "Correo"
+        ),
+
+        "direccion": (
+            "Dirección"
+        ),
+    }
+
+    diferencias = []
+
+    for campo, etiqueta in campos.items():
+
+        valor_api = datos_api.get(
+            campo
+        )
+
+        if valor_vacio(
+            valor_api
+        ):
+            continue
+
+        valor_actual = getattr(
+            cliente,
+            campo,
+            "",
+        )
+
+        actual_normalizado = (
+            texto_limpio(
+                valor_actual
+            )
+        )
+
+        api_normalizado = (
+            texto_limpio(
+                valor_api
+            )
+        )
+
+        # Email se compara en minúsculas.
+        if campo == "email":
+
+            son_iguales = (
+                actual_normalizado.lower()
+                ==
+                api_normalizado.lower()
+            )
+
+        else:
+
+            son_iguales = (
+                actual_normalizado.upper()
+                ==
+                api_normalizado.upper()
+            )
+
+        if son_iguales:
+            continue
+
+        diferencias.append({
+
+            "campo": campo,
+
+            "etiqueta": etiqueta,
+
+            "actual": (
+                actual_normalizado
+            ),
+
+            "api": (
+                api_normalizado
+            ),
+
+            "actual_vacio": (
+                valor_vacio(
+                    valor_actual
+                )
+            ),
+        })
+
+    return diferencias
+
+
+# =========================================================
+# API: CONSULTAR CLIENTE POR CÉDULA / RUC
+# =========================================================
+
 @login_required
 def consultar_cedula_api(request):
-    identificacion = request.GET.get("cedula", "").strip()
-    solicita_full = request.GET.get("full", "false").strip().lower() == "true"
-    
-    if not identificacion or not identificacion.isdigit() or len(identificacion) not in [10, 13]:
-        return JsonResponse({"exito": False, "error": "Identificación inválida."})
 
-    es_ruc = len(identificacion) == 13
-    cliente = Cliente.objects.filter(identificacion=identificacion).first()
+    identificacion = (
+        request.GET
+        .get(
+            "cedula",
+            "",
+        )
+        .strip()
+    )
 
-    # --- LÓGICA DE CACHÉ (Sin tocar tu modelo) ---
-    if cliente:
-        if not es_ruc and (not solicita_full or cliente.datos_full_consultados):
-            return JsonResponse({"exito": True, "origen": "bd", "cliente": serializar_cliente(cliente)})
-        if es_ruc and cliente.fecha_ultima_consulta_api and (timezone.now() - cliente.fecha_ultima_consulta_api) < timedelta(days=30):
-            return JsonResponse({"exito": True, "origen": "bd_fresca", "cliente": serializar_cliente(cliente)})
+    solicita_full = (
+        parametro_booleano(
+            request,
+            "full",
+            False,
+        )
+    )
 
-    # --- CONSULTA EXTERNA ---
-    url = f"https://apiconsult.zampisoft.com/api/consultar?identificacion={identificacion}&token={CEDULA_API_TOKEN}"
-    if not es_ruc and solicita_full:
-        url += "&full=true"
+    # =====================================================
+    # NUEVO:
+    # refresh=true fuerza consulta externa
+    # SIN SOBREESCRIBIR automáticamente los datos existentes.
+    # =====================================================
+
+    forzar_refresh = (
+        parametro_booleano(
+            request,
+            "refresh",
+            False,
+        )
+    )
+
+    # =====================================================
+    # VALIDACIÓN
+    # =====================================================
+
+    if (
+        not identificacion
+        or not identificacion.isdigit()
+        or len(
+            identificacion
+        ) not in [10, 13]
+    ):
+
+        return JsonResponse(
+            {
+                "exito": False,
+                "error": (
+                    "Identificación inválida. "
+                    "Debe tener 10 dígitos para cédula "
+                    "o 13 para RUC."
+                ),
+            },
+            status=400,
+        )
+
+    es_ruc = (
+        len(
+            identificacion
+        )
+        == 13
+    )
+
+    cliente = (
+        Cliente.objects
+        .filter(
+            identificacion=identificacion
+        )
+        .first()
+    )
+
+    # =====================================================
+    # CACHE
+    #
+    # Si refresh=true, NO utilizamos este retorno.
+    # =====================================================
+
+    if (
+        cliente
+        and not forzar_refresh
+    ):
+
+        # Persona natural
+        if (
+            not es_ruc
+            and (
+                not solicita_full
+                or cliente.datos_full_consultados
+            )
+        ):
+
+            return JsonResponse({
+
+                "exito": True,
+
+                "origen": "bd",
+
+                "cliente": (
+                    serializar_cliente(
+                        cliente
+                    )
+                ),
+
+                "datos_api": {},
+
+                "cambios_sugeridos": [],
+            })
+
+        # RUC
+        if (
+            es_ruc
+            and cliente.fecha_ultima_consulta_api
+            and (
+                timezone.now()
+                -
+                cliente.fecha_ultima_consulta_api
+            )
+            <
+            timedelta(
+                days=30
+            )
+        ):
+
+            return JsonResponse({
+
+                "exito": True,
+
+                "origen": "bd_fresca",
+
+                "cliente": (
+                    serializar_cliente(
+                        cliente
+                    )
+                ),
+
+                "datos_api": {},
+
+                "cambios_sugeridos": [],
+            })
+
+    # =====================================================
+    # CONSULTA EXTERNA
+    # =====================================================
+
+    url = (
+        "https://apiconsult.zampisoft.com/api/consultar"
+        f"?identificacion={identificacion}"
+        f"&token={CEDULA_API_TOKEN}"
+    )
+
+    if (
+        not es_ruc
+        and solicita_full
+    ):
+
+        url += (
+            "&full=true"
+        )
 
     try:
-        respuesta = requests.get(url, timeout=20)
+
+        respuesta = requests.get(
+            url,
+            timeout=20,
+        )
+
         if respuesta.status_code != 200:
-            return JsonResponse({"exito": False, "error": "Error externo"})
+
+            return JsonResponse(
+                {
+                    "exito": False,
+                    "error": (
+                        "La API externa no pudo consultar "
+                        "la identificación."
+                    ),
+                },
+                status=502,
+            )
 
         data = respuesta.json()
-        
-        # --- UTILIZANDO TUS MÉTODOS EXISTENTES ---
-        if not cliente:
-            cliente = Cliente(identificacion=identificacion)
-        
-        # Aquí aprovechas tus métodos ya construidos
-        if es_ruc:
-            cliente.cargar_desde_api_ruc(data)
-        else:
-            cliente.cargar_desde_api_persona(data, full=solicita_full)
-            
-        cliente.fecha_ultima_consulta_api = timezone.now()
-        cliente.save() # Esto dispara tu normalizar_datos() y full_clean()
 
-        return JsonResponse({"exito": True, "origen": "api", "cliente": serializar_cliente(cliente)})
-        
+        # =================================================
+        # EXTRAER LO QUE LA API ENCONTRÓ
+        # ANTES DE MODIFICAR CUALQUIER COSA
+        # =================================================
+
+        datos_detectados = (
+            extraer_datos_cliente_api(
+                data,
+                es_ruc=es_ruc,
+            )
+        )
+
+        cliente_era_nuevo = (
+            cliente is None
+        )
+
+        # =================================================
+        # TRANSACCIÓN
+        # =================================================
+
+        with transaction.atomic():
+
+            if cliente:
+
+                cliente = (
+                    Cliente.objects
+                    .select_for_update()
+                    .get(
+                        pk=cliente.pk
+                    )
+                )
+
+            else:
+
+                cliente = (
+                    Cliente(
+                        identificacion=identificacion
+                    )
+                )
+
+            # =============================================
+            # IMPORTANTE
+            #
+            # sobrescribir=False
+            #
+            # La API:
+            # - llena campos vacíos
+            # - NO reemplaza campos existentes
+            # =============================================
+
+            if es_ruc:
+
+                cliente.cargar_desde_api_ruc(
+                    data,
+                    sobrescribir=False,
+                )
+
+            else:
+
+                cliente.cargar_desde_api_persona(
+                    data,
+                    full=solicita_full,
+                    sobrescribir=False,
+                )
+
+            cliente.fecha_ultima_consulta_api = (
+                timezone.now()
+            )
+
+            cliente.save()
+
+        # =================================================
+        # DESPUÉS DE GUARDAR:
+        # VER DIFERENCIAS ENTRE MAO Y API
+        # =================================================
+
+        cambios_sugeridos = (
+            comparar_cliente_con_api(
+                cliente,
+                datos_detectados,
+            )
+        )
+
+        if cliente_era_nuevo:
+
+            origen = (
+                "api_nuevo"
+            )
+
+        elif forzar_refresh:
+
+            origen = (
+                "api_refrescada"
+            )
+
+        else:
+
+            origen = (
+                "api"
+            )
+
+        return JsonResponse({
+
+            "exito": True,
+
+            "origen": origen,
+
+            "cliente": (
+                serializar_cliente(
+                    cliente
+                )
+            ),
+
+            # Valores que devolvió la API externa.
+            "datos_api": (
+                datos_detectados
+            ),
+
+            # Diferencias que NO fueron aplicadas.
+            "cambios_sugeridos": (
+                cambios_sugeridos
+            ),
+        })
+
+    except requests.RequestException as e:
+
+        return JsonResponse(
+            {
+                "exito": False,
+                "error": (
+                    "No se pudo conectar con la API "
+                    f"de identificación: {str(e)}"
+                ),
+            },
+            status=502,
+        )
+
+    except ValueError as e:
+
+        return JsonResponse(
+            {
+                "exito": False,
+                "error": (
+                    "La API externa devolvió "
+                    f"una respuesta inválida: {str(e)}"
+                ),
+            },
+            status=502,
+        )
+
     except Exception as e:
-        return JsonResponse({"exito": False, "error": str(e)}) 
+
+        return JsonResponse(
+            {
+                "exito": False,
+                "error": str(e),
+            },
+            status=500,
+        )
+
+
+# =========================================================
+# API: EDITAR DATOS DEL MISMO CLIENTE
+# =========================================================
+
+@login_required
+@require_POST
+def actualizar_datos_cliente_api(
+    request,
+    cliente_id,
+):
+    """
+    Actualización MANUAL y explícita.
+
+    Aquí sí se permite reemplazar teléfono, correo o dirección,
+    porque fue el usuario quien decidió hacerlo.
+
+    NO permite modificar:
+    - identificación
+    - nombre
+    - tipo_documento
+
+    desde esta API.
+    """
+
+    # =====================================================
+    # ACEPTAR JSON O FORM-DATA
+    # =====================================================
+
+    try:
+
+        content_type = (
+            request.content_type
+            or ""
+        ).lower()
+
+        if (
+            "application/json"
+            in content_type
+        ):
+
+            payload = json.loads(
+                request.body
+                or b"{}"
+            )
+
+        else:
+
+            payload = (
+                request.POST
+            )
+
+    except Exception:
+
+        return JsonResponse(
+            {
+                "exito": False,
+                "error": (
+                    "Datos enviados inválidos."
+                ),
+            },
+            status=400,
+        )
+
+    # =====================================================
+    # SOLO ESTOS CAMPOS SE EDITAN DESDE EL MODAL
+    # =====================================================
+
+    campos_permitidos = {
+        "telefono",
+        "telefono_secundario",
+        "telefono_trabajo",
+        "email",
+        "direccion",
+    }
+
+    try:
+
+        with transaction.atomic():
+
+            cliente = (
+                Cliente.objects
+                .select_for_update()
+                .filter(
+                    pk=cliente_id
+                )
+                .first()
+            )
+
+            if not cliente:
+
+                return JsonResponse(
+                    {
+                        "exito": False,
+                        "error": (
+                            "El cliente no existe."
+                        ),
+                    },
+                    status=404,
+                )
+
+            hubo_cambios = False
+
+            for campo in campos_permitidos:
+
+                if campo not in payload:
+                    continue
+
+                valor = payload.get(
+                    campo
+                )
+
+                if valor is None:
+                    valor = ""
+
+                if isinstance(
+                    valor,
+                    str,
+                ):
+
+                    valor = (
+                        valor.strip()
+                    )
+
+                valor_actual = getattr(
+                    cliente,
+                    campo,
+                    "",
+                )
+
+                if (
+                    texto_limpio(
+                        valor_actual
+                    )
+                    !=
+                    texto_limpio(
+                        valor
+                    )
+                ):
+
+                    setattr(
+                        cliente,
+                        campo,
+                        valor,
+                    )
+
+                    hubo_cambios = True
+
+            if hubo_cambios:
+
+                cliente.save()
+
+        return JsonResponse({
+
+            "exito": True,
+
+            "actualizado": (
+                hubo_cambios
+            ),
+
+            "cliente": (
+                serializar_cliente(
+                    cliente
+                )
+            ),
+        })
+
+    except Exception as e:
+
+        return JsonResponse(
+            {
+                "exito": False,
+                "error": str(e),
+            },
+            status=400,
+        )
+
+
 # =========================================================
 # API: BÚSQUEDA REPUESTOS
 # =========================================================
+
 @login_required
 def api_buscar_repuestos_ot(request):
 
-    query = request.GET.get(
-        'q',
-        ''
-    ).strip()
+    query = (
+        request.GET
+        .get(
+            "q",
+            "",
+        )
+        .strip()
+    )
 
-    sucursal_activa = obtener_sucursal_activa(request)
+    sucursal_activa = (
+        obtener_sucursal_activa(
+            request
+        )
+    )
 
-    if not query or not sucursal_activa:
+    if (
+        not query
+        or not sucursal_activa
+    ):
+
         return JsonResponse({
             "resultados": []
         })
 
-    terminos = query.split()
+    terminos = (
+        query.split()
+    )
 
     repuestos = (
         CodigoProducto.objects
         .filter(
             activo=True,
-            producto__activo=True
+            producto__activo=True,
         )
         .select_related(
-            'producto__categoria',
-            'marca'
+            "producto__categoria",
+            "marca",
         )
     )
 
-    for t in terminos:
+    for termino in terminos:
 
-        if len(t) <= 2 and len(terminos) > 1:
+        if (
+            len(
+                termino
+            ) <= 2
+            and len(
+                terminos
+            ) > 1
+        ):
+
             continue
 
         repuestos = repuestos.filter(
 
-            Q(producto__nombre_base__icontains=t) |
-            Q(nombre_comercial__icontains=t) |
-            Q(marca__nombre__icontains=t) |
-            Q(producto__categoria__nombre__icontains=t) |
-            Q(codigo__icontains=t) |
-            Q(codigo_barras__icontains=t) |
-            Q(producto__valores_atributos__valor__icontains=t)
-
+            Q(
+                producto__nombre_base__icontains=termino
+            )
+            |
+            Q(
+                nombre_comercial__icontains=termino
+            )
+            |
+            Q(
+                marca__nombre__icontains=termino
+            )
+            |
+            Q(
+                producto__categoria__nombre__icontains=termino
+            )
+            |
+            Q(
+                codigo__icontains=termino
+            )
+            |
+            Q(
+                codigo_barras__icontains=termino
+            )
+            |
+            Q(
+                producto__valores_atributos__valor__icontains=termino
+            )
         )
 
     data = []
 
-    for item in repuestos.distinct()[:20]:
+    for item in (
+        repuestos
+        .distinct()[:20]
+    ):
 
         stock_obj = (
             StockSucursal.objects
             .filter(
                 codigo_producto=item,
-                sucursal=sucursal_activa
+                sucursal=sucursal_activa,
             )
             .first()
         )
@@ -627,49 +2153,97 @@ def api_buscar_repuestos_ot(request):
 
         data.append({
 
-            "id": item.id,
-
-            "codigo": item.codigo,
-
-            "descripcion": desc_final.strip(),
-
-            "p_u": str(
-                item.precio_venta or "0.00"
+            "id": (
+                item.id
             ),
 
-            "stock":
+            "codigo": (
+                item.codigo
+            ),
+
+            "descripcion": (
+                desc_final.strip()
+            ),
+
+            "p_u": str(
+                item.precio_venta
+                or "0.00"
+            ),
+
+            "stock": (
                 stock_obj.cantidad
                 if stock_obj
-                else 0,
+                else 0
+            ),
         })
 
     return JsonResponse({
         "resultados": data
     })
 
-# =================================================================================
+
+# =========================================================
 # API: BÚSQUEDA SERVICIOS PARA OT
-# =================================================================================
+# =========================================================
+
 @login_required
 def api_buscar_servicios_ot(request):
-    query = request.GET.get("q", "").strip()
 
-    categoria = request.GET.get("categoria", "moi").strip().lower()
+    query = (
+        request.GET
+        .get(
+            "q",
+            "",
+        )
+        .strip()
+    )
 
-    tipo_tarifa_vehiculo = request.GET.get(
-        "tipo_tarifa_vehiculo",
-        "NO_APLICA"
-    ).strip().upper() or "NO_APLICA"
+    categoria = (
+        request.GET
+        .get(
+            "categoria",
+            "moi",
+        )
+        .strip()
+        .lower()
+    )
 
-    variante_precio = request.GET.get(
-        "variante_precio",
-        "NORMAL"
-    ).strip().upper() or "NORMAL"
+    tipo_tarifa_vehiculo = (
+        request.GET
+        .get(
+            "tipo_tarifa_vehiculo",
+            "NO_APLICA",
+        )
+        .strip()
+        .upper()
+        or "NO_APLICA"
+    )
 
-    sucursal_activa = obtener_sucursal_activa(request)
+    variante_precio = (
+        request.GET
+        .get(
+            "variante_precio",
+            "NORMAL",
+        )
+        .strip()
+        .upper()
+        or "NORMAL"
+    )
 
-    if not query or not sucursal_activa:
-        return JsonResponse({"resultados": []})
+    sucursal_activa = (
+        obtener_sucursal_activa(
+            request
+        )
+    )
+
+    if (
+        not query
+        or not sucursal_activa
+    ):
+
+        return JsonResponse({
+            "resultados": []
+        })
 
     mapa_categorias = {
         "moi": "MEC",
@@ -679,125 +2253,324 @@ def api_buscar_servicios_ot(request):
         "ele": "ELE",
     }
 
-    categoria_db = mapa_categorias.get(categoria, "MEC")
+    categoria_db = (
+        mapa_categorias.get(
+            categoria,
+            "MEC",
+        )
+    )
 
-    terminos = query.split()
+    terminos = (
+        query.split()
+    )
 
     servicios = (
         ServicioCatalogo.objects
         .filter(
             activo=True,
-            categoria=categoria_db
+            categoria=categoria_db,
         )
-        .prefetch_related("procedimientos")
+        .prefetch_related(
+            "procedimientos"
+        )
     )
 
-    for t in terminos:
-        if len(t) <= 2 and len(terminos) > 1:
+    for termino in terminos:
+
+        if (
+            len(
+                termino
+            ) <= 2
+            and len(
+                terminos
+            ) > 1
+        ):
+
             continue
 
         servicios = servicios.filter(
-            Q(codigo__icontains=t) |
-            Q(descripcion__icontains=t) |
-            Q(categoria__icontains=t) |
-            Q(procedimientos__descripcion__icontains=t)
+
+            Q(
+                codigo__icontains=termino
+            )
+            |
+            Q(
+                descripcion__icontains=termino
+            )
+            |
+            Q(
+                categoria__icontains=termino
+            )
+            |
+            Q(
+                procedimientos__descripcion__icontains=termino
+            )
         )
 
     data = []
 
-    for item in servicios.distinct()[:20]:
-        precio = item.obtener_precio_inteligente(
-            sucursal=sucursal_activa,
-            tipo_tarifa=tipo_tarifa_vehiculo,
-            variante=variante_precio,
+    for item in (
+        servicios
+        .distinct()[:20]
+    ):
+
+        precio = (
+            item.obtener_precio_inteligente(
+                sucursal=sucursal_activa,
+                tipo_tarifa=tipo_tarifa_vehiculo,
+                variante=variante_precio,
+            )
         )
 
         procedimientos = [
+
             {
                 "id": proc.id,
-                "descripcion": proc.descripcion,
-                "orden": proc.orden,
+                "descripcion": (
+                    proc.descripcion
+                ),
+                "orden": (
+                    proc.orden
+                ),
             }
-            for proc in item.procedimientos.all()
-            if getattr(proc, "visible_en_ot", True)
+
+            for proc
+            in item.procedimientos.all()
+
+            if getattr(
+                proc,
+                "visible_en_ot",
+                True,
+            )
         ]
 
         data.append({
-            "id": item.id,
-            "codigo": item.codigo,
-            "descripcion": item.descripcion,
-            "descripcion_display": f"[{item.get_categoria_display()}] {item.descripcion}",
-            "p_u": str(precio or "0.00"),
-            "precio_recomendado": str(precio or "0.00"),
-            "requiere_tipo_tarifa": item.requiere_tipo_tarifa,
-            "requiere_variante": item.requiere_variante,
-            "tipo_tarifa_aplicada": tipo_tarifa_vehiculo,
-            "variante_aplicada": variante_precio,
-            "procedimientos": procedimientos,
+
+            "id": (
+                item.id
+            ),
+
+            "codigo": (
+                item.codigo
+            ),
+
+            "descripcion": (
+                item.descripcion
+            ),
+
+            "descripcion_display": (
+                f"[{item.get_categoria_display()}] "
+                f"{item.descripcion}"
+            ),
+
+            "p_u": str(
+                precio
+                or "0.00"
+            ),
+
+            "precio_recomendado": str(
+                precio
+                or "0.00"
+            ),
+
+            "requiere_tipo_tarifa": (
+                item.requiere_tipo_tarifa
+            ),
+
+            "requiere_variante": (
+                item.requiere_variante
+            ),
+
+            "tipo_tarifa_aplicada": (
+                tipo_tarifa_vehiculo
+            ),
+
+            "variante_aplicada": (
+                variante_precio
+            ),
+
+            "procedimientos": (
+                procedimientos
+            ),
+
             "stock": 0,
         })
 
-    return JsonResponse({"resultados": data})
+    return JsonResponse({
+        "resultados": data
+    })
 
-## =================================================================================
+
+# =========================================================
 # API: AUTOCOMPLETADO DE PLACA PARA RECEPCIÓN
-# =================================================================================
+# =========================================================
+
 @login_required
 def buscar_vehiculo_por_placa(request):
-    placa = request.GET.get('placa', '').strip().upper()
-    
+
+    placa = (
+        request.GET
+        .get(
+            "placa",
+            "",
+        )
+        .strip()
+        .upper()
+    )
+
     if placa:
-        # Buscamos el último expediente de esta placa
-        expediente = ExpedienteVehiculo.objects.filter(placa=placa).order_by('-id').first()
-        
-        if expediente and expediente.cliente:
-            # FILTRO DE CALIDAD
+
+        expediente = (
+            ExpedienteVehiculo.objects
+            .filter(
+                placa=placa
+            )
+            .order_by(
+                "-id"
+            )
+            .first()
+        )
+
+        if (
+            expediente
+            and expediente.cliente
+        ):
+
+            cliente = (
+                expediente.cliente
+            )
+
             cedula_valida = ""
-            ced_temp = str(expediente.cliente.identificacion or "").strip()
-            if ced_temp.isdigit() and len(ced_temp) in [10, 13]:
-                cedula_valida = ced_temp
-                
+
+            ced_temp = str(
+                cliente.identificacion
+                or ""
+            ).strip()
+
+            if (
+                ced_temp.isdigit()
+                and len(
+                    ced_temp
+                ) in [10, 13]
+            ):
+
+                cedula_valida = (
+                    ced_temp
+                )
+
             return JsonResponse({
-                'encontrado': True,
-                'vehiculo': expediente.vehiculo or '',
-                'anio': expediente.anio_vehiculo or '',
-                'cliente': {
-                    'identificacion': cedula_valida, # <--- AHORA PASA POR EL FILTRO
-                    'nombre': expediente.cliente.nombre_completo
-                }
+
+                "encontrado": True,
+
+                "vehiculo": (
+                    expediente.vehiculo
+                    or ""
+                ),
+
+                "anio": (
+                    expediente.anio_vehiculo
+                    or ""
+                ),
+
+                "cliente": {
+
+                    "id": (
+                        cliente.id
+                    ),
+
+                    "identificacion": (
+                        cedula_valida
+                    ),
+
+                    "nombre": (
+                        cliente.nombre_completo
+                    ),
+
+                    "telefono": (
+                        cliente.telefono
+                        or ""
+                    ),
+
+                    "email": (
+                        cliente.email
+                        or ""
+                    ),
+                },
             })
-            
-    # Si no existe la placa o no tiene cliente
-    return JsonResponse({'encontrado': False})
+
+    return JsonResponse({
+        "encontrado": False
+    })
 
 
 # =========================================================
 # API: BÚSQUEDA RECOMENDACIONES TÉCNICAS
 # =========================================================
+
 @login_required
 def api_buscar_recomendaciones_ot(request):
-    query = request.GET.get("q", "").strip()
 
-    recomendaciones = PlantillaRecomendacion.objects.filter(
-        activo=True
-    ).order_by("orden_visual", "titulo")
+    query = (
+        request.GET
+        .get(
+            "q",
+            "",
+        )
+        .strip()
+    )
+
+    recomendaciones = (
+        PlantillaRecomendacion.objects
+        .filter(
+            activo=True
+        )
+        .order_by(
+            "orden_visual",
+            "titulo",
+        )
+    )
 
     if query:
-        terminos = query.split()
 
-        for t in terminos:
-            recomendaciones = recomendaciones.filter(
-                Q(titulo__icontains=t) |
-                Q(texto__icontains=t)
+        terminos = (
+            query.split()
+        )
+
+        for termino in terminos:
+
+            recomendaciones = (
+                recomendaciones
+                .filter(
+                    Q(
+                        titulo__icontains=termino
+                    )
+                    |
+                    Q(
+                        texto__icontains=termino
+                    )
+                )
             )
 
     data = []
 
-    for item in recomendaciones.distinct()[:20]:
+    for item in (
+        recomendaciones
+        .distinct()[:20]
+    ):
+
         data.append({
-            "id": item.id,
-            "titulo": item.titulo,
-            "texto": item.texto,
+
+            "id": (
+                item.id
+            ),
+
+            "titulo": (
+                item.titulo
+            ),
+
+            "texto": (
+                item.texto
+            ),
         })
 
     return JsonResponse({
