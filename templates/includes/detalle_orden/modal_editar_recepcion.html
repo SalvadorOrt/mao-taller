@@ -1595,11 +1595,17 @@
 
     function construirUrlActualizarCliente(clienteId) {
 
-        return URL_ACTUALIZAR_CLIENTE_BASE.replace(
-            /\/0\/$/,
-            `/${clienteId}/`
+    if (!clienteId) {
+        throw new Error(
+            'No se pudo determinar el ID del cliente.'
         );
     }
+
+    return URL_ACTUALIZAR_CLIENTE_BASE.replace(
+        '/0/',
+        `/${clienteId}/`
+    );
+}
 
 
     function mostrarEstadoGenerico(box, mensaje, tipo) {
