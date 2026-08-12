@@ -1,7 +1,7 @@
 from django.urls import path
 
-# Importamos los submódulos de vistas directamente
 from . import views
+
 from .views import (
     catalogo,
     dashboard,
@@ -11,44 +11,61 @@ from .views import (
     stock,
 )
 
+
 urlpatterns = [
 
     # =====================================================
     # USUARIOS
     # =====================================================
+
     path(
         "usuarios/",
         views.lista_usuarios,
         name="lista_usuarios",
     ),
+
     path(
         "usuarios/nuevo/",
         views.gestionar_usuario,
         name="crear_usuario",
     ),
+
     path(
         "usuarios/editar/<int:pk>/",
         views.gestionar_usuario,
         name="editar_usuario",
     ),
 
+
     # =====================================================
     # DASHBOARD
     # =====================================================
+
     path(
         "",
         dashboard.dashboard_inventario,
         name="inventario_dashboard",
     ),
 
+
     # =====================================================
     # CATÁLOGO
     # =====================================================
+
+    # -----------------------------------------------------
+    # LISTADO
+    # -----------------------------------------------------
+
     path(
         "catalogo/",
         catalogo.catalogo_lista,
         name="inventario_catalogo",
     ),
+
+
+    # -----------------------------------------------------
+    # CREAR PRODUCTO
+    # -----------------------------------------------------
 
     path(
         "catalogo/nuevo/",
@@ -56,11 +73,37 @@ urlpatterns = [
         name="inventario_catalogo_crear",
     ),
 
+
+    # -----------------------------------------------------
+    # DETALLE DEL PRODUCTO
+    #
+    # Ejemplo:
+    # /inventario/catalogo/123/
+    #
+    # 123 = ID de CodigoProducto
+    # -----------------------------------------------------
+
     path(
         "catalogo/<int:codigo_id>/",
         catalogo.catalogo_detalle,
         name="inventario_catalogo_detalle",
     ),
+
+
+    # -----------------------------------------------------
+    # EDITAR PRODUCTO
+    #
+    # Ejemplo:
+    # /inventario/catalogo/123/editar/
+    #
+    # Desde CodigoProducto obtenemos su Producto
+    # y editamos:
+    #
+    # - información del producto
+    # - imágenes
+    # - atributos
+    # - referencias comerciales
+    # -----------------------------------------------------
 
     path(
         "catalogo/<int:codigo_id>/editar/",
@@ -68,11 +111,21 @@ urlpatterns = [
         name="inventario_catalogo_editar",
     ),
 
+
+    # -----------------------------------------------------
+    # ACTIVAR / DESACTIVAR CÓDIGO
+    # -----------------------------------------------------
+
     path(
         "catalogo/<int:codigo_id>/toggle/",
         catalogo.catalogo_toggle_codigo,
         name="inventario_catalogo_toggle",
     ),
+
+
+    # -----------------------------------------------------
+    # AGREGAR NUEVA REFERENCIA AL MISMO PRODUCTO
+    # -----------------------------------------------------
 
     path(
         "catalogo/producto/<int:producto_id>/nuevo-codigo/",
@@ -80,11 +133,16 @@ urlpatterns = [
         name="inventario_catalogo_nuevo_codigo",
     ),
 
+
     # =====================================================
     # MAESTROS
     # =====================================================
 
-    # Categorías
+
+    # =====================================================
+    # CATEGORÍAS
+    # =====================================================
+
     path(
         "maestros/categorias/",
         maestros.categoria_lista,
@@ -109,7 +167,11 @@ urlpatterns = [
         name="categoria_crear_rapida",
     ),
 
-    # Marcas
+
+    # =====================================================
+    # MARCAS
+    # =====================================================
+
     path(
         "maestros/marcas/",
         maestros.marca_lista,
@@ -134,7 +196,11 @@ urlpatterns = [
         name="marca_crear_rapida",
     ),
 
-    # Atributos
+
+    # =====================================================
+    # ATRIBUTOS
+    # =====================================================
+
     path(
         "maestros/atributos/",
         maestros.atributo_lista,
@@ -159,9 +225,11 @@ urlpatterns = [
         name="atributo_crear_rapido",
     ),
 
+
     # =====================================================
     # STOCK
     # =====================================================
+
     path(
         "stock/",
         stock.stock_lista,
@@ -186,9 +254,11 @@ urlpatterns = [
         name="inventario_stock_editar_ubicacion",
     ),
 
+
     # =====================================================
     # MOVIMIENTOS
     # =====================================================
+
     path(
         "movimientos/",
         movimientos.movimiento_lista,
@@ -225,9 +295,11 @@ urlpatterns = [
         name="inventario_movimiento_salida_rapida",
     ),
 
+
     # =====================================================
     # INVENTARIO FÍSICO
     # =====================================================
+
     path(
         "fisico/",
         fisico.inventario_fisico_lista,
@@ -245,4 +317,5 @@ urlpatterns = [
         fisico.inventario_fisico_detalle,
         name="inventario_fisico_detalle",
     ),
+
 ]

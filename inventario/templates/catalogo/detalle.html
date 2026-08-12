@@ -1,255 +1,3422 @@
 {% extends "base.html" %}
 {% load static %}
 
+
 {% block title %}
-Detalle Repuesto
+{{ producto.sku_interno }} | MAO
 {% endblock %}
+
+
+{% block page_title %}
+Detalle de Repuesto
+{% endblock %}
+
+
+{% block page_subtitle %}
+Información completa del producto
+{% endblock %}
+
+
 
 {% block content %}
 
-<div class="page-header">
-    <div>
-        <h2>{{ producto.nombre_base }}</h2>
-        <p>{{ producto.sku_interno }} | {{ producto.categoria.nombre }}</p>
-    </div>
 
-    <div style="display:flex; gap:10px;">
-        <a href="{% url 'inventario_catalogo' %}"
-           class="btn-login">
-            Volver
-        </a>
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
 
-        <a href="{% url 'inventario_catalogo_editar' codigo.id %}"
-           class="btn-login primary">
-            Editar
-        </a>
-    </div>
-</div>
 
-<div class="form-card">
+<style>
 
-    <div class="form-section">
-        <h4>Producto base</h4>
+    /* =====================================================
+       PÁGINA
+    ===================================================== */
 
-        <div class="detail-grid">
-            <div>
-                <span class="field-label">SKU</span>
-                <strong>{{ producto.sku_interno }}</strong>
+    .producto-detalle-wrapper {
+        padding-top: 8px;
+        padding-bottom: 28px;
+    }
+
+
+    /* =====================================================
+       CABECERA
+    ===================================================== */
+
+    .producto-detalle-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 14px;
+
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+
+    .producto-detalle-header-info {
+        min-width: 0;
+    }
+
+
+    .producto-detalle-title {
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+        flex-wrap: wrap;
+
+        color: var(--text);
+
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+
+    .producto-detalle-subtitle {
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 10px;
+        font-weight: 500;
+
+        line-height: 1.4;
+    }
+
+
+    .producto-detalle-header-actions {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        flex-shrink: 0;
+    }
+
+
+    /* =====================================================
+       SKU
+    ===================================================== */
+
+    .producto-sku {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 23px;
+
+        padding: 3px 8px;
+
+        border: 1px solid #d2d2d7;
+        border-radius: 6px;
+
+        background: #f5f5f7;
+
+        color: #6e6e73;
+
+        font-size: 9px;
+        font-weight: 700;
+
+        letter-spacing: 0.03em;
+    }
+
+
+    /* =====================================================
+       BADGES
+    ===================================================== */
+
+    .producto-badges {
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+        flex-wrap: wrap;
+
+        margin-top: 7px;
+    }
+
+
+    .producto-badge {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 22px;
+
+        padding: 3px 8px;
+
+        border: 1px solid #e5e5ea;
+        border-radius: 999px;
+
+        background: #fbfbfd;
+
+        color: #6e6e73;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .producto-badge.activo {
+        background: #ecfdf3;
+        border-color: #b7efc5;
+
+        color: #248a3d;
+    }
+
+
+    .producto-badge.inactivo {
+        background: #fff1f0;
+        border-color: #ffd6d6;
+
+        color: #d70015;
+    }
+
+
+    .producto-badge.warning {
+        background: #fff8e6;
+        border-color: #ffe3a3;
+
+        color: #b26a00;
+    }
+
+
+    /* =====================================================
+       SECCIONES
+    ===================================================== */
+
+    .producto-detalle-section {
+        margin-bottom: 15px;
+    }
+
+
+    .producto-detalle-section .section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 10px;
+    }
+
+
+    /* =====================================================
+       INFORMACIÓN GENERAL
+    ===================================================== */
+
+    .producto-info-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+
+        border-top: 0;
+    }
+
+
+    .producto-info-item {
+        min-width: 0;
+
+        padding: 11px 13px;
+
+        border-right: 1px solid var(--border-soft);
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+
+    .producto-info-item:nth-child(4n) {
+        border-right: 0;
+    }
+
+
+    .producto-info-item.full {
+        grid-column: 1 / -1;
+
+        border-right: 0;
+    }
+
+
+    .producto-info-label {
+        margin-bottom: 4px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+
+    .producto-info-value {
+        color: var(--text);
+
+        font-size: 10px;
+        font-weight: 600;
+
+        line-height: 1.45;
+
+        word-break: break-word;
+    }
+
+
+    .producto-info-value.descripcion {
+        font-weight: 500;
+
+        white-space: pre-line;
+    }
+
+
+    /* =====================================================
+       CÓDIGO SELECCIONADO
+    ===================================================== */
+
+    .codigo-principal-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                5,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .codigo-principal-item {
+        padding: 10px 12px;
+
+        border-right: 1px solid var(--border-soft);
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+
+    .codigo-principal-item:nth-child(5n) {
+        border-right: 0;
+    }
+
+
+    .codigo-principal-label {
+        margin-bottom: 4px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .codigo-principal-value {
+        color: var(--text);
+
+        font-size: 10px;
+        font-weight: 650;
+
+        word-break: break-word;
+    }
+
+
+    .codigo-principal-value.precio {
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       IMÁGENES
+    ===================================================== */
+
+    .detalle-imagenes {
+        padding: 12px;
+    }
+
+
+    .detalle-carousel {
+        position: relative;
+
+        width: 100%;
+
+        min-height: 300px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        overflow: hidden;
+
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+
+        background: #f8f8fa;
+    }
+
+
+    .detalle-carousel-img {
+        display: block;
+
+        max-width: 100%;
+        max-height: 380px;
+
+        object-fit: contain;
+
+        cursor: zoom-in;
+    }
+
+
+    .detalle-carousel-arrow {
+        position: absolute;
+
+        top: 50%;
+
+        width: 34px;
+        height: 34px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        transform: translateY(-50%);
+
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.94);
+
+        color: #1d1d1f;
+
+        cursor: pointer;
+
+        z-index: 5;
+    }
+
+
+    .detalle-carousel-arrow:hover {
+        background: #fff;
+    }
+
+
+    .detalle-carousel-arrow.left {
+        left: 10px;
+    }
+
+
+    .detalle-carousel-arrow.right {
+        right: 10px;
+    }
+
+
+    .detalle-carousel-contador {
+        position: absolute;
+
+        right: 10px;
+        bottom: 10px;
+
+        padding: 4px 8px;
+
+        border-radius: 999px;
+
+        background: rgba(0, 0, 0, 0.65);
+
+        color: #fff;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    .detalle-imagenes-miniaturas {
+        display: flex;
+
+        gap: 7px;
+
+        margin-top: 9px;
+
+        overflow-x: auto;
+
+        padding-bottom: 2px;
+    }
+
+
+    .detalle-miniatura {
+        width: 58px;
+        min-width: 58px;
+
+        height: 58px;
+
+        padding: 2px;
+
+        overflow: hidden;
+
+        border: 1px solid #d2d2d7;
+        border-radius: 7px;
+
+        background: #fff;
+
+        cursor: pointer;
+    }
+
+
+    .detalle-miniatura.active {
+        border: 2px solid var(--accent);
+    }
+
+
+    .detalle-miniatura img {
+        width: 100%;
+        height: 100%;
+
+        object-fit: cover;
+
+        border-radius: 4px;
+    }
+
+
+    .detalle-imagenes-vacio {
+        min-height: 120px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        gap: 6px;
+
+        color: var(--muted);
+
+        font-size: 10px;
+    }
+
+
+    .detalle-imagenes-vacio i {
+        font-size: 25px;
+
+        opacity: 0.45;
+    }
+
+
+    /* =====================================================
+       FULLSCREEN
+    ===================================================== */
+
+    .detalle-fullscreen {
+        position: fixed;
+
+        inset: 0;
+
+        display: none;
+
+        z-index: 999999;
+
+        background: rgba(0, 0, 0, 0.94);
+    }
+
+
+    .detalle-fullscreen.active {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .detalle-fullscreen-header {
+        min-height: 55px;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 8px 14px;
+
+        color: #fff;
+
+        border-bottom:
+            1px solid
+            rgba(255, 255, 255, 0.15);
+    }
+
+
+    .detalle-fullscreen-info {
+        min-width: 0;
+    }
+
+
+    .detalle-fullscreen-nombre {
+        max-width: 500px;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        font-size: 11px;
+        font-weight: 650;
+    }
+
+
+    .detalle-fullscreen-contador {
+        margin-top: 2px;
+
+        color: rgba(255, 255, 255, 0.65);
+
+        font-size: 9px;
+    }
+
+
+    .detalle-fullscreen-controls {
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+    }
+
+
+    .detalle-fullscreen-btn {
+        min-width: 34px;
+        height: 34px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0 9px;
+
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 7px;
+
+        background: rgba(255,255,255,0.08);
+
+        color: #fff;
+
+        cursor: pointer;
+
+        font-size: 11px;
+    }
+
+
+    .detalle-fullscreen-btn:hover {
+        background: rgba(255,255,255,0.16);
+    }
+
+
+    .detalle-fullscreen-body {
+        position: relative;
+
+        flex: 1;
+
+        min-height: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        overflow: hidden;
+    }
+
+
+    .detalle-fullscreen-stage {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        overflow: auto;
+    }
+
+
+    .detalle-fullscreen-img {
+        max-width: 92%;
+        max-height: 88vh;
+
+        object-fit: contain;
+
+        transform-origin: center center;
+
+        transition: transform 0.12s ease;
+    }
+
+
+    .detalle-fullscreen-arrow {
+        position: absolute;
+
+        top: 50%;
+
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        transform: translateY(-50%);
+
+        border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 50%;
+
+        background: rgba(0,0,0,0.35);
+
+        color: #fff;
+
+        z-index: 5;
+
+        cursor: pointer;
+    }
+
+
+    .detalle-fullscreen-arrow.left {
+        left: 14px;
+    }
+
+
+    .detalle-fullscreen-arrow.right {
+        right: 14px;
+    }
+
+
+    /* =====================================================
+       TABLAS
+    ===================================================== */
+
+    .producto-detalle-wrapper .ot-table {
+        font-size: 9px;
+    }
+
+
+    .producto-detalle-wrapper .ot-table thead th {
+        padding: 7px 8px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 700;
+
+        white-space: nowrap;
+
+        text-transform: uppercase;
+    }
+
+
+    .producto-detalle-wrapper .ot-table tbody td {
+        padding: 8px;
+
+        vertical-align: middle;
+    }
+
+
+    .producto-detalle-wrapper .ot-table tbody tr:hover td {
+        background: #fbfbfd;
+    }
+
+
+    .codigo-seleccionado td {
+        background: #f3f8ff !important;
+    }
+
+
+    /* =====================================================
+       CÓDIGO
+    ===================================================== */
+
+    .codigo-text {
+        font-family:
+            ui-monospace,
+            SFMono-Regular,
+            Menlo,
+            Monaco,
+            Consolas,
+            monospace;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+
+    /* =====================================================
+       PRECIOS
+    ===================================================== */
+
+    .precio-venta {
+        color: #248a3d;
+
+        font-weight: 750;
+    }
+
+
+    .precio-compra {
+        color: #6e6e73;
+
+        font-weight: 650;
+    }
+
+
+    /* =====================================================
+       ESTADO CÓDIGO
+    ===================================================== */
+
+    .codigo-estado {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 21px;
+
+        padding: 3px 7px;
+
+        border-radius: 999px;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .codigo-estado.activo {
+        background: #ecfdf3;
+        color: #248a3d;
+    }
+
+
+    .codigo-estado.inactivo {
+        background: #fff1f0;
+        color: #d70015;
+    }
+
+
+    /* =====================================================
+       ATRIBUTOS
+    ===================================================== */
+
+    .atributo-nombre {
+        font-weight: 650;
+    }
+
+
+    .atributo-unidad {
+        margin-left: 3px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       STOCK
+    ===================================================== */
+
+    .stock-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                minmax(170px, 1fr)
+            );
+
+        gap: 9px;
+
+        padding: 12px;
+    }
+
+
+    .stock-card {
+        padding: 10px 11px;
+
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+
+        background: #fbfbfd;
+    }
+
+
+    .stock-sucursal {
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+
+    .stock-cantidad {
+        margin-top: 3px;
+
+        color: var(--text);
+
+        font-size: 17px;
+        font-weight: 750;
+    }
+
+
+    .stock-ubicacion {
+        margin-top: 4px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       MOVIMIENTOS
+    ===================================================== */
+
+    .movimiento-tipo {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 20px;
+
+        padding: 3px 7px;
+
+        border-radius: 999px;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    .movimiento-tipo.entrada {
+        background: #ecfdf3;
+        color: #248a3d;
+    }
+
+
+    .movimiento-tipo.salida {
+        background: #fff1f0;
+        color: #d70015;
+    }
+
+
+    .movimiento-tipo.ajuste {
+        background: #eef5ff;
+        color: #0066cc;
+    }
+
+
+    /* =====================================================
+       VACÍO
+    ===================================================== */
+
+    .detalle-empty {
+        padding: 22px;
+
+        text-align: center;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+
+    .detalle-empty i {
+        display: block;
+
+        margin-bottom: 5px;
+
+        font-size: 18px;
+
+        opacity: 0.45;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 900px) {
+
+        .producto-info-grid {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .producto-info-item:nth-child(4n) {
+            border-right:
+                1px solid
+                var(--border-soft);
+        }
+
+
+        .producto-info-item:nth-child(2n) {
+            border-right: 0;
+        }
+
+
+        .codigo-principal-grid {
+            grid-template-columns:
+                repeat(
+                    2,
+                    minmax(0, 1fr)
+                );
+        }
+
+
+        .codigo-principal-item:nth-child(5n) {
+            border-right:
+                1px solid
+                var(--border-soft);
+        }
+
+
+        .codigo-principal-item:nth-child(2n) {
+            border-right: 0;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .producto-detalle-header {
+            align-items: flex-start;
+
+            flex-direction: column;
+        }
+
+
+        .producto-detalle-header-actions {
+            width: 100%;
+
+            justify-content: flex-end;
+        }
+
+
+        .producto-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .producto-info-item {
+            border-right: 0 !important;
+        }
+
+
+        .codigo-principal-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .codigo-principal-item {
+            border-right: 0 !important;
+        }
+
+
+        .detalle-carousel {
+            min-height: 220px;
+        }
+
+    }
+
+</style>
+
+
+
+<div
+    class="
+        container
+        ot-wrapper
+        producto-detalle-wrapper
+    "
+>
+
+
+    <!-- ==================================================
+         CABECERA
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-header
+        "
+    >
+
+
+        <div class="producto-detalle-header-info">
+
+
+            <div class="producto-detalle-title">
+
+
+                <span>
+                    {{ producto.nombre_base }}
+                </span>
+
+
+                <span class="producto-sku">
+                    {{ producto.sku_interno }}
+                </span>
+
+
             </div>
 
-            <div>
-                <span class="field-label">Categoría</span>
-                <strong>{{ producto.categoria.nombre }}</strong>
+
+
+            <div class="producto-detalle-subtitle">
+
+                {{ producto.categoria.nombre }}
+
+                {% if codigo.marca %}
+                    · {{ codigo.marca.nombre }}
+                {% endif %}
+
+                · {{ codigo.codigo }}
+
             </div>
 
-            <div>
-                <span class="field-label">Estado</span>
+
+
+            <div class="producto-badges">
+
+
                 {% if producto.activo %}
-                    <span class="badge-success">Activo</span>
+
+                    <span class="producto-badge activo">
+
+                        <i
+                            class="bi bi-check-circle"
+                            style="margin-right:4px;"
+                        ></i>
+
+                        PRODUCTO ACTIVO
+
+                    </span>
+
                 {% else %}
-                    <span class="badge-danger">Inactivo</span>
+
+                    <span class="producto-badge inactivo">
+
+                        <i
+                            class="bi bi-x-circle"
+                            style="margin-right:4px;"
+                        ></i>
+
+                        PRODUCTO INACTIVO
+
+                    </span>
+
                 {% endif %}
+
+
+
+                {% if producto.descontinuado %}
+
+                    <span class="producto-badge inactivo">
+
+                        DESCONTINUADO
+
+                    </span>
+
+                {% endif %}
+
+
+
+                {% if producto.datos_incompletos %}
+
+                    <span class="producto-badge warning">
+
+                        DATOS INCOMPLETOS
+
+                    </span>
+
+                {% endif %}
+
+
+
+                <span class="producto-badge">
+
+                    {{ producto.get_origen_display }}
+
+                </span>
+
+
             </div>
 
-            <div>
-                <span class="field-label">Precio secreto</span>
-                <strong>{{ precio_secreto }}</strong>
-            </div>
         </div>
 
-        {% if producto.descripcion %}
-            <div style="margin-top:15px;">
-                <span class="field-label">Descripción</span>
-                <p>{{ producto.descripcion }}</p>
-            </div>
-        {% endif %}
-    </div>
 
-    <div class="form-section">
-        <h4>Atributos técnicos</h4>
 
-        <div class="ot-table-wrap">
-            <table class="ot-table">
-                <thead>
-                    <tr>
-                        <th>Atributo</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
+        <div class="producto-detalle-header-actions">
 
-                <tbody>
-                    {% for atributo in atributos %}
-                        <tr>
-                            <td>{{ atributo.atributo }}</td>
-                            <td>{{ atributo.valor }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="2" style="text-align:center; color:#86868b;">
-                                Sin atributos registrados.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+            <!--
+                IMPORTANTE:
+                Si en urls.py tu name para editar tiene otro
+                nombre, cambia solamente esta línea.
+            -->
+
+            <a
+                href="{% url 'inventario_catalogo_editar' codigo.id %}"
+                class="btn-login primary"
+            >
+
+                <i
+                    class="bi bi-pencil-square"
+                    style="margin-right:5px;"
+                ></i>
+
+                Editar
+
+            </a>
+
+
+
+            <a
+                href="{% url 'inventario_catalogo' %}"
+                class="btn-login"
+            >
+
+                <i
+                    class="bi bi-arrow-left"
+                    style="margin-right:5px;"
+                ></i>
+
+                Catálogo
+
+            </a>
+
+
         </div>
+
     </div>
 
-    <div class="form-section">
-        <h4>Códigos comerciales</h4>
 
-        <div class="ot-table-wrap">
-            <table class="ot-table">
-                <thead>
-                    <tr>
-                        <th>Marca</th>
-                        <th>Tipo</th>
-                        <th>Código</th>
-                        <th>Barras</th>
-                        <th>Nombre comercial</th>
-                        <th>Compra</th>
-                        <th>Venta</th>
-                        <th>Secreto</th>
-                        <th>Activo</th>
-                    </tr>
-                </thead>
 
-                <tbody>
-                    {% for cod in codigos_equivalentes %}
-                        <tr {% if cod.id == codigo.id %}style="background:#f5f5f7;"{% endif %}>
-                            <td>{{ cod.marca.nombre }}</td>
-                            <td>{{ cod.get_tipo_codigo_display }}</td>
-                            <td><strong>{{ cod.codigo }}</strong></td>
-                            <td>{{ cod.codigo_barras|default:"-" }}</td>
-                            <td>{{ cod.nombre_comercial|default:"-" }}</td>
-                            <td>
-                                {% if cod.precio_compra %}
-                                    ${{ cod.precio_compra }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if cod.precio_venta %}
-                                    ${{ cod.precio_venta }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td><strong>{{ cod.precio_secreto }}</strong></td>
-                            <td>
-                                {% if cod.activo %}
-                                    <span class="badge-success">Sí</span>
-                                {% else %}
-                                    <span class="badge-danger">No</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="9" style="text-align:center; color:#86868b;">
-                                Sin códigos comerciales.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- ==================================================
+         IMÁGENES
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Imágenes
+            </span>
+
+
+            <span
+                style="
+                    color:var(--muted);
+                    font-size:8px;
+                    font-weight:600;
+                "
+            >
+                {{ imagenes|length }}
+                imagen{{ imagenes|length|pluralize:"es" }}
+            </span>
+
+
         </div>
-    </div>
 
-    <div class="form-section">
-    <h4>Imágenes del producto</h4>
 
-    <div class="preview-grid">
-        {% for imagen in imagenes %}
-            <div class="preview-item">
-                <img
-                    src="{{ imagen.imagen.url }}"
-                    alt="{{ imagen.descripcion|default:'Imagen de producto' }}"
-                    class="preview-img">
 
-                {% if imagen.descripcion %}
-                    <div class="preview-nombre">
-                        {{ imagen.descripcion }}
+        <div class="detalle-imagenes">
+
+
+            {% if imagenes %}
+
+
+                <div class="detalle-carousel">
+
+
+                    <button
+                        type="button"
+                        class="
+                            detalle-carousel-arrow
+                            left
+                        "
+                        id="detalleImagenAnterior"
+                        title="Imagen anterior"
+                    >
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+
+
+
+                    <img
+                        id="detalleImagenPrincipal"
+                        class="detalle-carousel-img"
+
+                        src="{{ imagenes.0.imagen.url }}"
+
+                        alt="
+                            {{ imagenes.0.descripcion|default:producto.nombre_base }}
+                        "
+
+                        onclick="abrirImagenDetalleFullscreen()"
+                    >
+
+
+
+                    <button
+                        type="button"
+                        class="
+                            detalle-carousel-arrow
+                            right
+                        "
+                        id="detalleImagenSiguiente"
+                        title="Imagen siguiente"
+                    >
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+
+
+
+                    <div class="detalle-carousel-contador">
+
+                        <span id="detalleImagenNumero">
+                            1
+                        </span>
+
+                        /
+
+                        <span>
+                            {{ imagenes|length }}
+                        </span>
+
                     </div>
-                {% endif %}
+
+                </div>
+
+
+
+                <!-- MINIATURAS -->
+
+                <div
+                    class="detalle-imagenes-miniaturas"
+                    id="detalleImagenMiniaturas"
+                >
+
+
+                    {% for imagen in imagenes %}
+
+                        <button
+                            type="button"
+
+                            class="
+                                detalle-miniatura
+                                {% if forloop.first %}
+                                    active
+                                {% endif %}
+                            "
+
+                            data-index="{{ forloop.counter0 }}"
+
+                            data-url="{{ imagen.imagen.url }}"
+
+                            data-descripcion="
+                                {{ imagen.descripcion|default:producto.nombre_base }}
+                            "
+
+                            onclick="
+                                seleccionarImagenDetalle(
+                                    {{ forloop.counter0 }}
+                                )
+                            "
+                        >
+
+                            <img
+                                src="{{ imagen.imagen.url }}"
+                                alt="
+                                    {{ imagen.descripcion|default:producto.nombre_base }}
+                                "
+                            >
+
+                        </button>
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <div class="detalle-imagenes-vacio">
+
+                    <i class="bi bi-image"></i>
+
+                    <span>
+                        Este producto todavía no tiene imágenes.
+                    </span>
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         INFORMACIÓN GENERAL
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Información del producto
+            </span>
+
+
+            <i
+                class="bi bi-box"
+                style="
+                    color:var(--accent);
+                    font-size:12px;
+                "
+            ></i>
+
+
+        </div>
+
+
+
+        <div class="producto-info-grid">
+
+
+            <div class="producto-info-item">
+
+                <div class="producto-info-label">
+                    SKU interno
+                </div>
+
+                <div class="producto-info-value">
+                    {{ producto.sku_interno }}
+                </div>
+
             </div>
-        {% empty %}
-            <p style="color:#86868b;">
-                Sin imágenes registradas para este producto.
-            </p>
-        {% endfor %}
-    </div>
-</div>
 
-    <div class="form-section">
-        <h4>Stock por sucursal</h4>
+
+
+            <div class="producto-info-item">
+
+                <div class="producto-info-label">
+                    Categoría
+                </div>
+
+                <div class="producto-info-value">
+                    {{ producto.categoria.nombre }}
+                </div>
+
+            </div>
+
+
+
+            <div class="producto-info-item">
+
+                <div class="producto-info-label">
+                    Prefijo
+                </div>
+
+                <div class="producto-info-value">
+                    {{ producto.categoria.prefijo_sku }}
+                </div>
+
+            </div>
+
+
+
+            <div class="producto-info-item">
+
+                <div class="producto-info-label">
+                    Origen
+                </div>
+
+                <div class="producto-info-value">
+                    {{ producto.get_origen_display }}
+                </div>
+
+            </div>
+
+
+
+            <div class="producto-info-item full">
+
+                <div class="producto-info-label">
+                    Nombre base
+                </div>
+
+                <div class="producto-info-value">
+                    {{ producto.nombre_base }}
+                </div>
+
+            </div>
+
+
+
+            <div class="producto-info-item full">
+
+                <div class="producto-info-label">
+                    Descripción
+                </div>
+
+                <div
+                    class="
+                        producto-info-value
+                        descripcion
+                    "
+                >
+                    {{ producto.descripcion|default:"Sin descripción registrada." }}
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         REFERENCIA SELECCIONADA
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Referencia seleccionada
+            </span>
+
+
+            <span class="producto-sku">
+                {{ codigo.codigo }}
+            </span>
+
+
+        </div>
+
+
+
+        <div class="codigo-principal-grid">
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Marca
+                </div>
+
+                <div class="codigo-principal-value">
+                    {{ codigo.marca.nombre }}
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Tipo
+                </div>
+
+                <div class="codigo-principal-value">
+                    {{ codigo.get_tipo_codigo_display }}
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Código
+                </div>
+
+                <div
+                    class="
+                        codigo-principal-value
+                        codigo-text
+                    "
+                >
+                    {{ codigo.codigo }}
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Código barras
+                </div>
+
+                <div
+                    class="
+                        codigo-principal-value
+                        codigo-text
+                    "
+                >
+                    {{ codigo.codigo_barras|default:"-" }}
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Estado
+                </div>
+
+                <div class="codigo-principal-value">
+
+                    {% if codigo.activo %}
+
+                        <span class="codigo-estado activo">
+                            ACTIVO
+                        </span>
+
+                    {% else %}
+
+                        <span class="codigo-estado inactivo">
+                            INACTIVO
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Nombre comercial
+                </div>
+
+                <div class="codigo-principal-value">
+                    {{ codigo.nombre_comercial|default:"-" }}
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Presentación
+                </div>
+
+                <div class="codigo-principal-value">
+
+                    {% if codigo.presentacion_cantidad %}
+
+                        {{ codigo.presentacion_cantidad|floatformat:2 }}
+
+                        {{ codigo.presentacion_unidad|default:"" }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Precio compra
+                </div>
+
+                <div
+                    class="
+                        codigo-principal-value
+                        precio
+                        precio-compra
+                    "
+                >
+
+                    {% if codigo.precio_compra != None %}
+
+                        ${{ codigo.precio_compra|floatformat:2 }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Precio venta
+                </div>
+
+                <div
+                    class="
+                        codigo-principal-value
+                        precio
+                        precio-venta
+                    "
+                >
+
+                    {% if codigo.precio_venta != None %}
+
+                        ${{ codigo.precio_venta|floatformat:2 }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Precio secreto
+                </div>
+
+                <div
+                    class="
+                        codigo-principal-value
+                        codigo-text
+                    "
+                >
+                    {{ precio_secreto|default:"---" }}
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    Margen
+                </div>
+
+                <div class="codigo-principal-value">
+
+                    {{ codigo.margen_ganancia_porcentaje|floatformat:2 }}%
+
+                </div>
+
+            </div>
+
+
+
+            <div class="codigo-principal-item">
+
+                <div class="codigo-principal-label">
+                    IVA costo
+                </div>
+
+                <div class="codigo-principal-value">
+
+                    {{ codigo.porcentaje_iva_costo|floatformat:2 }}%
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         ATRIBUTOS TÉCNICOS
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Atributos técnicos
+            </span>
+
+
+            <span
+                style="
+                    color:var(--muted);
+                    font-size:8px;
+                "
+            >
+                {{ atributos|length }}
+                registrado{{ atributos|length|pluralize:"s" }}
+            </span>
+
+
+        </div>
+
+
 
         <div class="ot-table-wrap">
+
+
             <table class="ot-table">
+
+
                 <thead>
+
                     <tr>
-                        <th>Sucursal</th>
-                        <th>Cantidad</th>
-                        <th>Ubicación</th>
+
+                        <th style="width:45%;">
+                            Atributo
+                        </th>
+
+                        <th style="width:55%;">
+                            Valor
+                        </th>
+
                     </tr>
+
                 </thead>
 
+
+
                 <tbody>
-                    {% for stock in stocks %}
+
+
+                    {% for item in atributos %}
+
                         <tr>
-                            <td>{{ stock.sucursal.nombre }}</td>
-                            <td><strong>{{ stock.cantidad }}</strong></td>
-                            <td>{{ stock.ubicacion|default:"-" }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="3" style="text-align:center; color:#86868b;">
-                                Sin stock registrado.
+
+                            <td>
+
+                                <span class="atributo-nombre">
+                                    {{ item.atributo.nombre }}
+                                </span>
+
+
+                                {% if item.atributo.unidad %}
+
+                                    <span class="atributo-unidad">
+
+                                        ({{ item.atributo.unidad }})
+
+                                    </span>
+
+                                {% endif %}
+
                             </td>
+
+
+                            <td>
+
+                                <strong>
+                                    {{ item.valor }}
+                                </strong>
+
+                                {% if item.atributo.unidad %}
+
+                                    <span
+                                        style="
+                                            margin-left:3px;
+                                            color:var(--muted);
+                                        "
+                                    >
+                                        {{ item.atributo.unidad }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
                         </tr>
+
+
+                    {% empty %}
+
+
+                        <tr>
+
+                            <td
+                                colspan="2"
+                                class="detalle-empty"
+                            >
+
+                                <i class="bi bi-sliders"></i>
+
+                                No existen atributos técnicos
+                                registrados para este producto.
+
+                            </td>
+
+                        </tr>
+
+
                     {% endfor %}
+
+
                 </tbody>
+
             </table>
+
         </div>
+
     </div>
 
-    <div class="form-section">
-        <h4>Últimos movimientos</h4>
+
+
+    <!-- ==================================================
+         CÓDIGOS / REFERENCIAS
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Referencias comerciales
+            </span>
+
+
+            <span
+                style="
+                    color:var(--muted);
+                    font-size:8px;
+                "
+            >
+                {{ codigos_equivalentes|length }}
+                referencia{{ codigos_equivalentes|length|pluralize:"s" }}
+            </span>
+
+
+        </div>
+
+
 
         <div class="ot-table-wrap">
-            <table class="ot-table">
+
+
+            <table
+                class="ot-table"
+                style="min-width:1050px;"
+            >
+
+
                 <thead>
+
                     <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Sucursal</th>
-                        <th>Cantidad</th>
-                        <th>Referencia</th>
+
+                        <th>
+                            Marca
+                        </th>
+
+                        <th>
+                            Tipo
+                        </th>
+
+                        <th>
+                            Código
+                        </th>
+
+                        <th>
+                            Barras
+                        </th>
+
+                        <th>
+                            Nombre comercial
+                        </th>
+
+                        <th>
+                            Presentación
+                        </th>
+
+                        <th>
+                            Compra
+                        </th>
+
+                        <th>
+                            Venta
+                        </th>
+
+                        <th>
+                            Estado
+                        </th>
+
+                        <th style="text-align:center;">
+                            Ver
+                        </th>
+
                     </tr>
+
                 </thead>
 
+
+
                 <tbody>
-                    {% for mov in movimientos %}
-                        <tr>
-                            <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
-                            <td>{{ mov.get_tipo_movimiento_display }}</td>
-                            <td>{{ mov.sucursal.nombre }}</td>
-                            <td>{{ mov.cantidad }}</td>
-                            <td>{{ mov.referencia|default:"-" }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="5" style="text-align:center; color:#86868b;">
-                                Sin movimientos registrados.
+
+
+                    {% for ref in codigos_equivalentes %}
+
+
+                        <tr
+                            class="
+                                {% if ref.id == codigo.id %}
+                                    codigo-seleccionado
+                                {% endif %}
+                            "
+                        >
+
+
+                            <td>
+                                {{ ref.marca.nombre }}
                             </td>
+
+
+                            <td>
+                                {{ ref.get_tipo_codigo_display }}
+                            </td>
+
+
+                            <td>
+
+                                <span class="codigo-text">
+                                    {{ ref.codigo }}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="codigo-text">
+                                    {{ ref.codigo_barras|default:"-" }}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                {{ ref.nombre_comercial|default:"-" }}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if ref.presentacion_cantidad %}
+
+                                    {{ ref.presentacion_cantidad|floatformat:2 }}
+
+                                    {{ ref.presentacion_unidad|default:"" }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if ref.precio_compra != None %}
+
+                                    <span class="precio-compra">
+
+                                        ${{ ref.precio_compra|floatformat:2 }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if ref.precio_venta != None %}
+
+                                    <span class="precio-venta">
+
+                                        ${{ ref.precio_venta|floatformat:2 }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if ref.activo %}
+
+                                    <span class="codigo-estado activo">
+                                        ACTIVO
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="codigo-estado inactivo">
+                                        INACTIVO
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td style="text-align:center;">
+
+                                {% if ref.id == codigo.id %}
+
+                                    <span
+                                        class="btn-login"
+                                        style="
+                                            pointer-events:none;
+                                            opacity:.55;
+                                            min-width:30px;
+                                            padding:5px 8px;
+                                        "
+                                    >
+                                        <i class="bi bi-check-lg"></i>
+                                    </span>
+
+                                {% else %}
+
+                                    <a
+                                        href="{% url 'inventario_catalogo_detalle' ref.id %}"
+                                        class="btn-login"
+                                        title="Ver esta referencia"
+                                        style="
+                                            min-width:30px;
+                                            padding:5px 8px;
+                                        "
+                                    >
+
+                                        <i class="bi bi-eye"></i>
+
+                                    </a>
+
+                                {% endif %}
+
+                            </td>
+
+
                         </tr>
+
+
+                    {% empty %}
+
+
+                        <tr>
+
+                            <td
+                                colspan="10"
+                                class="detalle-empty"
+                            >
+
+                                <i class="bi bi-upc-scan"></i>
+
+                                No existen referencias registradas.
+
+                            </td>
+
+                        </tr>
+
+
                     {% endfor %}
+
+
                 </tbody>
+
+
             </table>
+
         </div>
+
     </div>
 
+
+
+    <!-- ==================================================
+         STOCK REFERENCIA ACTUAL
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Stock por sucursal
+            </span>
+
+
+            <span
+                style="
+                    color:var(--muted);
+                    font-size:8px;
+                "
+            >
+                Referencia:
+                {{ codigo.codigo }}
+            </span>
+
+
+        </div>
+
+
+
+        {% if stocks %}
+
+
+            <div class="stock-grid">
+
+
+                {% for stock in stocks %}
+
+
+                    <div class="stock-card">
+
+
+                        <div class="stock-sucursal">
+
+                            <i
+                                class="bi bi-building"
+                                style="margin-right:4px;"
+                            ></i>
+
+                            {{ stock.sucursal.nombre }}
+
+                        </div>
+
+
+                        <div class="stock-cantidad">
+
+                            {{ stock.cantidad|floatformat:2 }}
+
+                        </div>
+
+
+                        <div class="stock-ubicacion">
+
+                            <i
+                                class="bi bi-geo-alt"
+                                style="margin-right:3px;"
+                            ></i>
+
+                            {% if stock.ubicacion %}
+
+                                {{ stock.ubicacion }}
+
+                            {% else %}
+
+                                Sin ubicación asignada
+
+                            {% endif %}
+
+                        </div>
+
+
+                    </div>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="detalle-empty">
+
+                <i class="bi bi-boxes"></i>
+
+                No existe información de stock para esta referencia.
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+
+    <!-- ==================================================
+         MOVIMIENTOS
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            producto-detalle-section
+        "
+    >
+
+
+        <div class="section-title">
+
+
+            <span>
+                Últimos movimientos
+            </span>
+
+
+            <span
+                style="
+                    color:var(--muted);
+                    font-size:8px;
+                "
+            >
+                Últimos 20 · {{ codigo.codigo }}
+            </span>
+
+
+        </div>
+
+
+
+        <div class="ot-table-wrap">
+
+
+            <table
+                class="ot-table"
+                style="min-width:800px;"
+            >
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Fecha
+                        </th>
+
+                        <th>
+                            Sucursal
+                        </th>
+
+                        <th>
+                            Tipo
+                        </th>
+
+                        <th>
+                            Cantidad
+                        </th>
+
+                        <th>
+                            P. unitario
+                        </th>
+
+                        <th>
+                            Referencia
+                        </th>
+
+                        <th>
+                            Observación
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+
+                <tbody>
+
+
+                    {% for movimiento in movimientos %}
+
+
+                        <tr>
+
+
+                            <td>
+
+                                {{ movimiento.fecha|date:"d/m/Y H:i" }}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ movimiento.sucursal.nombre|default:"-" }}
+
+                            </td>
+
+
+                            <td>
+
+                                <span
+                                    class="
+                                        movimiento-tipo
+                                        {{ movimiento.tipo_movimiento }}
+                                    "
+                                >
+
+                                    {{ movimiento.get_tipo_movimiento_display }}
+
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    {{ movimiento.cantidad|floatformat:2 }}
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+
+                                {% if movimiento.precio_unitario != None %}
+
+                                    ${{ movimiento.precio_unitario|floatformat:2 }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ movimiento.referencia|default:"-" }}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ movimiento.observacion|default:"-"|truncatechars:80 }}
+
+                            </td>
+
+
+                        </tr>
+
+
+                    {% empty %}
+
+
+                        <tr>
+
+                            <td
+                                colspan="7"
+                                class="detalle-empty"
+                            >
+
+                                <i class="bi bi-clock-history"></i>
+
+                                Esta referencia todavía no tiene
+                                movimientos de inventario.
+
+                            </td>
+
+                        </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         BOTONES INFERIORES
+    =================================================== -->
+
+    <div
+        style="
+            display:flex;
+            justify-content:flex-end;
+            align-items:center;
+            gap:8px;
+
+            margin-top:15px;
+
+            padding:10px 12px;
+
+            border:1px solid var(--border);
+            border-radius:10px;
+
+            background:#fff;
+        "
+    >
+
+
+        <a
+            href="{% url 'inventario_catalogo' %}"
+            class="btn-login"
+        >
+
+            <i
+                class="bi bi-arrow-left"
+                style="margin-right:5px;"
+            ></i>
+
+            Volver al catálogo
+
+        </a>
+
+
+
+        <a
+            href="{% url 'inventario_catalogo_editar' codigo.id %}"
+            class="btn-login primary"
+        >
+
+            <i
+                class="bi bi-pencil-square"
+                style="margin-right:5px;"
+            ></i>
+
+            Editar producto
+
+        </a>
+
+
+    </div>
+
+
 </div>
+
+
+
+<!-- =====================================================
+     FULLSCREEN DE IMÁGENES
+===================================================== -->
+
+{% if imagenes %}
+
+<div
+    id="detalleImagenFullscreen"
+    class="detalle-fullscreen"
+>
+
+
+    <div class="detalle-fullscreen-header">
+
+
+        <div class="detalle-fullscreen-info">
+
+
+            <div
+                id="detalleFullscreenNombre"
+                class="detalle-fullscreen-nombre"
+            >
+                Imagen
+            </div>
+
+
+            <div
+                id="detalleFullscreenContador"
+                class="detalle-fullscreen-contador"
+            >
+                1 de {{ imagenes|length }}
+            </div>
+
+
+        </div>
+
+
+
+        <div class="detalle-fullscreen-controls">
+
+
+            <button
+                type="button"
+                class="detalle-fullscreen-btn"
+                onclick="cambiarZoomDetalle(-0.25)"
+                title="Alejar"
+            >
+
+                <i class="bi bi-dash-lg"></i>
+
+            </button>
+
+
+
+            <span
+                id="detalleZoomNivel"
+                class="detalle-fullscreen-btn"
+                style="
+                    cursor:default;
+                    min-width:58px;
+                "
+            >
+                100%
+            </span>
+
+
+
+            <button
+                type="button"
+                class="detalle-fullscreen-btn"
+                onclick="cambiarZoomDetalle(0.25)"
+                title="Acercar"
+            >
+
+                <i class="bi bi-plus-lg"></i>
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="detalle-fullscreen-btn"
+                onclick="resetZoomDetalle()"
+                title="Restablecer zoom"
+            >
+
+                <i class="bi bi-arrow-counterclockwise"></i>
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="detalle-fullscreen-btn"
+                onclick="cerrarImagenDetalleFullscreen()"
+                title="Minimizar"
+            >
+
+                <i class="bi bi-fullscreen-exit"></i>
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="detalle-fullscreen-body">
+
+
+        <button
+            type="button"
+            class="
+                detalle-fullscreen-arrow
+                left
+            "
+            onclick="imagenDetalleAnterior()"
+        >
+
+            <i class="bi bi-chevron-left"></i>
+
+        </button>
+
+
+
+        <div
+            class="detalle-fullscreen-stage"
+            id="detalleFullscreenStage"
+        >
+
+
+            <img
+                id="detalleFullscreenImg"
+                class="detalle-fullscreen-img"
+                src=""
+                alt="Imagen de producto"
+                draggable="false"
+            >
+
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="
+                detalle-fullscreen-arrow
+                right
+            "
+            onclick="imagenDetalleSiguiente()"
+        >
+
+            <i class="bi bi-chevron-right"></i>
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+{% endif %}
+
+
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+
+{% if imagenes %}
+
+<script>
+
+(function () {
+
+    "use strict";
+
+
+    /* =====================================================
+       ESTADO
+    ===================================================== */
+
+    const estado = {
+
+        indice: 0,
+
+        zoom: 1,
+
+        zoomMin: 0.5,
+
+        zoomMax: 4,
+
+        zoomPaso: 0.25,
+
+        imagenes: []
+
+    };
+
+
+    /* =====================================================
+       LEER IMÁGENES DEL HTML
+    ===================================================== */
+
+    function cargarImagenes() {
+
+        const miniaturas =
+            document.querySelectorAll(
+                ".detalle-miniatura"
+            );
+
+
+        estado.imagenes =
+            Array.from(
+                miniaturas
+            ).map(
+                function (boton) {
+
+                    return {
+
+                        url:
+                            boton.dataset.url,
+
+                        descripcion:
+                            boton.dataset.descripcion
+                            ||
+                            "Imagen del producto"
+
+                    };
+
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       MOSTRAR
+    ===================================================== */
+
+    function mostrarImagen(indice) {
+
+        const total =
+            estado.imagenes.length;
+
+
+        if (!total) {
+            return;
+        }
+
+
+        if (indice < 0) {
+            indice =
+                total - 1;
+        }
+
+
+        if (indice >= total) {
+            indice = 0;
+        }
+
+
+        estado.indice =
+            indice;
+
+
+        const imagen =
+            estado.imagenes[
+                indice
+            ];
+
+
+        const principal =
+            document.getElementById(
+                "detalleImagenPrincipal"
+            );
+
+
+        const numero =
+            document.getElementById(
+                "detalleImagenNumero"
+            );
+
+
+        if (principal) {
+
+            principal.src =
+                imagen.url;
+
+            principal.alt =
+                imagen.descripcion;
+
+        }
+
+
+        if (numero) {
+
+            numero.textContent =
+                String(
+                    indice + 1
+                );
+
+        }
+
+
+        const miniaturas =
+            document.querySelectorAll(
+                ".detalle-miniatura"
+            );
+
+
+        miniaturas.forEach(
+            function (
+                boton,
+                miniIndice
+            ) {
+
+                boton.classList.toggle(
+                    "active",
+                    miniIndice === indice
+                );
+
+            }
+        );
+
+
+        if (fullscreenAbierto()) {
+
+            actualizarFullscreen();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ANTERIOR / SIGUIENTE
+    ===================================================== */
+
+    function anterior() {
+
+        mostrarImagen(
+            estado.indice - 1
+        );
+
+    }
+
+
+    function siguiente() {
+
+        mostrarImagen(
+            estado.indice + 1
+        );
+
+    }
+
+
+    /* =====================================================
+       FULLSCREEN
+    ===================================================== */
+
+    function fullscreenAbierto() {
+
+        const fullscreen =
+            document.getElementById(
+                "detalleImagenFullscreen"
+            );
+
+
+        return Boolean(
+            fullscreen
+            &&
+            fullscreen.classList.contains(
+                "active"
+            )
+        );
+
+    }
+
+
+    function abrirFullscreen() {
+
+        if (
+            !estado.imagenes.length
+        ) {
+            return;
+        }
+
+
+        const fullscreen =
+            document.getElementById(
+                "detalleImagenFullscreen"
+            );
+
+
+        if (!fullscreen) {
+            return;
+        }
+
+
+        fullscreen.classList.add(
+            "active"
+        );
+
+
+        document.body.style.overflow =
+            "hidden";
+
+
+        estado.zoom = 1;
+
+
+        actualizarFullscreen();
+
+    }
+
+
+    function cerrarFullscreen() {
+
+        const fullscreen =
+            document.getElementById(
+                "detalleImagenFullscreen"
+            );
+
+
+        if (!fullscreen) {
+            return;
+        }
+
+
+        fullscreen.classList.remove(
+            "active"
+        );
+
+
+        document.body.style.overflow =
+            "";
+
+
+        estado.zoom = 1;
+
+
+        aplicarZoom();
+
+    }
+
+
+    function actualizarFullscreen() {
+
+        if (
+            !estado.imagenes.length
+        ) {
+            return;
+        }
+
+
+        const imagen =
+            estado.imagenes[
+                estado.indice
+            ];
+
+
+        const img =
+            document.getElementById(
+                "detalleFullscreenImg"
+            );
+
+
+        const nombre =
+            document.getElementById(
+                "detalleFullscreenNombre"
+            );
+
+
+        const contador =
+            document.getElementById(
+                "detalleFullscreenContador"
+            );
+
+
+        if (img) {
+
+            img.src =
+                imagen.url;
+
+            img.alt =
+                imagen.descripcion;
+
+        }
+
+
+        if (nombre) {
+
+            nombre.textContent =
+                imagen.descripcion;
+
+        }
+
+
+        if (contador) {
+
+            contador.textContent =
+                (
+                    estado.indice + 1
+                )
+                +
+                " de "
+                +
+                estado.imagenes.length;
+
+        }
+
+
+        estado.zoom = 1;
+
+
+        aplicarZoom();
+
+    }
+
+
+    /* =====================================================
+       ZOOM
+    ===================================================== */
+
+    function aplicarZoom() {
+
+        const img =
+            document.getElementById(
+                "detalleFullscreenImg"
+            );
+
+
+        const nivel =
+            document.getElementById(
+                "detalleZoomNivel"
+            );
+
+
+        if (img) {
+
+            img.style.transform =
+                `scale(${estado.zoom})`;
+
+        }
+
+
+        if (nivel) {
+
+            nivel.textContent =
+                `${Math.round(
+                    estado.zoom * 100
+                )}%`;
+
+        }
+
+    }
+
+
+    function cambiarZoom(cambio) {
+
+        let nuevo =
+            estado.zoom
+            +
+            cambio;
+
+
+        nuevo =
+            Math.max(
+                estado.zoomMin,
+                nuevo
+            );
+
+
+        nuevo =
+            Math.min(
+                estado.zoomMax,
+                nuevo
+            );
+
+
+        estado.zoom =
+            nuevo;
+
+
+        aplicarZoom();
+
+    }
+
+
+    function resetZoom() {
+
+        estado.zoom = 1;
+
+        aplicarZoom();
+
+    }
+
+
+    /* =====================================================
+       API GLOBAL
+    ===================================================== */
+
+    window.seleccionarImagenDetalle =
+        function (indice) {
+
+            mostrarImagen(
+                indice
+            );
+
+        };
+
+
+    window.abrirImagenDetalleFullscreen =
+        abrirFullscreen;
+
+
+    window.cerrarImagenDetalleFullscreen =
+        cerrarFullscreen;
+
+
+    window.imagenDetalleAnterior =
+        anterior;
+
+
+    window.imagenDetalleSiguiente =
+        siguiente;
+
+
+    window.cambiarZoomDetalle =
+        cambiarZoom;
+
+
+    window.resetZoomDetalle =
+        resetZoom;
+
+
+    /* =====================================================
+       EVENTOS
+    ===================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            cargarImagenes();
+
+
+            const anteriorBtn =
+                document.getElementById(
+                    "detalleImagenAnterior"
+                );
+
+
+            const siguienteBtn =
+                document.getElementById(
+                    "detalleImagenSiguiente"
+                );
+
+
+            if (anteriorBtn) {
+
+                anteriorBtn.addEventListener(
+                    "click",
+                    anterior
+                );
+
+            }
+
+
+            if (siguienteBtn) {
+
+                siguienteBtn.addEventListener(
+                    "click",
+                    siguiente
+                );
+
+            }
+
+
+            mostrarImagen(0);
+
+        }
+    );
+
+
+    /* =====================================================
+       TECLADO
+    ===================================================== */
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                !fullscreenAbierto()
+            ) {
+                return;
+            }
+
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                cerrarFullscreen();
+
+                return;
+
+            }
+
+
+            if (
+                event.key === "ArrowLeft"
+            ) {
+
+                anterior();
+
+                return;
+
+            }
+
+
+            if (
+                event.key === "ArrowRight"
+            ) {
+
+                siguiente();
+
+                return;
+
+            }
+
+
+            if (
+                event.key === "+"
+                ||
+                event.key === "="
+            ) {
+
+                cambiarZoom(
+                    estado.zoomPaso
+                );
+
+                return;
+
+            }
+
+
+            if (
+                event.key === "-"
+            ) {
+
+                cambiarZoom(
+                    -estado.zoomPaso
+                );
+
+                return;
+
+            }
+
+
+            if (
+                event.key === "0"
+            ) {
+
+                resetZoom();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       RUEDA MOUSE
+    ===================================================== */
+
+    document.addEventListener(
+        "wheel",
+        function (event) {
+
+            if (
+                !fullscreenAbierto()
+            ) {
+                return;
+            }
+
+
+            event.preventDefault();
+
+
+            if (
+                event.deltaY < 0
+            ) {
+
+                cambiarZoom(
+                    estado.zoomPaso
+                );
+
+            } else {
+
+                cambiarZoom(
+                    -estado.zoomPaso
+                );
+
+            }
+
+        },
+        {
+            passive: false
+        }
+    );
+
+
+})();
+
+</script>
+
+{% endif %}
+
 
 {% endblock %}

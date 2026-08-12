@@ -1,120 +1,1300 @@
 {% extends "base.html" %}
 {% load static %}
 
+
 {% block title %}
+Editar Repuesto | MAO
+{% endblock %}
+
+
+{% block page_title %}
 Editar Repuesto
 {% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet"
-      href="{% static 'inventario/css/catalogo_form.css' %}">
+
+{% block page_subtitle %}
+Modificar información, atributos y referencias comerciales
 {% endblock %}
+
+
 
 {% block content %}
 
-<div class="page-header">
-    <div>
-        <h2>Editar Repuesto</h2>
-        <p>
-            {{ producto.sku_interno }} - {{ producto.nombre_base }}
-        </p>
+
+<!-- =====================================================
+     ESTILOS
+===================================================== -->
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'inventario/css/catalogo_form.css' %}"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'inventario/css/imagenes_producto.css' %}"
+>
+
+
+
+<style>
+
+    /* =====================================================
+       PÁGINA
+    ===================================================== */
+
+    .catalogo-editar-wrapper {
+        padding-top: 8px;
+        padding-bottom: 25px;
+    }
+
+
+    /* =====================================================
+       CABECERA
+    ===================================================== */
+
+    .catalogo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 12px;
+
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+
+    .catalogo-header-info {
+        min-width: 0;
+    }
+
+
+    .catalogo-header-title {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        color: var(--text);
+
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+
+    .catalogo-header-subtitle {
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+
+    .catalogo-header-sku {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 22px;
+
+        padding: 3px 7px;
+
+        border: 1px solid #d2d2d7;
+        border-radius: 6px;
+
+        background: #f5f5f7;
+
+        color: #6e6e73;
+
+        font-size: 9px;
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    .catalogo-header-actions {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        flex-shrink: 0;
+    }
+
+
+    /* =====================================================
+       SECCIONES
+    ===================================================== */
+
+    .catalogo-section {
+        margin-bottom: 15px;
+    }
+
+
+    .catalogo-section .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+    }
+
+
+    /* =====================================================
+       PRODUCTO
+    ===================================================== */
+
+    .producto-compact-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px 14px;
+
+        padding: 12px 15px 15px;
+    }
+
+
+    .producto-field {
+        min-width: 0;
+    }
+
+
+    .producto-full {
+        grid-column: 1 / -1;
+    }
+
+
+    .producto-bottom {
+        grid-column: 1 / -1;
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.5fr)
+            minmax(280px, 0.8fr);
+
+        gap: 14px;
+
+        align-items: end;
+    }
+
+
+    /* =====================================================
+       LABELS
+    ===================================================== */
+
+    .catalogo-editar-wrapper .field-label {
+        display: block;
+
+        margin-bottom: 4px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+
+    /* =====================================================
+       INPUTS
+    ===================================================== */
+
+    .catalogo-editar-wrapper input[type="text"],
+    .catalogo-editar-wrapper input[type="number"],
+    .catalogo-editar-wrapper input[type="search"],
+    .catalogo-editar-wrapper select {
+
+        width: 100%;
+
+        height: 32px;
+        min-height: 32px;
+
+        padding: 0 8px;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #fff;
+        color: var(--text);
+
+        font-size: 10px;
+
+        outline: none;
+    }
+
+
+    .catalogo-editar-wrapper textarea {
+        width: 100%;
+
+        min-height: 60px;
+
+        padding: 7px 8px;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #fff;
+        color: var(--text);
+
+        font-size: 10px;
+
+        resize: vertical;
+        outline: none;
+    }
+
+
+    .catalogo-editar-wrapper input:focus,
+    .catalogo-editar-wrapper select:focus,
+    .catalogo-editar-wrapper textarea:focus {
+
+        border-color: var(--accent);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(0, 113, 227, 0.07);
+    }
+
+
+    /* =====================================================
+       CAMPO + BOTÓN
+    ===================================================== */
+
+    .field-with-action {
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+    }
+
+
+    .field-with-action .apple-dropdown {
+        position: relative;
+
+        flex: 1;
+        min-width: 0;
+    }
+
+
+    .btn-mini {
+        width: 32px !important;
+        min-width: 32px !important;
+
+        height: 32px !important;
+        min-height: 32px !important;
+
+        padding: 0 !important;
+
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 7px !important;
+    }
+
+
+    /* =====================================================
+       ESTADOS
+    ===================================================== */
+
+    .producto-estados {
+        min-height: 34px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 12px;
+        flex-wrap: wrap;
+
+        padding: 6px 9px;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #fbfbfd;
+    }
+
+
+    .producto-estado-item {
+        display: inline-flex !important;
+        align-items: center;
+
+        gap: 5px;
+
+        margin: 0 !important;
+
+        color: var(--text) !important;
+
+        font-size: 9px !important;
+        font-weight: 600 !important;
+    }
+
+
+    .producto-estado-item input {
+        width: 13px;
+        height: 13px;
+
+        margin: 0;
+    }
+
+
+    /* =====================================================
+       ACCIÓN DE SECCIÓN
+    ===================================================== */
+
+    .catalogo-section-action {
+        height: 30px;
+
+        padding: 0 9px;
+
+        display: inline-flex;
+        align-items: center;
+
+        gap: 5px;
+
+        border-radius: 7px;
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       TABLAS GENERALES
+    ===================================================== */
+
+    .catalogo-editar-wrapper .ot-table-wrap {
+        border-radius: 0 0 10px 10px;
+    }
+
+
+    .catalogo-editar-wrapper .ot-table {
+        font-size: 9px;
+    }
+
+
+    .catalogo-editar-wrapper .ot-table thead th {
+        padding: 7px;
+
+        font-size: 8px;
+        line-height: 1.15;
+
+        white-space: nowrap;
+    }
+
+
+    .catalogo-editar-wrapper .ot-table tbody td {
+        padding: 6px 7px;
+
+        vertical-align: middle;
+    }
+
+
+    .catalogo-editar-wrapper .ot-table input,
+    .catalogo-editar-wrapper .ot-table select {
+
+        height: 29px;
+        min-height: 29px;
+
+        padding: 0 6px;
+
+        border-radius: 6px;
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       ATRIBUTOS
+    ===================================================== */
+
+    #tablaAtributos {
+        min-width: 650px;
+    }
+
+
+    /* =====================================================
+       ELIMINAR
+    ===================================================== */
+
+    .catalogo-delete-btn {
+        width: 28px !important;
+        min-width: 28px !important;
+
+        height: 28px !important;
+        min-height: 28px !important;
+
+        padding: 0 !important;
+
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 6px !important;
+    }
+
+
+    /* =====================================================
+       ERRORES
+    ===================================================== */
+
+    .errorlist {
+        margin: 3px 0 0;
+        padding: 0;
+
+        list-style: none;
+
+        color: var(--danger);
+
+        font-size: 8px;
+        font-weight: 600;
+    }
+
+
+    /* =====================================================
+       CÓDIGOS - DESCRIPCIÓN
+    ===================================================== */
+
+    .catalogo-codigos-info {
+        padding: 8px 10px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 500;
+
+        border-bottom:
+            1px solid
+            var(--border-soft);
+    }
+
+
+    /* =====================================================
+       CÓDIGOS - SCROLL
+    ===================================================== */
+
+    .catalogo-codigos-wrap {
+        width: 100%;
+
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+
+    .catalogo-codigos-table {
+        width: 100%;
+
+        min-width: 1260px !important;
+
+        table-layout: fixed;
+    }
+
+
+    /* =====================================================
+       CÓDIGOS - CABECERA
+    ===================================================== */
+
+    .catalogo-codigos-table thead th {
+        padding: 7px 6px !important;
+
+        color: var(--muted);
+
+        font-size: 8px !important;
+        font-weight: 700 !important;
+
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+
+        vertical-align: middle;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       CÓDIGOS - FILAS
+    ===================================================== */
+
+    .catalogo-codigos-table tbody tr {
+        height: 42px;
+    }
+
+
+    .catalogo-codigos-table tbody td {
+        padding: 6px 5px !important;
+
+        vertical-align: middle !important;
+
+        background: #fff;
+    }
+
+
+    .catalogo-codigos-table tbody tr:hover td {
+        background: #fbfbfd;
+    }
+
+
+    /* =====================================================
+       CÓDIGOS - INPUTS
+    ===================================================== */
+
+    .catalogo-codigos-table input[type="text"],
+    .catalogo-codigos-table input[type="number"],
+    .catalogo-codigos-table select {
+
+        display: block;
+
+        width: 100% !important;
+
+        min-width: 0 !important;
+
+        height: 29px !important;
+        min-height: 29px !important;
+
+        margin: 0 !important;
+
+        padding: 0 6px !important;
+
+        border:
+            1px solid
+            var(--border) !important;
+
+        border-radius: 6px !important;
+
+        font-size: 9px !important;
+    }
+
+
+    /* =====================================================
+       CHECKBOX
+    ===================================================== */
+
+    .catalogo-codigos-table
+    input[type="checkbox"] {
+
+        display: inline-block !important;
+
+        width: 14px !important;
+        min-width: 14px !important;
+
+        height: 14px !important;
+        min-height: 14px !important;
+
+        margin: 0 !important;
+
+        accent-color: var(--accent);
+    }
+
+
+    /* =====================================================
+       MARCA
+    ===================================================== */
+
+    .codigo-marca-wrap {
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+    }
+
+
+    .codigo-marca-wrap .apple-dropdown {
+        flex: 1;
+        min-width: 0;
+    }
+
+
+    .codigo-marca-wrap .btn-mini {
+        width: 29px !important;
+        min-width: 29px !important;
+
+        height: 29px !important;
+        min-height: 29px !important;
+
+        padding: 0 !important;
+    }
+
+
+    /* =====================================================
+       COLUMNAS CÓDIGOS
+    ===================================================== */
+
+    .catalogo-codigos-table .col-marca {
+        width: 175px;
+    }
+
+    .catalogo-codigos-table .col-tipo {
+        width: 90px;
+    }
+
+    .catalogo-codigos-table .col-codigo {
+        width: 110px;
+    }
+
+    .catalogo-codigos-table .col-barras {
+        width: 125px;
+    }
+
+    .catalogo-codigos-table .col-nombre {
+        width: 150px;
+    }
+
+    .catalogo-codigos-table .col-cantidad {
+        width: 75px;
+    }
+
+    .catalogo-codigos-table .col-unidad {
+        width: 75px;
+    }
+
+    .catalogo-codigos-table .col-compra {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-venta {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-margen {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-iva {
+        width: 85px;
+    }
+
+    .catalogo-codigos-table .col-secreto {
+        width: 95px;
+    }
+
+    .catalogo-codigos-table .col-activo {
+        width: 55px;
+
+        text-align: center;
+    }
+
+    .catalogo-codigos-table .col-accion {
+        width: 42px;
+    }
+
+
+    /* =====================================================
+       BOTÓN ELIMINAR CÓDIGO
+    ===================================================== */
+
+    .catalogo-codigos-table
+    .catalogo-delete-btn {
+
+        width: 28px !important;
+        min-width: 28px !important;
+
+        height: 28px !important;
+        min-height: 28px !important;
+
+        margin: 0 auto !important;
+
+        padding: 0 !important;
+
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 6px !important;
+    }
+
+
+    /* =====================================================
+       PRECIO SECRETO
+    ===================================================== */
+
+    .catalogo-codigos-table
+    input[readonly] {
+
+        background:
+            #f5f5f7 !important;
+
+        color:
+            var(--muted) !important;
+
+        font-weight: 600;
+    }
+
+
+    /* =====================================================
+       INFORMACIÓN EXISTENTE
+    ===================================================== */
+
+    .catalogo-editar-meta {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+        flex-wrap: wrap;
+
+        margin-top: 6px;
+    }
+
+
+    .catalogo-editar-chip {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 21px;
+
+        padding: 3px 7px;
+
+        border: 1px solid #e5e5ea;
+        border-radius: 999px;
+
+        background: #fbfbfd;
+
+        color: #6e6e73;
+
+        font-size: 8px;
+        font-weight: 600;
+    }
+
+
+    /* =====================================================
+       ACCIONES INFERIORES
+    ===================================================== */
+
+    .catalogo-sticky-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 8px;
+
+        position: sticky;
+
+        bottom: 8px;
+
+        z-index: 50;
+
+        margin-top: 15px;
+        padding: 10px 12px;
+
+        border:
+            1px solid
+            var(--border);
+
+        border-radius: 10px;
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.95
+            );
+
+        backdrop-filter:
+            blur(10px);
+
+        box-shadow:
+            0 8px 25px
+            rgba(0, 0, 0, 0.08);
+    }
+
+
+    .catalogo-sticky-left,
+    .catalogo-sticky-right {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 800px) {
+
+        .catalogo-header {
+            align-items: flex-start;
+        }
+
+
+        .catalogo-header-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+
+        .producto-compact-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .producto-full {
+            grid-column: auto;
+        }
+
+
+        .producto-bottom {
+            grid-column: auto;
+
+            grid-template-columns: 1fr;
+        }
+
+
+        .catalogo-sticky-actions {
+            align-items: stretch;
+
+            flex-direction: column;
+        }
+
+
+        .catalogo-sticky-left,
+        .catalogo-sticky-right {
+            width: 100%;
+        }
+
+
+        .catalogo-sticky-right {
+            justify-content: flex-end;
+        }
+
+    }
+
+</style>
+
+
+
+<!-- =====================================================
+     CONTENEDOR
+===================================================== -->
+
+<div
+    class="
+        container
+        ot-wrapper
+        catalogo-editar-wrapper
+    "
+>
+
+
+    <!-- ==================================================
+         CABECERA
+    =================================================== -->
+
+    <div
+        class="
+            ot-card
+            catalogo-header
+        "
+    >
+
+
+        <div class="catalogo-header-info">
+
+
+            <div class="catalogo-header-title">
+
+                <span>
+                    Editar repuesto
+                </span>
+
+
+                {% if producto.sku_interno %}
+
+                    <span class="catalogo-header-sku">
+                        {{ producto.sku_interno }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+
+            <div class="catalogo-header-subtitle">
+
+                {{ producto.nombre_base|default:"Producto del inventario" }}
+
+            </div>
+
+
+
+            <div class="catalogo-editar-meta">
+
+                {% if producto.categoria %}
+
+                    <span class="catalogo-editar-chip">
+
+                        <i
+                            class="bi bi-tag"
+                            style="margin-right:4px;"
+                        ></i>
+
+                        {{ producto.categoria.nombre }}
+
+                    </span>
+
+                {% endif %}
+
+
+                <span class="catalogo-editar-chip">
+
+                    <i
+                        class="bi bi-upc-scan"
+                        style="margin-right:4px;"
+                    ></i>
+
+                    {{ producto.codigos.count }}
+                    referencia{{ producto.codigos.count|pluralize }}
+
+                </span>
+
+
+                <span class="catalogo-editar-chip">
+
+                    <i
+                        class="bi bi-sliders"
+                        style="margin-right:4px;"
+                    ></i>
+
+                    {{ producto.valores_atributos.count }}
+                    atributo{{ producto.valores_atributos.count|pluralize }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="catalogo-header-actions">
+
+
+            <!-- VER PRODUCTO -->
+
+            <a
+                href="{% url 'inventario_catalogo_detalle' codigo.id %}"
+                class="btn-login"
+            >
+
+                <i
+                    class="bi bi-eye"
+                    style="margin-right:5px;"
+                ></i>
+
+                Ver producto
+
+            </a>
+
+
+
+            <!-- CATÁLOGO -->
+
+            <a
+                href="{% url 'inventario_catalogo' %}"
+                class="btn-login"
+            >
+
+                <i
+                    class="bi bi-arrow-left"
+                    style="margin-right:5px;"
+                ></i>
+
+                Catálogo
+
+            </a>
+
+        </div>
+
     </div>
 
-    <div>
-        <a href="{% url 'inventario_catalogo_detalle' codigo.id %}"
-           class="btn-login">
-            Volver
-        </a>
-    </div>
-</div>
 
-<div class="form-card">
 
-    <form method="POST"
-          enctype="multipart/form-data"
-          id="catalogoForm"
-          data-url-categoria-rapida="{% url 'categoria_crear_rapida' %}"
-          data-url-marca-rapida="{% url 'marca_crear_rapida' %}"
-          data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}">
+    <!-- ==================================================
+         FORMULARIO
+    =================================================== -->
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        id="catalogoForm"
+
+        data-modo="editar"
+
+        data-producto-id="{{ producto.id }}"
+        data-codigo-id="{{ codigo.id }}"
+
+        data-url-categoria-rapida="{% url 'categoria_crear_rapida' %}"
+        data-url-marca-rapida="{% url 'marca_crear_rapida' %}"
+        data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}"
+    >
 
         {% csrf_token %}
+
+
+
+        <!-- ==================================================
+             MANAGEMENT FORMS
+        =================================================== -->
 
         {{ codigo_formset.management_form }}
         {{ atributo_formset.management_form }}
 
+
+
+        <!-- ==================================================
+             ERRORES GENERALES
+        =================================================== -->
+
         {% if producto_form.non_field_errors %}
+
             <div class="alert alert-danger">
+
                 {{ producto_form.non_field_errors }}
+
             </div>
+
         {% endif %}
+
+
 
         {% if codigo_formset.non_form_errors %}
+
             <div class="alert alert-danger">
+
                 {{ codigo_formset.non_form_errors }}
+
             </div>
+
         {% endif %}
+
+
 
         {% if atributo_formset.non_form_errors %}
+
             <div class="alert alert-danger">
+
                 {{ atributo_formset.non_form_errors }}
+
             </div>
+
         {% endif %}
 
-        <div class="form-section">
-            <h4>Identificación</h4>
 
-            <div class="form-grid-2">
-                <div>
-                    <label class="field-label">SKU interno</label>
-                    <input type="text"
-                           class="form-control-apple"
-                           value="{{ producto.sku_interno }}"
-                           readonly>
-                </div>
 
-                <div>
-                    <label class="field-label">Origen</label>
-                    <input type="text"
-                           class="form-control-apple"
-                           value="{{ producto.get_origen_display }}"
-                           readonly>
-                </div>
+        <!-- ==================================================
+             INFORMACIÓN DEL PRODUCTO
+        =================================================== -->
+
+        <div
+            class="
+                ot-card
+                catalogo-section
+            "
+        >
+
+            <div class="section-title">
+
+
+                <span>
+                    Información del producto
+                </span>
+
+
+                <i
+                    class="bi bi-box"
+                    style="
+                        color:var(--accent);
+                        font-size:12px;
+                    "
+                ></i>
+
             </div>
+
+
+            {% include "catalogo/partials/_producto.html" %}
+
         </div>
 
-        {% include "catalogo/partials/_producto.html" %}
-        {% include "catalogo/partials/_atributos.html" %}
-        {% include "catalogo/partials/_codigos.html" %}
+
+
+        <!-- ==================================================
+             ATRIBUTOS
+        =================================================== -->
+
+        <div
+            class="
+                ot-card
+                catalogo-section
+            "
+        >
+
+            {% include "catalogo/partials/_atributos.html" %}
+
+        </div>
+
+
+
+        <!-- ==================================================
+             CÓDIGOS
+        =================================================== -->
+
+        <div
+            class="
+                ot-card
+                catalogo-section
+            "
+        >
+
+            {% include "catalogo/partials/_codigos.html" %}
+
+        </div>
+
+
+
+        <!-- ==================================================
+             MODALES RÁPIDOS
+        =================================================== -->
+
         {% include "catalogo/partials/_modales.html" %}
 
-        <hr>
 
-        <div class="form-actions">
-            <a href="{% url 'inventario_catalogo_detalle' codigo.id %}"
-               class="btn-login">
-                Cancelar
-            </a>
 
-            <button type="submit"
-                    class="btn-login primary">
-                Guardar Cambios
-            </button>
+        <!-- ==================================================
+             ACCIONES
+        =================================================== -->
+
+        <div class="catalogo-sticky-actions">
+
+
+            <div class="catalogo-sticky-left">
+
+                <a
+                    href="{% url 'inventario_catalogo_detalle' codigo.id %}"
+                    class="btn-login"
+                    style="
+                        background:#f5f5f7;
+                        border-color:#d2d2d7;
+                        color:var(--text);
+                    "
+                >
+
+                    <i
+                        class="bi bi-x-lg"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Cancelar
+
+                </a>
+
+            </div>
+
+
+
+            <div class="catalogo-sticky-right">
+
+
+                <a
+                    href="{% url 'inventario_catalogo' %}"
+                    class="btn-login"
+                >
+
+                    <i
+                        class="bi bi-list"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Catálogo
+
+                </a>
+
+
+
+                <button
+                    type="submit"
+                    class="btn-login primary"
+                >
+
+                    <i
+                        class="bi bi-check-lg"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Guardar cambios
+
+                </button>
+
+            </div>
+
         </div>
+
 
     </form>
 
 </div>
 
+
 {% endblock %}
+
+
+
 {% block extra_js %}
 
-<script src="{% static 'inventario/js/utilidades.js' %}"></script>
-<script src="{% static 'inventario/js/dropdowns.js' %}"></script>
-<script src="{% static 'inventario/js/imagenes.js' %}"></script>
-<script src="{% static 'inventario/js/atributos.js' %}"></script>
-<script src="{% static 'inventario/js/codigos.js' %}"></script>
-<script src="{% static 'inventario/js/modales.js' %}"></script>
-<script src="{% static 'inventario/js/catalogo_form.js' %}"></script>
-<script src="{% static 'inventario/js/index.js' %}"></script>
+
+<script
+    src="{% static 'inventario/js/utilidades.js' %}"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/dropdowns.js' %}"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/imagenes.js' %}?v=3"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/atributos.js' %}"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/codigos.js' %}"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/modales.js' %}"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/catalogo_form.js' %}"
+></script>
+
+
+<script
+    src="{% static 'inventario/js/index.js' %}"
+></script>
+
 
 {% endblock %}
