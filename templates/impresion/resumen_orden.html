@@ -462,7 +462,7 @@
     </style>
 </head>
 
-<body onload="window.print();">
+<body>
 
 <div class="page">
 
@@ -1027,6 +1027,19 @@
     {% endif %}
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Establece el nombre antes de abrir la impresión
+        document.title = "{{ nombre_archivo|escapejs }}";
+
+        // Pequeña espera para asegurar que Chrome
+        // haya registrado el nuevo título.
+        setTimeout(function () {
+            window.print();
+        }, 300);
+    });
+</script>
 
 </body>
 </html>
