@@ -615,10 +615,13 @@
 
 
     <!-- =====================================================
-         PÁGINA 2 - TRASERA
+     PÁGINA 2 - TRASERA
+     Solo se incluye cuando se solicita expresamente
     ====================================================== -->
 
-    {% include "impresion/imprimir_tecnico_trasera.html" %}
+    {% if incluir_trasera %}
+        {% include "impresion/imprimir_tecnico_trasera.html" %}
+    {% endif %}
 
 
     <!-- =====================================================

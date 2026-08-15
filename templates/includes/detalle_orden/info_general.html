@@ -2,7 +2,6 @@
 
 <style>
 
-
     .btn-proforma {
         background: #ffffff;
         color: #0071e3;
@@ -16,6 +15,66 @@
         border-color: #005bb7;
         transform: translateY(-1px);
     }
+
+
+    /* ==========================================================
+       SWITCH SUTIL - SEGUNDA HOJA DE LA FICHA
+       ========================================================== */
+
+    .switch-ficha {
+        position: relative;
+        display: inline-block;
+        width: 30px;
+        height: 18px;
+        margin: 0;
+        flex: 0 0 auto;
+    }
+
+    .switch-ficha input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .switch-ficha-slider {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: #d2d2d7;
+        border-radius: 999px;
+        transition: 0.2s ease;
+    }
+
+    .switch-ficha-slider::before {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        left: 2px;
+        top: 2px;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+        transition: 0.2s ease;
+    }
+
+    .switch-ficha input:checked + .switch-ficha-slider {
+        background: #0071e3;
+    }
+
+    .switch-ficha input:checked + .switch-ficha-slider::before {
+        transform: translateX(12px);
+    }
+
+    .switch-ficha:hover .switch-ficha-slider {
+        box-shadow:
+            0 0 0 3px rgba(0, 113, 227, 0.08);
+    }
+
+
+    /* ==========================================================
+       INFORMACIÓN GENERAL
+       ========================================================== */
 
     .info-general-grid {
         display: grid;
@@ -89,6 +148,7 @@
         color: #1d1d1f;
         box-sizing: border-box;
         outline: none;
+
         transition:
             border-color 0.2s ease,
             box-shadow 0.2s ease;
@@ -96,6 +156,7 @@
 
     .intervalo-mantenimiento-input:focus {
         border-color: #0071e3;
+
         box-shadow:
             0 0 0 3px rgba(0, 113, 227, 0.12);
     }
@@ -113,7 +174,13 @@
         font-weight: 800;
     }
 
+
+    /* ==========================================================
+       RESPONSIVE
+       ========================================================== */
+
     @media (max-width: 1050px) {
+
         .info-general-grid {
             grid-template-columns:
                 repeat(2, minmax(0, 1fr));
@@ -125,6 +192,7 @@
     }
 
     @media (max-width: 700px) {
+
         .info-general-grid {
             grid-template-columns: 1fr;
         }
@@ -139,11 +207,14 @@
     }
 
     @media (max-width: 420px) {
+
         .vehiculo-operacion-grid {
             grid-template-columns: 1fr;
         }
     }
+
 </style>
+
 
 <div
     class="ot-card"
@@ -155,6 +226,7 @@
     <!-- ============================================= -->
     <!-- HEADER -->
     <!-- ============================================= -->
+
     <div
         style="
             display: flex;
@@ -167,6 +239,7 @@
     >
 
         <div>
+
             <div
                 style="
                     font-size: 18px;
@@ -187,6 +260,7 @@
                     gap: 5px;
                 "
             >
+
                 <i class="bi bi-calendar-event"></i>
 
                 <span>
@@ -195,6 +269,7 @@
                     a las
                     {{ orden.fecha_ingreso|time:"H:i" }}
                 </span>
+
             </div>
 
             <p
@@ -206,9 +281,20 @@
             >
                 Detalle operativo de la orden
             </p>
+
         </div>
 
+
+        <!-- ============================================= -->
+        <!-- ACCIONES -->
+        <!-- ============================================= -->
+
         <div class="d-flex align-items-center gap-2">
+
+
+            <!-- ========================================= -->
+            <!-- PROFORMA -->
+            <!-- ========================================= -->
 
             {% if puede_editar %}
 
@@ -226,12 +312,14 @@
                             border-color: #0071e3;
                         "
                     >
+
                         <i
                             class="bi bi-file-earmark-check"
                             style="margin-right: 4px;"
                         ></i>
 
                         Continuar Proforma
+
                     </a>
 
                 {% else %}
@@ -246,93 +334,155 @@
                             justify-content: center;
                         "
                     >
+
                         <i
                             class="bi bi-file-earmark-plus"
                             style="margin-right: 4px;"
                         ></i>
 
                         Nueva Proforma
+
                     </a>
 
                 {% endif %}
 
             {% endif %}
 
-            <button
-                type="button"
-                onclick="imprimirFichaDirecto(event)"
-                class="btn-login"
+
+            <!-- ========================================= -->
+            <!-- SWITCH + IMPRIMIR FICHA -->
+            <!-- ========================================= -->
+
+            <div
                 style="
-                    background: #f5f5f7;
-                    color: #1d1d1f;
-                    border-color: #d2d2d7;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 7px;
                 "
             >
+
+                <!--
+                    SWITCH APAGADO:
+                    imprime solamente la primera hoja.
+
+                    SWITCH ENCENDIDO:
+                    imprime frontal + trasera.
+                -->
+
+                <label
+                    class="switch-ficha"
+                    title="Incluir hoja adicional"
+                >
+
+                    <input
+                        type="checkbox"
+                        id="switchFichaCompleta"
+                    >
+
+                    <span
+                        class="switch-ficha-slider"
+                    ></span>
+
+                </label>
+
+
+                <button
+                    type="button"
+                    onclick="imprimirFichaDirecto(event)"
+                    class="btn-login"
+                    style="
+                        background: #f5f5f7;
+                        color: #1d1d1f;
+                        border-color: #d2d2d7;
+                    "
+                >
+
+                    <i
+                        class="bi bi-tools"
+                        style="margin-right: 4px;"
+                    ></i>
+
+                    Imprimir Ficha
+
+                </button>
+
+            </div>
+
+
+            <!-- ========================================= -->
+            <!-- RESUMEN -->
+            <!-- ========================================= -->
+
+            <button
+                type="button"
+                onclick="imprimirResumenDirecto(event)"
+                class="btn-login"
+                style="
+                    background: #0071e3;
+                    border-color: #0071e3;
+                    color: #ffffff;
+                "
+            >
+
                 <i
-                    class="bi bi-tools"
+                    class="bi bi-receipt"
                     style="margin-right: 4px;"
                 ></i>
 
-                Imprimir Ficha
+                Resumen de Orden
+
             </button>
 
-            <button
-                        type="button"
-                        onclick="imprimirResumenDirecto(event)"
-                        class="btn-login"
-                        style="
-                            background: #0071e3;
-                            border-color: #0071e3;
-                            color: #ffffff;
-                        "
-                    >
-                        <i
-                            class="bi bi-receipt"
-                            style="margin-right: 4px;"
-                        ></i>
 
-                        Resumen de Orden
-                    </button>
+            <!-- ========================================= -->
+            <!-- ANULAR / COMPLETAR -->
+            <!-- ========================================= -->
 
-                    {% if puede_editar %}
+            {% if puede_editar %}
 
-            <button
-                type="button"
-                class="btn-login"
-                style="
-                    background-color: #ff3b30;
-                    border-color: #ff3b30;
-                    color: #ffffff;
-                "
-                onclick="
-                    confirmarAccionNativa(
-                        'anular',
-                        'form_anular_orden'
-                    )
-                "
-            >
-                Anular
-            </button>
+                <button
+                    type="button"
+                    class="btn-login"
+                    style="
+                        background-color: #ff3b30;
+                        border-color: #ff3b30;
+                        color: #ffffff;
+                    "
+                    onclick="
+                        confirmarAccionNativa(
+                            'anular',
+                            'form_anular_orden'
+                        )
+                    "
+                >
+                    Anular
+                </button>
 
-            <button
-                type="button"
-                class="btn-login"
-                style="
-                    background-color: #34c759;
-                    border-color: #34c759;
-                    color: #ffffff;
-                "
-                onclick="
-                    confirmarAccionNativa(
-                        'cerrar',
-                        'form_cerrar_orden'
-                    )
-                "
-            >
-                Completar
-            </button>
 
-        {% endif %}
+                <button
+                    type="button"
+                    class="btn-login"
+                    style="
+                        background-color: #34c759;
+                        border-color: #34c759;
+                        color: #ffffff;
+                    "
+                    onclick="
+                        confirmarAccionNativa(
+                            'cerrar',
+                            'form_cerrar_orden'
+                        )
+                    "
+                >
+                    Completar
+                </button>
+
+            {% endif %}
+
+
+            <!-- ========================================= -->
+            <!-- ESTADO -->
+            <!-- ========================================= -->
 
             <div
                 style="
@@ -345,6 +495,7 @@
                     margin-left: 5px;
                 "
             >
+
                 <span
                     style="
                         color: var(--muted, #6e6e73);
@@ -353,27 +504,39 @@
                     Estado:
                 </span>
 
-                <strong style="margin-left: 4px;">
+                <strong
+                    style="
+                        margin-left: 4px;
+                    "
+                >
                     {{ orden.get_estado_display|upper }}
                 </strong>
+
             </div>
 
         </div>
+
     </div>
+
 
     <!-- ============================================= -->
     <!-- TARJETAS DE INFORMACIÓN -->
     <!-- ============================================= -->
+
     <div class="info-general-grid">
+
 
         <!-- ============================================= -->
         <!-- CLIENTE -->
         <!-- ============================================= -->
+
         <div class="info-general-card">
 
             <div
                 class="info-label"
-                style="margin-bottom: 5px;"
+                style="
+                    margin-bottom: 5px;
+                "
             >
                 Cliente
             </div>
@@ -406,6 +569,7 @@
                     margin-top: 4px;
                 "
             >
+
                 Celular:
 
                 {% if orden.cliente and orden.cliente.telefono %}
@@ -419,13 +583,19 @@
                             text-decoration: none;
                         "
                     >
+
                         <i class="bi bi-whatsapp"></i>
+
                         {{ orden.cliente.telefono }}
+
                     </a>
 
                 {% else %}
+
                     NO REGISTRADO
+
                 {% endif %}
+
             </div>
 
             <div
@@ -435,25 +605,35 @@
                     margin-top: 4px;
                 "
             >
+
                 Correo:
 
                 {% if orden.cliente and orden.cliente.email %}
+
                     {{ orden.cliente.email|lower }}
+
                 {% else %}
+
                     NO REGISTRADO
+
                 {% endif %}
+
             </div>
 
         </div>
 
+
         <!-- ============================================= -->
         <!-- VEHÍCULO -->
         <!-- ============================================= -->
+
         <div class="info-general-card">
 
             <div
                 class="info-label"
-                style="margin-bottom: 5px;"
+                style="
+                    margin-bottom: 5px;
+                "
             >
                 Vehículo
             </div>
@@ -475,6 +655,7 @@
                     margin-top: 4px;
                 "
             >
+
                 Año:
                 {{ orden.anio_vehiculo|default:"-" }}
 
@@ -482,6 +663,7 @@
 
                 Color:
                 {{ orden.color|upper|default:"-" }}
+
             </div>
 
             <div
@@ -496,17 +678,21 @@
                     border-radius: 4px;
                 "
             >
+
                 <i class="bi bi-key-fill"></i>
 
                 Clave:
                 {{ orden.clave_encendido|default:"-" }}
+
             </div>
 
         </div>
 
+
         <!-- ============================================= -->
         <!-- VEHÍCULO: PLACA, KM, COMBUSTIBLE Y MANTENIMIENTO -->
         <!-- ============================================= -->
+
         <div
             class="
                 info-general-card
@@ -515,9 +701,12 @@
         >
 
             <!-- PLACA -->
+
             <div
                 class="info-label"
-                style="margin-bottom: 5px;"
+                style="
+                    margin-bottom: 5px;
+                "
             >
                 Placa
             </div>
@@ -533,7 +722,11 @@
                 {{ orden.placa|upper|default:"S/P" }}
             </div>
 
+
+            <!-- ========================================= -->
             <!-- KILOMETRAJE Y COMBUSTIBLE -->
+            <!-- ========================================= -->
+
             <div class="vehiculo-operacion-grid">
 
                 <div class="vehiculo-operacion-item">
@@ -543,8 +736,11 @@
                     </div>
 
                     <div class="vehiculo-operacion-valor">
+
                         {% if orden.kilometraje is not None %}
+
                             {{ orden.kilometraje|intcomma }}
+
                             <span
                                 style="
                                     font-size: 10px;
@@ -553,7 +749,9 @@
                             >
                                 km
                             </span>
+
                         {% else %}
+
                             <span
                                 style="
                                     font-size: 11px;
@@ -562,10 +760,13 @@
                             >
                                 NO REGISTRADO
                             </span>
+
                         {% endif %}
+
                     </div>
 
                 </div>
+
 
                 <div class="vehiculo-operacion-item">
 
@@ -581,6 +782,7 @@
                             gap: 5px;
                         "
                     >
+
                         <i
                             class="bi bi-fuel-pump-fill"
                             style="
@@ -592,20 +794,29 @@
                         <span>
                             {{ orden.get_nivel_combustible_display|default:"-" }}
                         </span>
+
                     </div>
 
                 </div>
 
             </div>
 
-            <!-- Valor oculto para JavaScript -->
+
+            <!-- ========================================= -->
+            <!-- VALOR OCULTO KM -->
+            <!-- ========================================= -->
+
             <input
                 type="hidden"
                 id="id_kilometraje"
                 value="{{ orden.kilometraje|default_if_none:'' }}"
             >
 
+
+            <!-- ========================================= -->
             <!-- INTERVALO -->
+            <!-- ========================================= -->
+
             <div
                 class="info-label"
                 style="
@@ -616,60 +827,67 @@
                 Próximo mantenimiento en
             </div>
 
+
             {% if puede_editar %}
 
-                <div class="intervalo-mantenimiento-contenedor">
-
-<input
-    type="number"
-    id="id_intervalo_mantenimiento_km"
-    name="intervalo_mantenimiento_km"
-    class="intervalo-mantenimiento-input"
-    value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
-    min="1"
-    max="100000"
-    step="1"
-   
-    autocomplete="off"
-    inputmode="numeric"
-
-    oninput="
-        this.setCustomValidity('');
-
-        if (
-            typeof actualizarProximoMantenimiento ===
-            'function'
-        ) {
-            actualizarProximoMantenimiento();
-        }
-    "
->
-
-                <span
-                    style="
-                        font-size:12px;
-                        font-weight:700;
-                        color:#6e6e73;
-                        white-space:nowrap;
+                <div
+                    class="
+                        intervalo-mantenimiento-contenedor
                     "
                 >
-                    km
-                </span>
 
-            </div>
+                    <input
+                        type="number"
+                        id="id_intervalo_mantenimiento_km"
+                        name="intervalo_mantenimiento_km"
+                        class="intervalo-mantenimiento-input"
+                        value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
+                        min="1"
+                        max="100000"
+                        step="1"
+                        autocomplete="off"
+                        inputmode="numeric"
 
-            <div
-                style="
-                    margin-top:6px;
-                    font-size:10px;
-                    color:#86868b;
-                    line-height:1.35;
-                "
-            >
-                Distancia en kilómetros hasta el siguiente mantenimiento.
-            </div>
+                        oninput="
+                            this.setCustomValidity('');
+
+                            if (
+                                typeof actualizarProximoMantenimiento ===
+                                'function'
+                            ) {
+                                actualizarProximoMantenimiento();
+                            }
+                        "
+                    >
+
+                    <span
+                        style="
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: #6e6e73;
+                            white-space: nowrap;
+                        "
+                    >
+                        km
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="
+                        margin-top: 6px;
+                        font-size: 10px;
+                        color: #86868b;
+                        line-height: 1.35;
+                    "
+                >
+                    Distancia en kilómetros hasta el siguiente mantenimiento.
+                </div>
+
 
             {% else %}
+
 
                 <div
                     style="
@@ -678,16 +896,27 @@
                         color: #1d1d1f;
                     "
                 >
+
                     {% if orden.intervalo_mantenimiento_km is not None %}
-                        {{ orden.intervalo_mantenimiento_km|intcomma }} km
+
+                        {{ orden.intervalo_mantenimiento_km|intcomma }}
+                        km
+
                     {% else %}
+
                         NO DEFINIDO
+
                     {% endif %}
+
                 </div>
 
             {% endif %}
 
+
+            <!-- ========================================= -->
             <!-- PRÓXIMO MANTENIMIENTO CALCULADO -->
+            <!-- ========================================= -->
+
             <div
                 class="info-label"
                 style="
@@ -698,7 +927,11 @@
                 Próximo mantenimiento
             </div>
 
-            <div class="proximo-mantenimiento-resultado">
+            <div
+                class="
+                    proximo-mantenimiento-resultado
+                "
+            >
 
                 <i
                     class="bi bi-speedometer2"
@@ -708,15 +941,25 @@
                     "
                 ></i>
 
-                <span id="id_proximo_mantenimiento_km">
+                <span
+                    id="id_proximo_mantenimiento_km"
+                >
+
                     {% if orden.proximo_mantenimiento_km is not None %}
+
                         {{ orden.proximo_mantenimiento_km|intcomma }}
+
                     {% else %}
+
                         -
+
                     {% endif %}
+
                 </span>
 
-                <span>km</span>
+                <span>
+                    km
+                </span>
 
             </div>
 
@@ -724,9 +967,11 @@
 
     </div>
 
+
     <!-- ============================================= -->
     <!-- REPORTE Y TRABAJOS SOLICITADOS -->
     <!-- ============================================= -->
+
     <div
         style="
             display: grid;
@@ -740,7 +985,11 @@
         "
     >
 
+
+        <!-- ========================================= -->
         <!-- REPORTE DEL CLIENTE -->
+        <!-- ========================================= -->
+
         <div
             style="
                 padding: 12px;
@@ -788,6 +1037,7 @@
                                 margin-bottom: 3px;
                             "
                         >
+
                             <strong
                                 style="
                                     min-width: 16px;
@@ -800,6 +1050,7 @@
                             <span>
                                 {{ sintoma.descripcion|upper }}
                             </span>
+
                         </div>
 
                     {% empty %}
@@ -818,9 +1069,14 @@
                 {% endif %}
 
             </div>
+
         </div>
 
+
+        <!-- ========================================= -->
         <!-- TRABAJOS SOLICITADOS -->
+        <!-- ========================================= -->
+
         <div
             style="
                 padding: 12px;
@@ -862,6 +1118,7 @@
                             margin-bottom: 3px;
                         "
                     >
+
                         <strong
                             style="
                                 min-width: 16px;
@@ -872,14 +1129,23 @@
                         </strong>
 
                         <span>
+
                             {% if trabajo.trabajo_catalogo %}
+
                                 {{ trabajo.trabajo_catalogo.nombre|upper }}
+
                             {% elif trabajo.descripcion_manual %}
+
                                 {{ trabajo.descripcion_manual|upper }}
+
                             {% else %}
+
                                 TRABAJO SIN DESCRIPCIÓN
+
                             {% endif %}
+
                         </span>
+
                     </div>
 
                 {% empty %}
@@ -896,152 +1162,367 @@
                 {% endfor %}
 
             </div>
+
         </div>
 
     </div>
 
 </div>
 
+
 <script>
-    function confirmarAccionNativa(accion, formId) {
+
+    /* ==========================================================
+       CONFIRMAR ACCIONES
+       ========================================================== */
+
+    function confirmarAccionNativa(
+        accion,
+        formId
+    ) {
+
         let titulo = '';
         let texto = '';
         let icono = '';
         let colorBoton = '';
 
+
         if (accion === 'anular') {
-            titulo = '¿Anular Orden?';
+
+            titulo =
+                '¿Anular Orden?';
+
             texto =
                 'Esta acción cancelará la orden y no se podrá deshacer.';
-            icono = 'warning';
-            colorBoton = '#ff3b30';
+
+            icono =
+                'warning';
+
+            colorBoton =
+                '#ff3b30';
+
+
         } else if (accion === 'cerrar') {
-            titulo = '¿Completar Orden?';
+
+            titulo =
+                '¿Completar Orden?';
+
             texto =
                 'El vehículo pasará a estado cerrado y estará listo para facturación.';
-            icono = 'question';
-            colorBoton = '#34c759';
+
+            icono =
+                'question';
+
+            colorBoton =
+                '#34c759';
         }
 
+
         Swal.fire({
-            title: titulo,
-            text: texto,
-            icon: icono,
-            showCancelButton: true,
-            confirmButtonColor: colorBoton,
-            cancelButtonColor: '#6e6e73',
-            confirmButtonText: 'Sí, continuar',
-            cancelButtonText: 'Cancelar',
+
+            title:
+                titulo,
+
+            text:
+                texto,
+
+            icon:
+                icono,
+
+            showCancelButton:
+                true,
+
+            confirmButtonColor:
+                colorBoton,
+
+            cancelButtonColor:
+                '#6e6e73',
+
+            confirmButtonText:
+                'Sí, continuar',
+
+            cancelButtonText:
+                'Cancelar',
+
             customClass: {
-                popup: 'swal-mao-popup',
-                title: 'swal-mao-title',
-                htmlContainer: 'swal-mao-html'
-            }
-        }).then(function (result) {
-            if (!result.isConfirmed) {
-                return;
+                popup:
+                    'swal-mao-popup',
+
+                title:
+                    'swal-mao-title',
+
+                htmlContainer:
+                    'swal-mao-html'
             }
 
-            const formulario =
-                document.getElementById(formId);
+        }).then(
+            function (result) {
 
-            if (formulario) {
-                formulario.submit();
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                const formulario =
+                    document.getElementById(
+                        formId
+                    );
+
+                if (formulario) {
+                    formulario.submit();
+                }
             }
-        });
+        );
     }
 
 
-    function imprimirFichaDirecto(evento) {
-        const boton = evento.currentTarget;
+    /* ==========================================================
+       IMPRIMIR FICHA TÉCNICA
+       ========================================================== */
 
-        if (!boton || boton.disabled) {
+    function imprimirFichaDirecto(
+        evento
+    ) {
+
+        const boton =
+            evento.currentTarget;
+
+
+        if (
+            !boton ||
+            boton.disabled
+        ) {
             return;
         }
 
-        const textoOriginal = boton.innerHTML;
 
-        boton.disabled = true;
+        const textoOriginal =
+            boton.innerHTML;
+
+
+        // ======================================================
+        // SWITCH DE SEGUNDA HOJA
+        // ======================================================
+
+        const switchFicha =
+            document.getElementById(
+                'switchFichaCompleta'
+            );
+
+
+        const incluirTrasera =
+            switchFicha &&
+            switchFicha.checked;
+
+
+        // ======================================================
+        // BLOQUEAR BOTÓN
+        // ======================================================
+
+        boton.disabled =
+            true;
+
         boton.innerHTML =
             '<i class="bi bi-hourglass-split"></i> Cargando...';
+
+
+        // ======================================================
+        // ELIMINAR IFRAME ANTERIOR
+        // ======================================================
 
         const iframeAnterior =
             document.getElementById(
                 'iframeImpresionDinamico'
             );
 
+
         if (iframeAnterior) {
             iframeAnterior.remove();
         }
 
+
+        // ======================================================
+        // CREAR IFRAME
+        // ======================================================
+
         const iframe =
-            document.createElement('iframe');
+            document.createElement(
+                'iframe'
+            );
+
 
         iframe.id =
             'iframeImpresionDinamico';
 
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-10000px';
-        iframe.style.left = '-10000px';
-        iframe.style.width = '1000px';
-        iframe.style.height = '1000px';
-        iframe.style.border = 'none';
 
-        document.body.appendChild(iframe);
+        iframe.style.position =
+            'absolute';
 
-        iframe.src =
+        iframe.style.top =
+            '-10000px';
+
+        iframe.style.left =
+            '-10000px';
+
+        iframe.style.width =
+            '1000px';
+
+        iframe.style.height =
+            '1000px';
+
+        iframe.style.border =
+            'none';
+
+
+        document.body.appendChild(
+            iframe
+        );
+
+
+        // ======================================================
+        // URL DE IMPRESIÓN
+        // ======================================================
+
+        let url =
             "{% url 'imprimir_tecnico' orden.id %}";
 
-        window.setTimeout(function () {
-            boton.disabled = false;
-            boton.innerHTML = textoOriginal;
-        }, 2000);
+
+        /*
+         * APAGADO:
+         *
+         * /imprimir-tecnico/123/
+         *
+         *
+         * ENCENDIDO:
+         *
+         * /imprimir-tecnico/123/?trasera=1
+         */
+
+        if (incluirTrasera) {
+
+            url +=
+                '?trasera=1';
+        }
+
+
+        iframe.src =
+            url;
+
+
+        // ======================================================
+        // RESTAURAR BOTÓN
+        // ======================================================
+
+        window.setTimeout(
+
+            function () {
+
+                boton.disabled =
+                    false;
+
+                boton.innerHTML =
+                    textoOriginal;
+            },
+
+            2000
+        );
     }
 
 
-    function imprimirResumenDirecto(evento) {
-        const boton = evento.currentTarget;
+    /* ==========================================================
+       IMPRIMIR RESUMEN
+       ========================================================== */
 
-        if (!boton || boton.disabled) {
+    function imprimirResumenDirecto(
+        evento
+    ) {
+
+        const boton =
+            evento.currentTarget;
+
+
+        if (
+            !boton ||
+            boton.disabled
+        ) {
             return;
         }
 
-        const textoOriginal = boton.innerHTML;
 
-        boton.disabled = true;
+        const textoOriginal =
+            boton.innerHTML;
+
+
+        boton.disabled =
+            true;
+
+
         boton.innerHTML =
             '<i class="bi bi-hourglass-split"></i> Generando PDF...';
+
 
         const iframeAnterior =
             document.getElementById(
                 'iframeImpresionResumen'
             );
 
+
         if (iframeAnterior) {
             iframeAnterior.remove();
         }
 
+
         const iframe =
-            document.createElement('iframe');
+            document.createElement(
+                'iframe'
+            );
+
 
         iframe.id =
             'iframeImpresionResumen';
 
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-10000px';
-        iframe.style.left = '-10000px';
-        iframe.style.width = '1000px';
-        iframe.style.height = '1000px';
-        iframe.style.border = 'none';
 
-        document.body.appendChild(iframe);
+        iframe.style.position =
+            'absolute';
+
+        iframe.style.top =
+            '-10000px';
+
+        iframe.style.left =
+            '-10000px';
+
+        iframe.style.width =
+            '1000px';
+
+        iframe.style.height =
+            '1000px';
+
+        iframe.style.border =
+            'none';
+
+
+        document.body.appendChild(
+            iframe
+        );
+
 
         iframe.src =
             "{% url 'imprimir_resumen' orden.id %}";
 
-        window.setTimeout(function () {
-            boton.disabled = false;
-            boton.innerHTML = textoOriginal;
-        }, 2000);
+
+        window.setTimeout(
+
+            function () {
+
+                boton.disabled =
+                    false;
+
+                boton.innerHTML =
+                    textoOriginal;
+
+            },
+
+            2000
+        );
     }
+
 </script>

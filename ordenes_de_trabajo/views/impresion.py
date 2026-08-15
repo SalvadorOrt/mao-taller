@@ -169,7 +169,6 @@ def obtener_porcentaje_iva_activo():
 # ==========================================================
 # IMPRIMIR FICHA TÉCNICA
 # ==========================================================
-
 @login_required
 @xframe_options_sameorigin
 def imprimir_tecnico(request, pk):
@@ -222,15 +221,29 @@ def imprimir_tecnico(request, pk):
     )
 
     # ======================================================
-    # NOMBRE DEL DOCUMENTO
+    # HOJA ADICIONAL / PARTE TRASERA
     # ======================================================
     #
-    # Ejemplo:
+    # Por defecto:
     #
-    # OT-24522_PDI4385_FICHA-TECNICA
+    #   /imprimir-tecnico/123/
     #
-    # Cuando Chrome/Edge utilice el título de la página
-    # al guardar como PDF, propondrá este nombre.
+    # muestra únicamente la primera hoja.
+    #
+    # Cuando llega:
+    #
+    #   ?trasera=1
+    #
+    # se mostrará también la segunda hoja.
+    #
+    # ======================================================
+
+    incluir_trasera = (
+        request.GET.get("trasera") == "1"
+    )
+
+    # ======================================================
+    # NOMBRE DEL DOCUMENTO
     # ======================================================
 
     nombre_archivo = nombre_documento_orden(
@@ -250,6 +263,9 @@ def imprimir_tecnico(request, pk):
             "empresa": empresa_ligada,
             "chk": chk,
             "croquis": croquis,
+
+            # Control de segunda hoja
+            "incluir_trasera": incluir_trasera,
 
             # Nombre para impresión / PDF
             "nombre_archivo": nombre_archivo,
