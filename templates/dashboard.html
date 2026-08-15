@@ -192,25 +192,25 @@
             <div class="mb-3">
                 <div class="placa-vehiculo">
                     <div
-                    class="placa-header"
-                    style="
-                        background-color:
-                            {% if vehiculo.es_migrada %}
-                                #86868b
-                            {% else %}
-                                {{ vehiculo.color_hex|default:'#1d1d1f' }}
-                            {% endif %};
+    class="placa-header"
+    style="
+        background-color:
+            {% if vehiculo.es_migrada %}
+                #86868b
+            {% else %}
+                {{ vehiculo.color_fondo_vehiculo }}
+            {% endif %};
 
-                        color:
-                            {% if vehiculo.es_migrada %}
-                                #FFFFFF
-                            {% else %}
-                                {{ vehiculo.color_texto_vehiculo }}
-                            {% endif %};
-                    "
-                >
-                    {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
-                </div>
+        color:
+            {% if vehiculo.es_migrada %}
+                #ffffff
+            {% else %}
+                {{ vehiculo.color_texto_vehiculo }}
+            {% endif %};
+    "
+>
+    {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
+</div>
                     <div class="placa-numero">{{ vehiculo.placa }}</div>
                     <div class="placa-footer">{{ vehiculo.cliente|default:"SIN CLIENTE" }}</div>
                 </div>

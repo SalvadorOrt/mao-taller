@@ -1702,11 +1702,6 @@ class ConfiguracionTributaria(models.Model):
     def __str__(self):
         return f"{self.nombre} - {self.porcentaje_iva}%"
 class OrdenTrabajo(models.Model):
-
-    # ==========================================================
-    # OPCIONES
-    # ==========================================================
-
     ESTADOS = [
         ("ABIERTA", "En Taller / Abierta"),
         ("CERRADA", "Entregado / Pagada"),
@@ -1727,7 +1722,7 @@ class OrdenTrabajo(models.Model):
     ]
 
     # ==========================================================
-    # IDENTIFICACIÓN DE LA ORDEN
+    # DATOS PRINCIPALES
     # ==========================================================
 
     numero_orden = models.CharField(
@@ -1750,11 +1745,11 @@ class OrdenTrabajo(models.Model):
     )
 
     # ==========================================================
-    # DATOS DE MIGRACIÓN
+    # MIGRACIÓN
     # ==========================================================
 
     es_migrada = models.BooleanField(
-        default=False
+        default=False,
     )
 
     numero_orden_origen = models.CharField(
@@ -1786,7 +1781,7 @@ class OrdenTrabajo(models.Model):
     )
 
     requiere_revision_migracion = models.BooleanField(
-        default=False
+        default=False,
     )
 
     hash_migracion = models.CharField(
@@ -1879,7 +1874,7 @@ class OrdenTrabajo(models.Model):
     )
 
     # ==========================================================
-    # KILOMETRAJE / MANTENIMIENTO
+    # MANTENIMIENTO
     # ==========================================================
 
     kilometraje = models.PositiveIntegerField(
@@ -1925,7 +1920,7 @@ class OrdenTrabajo(models.Model):
     )
 
     # ==========================================================
-    # TARIFAS
+    # TARIFA VEHÍCULO
     # ==========================================================
 
     tipo_tarifa_vehiculo = models.CharField(
@@ -1950,19 +1945,19 @@ class OrdenTrabajo(models.Model):
     )
 
     fecha_ingreso = models.DateTimeField(
-        default=timezone.now
+        default=timezone.now,
     )
 
     actualizado_en = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     version = models.PositiveIntegerField(
-        default=1
+        default=1,
     )
 
     # ==========================================================
-    # TOTALES
+    # ECONÓMICO
     # ==========================================================
 
     total_general = models.DecimalField(
@@ -2052,7 +2047,7 @@ class OrdenTrabajo(models.Model):
     )
 
     # ==========================================================
-    # RECEPCIÓN DEL VEHÍCULO
+    # CHECKLIST / FIRMA
     # ==========================================================
 
     nivel_combustible = models.CharField(
@@ -2063,7 +2058,7 @@ class OrdenTrabajo(models.Model):
     )
 
     checklist_confirmado_cliente = models.BooleanField(
-        default=False
+        default=False,
     )
 
     firma_cliente = models.ImageField(
@@ -2112,12 +2107,11 @@ class OrdenTrabajo(models.Model):
         ]
 
     # ==========================================================
-    # CLIENTE FINAL
+    # CLIENTE
     # ==========================================================
 
     @property
     def nombre_cliente_final(self):
-
         if self.cliente:
             return self.cliente.nombre_completo
 
@@ -2133,7 +2127,6 @@ class OrdenTrabajo(models.Model):
 
     @property
     def badge_origen(self):
-
         return (
             "MIGRADA"
             if self.es_migrada
@@ -2141,98 +2134,320 @@ class OrdenTrabajo(models.Model):
         )
 
     # ==========================================================
-    # COLOR DEL TEXTO DEL VEHÍCULO
+    # SISTEMA DE COLOR DEL VEHÍCULO
     # ==========================================================
+
+    @staticmethod
+    def _obtener_color_hex_desde_valor(valor):
+        """
+        Convierte diferentes representaciones de color
+        a formato hexadecimal.
+
+        Acepta:
+        - #FFFFFF
+        - #fff
+        - rgb(255, 255, 255)
+        - BLANCO
+        - GRIS
+        - ROJO
+        - AZUL
+        - etc.
+        """
+
+        if not valor:
+            return None
+
+        valor = str(valor).strip()
+
+        if not valor:
+            return None
+
+        # ------------------------------------------------------
+        # HEX de 6 caracteres
+        # ------------------------------------------------------
+
+        if (
+            valor.startswith("#")
+            and len(valor) == 7
+        ):
+            try:
+                int(valor[1:], 16)
+                return valor.upper()
+            except ValueError:
+                pass
+
+        # ------------------------------------------------------
+        # HEX abreviado #FFF
+        # ------------------------------------------------------
+
+        if (
+            valor.startswith("#")
+            and len(valor) == 4
+        ):
+            try:
+                int(valor[1:], 16)
+
+                return (
+                    "#"
+                    + valor[1] * 2
+                    + valor[2] * 2
+                    + valor[3] * 2
+                ).upper()
+
+            except ValueError:
+                pass
+
+        # ------------------------------------------------------
+        # RGB
+        # ------------------------------------------------------
+
+        valor_lower = valor.lower()
+
+        if valor_lower.startswith("rgb("):
+            try:
+                contenido = (
+                    valor_lower
+                    .replace("rgb(", "")
+                    .replace(")", "")
+                )
+
+                partes = [
+                    int(parte.strip())
+                    for parte in contenido.split(",")
+                ]
+
+                if (
+                    len(partes) == 3
+                    and all(
+                        0 <= parte <= 255
+                        for parte in partes
+                    )
+                ):
+                    return "#{:02X}{:02X}{:02X}".format(
+                        partes[0],
+                        partes[1],
+                        partes[2],
+                    )
+
+            except (
+                ValueError,
+                TypeError,
+            ):
+                pass
+
+        # ------------------------------------------------------
+        # NOMBRES DE COLORES
+        # ------------------------------------------------------
+
+        mapa_colores = {
+            "blanco": "#F5F5F7",
+            "white": "#F5F5F7",
+
+            "negro": "#212121",
+            "black": "#212121",
+
+            "plata": "#BDBDBD",
+            "plateado": "#BDBDBD",
+            "silver": "#BDBDBD",
+
+            "gris": "#757575",
+            "gray": "#757575",
+            "grey": "#757575",
+
+            "plomo": "#424242",
+
+            "rojo": "#D32F2F",
+            "red": "#D32F2F",
+
+            "vino": "#880E4F",
+            "tinto": "#880E4F",
+            "borgoña": "#880E4F",
+            "burdeos": "#880E4F",
+
+            "azul": "#1976D2",
+            "blue": "#1976D2",
+
+            "celeste": "#03A9F4",
+
+            "verde": "#388E3C",
+            "green": "#388E3C",
+
+            "amarillo": "#FBC02D",
+            "yellow": "#FBC02D",
+
+            "dorado": "#CBA135",
+            "oro": "#CBA135",
+            "gold": "#CBA135",
+
+            "naranja": "#F57C00",
+            "orange": "#F57C00",
+
+            "cafe": "#5D4037",
+            "café": "#5D4037",
+            "marrón": "#5D4037",
+            "marron": "#5D4037",
+            "brown": "#5D4037",
+
+            "beige": "#D7CCC8",
+
+            "crema": "#FFF9C4",
+            "cream": "#FFF9C4",
+        }
+
+        for nombre, hex_code in mapa_colores.items():
+            if nombre in valor_lower:
+                return hex_code
+
+        return None
+
+    @property
+    def color_fondo_vehiculo(self):
+        """
+        Color que realmente debe utilizar la interfaz.
+
+        IMPORTANTE:
+        Primero intenta obtenerlo desde `color`.
+
+        Esto permite que las órdenes antiguas que ya tenían
+        colores guardados sigan funcionando aunque su
+        `color_hex` tenga todavía el valor por defecto.
+        """
+
+        color_original = (
+            self._obtener_color_hex_desde_valor(
+                self.color
+            )
+        )
+
+        if color_original:
+            return color_original
+
+        color_hex_guardado = (
+            self._obtener_color_hex_desde_valor(
+                self.color_hex
+            )
+        )
+
+        if color_hex_guardado:
+            return color_hex_guardado
+
+        return "#1D1D1F"
 
     @property
     def color_texto_vehiculo(self):
         """
-        Determina automáticamente si el texto del encabezado
-        debe ser negro o blanco según el color de fondo.
+        Decide si el texto debe ser negro o blanco
+        según el contraste real con el fondo.
 
-        Fondo claro:
-            texto negro.
-
-        Fondo oscuro:
-            texto blanco.
+        Usa luminancia relativa para comparar el
+        contraste contra negro y contra blanco.
         """
 
-        color = (
-            self.color_hex
-            or "#1d1d1f"
-        )
+        color = self.color_fondo_vehiculo
 
         try:
-
-            color = str(color).strip()
-
-            if not color.startswith("#"):
-                return "#FFFFFF"
-
             color = color.lstrip("#")
 
             if len(color) != 6:
                 return "#FFFFFF"
 
-            rojo = int(
-                color[0:2],
-                16,
+            r = int(color[0:2], 16) / 255
+            g = int(color[2:4], 16) / 255
+            b = int(color[4:6], 16) / 255
+
+            def convertir(canal):
+                if canal <= 0.03928:
+                    return canal / 12.92
+
+                return (
+                    (canal + 0.055) / 1.055
+                ) ** 2.4
+
+            r = convertir(r)
+            g = convertir(g)
+            b = convertir(b)
+
+            luminancia = (
+                0.2126 * r
+                + 0.7152 * g
+                + 0.0722 * b
             )
 
-            verde = int(
-                color[2:4],
-                16,
+            contraste_negro = (
+                luminancia + 0.05
+            ) / 0.05
+
+            contraste_blanco = (
+                1.05
+                / (luminancia + 0.05)
             )
 
-            azul = int(
-                color[4:6],
-                16,
-            )
-
-            # Luminosidad perceptual.
-            luminosidad = (
-                (rojo * 299)
-                + (verde * 587)
-                + (azul * 114)
-            ) / 1000
-
-            if luminosidad >= 150:
-                return "#1d1d1f"
+            if contraste_negro >= contraste_blanco:
+                return "#1D1D1F"
 
             return "#FFFFFF"
 
         except (
             ValueError,
             TypeError,
+            IndexError,
         ):
             return "#FFFFFF"
 
+    def _calcular_color_hex(self):
+        """
+        Mantiene sincronizado color_hex con el campo color.
+
+        Si `color` contiene un valor válido, ese valor tiene
+        prioridad.
+
+        Si no se puede interpretar `color`, conserva
+        color_hex si ya contiene un valor válido.
+        """
+
+        color_calculado = (
+            self._obtener_color_hex_desde_valor(
+                self.color
+            )
+        )
+
+        if color_calculado:
+            self.color_hex = color_calculado
+            return
+
+        color_hex_actual = (
+            self._obtener_color_hex_desde_valor(
+                self.color_hex
+            )
+        )
+
+        if color_hex_actual:
+            self.color_hex = color_hex_actual
+            return
+
+        self.color_hex = "#1D1D1F"
+
     # ==========================================================
-    # BLOQUEO / ESTADOS
+    # ESTADOS / BLOQUEO
     # ==========================================================
 
     def esta_bloqueada(self):
-
         return self.estado in [
             "CERRADA",
             "ANULADA",
         ]
 
     def puede_editarse(self):
-
         return self.estado == "ABIERTA"
 
     def puede_cerrarse(self):
-
         if self.estado != "ABIERTA":
-
             return (
                 False,
                 "Solo se pueden cerrar órdenes abiertas.",
             )
 
         if not self.tecnicos.exists():
-
             return (
                 False,
                 "Debe asignar al menos un técnico "
@@ -2246,7 +2461,6 @@ class OrdenTrabajo(models.Model):
     # ==========================================================
 
     def _estado_anterior(self):
-
         if not self.pk:
             return None
 
@@ -2265,7 +2479,6 @@ class OrdenTrabajo(models.Model):
     # ==========================================================
 
     def _campos_modificados(self):
-
         if not self.pk:
             return []
 
@@ -2289,12 +2502,14 @@ class OrdenTrabajo(models.Model):
             "porcentaje_iva",
             "actualizado_en",
             "version",
+
+            # Campo derivado automáticamente.
+            "color_hex",
         }
 
         modificados = []
 
         for field in self._meta.concrete_fields:
-
             nombre = field.name
 
             if nombre in ignorar:
@@ -2315,12 +2530,7 @@ class OrdenTrabajo(models.Model):
 
         return modificados
 
-    # ==========================================================
-    # VALIDACIÓN DE BLOQUEO
-    # ==========================================================
-
     def validar_bloqueo_edicion(self):
-
         estado_anterior = (
             self._estado_anterior()
         )
@@ -2342,7 +2552,7 @@ class OrdenTrabajo(models.Model):
             return
 
         # Única excepción:
-        # reabrir la orden.
+        # reabrir una orden.
 
         if (
             campos_modificados == ["estado"]
@@ -2357,11 +2567,10 @@ class OrdenTrabajo(models.Model):
         )
 
     # ==========================================================
-    # CONFIGURACIÓN IVA
+    # IVA
     # ==========================================================
 
     def obtener_configuracion_iva_activa(self):
-
         return (
             ConfiguracionTributaria.objects
             .filter(activa=True)
@@ -2373,13 +2582,11 @@ class OrdenTrabajo(models.Model):
         )
 
     # ==========================================================
-    # NORMALIZAR TEXTO
+    # NORMALIZACIÓN
     # ==========================================================
 
     def _normalizar_campos_texto(self):
-
         if self.numero_orden:
-
             self.numero_orden = (
                 self.numero_orden
                 .strip()
@@ -2387,7 +2594,6 @@ class OrdenTrabajo(models.Model):
             )
 
         if self.numero_orden_origen:
-
             self.numero_orden_origen = (
                 self.numero_orden_origen
                 .strip()
@@ -2395,7 +2601,6 @@ class OrdenTrabajo(models.Model):
             )
 
         if self.placa:
-
             self.placa = (
                 self.placa
                 .strip()
@@ -2403,21 +2608,18 @@ class OrdenTrabajo(models.Model):
             )
 
         if self.vehiculo:
-
             self.vehiculo = (
                 self.vehiculo
                 .strip()
             )
 
         if self.color:
-
             self.color = (
                 self.color
                 .strip()
             )
 
         if self.clave_encendido:
-
             self.clave_encendido = (
                 self.clave_encendido
                 .strip()
@@ -2425,158 +2627,40 @@ class OrdenTrabajo(models.Model):
             )
 
         if self.cliente_respaldo:
-
             self.cliente_respaldo = (
                 self.cliente_respaldo
                 .strip()
             )
 
         if self.observaciones_recepcion:
-
             self.observaciones_recepcion = (
                 self.observaciones_recepcion
                 .strip()
             )
 
         if self.sintomas_cliente:
-
             self.sintomas_cliente = (
                 self.sintomas_cliente
                 .strip()
             )
 
         if self.observaciones_tecnicas:
-
             self.observaciones_tecnicas = (
                 self.observaciones_tecnicas
                 .strip()
             )
 
         if self.archivo_origen:
-
             self.archivo_origen = (
                 self.archivo_origen
                 .strip()
             )
 
         if self.hoja_origen:
-
             self.hoja_origen = (
                 self.hoja_origen
                 .strip()
             )
-
-    # ==========================================================
-    # CALCULAR COLOR HEX
-    # ==========================================================
-
-    def _calcular_color_hex(self):
-        """
-        Convierte el nombre del color del vehículo
-        a un color hexadecimal para utilizarlo
-        en la interfaz.
-
-        También acepta directamente valores HEX.
-        """
-
-        color_actual = (
-            str(self.color or "")
-            .strip()
-        )
-
-        # ======================================================
-        # SIN COLOR
-        # ======================================================
-
-        if not color_actual:
-
-            self.color_hex = "#1d1d1f"
-
-            return
-
-        # ======================================================
-        # SI YA VIENE COMO HEX
-        # ======================================================
-
-        if (
-            color_actual.startswith("#")
-            and len(color_actual) == 7
-        ):
-
-            try:
-
-                int(
-                    color_actual[1:],
-                    16,
-                )
-
-                self.color_hex = (
-                    color_actual.upper()
-                )
-
-                return
-
-            except ValueError:
-                pass
-
-        # ======================================================
-        # NOMBRE DEL COLOR
-        # ======================================================
-
-        color_lower = (
-            color_actual.lower()
-        )
-
-        mapa_colores = {
-
-            "blanco": "#F5F5F7",
-
-            "negro": "#212121",
-
-            "plata": "#BDBDBD",
-            "plateado": "#BDBDBD",
-
-            "gris": "#757575",
-
-            "plomo": "#424242",
-
-            "rojo": "#D32F2F",
-
-            "vino": "#880E4F",
-            "tinto": "#880E4F",
-
-            "azul": "#1976D2",
-
-            "celeste": "#03A9F4",
-
-            "verde": "#388E3C",
-
-            "amarillo": "#FBC02D",
-
-            "dorado": "#CBA135",
-            "oro": "#CBA135",
-
-            "naranja": "#F57C00",
-
-            "cafe": "#5D4037",
-            "café": "#5D4037",
-            "marrón": "#5D4037",
-            "marron": "#5D4037",
-
-            "beige": "#D7CCC8",
-
-            "crema": "#FFF9C4",
-        }
-
-        self.color_hex = "#1d1d1f"
-
-        for clave, hex_code in mapa_colores.items():
-
-            if clave in color_lower:
-
-                self.color_hex = hex_code
-
-                break
 
     # ==========================================================
     # PRÓXIMO MANTENIMIENTO
@@ -2596,49 +2680,35 @@ class OrdenTrabajo(models.Model):
             self.kilometraje is None
             or self.intervalo_mantenimiento_km is None
         ):
-
             self.proximo_mantenimiento_km = None
-
             return None
 
         if self.kilometraje < 0:
-
             self.proximo_mantenimiento_km = None
-
             return None
 
         if self.intervalo_mantenimiento_km <= 0:
-
             self.proximo_mantenimiento_km = None
-
             return None
 
         proximo = (
             self.kilometraje
-            +
-            self.intervalo_mantenimiento_km
+            + self.intervalo_mantenimiento_km
         )
 
         if proximo <= self.kilometraje:
-
             self.proximo_mantenimiento_km = None
-
             return None
 
-        self.proximo_mantenimiento_km = (
-            proximo
-        )
+        self.proximo_mantenimiento_km = proximo
 
-        return (
-            self.proximo_mantenimiento_km
-        )
+        return self.proximo_mantenimiento_km
 
     # ==========================================================
-    # CALCULAR TOTAL
+    # CÁLCULO ECONÓMICO
     # ==========================================================
 
     def calcular_total(self):
-
         servicios = (
             self.servicios_detalles
             .aggregate(
@@ -2673,12 +2743,9 @@ class OrdenTrabajo(models.Model):
 
         subtotal_sin_iva = (
             servicios
-            +
-            insumos
-            +
-            servicios_historicos
-            +
-            insumos_historicos
+            + insumos
+            + servicios_historicos
+            + insumos_historicos
         ).quantize(
             Decimal("0.01"),
             rounding=ROUND_HALF_UP,
@@ -2689,21 +2756,17 @@ class OrdenTrabajo(models.Model):
         # ======================================================
 
         if self.porcentaje_iva is None:
-
             config = (
                 self.obtener_configuracion_iva_activa()
             )
 
             if config:
-
                 self.configuracion_iva = config
-
                 self.porcentaje_iva = (
                     config.porcentaje_iva
                 )
 
             else:
-
                 self.porcentaje_iva = (
                     Decimal("0.00")
                 )
@@ -2728,20 +2791,13 @@ class OrdenTrabajo(models.Model):
         )
 
         if descuento_ingresado < Decimal("0.00"):
-
             raise ValidationError({
                 "descuento_ingresado":
                     "El descuento no puede ser negativo."
             })
 
-        # ======================================================
-        # DESCUENTO POR PORCENTAJE
-        # ======================================================
-
         if tipo_descuento == "PORCENTAJE":
-
             if descuento_ingresado > Decimal("100.00"):
-
                 raise ValidationError({
                     "descuento_ingresado": (
                         "El descuento porcentual "
@@ -2755,23 +2811,15 @@ class OrdenTrabajo(models.Model):
 
             valor_descuento = (
                 subtotal_sin_iva
-                *
-                descuento_porcentaje
-                /
-                Decimal("100")
+                * descuento_porcentaje
+                / Decimal("100")
             ).quantize(
                 Decimal("0.01"),
                 rounding=ROUND_HALF_UP,
             )
 
-        # ======================================================
-        # DESCUENTO FIJO
-        # ======================================================
-
         elif tipo_descuento == "VALOR_FIJO":
-
             if descuento_ingresado > subtotal_sin_iva:
-
                 raise ValidationError({
                     "descuento_ingresado": (
                         "El descuento fijo no puede "
@@ -2784,26 +2832,21 @@ class OrdenTrabajo(models.Model):
             )
 
             if subtotal_sin_iva > Decimal("0.00"):
-
                 descuento_porcentaje = (
                     valor_descuento
-                    *
-                    Decimal("100")
-                    /
-                    subtotal_sin_iva
+                    * Decimal("100")
+                    / subtotal_sin_iva
                 ).quantize(
                     Decimal("0.01"),
                     rounding=ROUND_HALF_UP,
                 )
 
             else:
-
                 descuento_porcentaje = (
                     Decimal("0.00")
                 )
 
         else:
-
             raise ValidationError({
                 "tipo_descuento":
                     "El tipo de descuento no es válido."
@@ -2815,28 +2858,25 @@ class OrdenTrabajo(models.Model):
 
         base_imponible = (
             subtotal_sin_iva
-            -
-            valor_descuento
+            - valor_descuento
         ).quantize(
             Decimal("0.01"),
             rounding=ROUND_HALF_UP,
         )
 
         # ======================================================
-        # VALOR IVA
+        # IVA
         # ======================================================
 
         valor_iva = (
             base_imponible
-            *
-            Decimal(
+            * Decimal(
                 str(
                     self.porcentaje_iva
                     or Decimal("0.00")
                 )
             )
-            /
-            Decimal("100")
+            / Decimal("100")
         ).quantize(
             Decimal("0.01"),
             rounding=ROUND_HALF_UP,
@@ -2847,18 +2887,15 @@ class OrdenTrabajo(models.Model):
         # ======================================================
 
         if self.sumar_iva_al_total:
-
             total_final = (
                 base_imponible
-                +
-                valor_iva
+                + valor_iva
             ).quantize(
                 Decimal("0.01"),
                 rounding=ROUND_HALF_UP,
             )
 
         else:
-
             total_final = (
                 base_imponible
                 .quantize(
@@ -2868,7 +2905,7 @@ class OrdenTrabajo(models.Model):
             )
 
         # ======================================================
-        # ASIGNAR
+        # ASIGNACIÓN
         # ======================================================
 
         self.total_general = (
@@ -2896,15 +2933,13 @@ class OrdenTrabajo(models.Model):
         )
 
         # ======================================================
-        # GUARDADO DIRECTO
+        # ACTUALIZACIÓN DIRECTA
         # ======================================================
 
         if self.pk:
-
             OrdenTrabajo.objects.filter(
                 pk=self.pk
             ).update(
-
                 total_general=
                     subtotal_sin_iva,
 
@@ -2940,13 +2975,11 @@ class OrdenTrabajo(models.Model):
             )
 
     # ==========================================================
-    # CLEAN
+    # VALIDACIÓN
     # ==========================================================
 
     def clean(self):
-
         self._normalizar_campos_texto()
-
         self.validar_bloqueo_edicion()
 
         errores = {}
@@ -2959,24 +2992,20 @@ class OrdenTrabajo(models.Model):
             not self.numero_orden
             or not self.numero_orden.strip()
         ):
-
             errores["numero_orden"] = (
                 "El número de orden es obligatorio."
             )
 
         if not self.sucursal_id:
-
             errores["sucursal"] = (
                 "La sucursal es obligatoria."
             )
 
         if not self.es_migrada:
-
             if (
                 not self.placa
                 or not self.placa.strip()
             ):
-
                 errores["placa"] = (
                     "La placa es obligatoria "
                     "para órdenes no migradas."
@@ -2986,7 +3015,6 @@ class OrdenTrabajo(models.Model):
             self.anio_vehiculo is not None
             and self.anio_vehiculo < 1900
         ):
-
             errores["anio_vehiculo"] = (
                 "El año del vehículo no es válido."
             )
@@ -2999,16 +3027,13 @@ class OrdenTrabajo(models.Model):
             self.kilometraje is not None
             and self.kilometraje < 0
         ):
-
             errores["kilometraje"] = (
                 "El kilometraje actual "
                 "no puede ser negativo."
             )
 
         if self.intervalo_mantenimiento_km is not None:
-
             if self.intervalo_mantenimiento_km <= 0:
-
                 errores[
                     "intervalo_mantenimiento_km"
                 ] = (
@@ -3017,7 +3042,6 @@ class OrdenTrabajo(models.Model):
                 )
 
             if self.kilometraje is None:
-
                 errores[
                     "intervalo_mantenimiento_km"
                 ] = (
@@ -3027,9 +3051,7 @@ class OrdenTrabajo(models.Model):
                 )
 
         if self.proximo_mantenimiento_km is not None:
-
             if self.proximo_mantenimiento_km < 0:
-
                 errores[
                     "proximo_mantenimiento_km"
                 ] = (
@@ -3038,7 +3060,6 @@ class OrdenTrabajo(models.Model):
                 )
 
             if self.kilometraje is None:
-
                 errores[
                     "proximo_mantenimiento_km"
                 ] = (
@@ -3051,7 +3072,6 @@ class OrdenTrabajo(models.Model):
                 self.proximo_mantenimiento_km
                 <= self.kilometraje
             ):
-
                 errores[
                     "proximo_mantenimiento_km"
                 ] = (
@@ -3065,11 +3085,9 @@ class OrdenTrabajo(models.Model):
             and self.intervalo_mantenimiento_km is not None
             and self.intervalo_mantenimiento_km > 0
         ):
-
             proximo_esperado = (
                 self.kilometraje
-                +
-                self.intervalo_mantenimiento_km
+                + self.intervalo_mantenimiento_km
             )
 
             if (
@@ -3077,7 +3095,6 @@ class OrdenTrabajo(models.Model):
                 and self.proximo_mantenimiento_km
                 != proximo_esperado
             ):
-
                 errores[
                     "proximo_mantenimiento_km"
                 ] = (
@@ -3094,8 +3111,9 @@ class OrdenTrabajo(models.Model):
             self.es_migrada
             and not self.numero_orden_origen
         ):
-
-            errores["numero_orden_origen"] = (
+            errores[
+                "numero_orden_origen"
+            ] = (
                 "Las OT migradas deben guardar "
                 "el número original extraído."
             )
@@ -3112,40 +3130,31 @@ class OrdenTrabajo(models.Model):
         )
 
         if descuento_ingresado < Decimal("0.00"):
-
             errores["descuento_ingresado"] = (
                 "El descuento no puede ser negativo."
             )
 
         if self.tipo_descuento == "PORCENTAJE":
-
             if descuento_ingresado > Decimal("100.00"):
-
                 errores["descuento_ingresado"] = (
                     "El descuento porcentual "
                     "no puede ser mayor al 100%."
                 )
 
         elif self.tipo_descuento == "VALOR_FIJO":
-
-            # La validación definitiva se realiza
-            # en calcular_total(), ya que aquí el
-            # subtotal puede estar desactualizado.
-
+            # Se valida contra el subtotal real
+            # dentro de calcular_total().
             pass
 
         else:
-
             errores["tipo_descuento"] = (
                 "El tipo de descuento no es válido."
             )
 
-        # ======================================================
-        # ERRORES
-        # ======================================================
-
         if errores:
-            raise ValidationError(errores)
+            raise ValidationError(
+                errores
+            )
 
     # ==========================================================
     # SAVE
@@ -3156,9 +3165,9 @@ class OrdenTrabajo(models.Model):
         *args,
         **kwargs,
     ):
-
         self._normalizar_campos_texto()
 
+        # Sincroniza automáticamente el hexadecimal.
         self._calcular_color_hex()
 
         self.calcular_proximo_mantenimiento()
@@ -3168,27 +3177,21 @@ class OrdenTrabajo(models.Model):
         )
 
         if update_fields is not None:
-
             campos = set(
                 update_fields
             )
 
-            # Si cambia el color,
-            # color_hex también debe guardarse.
-
+            # Si cambia color, también debe actualizarse
+            # automáticamente color_hex.
             if "color" in campos:
                 campos.add(
                     "color_hex"
                 )
 
-            # Si cambia kilometraje o intervalo,
-            # también cambia próximo mantenimiento.
-
             if {
                 "kilometraje",
                 "intervalo_mantenimiento_km",
             } & campos:
-
                 campos.add(
                     "proximo_mantenimiento_km"
                 )
@@ -3209,7 +3212,6 @@ class OrdenTrabajo(models.Model):
     # ==========================================================
 
     def __str__(self):
-
         placa = (
             self.placa
             if self.placa
@@ -3220,7 +3222,6 @@ class OrdenTrabajo(models.Model):
             self.es_migrada
             and self.numero_orden_origen
         ):
-
             return (
                 f"[{self.sucursal.codigo}] "
                 f"OT {self.numero_orden} | "
