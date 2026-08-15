@@ -3,7 +3,9 @@
 
 {% block title %}Panel de Control | MAO{% endblock %}
 
+
 {% block header_actions %}
+
 <style>
     .header-actions-mao {
         display: flex;
@@ -23,7 +25,7 @@
     }
 
     .mao-combobox-input {
-        min-width: 260px; 
+        min-width: 260px;
         width: 260px;
         height: 44px;
         border: 1px solid rgba(0, 0, 0, 0.08);
@@ -51,7 +53,7 @@
     .mao-combobox-input:disabled {
         opacity: 1;
         background: #f5f5f7;
-        color: #86868b; 
+        color: #86868b;
         border: 1px solid transparent;
         cursor: not-allowed;
     }
@@ -90,8 +92,15 @@
     }
 
     @keyframes maoDropdownFade {
-        from { opacity: 0; transform: translateY(-4px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .mao-combobox-options {
@@ -111,7 +120,9 @@
         border-radius: 12px;
         color: #1d1d1f;
         font-weight: 500;
-        transition: background 0.15s ease, color 0.15s ease;
+        transition:
+            background 0.15s ease,
+            color 0.15s ease;
         cursor: pointer;
     }
 
@@ -125,9 +136,17 @@
     }
 </style>
 
+
 <div class="header-actions-mao">
-    <form method="post" action="{% url 'cambiar_sucursal_activa' %}" class="m-0" id="formSucursalActiva">
+
+    <form
+        method="post"
+        action="{% url 'cambiar_sucursal_activa' %}"
+        class="m-0"
+        id="formSucursalActiva"
+    >
         {% csrf_token %}
+
         <input
             type="hidden"
             name="sucursal_id"
@@ -135,183 +154,616 @@
             value="{% if sucursal_activa %}{{ sucursal_activa.id }}{% endif %}"
         >
 
-        <div class="mao-combobox" id="maoComboboxSucursal">
-            <div class="mao-combobox-input-wrap" {% if not puede_cambiar_sucursal %}title="Operando en tu sucursal asignada"{% endif %}>
-                
+        <div
+            class="mao-combobox"
+            id="maoComboboxSucursal"
+        >
+
+            <div
+                class="mao-combobox-input-wrap"
+                {% if not puede_cambiar_sucursal %}
+                    title="Operando en tu sucursal asignada"
+                {% endif %}
+            >
+
                 <input
                     type="text"
                     id="maoComboboxInput"
                     class="mao-combobox-input"
                     value="{% if sucursal_activa %}{{ sucursal_activa.nombre|upper }}{% if not puede_cambiar_sucursal %} (TU SUCURSAL){% endif %}{% else %}SELECCIONAR SUCURSAL{% endif %}"
                     readonly
-                    {% if not puede_cambiar_sucursal %}disabled{% endif %}
+                    {% if not puede_cambiar_sucursal %}
+                        disabled
+                    {% endif %}
                 >
-                
+
                 {% if puede_cambiar_sucursal %}
-                    <i class="bi bi-chevron-down mao-combobox-icon"></i>
+
+                    <i
+                        class="bi bi-chevron-down mao-combobox-icon"
+                    ></i>
+
                 {% else %}
-                    <i class="bi bi-lock-fill mao-combobox-icon" style="opacity: 0.4;"></i>
+
+                    <i
+                        class="bi bi-lock-fill mao-combobox-icon"
+                        style="opacity: 0.4;"
+                    ></i>
+
                 {% endif %}
+
             </div>
 
+
             {% if puede_cambiar_sucursal %}
-            <div class="mao-combobox-menu" id="maoComboboxMenu">
-                <div class="mao-combobox-options" id="maoComboboxOptions">
+
+            <div
+                class="mao-combobox-menu"
+                id="maoComboboxMenu"
+            >
+
+                <div
+                    class="mao-combobox-options"
+                    id="maoComboboxOptions"
+                >
+
                     {% for sucursal in sucursales %}
+
                     <button
                         type="button"
                         class="mao-combobox-option {% if sucursal_activa and sucursal.id == sucursal_activa.id %}active{% endif %}"
                         data-id="{{ sucursal.id }}"
-                        data-name=" {{ sucursal.nombre|upper }}"
+                        data-name="{{ sucursal.nombre|upper }}"
                     >
                         {{ sucursal.nombre|upper }}
                     </button>
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
             {% endif %}
+
         </div>
+
     </form>
 
+
     {% if request.user.rol == 'CAJA' or request.user.rol == 'ADMIN' %}
-    <a href="{% url 'crear_orden' %}" class="btn-login px-4 text-decoration-none" style="width: auto;">
-        <i class="bi bi-plus-lg me-2"></i> Nueva OT
+
+    <a
+        href="{% url 'crear_orden' %}"
+        class="btn-login px-4 text-decoration-none"
+        style="width: auto;"
+    >
+        <i class="bi bi-plus-lg me-2"></i>
+        Nueva OT
     </a>
+
     {% endif %}
+
 </div>
+
 {% endblock %}
+
+
 
 {% block content %}
-<div class="row g-4 mt-4" id="contenedorTarjetas">
+
+<div
+    class="row g-4 mt-4"
+    id="contenedorTarjetas"
+>
+
     {% for vehiculo in ordenes_activas %}
+
     <div class="col-md-4 col-lg-3 tarjeta-carro">
-        <div class="login-card w-100 p-3 tarjeta-click"
-             data-url="{% url 'detalle_orden' vehiculo.id %}"
-             style="cursor: pointer;">
+
+        <div
+            class="login-card w-100 p-3 tarjeta-click"
+            data-url="{% url 'detalle_orden' vehiculo.id %}"
+            style="cursor: pointer;"
+        >
 
             <div class="mb-3">
+
                 <div class="placa-vehiculo">
+
+
+                    <!-- =================================================
+                         MODELO / COLOR DEL VEHÍCULO
+                         ================================================= -->
+
                     <div
-    class="placa-header"
-    style="
-        background-color:
-            {% if vehiculo.es_migrada %}
-                #86868b
-            {% else %}
-                {{ vehiculo.color_fondo_vehiculo }}
-            {% endif %};
-
-        color:
-            {% if vehiculo.es_migrada %}
-                #ffffff
-            {% else %}
-                {{ vehiculo.color_texto_vehiculo }}
-            {% endif %};
-    "
->
-    {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
-</div>
-                    <div class="placa-numero">{{ vehiculo.placa }}</div>
-                    <div class="placa-footer">{{ vehiculo.cliente|default:"SIN CLIENTE" }}</div>
-                </div>
-            </div>
-
-            <div class="small mb-2 text-center text-muted">
-                <strong>{{ vehiculo.numero_orden }}</strong>
-                <!-- Etiqueta visual para las reabiertas migradas -->
-                {% if vehiculo.es_migrada %}
-                    <div style="margin-top: 4px;">
-                        <span style="background: #fff5cc; color: #d97706; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 9px; border: 1px solid #ffcc00;">MIGRADA</span>
+                        class="placa-header js-placa-color"
+                        style="
+                            background-color:
+                            {% if vehiculo.es_migrada %}
+                                #86868b
+                            {% elif vehiculo.color %}
+                                {{ vehiculo.color }}
+                            {% else %}
+                                #1d1d1f
+                            {% endif %};
+                        "
+                    >
+                        {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
                     </div>
-                {% endif %}
+
+
+                    <!-- =================================================
+                         PLACA
+                         ================================================= -->
+
+                    <div class="placa-numero">
+                        {{ vehiculo.placa|default:"SIN PLACA" }}
+                    </div>
+
+
+                    <!-- =================================================
+                         CLIENTE
+                         ================================================= -->
+
+                    <div class="placa-footer">
+                        {{ vehiculo.nombre_cliente_final }}
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="login-footer mt-auto pt-2"
-                 style="text-align: center; color: var(--accent); font-weight: 500; border-top: 1px solid rgba(0,0,0,0.05);">
-                <div>
-                    <i class="bi bi-tools me-1"></i>
-                    {{ vehiculo.items_count|default:"0" }} items
+
+            <!-- =====================================================
+                 NÚMERO DE ORDEN
+                 ===================================================== -->
+
+            <div
+                class="small mb-2 text-center text-muted"
+            >
+
+                <strong>
+                    {{ vehiculo.numero_orden }}
+                </strong>
+
+
+                {% if vehiculo.es_migrada %}
+
+                <div style="margin-top: 4px;">
+
+                    <span
+                        style="
+                            background: #fff5cc;
+                            color: #d97706;
+                            padding: 2px 6px;
+                            border-radius: 6px;
+                            font-weight: 700;
+                            font-size: 9px;
+                            border: 1px solid #ffcc00;
+                        "
+                    >
+                        MIGRADA
+                    </span>
+
                 </div>
-                <div class="mt-1" style="font-size: 0.8rem; color: #6e6e73;">
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- =====================================================
+                 ITEMS / ESTADO
+                 ===================================================== -->
+
+            <div
+                class="login-footer mt-auto pt-2"
+                style="
+                    text-align: center;
+                    color: var(--accent);
+                    font-weight: 500;
+                    border-top: 1px solid rgba(0,0,0,0.05);
+                "
+            >
+
+                <div>
+
+                    <i class="bi bi-tools me-1"></i>
+
+                    {{ vehiculo.items_count|default:"0" }} items
+
+                </div>
+
+
+                <div
+                    class="mt-1"
+                    style="
+                        font-size: 0.8rem;
+                        color: #6e6e73;
+                    "
+                >
                     {{ vehiculo.estado }}
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
 
     {% empty %}
+
+
     <div class="col-12 mt-2">
-        <div class="login-card mx-auto text-center py-5" style="max-width: 500px;">
-            <i class="bi bi-inbox text-muted display-1 opacity-50 mb-3 d-block"></i>
-            <h2 class="login-title mt-2">Sin órdenes activas</h2>
-            <p class="login-subtitle mb-0">No hay órdenes de trabajo abiertas en este momento.</p>
+
+        <div
+            class="login-card mx-auto text-center py-5"
+            style="max-width: 500px;"
+        >
+
+            <i
+                class="
+                    bi bi-inbox
+                    text-muted
+                    display-1
+                    opacity-50
+                    mb-3
+                    d-block
+                "
+            ></i>
+
+            <h2 class="login-title mt-2">
+                Sin órdenes activas
+            </h2>
+
+            <p class="login-subtitle mb-0">
+                No hay órdenes de trabajo abiertas
+                en este momento.
+            </p>
+
         </div>
+
     </div>
+
     {% endfor %}
+
 </div>
+
 {% endblock %}
 
+
+
 {% block extra_js %}
+
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        // =========================================================
+        // CONTRASTE AUTOMÁTICO DEL MODELO DEL VEHÍCULO
+        // =========================================================
+        //
+        // Conservamos el fondo original de vehiculo.color.
+        //
+        // Fondo claro  -> texto negro
+        // Fondo oscuro -> texto blanco
+        //
+        // =========================================================
+
+        const encabezadosVehiculo =
+            document.querySelectorAll(
+                '.js-placa-color'
+            );
+
+
+        encabezadosVehiculo.forEach(
+            function (encabezado) {
+
+                const estilo =
+                    window.getComputedStyle(
+                        encabezado
+                    );
+
+
+                const fondo =
+                    estilo.backgroundColor;
+
+
+                const valores =
+                    fondo.match(
+                        /[\d.]+/g
+                    );
+
+
+                if (
+                    !valores ||
+                    valores.length < 3
+                ) {
+
+                    encabezado.style.color =
+                        '#ffffff';
+
+                    return;
+                }
+
+
+                const r =
+                    Number(
+                        valores[0]
+                    );
+
+
+                const g =
+                    Number(
+                        valores[1]
+                    );
+
+
+                const b =
+                    Number(
+                        valores[2]
+                    );
+
+
+                // =================================================
+                // LUMINOSIDAD PERCEPTUAL
+                // =================================================
+
+                const luminosidad =
+                    (
+                        (r * 299)
+                        +
+                        (g * 587)
+                        +
+                        (b * 114)
+                    )
+                    / 1000;
+
+
+                // =================================================
+                // TEXTO AUTOMÁTICO
+                // =================================================
+
+                if (
+                    luminosidad >= 150
+                ) {
+
+                    // Fondo claro:
+                    // blanco, plata, crema, amarillo,
+                    // beige, gris muy claro, etc.
+
+                    encabezado.style.color =
+                        '#1d1d1f';
+
+                } else {
+
+                    // Fondo oscuro:
+                    // negro, rojo, azul, vino,
+                    // verde oscuro, plomo, etc.
+
+                    encabezado.style.color =
+                        '#ffffff';
+
+                }
+
+            }
+        );
+
+
         // =========================================================
         // BUSCADOR GENERAL DE TARJETAS
         // =========================================================
-        const buscador = document.getElementById('buscadorDashboard');
-        if (buscador) {
-            buscador.addEventListener('keyup', function () {
-                let textoBusqueda = this.value.toLowerCase();
-                let tarjetas = document.querySelectorAll('.tarjeta-carro');
 
-                tarjetas.forEach(function (tarjeta) {
-                    let contenido = tarjeta.textContent.toLowerCase();
-                    tarjeta.style.display = contenido.includes(textoBusqueda) ? '' : 'none';
-                });
-            });
+        const buscador =
+            document.getElementById(
+                'buscadorDashboard'
+            );
+
+
+        if (buscador) {
+
+            buscador.addEventListener(
+                'keyup',
+                function () {
+
+                    const textoBusqueda =
+                        this.value
+                            .toLowerCase()
+                            .trim();
+
+
+                    const tarjetas =
+                        document.querySelectorAll(
+                            '.tarjeta-carro'
+                        );
+
+
+                    tarjetas.forEach(
+                        function (tarjeta) {
+
+                            const contenido =
+                                tarjeta
+                                    .textContent
+                                    .toLowerCase();
+
+
+                            tarjeta.style.display =
+                                contenido.includes(
+                                    textoBusqueda
+                                )
+                                    ? ''
+                                    : 'none';
+
+                        }
+                    );
+
+                }
+            );
+
         }
+
 
         // =========================================================
         // REDIRECCIÓN DE LAS TARJETAS AL DETALLE
         // =========================================================
-        const tarjetasClick = document.querySelectorAll('.tarjeta-click');
-        tarjetasClick.forEach(function (tarjeta) {
-            tarjeta.addEventListener('click', function () {
-                const url = this.dataset.url;
-                if (url) {
-                    window.location.href = url;
-                }
-            });
-        });
+
+        const tarjetasClick =
+            document.querySelectorAll(
+                '.tarjeta-click'
+            );
+
+
+        tarjetasClick.forEach(
+            function (tarjeta) {
+
+                tarjeta.addEventListener(
+                    'click',
+                    function () {
+
+                        const url =
+                            this.dataset.url;
+
+
+                        if (url) {
+
+                            window.location.href =
+                                url;
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
 
         // =========================================================
-        // DROPDOWN (COMBOBOX) DE SUCURSALES
+        // DROPDOWN / COMBOBOX DE SUCURSALES
         // =========================================================
-        const combobox = document.getElementById('maoComboboxSucursal');
-        const input = document.getElementById('maoComboboxInput');
-        const options = document.querySelectorAll('.mao-combobox-option');
-        const form = document.getElementById('formSucursalActiva');
 
-        if (combobox && input && !input.disabled) {
-            input.addEventListener('click', function (e) {
-                e.stopPropagation();
-                combobox.classList.toggle('open');
-            });
+        const combobox =
+            document.getElementById(
+                'maoComboboxSucursal'
+            );
 
-            document.addEventListener('click', function (e) {
-                if (!combobox.contains(e.target)) {
-                    combobox.classList.remove('open');
+
+        const input =
+            document.getElementById(
+                'maoComboboxInput'
+            );
+
+
+        const options =
+            document.querySelectorAll(
+                '.mao-combobox-option'
+            );
+
+
+        const form =
+            document.getElementById(
+                'formSucursalActiva'
+            );
+
+
+        if (
+            combobox &&
+            input &&
+            !input.disabled
+        ) {
+
+            // =====================================================
+            // ABRIR / CERRAR COMBOBOX
+            // =====================================================
+
+            input.addEventListener(
+                'click',
+                function (e) {
+
+                    e.stopPropagation();
+
+                    combobox.classList.toggle(
+                        'open'
+                    );
+
                 }
-            });
+            );
 
-            options.forEach(function (option) {
-                option.addEventListener('click', function () {
-                    const id = this.dataset.id;
-                    document.getElementById('sucursal_id_hidden').value = id;
-                    if (form) form.submit();
-                });
-            });
+
+            // =====================================================
+            // CERRAR AL HACER CLICK FUERA
+            // =====================================================
+
+            document.addEventListener(
+                'click',
+                function (e) {
+
+                    if (
+                        !combobox.contains(
+                            e.target
+                        )
+                    ) {
+
+                        combobox.classList.remove(
+                            'open'
+                        );
+
+                    }
+
+                }
+            );
+
+
+            // =====================================================
+            // SELECCIONAR SUCURSAL
+            // =====================================================
+
+            options.forEach(
+                function (option) {
+
+                    option.addEventListener(
+                        'click',
+                        function () {
+
+                            const id =
+                                this.dataset.id;
+
+
+                            const hidden =
+                                document.getElementById(
+                                    'sucursal_id_hidden'
+                                );
+
+
+                            if (hidden) {
+
+                                hidden.value =
+                                    id;
+
+                            }
+
+
+                            if (form) {
+
+                                form.submit();
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
         }
-    });
+
+    }
+);
+
 </script>
+
 {% endblock %}
