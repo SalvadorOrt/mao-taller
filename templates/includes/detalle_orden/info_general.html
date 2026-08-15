@@ -924,18 +924,27 @@
                 >
 
                     <input
-                        type="number"
+                        type="text"
                         id="id_intervalo_mantenimiento_km"
                         name="intervalo_mantenimiento_km"
                         class="intervalo-mantenimiento-input"
                         value="{{ orden.intervalo_mantenimiento_km|default_if_none:'' }}"
-                        min="1"
-                        max="100000"
-                        step="1"
+                        maxlength="6"
                         autocomplete="off"
                         inputmode="numeric"
+                        pattern="[0-9]*"
 
                         oninput="
+                            this.value = this.value.replace(/[^0-9]/g, '');
+
+                            if (this.value !== '') {
+                                let valor = parseInt(this.value, 10);
+
+                                if (valor > 100000) {
+                                    this.value = '100000';
+                                }
+                            }
+
                             this.setCustomValidity('');
 
                             if (
