@@ -307,7 +307,13 @@
                          ================================================= -->
 
                     <div class="placa-footer">
-                        {{ vehiculo.nombre_cliente_final }}
+                        {% if vehiculo.cliente %}
+                            {{ vehiculo.cliente.nombre_completo }}
+                        {% elif vehiculo.cliente_respaldo %}
+                            {{ vehiculo.cliente_respaldo }}
+                        {% else %}
+                            SIN CLIENTE
+                        {% endif %}
                     </div>
 
                 </div>
