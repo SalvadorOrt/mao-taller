@@ -82,13 +82,7 @@ def nombre_documento_orden(
     orden,
     tipo_documento,
 ):
-    """
-    Estructura estándar:
-
-        OT-24522_PDI4385_FICHA-TECNICA
-        OT-24522_PDI4385_RESUMEN-ORDEN
-        OT-24522_PDI4385_PROFORMA
-    """
+   
 
     numero_orden = limpiar_nombre_archivo(
         orden.numero_orden,
@@ -100,6 +94,11 @@ def nombre_documento_orden(
         "SIN-PLACA",
     )
 
+    cliente = limpiar_nombre_archivo(
+        orden.nombre_cliente_final,
+        "SIN-CLIENTE",
+    )
+
     tipo_documento = limpiar_nombre_archivo(
         tipo_documento,
         "DOCUMENTO",
@@ -108,9 +107,9 @@ def nombre_documento_orden(
     return (
         f"{numero_orden}_"
         f"{placa}_"
+        f"{cliente}_"
         f"{tipo_documento}"
     )
-
 
 def nombre_documento_cotizacion(cotizacion):
     """
