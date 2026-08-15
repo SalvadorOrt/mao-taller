@@ -268,57 +268,34 @@
         >
 
             <div class="mb-3">
+    <div class="placa-vehiculo">
 
-                <div class="placa-vehiculo">
+        <div
+            class="placa-header js-placa-color"
+            style="
+                background-color:
+                {% if vehiculo.es_migrada %}
+                    #86868b
+                {% elif vehiculo.color %}
+                    {{ vehiculo.color }}
+                {% else %}
+                    #1d1d1f
+                {% endif %};
+            "
+        >
+            {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
+        </div>
 
+        <div class="placa-numero">
+            {{ vehiculo.placa }}
+        </div>
 
-                    <!-- =================================================
-                         MODELO / COLOR DEL VEHÍCULO
-                         ================================================= -->
+        <div class="placa-footer">
+            {{ vehiculo.cliente|default:"SIN CLIENTE" }}
+        </div>
 
-                    <div
-                        class="placa-header js-placa-color"
-                        style="
-                            background-color:
-                            {% if vehiculo.es_migrada %}
-                                #86868b
-                            {% elif vehiculo.color %}
-                                {{ vehiculo.color }}
-                            {% else %}
-                                #1d1d1f
-                            {% endif %};
-                        "
-                    >
-                        {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
-                    </div>
-
-
-                    <!-- =================================================
-                         PLACA
-                         ================================================= -->
-
-                    <div class="placa-numero">
-                        {{ vehiculo.placa|default:"SIN PLACA" }}
-                    </div>
-
-
-                    <!-- =================================================
-                         CLIENTE
-                         ================================================= -->
-
-                    <div class="placa-footer">
-                        {% if vehiculo.cliente %}
-                            {{ vehiculo.cliente.nombre_completo }}
-                        {% elif vehiculo.cliente_respaldo %}
-                            {{ vehiculo.cliente_respaldo }}
-                        {% else %}
-                            SIN CLIENTE
-                        {% endif %}
-                    </div>
-
-                </div>
-
-            </div>
+    </div>
+</div>
 
 
             <!-- =====================================================
