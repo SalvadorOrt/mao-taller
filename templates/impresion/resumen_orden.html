@@ -1030,14 +1030,68 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Establece el nombre antes de abrir la impresión
-        document.title = "{{ nombre_archivo|escapejs }}";
 
-        // Pequeña espera para asegurar que Chrome
-        // haya registrado el nuevo título.
+        const nombreArchivo = "{{ nombre_archivo|escapejs }}";
+
+        // Título del documento que se está imprimiendo
+        document.title = nombreArchivo;
+
+        // =====================================================
+        // CHROME + IFRAME
+        // =====================================================
+        // Chrome puede tomar como nombre del PDF el título
+        // de la página principal en vez del título del iframe.
+        // Por eso cambiamos temporalmente también el título
+        // de la ventana principal.
+        // =====================================================
+
+        let tituloOriginalPrincipal = null;
+
+        try {
+            if (window.top !== window) {
+                tituloOriginalPrincipal = window.top.document.title;
+                window.top.document.title = nombreArchivo;
+            }
+        } catch (error) {
+            console.warn(
+                "No se pudo cambiar el título de la ventana principal:",
+                error
+            );
+        }
+
+        // =====================================================
+        // RESTAURAR TÍTULO AL TERMINAR LA IMPRESIÓN
+        // =====================================================
+
+        window.addEventListener(
+            "afterprint",
+            function () {
+                try {
+                    if (
+                        tituloOriginalPrincipal !== null &&
+                        window.top !== window
+                    ) {
+                        window.top.document.title =
+                            tituloOriginalPrincipal;
+                    }
+                } catch (error) {
+                    console.warn(
+                        "No se pudo restaurar el título:",
+                        error
+                    );
+                }
+            },
+            { once: true }
+        );
+
+        // =====================================================
+        // ABRIR IMPRESIÓN
+        // =====================================================
+
         setTimeout(function () {
             window.print();
         }, 300);
+
     });
 </script>
 
