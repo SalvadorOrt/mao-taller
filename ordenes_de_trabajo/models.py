@@ -1702,6 +1702,11 @@ class ConfiguracionTributaria(models.Model):
     def __str__(self):
         return f"{self.nombre} - {self.porcentaje_iva}%"
 class OrdenTrabajo(models.Model):
+
+    # ==========================================================
+    # OPCIONES
+    # ==========================================================
+
     ESTADOS = [
         ("ABIERTA", "En Taller / Abierta"),
         ("CERRADA", "Entregado / Pagada"),
@@ -1721,7 +1726,14 @@ class OrdenTrabajo(models.Model):
         ("VALOR_FIJO", "Valor fijo ($)"),
     ]
 
-    numero_orden = models.CharField(max_length=50, unique=True)
+    # ==========================================================
+    # IDENTIFICACIÓN DE LA ORDEN
+    # ==========================================================
+
+    numero_orden = models.CharField(
+        max_length=50,
+        unique=True,
+    )
 
     sucursal = models.ForeignKey(
         Sucursal,
@@ -1737,13 +1749,45 @@ class OrdenTrabajo(models.Model):
         blank=True,
     )
 
-    es_migrada = models.BooleanField(default=False)
-    numero_orden_origen = models.CharField(max_length=50, null=True, blank=True)
-    archivo_origen = models.CharField(max_length=255, null=True, blank=True)
-    hoja_origen = models.CharField(max_length=50, null=True, blank=True)
-    anio_origen_migracion = models.PositiveSmallIntegerField(null=True, blank=True)
-    json_origen = models.JSONField(null=True, blank=True)
-    requiere_revision_migracion = models.BooleanField(default=False)
+    # ==========================================================
+    # DATOS DE MIGRACIÓN
+    # ==========================================================
+
+    es_migrada = models.BooleanField(
+        default=False
+    )
+
+    numero_orden_origen = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+    )
+
+    archivo_origen = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    hoja_origen = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+    )
+
+    anio_origen_migracion = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    json_origen = models.JSONField(
+        null=True,
+        blank=True,
+    )
+
+    requiere_revision_migracion = models.BooleanField(
+        default=False
+    )
 
     hash_migracion = models.CharField(
         max_length=64,
@@ -1751,6 +1795,10 @@ class OrdenTrabajo(models.Model):
         blank=True,
         db_index=True,
     )
+
+    # ==========================================================
+    # PERSONAL
+    # ==========================================================
 
     usuario_receptor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1767,6 +1815,10 @@ class OrdenTrabajo(models.Model):
         verbose_name="Técnicos encargados",
     )
 
+    # ==========================================================
+    # CLIENTE
+    # ==========================================================
+
     cliente = models.ForeignKey(
         Cliente,
         on_delete=models.SET_NULL,
@@ -1775,14 +1827,44 @@ class OrdenTrabajo(models.Model):
         blank=True,
     )
 
-    cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
+    cliente_respaldo = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
 
-    color = models.CharField(max_length=50, null=True, blank=True)
-    color_hex = models.CharField(max_length=7, default="#1d1d1f")
+    # ==========================================================
+    # VEHÍCULO
+    # ==========================================================
 
-    placa = models.CharField(max_length=15, db_index=True, null=True, blank=True)
-    vehiculo = models.CharField(max_length=150, null=True, blank=True)
-    anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+    color = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+    )
+
+    color_hex = models.CharField(
+        max_length=7,
+        default="#1d1d1f",
+    )
+
+    placa = models.CharField(
+        max_length=15,
+        db_index=True,
+        null=True,
+        blank=True,
+    )
+
+    vehiculo = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+    )
+
+    anio_vehiculo = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
 
     clave_encendido = models.CharField(
         max_length=50,
@@ -1791,7 +1873,14 @@ class OrdenTrabajo(models.Model):
         verbose_name="Clave/PIN de Encendido",
     )
 
-    fecha_origen = models.DateField(null=True, blank=True)
+    fecha_origen = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================================
+    # KILOMETRAJE / MANTENIMIENTO
+    # ==========================================================
 
     kilometraje = models.PositiveIntegerField(
         null=True,
@@ -1816,9 +1905,28 @@ class OrdenTrabajo(models.Model):
         verbose_name="Próximo mantenimiento",
     )
 
-    observaciones_recepcion = models.TextField(null=True, blank=True)
-    sintomas_cliente = models.TextField(null=True, blank=True)
-    observaciones_tecnicas = models.TextField(null=True, blank=True)
+    # ==========================================================
+    # RECEPCIÓN
+    # ==========================================================
+
+    observaciones_recepcion = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    sintomas_cliente = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    observaciones_tecnicas = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================================
+    # TARIFAS
+    # ==========================================================
 
     tipo_tarifa_vehiculo = models.CharField(
         max_length=20,
@@ -1831,11 +1939,32 @@ class OrdenTrabajo(models.Model):
         default="NO_APLICA",
     )
 
-    estado = models.CharField(max_length=15, choices=ESTADOS, default="ABIERTA")
-    fecha_ingreso = models.DateTimeField(default=timezone.now)
-    actualizado_en = models.DateTimeField(auto_now=True)
-    version = models.PositiveIntegerField(default=1)
- 
+    # ==========================================================
+    # ESTADO
+    # ==========================================================
+
+    estado = models.CharField(
+        max_length=15,
+        choices=ESTADOS,
+        default="ABIERTA",
+    )
+
+    fecha_ingreso = models.DateTimeField(
+        default=timezone.now
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True
+    )
+
+    version = models.PositiveIntegerField(
+        default=1
+    )
+
+    # ==========================================================
+    # TOTALES
+    # ==========================================================
+
     total_general = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -1882,7 +2011,10 @@ class OrdenTrabajo(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        help_text="Valor escrito por el usuario, como porcentaje o valor fijo.",
+        help_text=(
+            "Valor escrito por el usuario, "
+            "como porcentaje o valor fijo."
+        ),
     )
 
     descuento_porcentaje = models.DecimalField(
@@ -1890,7 +2022,10 @@ class OrdenTrabajo(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
         editable=False,
-        help_text="Porcentaje real o equivalente calculado por el sistema.",
+        help_text=(
+            "Porcentaje real o equivalente "
+            "calculado por el sistema."
+        ),
     )
 
     valor_descuento = models.DecimalField(
@@ -1898,7 +2033,10 @@ class OrdenTrabajo(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
         editable=False,
-        help_text="Valor monetario del descuento calculado por el sistema.",
+        help_text=(
+            "Valor monetario del descuento "
+            "calculado por el sistema."
+        ),
     )
 
     valor_iva = models.DecimalField(
@@ -1913,6 +2051,10 @@ class OrdenTrabajo(models.Model):
         default=Decimal("0.00"),
     )
 
+    # ==========================================================
+    # RECEPCIÓN DEL VEHÍCULO
+    # ==========================================================
+
     nivel_combustible = models.CharField(
         max_length=10,
         choices=NIVELES_COMBUSTIBLE,
@@ -1920,7 +2062,9 @@ class OrdenTrabajo(models.Model):
         blank=True,
     )
 
-    checklist_confirmado_cliente = models.BooleanField(default=False)
+    checklist_confirmado_cliente = models.BooleanField(
+        default=False
+    )
 
     firma_cliente = models.ImageField(
         upload_to="ordenes/firmas/%Y/%m/",
@@ -1928,66 +2072,208 @@ class OrdenTrabajo(models.Model):
         blank=True,
     )
 
-    fecha_firma = models.DateTimeField(null=True, blank=True)
+    fecha_firma = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================================
+    # META
+    # ==========================================================
 
     class Meta:
         ordering = ["-fecha_ingreso"]
+
         verbose_name = "Orden de Trabajo"
         verbose_name_plural = "Órdenes de Trabajo"
+
         indexes = [
-            models.Index(fields=["sucursal", "estado"]),
-            models.Index(fields=["placa", "fecha_ingreso"]),
-            models.Index(fields=["estado", "fecha_ingreso"]),
-            models.Index(fields=["es_migrada", "anio_origen_migracion"]),
-            models.Index(fields=["numero_orden_origen"]),
-            models.Index(fields=["fecha_origen"]),
+            models.Index(
+                fields=["sucursal", "estado"]
+            ),
+            models.Index(
+                fields=["placa", "fecha_ingreso"]
+            ),
+            models.Index(
+                fields=["estado", "fecha_ingreso"]
+            ),
+            models.Index(
+                fields=[
+                    "es_migrada",
+                    "anio_origen_migracion",
+                ]
+            ),
+            models.Index(
+                fields=["numero_orden_origen"]
+            ),
+            models.Index(
+                fields=["fecha_origen"]
+            ),
         ]
+
+    # ==========================================================
+    # CLIENTE FINAL
+    # ==========================================================
 
     @property
     def nombre_cliente_final(self):
+
         if self.cliente:
             return self.cliente.nombre_completo
-        return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
+
+        return (
+            self.cliente_respaldo
+            if self.cliente_respaldo
+            else "SIN NOMBRE"
+        )
+
+    # ==========================================================
+    # ORIGEN
+    # ==========================================================
 
     @property
     def badge_origen(self):
-        return "MIGRADA" if self.es_migrada else "NORMAL"
 
+        return (
+            "MIGRADA"
+            if self.es_migrada
+            else "NORMAL"
+        )
+
+    # ==========================================================
+    # COLOR DEL TEXTO DEL VEHÍCULO
+    # ==========================================================
+
+    @property
+    def color_texto_vehiculo(self):
+        """
+        Determina automáticamente si el texto del encabezado
+        debe ser negro o blanco según el color de fondo.
+
+        Fondo claro:
+            texto negro.
+
+        Fondo oscuro:
+            texto blanco.
+        """
+
+        color = (
+            self.color_hex
+            or "#1d1d1f"
+        )
+
+        try:
+
+            color = str(color).strip()
+
+            if not color.startswith("#"):
+                return "#FFFFFF"
+
+            color = color.lstrip("#")
+
+            if len(color) != 6:
+                return "#FFFFFF"
+
+            rojo = int(
+                color[0:2],
+                16,
+            )
+
+            verde = int(
+                color[2:4],
+                16,
+            )
+
+            azul = int(
+                color[4:6],
+                16,
+            )
+
+            # Luminosidad perceptual.
+            luminosidad = (
+                (rojo * 299)
+                + (verde * 587)
+                + (azul * 114)
+            ) / 1000
+
+            if luminosidad >= 150:
+                return "#1d1d1f"
+
+            return "#FFFFFF"
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+            return "#FFFFFF"
+
+    # ==========================================================
+    # BLOQUEO / ESTADOS
+    # ==========================================================
 
     def esta_bloqueada(self):
-        return self.estado in ["CERRADA", "ANULADA"]
 
+        return self.estado in [
+            "CERRADA",
+            "ANULADA",
+        ]
 
     def puede_editarse(self):
+
         return self.estado == "ABIERTA"
 
-
     def puede_cerrarse(self):
+
         if self.estado != "ABIERTA":
-            return False, "Solo se pueden cerrar órdenes abiertas."
+
+            return (
+                False,
+                "Solo se pueden cerrar órdenes abiertas.",
+            )
 
         if not self.tecnicos.exists():
-            return False, "Debe asignar al menos un técnico antes de cerrar la orden."
+
+            return (
+                False,
+                "Debe asignar al menos un técnico "
+                "antes de cerrar la orden.",
+            )
 
         return True, None
 
+    # ==========================================================
+    # ESTADO ANTERIOR
+    # ==========================================================
 
     def _estado_anterior(self):
+
         if not self.pk:
             return None
 
         return (
             OrdenTrabajo.objects
             .filter(pk=self.pk)
-            .values_list("estado", flat=True)
+            .values_list(
+                "estado",
+                flat=True,
+            )
             .first()
         )
 
+    # ==========================================================
+    # CAMPOS MODIFICADOS
+    # ==========================================================
+
     def _campos_modificados(self):
+
         if not self.pk:
             return []
 
-        anterior = OrdenTrabajo.objects.filter(pk=self.pk).first()
+        anterior = (
+            OrdenTrabajo.objects
+            .filter(pk=self.pk)
+            .first()
+        )
 
         if not anterior:
             return []
@@ -2008,363 +2294,756 @@ class OrdenTrabajo(models.Model):
         modificados = []
 
         for field in self._meta.concrete_fields:
+
             nombre = field.name
 
             if nombre in ignorar:
                 continue
 
-            valor_anterior = getattr(anterior, nombre)
-            valor_actual = getattr(self, nombre)
+            valor_anterior = getattr(
+                anterior,
+                nombre,
+            )
+
+            valor_actual = getattr(
+                self,
+                nombre,
+            )
 
             if valor_anterior != valor_actual:
                 modificados.append(nombre)
 
         return modificados
 
+    # ==========================================================
+    # VALIDACIÓN DE BLOQUEO
+    # ==========================================================
+
     def validar_bloqueo_edicion(self):
-        estado_anterior = self._estado_anterior()
+
+        estado_anterior = (
+            self._estado_anterior()
+        )
 
         if not estado_anterior:
             return
 
-        if estado_anterior not in ["CERRADA", "ANULADA"]:
+        if estado_anterior not in [
+            "CERRADA",
+            "ANULADA",
+        ]:
             return
 
-        campos_modificados = self._campos_modificados()
+        campos_modificados = (
+            self._campos_modificados()
+        )
 
         if not campos_modificados:
             return
 
-        # Única excepción: reabrir la orden.
-        if campos_modificados == ["estado"] and self.estado == "ABIERTA":
+        # Única excepción:
+        # reabrir la orden.
+
+        if (
+            campos_modificados == ["estado"]
+            and self.estado == "ABIERTA"
+        ):
             return
 
         raise ValidationError(
-            "No se puede modificar una orden cerrada o anulada. "
+            "No se puede modificar una orden "
+            "cerrada o anulada. "
             "Primero debe reabrirse."
         )
 
+    # ==========================================================
+    # CONFIGURACIÓN IVA
+    # ==========================================================
+
     def obtener_configuracion_iva_activa(self):
-        return ConfiguracionTributaria.objects.filter(
-            activa=True
-        ).order_by("-fecha_inicio", "-id").first()
+
+        return (
+            ConfiguracionTributaria.objects
+            .filter(activa=True)
+            .order_by(
+                "-fecha_inicio",
+                "-id",
+            )
+            .first()
+        )
+
+    # ==========================================================
+    # NORMALIZAR TEXTO
+    # ==========================================================
 
     def _normalizar_campos_texto(self):
+
         if self.numero_orden:
-            self.numero_orden = self.numero_orden.strip().upper()
+
+            self.numero_orden = (
+                self.numero_orden
+                .strip()
+                .upper()
+            )
 
         if self.numero_orden_origen:
-            self.numero_orden_origen = self.numero_orden_origen.strip().upper()
+
+            self.numero_orden_origen = (
+                self.numero_orden_origen
+                .strip()
+                .upper()
+            )
 
         if self.placa:
-            self.placa = self.placa.strip().upper()
+
+            self.placa = (
+                self.placa
+                .strip()
+                .upper()
+            )
 
         if self.vehiculo:
-            self.vehiculo = self.vehiculo.strip()
+
+            self.vehiculo = (
+                self.vehiculo
+                .strip()
+            )
 
         if self.color:
-            self.color = self.color.strip()
+
+            self.color = (
+                self.color
+                .strip()
+            )
 
         if self.clave_encendido:
-            self.clave_encendido = self.clave_encendido.strip().upper()
+
+            self.clave_encendido = (
+                self.clave_encendido
+                .strip()
+                .upper()
+            )
 
         if self.cliente_respaldo:
-            self.cliente_respaldo = self.cliente_respaldo.strip()
+
+            self.cliente_respaldo = (
+                self.cliente_respaldo
+                .strip()
+            )
 
         if self.observaciones_recepcion:
-            self.observaciones_recepcion = self.observaciones_recepcion.strip()
+
+            self.observaciones_recepcion = (
+                self.observaciones_recepcion
+                .strip()
+            )
 
         if self.sintomas_cliente:
-            self.sintomas_cliente = self.sintomas_cliente.strip()
+
+            self.sintomas_cliente = (
+                self.sintomas_cliente
+                .strip()
+            )
 
         if self.observaciones_tecnicas:
-            self.observaciones_tecnicas = self.observaciones_tecnicas.strip()
+
+            self.observaciones_tecnicas = (
+                self.observaciones_tecnicas
+                .strip()
+            )
 
         if self.archivo_origen:
-            self.archivo_origen = self.archivo_origen.strip()
+
+            self.archivo_origen = (
+                self.archivo_origen
+                .strip()
+            )
 
         if self.hoja_origen:
-            self.hoja_origen = self.hoja_origen.strip()
+
+            self.hoja_origen = (
+                self.hoja_origen
+                .strip()
+            )
+
+    # ==========================================================
+    # CALCULAR COLOR HEX
+    # ==========================================================
 
     def _calcular_color_hex(self):
-        if self.color_hex and self.color_hex != "#1d1d1f":
+        """
+        Convierte el nombre del color del vehículo
+        a un color hexadecimal para utilizarlo
+        en la interfaz.
+
+        También acepta directamente valores HEX.
+        """
+
+        color_actual = (
+            str(self.color or "")
+            .strip()
+        )
+
+        # ======================================================
+        # SIN COLOR
+        # ======================================================
+
+        if not color_actual:
+
+            self.color_hex = "#1d1d1f"
+
             return
 
-        self.color_hex = "#1d1d1f"
+        # ======================================================
+        # SI YA VIENE COMO HEX
+        # ======================================================
 
-        if not self.color:
-            return
+        if (
+            color_actual.startswith("#")
+            and len(color_actual) == 7
+        ):
 
-        color_lower = self.color.lower()
+            try:
+
+                int(
+                    color_actual[1:],
+                    16,
+                )
+
+                self.color_hex = (
+                    color_actual.upper()
+                )
+
+                return
+
+            except ValueError:
+                pass
+
+        # ======================================================
+        # NOMBRE DEL COLOR
+        # ======================================================
+
+        color_lower = (
+            color_actual.lower()
+        )
 
         mapa_colores = {
+
             "blanco": "#F5F5F7",
+
             "negro": "#212121",
+
             "plata": "#BDBDBD",
             "plateado": "#BDBDBD",
+
             "gris": "#757575",
+
             "plomo": "#424242",
+
             "rojo": "#D32F2F",
+
             "vino": "#880E4F",
             "tinto": "#880E4F",
+
             "azul": "#1976D2",
+
             "celeste": "#03A9F4",
+
             "verde": "#388E3C",
+
             "amarillo": "#FBC02D",
+
             "dorado": "#CBA135",
             "oro": "#CBA135",
+
             "naranja": "#F57C00",
+
             "cafe": "#5D4037",
+            "café": "#5D4037",
             "marrón": "#5D4037",
             "marron": "#5D4037",
+
             "beige": "#D7CCC8",
+
             "crema": "#FFF9C4",
         }
 
+        self.color_hex = "#1d1d1f"
+
         for clave, hex_code in mapa_colores.items():
+
             if clave in color_lower:
+
                 self.color_hex = hex_code
+
                 break
+
+    # ==========================================================
+    # PRÓXIMO MANTENIMIENTO
+    # ==========================================================
 
     def calcular_proximo_mantenimiento(self):
         """
-        Calcula el kilometraje del próximo mantenimiento.
+        Calcula:
 
-        Fórmula:
-            próximo mantenimiento =
-                kilometraje actual + intervalo aplicado
-
-        Si los datos no son válidos, el próximo mantenimiento
-        se establece en None.
+        próximo mantenimiento =
+            kilometraje actual
+            +
+            intervalo de mantenimiento
         """
 
         if (
             self.kilometraje is None
             or self.intervalo_mantenimiento_km is None
         ):
+
             self.proximo_mantenimiento_km = None
+
             return None
 
-        # El kilometraje no puede ser negativo
         if self.kilometraje < 0:
+
             self.proximo_mantenimiento_km = None
+
             return None
 
-        # El intervalo debe ser mayor que cero
         if self.intervalo_mantenimiento_km <= 0:
+
             self.proximo_mantenimiento_km = None
+
             return None
 
         proximo = (
             self.kilometraje
-            + self.intervalo_mantenimiento_km
+            +
+            self.intervalo_mantenimiento_km
         )
 
-        # Validación de seguridad
         if proximo <= self.kilometraje:
+
             self.proximo_mantenimiento_km = None
+
             return None
 
-        self.proximo_mantenimiento_km = proximo
+        self.proximo_mantenimiento_km = (
+            proximo
+        )
 
-        return self.proximo_mantenimiento_km
+        return (
+            self.proximo_mantenimiento_km
+        )
 
+    # ==========================================================
+    # CALCULAR TOTAL
+    # ==========================================================
 
     def calcular_total(self):
+
         servicios = (
-            self.servicios_detalles.aggregate(total=Sum("subtotal"))["total"]
+            self.servicios_detalles
+            .aggregate(
+                total=Sum("subtotal")
+            )["total"]
             or Decimal("0.00")
         )
+
         insumos = (
-            self.insumos_detalles.aggregate(total=Sum("subtotal"))["total"]
+            self.insumos_detalles
+            .aggregate(
+                total=Sum("subtotal")
+            )["total"]
             or Decimal("0.00")
         )
+
         servicios_historicos = (
-            self.servicios_historicos.aggregate(total=Sum("subtotal"))["total"]
+            self.servicios_historicos
+            .aggregate(
+                total=Sum("subtotal")
+            )["total"]
             or Decimal("0.00")
         )
+
         insumos_historicos = (
-            self.insumos_historicos.aggregate(total=Sum("subtotal"))["total"]
+            self.insumos_historicos
+            .aggregate(
+                total=Sum("subtotal")
+            )["total"]
             or Decimal("0.00")
         )
 
         subtotal_sin_iva = (
             servicios
-            + insumos
-            + servicios_historicos
-            + insumos_historicos
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            +
+            insumos
+            +
+            servicios_historicos
+            +
+            insumos_historicos
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        # ======================================================
+        # IVA
+        # ======================================================
 
         if self.porcentaje_iva is None:
-            config = self.obtener_configuracion_iva_activa()
+
+            config = (
+                self.obtener_configuracion_iva_activa()
+            )
 
             if config:
-                self.configuracion_iva = config
-                self.porcentaje_iva = config.porcentaje_iva
-            else:
-                self.porcentaje_iva = Decimal("0.00")
 
-        tipo_descuento = self.tipo_descuento or "PORCENTAJE"
+                self.configuracion_iva = config
+
+                self.porcentaje_iva = (
+                    config.porcentaje_iva
+                )
+
+            else:
+
+                self.porcentaje_iva = (
+                    Decimal("0.00")
+                )
+
+        # ======================================================
+        # DESCUENTO
+        # ======================================================
+
+        tipo_descuento = (
+            self.tipo_descuento
+            or "PORCENTAJE"
+        )
+
         descuento_ingresado = Decimal(
-            str(self.descuento_ingresado or Decimal("0.00"))
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            str(
+                self.descuento_ingresado
+                or Decimal("0.00")
+            )
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
 
         if descuento_ingresado < Decimal("0.00"):
+
             raise ValidationError({
-                "descuento_ingresado": "El descuento no puede ser negativo."
+                "descuento_ingresado":
+                    "El descuento no puede ser negativo."
             })
+
+        # ======================================================
+        # DESCUENTO POR PORCENTAJE
+        # ======================================================
 
         if tipo_descuento == "PORCENTAJE":
+
             if descuento_ingresado > Decimal("100.00"):
+
                 raise ValidationError({
                     "descuento_ingresado": (
-                        "El descuento porcentual no puede ser mayor al 100%."
+                        "El descuento porcentual "
+                        "no puede ser mayor al 100%."
                     )
                 })
 
-            descuento_porcentaje = descuento_ingresado
+            descuento_porcentaje = (
+                descuento_ingresado
+            )
+
             valor_descuento = (
                 subtotal_sin_iva
-                * descuento_porcentaje
-                / Decimal("100")
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-        elif tipo_descuento == "VALOR_FIJO":
-            if descuento_ingresado > subtotal_sin_iva:
-                raise ValidationError({
-                    "descuento_ingresado": (
-                        "El descuento fijo no puede superar el subtotal "
-                        "de la orden."
-                    )
-                })
-
-            valor_descuento = descuento_ingresado
-
-            if subtotal_sin_iva > Decimal("0.00"):
-                descuento_porcentaje = (
-                    valor_descuento
-                    * Decimal("100")
-                    / subtotal_sin_iva
-                ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            else:
-                descuento_porcentaje = Decimal("0.00")
-
-        else:
-            raise ValidationError({
-                "tipo_descuento": "El tipo de descuento no es válido."
-            })
-
-        base_imponible = (
-            subtotal_sin_iva - valor_descuento
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-        valor_iva = (
-            base_imponible
-            * Decimal(str(self.porcentaje_iva or Decimal("0.00")))
-            / Decimal("100")
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-        if self.sumar_iva_al_total:
-            total_final = (
-                base_imponible + valor_iva
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        else:
-            total_final = base_imponible.quantize(
+                *
+                descuento_porcentaje
+                /
+                Decimal("100")
+            ).quantize(
                 Decimal("0.01"),
                 rounding=ROUND_HALF_UP,
             )
 
-        self.total_general = subtotal_sin_iva
-        self.subtotal_sin_iva = subtotal_sin_iva
-        self.descuento_porcentaje = descuento_porcentaje
-        self.valor_descuento = valor_descuento
-        self.valor_iva = valor_iva
-        self.total_final = total_final
+        # ======================================================
+        # DESCUENTO FIJO
+        # ======================================================
 
-        if self.pk:
-            OrdenTrabajo.objects.filter(pk=self.pk).update(
-                total_general=subtotal_sin_iva,
-                configuracion_iva=self.configuracion_iva,
-                porcentaje_iva=self.porcentaje_iva,
-                sumar_iva_al_total=self.sumar_iva_al_total,
-                subtotal_sin_iva=subtotal_sin_iva,
-                tipo_descuento=tipo_descuento,
-                descuento_ingresado=descuento_ingresado,
-                descuento_porcentaje=descuento_porcentaje,
-                valor_descuento=valor_descuento,
-                valor_iva=valor_iva,
-                total_final=total_final,
+        elif tipo_descuento == "VALOR_FIJO":
+
+            if descuento_ingresado > subtotal_sin_iva:
+
+                raise ValidationError({
+                    "descuento_ingresado": (
+                        "El descuento fijo no puede "
+                        "superar el subtotal de la orden."
+                    )
+                })
+
+            valor_descuento = (
+                descuento_ingresado
             )
 
+            if subtotal_sin_iva > Decimal("0.00"):
+
+                descuento_porcentaje = (
+                    valor_descuento
+                    *
+                    Decimal("100")
+                    /
+                    subtotal_sin_iva
+                ).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                )
+
+            else:
+
+                descuento_porcentaje = (
+                    Decimal("0.00")
+                )
+
+        else:
+
+            raise ValidationError({
+                "tipo_descuento":
+                    "El tipo de descuento no es válido."
+            })
+
+        # ======================================================
+        # BASE IMPONIBLE
+        # ======================================================
+
+        base_imponible = (
+            subtotal_sin_iva
+            -
+            valor_descuento
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        # ======================================================
+        # VALOR IVA
+        # ======================================================
+
+        valor_iva = (
+            base_imponible
+            *
+            Decimal(
+                str(
+                    self.porcentaje_iva
+                    or Decimal("0.00")
+                )
+            )
+            /
+            Decimal("100")
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        # ======================================================
+        # TOTAL FINAL
+        # ======================================================
+
+        if self.sumar_iva_al_total:
+
+            total_final = (
+                base_imponible
+                +
+                valor_iva
+            ).quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
+
+        else:
+
+            total_final = (
+                base_imponible
+                .quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                )
+            )
+
+        # ======================================================
+        # ASIGNAR
+        # ======================================================
+
+        self.total_general = (
+            subtotal_sin_iva
+        )
+
+        self.subtotal_sin_iva = (
+            subtotal_sin_iva
+        )
+
+        self.descuento_porcentaje = (
+            descuento_porcentaje
+        )
+
+        self.valor_descuento = (
+            valor_descuento
+        )
+
+        self.valor_iva = (
+            valor_iva
+        )
+
+        self.total_final = (
+            total_final
+        )
+
+        # ======================================================
+        # GUARDADO DIRECTO
+        # ======================================================
+
+        if self.pk:
+
+            OrdenTrabajo.objects.filter(
+                pk=self.pk
+            ).update(
+
+                total_general=
+                    subtotal_sin_iva,
+
+                configuracion_iva=
+                    self.configuracion_iva,
+
+                porcentaje_iva=
+                    self.porcentaje_iva,
+
+                sumar_iva_al_total=
+                    self.sumar_iva_al_total,
+
+                subtotal_sin_iva=
+                    subtotal_sin_iva,
+
+                tipo_descuento=
+                    tipo_descuento,
+
+                descuento_ingresado=
+                    descuento_ingresado,
+
+                descuento_porcentaje=
+                    descuento_porcentaje,
+
+                valor_descuento=
+                    valor_descuento,
+
+                valor_iva=
+                    valor_iva,
+
+                total_final=
+                    total_final,
+            )
+
+    # ==========================================================
+    # CLEAN
+    # ==========================================================
+
     def clean(self):
+
         self._normalizar_campos_texto()
+
         self.validar_bloqueo_edicion()
 
         errores = {}
 
-        # =====================================================
+        # ======================================================
         # DATOS GENERALES
-        # =====================================================
-        if not self.numero_orden or not self.numero_orden.strip():
+        # ======================================================
+
+        if (
+            not self.numero_orden
+            or not self.numero_orden.strip()
+        ):
+
             errores["numero_orden"] = (
                 "El número de orden es obligatorio."
             )
 
         if not self.sucursal_id:
+
             errores["sucursal"] = (
                 "La sucursal es obligatoria."
             )
 
         if not self.es_migrada:
-            if not self.placa or not self.placa.strip():
+
+            if (
+                not self.placa
+                or not self.placa.strip()
+            ):
+
                 errores["placa"] = (
-                    "La placa es obligatoria para órdenes "
-                    "no migradas."
+                    "La placa es obligatoria "
+                    "para órdenes no migradas."
                 )
 
         if (
             self.anio_vehiculo is not None
             and self.anio_vehiculo < 1900
         ):
+
             errores["anio_vehiculo"] = (
                 "El año del vehículo no es válido."
             )
 
-        # =====================================================
-        # KILOMETRAJE Y PRÓXIMO MANTENIMIENTO
-        # =====================================================
+        # ======================================================
+        # KILOMETRAJE
+        # ======================================================
+
         if (
             self.kilometraje is not None
             and self.kilometraje < 0
         ):
+
             errores["kilometraje"] = (
-                "El kilometraje actual no puede ser negativo."
+                "El kilometraje actual "
+                "no puede ser negativo."
             )
 
         if self.intervalo_mantenimiento_km is not None:
 
             if self.intervalo_mantenimiento_km <= 0:
-                errores["intervalo_mantenimiento_km"] = (
-                    "El intervalo de mantenimiento debe ser "
-                    "mayor que cero."
+
+                errores[
+                    "intervalo_mantenimiento_km"
+                ] = (
+                    "El intervalo de mantenimiento "
+                    "debe ser mayor que cero."
                 )
 
             if self.kilometraje is None:
-                errores["intervalo_mantenimiento_km"] = (
-                    "Debe registrar el kilometraje actual para "
-                    "calcular el próximo mantenimiento."
+
+                errores[
+                    "intervalo_mantenimiento_km"
+                ] = (
+                    "Debe registrar el kilometraje "
+                    "actual para calcular el "
+                    "próximo mantenimiento."
                 )
 
         if self.proximo_mantenimiento_km is not None:
 
             if self.proximo_mantenimiento_km < 0:
-                errores["proximo_mantenimiento_km"] = (
-                    "El próximo mantenimiento no puede ser negativo."
+
+                errores[
+                    "proximo_mantenimiento_km"
+                ] = (
+                    "El próximo mantenimiento "
+                    "no puede ser negativo."
                 )
 
             if self.kilometraje is None:
-                errores["proximo_mantenimiento_km"] = (
-                    "No se puede registrar un próximo mantenimiento "
+
+                errores[
+                    "proximo_mantenimiento_km"
+                ] = (
+                    "No se puede registrar un "
+                    "próximo mantenimiento "
                     "sin kilometraje actual."
                 )
 
@@ -2372,9 +3051,13 @@ class OrdenTrabajo(models.Model):
                 self.proximo_mantenimiento_km
                 <= self.kilometraje
             ):
-                errores["proximo_mantenimiento_km"] = (
-                    "El próximo mantenimiento debe ser mayor "
-                    "que el kilometraje actual."
+
+                errores[
+                    "proximo_mantenimiento_km"
+                ] = (
+                    "El próximo mantenimiento "
+                    "debe ser mayor que "
+                    "el kilometraje actual."
                 )
 
         if (
@@ -2382,9 +3065,11 @@ class OrdenTrabajo(models.Model):
             and self.intervalo_mantenimiento_km is not None
             and self.intervalo_mantenimiento_km > 0
         ):
+
             proximo_esperado = (
                 self.kilometraje
-                + self.intervalo_mantenimiento_km
+                +
+                self.intervalo_mantenimiento_km
             )
 
             if (
@@ -2392,26 +3077,33 @@ class OrdenTrabajo(models.Model):
                 and self.proximo_mantenimiento_km
                 != proximo_esperado
             ):
-                errores["proximo_mantenimiento_km"] = (
-                    "El próximo mantenimiento no coincide con "
-                    "el kilometraje actual más el intervalo."
+
+                errores[
+                    "proximo_mantenimiento_km"
+                ] = (
+                    "El próximo mantenimiento "
+                    "no coincide con el kilometraje "
+                    "actual más el intervalo."
                 )
 
-        # =====================================================
-        # ÓRDENES MIGRADAS
-        # =====================================================
+        # ======================================================
+        # MIGRADAS
+        # ======================================================
+
         if (
             self.es_migrada
             and not self.numero_orden_origen
         ):
+
             errores["numero_orden_origen"] = (
                 "Las OT migradas deben guardar "
                 "el número original extraído."
             )
 
-        # =====================================================
+        # ======================================================
         # DESCUENTOS
-        # =====================================================
+        # ======================================================
+
         descuento_ingresado = Decimal(
             str(
                 self.descuento_ingresado
@@ -2420,6 +3112,7 @@ class OrdenTrabajo(models.Model):
         )
 
         if descuento_ingresado < Decimal("0.00"):
+
             errores["descuento_ingresado"] = (
                 "El descuento no puede ser negativo."
             )
@@ -2427,6 +3120,7 @@ class OrdenTrabajo(models.Model):
         if self.tipo_descuento == "PORCENTAJE":
 
             if descuento_ingresado > Decimal("100.00"):
+
                 errores["descuento_ingresado"] = (
                     "El descuento porcentual "
                     "no puede ser mayor al 100%."
@@ -2434,58 +3128,113 @@ class OrdenTrabajo(models.Model):
 
         elif self.tipo_descuento == "VALOR_FIJO":
 
-            # No se valida contra subtotal_sin_iva aquí,
-            # porque el subtotal todavía puede estar
-            # desactualizado.
-            #
-            # La validación definitiva debe realizarse
-            # en calcular_total(), cuando el subtotal ya
-            # haya sido recalculado.
+            # La validación definitiva se realiza
+            # en calcular_total(), ya que aquí el
+            # subtotal puede estar desactualizado.
+
             pass
 
         else:
+
             errores["tipo_descuento"] = (
                 "El tipo de descuento no es válido."
             )
 
-        # =====================================================
-        # RESULTADO FINAL
-        # =====================================================
+        # ======================================================
+        # ERRORES
+        # ======================================================
+
         if errores:
             raise ValidationError(errores)
 
-    def save(self, *args, **kwargs):
+    # ==========================================================
+    # SAVE
+    # ==========================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
         self._normalizar_campos_texto()
+
         self._calcular_color_hex()
+
         self.calcular_proximo_mantenimiento()
 
-        update_fields = kwargs.get("update_fields")
+        update_fields = (
+            kwargs.get("update_fields")
+        )
 
         if update_fields is not None:
-            campos = set(update_fields)
+
+            campos = set(
+                update_fields
+            )
+
+            # Si cambia el color,
+            # color_hex también debe guardarse.
+
+            if "color" in campos:
+                campos.add(
+                    "color_hex"
+                )
+
+            # Si cambia kilometraje o intervalo,
+            # también cambia próximo mantenimiento.
 
             if {
                 "kilometraje",
                 "intervalo_mantenimiento_km",
             } & campos:
-                campos.add("proximo_mantenimiento_km")
 
-            kwargs["update_fields"] = list(campos)
+                campos.add(
+                    "proximo_mantenimiento_km"
+                )
+
+            kwargs["update_fields"] = (
+                list(campos)
+            )
 
         self.full_clean()
-        super().save(*args, **kwargs)
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    # ==========================================================
+    # STRING
+    # ==========================================================
 
     def __str__(self):
-        placa = self.placa if self.placa else "SIN PLACA"
 
-        if self.es_migrada and self.numero_orden_origen:
+        placa = (
+            self.placa
+            if self.placa
+            else "SIN PLACA"
+        )
+
+        if (
+            self.es_migrada
+            and self.numero_orden_origen
+        ):
+
             return (
-                f"[{self.sucursal.codigo}] OT {self.numero_orden} | "
-                f"ORIGEN {self.numero_orden_origen} - {placa} "
+                f"[{self.sucursal.codigo}] "
+                f"OT {self.numero_orden} | "
+                f"ORIGEN {self.numero_orden_origen} "
+                f"- {placa} "
                 f"({self.nombre_cliente_final})"
             )
 
-        return f"[{self.sucursal.codigo}] OT {self.numero_orden} - {placa} ({self.nombre_cliente_final})"
+        return (
+            f"[{self.sucursal.codigo}] "
+            f"OT {self.numero_orden} "
+            f"- {placa} "
+            f"({self.nombre_cliente_final})"
+        )
 # ==========================================
 # 6. RECEPCIÓN
 # ==========================================
