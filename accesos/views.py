@@ -1,10 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import RolForm
+from .models import Rol
 from .permissions import permiso_requerido
 
 
@@ -15,7 +15,7 @@ from .permissions import permiso_requerido
 @permiso_requerido("auth.view_group")
 def roles_lista(request):
     roles = (
-        Group.objects
+        Rol.objects
         .prefetch_related("permissions")
         .order_by("name")
     )
@@ -47,7 +47,9 @@ def rol_crear(request):
                 f'El rol "{rol.name}" fue creado correctamente.',
             )
 
-            return redirect("accesos:roles_lista")
+            return redirect(
+                "accesos:roles_lista"
+            )
 
     else:
         form = RolForm()
@@ -70,7 +72,7 @@ def rol_crear(request):
 @permiso_requerido("auth.change_group")
 def rol_editar(request, pk):
     rol = get_object_or_404(
-        Group.objects.prefetch_related("permissions"),
+        Rol.objects.prefetch_related("permissions"),
         pk=pk,
     )
 
@@ -89,10 +91,14 @@ def rol_editar(request, pk):
                 f'El rol "{rol.name}" fue actualizado correctamente.',
             )
 
-            return redirect("accesos:roles_lista")
+            return redirect(
+                "accesos:roles_lista"
+            )
 
     else:
-        form = RolForm(instance=rol)
+        form = RolForm(
+            instance=rol
+        )
 
     return render(
         request,
@@ -112,19 +118,24 @@ def rol_editar(request, pk):
 @permiso_requerido("auth.delete_group")
 def rol_eliminar(request, pk):
     rol = get_object_or_404(
-        Group,
+        Rol,
         pk=pk,
     )
 
-    User = get_user_model()
+    Usuario = get_user_model()
 
-    usuarios_asignados = User.objects.filter(
-        groups=rol,
+    usuarios_asignados = (
+        Usuario.objects
+        .filter(groups=rol)
+        .order_by("username")
     )
 
     if request.method == "POST":
 
-        # Evitamos borrar un rol que todavía tenga usuarios.
+        # -------------------------------------------------
+        # No permitir eliminar un rol que todavía tenga
+        # usuarios asociados.
+        # -------------------------------------------------
         if usuarios_asignados.exists():
             messages.error(
                 request,
@@ -134,7 +145,9 @@ def rol_eliminar(request, pk):
                 ),
             )
 
-            return redirect("accesos:roles_lista")
+            return redirect(
+                "accesos:roles_lista"
+            )
 
         nombre = rol.name
 
@@ -146,7 +159,9 @@ def rol_eliminar(request, pk):
             f'El rol "{nombre}" fue eliminado correctamente.',
         )
 
-        return redirect("accesos:roles_lista")
+        return redirect(
+            "accesos:roles_lista"
+        )
 
     return render(
         request,
