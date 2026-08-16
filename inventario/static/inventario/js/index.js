@@ -1,8 +1,8 @@
-document.addEventListener("DOMContentLoaded", () => {
+// =========================================================
+// INICIALIZACIÓN GENERAL DEL CATÁLOGO
+// =========================================================
 
-    if (typeof inicializarDropdownsApple === "function") {
-        inicializarDropdownsApple();
-    }
+document.addEventListener("DOMContentLoaded", function () {
 
     if (typeof inicializarCodigos === "function") {
         inicializarCodigos();
@@ -12,16 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
         inicializarAtributos();
     }
 
-    if (typeof inicializarImagenes === "function") {
-        inicializarImagenes();
-    }
-
     if (typeof inicializarModales === "function") {
         inicializarModales();
-    }
-
-    if (typeof inicializarPrecioSecreto === "function") {
-        inicializarPrecioSecreto(document);
     }
 
 });

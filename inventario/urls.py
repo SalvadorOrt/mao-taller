@@ -1,7 +1,6 @@
 from django.urls import path
 
 from . import views
-
 from .views import (
     catalogo,
     dashboard,
@@ -18,43 +17,19 @@ urlpatterns = [
     # USUARIOS
     # =====================================================
 
-    path(
-        "usuarios/",
-        views.lista_usuarios,
-        name="lista_usuarios",
-    ),
-
-    path(
-        "usuarios/nuevo/",
-        views.gestionar_usuario,
-        name="crear_usuario",
-    ),
-
-    path(
-        "usuarios/editar/<int:pk>/",
-        views.gestionar_usuario,
-        name="editar_usuario",
-    ),
-
+    path("usuarios/", views.lista_usuarios, name="lista_usuarios"),
+    path("usuarios/nuevo/", views.gestionar_usuario, name="crear_usuario"),
+    path("usuarios/editar/<int:pk>/", views.gestionar_usuario, name="editar_usuario"),
 
     # =====================================================
     # DASHBOARD
     # =====================================================
 
-    path(
-        "",
-        dashboard.dashboard_inventario,
-        name="inventario_dashboard",
-    ),
-
+    path("", dashboard.dashboard_inventario, name="inventario_dashboard"),
 
     # =====================================================
     # CATÁLOGO
     # =====================================================
-
-    # -----------------------------------------------------
-    # LISTADO
-    # -----------------------------------------------------
 
     path(
         "catalogo/",
@@ -62,26 +37,38 @@ urlpatterns = [
         name="inventario_catalogo",
     ),
 
-
-    # -----------------------------------------------------
-    # CREAR PRODUCTO
-    # -----------------------------------------------------
-
     path(
         "catalogo/nuevo/",
         catalogo.catalogo_crear,
         name="inventario_catalogo_crear",
     ),
 
+    # =====================================================
+    # API INTELIGENTE DEL CATÁLOGO
+    # =====================================================
 
-    # -----------------------------------------------------
-    # DETALLE DEL PRODUCTO
-    #
-    # Ejemplo:
-    # /inventario/catalogo/123/
-    #
-    # 123 = ID de CodigoProducto
-    # -----------------------------------------------------
+    # Analiza descripción/código y devuelve:
+    # - productos parecidos
+    # - categoría sugerida
+    # - marca/código relacionado
+    # - confianza
+    path(
+        "catalogo/api/sugerir/",
+        catalogo.catalogo_sugerir_producto,
+        name="inventario_catalogo_sugerir",
+    ),
+
+    # Devuelve los atributos técnicos configurados
+    # para una categoría.
+    path(
+        "catalogo/api/categoria/<int:categoria_id>/atributos/",
+        catalogo.catalogo_atributos_categoria,
+        name="inventario_catalogo_atributos_categoria",
+    ),
+
+    # =====================================================
+    # PRODUCTO / CÓDIGO
+    # =====================================================
 
     path(
         "catalogo/<int:codigo_id>/",
@@ -89,32 +76,11 @@ urlpatterns = [
         name="inventario_catalogo_detalle",
     ),
 
-
-    # -----------------------------------------------------
-    # EDITAR PRODUCTO
-    #
-    # Ejemplo:
-    # /inventario/catalogo/123/editar/
-    #
-    # Desde CodigoProducto obtenemos su Producto
-    # y editamos:
-    #
-    # - información del producto
-    # - imágenes
-    # - atributos
-    # - referencias comerciales
-    # -----------------------------------------------------
-
     path(
         "catalogo/<int:codigo_id>/editar/",
         catalogo.catalogo_editar_codigo,
         name="inventario_catalogo_editar",
     ),
-
-
-    # -----------------------------------------------------
-    # ACTIVAR / DESACTIVAR CÓDIGO
-    # -----------------------------------------------------
 
     path(
         "catalogo/<int:codigo_id>/toggle/",
@@ -122,22 +88,11 @@ urlpatterns = [
         name="inventario_catalogo_toggle",
     ),
 
-
-    # -----------------------------------------------------
-    # AGREGAR NUEVA REFERENCIA AL MISMO PRODUCTO
-    # -----------------------------------------------------
-
     path(
         "catalogo/producto/<int:producto_id>/nuevo-codigo/",
         catalogo.catalogo_crear_codigo_equivalente,
         name="inventario_catalogo_nuevo_codigo",
     ),
-
-
-    # =====================================================
-    # MAESTROS
-    # =====================================================
-
 
     # =====================================================
     # CATEGORÍAS
@@ -167,7 +122,6 @@ urlpatterns = [
         name="categoria_crear_rapida",
     ),
 
-
     # =====================================================
     # MARCAS
     # =====================================================
@@ -195,7 +149,6 @@ urlpatterns = [
         maestros.marca_crear_rapida,
         name="marca_crear_rapida",
     ),
-
 
     # =====================================================
     # ATRIBUTOS
@@ -225,7 +178,6 @@ urlpatterns = [
         name="atributo_crear_rapido",
     ),
 
-
     # =====================================================
     # STOCK
     # =====================================================
@@ -253,7 +205,6 @@ urlpatterns = [
         stock.stock_editar_ubicacion,
         name="inventario_stock_editar_ubicacion",
     ),
-
 
     # =====================================================
     # MOVIMIENTOS
@@ -295,7 +246,6 @@ urlpatterns = [
         name="inventario_movimiento_salida_rapida",
     ),
 
-
     # =====================================================
     # INVENTARIO FÍSICO
     # =====================================================
@@ -317,5 +267,4 @@ urlpatterns = [
         fisico.inventario_fisico_detalle,
         name="inventario_fisico_detalle",
     ),
-
 ]

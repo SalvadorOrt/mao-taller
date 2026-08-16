@@ -985,7 +985,83 @@ class Atributo(models.Model):
     def __str__(self):
         return self.nombre if not self.unidad else f"{self.nombre} ({self.unidad})"
 
+# =========================================================
+# ATRIBUTOS RECOMENDADOS POR CATEGORÍA
+# =========================================================
+class CategoriaAtributo(models.Model):
 
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.CASCADE,
+        related_name="atributos_configurados",
+    )
+
+    atributo = models.ForeignKey(
+        Atributo,
+        on_delete=models.CASCADE,
+        related_name="categorias_configuradas",
+    )
+
+    requerido = models.BooleanField(
+        default=False,
+        help_text=(
+            "Indica si este atributo debe completarse "
+            "obligatoriamente para productos de esta categoría."
+        ),
+    )
+
+    orden = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "Orden en que debe aparecer el atributo "
+            "dentro del formulario."
+        ),
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    class Meta:
+        ordering = [
+            "orden",
+            "atributo__nombre",
+        ]
+
+        verbose_name = "Atributo de categoría"
+        verbose_name_plural = "Atributos de categorías"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "categoria",
+                    "atributo",
+                ],
+                name="categoria_atributo_unico",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "categoria",
+                    "activo",
+                ]
+            ),
+        ]
+
+    def __str__(self):
+        obligatorio = (
+            "OBLIGATORIO"
+            if self.requerido
+            else "OPCIONAL"
+        )
+
+        return (
+            f"{self.categoria.nombre} - "
+            f"{self.atributo} - "
+            f"{obligatorio}"
+        )
 class ValorAtributoProducto(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="valores_atributos")
     atributo = models.ForeignKey(Atributo, on_delete=models.CASCADE, related_name="valores_producto")

@@ -6,7 +6,11 @@ document.addEventListener("DOMContentLoaded", function () {
     inicializarCatalogoForm();
 });
 
+
 function inicializarCatalogoForm() {
+    const form = document.getElementById("catalogoForm");
+    if (!form) return;
+
     if (typeof inicializarDropdownsApple === "function") {
         inicializarDropdownsApple();
     }
@@ -15,7 +19,7 @@ function inicializarCatalogoForm() {
         inicializarImagenes(document);
     }
 
-    inicializarPrecioSecreto(document);
+    inicializarPrecioSecreto(form);
 }
 
 
@@ -24,41 +28,85 @@ function inicializarCatalogoForm() {
 // =====================================================
 
 function inicializarPrecioSecreto(contexto = document) {
-    contexto.querySelectorAll(".codigo-form").forEach(fila => {
-        const precioVentaInput = fila.querySelector(".precio-venta-input");
-        const precioSecretoInput = fila.querySelector(".precio-secreto-input");
 
-        if (!precioVentaInput || !precioSecretoInput) return;
-
+    // Calcular valores iniciales.
+    contexto.querySelectorAll(".codigo-form").forEach(function (fila) {
         actualizarPrecioSecretoFila(fila);
+    });
 
-        if (precioVentaInput.dataset.precioSecretoInicializado === "1") {
+    // Evitar registrar el listener más de una vez.
+    if (contexto.dataset?.precioSecretoInicializado === "1") {
+        return;
+    }
+
+    if (contexto.dataset) {
+        contexto.dataset.precioSecretoInicializado = "1";
+    }
+
+    // Delegación de eventos:
+    // también funciona con códigos agregados después.
+    contexto.addEventListener("input", function (event) {
+        const input = event.target;
+
+        if (!input.classList.contains("precio-venta-input")) {
             return;
         }
 
-        precioVentaInput.dataset.precioSecretoInicializado = "1";
+        const fila = input.closest(".codigo-form");
+        if (!fila) return;
 
-        precioVentaInput.addEventListener("input", function () {
-            actualizarPrecioSecretoFila(fila);
-        });
+        actualizarPrecioSecretoFila(fila);
     });
 }
 
+
+// =====================================================
+// ACTUALIZAR PRECIO SECRETO DE UNA FILA
+// =====================================================
+
 function actualizarPrecioSecretoFila(fila) {
-    const precioVentaInput = fila.querySelector(".precio-venta-input");
-    const precioSecretoInput = fila.querySelector(".precio-secreto-input");
+    if (!fila) return;
 
-    if (!precioVentaInput || !precioSecretoInput) return;
+    const precioVentaInput = fila.querySelector(
+        ".precio-venta-input"
+    );
 
-    precioSecretoInput.value = convertirPrecioSecreto(precioVentaInput.value);
+    const precioSecretoInput = fila.querySelector(
+        ".precio-secreto-input"
+    );
+
+    if (!precioVentaInput || !precioSecretoInput) {
+        return;
+    }
+
+    precioSecretoInput.value = convertirPrecioSecreto(
+        precioVentaInput.value
+    );
 }
 
+
+// =====================================================
+// CONVERTIR PRECIO A CÓDIGO SECRETO
+// =====================================================
+
 function convertirPrecioSecreto(valor) {
-    if (!valor) return "---";
+    if (
+        valor === null ||
+        valor === undefined ||
+        String(valor).trim() === ""
+    ) {
+        return "---";
+    }
 
-    let numero = parseFloat(valor.toString().replace(",", "."));
+    const numero = parseFloat(
+        String(valor)
+            .trim()
+            .replace(",", ".")
+    );
 
-    if (isNaN(numero)) return "---";
+    if (!Number.isFinite(numero)) {
+        return "---";
+    }
 
     const clave = {
         "1": "M",
@@ -71,14 +119,15 @@ function convertirPrecioSecreto(valor) {
         "8": "R",
         "9": "T",
         "0": "S",
-        ".": "."
+        ".": ".",
     };
 
-    const texto = numero.toFixed(2);
-
-    return texto
+    return numero
+        .toFixed(2)
         .split("")
-        .map(caracter => clave[caracter] || caracter)
+        .map(function (caracter) {
+            return clave[caracter] || caracter;
+        })
         .join("");
 }
 
@@ -94,26 +143,62 @@ document.addEventListener("submit", function (event) {
         return;
     }
 
-    if (typeof validarImagenesProducto === "function") {
-        if (!validarImagenesProducto()) {
-            event.preventDefault();
-            return;
-        }
+
+    // =================================================
+    // IMÁGENES
+    // =================================================
+
+    if (
+        typeof validarImagenesProducto === "function" &&
+        !validarImagenesProducto()
+    ) {
+        event.preventDefault();
+        return;
     }
 
-    if (typeof validarCodigos === "function") {
-        if (!validarCodigos()) {
-            event.preventDefault();
-            alert("Revise los códigos comerciales.");
-            return;
-        }
+
+    // =================================================
+    // CÓDIGOS
+    // =================================================
+
+    if (
+        typeof validarCodigos === "function" &&
+        !validarCodigos()
+    ) {
+        event.preventDefault();
+
+        alert(
+            "Revise los códigos comerciales."
+        );
+
+        return;
     }
 
-    if (typeof validarAtributos === "function") {
-        if (!validarAtributos()) {
-            event.preventDefault();
-            alert("Revise los atributos técnicos.");
-            return;
-        }
+
+    // =================================================
+    // ATRIBUTOS
+    // =================================================
+
+    if (
+        typeof validarAtributos === "function" &&
+        !validarAtributos()
+    ) {
+        event.preventDefault();
+
+        alert(
+            "Existe un valor técnico sin un atributo seleccionado."
+        );
+
+        return;
     }
 });
+
+
+// =====================================================
+// EXPORTAR
+// =====================================================
+
+window.inicializarCatalogoForm = inicializarCatalogoForm;
+window.inicializarPrecioSecreto = inicializarPrecioSecreto;
+window.actualizarPrecioSecretoFila = actualizarPrecioSecretoFila;
+window.convertirPrecioSecreto = convertirPrecioSecreto;

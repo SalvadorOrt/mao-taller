@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import modelformset_factory
+
 from .models import (
     Atributo,
     Categoria,
@@ -10,51 +11,83 @@ from .models import (
     Usuario,
     ValorAtributoProducto,
 )
+
+
+# =========================================================
+# USUARIOS
+# =========================================================
+
 class UsuarioForm(forms.ModelForm):
-    # Campo extra para la contraseña (no es obligatorio al editar, pero sí al crear)
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control-apple', 'placeholder': 'Contraseña secreta'}),
-        required=False, 
-        label="Contraseña"
+        required=False,
+        label="Contraseña",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control-apple",
+            "placeholder": "Contraseña secreta",
+        }),
     )
 
     class Meta:
         model = Usuario
         fields = [
-            'username', 'first_name', 'last_name', 'email', 
-            'cedula', 'rol', 'sucursal', 'puede_cambiar_sucursal'
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "cedula",
+            "rol",
+            "sucursal",
+            "puede_cambiar_sucursal",
         ]
+
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control-apple'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control-apple'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control-apple'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control-apple'}),
-            'cedula': forms.TextInput(attrs={'class': 'form-control-apple'}),
-            'rol': forms.Select(attrs={'class': 'form-control-apple'}),
-            'sucursal': forms.Select(attrs={'class': 'form-control-apple'}),
-            'puede_cambiar_sucursal': forms.CheckboxInput(),
+            "username": forms.TextInput(attrs={
+                "class": "form-control-apple",
+            }),
+            "first_name": forms.TextInput(attrs={
+                "class": "form-control-apple",
+            }),
+            "last_name": forms.TextInput(attrs={
+                "class": "form-control-apple",
+            }),
+            "email": forms.EmailInput(attrs={
+                "class": "form-control-apple",
+            }),
+            "cedula": forms.TextInput(attrs={
+                "class": "form-control-apple",
+            }),
+            "rol": forms.Select(attrs={
+                "class": "form-control-apple",
+            }),
+            "sucursal": forms.Select(attrs={
+                "class": "form-control-apple",
+            }),
+            "puede_cambiar_sucursal": forms.CheckboxInput(),
         }
 
     def save(self, commit=True):
-        # Obtenemos el usuario sin guardarlo en la BD todavía
         user = super().save(commit=False)
-        
-        # Si el administrador escribió una contraseña, la encriptamos de forma segura
+
         password = self.cleaned_data.get("password")
+
         if password:
             user.set_password(password)
-            
+
         if commit:
-            user.save() # ¡Aquí se disparará la magia de tu def save() en el modelo!
-            
+            user.save()
+
         return user
-    
 
 
+# =========================================================
+# PRODUCTO
+# =========================================================
 
 class ProductoForm(forms.ModelForm):
+
     class Meta:
         model = Producto
+
         fields = [
             "categoria",
             "nombre_base",
@@ -66,7 +99,7 @@ class ProductoForm(forms.ModelForm):
 
         widgets = {
             "categoria": forms.Select(attrs={
-                "class": "form-control-apple select2 searchable-select"
+                "class": "form-control-apple select2 searchable-select",
             }),
             "nombre_base": forms.TextInput(attrs={
                 "class": "form-control-apple",
@@ -100,8 +133,21 @@ class ProductoForm(forms.ModelForm):
         nombre = self.cleaned_data.get("nombre_base", "")
         return nombre.strip().upper()
 
+    def clean_descripcion(self):
+        descripcion = self.cleaned_data.get("descripcion")
+
+        if descripcion:
+            return descripcion.strip()
+
+        return None
+
+
+# =========================================================
+# CÓDIGO / REFERENCIA COMERCIAL
+# =========================================================
 
 class CodigoProductoForm(forms.ModelForm):
+
     precio_secreto = forms.CharField(
         required=False,
         disabled=True,
@@ -117,12 +163,12 @@ class CodigoProductoForm(forms.ModelForm):
         required=False,
         max_digits=6,
         decimal_places=2,
+        label="Margen %",
         widget=forms.NumberInput(attrs={
             "class": "form-control-apple",
             "step": "0.01",
             "min": "0",
         }),
-        label="Margen %",
     )
 
     porcentaje_iva_costo = forms.DecimalField(
@@ -130,16 +176,17 @@ class CodigoProductoForm(forms.ModelForm):
         required=False,
         max_digits=5,
         decimal_places=2,
+        label="IVA costo %",
         widget=forms.NumberInput(attrs={
             "class": "form-control-apple",
             "step": "0.01",
             "min": "0",
         }),
-        label="IVA costo %",
     )
 
     class Meta:
         model = CodigoProducto
+
         fields = [
             "marca",
             "tipo_codigo",
@@ -216,15 +263,17 @@ class CodigoProductoForm(forms.ModelForm):
         self.fields["precio_secreto"].initial = "---"
 
         if self.instance and self.instance.pk:
-            self.fields["precio_secreto"].initial = self.instance.precio_secreto
+            self.fields["precio_secreto"].initial = (
+                self.instance.precio_secreto
+            )
 
     def clean_codigo(self):
         codigo = self.cleaned_data.get("codigo", "")
         return codigo.strip().upper()
 
     def clean_codigo_barras(self):
-        codigo_barras = self.cleaned_data.get("codigo_barras", "")
-        return codigo_barras.strip() if codigo_barras else None
+        codigo = self.cleaned_data.get("codigo_barras", "")
+        return codigo.strip() if codigo else None
 
     def clean_nombre_comercial(self):
         nombre = self.cleaned_data.get("nombre_comercial", "")
@@ -235,9 +284,37 @@ class CodigoProductoForm(forms.ModelForm):
         return unidad.strip().upper() if unidad else None
 
 
+# =========================================================
+# ATRIBUTOS TÉCNICOS
+# =========================================================
+
 class ValorAtributoProductoForm(forms.ModelForm):
+
+    # El valor es opcional dentro del formulario.
+    #
+    # Esto permite que el motor sugiera:
+    #
+    # ROSCA
+    # ALTURA
+    # DIÁMETRO
+    #
+    # y el usuario complete solamente los que conozca.
+    #
+    # La vista únicamente guardará las filas que tengan:
+    #
+    # atributo + valor
+    #
+    valor = forms.CharField(
+        required=False,
+        label="Valor",
+        widget=forms.TextInput(attrs={
+            "class": "form-control-apple",
+        }),
+    )
+
     class Meta:
         model = ValorAtributoProducto
+
         fields = [
             "atributo",
             "valor",
@@ -246,9 +323,6 @@ class ValorAtributoProductoForm(forms.ModelForm):
         widgets = {
             "atributo": forms.Select(attrs={
                 "class": "form-control-apple select2 atributo-select",
-            }),
-            "valor": forms.TextInput(attrs={
-                "class": "form-control-apple",
             }),
         }
 
@@ -259,7 +333,12 @@ class ValorAtributoProductoForm(forms.ModelForm):
 
     def clean_valor(self):
         valor = self.cleaned_data.get("valor", "")
-        return valor.strip()
+        return valor.strip() if valor else ""
+
+
+# =========================================================
+# CATEGORÍAS
+# =========================================================
 
 class CategoriaForm(forms.ModelForm):
 
@@ -284,10 +363,14 @@ class CategoriaForm(forms.ModelForm):
     def clean_nombre(self):
         nombre = self.cleaned_data["nombre"].strip().upper()
 
-        if Categoria.objects.filter(
-            nombre__iexact=nombre
-        ).exclude(pk=self.instance.pk).exists():
+        existe = (
+            Categoria.objects
+            .filter(nombre__iexact=nombre)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        )
 
+        if existe:
             raise forms.ValidationError(
                 "Ya existe una categoría con ese nombre."
             )
@@ -295,8 +378,13 @@ class CategoriaForm(forms.ModelForm):
         return nombre
 
     def clean_prefijo_sku(self):
-        return self.cleaned_data["prefijo_sku"].strip().upper()
-    
+        prefijo = self.cleaned_data.get("prefijo_sku", "")
+        return prefijo.strip().upper()
+
+
+# =========================================================
+# MARCAS
+# =========================================================
 
 class MarcaRepuestoForm(forms.ModelForm):
 
@@ -314,19 +402,26 @@ class MarcaRepuestoForm(forms.ModelForm):
         }
 
     def clean_nombre(self):
-
         nombre = self.cleaned_data["nombre"].strip().upper()
 
-        if MarcaRepuesto.objects.filter(
-            nombre__iexact=nombre
-        ).exclude(pk=self.instance.pk).exists():
+        existe = (
+            MarcaRepuesto.objects
+            .filter(nombre__iexact=nombre)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        )
 
+        if existe:
             raise forms.ValidationError(
                 "La marca ya existe."
             )
 
         return nombre
-    
+
+
+# =========================================================
+# ATRIBUTOS MAESTROS
+# =========================================================
 
 class AtributoForm(forms.ModelForm):
 
@@ -349,16 +444,22 @@ class AtributoForm(forms.ModelForm):
         }
 
     def clean_nombre(self):
-        return self.cleaned_data["nombre"].strip().upper()
+        nombre = self.cleaned_data.get("nombre", "")
+        return nombre.strip().upper()
 
     def clean_unidad(self):
-
         unidad = self.cleaned_data.get("unidad")
 
         if unidad:
             return unidad.strip().upper()
 
         return None
+
+
+# =========================================================
+# IMÁGENES
+# =========================================================
+
 class ImagenProductoForm(forms.ModelForm):
 
     class Meta:
@@ -370,17 +471,13 @@ class ImagenProductoForm(forms.ModelForm):
         ]
 
         widgets = {
-            "imagen": forms.ClearableFileInput(
-                attrs={
-                    "class": "form-control-apple",
-                    "accept": "image/*",
-                }
-            ),
-            "descripcion": forms.TextInput(
-                attrs={
-                    "class": "form-control-apple",
-                }
-            ),
+            "imagen": forms.ClearableFileInput(attrs={
+                "class": "form-control-apple",
+                "accept": "image/*",
+            }),
+            "descripcion": forms.TextInput(attrs={
+                "class": "form-control-apple",
+            }),
         }
 
         labels = {
@@ -395,6 +492,12 @@ class ImagenProductoForm(forms.ModelForm):
             return descripcion.strip()
 
         return None
+
+
+# =========================================================
+# FORMSETS
+# =========================================================
+
 CodigoProductoFormSet = modelformset_factory(
     CodigoProducto,
     form=CodigoProductoForm,
@@ -402,14 +505,10 @@ CodigoProductoFormSet = modelformset_factory(
     can_delete=True,
 )
 
+
 ValorAtributoProductoFormSet = modelformset_factory(
     ValorAtributoProducto,
     form=ValorAtributoProductoForm,
     extra=1,
     can_delete=True,
 )
-
-
-
-
-

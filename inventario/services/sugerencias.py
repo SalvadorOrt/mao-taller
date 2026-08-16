@@ -205,7 +205,43 @@ class MotorSugerenciasProducto:
         return MotorSugerenciasProducto._limitar_porcentaje(
             puntaje
         )
+    @staticmethod
+    def _puntaje_marca_texto(texto, marca):
+        texto_normalizado = normalizar_texto(texto)
+        marca_normalizada = normalizar_texto(marca)
 
+        if (
+            not texto_normalizado
+            or not marca_normalizada
+        ):
+            return CERO
+
+        tokens_texto = set(
+            tokenizar_texto(texto_normalizado)
+        )
+
+        tokens_marca = set(
+            tokenizar_texto(marca_normalizada)
+        )
+
+        # Marca escrita explícitamente.
+        #
+        # Ejemplo:
+        # MANN W712/93 FILTRO ACEITE
+        if (
+            tokens_marca
+            and tokens_marca.issubset(tokens_texto)
+        ):
+            return CIEN
+
+        # Marca compuesta incluida como frase.
+        if marca_normalizada in texto_normalizado:
+            return CIEN
+
+        return MotorSugerenciasProducto._similitud_texto(
+            texto_normalizado,
+            marca_normalizada,
+        )
     @staticmethod
     def _ponderar(*valores):
         """
@@ -754,6 +790,10 @@ class MotorSugerenciasProducto:
     # RESULTADOS DESDE CATÁLOGO
     # =====================================================
 
+    # =====================================================
+# RESULTADOS DESDE CATÁLOGO
+# =====================================================
+
     def _buscar_en_catalogo(
         self,
         *,
@@ -767,6 +807,8 @@ class MotorSugerenciasProducto:
                 "nombre_base",
                 "descripcion",
                 "codigos__nombre_comercial",
+                "codigos__codigo",
+                "codigos__marca__nombre",
             ],
         )
 
@@ -809,6 +851,10 @@ class MotorSugerenciasProducto:
                 producto.codigos.all()
             )
 
+            # =============================================
+            # PRODUCTO SIN CÓDIGOS COMERCIALES
+            # =============================================
+
             if not codigos:
                 clave = self._clave_resultado(
                     producto,
@@ -819,31 +865,24 @@ class MotorSugerenciasProducto:
                     clave,
                     self._estructura_resultado(
                         producto=producto,
-                        codigo_producto=codigo_producto,
+                        codigo_producto=None,
                     ),
                 )
-                if (
-                    codigo_producto
-                    and (
-                        resultado["codigo_producto"] is None
-                        or puntaje_codigo
-                        > resultado["puntaje_codigo"]
-                    )
-                ):
-                    resultado["codigo_producto"] = codigo_producto
-                    resultado["marca"] = codigo_producto.marca
-                resultado["puntaje_texto"] = max(
-                        resultado["puntaje_texto"],
-                        puntaje_producto,
-                        puntaje_comercial,
-                    )
 
-                resultado["puntaje_codigo"] = max(
-                    resultado["puntaje_codigo"],
-                    puntaje_codigo,
+                resultado["puntaje_texto"] = max(
+                    resultado["puntaje_texto"],
+                    puntaje_producto,
+                )
+
+                resultado["fuentes"].add(
+                    "CATALOGO"
                 )
 
                 continue
+
+            # =============================================
+            # PRODUCTO CON CÓDIGOS
+            # =============================================
 
             for codigo_producto in codigos:
                 puntaje_comercial = (
@@ -853,12 +892,24 @@ class MotorSugerenciasProducto:
                     )
                 )
 
+                puntaje_marca = CERO
+
+                if (
+                    codigo_producto.marca
+                    and codigo_producto.marca.nombre
+                ):
+                    puntaje_marca = (
+                        self._puntaje_marca_texto(
+                            texto,
+                            codigo_producto.marca.nombre,
+                        )
+                    )
+
                 puntaje_codigo = CERO
 
                 if codigo_normalizado:
                     codigo_catalogo = (
-                        codigo_producto
-                        .codigo_normalizado
+                        codigo_producto.codigo_normalizado
                     )
 
                     if (
@@ -888,10 +939,26 @@ class MotorSugerenciasProducto:
                     ),
                 )
 
+                # Si este código coincide mejor que el código
+                # actualmente asociado al resultado, lo reemplazamos.
+                if (
+                    resultado["codigo_producto"] is None
+                    or puntaje_codigo
+                    > resultado["puntaje_codigo"]
+                ):
+                    resultado["codigo_producto"] = (
+                        codigo_producto
+                    )
+
+                    resultado["marca"] = (
+                        codigo_producto.marca
+                    )
+
                 resultado["puntaje_texto"] = max(
                     resultado["puntaje_texto"],
                     puntaje_producto,
                     puntaje_comercial,
+                    puntaje_marca,
                 )
 
                 resultado["puntaje_codigo"] = max(
@@ -903,6 +970,10 @@ class MotorSugerenciasProducto:
                     "CATALOGO"
                 )
 
+                if puntaje_marca >= Decimal("80.00"):
+                    resultado["fuentes"].add(
+                        "MARCA_CATALOGO"
+                    )
     # =====================================================
     # CÁLCULO FINAL
     # =====================================================
