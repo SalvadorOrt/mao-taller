@@ -4,6 +4,7 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import RolForm
@@ -362,14 +363,51 @@ def _contexto_formulario(form, rol, titulo):
 @permiso_requerido("accesos.view_rol")
 def roles_lista(request):
 
-    roles = (
+    Usuario = get_user_model()
+
+    # -----------------------------------------------------
+    # ROLES
+    # -----------------------------------------------------
+
+    roles = list(
         Rol.objects
-        .prefetch_related(
-            "permissions",
-            "user_set",
-        )
+        .prefetch_related("permissions")
         .order_by("name")
     )
+
+    # -----------------------------------------------------
+    # CANTIDAD DE USUARIOS POR ROL
+    #
+    # Se consulta desde Usuario.groups para no depender
+    # del related_name inverso configurado en Usuario.
+    # -----------------------------------------------------
+
+    usuarios_por_rol = {
+        fila["groups"]: fila["total"]
+        for fila in (
+            Usuario.objects
+            .filter(groups__isnull=False)
+            .values("groups")
+            .annotate(
+                total=Count(
+                    "pk",
+                    distinct=True,
+                )
+            )
+        )
+    }
+
+    # -----------------------------------------------------
+    # AGREGAR CONTEO A CADA ROL
+    # -----------------------------------------------------
+
+    for rol in roles:
+        rol.usuarios_count = (
+            usuarios_por_rol.get(
+                rol.pk,
+                0,
+            )
+        )
 
     return render(
         request,
