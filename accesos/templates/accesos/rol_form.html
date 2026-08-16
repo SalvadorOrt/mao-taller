@@ -1,0 +1,971 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block title %}
+{{ titulo }} | MAO
+{% endblock %}
+
+
+{% block page_subtitle %}
+Personal y accesos
+{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'accesos/css/accesos.css' %}"
+>
+
+<style>
+
+    /* =====================================================
+       BUSCADOR DE PERMISOS
+    ===================================================== */
+
+    .permisos-buscador {
+        padding: 12px 15px;
+
+        border-bottom: 1px solid var(--border);
+
+        background: #fbfbfd;
+    }
+
+
+    .permisos-buscador-wrap {
+        position: relative;
+    }
+
+
+    .permisos-buscador-icon {
+        position: absolute;
+
+        left: 10px;
+        top: 50%;
+
+        transform: translateY(-50%);
+
+        color: var(--muted);
+
+        font-size: 11px;
+
+        pointer-events: none;
+    }
+
+
+    .permisos-buscador input {
+        padding-left: 30px !important;
+    }
+
+
+    /* =====================================================
+       LISTADO DE PERMISOS
+    ===================================================== */
+
+    .permisos-listado {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 7px 16px;
+
+        padding: 15px;
+    }
+
+
+    .permiso-item {
+        min-height: 34px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        padding: 7px 9px;
+
+        border: 1px solid var(--border);
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        cursor: pointer;
+
+        transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease;
+    }
+
+
+    .permiso-item:hover {
+        border-color: rgba(0, 113, 227, 0.45);
+
+        background: rgba(0, 113, 227, 0.025);
+    }
+
+
+    .permiso-item:has(input:checked) {
+        border-color: rgba(0, 113, 227, 0.35);
+
+        background: rgba(0, 113, 227, 0.05);
+    }
+
+
+    .permiso-item input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+
+        min-width: 14px;
+
+        margin: 0;
+
+        accent-color: var(--accent);
+    }
+
+
+    .permiso-label {
+        min-width: 0;
+
+        color: var(--text);
+
+        font-size: 9px;
+        font-weight: 550;
+
+        line-height: 1.35;
+    }
+
+
+    /* =====================================================
+       HERRAMIENTAS
+    ===================================================== */
+
+    .permisos-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 9px 15px;
+
+        border-bottom: 1px solid var(--border);
+
+        background: #ffffff;
+    }
+
+
+    .permisos-toolbar-info {
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 500;
+    }
+
+
+    .permisos-toolbar-actions {
+        display: flex;
+        align-items: center;
+
+        gap: 5px;
+    }
+
+
+    .btn-permiso-tool {
+        height: 28px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 4px;
+
+        padding: 0 8px;
+
+        border: 1px solid var(--border);
+        border-radius: 6px;
+
+        background: #ffffff;
+
+        color: var(--text);
+
+        font-size: 8px;
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+
+    .btn-permiso-tool:hover {
+        border-color: var(--accent);
+
+        color: var(--accent);
+    }
+
+
+    /* =====================================================
+       MENSAJE SIN RESULTADOS
+    ===================================================== */
+
+    #sinResultadosPermisos {
+        display: none;
+
+        padding: 30px 15px;
+
+        text-align: center;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 800px) {
+
+        .permisos-listado {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 576px) {
+
+        .permisos-toolbar {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="container accesos-wrapper">
+
+
+    <!-- ==================================================
+         CABECERA
+    =================================================== -->
+
+    <div class="accesos-header">
+
+
+        <div class="accesos-header-info">
+
+
+            <div class="accesos-header-title">
+                {{ titulo }}
+            </div>
+
+
+            <div class="accesos-header-subtitle">
+
+                {% if rol %}
+
+                    Modifica el nombre y las capacidades
+                    asignadas a este rol.
+
+                {% else %}
+
+                    Crea un nuevo perfil de acceso
+                    para los usuarios del sistema.
+
+                {% endif %}
+
+            </div>
+
+
+        </div>
+
+
+        <a
+            href="{% url 'accesos:roles_lista' %}"
+            class="accesos-btn"
+        >
+
+            <i class="bi bi-arrow-left"></i>
+
+            Volver
+
+        </a>
+
+
+    </div>
+
+
+
+    <!-- ==================================================
+         FORMULARIO
+    =================================================== -->
+
+    <form method="post" id="rolForm">
+
+
+        {% csrf_token %}
+
+
+        <!-- ==================================================
+             ERRORES GENERALES
+        =================================================== -->
+
+        {% if form.non_field_errors %}
+
+            <div
+                class="alert alert-danger"
+                style="
+                    font-size:9px;
+                    border-radius:8px;
+                "
+            >
+
+                {{ form.non_field_errors }}
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ==================================================
+             INFORMACIÓN DEL ROL
+        =================================================== -->
+
+        <div class="accesos-card">
+
+
+            <div class="accesos-card-header">
+
+
+                <div class="accesos-card-title">
+
+                    <i class="bi bi-person-badge"></i>
+
+                    Información del rol
+
+                </div>
+
+
+            </div>
+
+
+            <div class="accesos-form-body">
+
+
+                <div class="accesos-field">
+
+
+                    <label
+                        for="{{ form.name.id_for_label }}"
+                        class="accesos-label"
+                    >
+                        Nombre del rol
+                    </label>
+
+
+                    {{ form.name }}
+
+
+                    {% if form.name.errors %}
+
+                        {{ form.name.errors }}
+
+                    {% endif %}
+
+
+                    <div
+                        style="
+                            margin-top:5px;
+                            color:var(--muted);
+                            font-size:8px;
+                        "
+                    >
+                        Ejemplo: Supervisor, Contabilidad,
+                        Recepción o Jefe de Bodega.
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ==================================================
+             PERMISOS
+        =================================================== -->
+
+        <div class="accesos-card">
+
+
+            <!-- ==============================================
+                 CABECERA
+            =============================================== -->
+
+            <div class="accesos-card-header">
+
+
+                <div class="accesos-card-title">
+
+                    <i class="bi bi-key"></i>
+
+                    Permisos
+
+                </div>
+
+
+                <span
+                    class="accesos-badge"
+                    id="contadorPermisos"
+                >
+                    0 seleccionados
+                </span>
+
+
+            </div>
+
+
+
+            <!-- ==============================================
+                 BUSCADOR
+            =============================================== -->
+
+            <div class="permisos-buscador">
+
+
+                <div class="permisos-buscador-wrap">
+
+
+                    <i
+                        class="
+                            bi
+                            bi-search
+                            permisos-buscador-icon
+                        "
+                    ></i>
+
+
+                    <input
+                        type="search"
+                        id="buscarPermiso"
+                        placeholder="Buscar permiso..."
+                        autocomplete="off"
+                    >
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ==============================================
+                 HERRAMIENTAS
+            =============================================== -->
+
+            <div class="permisos-toolbar">
+
+
+                <div class="permisos-toolbar-info">
+                    Selecciona únicamente las capacidades
+                    que necesita este rol.
+                </div>
+
+
+                <div class="permisos-toolbar-actions">
+
+
+                    <button
+                        type="button"
+                        class="btn-permiso-tool"
+                        id="seleccionarVisibles"
+                    >
+
+                        <i class="bi bi-check2-square"></i>
+
+                        Marcar visibles
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn-permiso-tool"
+                        id="limpiarVisibles"
+                    >
+
+                        <i class="bi bi-square"></i>
+
+                        Limpiar visibles
+
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ==============================================
+                 LISTADO
+            =============================================== -->
+
+            <div
+                class="permisos-listado"
+                id="listaPermisos"
+            >
+
+
+                {% for checkbox in form.permissions %}
+
+
+                    <label
+                        class="permiso-item"
+                        data-permiso="{{ checkbox.choice_label|lower }}"
+                    >
+
+
+                        {{ checkbox.tag }}
+
+
+                        <span class="permiso-label">
+
+                            {{ checkbox.choice_label }}
+
+                        </span>
+
+
+                    </label>
+
+
+                {% empty %}
+
+
+                    <div class="accesos-empty">
+
+                        <i class="bi bi-key"></i>
+
+
+                        <div class="accesos-empty-title">
+                            No existen permisos disponibles
+                        </div>
+
+
+                        <div class="accesos-empty-text">
+                            Django todavía no ha generado
+                            permisos para las aplicaciones.
+                        </div>
+
+
+                    </div>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+
+            <!-- ==============================================
+                 SIN RESULTADOS
+            =============================================== -->
+
+            <div id="sinResultadosPermisos">
+
+                <i
+                    class="bi bi-search"
+                    style="
+                        display:block;
+                        margin-bottom:6px;
+                        font-size:20px;
+                    "
+                ></i>
+
+                No se encontraron permisos con ese criterio.
+
+            </div>
+
+
+
+            {% if form.permissions.errors %}
+
+                <div
+                    style="
+                        padding:0 15px 15px;
+                    "
+                >
+
+                    {{ form.permissions.errors }}
+
+                </div>
+
+            {% endif %}
+
+
+        </div>
+
+
+
+        <!-- ==================================================
+             INFORMACIÓN IMPORTANTE
+        =================================================== -->
+
+        <div class="accesos-card">
+
+
+            <div class="accesos-card-header">
+
+
+                <div class="accesos-card-title">
+
+                    <i class="bi bi-info-circle"></i>
+
+                    Funcionamiento
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                style="
+                    padding:12px 15px;
+                    color:var(--muted);
+                    font-size:9px;
+                    line-height:1.6;
+                "
+            >
+
+                Los usuarios que pertenezcan a este rol
+                recibirán automáticamente los permisos
+                seleccionados.
+
+                No es necesario configurar los permisos
+                individualmente para cada usuario.
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ==================================================
+             ACCIONES
+        =================================================== -->
+
+        <div class="accesos-actions">
+
+
+            <a
+                href="{% url 'accesos:roles_lista' %}"
+                class="accesos-btn"
+            >
+
+                Cancelar
+
+            </a>
+
+
+            <button
+                type="submit"
+                class="
+                    accesos-btn
+                    accesos-btn-primary
+                "
+            >
+
+                <i class="bi bi-check-lg"></i>
+
+
+                {% if rol %}
+
+                    Guardar cambios
+
+                {% else %}
+
+                    Crear rol
+
+                {% endif %}
+
+
+            </button>
+
+
+        </div>
+
+
+    </form>
+
+
+</div>
+
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        // =====================================================
+        // ELEMENTOS
+        // =====================================================
+
+        const buscador =
+            document.getElementById(
+                "buscarPermiso"
+            );
+
+        const lista =
+            document.getElementById(
+                "listaPermisos"
+            );
+
+        const contador =
+            document.getElementById(
+                "contadorPermisos"
+            );
+
+        const sinResultados =
+            document.getElementById(
+                "sinResultadosPermisos"
+            );
+
+        const seleccionarVisibles =
+            document.getElementById(
+                "seleccionarVisibles"
+            );
+
+        const limpiarVisibles =
+            document.getElementById(
+                "limpiarVisibles"
+            );
+
+
+        if (!lista) {
+            return;
+        }
+
+
+        const items = Array.from(
+            lista.querySelectorAll(
+                ".permiso-item"
+            )
+        );
+
+
+        // =====================================================
+        // CONTADOR
+        // =====================================================
+
+        function actualizarContador() {
+
+            const total = lista.querySelectorAll(
+                'input[type="checkbox"]:checked'
+            ).length;
+
+
+            contador.textContent =
+                total === 1
+                    ? "1 seleccionado"
+                    : `${total} seleccionados`;
+
+        }
+
+
+        // =====================================================
+        // FILTRAR
+        // =====================================================
+
+        function filtrarPermisos() {
+
+            const texto = (
+                buscador.value || ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+            let visibles = 0;
+
+
+            items.forEach(
+                function (item) {
+
+                    const permiso = (
+                        item.dataset.permiso || ""
+                    ).toLowerCase();
+
+
+                    const mostrar =
+                        permiso.includes(texto);
+
+
+                    item.style.display =
+                        mostrar
+                            ? "flex"
+                            : "none";
+
+
+                    if (mostrar) {
+                        visibles++;
+                    }
+
+                }
+            );
+
+
+            sinResultados.style.display =
+                visibles === 0
+                    ? "block"
+                    : "none";
+
+        }
+
+
+        // =====================================================
+        // MARCAR VISIBLES
+        // =====================================================
+
+        seleccionarVisibles.addEventListener(
+            "click",
+            function () {
+
+                items.forEach(
+                    function (item) {
+
+                        if (
+                            item.style.display !==
+                            "none"
+                        ) {
+
+                            const checkbox =
+                                item.querySelector(
+                                    'input[type="checkbox"]'
+                                );
+
+
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+
+                        }
+
+                    }
+                );
+
+
+                actualizarContador();
+
+            }
+        );
+
+
+        // =====================================================
+        // LIMPIAR VISIBLES
+        // =====================================================
+
+        limpiarVisibles.addEventListener(
+            "click",
+            function () {
+
+                items.forEach(
+                    function (item) {
+
+                        if (
+                            item.style.display !==
+                            "none"
+                        ) {
+
+                            const checkbox =
+                                item.querySelector(
+                                    'input[type="checkbox"]'
+                                );
+
+
+                            if (checkbox) {
+                                checkbox.checked = false;
+                            }
+
+                        }
+
+                    }
+                );
+
+
+                actualizarContador();
+
+            }
+        );
+
+
+        // =====================================================
+        // EVENTOS CHECKBOX
+        // =====================================================
+
+        lista.addEventListener(
+            "change",
+            function (event) {
+
+                if (
+                    event.target.matches(
+                        'input[type="checkbox"]'
+                    )
+                ) {
+
+                    actualizarContador();
+
+                }
+
+            }
+        );
+
+
+        // =====================================================
+        // BUSCADOR
+        // =====================================================
+
+        buscador.addEventListener(
+            "input",
+            filtrarPermisos
+        );
+
+
+        // =====================================================
+        // ESTADO INICIAL
+        // =====================================================
+
+        actualizarContador();
+
+    }
+);
+
+</script>
+
+{% endblock %}

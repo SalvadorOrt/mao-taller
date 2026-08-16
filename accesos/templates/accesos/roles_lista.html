@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block title %}
+Roles y permisos | MAO
+{% endblock %}
+
+
+{% block page_subtitle %}
+Personal y accesos
+{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'accesos/css/accesos.css' %}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="container accesos-wrapper">
+
+
+    <!-- ==================================================
+         CABECERA
+    =================================================== -->
+
+    <div class="accesos-header">
+
+        <div class="accesos-header-info">
+
+            <div class="accesos-header-title">
+                Roles y permisos
+            </div>
+
+            <div class="accesos-header-subtitle">
+                Administra los perfiles de acceso y las capacidades
+                disponibles dentro del sistema.
+            </div>
+
+        </div>
+
+
+        {% if perms.accesos.add_rol %}
+
+            <a
+                href="{% url 'accesos:rol_crear' %}"
+                class="accesos-btn accesos-btn-primary"
+            >
+
+                <i class="bi bi-plus-lg"></i>
+
+                Nuevo rol
+
+            </a>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ==================================================
+         LISTADO DE ROLES
+    =================================================== -->
+
+    <div class="accesos-card">
+
+
+        <!-- ==============================================
+             CABECERA DE LA TARJETA
+        =============================================== -->
+
+        <div class="accesos-card-header">
+
+            <div class="accesos-card-title">
+
+                <i class="bi bi-shield-check"></i>
+
+                Roles configurados
+
+            </div>
+
+
+            <span class="accesos-badge">
+                {{ roles|length }} rol{{ roles|length|pluralize:"es" }}
+            </span>
+
+        </div>
+
+
+        <!-- ==============================================
+             CONTENIDO
+        =============================================== -->
+
+        {% if roles %}
+
+            <div class="accesos-table-wrap">
+
+                <table class="accesos-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Rol
+                            </th>
+
+                            <th>
+                                Usuarios
+                            </th>
+
+                            <th>
+                                Permisos
+                            </th>
+
+                            <th style="text-align:right;">
+                                Acciones
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for rol in roles %}
+
+                            <tr>
+
+
+                                <!-- ======================
+                                     ROL
+                                ======================= -->
+
+                                <td>
+
+                                    <div class="accesos-role-name">
+
+                                        <span class="accesos-role-icon">
+
+                                            {% if rol.name == "Administrador" %}
+
+                                                <i class="bi bi-shield-fill-check"></i>
+
+                                            {% elif rol.name == "Bodega" %}
+
+                                                <i class="bi bi-box-seam"></i>
+
+                                            {% elif rol.name == "Caja" %}
+
+                                                <i class="bi bi-receipt"></i>
+
+                                            {% elif rol.name == "Técnico" %}
+
+                                                <i class="bi bi-tools"></i>
+
+                                            {% else %}
+
+                                                <i class="bi bi-person-badge"></i>
+
+                                            {% endif %}
+
+                                        </span>
+
+
+                                        <div>
+
+                                            <div>
+                                                {{ rol.name }}
+                                            </div>
+
+                                            <div
+                                                style="
+                                                    margin-top:2px;
+                                                    color:var(--muted);
+                                                    font-size:8px;
+                                                    font-weight:500;
+                                                "
+                                            >
+                                                Perfil de acceso
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- ======================
+                                     USUARIOS
+                                ======================= -->
+
+                                <td>
+
+                                    <span class="accesos-badge">
+
+                                        <i class="bi bi-person me-1"></i>
+
+                                        {{ rol.user_set.count }}
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ======================
+                                     PERMISOS
+                                ======================= -->
+
+                                <td>
+
+                                    <span class="accesos-badge">
+
+                                        <i class="bi bi-key me-1"></i>
+
+                                        {{ rol.permissions.count }}
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ======================
+                                     ACCIONES
+                                ======================= -->
+
+                                <td>
+
+                                    <div class="accesos-row-actions">
+
+
+                                        {% if perms.accesos.change_rol %}
+
+                                            <a
+                                                href="{% url 'accesos:rol_editar' rol.pk %}"
+                                                class="accesos-icon-btn"
+                                                title="Editar rol"
+                                            >
+
+                                                <i class="bi bi-pencil"></i>
+
+                                            </a>
+
+                                        {% endif %}
+
+
+                                        {% if perms.accesos.delete_rol %}
+
+                                            <a
+                                                href="{% url 'accesos:rol_eliminar' rol.pk %}"
+                                                class="
+                                                    accesos-icon-btn
+                                                    accesos-icon-btn-danger
+                                                "
+                                                title="Eliminar rol"
+                                            >
+
+                                                <i class="bi bi-trash"></i>
+
+                                            </a>
+
+                                        {% endif %}
+
+
+                                    </div>
+
+                                </td>
+
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- ==========================================
+                 SIN ROLES
+            =========================================== -->
+
+            <div class="accesos-empty">
+
+                <i class="bi bi-shield"></i>
+
+
+                <div class="accesos-empty-title">
+                    No existen roles
+                </div>
+
+
+                <div class="accesos-empty-text">
+                    Crea el primer rol para comenzar a administrar
+                    los permisos del sistema.
+                </div>
+
+
+                {% if perms.accesos.add_rol %}
+
+                    <div style="margin-top:15px;">
+
+                        <a
+                            href="{% url 'accesos:rol_crear' %}"
+                            class="accesos-btn accesos-btn-primary"
+                        >
+
+                            <i class="bi bi-plus-lg"></i>
+
+                            Crear rol
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- ==================================================
+         INFORMACIÓN
+    =================================================== -->
+
+    <div class="accesos-card">
+
+        <div class="accesos-card-header">
+
+            <div class="accesos-card-title">
+
+                <i class="bi bi-info-circle"></i>
+
+                Gestión de accesos
+
+            </div>
+
+        </div>
+
+
+        <div
+            style="
+                padding:12px 15px;
+                font-size:9px;
+                line-height:1.6;
+                color:var(--muted);
+            "
+        >
+
+            Los roles agrupan permisos del sistema.
+
+            Los usuarios reciben automáticamente las capacidades
+            asociadas a los roles que tengan asignados.
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

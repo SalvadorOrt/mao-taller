@@ -2,121 +2,293 @@ def get_menu_lateral(user):
     menu = []
 
     # =====================================================
-    # OPERACIÓN TALLER
-    # Solo CAJA y ADMIN
+    # USUARIO NO AUTENTICADO
     # =====================================================
-    if user.rol in ["CAJA", "ADMIN"]:
+
+    if not user.is_authenticated:
+        return menu
+
+
+    # =====================================================
+    # OPERACIÓN TALLER
+    # =====================================================
+
+    items_operacion = []
+
+
+    # -----------------------------------------------------
+    # DASHBOARD TALLER
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "ordenes_de_trabajo.view_ordentrabajo"
+    ):
+        items_operacion.append({
+            "label": "Dashboard Taller",
+            "url_name": "dashboard",
+            "icon": "bi-house-door",
+        })
+
+
+    # -----------------------------------------------------
+    # NUEVA ORDEN
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "ordenes_de_trabajo.add_ordentrabajo"
+    ):
+        items_operacion.append({
+            "label": "Nueva Orden",
+            "url_name": "crear_orden",
+            "icon": "bi-plus-circle",
+        })
+
+
+    # -----------------------------------------------------
+    # NUEVA COTIZACIÓN
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "ordenes_de_trabajo.add_cotizacion"
+    ):
+        items_operacion.append({
+            "label": "Nueva Cotización",
+            "url_name": "crear_cotizacion",
+            "icon": "bi-file-earmark-plus",
+        })
+
+
+    # -----------------------------------------------------
+    # ÓRDENES DE TRABAJO
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "ordenes_de_trabajo.view_ordentrabajo"
+    ):
+        items_operacion.append({
+            "label": "Órdenes de Trabajo",
+            "url_name": "lista_ordenes",
+            "icon": "bi-list-ul",
+        })
+
+
+    # -----------------------------------------------------
+    # VEHÍCULOS / EXPEDIENTES
+    #
+    # Esta URL pertenece al Django Admin.
+    # Por eso además del permiso necesita is_staff.
+    # -----------------------------------------------------
+
+    if (
+        user.is_staff
+        and user.has_perm(
+            "ordenes_de_trabajo.view_expedientevehiculo"
+        )
+    ):
+        items_operacion.append({
+            "label": "Vehículos / Expedientes",
+            "url": "/admin/ordenes_de_trabajo/expedientevehiculo/",
+            "icon": "bi-car-front",
+        })
+
+
+    # -----------------------------------------------------
+    # CLIENTES
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "ordenes_de_trabajo.view_cliente"
+    ):
+        items_operacion.append({
+            "label": "Clientes",
+            "url_name": "lista_clientes",
+            "icon": "bi-people",
+        })
+
+
+    # -----------------------------------------------------
+    # AGREGAR SECCIÓN
+    # -----------------------------------------------------
+
+    if items_operacion:
         menu.append({
             "titulo": "Operación Taller",
-            "items": [
-                {
-                    "label": "Dashboard Taller",
-                    "url_name": "dashboard",
-                    "icon": "bi-house-door",
-                },
-                {
-                    "label": "Nueva Orden",
-                    "url_name": "crear_orden",
-                    "icon": "bi-plus-circle",
-                },
-                {
-                    "label": "Nueva Cotización",
-                    "url_name": "crear_cotizacion",
-                    "icon": "bi-file-earmark-plus",
-                },
-                {
-                    "label": "Órdenes de Trabajo",
-                    "url_name": "lista_ordenes",
-                    "icon": "bi-list-ul",
-                },
-                {
-                    "label": "Vehículos / Expedientes",
-                    "url": "/admin/ordenes_de_trabajo/expedientevehiculo/",
-                    "icon": "bi-car-front",
-                },
-                {
-                    "label": "Clientes",
-                    "url_name": "lista_clientes",
-                    "icon": "bi-people",
-                },
-            ]
+            "items": items_operacion,
         })
+
 
     # =====================================================
     # AVALÚOS
-    # Todos los roles pueden acceder.
-    #
-    # TECNICO:
-    # como no entra en las demás condiciones,
-    # esta será su única sección visible.
     # =====================================================
-    if user.rol in ["ADMIN", "BODEGA", "CAJA", "TECNICO"]:
+
+    items_avaluos = []
+
+
+    if user.has_perm(
+        "avaluos.view_avaluomecanico"
+    ):
+        items_avaluos.append({
+            "label": "Órdenes pendientes",
+            "url_name": "avaluos:ordenes_pendientes",
+            "icon": "bi-clipboard2-pulse",
+        })
+
+
+    if items_avaluos:
         menu.append({
             "titulo": "Avalúos",
-            "items": [
-                {
-                    "label": "Órdenes pendientes",
-                    "url_name": "avaluos:ordenes_pendientes",
-                    "icon": "bi-clipboard2-pulse",
-                },
-            ],
+            "items": items_avaluos,
         })
+
 
     # =====================================================
     # INVENTARIO
-    # Solo BODEGA y ADMIN
     # =====================================================
-    if user.rol in ["BODEGA", "ADMIN"]:
+
+    items_inventario = []
+
+
+    # -----------------------------------------------------
+    # DASHBOARD INVENTARIO
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "inventario.view_stocksucursal"
+    ):
+        items_inventario.append({
+            "label": "Dashboard Inventario",
+            "url_name": "inventario_dashboard",
+            "icon": "bi-speedometer2",
+        })
+
+
+    # -----------------------------------------------------
+    # CATÁLOGO
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "inventario.view_producto"
+    ):
+        items_inventario.append({
+            "label": "Catálogo",
+            "url_name": "inventario_catalogo",
+            "icon": "bi-box-seam",
+        })
+
+
+    # -----------------------------------------------------
+    # STOCK
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "inventario.view_stocksucursal"
+    ):
+        items_inventario.append({
+            "label": "Stock",
+            "url_name": "inventario_stock",
+            "icon": "bi-stack",
+        })
+
+
+    # -----------------------------------------------------
+    # MOVIMIENTOS
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "inventario.view_movimientostock"
+    ):
+        items_inventario.append({
+            "label": "Movimientos",
+            "url_name": "inventario_movimientos",
+            "icon": "bi-arrow-left-right",
+        })
+
+
+    # -----------------------------------------------------
+    # INVENTARIO FÍSICO
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "inventario.view_inventariofisico"
+    ):
+        items_inventario.append({
+            "label": "Inventario Físico",
+            "url_name": "inventario_fisico",
+            "icon": "bi-clipboard-check",
+        })
+
+
+    # -----------------------------------------------------
+    # AGREGAR SECCIÓN
+    # -----------------------------------------------------
+
+    if items_inventario:
         menu.append({
             "titulo": "Inventario",
-            "items": [
-                {
-                    "label": "Dashboard Inventario",
-                    "url_name": "inventario_dashboard",
-                    "icon": "bi-speedometer2",
-                },
-                {
-                    "label": "Catálogo",
-                    "url_name": "inventario_catalogo",
-                    "icon": "bi-box-seam",
-                },
-                {
-                    "label": "Stock",
-                    "url_name": "inventario_stock",
-                    "icon": "bi-stack",
-                },
-                {
-                    "label": "Movimientos",
-                    "url_name": "inventario_movimientos",
-                    "icon": "bi-arrow-left-right",
-                },
-                {
-                    "label": "Inventario Físico",
-                    "url_name": "inventario_fisico",
-                    "icon": "bi-clipboard-check",
-                },
-            ]
+            "items": items_inventario,
         })
+
 
     # =====================================================
     # ADMINISTRACIÓN
-    # Solo ADMIN
     # =====================================================
-    if user.rol == "ADMIN":
+
+    items_administracion = []
+
+
+    # -----------------------------------------------------
+    # ROLES Y PERMISOS
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "accesos.view_rol"
+    ):
+        items_administracion.append({
+            "label": "Roles y permisos",
+            "url_name": "accesos:roles_lista",
+            "icon": "bi-shield-lock",
+        })
+
+
+    # -----------------------------------------------------
+    # PERSONAL Y ACCESOS
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "inventario.view_usuario"
+    ):
+        items_administracion.append({
+            "label": "Personal y Accesos",
+            "url_name": "lista_usuarios",
+            "icon": "bi-people-fill",
+        })
+
+
+    # -----------------------------------------------------
+    # PANEL ADMIN DJANGO
+    # -----------------------------------------------------
+
+    if user.is_staff:
+        items_administracion.append({
+            "label": "Panel Admin",
+            "url": "/admin/",
+            "icon": "bi-sliders",
+        })
+
+
+    # -----------------------------------------------------
+    # AGREGAR SECCIÓN
+    # -----------------------------------------------------
+
+    if items_administracion:
         menu.append({
             "titulo": "Administración",
-            "items": [
-                {
-                    "label": "Personal y Accesos",
-                    "url_name": "lista_usuarios",
-                    "icon": "bi-people-fill",
-                },
-                {
-                    "label": "Panel Admin",
-                    "url": "/admin/",
-                    "icon": "bi-sliders",
-                },
-            ]
+            "items": items_administracion,
         })
+
+
+    # =====================================================
+    # RESULTADO
+    # =====================================================
 
     return menu
