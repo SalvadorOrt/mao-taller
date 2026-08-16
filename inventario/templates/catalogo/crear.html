@@ -910,10 +910,13 @@ Crear una nueva referencia en el inventario
         method="POST"
         enctype="multipart/form-data"
         id="catalogoForm"
+
         data-url-categoria-rapida="{% url 'categoria_crear_rapida' %}"
         data-url-marca-rapida="{% url 'marca_crear_rapida' %}"
         data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}"
+
         data-url-sugerencias="{% url 'inventario_catalogo_sugerir' %}"
+
         data-url-atributos-categoria="{% url 'inventario_catalogo_atributos_categoria' 0 %}"
     >
 
@@ -1121,42 +1124,18 @@ Crear una nueva referencia en el inventario
 {% endblock %}
 
 
-
 {% block extra_js %}
 
-<script
-    src="{% static 'inventario/js/utilidades.js' %}"
-></script>
+<script src="{% static 'inventario/js/utilidades.js' %}?v=2"></script>
+<script src="{% static 'inventario/js/dropdowns.js' %}?v=2"></script>
+<script src="{% static 'inventario/js/imagenes.js' %}?v=2"></script>
+<script src="{% static 'inventario/js/atributos.js' %}?v=2"></script>
+<script src="{% static 'inventario/js/codigos.js' %}?v=2"></script>
+<script src="{% static 'inventario/js/modales.js' %}?v=2"></script>
 
-<script
-    src="{% static 'inventario/js/dropdowns.js' %}"
-></script>
+<script src="{% static 'inventario/js/sugerencias.js' %}?v=2"></script>
 
-<!--
-    Toda la lógica del carrusel queda en este archivo.
--->
-<script
-    src="{% static 'inventario/js/imagenes.js' %}?v=2"
-></script>
+<script src="{% static 'inventario/js/catalogo_form.js' %}?v=2"></script>
+<script src="{% static 'inventario/js/index.js' %}?v=2"></script>
 
-<script
-    src="{% static 'inventario/js/atributos.js' %}"
-></script>
-
-<script
-    src="{% static 'inventario/js/codigos.js' %}"
-></script>
-
-<script
-    src="{% static 'inventario/js/modales.js' %}"
-></script>
-
-<script
-    src="{% static 'inventario/js/catalogo_form.js' %}"
-></script>
-
-<script
-    src="{% static 'inventario/js/index.js' %}"
-></script>
-<script src="{% static 'inventario/js/sugerencias.js' %}?v=1"></script>
 {% endblock %}
