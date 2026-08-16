@@ -12,7 +12,7 @@ from .permissions import permiso_requerido
 # LISTA DE ROLES
 # =========================================================
 
-@permiso_requerido("auth.view_group")
+@permiso_requerido("accesos.view_rol")
 def roles_lista(request):
     roles = (
         Rol.objects
@@ -33,7 +33,7 @@ def roles_lista(request):
 # CREAR ROL
 # =========================================================
 
-@permiso_requerido("auth.add_group")
+@permiso_requerido("accesos.add_rol")
 def rol_crear(request):
     if request.method == "POST":
         form = RolForm(request.POST)
@@ -69,7 +69,7 @@ def rol_crear(request):
 # EDITAR ROL
 # =========================================================
 
-@permiso_requerido("auth.change_group")
+@permiso_requerido("accesos.change_rol")
 def rol_editar(request, pk):
     rol = get_object_or_404(
         Rol.objects.prefetch_related("permissions"),
@@ -115,7 +115,7 @@ def rol_editar(request, pk):
 # ELIMINAR ROL
 # =========================================================
 
-@permiso_requerido("auth.delete_group")
+@permiso_requerido("accesos.delete_rol")
 def rol_eliminar(request, pk):
     rol = get_object_or_404(
         Rol,
