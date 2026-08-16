@@ -22,158 +22,80 @@ Personal y accesos
 <style>
 
     /* =====================================================
-       BUSCADOR DE PERMISOS
+       FORMULARIO DE ROL
     ===================================================== */
 
-    .permisos-buscador {
-        padding: 12px 15px;
+    .rol-form-shell {
+        max-width: 1180px;
+        margin: 0 auto;
+    }
 
+
+    /* =====================================================
+       BUSCADOR
+    ===================================================== */
+
+    .permisos-search {
+        padding: 10px 14px;
         border-bottom: 1px solid var(--border);
-
         background: #fbfbfd;
     }
 
-
-    .permisos-buscador-wrap {
+    .permisos-search-wrap {
         position: relative;
     }
 
-
-    .permisos-buscador-icon {
+    .permisos-search-icon {
         position: absolute;
-
         left: 10px;
         top: 50%;
-
         transform: translateY(-50%);
-
         color: var(--muted);
-
         font-size: 11px;
-
         pointer-events: none;
     }
 
-
-    .permisos-buscador input {
+    .permisos-search input {
         padding-left: 30px !important;
     }
 
 
     /* =====================================================
-       LISTADO DE PERMISOS
+       HERRAMIENTAS GLOBALES
     ===================================================== */
 
-    .permisos-listado {
-        display: grid;
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 7px 16px;
-
-        padding: 15px;
-    }
-
-
-    .permiso-item {
-        min-height: 34px;
-
+    .permisos-global-toolbar {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 10px;
 
-        gap: 8px;
+        padding: 8px 14px;
 
-        padding: 7px 9px;
-
-        border: 1px solid var(--border);
-        border-radius: 7px;
-
-        background: #ffffff;
-
-        cursor: pointer;
-
-        transition:
-            border-color 0.15s ease,
-            background-color 0.15s ease;
+        border-bottom: 1px solid var(--border);
+        background: #fff;
     }
 
-
-    .permiso-item:hover {
-        border-color: rgba(0, 113, 227, 0.45);
-
-        background: rgba(0, 113, 227, 0.025);
-    }
-
-
-    .permiso-item:has(input:checked) {
-        border-color: rgba(0, 113, 227, 0.35);
-
-        background: rgba(0, 113, 227, 0.05);
-    }
-
-
-    .permiso-item input[type="checkbox"] {
-        width: 14px;
-        height: 14px;
-
-        min-width: 14px;
-
-        margin: 0;
-
-        accent-color: var(--accent);
-    }
-
-
-    .permiso-label {
-        min-width: 0;
-
-        color: var(--text);
-
+    .permisos-global-info {
+        color: var(--muted);
         font-size: 9px;
-        font-weight: 550;
+        line-height: 1.4;
+    }
 
-        line-height: 1.35;
+    .permisos-global-actions {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-wrap: wrap;
     }
 
 
     /* =====================================================
-       HERRAMIENTAS
+       BOTÓN PEQUEÑO
     ===================================================== */
 
-    .permisos-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        gap: 10px;
-
-        padding: 9px 15px;
-
-        border-bottom: 1px solid var(--border);
-
-        background: #ffffff;
-    }
-
-
-    .permisos-toolbar-info {
-        color: var(--muted);
-
-        font-size: 9px;
-        font-weight: 500;
-    }
-
-
-    .permisos-toolbar-actions {
-        display: flex;
-        align-items: center;
-
-        gap: 5px;
-    }
-
-
-    .btn-permiso-tool {
-        height: 28px;
+    .perm-tool-btn {
+        height: 27px;
 
         display: inline-flex;
         align-items: center;
@@ -186,38 +108,429 @@ Personal y accesos
         border: 1px solid var(--border);
         border-radius: 6px;
 
-        background: #ffffff;
-
+        background: #fff;
         color: var(--text);
 
         font-size: 8px;
-        font-weight: 600;
+        font-weight: 650;
 
         cursor: pointer;
+
+        transition:
+            border-color .15s ease,
+            color .15s ease,
+            background-color .15s ease;
     }
 
-
-    .btn-permiso-tool:hover {
+    .perm-tool-btn:hover {
         border-color: var(--accent);
-
         color: var(--accent);
+        background: #fbfbfd;
+    }
+
+    .perm-tool-btn-danger {
+        color: var(--danger);
+    }
+
+    .perm-tool-btn-danger:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+        background: rgba(255, 59, 48, .04);
     }
 
 
     /* =====================================================
-       MENSAJE SIN RESULTADOS
+       APLICACIONES / ACORDEÓN
+    ===================================================== */
+
+    .permisos-apps {
+        padding: 10px;
+        background: #f7f7f9;
+    }
+
+    .perm-app {
+        margin-bottom: 7px;
+
+        border: 1px solid var(--border);
+        border-radius: 8px;
+
+        background: #fff;
+
+        overflow: hidden;
+    }
+
+    .perm-app:last-child {
+        margin-bottom: 0;
+    }
+
+
+    /* =====================================================
+       CABECERA DEL MÓDULO
+    ===================================================== */
+
+    .perm-app-header {
+        width: 100%;
+
+        min-height: 39px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+        padding: 7px 10px;
+
+        border: 0;
+        background: #fff;
+
+        cursor: pointer;
+
+        text-align: left;
+    }
+
+    .perm-app-header:hover {
+        background: #fbfbfd;
+    }
+
+    .perm-app-left {
+        min-width: 0;
+
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+    }
+
+    .perm-app-chevron {
+        width: 18px;
+        height: 18px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex-shrink: 0;
+
+        color: var(--muted);
+        font-size: 10px;
+
+        transition: transform .15s ease;
+    }
+
+    .perm-app.abierto .perm-app-chevron {
+        transform: rotate(90deg);
+    }
+
+    .perm-app-icon {
+        width: 27px;
+        height: 27px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex-shrink: 0;
+
+        border-radius: 7px;
+
+        background: rgba(0, 113, 227, .07);
+        color: var(--accent);
+
+        font-size: 11px;
+    }
+
+    .perm-app-info {
+        min-width: 0;
+    }
+
+    .perm-app-name {
+        color: var(--text);
+
+        font-size: 9px;
+        font-weight: 750;
+
+        text-transform: uppercase;
+        letter-spacing: .035em;
+    }
+
+    .perm-app-description {
+        margin-top: 1px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 500;
+    }
+
+    .perm-app-right {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        flex-shrink: 0;
+    }
+
+    .perm-app-counter {
+        min-width: 48px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 22px;
+
+        padding: 2px 7px;
+
+        border-radius: 999px;
+
+        background: #f5f5f7;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+
+    /* =====================================================
+       CUERPO DEL MÓDULO
+    ===================================================== */
+
+    .perm-app-body {
+        display: none;
+
+        border-top: 1px solid var(--border);
+    }
+
+    .perm-app.abierto .perm-app-body {
+        display: block;
+    }
+
+
+    /* =====================================================
+       HERRAMIENTAS POR MÓDULO
+    ===================================================== */
+
+    .perm-app-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 8px;
+
+        padding: 7px 10px;
+
+        border-bottom: 1px solid var(--border);
+
+        background: #fbfbfd;
+    }
+
+    .perm-app-toolbar-text {
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+    .perm-app-toolbar-actions {
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+
+    /* =====================================================
+       MATRIZ
+    ===================================================== */
+
+    .perm-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .perm-table {
+        width: 100%;
+
+        border-collapse: collapse;
+
+        table-layout: fixed;
+
+        font-size: 9px;
+    }
+
+    .perm-table th {
+        height: 30px;
+
+        padding: 5px 6px;
+
+        border-bottom: 1px solid var(--border);
+
+        background: #fff;
+
+        color: var(--muted);
+
+        font-size: 7.5px;
+        font-weight: 750;
+
+        text-transform: uppercase;
+        letter-spacing: .035em;
+
+        text-align: center;
+    }
+
+    .perm-table th:first-child {
+        width: auto;
+        text-align: left;
+        padding-left: 12px;
+    }
+
+    .perm-table th.perm-col {
+        width: 82px;
+    }
+
+    .perm-table td {
+        height: 34px;
+
+        padding: 5px 6px;
+
+        border-bottom: 1px solid #f1f1f3;
+
+        vertical-align: middle;
+    }
+
+    .perm-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .perm-table tbody tr:hover td {
+        background: #fbfbfd;
+    }
+
+    .perm-model-name {
+        padding-left: 12px !important;
+
+        color: var(--text);
+
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+    .perm-checkbox-cell {
+        text-align: center;
+    }
+
+    .perm-checkbox-cell input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+
+        margin: 0;
+
+        vertical-align: middle;
+
+        accent-color: var(--accent);
+
+        cursor: pointer;
+    }
+
+    .perm-empty-action {
+        color: #d1d1d6;
+        font-size: 10px;
+    }
+
+    .perm-delete-col {
+        background: rgba(255, 59, 48, .018);
+    }
+
+    .perm-table th.perm-delete-col {
+        color: var(--danger);
+    }
+
+
+    /* =====================================================
+       PERMISOS PERSONALIZADOS
+    ===================================================== */
+
+    .custom-permissions {
+        padding: 8px 12px 10px;
+
+        border-top: 1px solid var(--border);
+
+        background: #fbfbfd;
+    }
+
+    .custom-permissions-title {
+        margin-bottom: 6px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 750;
+
+        text-transform: uppercase;
+        letter-spacing: .035em;
+    }
+
+    .custom-permission-item {
+        min-height: 29px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+
+        padding: 4px 0;
+
+        color: var(--text);
+
+        font-size: 8.5px;
+    }
+
+    .custom-permission-item input {
+        width: 14px;
+        height: 14px;
+
+        margin: 0;
+
+        accent-color: var(--accent);
+    }
+
+
+    /* =====================================================
+       SIN RESULTADOS
     ===================================================== */
 
     #sinResultadosPermisos {
         display: none;
 
-        padding: 30px 15px;
+        padding: 32px 15px;
 
         text-align: center;
 
         color: var(--muted);
 
         font-size: 9px;
+
+        background: #fff;
+    }
+
+
+    /* =====================================================
+       ACCIONES INFERIORES
+    ===================================================== */
+
+    .rol-actions-sticky {
+        position: sticky;
+
+        bottom: 10px;
+
+        z-index: 30;
+
+        margin-top: 12px;
+
+        box-shadow: 0 5px 25px rgba(0, 0, 0, .06);
     }
 
 
@@ -225,20 +538,24 @@ Personal y accesos
        RESPONSIVE
     ===================================================== */
 
-    @media (max-width: 800px) {
+    @media (max-width: 760px) {
 
-        .permisos-listado {
-            grid-template-columns: 1fr;
-        }
-
-    }
-
-
-    @media (max-width: 576px) {
-
-        .permisos-toolbar {
+        .permisos-global-toolbar,
+        .perm-app-toolbar {
             align-items: flex-start;
             flex-direction: column;
+        }
+
+        .perm-app-right {
+            gap: 4px;
+        }
+
+        .perm-table th.perm-col {
+            width: 60px;
+        }
+
+        .perm-app-description {
+            display: none;
         }
 
     }
@@ -248,11 +565,9 @@ Personal y accesos
 {% endblock %}
 
 
-
 {% block content %}
 
-
-<div class="container accesos-wrapper">
+<div class="container accesos-wrapper rol-form-shell">
 
 
     <!-- ==================================================
@@ -261,31 +576,25 @@ Personal y accesos
 
     <div class="accesos-header">
 
-
         <div class="accesos-header-info">
-
 
             <div class="accesos-header-title">
                 {{ titulo }}
             </div>
 
-
             <div class="accesos-header-subtitle">
 
                 {% if rol %}
 
-                    Modifica el nombre y las capacidades
-                    asignadas a este rol.
+                    Configura las capacidades que tendrá este rol.
 
                 {% else %}
 
-                    Crea un nuevo perfil de acceso
-                    para los usuarios del sistema.
+                    Crea un nuevo perfil y selecciona sus permisos.
 
                 {% endif %}
 
             </div>
-
 
         </div>
 
@@ -294,16 +603,11 @@ Personal y accesos
             href="{% url 'accesos:roles_lista' %}"
             class="accesos-btn"
         >
-
             <i class="bi bi-arrow-left"></i>
-
             Volver
-
         </a>
 
-
     </div>
-
 
 
     <!-- ==================================================
@@ -311,7 +615,6 @@ Personal y accesos
     =================================================== -->
 
     <form method="post" id="rolForm">
-
 
         {% csrf_token %}
 
@@ -324,47 +627,33 @@ Personal y accesos
 
             <div
                 class="alert alert-danger"
-                style="
-                    font-size:9px;
-                    border-radius:8px;
-                "
+                style="font-size:9px; border-radius:8px;"
             >
-
                 {{ form.non_field_errors }}
-
             </div>
 
         {% endif %}
 
 
-
         <!-- ==================================================
-             INFORMACIÓN DEL ROL
+             DATOS DEL ROL
         =================================================== -->
 
         <div class="accesos-card">
 
-
             <div class="accesos-card-header">
 
-
                 <div class="accesos-card-title">
-
                     <i class="bi bi-person-badge"></i>
-
                     Información del rol
-
                 </div>
-
 
             </div>
 
 
             <div class="accesos-form-body">
 
-
                 <div class="accesos-field">
-
 
                     <label
                         for="{{ form.name.id_for_label }}"
@@ -373,16 +662,11 @@ Personal y accesos
                         Nombre del rol
                     </label>
 
-
                     {{ form.name }}
 
-
                     {% if form.name.errors %}
-
                         {{ form.name.errors }}
-
                     {% endif %}
-
 
                     <div
                         style="
@@ -391,19 +675,15 @@ Personal y accesos
                             font-size:8px;
                         "
                     >
-                        Ejemplo: Supervisor, Contabilidad,
-                        Recepción o Jefe de Bodega.
+                        Ejemplo: Bodega, Caja, Supervisor,
+                        Contabilidad o Jefe de Taller.
                     </div>
-
 
                 </div>
 
-
             </div>
 
-
         </div>
-
 
 
         <!-- ==================================================
@@ -412,20 +692,15 @@ Personal y accesos
 
         <div class="accesos-card">
 
-
             <!-- ==============================================
                  CABECERA
             =============================================== -->
 
             <div class="accesos-card-header">
 
-
                 <div class="accesos-card-title">
-
                     <i class="bi bi-key"></i>
-
                     Permisos
-
                 </div>
 
 
@@ -433,257 +708,576 @@ Personal y accesos
                     class="accesos-badge"
                     id="contadorPermisos"
                 >
-                    0 seleccionados
+                    {{ total_seleccionados }}
+                    de
+                    {{ total_permisos }}
                 </span>
 
-
             </div>
-
 
 
             <!-- ==============================================
                  BUSCADOR
             =============================================== -->
 
-            <div class="permisos-buscador">
+            <div class="permisos-search">
 
-
-                <div class="permisos-buscador-wrap">
-
+                <div class="permisos-search-wrap">
 
                     <i
                         class="
                             bi
                             bi-search
-                            permisos-buscador-icon
+                            permisos-search-icon
                         "
                     ></i>
-
 
                     <input
                         type="search"
                         id="buscarPermiso"
-                        placeholder="Buscar permiso..."
+                        placeholder="Buscar módulo o recurso..."
                         autocomplete="off"
                     >
 
-
                 </div>
-
 
             </div>
 
 
-
             <!-- ==============================================
-                 HERRAMIENTAS
+                 HERRAMIENTAS GENERALES
             =============================================== -->
 
-            <div class="permisos-toolbar">
+            <div class="permisos-global-toolbar">
 
-
-                <div class="permisos-toolbar-info">
-                    Selecciona únicamente las capacidades
-                    que necesita este rol.
+                <div class="permisos-global-info">
+                    Abre solamente el módulo que quieras modificar.
                 </div>
 
 
-                <div class="permisos-toolbar-actions">
-
+                <div class="permisos-global-actions">
 
                     <button
                         type="button"
-                        class="btn-permiso-tool"
-                        id="seleccionarVisibles"
+                        class="perm-tool-btn"
+                        id="marcarTodos"
                     >
-
-                        <i class="bi bi-check2-square"></i>
-
-                        Marcar visibles
-
+                        <i class="bi bi-check2-all"></i>
+                        Marcar todo
                     </button>
 
 
                     <button
                         type="button"
-                        class="btn-permiso-tool"
-                        id="limpiarVisibles"
+                        class="perm-tool-btn"
+                        id="soloLecturaTodos"
                     >
-
-                        <i class="bi bi-square"></i>
-
-                        Limpiar visibles
-
+                        <i class="bi bi-eye"></i>
+                        Solo lectura
                     </button>
 
 
-                </div>
+                    <button
+                        type="button"
+                        class="
+                            perm-tool-btn
+                            perm-tool-btn-danger
+                        "
+                        id="limpiarTodos"
+                    >
+                        <i class="bi bi-x-lg"></i>
+                        Limpiar
+                    </button>
 
+                </div>
 
             </div>
 
 
-
             <!-- ==============================================
-                 LISTADO
+                 APLICACIONES
             =============================================== -->
 
             <div
-                class="permisos-listado"
+                class="permisos-apps"
                 id="listaPermisos"
             >
 
+                {% for aplicacion in permisos_agrupados %}
 
-                {% for checkbox in form.permissions %}
-
-
-                    <label
-                        class="permiso-item"
-                        data-permiso="{{ checkbox.choice_label|lower }}"
+                    <div
+                        class="perm-app"
+                        data-app="{{ aplicacion.app_label }}"
+                        data-search="{{ aplicacion.nombre|lower }}"
                     >
 
+                        <!-- ==================================
+                             CABECERA APP
+                        =================================== -->
 
-                        {{ checkbox.tag }}
+                        <button
+                            type="button"
+                            class="perm-app-header"
+                        >
+
+                            <div class="perm-app-left">
+
+                                <span class="perm-app-chevron">
+                                    <i class="bi bi-chevron-right"></i>
+                                </span>
 
 
-                        <span class="permiso-label">
-
-                            {{ checkbox.choice_label }}
-
-                        </span>
+                                <span class="perm-app-icon">
+                                    <i class="bi bi-grid"></i>
+                                </span>
 
 
-                    </label>
+                                <div class="perm-app-info">
 
+                                    <div class="perm-app-name">
+                                        {{ aplicacion.nombre }}
+                                    </div>
+
+                                    <div class="perm-app-description">
+                                        {{ aplicacion.modelos|length }}
+                                        recurso{{ aplicacion.modelos|length|pluralize:"s" }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="perm-app-right">
+
+                                <span
+                                    class="perm-app-counter"
+                                    data-counter-app="{{ aplicacion.app_label }}"
+                                >
+                                    {{ aplicacion.seleccionados }}
+                                    /
+                                    {{ aplicacion.total }}
+                                </span>
+
+                            </div>
+
+                        </button>
+
+
+                        <!-- ==================================
+                             CUERPO APP
+                        =================================== -->
+
+                        <div class="perm-app-body">
+
+
+                            <!-- ==============================
+                                 HERRAMIENTAS APP
+                            =============================== -->
+
+                            <div class="perm-app-toolbar">
+
+                                <div class="perm-app-toolbar-text">
+                                    Configuración del módulo
+                                </div>
+
+
+                                <div class="perm-app-toolbar-actions">
+
+                                    <button
+                                        type="button"
+                                        class="perm-tool-btn"
+                                        data-app-action="all"
+                                        data-app="{{ aplicacion.app_label }}"
+                                    >
+                                        <i class="bi bi-check2-all"></i>
+                                        Todos
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="perm-tool-btn"
+                                        data-app-action="read"
+                                        data-app="{{ aplicacion.app_label }}"
+                                    >
+                                        <i class="bi bi-eye"></i>
+                                        Solo lectura
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="
+                                            perm-tool-btn
+                                            perm-tool-btn-danger
+                                        "
+                                        data-app-action="clear"
+                                        data-app="{{ aplicacion.app_label }}"
+                                    >
+                                        <i class="bi bi-x-lg"></i>
+                                        Limpiar
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ==============================
+                                 MATRIZ
+                            =============================== -->
+
+                            <div class="perm-table-wrap">
+
+                                <table class="perm-table">
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>
+                                                Recurso
+                                            </th>
+
+                                            <th class="perm-col">
+                                                Ver
+                                            </th>
+
+                                            <th class="perm-col">
+                                                Crear
+                                            </th>
+
+                                            <th class="perm-col">
+                                                Editar
+                                            </th>
+
+                                            <th
+                                                class="
+                                                    perm-col
+                                                    perm-delete-col
+                                                "
+                                            >
+                                                Eliminar
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody>
+
+                                        {% for modelo in aplicacion.modelos %}
+
+                                            <tr
+                                                class="perm-model-row"
+                                                data-search="
+                                                    {{ aplicacion.nombre|lower }}
+                                                    {{ modelo.nombre|lower }}
+                                                    {{ modelo.model|lower }}
+                                                "
+                                            >
+
+                                                <!-- RECURSO -->
+
+                                                <td class="perm-model-name">
+
+                                                    {{ modelo.nombre }}
+
+                                                </td>
+
+
+                                                <!-- VER -->
+
+                                                <td class="perm-checkbox-cell">
+
+                                                    {% if modelo.view %}
+
+                                                        <input
+                                                            type="checkbox"
+                                                            name="permissions"
+                                                            value="{{ modelo.view.id }}"
+                                                            data-app="{{ aplicacion.app_label }}"
+                                                            data-action="view"
+                                                            {% if modelo.view.seleccionado %}
+                                                                checked
+                                                            {% endif %}
+                                                            title="Ver {{ modelo.nombre }}"
+                                                        >
+
+                                                    {% else %}
+
+                                                        <span class="perm-empty-action">
+                                                            —
+                                                        </span>
+
+                                                    {% endif %}
+
+                                                </td>
+
+
+                                                <!-- CREAR -->
+
+                                                <td class="perm-checkbox-cell">
+
+                                                    {% if modelo.add %}
+
+                                                        <input
+                                                            type="checkbox"
+                                                            name="permissions"
+                                                            value="{{ modelo.add.id }}"
+                                                            data-app="{{ aplicacion.app_label }}"
+                                                            data-action="add"
+                                                            {% if modelo.add.seleccionado %}
+                                                                checked
+                                                            {% endif %}
+                                                            title="Crear {{ modelo.nombre }}"
+                                                        >
+
+                                                    {% else %}
+
+                                                        <span class="perm-empty-action">
+                                                            —
+                                                        </span>
+
+                                                    {% endif %}
+
+                                                </td>
+
+
+                                                <!-- EDITAR -->
+
+                                                <td class="perm-checkbox-cell">
+
+                                                    {% if modelo.change %}
+
+                                                        <input
+                                                            type="checkbox"
+                                                            name="permissions"
+                                                            value="{{ modelo.change.id }}"
+                                                            data-app="{{ aplicacion.app_label }}"
+                                                            data-action="change"
+                                                            {% if modelo.change.seleccionado %}
+                                                                checked
+                                                            {% endif %}
+                                                            title="Editar {{ modelo.nombre }}"
+                                                        >
+
+                                                    {% else %}
+
+                                                        <span class="perm-empty-action">
+                                                            —
+                                                        </span>
+
+                                                    {% endif %}
+
+                                                </td>
+
+
+                                                <!-- ELIMINAR -->
+
+                                                <td
+                                                    class="
+                                                        perm-checkbox-cell
+                                                        perm-delete-col
+                                                    "
+                                                >
+
+                                                    {% if modelo.delete %}
+
+                                                        <input
+                                                            type="checkbox"
+                                                            name="permissions"
+                                                            value="{{ modelo.delete.id }}"
+                                                            data-app="{{ aplicacion.app_label }}"
+                                                            data-action="delete"
+                                                            {% if modelo.delete.seleccionado %}
+                                                                checked
+                                                            {% endif %}
+                                                            title="Eliminar {{ modelo.nombre }}"
+                                                        >
+
+                                                    {% else %}
+
+                                                        <span class="perm-empty-action">
+                                                            —
+                                                        </span>
+
+                                                    {% endif %}
+
+                                                </td>
+
+                                            </tr>
+
+
+                                            <!-- ==================
+                                                 PERSONALIZADOS
+                                            =================== -->
+
+                                            {% if modelo.otros %}
+
+                                                <tr
+                                                    class="perm-model-row"
+                                                    data-search="
+                                                        {{ aplicacion.nombre|lower }}
+                                                        {{ modelo.nombre|lower }}
+                                                    "
+                                                >
+
+                                                    <td colspan="5">
+
+                                                        <div class="custom-permissions">
+
+                                                            <div class="custom-permissions-title">
+                                                                Permisos adicionales
+                                                            </div>
+
+
+                                                            {% for permiso in modelo.otros %}
+
+                                                                <label class="custom-permission-item">
+
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        name="permissions"
+                                                                        value="{{ permiso.id }}"
+                                                                        data-app="{{ aplicacion.app_label }}"
+                                                                        data-action="custom"
+                                                                        {% if permiso.seleccionado %}
+                                                                            checked
+                                                                        {% endif %}
+                                                                    >
+
+                                                                    <span>
+                                                                        {{ permiso.nombre }}
+                                                                    </span>
+
+                                                                </label>
+
+                                                            {% endfor %}
+
+                                                        </div>
+
+                                                    </td>
+
+                                                </tr>
+
+                                            {% endif %}
+
+                                        {% endfor %}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 {% empty %}
-
 
                     <div class="accesos-empty">
 
                         <i class="bi bi-key"></i>
 
-
                         <div class="accesos-empty-title">
                             No existen permisos disponibles
                         </div>
 
-
                         <div class="accesos-empty-text">
-                            Django todavía no ha generado
-                            permisos para las aplicaciones.
+                            No hay permisos configurables en este momento.
                         </div>
 
-
                     </div>
-
 
                 {% endfor %}
 
 
-            </div>
+                <!-- ==========================================
+                     SIN RESULTADOS
+                =========================================== -->
 
+                <div id="sinResultadosPermisos">
 
+                    <i
+                        class="bi bi-search"
+                        style="
+                            display:block;
+                            margin-bottom:6px;
+                            font-size:20px;
+                        "
+                    ></i>
 
-            <!-- ==============================================
-                 SIN RESULTADOS
-            =============================================== -->
+                    No se encontraron módulos o recursos.
 
-            <div id="sinResultadosPermisos">
-
-                <i
-                    class="bi bi-search"
-                    style="
-                        display:block;
-                        margin-bottom:6px;
-                        font-size:20px;
-                    "
-                ></i>
-
-                No se encontraron permisos con ese criterio.
+                </div>
 
             </div>
-
 
 
             {% if form.permissions.errors %}
 
-                <div
-                    style="
-                        padding:0 15px 15px;
-                    "
-                >
-
+                <div style="padding:0 15px 15px;">
                     {{ form.permissions.errors }}
-
                 </div>
 
             {% endif %}
 
-
         </div>
 
 
-
         <!-- ==================================================
-             INFORMACIÓN IMPORTANTE
+             INFORMACIÓN
         =================================================== -->
 
         <div class="accesos-card">
 
-
             <div class="accesos-card-header">
 
-
                 <div class="accesos-card-title">
-
                     <i class="bi bi-info-circle"></i>
-
                     Funcionamiento
-
                 </div>
-
 
             </div>
 
 
             <div
                 style="
-                    padding:12px 15px;
+                    padding:11px 15px;
                     color:var(--muted);
                     font-size:9px;
-                    line-height:1.6;
+                    line-height:1.55;
                 "
             >
 
-                Los usuarios que pertenezcan a este rol
-                recibirán automáticamente los permisos
-                seleccionados.
+                Los usuarios reciben automáticamente los permisos
+                correspondientes a sus roles.
 
-                No es necesario configurar los permisos
-                individualmente para cada usuario.
+                Puedes utilizar
+                <strong>Solo lectura</strong>
+                para permitir consultar información sin crear,
+                modificar o eliminar registros.
 
             </div>
 
-
         </div>
-
 
 
         <!-- ==================================================
              ACCIONES
         =================================================== -->
 
-        <div class="accesos-actions">
-
+        <div class="accesos-actions rol-actions-sticky">
 
             <a
                 href="{% url 'accesos:roles_lista' %}"
                 class="accesos-btn"
             >
-
                 Cancelar
-
             </a>
 
 
@@ -697,274 +1291,450 @@ Personal y accesos
 
                 <i class="bi bi-check-lg"></i>
 
-
                 {% if rol %}
-
                     Guardar cambios
-
                 {% else %}
-
                     Crear rol
-
                 {% endif %}
-
 
             </button>
 
-
         </div>
-
 
     </form>
 
-
 </div>
 
-
 {% endblock %}
-
 
 
 {% block extra_js %}
 
 <script>
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-        // =====================================================
-        // ELEMENTOS
-        // =====================================================
+    // =====================================================
+    // ELEMENTOS
+    // =====================================================
 
-        const buscador =
-            document.getElementById(
-                "buscarPermiso"
-            );
+    const lista =
+        document.getElementById("listaPermisos");
 
-        const lista =
-            document.getElementById(
-                "listaPermisos"
-            );
+    const buscador =
+        document.getElementById("buscarPermiso");
 
-        const contador =
-            document.getElementById(
-                "contadorPermisos"
-            );
+    const contadorGlobal =
+        document.getElementById("contadorPermisos");
 
-        const sinResultados =
-            document.getElementById(
-                "sinResultadosPermisos"
-            );
+    const sinResultados =
+        document.getElementById("sinResultadosPermisos");
 
-        const seleccionarVisibles =
-            document.getElementById(
-                "seleccionarVisibles"
-            );
+    const marcarTodos =
+        document.getElementById("marcarTodos");
 
-        const limpiarVisibles =
-            document.getElementById(
-                "limpiarVisibles"
-            );
+    const soloLecturaTodos =
+        document.getElementById("soloLecturaTodos");
+
+    const limpiarTodos =
+        document.getElementById("limpiarTodos");
 
 
-        if (!lista) {
-            return;
-        }
+    if (!lista) {
+        return;
+    }
 
 
-        const items = Array.from(
+    const aplicaciones = Array.from(
+        lista.querySelectorAll(".perm-app")
+    );
+
+
+    // =====================================================
+    // CHECKBOXES
+    // =====================================================
+
+    function getCheckboxes() {
+
+        return Array.from(
             lista.querySelectorAll(
-                ".permiso-item"
+                'input[name="permissions"]'
             )
         );
 
+    }
 
-        // =====================================================
-        // CONTADOR
-        // =====================================================
 
-        function actualizarContador() {
+    // =====================================================
+    // CONTADORES
+    // =====================================================
 
-            const total = lista.querySelectorAll(
-                'input[type="checkbox"]:checked'
+    function actualizarContadores() {
+
+        const todos = getCheckboxes();
+
+        const seleccionados =
+            todos.filter(
+                checkbox => checkbox.checked
             ).length;
 
 
-            contador.textContent =
-                total === 1
-                    ? "1 seleccionado"
-                    : `${total} seleccionados`;
+        contadorGlobal.textContent =
+            `${seleccionados} de ${todos.length}`;
 
+
+        aplicaciones.forEach(function (app) {
+
+            const appLabel =
+                app.dataset.app;
+
+            const checks =
+                Array.from(
+                    app.querySelectorAll(
+                        'input[name="permissions"]'
+                    )
+                );
+
+            const activos =
+                checks.filter(
+                    checkbox => checkbox.checked
+                ).length;
+
+            const counter =
+                app.querySelector(
+                    `[data-counter-app="${appLabel}"]`
+                );
+
+            if (counter) {
+
+                counter.textContent =
+                    `${activos} / ${checks.length}`;
+
+            }
+
+        });
+
+    }
+
+
+    // =====================================================
+    // ACORDEÓN
+    // =====================================================
+
+    aplicaciones.forEach(function (app) {
+
+        const header =
+            app.querySelector(
+                ".perm-app-header"
+            );
+
+        if (!header) {
+            return;
         }
 
+        header.addEventListener(
+            "click",
+            function () {
 
-        // =====================================================
-        // FILTRAR
-        // =====================================================
+                app.classList.toggle(
+                    "abierto"
+                );
 
-        function filtrarPermisos() {
+            }
+        );
 
-            const texto = (
-                buscador.value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-
-            let visibles = 0;
+    });
 
 
-            items.forEach(
-                function (item) {
+    // =====================================================
+    // ACCIÓN SOBRE CHECKBOXES
+    // =====================================================
 
-                    const permiso = (
-                        item.dataset.permiso || ""
+    function aplicarAccion(checks, accion) {
+
+        checks.forEach(function (checkbox) {
+
+            if (accion === "all") {
+
+                checkbox.checked = true;
+
+            }
+
+            else if (accion === "clear") {
+
+                checkbox.checked = false;
+
+            }
+
+            else if (accion === "read") {
+
+                checkbox.checked =
+                    checkbox.dataset.action === "view";
+
+            }
+
+        });
+
+        actualizarContadores();
+
+    }
+
+
+    // =====================================================
+    // ACCIONES GENERALES
+    // =====================================================
+
+    marcarTodos.addEventListener(
+        "click",
+        function () {
+
+            aplicarAccion(
+                getCheckboxes(),
+                "all"
+            );
+
+        }
+    );
+
+
+    soloLecturaTodos.addEventListener(
+        "click",
+        function () {
+
+            aplicarAccion(
+                getCheckboxes(),
+                "read"
+            );
+
+        }
+    );
+
+
+    limpiarTodos.addEventListener(
+        "click",
+        function () {
+
+            aplicarAccion(
+                getCheckboxes(),
+                "clear"
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // ACCIONES POR APLICACIÓN
+    // =====================================================
+
+    lista.addEventListener(
+        "click",
+        function (event) {
+
+            const boton =
+                event.target.closest(
+                    "[data-app-action]"
+                );
+
+            if (!boton) {
+                return;
+            }
+
+
+            const appLabel =
+                boton.dataset.app;
+
+            const accion =
+                boton.dataset.appAction;
+
+            const app =
+                lista.querySelector(
+                    `.perm-app[data-app="${appLabel}"]`
+                );
+
+            if (!app) {
+                return;
+            }
+
+
+            const checks =
+                Array.from(
+                    app.querySelectorAll(
+                        'input[name="permissions"]'
+                    )
+                );
+
+
+            aplicarAccion(
+                checks,
+                accion
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // CAMBIO MANUAL
+    // =====================================================
+
+    lista.addEventListener(
+        "change",
+        function (event) {
+
+            if (
+                event.target.matches(
+                    'input[name="permissions"]'
+                )
+            ) {
+
+                actualizarContadores();
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // BUSCADOR
+    // =====================================================
+
+    function filtrar() {
+
+        const texto =
+            (buscador.value || "")
+            .trim()
+            .toLowerCase();
+
+
+        let appsVisibles = 0;
+
+
+        aplicaciones.forEach(function (app) {
+
+            const nombreApp =
+                (
+                    app.dataset.search || ""
+                ).toLowerCase();
+
+            const filas =
+                Array.from(
+                    app.querySelectorAll(
+                        ".perm-model-row"
+                    )
+                );
+
+
+            // ---------------------------------------------
+            // SIN BÚSQUEDA
+            // ---------------------------------------------
+
+            if (!texto) {
+
+                app.style.display = "";
+
+                filas.forEach(function (fila) {
+                    fila.style.display = "";
+                });
+
+                app.classList.remove(
+                    "abierto"
+                );
+
+                appsVisibles++;
+
+                return;
+
+            }
+
+
+            // ---------------------------------------------
+            // COINCIDE LA APP COMPLETA
+            // ---------------------------------------------
+
+            const coincideApp =
+                nombreApp.includes(texto);
+
+
+            let filasVisibles = 0;
+
+
+            filas.forEach(function (fila) {
+
+                const contenido =
+                    (
+                        fila.dataset.search || ""
                     ).toLowerCase();
 
 
-                    const mostrar =
-                        permiso.includes(texto);
+                const mostrar =
+                    coincideApp ||
+                    contenido.includes(texto);
 
 
-                    item.style.display =
-                        mostrar
-                            ? "flex"
-                            : "none";
+                fila.style.display =
+                    mostrar
+                        ? ""
+                        : "none";
 
 
-                    if (mostrar) {
-                        visibles++;
-                    }
-
+                if (mostrar) {
+                    filasVisibles++;
                 }
-            );
+
+            });
 
 
-            sinResultados.style.display =
-                visibles === 0
-                    ? "block"
+            // ---------------------------------------------
+            // VISIBILIDAD DE APP
+            // ---------------------------------------------
+
+            const mostrarApp =
+                coincideApp ||
+                filasVisibles > 0;
+
+
+            app.style.display =
+                mostrarApp
+                    ? ""
                     : "none";
 
-        }
 
+            if (mostrarApp) {
 
-        // =====================================================
-        // MARCAR VISIBLES
-        // =====================================================
-
-        seleccionarVisibles.addEventListener(
-            "click",
-            function () {
-
-                items.forEach(
-                    function (item) {
-
-                        if (
-                            item.style.display !==
-                            "none"
-                        ) {
-
-                            const checkbox =
-                                item.querySelector(
-                                    'input[type="checkbox"]'
-                                );
-
-
-                            if (checkbox) {
-                                checkbox.checked = true;
-                            }
-
-                        }
-
-                    }
+                app.classList.add(
+                    "abierto"
                 );
 
-
-                actualizarContador();
-
-            }
-        );
-
-
-        // =====================================================
-        // LIMPIAR VISIBLES
-        // =====================================================
-
-        limpiarVisibles.addEventListener(
-            "click",
-            function () {
-
-                items.forEach(
-                    function (item) {
-
-                        if (
-                            item.style.display !==
-                            "none"
-                        ) {
-
-                            const checkbox =
-                                item.querySelector(
-                                    'input[type="checkbox"]'
-                                );
-
-
-                            if (checkbox) {
-                                checkbox.checked = false;
-                            }
-
-                        }
-
-                    }
-                );
-
-
-                actualizarContador();
+                appsVisibles++;
 
             }
-        );
+
+        });
 
 
-        // =====================================================
-        // EVENTOS CHECKBOX
-        // =====================================================
-
-        lista.addEventListener(
-            "change",
-            function (event) {
-
-                if (
-                    event.target.matches(
-                        'input[type="checkbox"]'
-                    )
-                ) {
-
-                    actualizarContador();
-
-                }
-
-            }
-        );
-
-
-        // =====================================================
-        // BUSCADOR
-        // =====================================================
-
-        buscador.addEventListener(
-            "input",
-            filtrarPermisos
-        );
-
-
-        // =====================================================
-        // ESTADO INICIAL
-        // =====================================================
-
-        actualizarContador();
+        sinResultados.style.display =
+            appsVisibles === 0
+                ? "block"
+                : "none";
 
     }
-);
+
+
+    buscador.addEventListener(
+        "input",
+        filtrar
+    );
+
+
+    // =====================================================
+    // ESTADO INICIAL
+    // =====================================================
+
+    actualizarContadores();
+
+});
 
 </script>
 
