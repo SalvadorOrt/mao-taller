@@ -1,31 +1,19 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
 
+from accesos.permissions import permiso_requerido
+
 from ...models import OrdenTrabajo, Sucursal, Tecnico
-from ..utils import obtener_sucursal_activa
+from ..utils import (
+    obtener_sucursal_activa,
+    usuario_puede_cambiar_sucursal,
+)
 
 
 # =========================================================
 # UTILIDADES INTERNAS
 # =========================================================
-
-def usuario_puede_cambiar_sucursal(request):
-    """
-    Indica si el usuario puede consultar órdenes
-    de otras sucursales.
-
-    No modifica la sucursal activa del usuario.
-    Solo controla el filtro de consulta.
-    """
-    return (
-        request.user.has_perm(
-            "empresa.can_change_active_branch"
-        )
-        or request.user.is_superuser
-    )
-
 
 def resolver_sucursal_filtro(
     request,
@@ -122,7 +110,9 @@ def resolver_sucursal_filtro(
 # DASHBOARD DEL TALLER
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.view_ordentrabajo"
+)
 def dashboard_taller(request):
     sucursal_activa = obtener_sucursal_activa(
         request
@@ -183,6 +173,12 @@ def dashboard_taller(request):
     # FILTRAR SUCURSAL
     # -----------------------------------------------------
     if (
+        not puede_cambiar_sucursal
+        and not sucursal_activa
+    ):
+        ordenes_activas = ordenes_activas.none()
+
+    elif (
         sucursal_filtro
         and sucursal_filtro != "todas"
     ):
@@ -217,7 +213,9 @@ def dashboard_taller(request):
 # LISTADO GLOBAL DE ÓRDENES
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.view_ordentrabajo"
+)
 def lista_ordenes(request):
     sucursal_activa = obtener_sucursal_activa(
         request
@@ -279,6 +277,12 @@ def lista_ordenes(request):
     # =====================================================
 
     if (
+        not puede_cambiar_sucursal
+        and not sucursal_activa
+    ):
+        ordenes = ordenes.none()
+
+    elif (
         sucursal_filtro
         and sucursal_filtro != "todas"
     ):

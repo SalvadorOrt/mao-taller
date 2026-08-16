@@ -581,25 +581,25 @@
 
                     Imprimir
                 </button>
-            {% if request.user.rol != "TECNICO" %}
+            {% if perms.ordenes_de_trabajo.view_ordentrabajo %}
 
-                <a
-                    href="{% url 'detalle_orden' orden.pk %}"
-                    class="btn-login"
-                    style="
-                        background: #f5f5f7;
-                        color: var(--text);
-                    "
-                >
-                    <i
-                        class="bi bi-eye"
-                        style="margin-right: 5px;"
-                    ></i>
+                    <a
+                        href="{% url 'detalle_orden' orden.pk %}"
+                        class="btn-login"
+                        style="
+                            background: #f5f5f7;
+                            color: var(--text);
+                        "
+                    >
+                        <i
+                            class="bi bi-eye"
+                            style="margin-right: 5px;"
+                        ></i>
 
-                    Ver OT
-                </a>
+                        Ver OT
+                    </a>
 
-            {% endif %}
+                {% endif %}
 
             <a
                 href="{% url 'avaluos:ordenes_pendientes' %}"

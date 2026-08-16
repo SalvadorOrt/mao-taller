@@ -1,10 +1,16 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+
+from accesos.permissions import permiso_requerido
+
+from ordenes_de_trabajo.views.utils import (
+    obtener_sucursal_activa,
+    usuario_puede_cambiar_sucursal,
+)
 
 from inventario.forms import (
     CodigoProductoFormSet,
@@ -249,9 +255,36 @@ def _validar_codigo_editado(codigo_obj):
 # LISTADO
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_producto"
+)
 def catalogo_lista(request):
     LIMITE_RESULTADOS = 80
+
+    sucursal_activa = obtener_sucursal_activa(
+        request
+    )
+
+    puede_cambiar_sucursal = (
+        usuario_puede_cambiar_sucursal(
+            request
+        )
+    )
+
+    stocks_visibles = (
+        StockSucursal.objects
+        .select_related(
+            "sucursal"
+        )
+    )
+
+    if not puede_cambiar_sucursal:
+        if sucursal_activa:
+            stocks_visibles = stocks_visibles.filter(
+                sucursal=sucursal_activa
+            )
+        else:
+            stocks_visibles = stocks_visibles.none()
 
     q = request.GET.get("q", "").strip()
     categoria_id = request.GET.get(
@@ -275,8 +308,11 @@ def catalogo_lista(request):
             "marca",
         )
         .prefetch_related(
-            "stocks_por_sucursal",
-            "stocks_por_sucursal__sucursal",
+            Prefetch(
+                "stocks_por_sucursal",
+                queryset=stocks_visibles,
+                to_attr="stocks_visibles",
+            ),
             "producto__imagenes",
         )
         .order_by(
@@ -342,7 +378,7 @@ def catalogo_lista(request):
         stock_total = sum(
             stock.cantidad
             for stock
-            in codigo.stocks_por_sucursal.all()
+            in codigo.stocks_visibles
         )
 
         equivalencias = (
@@ -389,6 +425,10 @@ def catalogo_lista(request):
             "estado": estado,
             "total_filtrado": total_filtrado,
             "limite_resultados": LIMITE_RESULTADOS,
+            "sucursal_activa": sucursal_activa,
+            "puede_cambiar_sucursal": (
+                puede_cambiar_sucursal
+            ),
         },
     )
 
@@ -397,7 +437,9 @@ def catalogo_lista(request):
 # DETALLE
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_producto"
+)
 def catalogo_detalle(request, codigo_id):
     codigo = get_object_or_404(
         CodigoProducto.objects
@@ -417,6 +459,52 @@ def catalogo_detalle(request, codigo_id):
     )
 
     producto = codigo.producto
+
+    sucursal_activa = obtener_sucursal_activa(
+        request
+    )
+
+    puede_cambiar_sucursal = (
+        usuario_puede_cambiar_sucursal(
+            request
+        )
+    )
+
+    stocks = (
+        StockSucursal.objects
+        .filter(
+            codigo_producto=codigo
+        )
+        .select_related(
+            "sucursal"
+        )
+        .order_by(
+            "sucursal__nombre"
+        )
+    )
+
+    movimientos = (
+        codigo.movimientos
+        .select_related(
+            "sucursal"
+        )
+        .order_by(
+            "-fecha"
+        )
+    )
+
+    if not puede_cambiar_sucursal:
+        if sucursal_activa:
+            stocks = stocks.filter(
+                sucursal=sucursal_activa
+            )
+
+            movimientos = movimientos.filter(
+                sucursal=sucursal_activa
+            )
+        else:
+            stocks = stocks.none()
+            movimientos = movimientos.none()
 
     return render(
         request,
@@ -442,21 +530,14 @@ def catalogo_detalle(request, codigo_id):
                 .all()
                 .order_by("id")
             ),
-            "stocks": (
-                StockSucursal.objects
-                .filter(
-                    codigo_producto=codigo
-                )
-                .select_related("sucursal")
-                .order_by("sucursal__nombre")
-            ),
-            "movimientos": (
-                codigo.movimientos
-                .select_related("sucursal")
-                .order_by("-fecha")[:20]
-            ),
+            "stocks": stocks,
+            "movimientos": movimientos[:20],
             "precio_secreto": (
                 codigo.precio_secreto
+            ),
+            "sucursal_activa": sucursal_activa,
+            "puede_cambiar_sucursal": (
+                puede_cambiar_sucursal
             ),
         },
     )
@@ -466,7 +547,9 @@ def catalogo_detalle(request, codigo_id):
 # API - MOTOR DE SUGERENCIAS
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_producto"
+)
 def catalogo_sugerir_producto(request):
     texto = request.GET.get(
         "texto",
@@ -533,7 +616,9 @@ def catalogo_sugerir_producto(request):
 # API - ATRIBUTOS POR CATEGORÍA
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_atributo"
+)
 def catalogo_atributos_categoria(
     request,
     categoria_id,
@@ -583,7 +668,9 @@ def catalogo_atributos_categoria(
 # CREAR PRODUCTO
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.add_producto"
+)
 def catalogo_crear(request):
     atributos_catalogo = (
         Atributo.objects
@@ -1020,7 +1107,9 @@ def catalogo_crear(request):
 # EDITAR PRODUCTO / CÓDIGOS
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.change_producto"
+)
 def catalogo_editar_codigo(
     request,
     codigo_id,
@@ -1337,7 +1426,9 @@ def catalogo_editar_codigo(
 # NUEVO CÓDIGO EQUIVALENTE
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.add_codigoproducto"
+)
 def catalogo_crear_codigo_equivalente(
     request,
     producto_id,
@@ -1463,7 +1554,9 @@ def catalogo_crear_codigo_equivalente(
 # ACTIVAR / DESACTIVAR CÓDIGO
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.change_codigoproducto"
+)
 def catalogo_toggle_codigo(
     request,
     codigo_id,

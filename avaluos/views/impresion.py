@@ -2,7 +2,7 @@ from collections import OrderedDict
 from decimal import Decimal
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from accesos.permissions import permiso_requerido
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.clickjacking import (
     xframe_options_sameorigin,
@@ -29,18 +29,22 @@ def usuario_puede_ver_avaluo(
     avaluo,
 ):
     """
-    Determina si el usuario puede consultar e imprimir el avalúo.
+    Valida el alcance de sucursal para consultar
+    e imprimir un avalúo.
 
     Puede acceder cuando:
 
-    - Es administrador.
-    - Tiene permiso para cambiar de sucursal.
+    - Es superusuario.
+    - Tiene permiso para gestionar avalúos
+      de todas las sucursales.
     - El avalúo pertenece a su sucursal asignada.
     """
 
     if (
-        request.user.rol == "ADMIN"
-        or request.user.puede_cambiar_sucursal
+        request.user.is_superuser
+        or request.user.has_perm(
+            "avaluos.gestionar_todas_sucursales"
+        )
     ):
         return True
 
@@ -277,7 +281,9 @@ def obtener_totales_impresion(
 # IMPRESIÓN PRINCIPAL DEL AVALÚO
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "avaluos.view_avaluomecanico"
+)
 @xframe_options_sameorigin
 def imprimir_avaluo(request, pk):
     """

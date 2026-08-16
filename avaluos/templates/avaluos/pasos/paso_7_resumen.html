@@ -574,7 +574,7 @@
             <input
                 type="text"
                 class="avaluo-input"
-                value="{% if avaluo.evaluador %}{{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username }}{% elif request.user.rol == 'TECNICO' %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Sin asignar{% endif %}"
+                value="{% if avaluo.evaluador %}{{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username }}{% elif perms.avaluos.autoasignarse_evaluador %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Sin asignar{% endif %}"
                 readonly
             >
 
@@ -635,7 +635,7 @@
 
         <div class="resumen-finalizar-text">
             Al finalizar, el avalúo quedará registrado como definitivo.
-            Solo un administrador podrá reabrirlo posteriormente.
+            Solo un usuario autorizado podrá reabrirlo posteriormente.
         </div>
 
         {% if puede_editar %}

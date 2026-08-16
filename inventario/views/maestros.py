@@ -5,6 +5,8 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from accesos.permissions import permiso_requerido
+
 from inventario.forms import (
     AtributoForm,
     CategoriaForm,
@@ -19,29 +21,13 @@ from inventario.models import (
 
 
 # =========================================================
-# PERMISOS
-# =========================================================
-
-def es_admin_o_bodega(user):
-    return (
-        user.is_authenticated
-        and user.rol in ["ADMIN", "BODEGA"]
-    )
-
-
-# =========================================================
 # CATEGORÍAS
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_categoria"
+)
 def categoria_lista(request):
-    if not es_admin_o_bodega(request.user):
-        messages.error(
-            request,
-            "No tienes permisos para gestionar categorías.",
-        )
-        return redirect("dashboard")
-
     q = request.GET.get("q", "").strip()
 
     categorias = Categoria.objects.all().order_by("nombre")
@@ -64,7 +50,13 @@ def categoria_lista(request):
 
 @login_required
 def categoria_gestionar(request, pk=None):
-    if not es_admin_o_bodega(request.user):
+    permiso_necesario = (
+        "inventario.change_categoria"
+        if pk
+        else "inventario.add_categoria"
+    )
+
+    if not request.user.has_perm(permiso_necesario):
         messages.error(
             request,
             "No tienes permisos para gestionar categorías.",
@@ -269,15 +261,10 @@ def categoria_gestionar(request, pk=None):
 # MARCAS
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_marcarepuesto"
+)
 def marca_lista(request):
-    if not es_admin_o_bodega(request.user):
-        messages.error(
-            request,
-            "No tienes permisos para gestionar marcas.",
-        )
-        return redirect("dashboard")
-
     q = request.GET.get("q", "").strip()
 
     marcas = MarcaRepuesto.objects.all().order_by("nombre")
@@ -299,7 +286,13 @@ def marca_lista(request):
 
 @login_required
 def marca_gestionar(request, pk=None):
-    if not es_admin_o_bodega(request.user):
+    permiso_necesario = (
+        "inventario.change_marcarepuesto"
+        if pk
+        else "inventario.add_marcarepuesto"
+    )
+
+    if not request.user.has_perm(permiso_necesario):
         messages.error(
             request,
             "No tienes permisos para gestionar marcas.",
@@ -358,15 +351,10 @@ def marca_gestionar(request, pk=None):
 # ATRIBUTOS TÉCNICOS
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "inventario.view_atributo"
+)
 def atributo_lista(request):
-    if not es_admin_o_bodega(request.user):
-        messages.error(
-            request,
-            "No tienes permisos para gestionar atributos.",
-        )
-        return redirect("dashboard")
-
     q = request.GET.get("q", "").strip()
 
     atributos = (
@@ -396,7 +384,13 @@ def atributo_lista(request):
 
 @login_required
 def atributo_gestionar(request, pk=None):
-    if not es_admin_o_bodega(request.user):
+    permiso_necesario = (
+        "inventario.change_atributo"
+        if pk
+        else "inventario.add_atributo"
+    )
+
+    if not request.user.has_perm(permiso_necesario):
         messages.error(
             request,
             "No tienes permisos para gestionar atributos.",
@@ -457,7 +451,9 @@ def atributo_gestionar(request, pk=None):
 
 @login_required
 def categoria_crear_rapida(request):
-    if not es_admin_o_bodega(request.user):
+    if not request.user.has_perm(
+        "inventario.add_categoria"
+    ):
         return JsonResponse(
             {
                 "ok": False,
@@ -550,7 +546,9 @@ def categoria_crear_rapida(request):
 
 @login_required
 def marca_crear_rapida(request):
-    if not es_admin_o_bodega(request.user):
+    if not request.user.has_perm(
+        "inventario.add_marcarepuesto"
+    ):
         return JsonResponse(
             {
                 "ok": False,
@@ -621,7 +619,9 @@ def marca_crear_rapida(request):
 
 @login_required
 def atributo_crear_rapido(request):
-    if not es_admin_o_bodega(request.user):
+    if not request.user.has_perm(
+        "inventario.add_atributo"
+    ):
         return JsonResponse(
             {
                 "ok": False,

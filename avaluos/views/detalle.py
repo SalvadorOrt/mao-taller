@@ -2,7 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
+from accesos.permissions import permiso_requerido
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -145,16 +145,21 @@ def validar_acceso_avaluo(
     avaluo,
 ):
     """
-    Permite acceder al avalúo cuando:
+    Valida el alcance de sucursal del usuario.
 
-    - El usuario es ADMIN.
-    - Tiene permiso para cambiar de sucursal.
+    Puede acceder cuando:
+
+    - Es superusuario.
+    - Tiene permiso para gestionar avalúos
+      de todas las sucursales.
     - El avalúo pertenece a su sucursal asignada.
     """
 
     if (
-        request.user.rol == "ADMIN"
-        or request.user.puede_cambiar_sucursal
+        request.user.is_superuser
+        or request.user.has_perm(
+            "avaluos.gestionar_todas_sucursales"
+        )
     ):
         return True
 
@@ -1057,7 +1062,7 @@ def guardar_paso_7_resumen(
     else:
         avaluo.responsable_taller = None
 
-    # Cualquier rol autorizado puede realizar el avalúo.
+    # Cualquier usuario autorizado puede realizar el avalúo.
     # Si todavía no existe evaluador, se asigna al usuario
     # que está guardando esta sección.
     if not avaluo.evaluador_id:
@@ -1514,7 +1519,9 @@ def obtener_resumen_avaluo(avaluo):
 # VISTA PRINCIPAL
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "avaluos.view_avaluomecanico"
+)
 def detalle_avaluo(
     request,
     pk,
@@ -1549,15 +1556,20 @@ def detalle_avaluo(
     )
 
     puede_editar = (
-        avaluo.estado
-        == EstadoAvaluo.BORRADOR
+        avaluo.estado == EstadoAvaluo.BORRADOR
+        and request.user.has_perm(
+            "avaluos.change_avaluomecanico"
+        )
     )
 
     if request.method == "POST":
         if not puede_editar:
             messages.error(
                 request,
-                "El avalúo está finalizado o anulado y no puede modificarse.",
+                (
+                    "No tienes permiso para modificar este avalúo "
+                    "o el registro ya no está disponible para edición."
+                ),
             )
 
             return redirect(
@@ -1703,14 +1715,37 @@ def detalle_avaluo(
         )
         .filter(
             Q(
-                rol="ADMIN",
-            )
-            | Q(
                 sucursal_id=(
                     avaluo.orden.sucursal_id
                 ),
             )
+            | Q(
+                is_superuser=True,
+            )
+            | Q(
+                user_permissions__codename=(
+                    "gestionar_todas_sucursales"
+                ),
+                user_permissions__content_type__app_label=(
+                    "avaluos"
+                ),
+                user_permissions__content_type__model=(
+                    "avaluomecanico"
+                ),
+            )
+            | Q(
+                groups__permissions__codename=(
+                    "gestionar_todas_sucursales"
+                ),
+                groups__permissions__content_type__app_label=(
+                    "avaluos"
+                ),
+                groups__permissions__content_type__model=(
+                    "avaluomecanico"
+                ),
+            )
         )
+        .distinct()
         .order_by(
             "first_name",
             "last_name",
@@ -1754,7 +1789,9 @@ def detalle_avaluo(
 # ELIMINAR FOTOGRAFÍA
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "avaluos.change_avaluomecanico"
+)
 @require_POST
 @transaction.atomic
 def eliminar_foto_avaluo(

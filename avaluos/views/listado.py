@@ -1,6 +1,7 @@
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render
+
+from accesos.permissions import permiso_requerido
 
 from ordenes_de_trabajo.models import (
     OrdenTrabajo,
@@ -9,12 +10,24 @@ from ordenes_de_trabajo.models import (
 )
 
 
-@login_required
+@permiso_requerido(
+    "avaluos.view_avaluomecanico"
+)
 def ordenes_pendientes(request):
+    # =====================================================
+    # PERMISOS Y ALCANCE DE SUCURSAL
+    # =====================================================
+
     puede_ver_todas_sucursales = (
-        request.user.rol == "ADMIN"
-        or request.user.puede_cambiar_sucursal
+        request.user.is_superuser
+        or request.user.has_perm(
+            "avaluos.gestionar_todas_sucursales"
+        )
     )
+
+    # =====================================================
+    # CONSULTA BASE
+    # =====================================================
 
     ordenes = (
         OrdenTrabajo.objects
@@ -170,21 +183,21 @@ def ordenes_pendientes(request):
     # =====================================================
 
     if sucursal_id.isdigit():
-        sucursal_seleccionada = int(
+        sucursal_seleccionada_id = int(
             sucursal_id
         )
 
         if puede_ver_todas_sucursales:
             ordenes = ordenes.filter(
-                sucursal_id=sucursal_seleccionada,
+                sucursal_id=sucursal_seleccionada_id,
             )
 
         elif (
             request.user.sucursal_id
-            == sucursal_seleccionada
+            == sucursal_seleccionada_id
         ):
             ordenes = ordenes.filter(
-                sucursal_id=sucursal_seleccionada,
+                sucursal_id=sucursal_seleccionada_id,
             )
 
     ordenes = ordenes.distinct()
@@ -202,10 +215,14 @@ def ordenes_pendientes(request):
             tecnicos = tecnicos.filter(
                 sucursal_id=int(sucursal_id),
             )
+
     else:
-        tecnicos = tecnicos.filter(
-            sucursal_id=request.user.sucursal_id,
-        )
+        if request.user.sucursal_id:
+            tecnicos = tecnicos.filter(
+                sucursal_id=request.user.sucursal_id,
+            )
+        else:
+            tecnicos = Tecnico.objects.none()
 
     tecnicos = tecnicos.order_by(
         "nombre",
@@ -225,7 +242,8 @@ def ordenes_pendientes(request):
                 "nombre",
             )
         )
-    else:
+
+    elif request.user.sucursal_id:
         sucursales = (
             Sucursal.objects
             .filter(
@@ -235,7 +253,25 @@ def ordenes_pendientes(request):
             .order_by(
                 "nombre",
             )
-    )
+        )
+
+    else:
+        sucursales = Sucursal.objects.none()
+
+    # =====================================================
+    # SUCURSAL SELECCIONADA
+    # =====================================================
+
+    sucursal_seleccionada = None
+
+    if sucursal_id.isdigit():
+        sucursal_seleccionada = (
+            sucursales
+            .filter(
+                pk=int(sucursal_id),
+            )
+            .first()
+        )
 
     # =====================================================
     # RENDER
@@ -256,6 +292,10 @@ def ordenes_pendientes(request):
 
             "tecnicos": tecnicos,
             "sucursales": sucursales,
+
+            "sucursal_seleccionada": (
+                sucursal_seleccionada
+            ),
 
             "puede_ver_todas_sucursales": (
                 puede_ver_todas_sucursales

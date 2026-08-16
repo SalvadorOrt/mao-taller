@@ -1,76 +1,134 @@
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render,
+)
 
-from inventario.models import Usuario
+from accesos.permissions import permiso_requerido
+
 from inventario.forms import UsuarioForm
+from inventario.models import Usuario
 
 
 @login_required
 def dashboard(request):
-    return render(request, "dashboard.html")
+    return render(
+        request,
+        "dashboard.html",
+    )
 
 
-@login_required
+@permiso_requerido(
+    "inventario.view_usuario"
+)
 def lista_usuarios(request):
-    # Protección total: Solo dueños
-    if request.user.rol != "ADMIN":
-        messages.error(request, "No tienes permisos para ver el personal.")
-        return redirect("dashboard")
-
-    usuarios = Usuario.objects.all().order_by(
-        "-is_active",
-        "rol",
-        "username"
+    usuarios = (
+        Usuario.objects
+        .all()
+        .prefetch_related(
+            "groups",
+        )
+        .order_by(
+            "-is_active",
+            "first_name",
+            "last_name",
+            "username",
+        )
     )
 
     return render(
         request,
         "usuarios/lista_usuarios.html",
-        {"usuarios": usuarios}
+        {
+            "usuarios": usuarios,
+        },
     )
 
 
 @login_required
-def gestionar_usuario(request, pk=None):
-    if request.user.rol != "ADMIN":
+def gestionar_usuario(
+    request,
+    pk=None,
+):
+    # =====================================================
+    # PERMISO NECESARIO
+    # =====================================================
+
+    permiso_necesario = (
+        "inventario.change_usuario"
+        if pk
+        else "inventario.add_usuario"
+    )
+
+    if not request.user.has_perm(
+        permiso_necesario
+    ):
         messages.error(
             request,
-            "Solo los administradores pueden gestionar usuarios."
+            (
+                "No tienes permisos para "
+                "gestionar usuarios."
+            ),
         )
-        return redirect("dashboard")
 
+        return redirect(
+            "dashboard"
+        )
+
+    # =====================================================
     # EDITAR
+    # =====================================================
+
     if pk:
         usuario = get_object_or_404(
             Usuario,
-            pk=pk
-        )
-        mensaje_exito = (
-            f"El usuario {usuario.username} fue actualizado."
+            pk=pk,
         )
 
+        mensaje_exito = (
+            f"El usuario {usuario.username} "
+            "fue actualizado."
+        )
+
+    # =====================================================
     # CREAR
+    # =====================================================
+
     else:
         usuario = None
+
         mensaje_exito = (
-            "Usuario creado y asignado a sucursal correctamente."
+            "Usuario creado y asignado "
+            "correctamente."
         )
 
-    if request.method == "POST":
+    # =====================================================
+    # POST
+    # =====================================================
 
+    if request.method == "POST":
         form = UsuarioForm(
             request.POST,
-            instance=usuario
+            instance=usuario,
         )
 
         if form.is_valid():
 
-            # Si es nuevo debe tener contraseña
-            if not pk and not form.cleaned_data.get("password"):
+            # Un usuario nuevo debe tener contraseña.
+            if (
+                not pk
+                and not form.cleaned_data.get(
+                    "password"
+                )
+            ):
                 form.add_error(
                     "password",
-                    "Debe asignar una contraseña al nuevo usuario."
+                    (
+                        "Debe asignar una contraseña "
+                        "al nuevo usuario."
+                    ),
                 )
 
             else:
@@ -78,15 +136,25 @@ def gestionar_usuario(request, pk=None):
 
                 messages.success(
                     request,
-                    mensaje_exito
+                    mensaje_exito,
                 )
 
-                return redirect("lista_usuarios")
+                return redirect(
+                    "lista_usuarios"
+                )
+
+    # =====================================================
+    # GET
+    # =====================================================
 
     else:
         form = UsuarioForm(
-            instance=usuario
+            instance=usuario,
         )
+
+    # =====================================================
+    # RENDER
+    # =====================================================
 
     return render(
         request,
@@ -94,5 +162,5 @@ def gestionar_usuario(request, pk=None):
         {
             "form": form,
             "usuario": usuario,
-        }
+        },
     )

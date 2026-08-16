@@ -24,57 +24,102 @@ from django.utils import timezone
 class UsuarioManager(BaseUserManager):
     use_in_migrations = True
 
-    def _create_user(self, username, email, password, **extra_fields):
+    def _create_user(
+        self,
+        username,
+        email,
+        password,
+        **extra_fields,
+    ):
         if not username:
-            raise ValueError("El username es obligatorio.")
+            raise ValueError(
+                "El username es obligatorio."
+            )
 
-        email = self.normalize_email(email) if email else email
+        email = (
+            self.normalize_email(email)
+            if email
+            else email
+        )
+
         username = username.strip()
 
-        user = self.model(username=username, email=email, **extra_fields)
+        user = self.model(
+            username=username,
+            email=email,
+            **extra_fields,
+        )
+
         user.set_password(password)
-        user.save(using=self._db)
+
+        user.save(
+            using=self._db
+        )
+
         return user
 
-    def create_user(self, username, email=None, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
+    def create_user(
+        self,
+        username,
+        email=None,
+        password=None,
+        **extra_fields,
+    ):
+        extra_fields.setdefault(
+            "is_staff",
+            False,
+        )
 
-        # Si no mandan rol, usuario normal = CAJA
-        extra_fields.setdefault("rol", "CAJA")
+        extra_fields.setdefault(
+            "is_superuser",
+            False,
+        )
 
-        return self._create_user(username, email, password, **extra_fields)
+        return self._create_user(
+            username,
+            email,
+            password,
+            **extra_fields,
+        )
 
-    def create_superuser(self, username, email=None, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("rol", "ADMIN")
-        extra_fields.setdefault("es_administrador", True)
-        extra_fields.setdefault("puede_cambiar_sucursal", True)
+    def create_superuser(
+        self,
+        username,
+        email=None,
+        password=None,
+        **extra_fields,
+    ):
+        extra_fields.setdefault(
+            "is_staff",
+            True,
+        )
+
+        extra_fields.setdefault(
+            "is_superuser",
+            True,
+        )
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError("El superusuario debe tener is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("El superusuario debe tener is_superuser=True.")
+            raise ValueError(
+                "El superusuario debe tener is_staff=True."
+            )
 
-        return self._create_user(username, email, password, **extra_fields)
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError(
+                "El superusuario debe tener is_superuser=True."
+            )
+
+        return self._create_user(
+            username,
+            email,
+            password,
+            **extra_fields,
+        )
 
 # =========================================================
 # 👤 USUARIO PERSONALIZADO
 # =========================================================
 class Usuario(AbstractUser):
-    ROLES = [
-        ("ADMIN", "Administrador"),
-        ("BODEGA", "Bodeguero"),
-        ("CAJA", "Cajera"),
-        ("TECNICO", "Técnico"),
-    ]
-
-    rol = models.CharField(
-        max_length=15,
-        choices=ROLES,
-        default="CAJA",
-    )
 
     cedula = models.CharField(
         max_length=15,
@@ -83,18 +128,12 @@ class Usuario(AbstractUser):
         blank=True,
     )
 
-    es_administrador = models.BooleanField(default=False)
-
     sucursal = models.ForeignKey(
         "ordenes_de_trabajo.Sucursal",
         on_delete=models.SET_NULL,
         related_name="usuarios",
         null=True,
         blank=True,
-    )
-
-    puede_cambiar_sucursal = models.BooleanField(
-        default=False,
     )
 
     groups = models.ManyToManyField(
@@ -116,6 +155,13 @@ class Usuario(AbstractUser):
     class Meta:
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"
+
+        permissions = [
+            (
+                "cambiar_sucursal_operativa",
+                "Cambiar sucursal operativa",
+            ),
+        ]
 
     def clean(self):
         super().clean()
@@ -151,50 +197,18 @@ class Usuario(AbstractUser):
         if self.cedula:
             self.cedula = self.cedula.strip()
 
-        # =====================================================
-        # REGLA CENTRAL:
-        # si es superusuario, SIEMPRE debe ser ADMIN
-        # =====================================================
-        if self.is_superuser:
-            self.rol = "ADMIN"
-            self.es_administrador = True
-            self.is_staff = True
-            self.puede_cambiar_sucursal = True
-
-        elif self.rol == "ADMIN":
-            self.es_administrador = True
-            self.is_superuser = False
-            self.is_staff = True
-            self.puede_cambiar_sucursal = True
-
-        elif self.rol == "BODEGA":
-            self.es_administrador = False
-            self.is_superuser = False
-            self.is_staff = True
-            self.puede_cambiar_sucursal = False
-
-        elif self.rol == "TECNICO":
-            self.es_administrador = False
-            self.is_superuser = False
-            self.is_staff = False
-            self.puede_cambiar_sucursal = False
-
-        else:  # CAJA
-            self.rol = "CAJA"
-            self.es_administrador = False
-            self.is_superuser = False
-            self.is_staff = True
-            self.puede_cambiar_sucursal = False
-
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        sucursal = self.sucursal.codigo if self.sucursal else "SIN SUCURSAL"
+        sucursal = (
+            self.sucursal.codigo
+            if self.sucursal
+            else "SIN SUCURSAL"
+        )
 
         return (
             f"{self.username} - "
-            f"{self.get_rol_display()} - "
             f"{sucursal}"
         )
 # =========================================================

@@ -231,7 +231,7 @@
     </form>
 
 
-    {% if request.user.rol == 'CAJA' or request.user.rol == 'ADMIN' %}
+    {% if perms.ordenes_de_trabajo.add_ordentrabajo %}
 
     <a
         href="{% url 'crear_orden' %}"

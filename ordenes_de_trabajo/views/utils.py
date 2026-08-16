@@ -61,7 +61,16 @@ def procesar_imagen_base64(base64_data):
 
 def usuario_puede_cambiar_sucursal(request):
     usuario = request.user
-    return bool(usuario.is_authenticated and getattr(usuario, "puede_cambiar_sucursal", False))
+
+    if not usuario.is_authenticated:
+        return False
+
+    return (
+        usuario.is_superuser
+        or usuario.has_perm(
+            "inventario.cambiar_sucursal_operativa"
+        )
+    )
 
 def obtener_sucursal_activa(request):
     usuario = request.user

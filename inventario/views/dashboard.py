@@ -1,30 +1,31 @@
-'''
+"""
 dashboard.py
 
 Resumen general.
 
 Debe mostrar:
 
-total productos
-productos activos
-productos sin stock
-stock negativo
-últimos movimientos
-alertas
+- total productos
+- productos activos
+- productos sin stock
+- stock negativo
+- últimos movimientos
+- alertas
 
 Usa consultas de:
 
-Producto
-CodigoProducto
-StockSucursal
-MovimientoStock
-'''
+- Producto
+- CodigoProducto
+- StockSucursal
+- MovimientoStock
+"""
 
 from decimal import Decimal
 
-from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Q, Sum
 from django.shortcuts import render
+
+from accesos.permissions import permiso_requerido
 
 from ordenes_de_trabajo.models import Sucursal
 from ordenes_de_trabajo.views.utils import (
@@ -33,32 +34,107 @@ from ordenes_de_trabajo.views.utils import (
 )
 
 from ..models import (
-    Producto,
     CodigoProducto,
-    StockSucursal,
-    MovimientoStock,
     InventarioFisico,
+    MovimientoStock,
+    Producto,
+    StockSucursal,
 )
 
 
-@login_required
+@permiso_requerido(
+    "inventario.view_stocksucursal"
+)
 def dashboard_inventario(request):
-    sucursal_activa = obtener_sucursal_activa(request)
 
-    sucursales = (
-        Sucursal.objects.filter(activa=True).order_by("nombre")
-        if usuario_puede_cambiar_sucursal(request)
-        else []
+    # =====================================================
+    # SUCURSAL / PERMISOS
+    # =====================================================
+
+    sucursal_activa = obtener_sucursal_activa(
+        request
     )
 
-    sucursal_id_req = request.GET.get("sucursal", "").strip()
+    puede_cambiar_sucursal = (
+        usuario_puede_cambiar_sucursal(
+            request
+        )
+    )
 
-    if sucursal_id_req:
-        sucursal_filtro = sucursal_id_req
-    elif sucursal_activa:
-        sucursal_filtro = str(sucursal_activa.id)
+    if puede_cambiar_sucursal:
+        sucursales = (
+            Sucursal.objects
+            .filter(
+                activa=True
+            )
+            .order_by(
+                "nombre"
+            )
+        )
     else:
-        sucursal_filtro = ""
+        sucursales = Sucursal.objects.none()
+
+    # =====================================================
+    # SUCURSAL SOLICITADA
+    # =====================================================
+
+    sucursal_id_req = (
+        request.GET
+        .get(
+            "sucursal",
+            "",
+        )
+        .strip()
+    )
+
+    sucursal_filtro = ""
+
+    # -----------------------------------------------------
+    # USUARIO CON PERMISO
+    # -----------------------------------------------------
+
+    if puede_cambiar_sucursal:
+
+        if sucursal_id_req.isdigit():
+            sucursal_solicitada = (
+                Sucursal.objects
+                .filter(
+                    pk=int(
+                        sucursal_id_req
+                    ),
+                    activa=True,
+                )
+                .first()
+            )
+
+            if sucursal_solicitada:
+                sucursal_filtro = str(
+                    sucursal_solicitada.pk
+                )
+
+            elif sucursal_activa:
+                sucursal_filtro = str(
+                    sucursal_activa.pk
+                )
+
+        elif sucursal_activa:
+            sucursal_filtro = str(
+                sucursal_activa.pk
+            )
+
+    # -----------------------------------------------------
+    # USUARIO SIN PERMISO
+    # -----------------------------------------------------
+
+    else:
+        if sucursal_activa:
+            sucursal_filtro = str(
+                sucursal_activa.pk
+            )
+
+    # =====================================================
+    # QUERYSETS BASE
+    # =====================================================
 
     stocks = (
         StockSucursal.objects
@@ -81,70 +157,246 @@ def dashboard_inventario(request):
         )
     )
 
-    inventarios = InventarioFisico.objects.select_related("sucursal")
+    inventarios = (
+        InventarioFisico.objects
+        .select_related(
+            "sucursal"
+        )
+    )
+
+    # =====================================================
+    # SEGURIDAD POR SUCURSAL
+    # =====================================================
 
     if sucursal_filtro:
-        stocks = stocks.filter(sucursal_id=sucursal_filtro)
-        movimientos = movimientos.filter(sucursal_id=sucursal_filtro)
-        inventarios = inventarios.filter(sucursal_id=sucursal_filtro)
+        stocks = stocks.filter(
+            sucursal_id=sucursal_filtro
+        )
 
-    total_productos = Producto.objects.filter(activo=True).count()
-    total_codigos = CodigoProducto.objects.filter(activo=True).count()
+        movimientos = movimientos.filter(
+            sucursal_id=sucursal_filtro
+        )
 
-    total_items_stock = stocks.count()
-    cantidad_total_stock = stocks.aggregate(total=Sum("cantidad"))["total"] or Decimal("0.00")
+        inventarios = inventarios.filter(
+            sucursal_id=sucursal_filtro
+        )
 
-    productos_con_stock = stocks.filter(cantidad__gt=0).count()
-    productos_sin_stock = stocks.filter(cantidad=0).count()
-    productos_stock_negativo = stocks.filter(cantidad__lt=0).count()
-    productos_stock_bajo = stocks.filter(cantidad__gt=0, cantidad__lte=2).count()
+    elif not puede_cambiar_sucursal:
+        # Usuario sin permiso y sin sucursal asignada:
+        # no puede consultar información de ninguna sede.
+        stocks = stocks.none()
+        movimientos = movimientos.none()
+        inventarios = inventarios.none()
 
-    ultimos_movimientos = movimientos.order_by("-fecha")[:10]
+    # =====================================================
+    # MÉTRICAS GENERALES DEL CATÁLOGO
+    # =====================================================
+
+    total_productos = (
+        Producto.objects
+        .filter(
+            activo=True
+        )
+        .count()
+    )
+
+    total_codigos = (
+        CodigoProducto.objects
+        .filter(
+            activo=True
+        )
+        .count()
+    )
+
+    # =====================================================
+    # MÉTRICAS DE STOCK
+    # =====================================================
+
+    total_items_stock = (
+        stocks.count()
+    )
+
+    cantidad_total_stock = (
+        stocks.aggregate(
+            total=Sum(
+                "cantidad"
+            )
+        )["total"]
+        or Decimal(
+            "0.00"
+        )
+    )
+
+    productos_con_stock = (
+        stocks
+        .filter(
+            cantidad__gt=0
+        )
+        .count()
+    )
+
+    productos_sin_stock = (
+        stocks
+        .filter(
+            cantidad=0
+        )
+        .count()
+    )
+
+    productos_stock_negativo = (
+        stocks
+        .filter(
+            cantidad__lt=0
+        )
+        .count()
+    )
+
+    productos_stock_bajo = (
+        stocks
+        .filter(
+            cantidad__gt=0,
+            cantidad__lte=2,
+        )
+        .count()
+    )
+
+    # =====================================================
+    # ÚLTIMOS MOVIMIENTOS
+    # =====================================================
+
+    ultimos_movimientos = (
+        movimientos
+        .order_by(
+            "-fecha"
+        )[:10]
+    )
+
+    # =====================================================
+    # ÚLTIMOS INVENTARIOS
+    # =====================================================
 
     ultimos_inventarios = (
         inventarios
-        .annotate(total_detalles=Count("detalles"))
-        .order_by("-fecha_inicio")[:5]
+        .annotate(
+            total_detalles=Count(
+                "detalles"
+            )
+        )
+        .order_by(
+            "-fecha_inicio"
+        )[:5]
     )
+
+    # =====================================================
+    # ALERTAS DE STOCK
+    # =====================================================
 
     stock_negativo = (
         stocks
-        .filter(cantidad__lt=0)
-        .order_by("cantidad")[:10]
+        .filter(
+            cantidad__lt=0
+        )
+        .order_by(
+            "cantidad"
+        )[:10]
     )
 
     stock_bajo = (
         stocks
-        .filter(cantidad__gt=0, cantidad__lte=2)
-        .order_by("cantidad")[:10]
+        .filter(
+            cantidad__gt=0,
+            cantidad__lte=2,
+        )
+        .order_by(
+            "cantidad"
+        )[:10]
     )
+
+    # =====================================================
+    # CÓDIGOS SIN PRECIO
+    # =====================================================
 
     codigos_sin_precio = (
         CodigoProducto.objects
-        .select_related("producto", "marca")
-        .filter(Q(precio_venta__isnull=True) | Q(precio_venta=0))
-        .order_by("producto__nombre_base")[:10]
+        .select_related(
+            "producto",
+            "marca",
+        )
+        .filter(
+            Q(
+                precio_venta__isnull=True
+            )
+            |
+            Q(
+                precio_venta=0
+            )
+        )
+        .order_by(
+            "producto__nombre_base"
+        )[:10]
     )
 
-    return render(request, "inventario/dashboard.html", {
-        "sucursal_activa": sucursal_activa,
-        "sucursales": sucursales,
-        "sucursal_filtro": sucursal_filtro,
-        "puede_cambiar_sucursal": usuario_puede_cambiar_sucursal(request),
+    # =====================================================
+    # TEMPLATE
+    # =====================================================
 
-        "total_productos": total_productos,
-        "total_codigos": total_codigos,
-        "total_items_stock": total_items_stock,
-        "cantidad_total_stock": cantidad_total_stock,
+    return render(
+        request,
+        "inventario/dashboard.html",
+        {
+            "sucursal_activa": (
+                sucursal_activa
+            ),
+            "sucursales": (
+                sucursales
+            ),
+            "sucursal_filtro": (
+                sucursal_filtro
+            ),
+            "puede_cambiar_sucursal": (
+                puede_cambiar_sucursal
+            ),
 
-        "productos_con_stock": productos_con_stock,
-        "productos_sin_stock": productos_sin_stock,
-        "productos_stock_negativo": productos_stock_negativo,
-        "productos_stock_bajo": productos_stock_bajo,
+            "total_productos": (
+                total_productos
+            ),
+            "total_codigos": (
+                total_codigos
+            ),
+            "total_items_stock": (
+                total_items_stock
+            ),
+            "cantidad_total_stock": (
+                cantidad_total_stock
+            ),
 
-        "ultimos_movimientos": ultimos_movimientos,
-        "ultimos_inventarios": ultimos_inventarios,
-        "stock_negativo": stock_negativo,
-        "stock_bajo": stock_bajo,
-        "codigos_sin_precio": codigos_sin_precio,
-    })
+            "productos_con_stock": (
+                productos_con_stock
+            ),
+            "productos_sin_stock": (
+                productos_sin_stock
+            ),
+            "productos_stock_negativo": (
+                productos_stock_negativo
+            ),
+            "productos_stock_bajo": (
+                productos_stock_bajo
+            ),
+
+            "ultimos_movimientos": (
+                ultimos_movimientos
+            ),
+            "ultimos_inventarios": (
+                ultimos_inventarios
+            ),
+            "stock_negativo": (
+                stock_negativo
+            ),
+            "stock_bajo": (
+                stock_bajo
+            ),
+            "codigos_sin_precio": (
+                codigos_sin_precio
+            ),
+        },
+    )

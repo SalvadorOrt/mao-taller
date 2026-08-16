@@ -908,7 +908,8 @@
                             <td>
                                 <div class="lista-avaluos-actions">
 
-                                    {% if request.user.rol != "TECNICO" %}
+                                    <!-- VER ORDEN DE TRABAJO -->
+                                    {% if perms.ordenes_de_trabajo.view_ordentrabajo %}
 
                                         <a
                                             href="{% url 'detalle_orden' orden.id %}"
@@ -923,36 +924,63 @@
 
                                     {% if orden.avaluo_mecanico %}
 
-                                        <a
-                                            href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
-                                            class="lista-avaluos-action-btn evaluate"
-                                            title="Abrir avalúo mecánico"
-                                        >
+                                        {% if orden.avaluo_mecanico.estado == "BORRADOR" %}
 
-                                            {% if orden.avaluo_mecanico.estado == "BORRADOR" %}
+                                            {% if perms.avaluos.change_avaluomecanico %}
 
-                                                <i class="bi bi-pencil-square"></i>
-                                                Continuar
+                                                <a
+                                                    href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
+                                                    class="lista-avaluos-action-btn evaluate"
+                                                    title="Continuar avalúo mecánico"
+                                                >
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    Continuar
+                                                </a>
 
-                                            {% else %}
+                                            {% elif perms.avaluos.view_avaluomecanico %}
 
-                                                <i class="bi bi-eye"></i>
-                                                Ver avalúo
+                                                <a
+                                                    href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
+                                                    class="lista-avaluos-action-btn view"
+                                                    title="Ver avalúo mecánico"
+                                                >
+                                                    <i class="bi bi-eye"></i>
+                                                    Ver avalúo
+                                                </a>
 
                                             {% endif %}
 
-                                        </a>
+                                        {% else %}
+
+                                            {% if perms.avaluos.view_avaluomecanico %}
+
+                                                <a
+                                                    href="{% url 'avaluos:detalle_avaluo_paso' orden.avaluo_mecanico.pk 1 %}"
+                                                    class="lista-avaluos-action-btn view"
+                                                    title="Ver avalúo mecánico"
+                                                >
+                                                    <i class="bi bi-eye"></i>
+                                                    Ver avalúo
+                                                </a>
+
+                                            {% endif %}
+
+                                        {% endif %}
 
                                     {% else %}
 
-                                        <a
-                                            href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
-                                            class="lista-avaluos-action-btn evaluate"
-                                            title="Iniciar avalúo mecánico"
-                                        >
-                                            <i class="bi bi-clipboard2-check"></i>
-                                            Evaluar
-                                        </a>
+                                        {% if perms.avaluos.add_avaluomecanico %}
+
+                                            <a
+                                                href="{% url 'avaluos:iniciar_avaluo' orden.id %}"
+                                                class="lista-avaluos-action-btn evaluate"
+                                                title="Iniciar avalúo mecánico"
+                                            >
+                                                <i class="bi bi-clipboard2-check"></i>
+                                                Evaluar
+                                            </a>
+
+                                        {% endif %}
 
                                     {% endif %}
 

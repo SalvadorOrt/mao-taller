@@ -1,7 +1,8 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
+
+from accesos.permissions import permiso_requerido
 
 from avaluos.models import (
     AvaluoMecanico,
@@ -19,11 +20,10 @@ from avaluos.models import (
     ResultadoPruebaRuta,
     ResultadoRevisionSiNo,
 )
+
 from ordenes_de_trabajo.models import OrdenTrabajo
 
-# =========================================================
-# CREAR RESULTADOS INICIALES
-# =========================================================
+
 # =========================================================
 # CREAR RESULTADOS INICIALES
 # =========================================================
@@ -179,16 +179,42 @@ def crear_resultados_iniciales(avaluo):
         ignore_conflicts=True,
     )
 
+
 # =========================================================
 # INICIAR AVALÚO DESDE ORDEN DE TRABAJO
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "avaluos.add_avaluomecanico"
+)
 @transaction.atomic
 def iniciar_avaluo(request, orden_id):
+
+    # =====================================================
+    # CAPACIDADES DEL USUARIO
+    # =====================================================
+
+    puede_gestionar_todas_sucursales = (
+        request.user.has_perm(
+            "avaluos.gestionar_todas_sucursales"
+        )
+    )
+
+    puede_autoasignarse_evaluador = (
+        request.user.has_perm(
+            "avaluos.autoasignarse_evaluador"
+        )
+    )
+
+    # =====================================================
+    # OBTENER ORDEN
+    # =====================================================
+
     orden = get_object_or_404(
         OrdenTrabajo.objects
-        .select_for_update(of=("self",))
+        .select_for_update(
+            of=("self",)
+        )
         .select_related(
             "sucursal",
             "cliente",
@@ -202,9 +228,13 @@ def iniciar_avaluo(request, orden_id):
     # =====================================================
 
     if orden.estado != "ABIERTA":
+
         messages.error(
             request,
-            "Solo se puede iniciar un avalúo desde una orden abierta.",
+            (
+                "Solo se puede iniciar un avalúo "
+                "desde una orden abierta."
+            ),
         )
 
         return redirect(
@@ -214,25 +244,52 @@ def iniciar_avaluo(request, orden_id):
     # =====================================================
     # VALIDAR SUCURSAL
     # =====================================================
+    #
+    # Los usuarios con el permiso:
+    #
+    #   gestionar_todas_sucursales
+    #
+    # pueden trabajar con órdenes de cualquier sucursal.
+    #
+    # Los demás quedan limitados a la sucursal asignada
+    # a su usuario.
+    # =====================================================
 
-    if request.user.rol != "ADMIN":
+    if not puede_gestionar_todas_sucursales:
+
+        # -------------------------------------------------
+        # USUARIO SIN SUCURSAL
+        # -------------------------------------------------
+
         if not request.user.sucursal_id:
+
             messages.error(
                 request,
-                "Tu usuario no tiene una sucursal asignada.",
+                (
+                    "Tu usuario no tiene una "
+                    "sucursal asignada."
+                ),
             )
 
             return redirect(
                 "avaluos:ordenes_pendientes",
             )
 
+        # -------------------------------------------------
+        # ORDEN DE OTRA SUCURSAL
+        # -------------------------------------------------
+
         if (
             orden.sucursal_id
             != request.user.sucursal_id
         ):
+
             messages.error(
                 request,
-                "No tienes permiso para evaluar una orden de otra sucursal.",
+                (
+                    "No tienes permiso para evaluar "
+                    "una orden de otra sucursal."
+                ),
             )
 
             return redirect(
@@ -254,7 +311,7 @@ def iniciar_avaluo(request, orden_id):
                 ),
                 "evaluador": (
                     request.user
-                    if request.user.rol == "TECNICO"
+                    if puede_autoasignarse_evaluador
                     else None
                 ),
             },
@@ -267,22 +324,49 @@ def iniciar_avaluo(request, orden_id):
 
     campos_actualizados = []
 
+    # -----------------------------------------------------
+    # ACTUALIZADO POR
+    # -----------------------------------------------------
+
     if not avaluo.actualizado_por_id:
-        avaluo.actualizado_por = request.user
+
+        avaluo.actualizado_por = (
+            request.user
+        )
+
         campos_actualizados.append(
             "actualizado_por",
         )
 
+    # -----------------------------------------------------
+    # AUTOASIGNAR EVALUADOR
+    # -----------------------------------------------------
+    #
+    # Ya no depende de que el usuario se llame o pertenezca
+    # al rol "TECNICO".
+    #
+    # Depende únicamente de su capacidad.
+    # -----------------------------------------------------
+
     if (
-        request.user.rol == "TECNICO"
+        puede_autoasignarse_evaluador
         and not avaluo.evaluador_id
     ):
-        avaluo.evaluador = request.user
+
+        avaluo.evaluador = (
+            request.user
+        )
+
         campos_actualizados.append(
             "evaluador",
         )
 
+    # -----------------------------------------------------
+    # GUARDAR CAMBIOS
+    # -----------------------------------------------------
+
     if campos_actualizados:
+
         avaluo.save(
             update_fields=(
                 campos_actualizados
@@ -303,14 +387,23 @@ def iniciar_avaluo(request, orden_id):
     # =====================================================
 
     if creado:
+
         messages.success(
             request,
-            "El avalúo fue iniciado correctamente.",
+            (
+                "El avalúo fue iniciado "
+                "correctamente."
+            ),
         )
+
     else:
+
         messages.info(
             request,
-            "Esta orden ya tenía un avalúo. Se abrió el registro existente.",
+            (
+                "Esta orden ya tenía un avalúo. "
+                "Se abrió el registro existente."
+            ),
         )
 
     # =====================================================

@@ -26,17 +26,29 @@ from .models import (
 # =========================================================
 # INLINE STOCK POR SUCURSAL
 # =========================================================
+
 class StockSucursalInline(admin.TabularInline):
     model = StockSucursal
     extra = 0
     can_delete = False
-    readonly_fields = ("cantidad", "actualizado_en")
-    fields = ("sucursal", "cantidad", "ubicacion", "actualizado_en")
+
+    readonly_fields = (
+        "cantidad",
+        "actualizado_en",
+    )
+
+    fields = (
+        "sucursal",
+        "cantidad",
+        "ubicacion",
+        "actualizado_en",
+    )
 
 
 class CodigoProductoInline(admin.TabularInline):
     model = CodigoProducto
     extra = 0
+
     fields = (
         "marca",
         "codigo",
@@ -46,6 +58,7 @@ class CodigoProductoInline(admin.TabularInline):
         "precio_venta",
         "activo",
     )
+
     show_change_link = True
 
 
@@ -57,76 +70,130 @@ class ValorAtributoProductoInline(admin.TabularInline):
 class ComponenteKitInline(admin.TabularInline):
     model = ComponenteKit
     extra = 0
-    autocomplete_fields = ("codigo_producto",)
+
+    autocomplete_fields = (
+        "codigo_producto",
+    )
 
 
 class DetalleInventarioFisicoInline(admin.TabularInline):
     model = DetalleInventarioFisico
     extra = 0
-    autocomplete_fields = ("codigo_producto",)
+
+    autocomplete_fields = (
+        "codigo_producto",
+    )
 
 
 # =========================================================
 # USUARIO
 # =========================================================
+
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
     model = Usuario
+
+    # =====================================================
+    # LISTADO
+    # =====================================================
 
     list_display = (
         "username",
         "email",
         "first_name",
         "last_name",
-        "rol",
+        "roles_asignados",
         "sucursal",
-        "puede_cambiar_sucursal",
-        "es_administrador",
         "is_staff",
         "is_superuser",
         "is_active",
     )
+
     list_filter = (
-        "rol",
+        "groups",
         "sucursal",
-        "puede_cambiar_sucursal",
-        "es_administrador",
         "is_staff",
         "is_superuser",
         "is_active",
     )
-    search_fields = ("username", "first_name", "last_name", "email", "cedula")
-    ordering = ("username",)
+
+    search_fields = (
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "cedula",
+    )
+
+    ordering = (
+        "username",
+    )
+
+    # =====================================================
+    # EDICIÓN
+    # =====================================================
 
     fieldsets = UserAdmin.fieldsets + (
         (
             "Datos MAO",
             {
                 "fields": (
-                    "rol",
                     "cedula",
-                    "es_administrador",
                     "sucursal",
-                    "puede_cambiar_sucursal",
-                )
+                ),
             },
         ),
     )
+
+    # =====================================================
+    # CREACIÓN
+    # =====================================================
 
     add_fieldsets = UserAdmin.add_fieldsets + (
         (
             "Datos MAO",
             {
                 "fields": (
-                    "rol",
                     "cedula",
                     "sucursal",
-                    "puede_cambiar_sucursal",
-                )
+                    "groups",
+                ),
             },
         ),
     )
 
+    # =====================================================
+    # OPTIMIZACIÓN
+    # =====================================================
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(
+            request
+        )
+
+        return queryset.prefetch_related(
+            "groups"
+        )
+
+    # =====================================================
+    # ROLES DINÁMICOS
+    # =====================================================
+
+    @admin.display(
+        description="Roles"
+    )
+    def roles_asignados(self, obj):
+        roles = list(
+            obj.groups.values_list(
+                "name",
+                flat=True,
+            )
+        )
+
+        if not roles:
+            return "Sin rol"
+
+        return ", ".join(roles)
 '''
 from django.contrib import admin
 from django.db.models import Sum
@@ -553,7 +620,7 @@ class DetalleFacturaTemporalInline(admin.TabularInline):
         from .models import CodigoProducto
         existe = CodigoProducto.objects.filter(codigo=obj.codigo_sri).exists()
         if existe:
-            return mark_safe("<span style='color:green; font-weight:bold;'>✅ EXISTENTE</span>")
+            return mark_safe("<span style='color:green; font-weight:bold;'> EXISTENTE</span>")
         return mark_safe("<span style='color:orange; font-weight:bold;'>✨ NUEVO</span>")
     estado_visual.short_description = "Estado"
 

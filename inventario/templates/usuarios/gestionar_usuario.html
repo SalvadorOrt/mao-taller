@@ -3,7 +3,7 @@
 
 {% block title %}{% if usuario %}Editar{% else %}Nuevo{% endif %} Usuario | MAO{% endblock %}
 {% block page_title %}{% if usuario %}Editar Usuario: {{ usuario.username }}{% else %}Nuevo Usuario{% endif %}{% endblock %}
-{% block page_subtitle %}Configuración de credenciales, datos personales y rol{% endblock %}
+{% block page_subtitle %}Configuración de credenciales, datos personales y accesos{% endblock %}
 
 {% block content %}
 <div class="container ot-wrapper" style="max-width: 800px; margin: 0 auto;">
@@ -76,32 +76,36 @@
 
             <div class="form-grid" style="margin-bottom: 25px;">
                 <div>
-                    <label class="form-label-mao">ROL EN EL SISTEMA</label>
+                    <label class="form-label-mao">ROLES DEL USUARIO</label>
 
-                    <div class="mao-select" data-target="inputRol">
-                        <button type="button" class="mao-select-btn">
-                            <span class="mao-select-text">Seleccionar rol</span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
+                    <div class="roles-grid">
+                        {% for opcion in form.groups %}
+                            <label class="rol-option">
+                                {{ opcion.tag }}
 
-                        <div class="mao-select-menu">
-                            {% for value, label in form.rol.field.choices %}
-                                <button type="button"
-                                        class="mao-select-option"
-                                        data-value="{{ value }}"
-                                        data-label="{{ label }}">
-                                    <span>{{ label }}</span>
-                                    <i class="bi bi-check2"></i>
-                                </button>
-                            {% endfor %}
-                        </div>
+                                <span class="rol-option-content">
+                                    <span class="rol-option-name">
+                                        {{ opcion.choice_label }}
+                                    </span>
+                                </span>
+                            </label>
+                        {% empty %}
+                            <span class="muted-text">
+                                No existen roles configurados.
+                            </span>
+                        {% endfor %}
                     </div>
 
-                    <input type="hidden" name="rol" id="inputRol" value="{{ form.rol.value|default:'' }}">
-
-                    {% if form.rol.errors %}
-                        <div class="error-text">{{ form.rol.errors.0 }}</div>
+                    {% if form.groups.errors %}
+                        <div class="error-text">
+                            {{ form.groups.errors.0 }}
+                        </div>
                     {% endif %}
+
+                    <div class="field-help">
+                        Los permisos del usuario se obtienen automáticamente
+                        de los roles seleccionados.
+                    </div>
                 </div>
 
                 <div>
@@ -131,21 +135,6 @@
                     {% if form.sucursal.errors %}
                         <div class="error-text">{{ form.sucursal.errors.0 }}</div>
                     {% endif %}
-                </div>
-            </div>
-
-            <div class="permiso-card">
-                <div style="transform: scale(1.2);">
-                    {{ form.puede_cambiar_sucursal }}
-                </div>
-
-                <div>
-                    <label for="{{ form.puede_cambiar_sucursal.id_for_label }}" class="checkbox-title">
-                        Permitir cambio de sucursal
-                    </label>
-                    <span class="checkbox-subtitle">
-                        Activa esta opción si el usuario es un auditor, gerente o dueño que necesita ver información de otras sedes.
-                    </span>
                 </div>
             </div>
 
@@ -333,31 +322,56 @@
         display: inline-block;
     }
 
-    .permiso-card {
-        background: #f5f5f7;
-        padding: 15px 20px;
+    .roles-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        border: 1.5px solid #d2d2d7;
         border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .rol-option {
         display: flex;
         align-items: center;
-        gap: 15px;
-        margin-bottom: 35px;
-        border: 1px solid #e5e5ea;
-    }
-
-    .checkbox-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text);
-        display: block;
+        gap: 10px;
+        min-height: 42px;
+        padding: 8px 12px;
+        border-radius: 10px;
         cursor: pointer;
-        margin-bottom: 2px;
+        transition: background 0.15s ease;
     }
 
-    .checkbox-subtitle {
+    .rol-option:hover {
+        background: #f5f5f7;
+    }
+
+    .rol-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #0071e3;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .rol-option-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .rol-option-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1d1d1f;
+    }
+
+    .field-help {
+        margin-top: 7px;
         font-size: 11px;
+        line-height: 1.4;
         color: #86868b;
-        display: block;
-        line-height: 1.35;
     }
 
     .form-actions {

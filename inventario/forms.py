@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import modelformset_factory
-
+from accesos.models import Rol
 from .models import (
     Atributo,
     Categoria,
@@ -18,67 +18,109 @@ from .models import (
 # =========================================================
 
 class UsuarioForm(forms.ModelForm):
+
     password = forms.CharField(
         required=False,
         label="Contraseña",
-        widget=forms.PasswordInput(attrs={
-            "class": "form-control-apple",
-            "placeholder": "Contraseña secreta",
-        }),
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control-apple",
+                "placeholder": "Contraseña secreta",
+            }
+        ),
+    )
+
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Rol.objects.none(),
+        required=False,
+        label="Roles",
+        widget=forms.CheckboxSelectMultiple(),
     )
 
     class Meta:
         model = Usuario
+
         fields = [
             "username",
             "first_name",
             "last_name",
             "email",
             "cedula",
-            "rol",
             "sucursal",
-            "puede_cambiar_sucursal",
+            "groups",
         ]
 
         widgets = {
-            "username": forms.TextInput(attrs={
-                "class": "form-control-apple",
-            }),
-            "first_name": forms.TextInput(attrs={
-                "class": "form-control-apple",
-            }),
-            "last_name": forms.TextInput(attrs={
-                "class": "form-control-apple",
-            }),
-            "email": forms.EmailInput(attrs={
-                "class": "form-control-apple",
-            }),
-            "cedula": forms.TextInput(attrs={
-                "class": "form-control-apple",
-            }),
-            "rol": forms.Select(attrs={
-                "class": "form-control-apple",
-            }),
-            "sucursal": forms.Select(attrs={
-                "class": "form-control-apple",
-            }),
-            "puede_cambiar_sucursal": forms.CheckboxInput(),
+            "username": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+            "first_name": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+            "last_name": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+            "cedula": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+            "sucursal": forms.Select(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
         }
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            **kwargs,
+        )
 
-        password = self.cleaned_data.get("password")
+        self.fields["groups"].queryset = (
+            Rol.objects
+            .all()
+            .order_by("name")
+        )
+
+    def save(
+        self,
+        commit=True,
+    ):
+        user = super().save(
+            commit=False
+        )
+
+        password = self.cleaned_data.get(
+            "password"
+        )
 
         if password:
-            user.set_password(password)
+            user.set_password(
+                password
+            )
 
         if commit:
             user.save()
+            self.save_m2m()
 
         return user
-
-
 # =========================================================
 # PRODUCTO
 # =========================================================

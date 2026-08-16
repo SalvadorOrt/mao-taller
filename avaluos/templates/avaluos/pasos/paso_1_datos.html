@@ -159,6 +159,7 @@
         </div>
 
         <div class="avaluo-field avaluo-col-3">
+
             <label class="avaluo-label">
                 Evaluador
             </label>
@@ -166,13 +167,14 @@
             <input
                 type="text"
                 class="avaluo-input"
-                value="{% if avaluo.evaluador %}{{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username }}{% elif request.user.rol == 'TECNICO' %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Por asignar{% endif %}"
+                value="{% if avaluo.evaluador %}{{ avaluo.evaluador.get_full_name|default:avaluo.evaluador.username }}{% elif perms.avaluos.autoasignarse_evaluador %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Por asignar{% endif %}"
                 readonly
             >
 
             <div class="avaluo-help">
-                El técnico conectado se asignará automáticamente.
+                El usuario autorizado para evaluar se asignará automáticamente.
             </div>
+
         </div>
 
     </div>
