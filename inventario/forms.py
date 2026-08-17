@@ -11,8 +11,6 @@ from .models import (
     Usuario,
     ValorAtributoProducto,
 )
-
-
 # =========================================================
 # USUARIOS
 # =========================================================
@@ -48,7 +46,12 @@ class UsuarioForm(forms.ModelForm):
             "cedula",
             "sucursal",
             "groups",
+            "is_active",
         ]
+
+        labels = {
+            "is_active": "Usuario activo",
+        }
 
         widgets = {
             "username": forms.TextInput(
@@ -79,6 +82,11 @@ class UsuarioForm(forms.ModelForm):
             "sucursal": forms.Select(
                 attrs={
                     "class": "form-control-apple",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
                 }
             ),
         }

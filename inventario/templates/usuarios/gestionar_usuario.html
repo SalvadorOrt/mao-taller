@@ -138,6 +138,49 @@
                 </div>
             </div>
 
+            {% if usuario %}
+                <h3 class="form-section-title">
+                    <i class="bi bi-person-check"></i> Estado de la Cuenta
+                </h3>
+
+                <div class="estado-usuario-card" id="estadoUsuarioCard">
+                    <div class="estado-usuario-info">
+                        <div class="estado-usuario-icon" id="estadoUsuarioIcon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+
+                        <div>
+                            <div class="estado-usuario-title" id="estadoUsuarioTitle">
+                                Habilitado
+                            </div>
+
+                            <div class="estado-usuario-description" id="estadoUsuarioDescription">
+                                El usuario puede iniciar sesión y utilizar los accesos asignados.
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="estado-switch" title="Habilitar o inhabilitar usuario">
+                        {{ form.is_active }}
+                        <span class="estado-slider"></span>
+                    </label>
+                </div>
+
+                {% if form.is_active.errors %}
+                    <div class="error-text estado-error">
+                        {{ form.is_active.errors.0 }}
+                    </div>
+                {% endif %}
+
+                <div class="field-help estado-help">
+                    Inhabilitar una cuenta no elimina al usuario ni sus roles.
+                    Solo impide que pueda iniciar sesión.
+                </div>
+            {% else %}
+                {# Los usuarios nuevos se crean habilitados por defecto. #}
+                <input type="hidden" name="is_active" value="on">
+            {% endif %}
+
             <div class="form-actions">
                 <a href="{% url 'lista_usuarios' %}" class="btn-login btn-cancel">
                     Cancelar
@@ -374,6 +417,124 @@
         color: #86868b;
     }
 
+    .estado-usuario-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 8px;
+        padding: 18px 20px;
+        border: 1.5px solid #d2d2d7;
+        border-radius: 16px;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+
+    .estado-usuario-card.activo {
+        border-color: rgba(52, 199, 89, 0.35);
+        background: rgba(52, 199, 89, 0.05);
+    }
+
+    .estado-usuario-card.inactivo {
+        border-color: rgba(255, 59, 48, 0.28);
+        background: rgba(255, 59, 48, 0.04);
+    }
+
+    .estado-usuario-info {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+    }
+
+    .estado-usuario-icon {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 20px;
+        background: #f5f5f7;
+        color: #86868b;
+    }
+
+    .estado-usuario-card.activo .estado-usuario-icon {
+        color: #248a3d;
+        background: rgba(52, 199, 89, 0.12);
+    }
+
+    .estado-usuario-card.inactivo .estado-usuario-icon {
+        color: #d70015;
+        background: rgba(255, 59, 48, 0.10);
+    }
+
+    .estado-usuario-title {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1d1d1f;
+        margin-bottom: 3px;
+    }
+
+    .estado-usuario-description {
+        color: #6e6e73;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .estado-switch {
+        position: relative;
+        width: 48px;
+        height: 28px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .estado-switch input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .estado-slider {
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: #d2d2d7;
+        transition: all 0.2s ease;
+    }
+
+    .estado-slider::before {
+        content: "";
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        left: 3px;
+        top: 3px;
+        border-radius: 50%;
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.20);
+        transition: transform 0.2s ease;
+    }
+
+    .estado-switch input:checked + .estado-slider {
+        background: #34c759;
+    }
+
+    .estado-switch input:checked + .estado-slider::before {
+        transform: translateX(20px);
+    }
+
+    .estado-help {
+        margin-bottom: 30px;
+    }
+
+    .estado-error {
+        margin-top: 8px;
+    }
+
     .form-actions {
         display: flex;
         justify-content: flex-end;
@@ -397,6 +558,10 @@
     @media (max-width: 768px) {
         .form-grid {
             grid-template-columns: 1fr;
+        }
+
+        .estado-usuario-card {
+            align-items: flex-start;
         }
 
         .form-actions {
@@ -466,6 +631,40 @@
                 });
             }
         });
+
+        const estadoCard = document.getElementById("estadoUsuarioCard");
+
+        if (estadoCard) {
+            const estadoInput = estadoCard.querySelector('input[name="is_active"]');
+            const estadoTitle = document.getElementById("estadoUsuarioTitle");
+            const estadoDescription = document.getElementById("estadoUsuarioDescription");
+            const estadoIcon = document.getElementById("estadoUsuarioIcon");
+
+            function actualizarEstadoUsuario() {
+                const activo = Boolean(estadoInput && estadoInput.checked);
+
+                estadoCard.classList.toggle("activo", activo);
+                estadoCard.classList.toggle("inactivo", !activo);
+
+                estadoTitle.textContent = activo
+                    ? "Habilitado"
+                    : "Inhabilitado";
+
+                estadoDescription.textContent = activo
+                    ? "El usuario puede iniciar sesión y utilizar los accesos asignados."
+                    : "El usuario no puede iniciar sesión. Sus roles y datos se conservan.";
+
+                estadoIcon.innerHTML = activo
+                    ? '<i class="bi bi-check-circle-fill"></i>'
+                    : '<i class="bi bi-slash-circle-fill"></i>';
+            }
+
+            actualizarEstadoUsuario();
+
+            if (estadoInput) {
+                estadoInput.addEventListener("change", actualizarEstadoUsuario);
+            }
+        }
     });
 </script>
 {% endblock %}
