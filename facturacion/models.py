@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 import random
 
 from django.core.exceptions import ValidationError
@@ -520,18 +520,43 @@ class FacturaVenta(models.Model):
             elif detalle.codigo_porcentaje_iva == "0":
                 subtotal_iva_0 += detalle.precio_total_sin_impuesto
 
-        self.total_sin_impuestos = total_sin_impuestos.quantize(Decimal("0.01"))
-        self.total_descuento = total_descuento.quantize(Decimal("0.01"))
-        
-        # Asignamos a los campos dinámicos que definiste en tu modelo
-        self.subtotal_gravado = subtotal_gravado.quantize(Decimal("0.01"))
-        self.valor_iva = valor_iva.quantize(Decimal("0.01"))
-        self.subtotal_iva_0 = subtotal_iva_0.quantize(Decimal("0.01"))
-        
-       
+        self.total_sin_impuestos = total_sin_impuestos.quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        self.total_descuento = total_descuento.quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        self.subtotal_gravado = subtotal_gravado.quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        self.valor_iva = valor_iva.quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        self.subtotal_iva_0 = subtotal_iva_0.quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        # IMPORTANTE:
+        # precio_total_sin_impuesto de cada detalle YA viene con
+        # el descuento de la línea aplicado. Por eso total_descuento
+        # se informa, pero NO se vuelve a restar aquí.
         self.importe_total = (
-            self.total_sin_impuestos - self.total_descuento + self.valor_iva + self.propina
-        ).quantize(Decimal("0.01"))
+            self.total_sin_impuestos
+            + self.valor_iva
+            + self.propina
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
 
         if guardar:
             # Actualizamos los update_fields para reflejar los campos reales de la BD
@@ -549,10 +574,23 @@ class FacturaVenta(models.Model):
         return self.pagos.aggregate(total=Sum("total")).get("total") or Decimal("0.00")
 
     def saldo_pendiente(self):
-        return (self.importe_total - self.total_pagado()).quantize(Decimal("0.01"))
+        return (
+            self.importe_total - self.total_pagado()
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
 
     def tiene_pagos_completos(self):
-        return self.total_pagado().quantize(Decimal("0.01")) == self.importe_total.quantize(Decimal("0.01"))
+        total_pagado = self.total_pagado().quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+        importe_total = self.importe_total.quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+        return total_pagado == importe_total
 
     # =====================================================
     # FIRMA
@@ -770,12 +808,60 @@ class DetalleFacturaVenta(models.Model):
         super().clean()
 
         if self.descuento < 0:
-            raise ValidationError({"descuento": "El descuento no puede ser negativo."})
+            raise ValidationError({
+                "descuento": "El descuento no puede ser negativo."
+            })
+
+        if (
+            self.cantidad is not None
+            and self.precio_unitario is not None
+            and self.descuento is not None
+        ):
+            subtotal_bruto = (
+                Decimal(str(self.cantidad))
+                * Decimal(str(self.precio_unitario))
+            )
+
+            if self.descuento > subtotal_bruto:
+                raise ValidationError({
+                    "descuento": (
+                        "El descuento no puede superar el subtotal "
+                        "bruto del detalle."
+                    )
+                })
 
     def obtener_tarifa_iva_activa(self):
-        config = ConfiguracionTributaria.objects.filter(
-            activa=True
-        ).order_by("-fecha_inicio", "-id").first()
+        """
+        Para una factura creada desde una OT, el IVA debe salir del
+        snapshot de la factura, que a su vez se copia desde la OT.
+
+        Para facturas manuales se conserva el fallback a la
+        configuración tributaria activa.
+        """
+
+        if self.factura_id:
+            # Factura proveniente de una Orden de Trabajo:
+            # respetar exactamente el IVA congelado en la factura.
+            if self.factura.orden_id:
+                return (
+                    self.factura.porcentaje_iva
+                    if self.factura.porcentaje_iva is not None
+                    else Decimal("0.00")
+                )
+
+            # Factura manual con porcentaje definido explícitamente.
+            if (
+                self.factura.porcentaje_iva is not None
+                and self.factura.porcentaje_iva > Decimal("0.00")
+            ):
+                return self.factura.porcentaje_iva
+
+        config = (
+            ConfiguracionTributaria.objects
+            .filter(activa=True)
+            .order_by("-fecha_inicio", "-id")
+            .first()
+        )
 
         if config:
             return config.porcentaje_iva
@@ -789,7 +875,10 @@ class DetalleFacturaVenta(models.Model):
         if subtotal < 0:
             subtotal = Decimal("0.00")
 
-        subtotal = subtotal.quantize(Decimal("0.01"))
+        subtotal = subtotal.quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
 
         self.precio_total_sin_impuesto = subtotal
         self.base_imponible = subtotal
@@ -799,14 +888,20 @@ class DetalleFacturaVenta(models.Model):
                 self.tarifa_iva = self.obtener_tarifa_iva_activa()
 
             self.valor_iva = (
-                subtotal * self.tarifa_iva / Decimal("100")
-            ).quantize(Decimal("0.01"))
+                subtotal
+                * self.tarifa_iva
+                / Decimal("100")
+            ).quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
         else:
             self.tarifa_iva = Decimal("0.00")
             self.valor_iva = Decimal("0.00") 
 
     def save(self, *args, **kwargs):
         self.recalcular()
+        self.full_clean()
         super().save(*args, **kwargs)
 
         if self.factura_id:

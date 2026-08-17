@@ -490,7 +490,7 @@ def guardar_detalle_ot(request, pk):
         if orden.estado != "ABIERTA":
             messages.error(
                 request,
-                "No se puede modificar una orden cerrada o anulada.",
+                "No se puede modificar una orden que no esté abierta.",
             )
             return redirect(
                 "detalle_orden",
@@ -781,6 +781,7 @@ def detalle_orden(request, pk):
         )
         and orden.estado
         in [
+            "TERMINADA",
             "CERRADA",
             "ANULADA",
         ]

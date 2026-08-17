@@ -1704,7 +1704,7 @@ class ConfiguracionTributaria(models.Model):
 class OrdenTrabajo(models.Model):
     ESTADOS = [
         ("ABIERTA", "En Taller / Abierta"),
-        ("CERRADA", "Entregado / Pagada"),
+        ("CERRADA", "Trabajo completado / Lista para facturar"),
         ("ANULADA", "Anulada"),
     ]
 
@@ -2541,6 +2541,7 @@ class OrdenTrabajo(models.Model):
         if estado_anterior not in [
             "CERRADA",
             "ANULADA",
+          
         ]:
             return
 
@@ -3290,7 +3291,7 @@ class OrdenTrabajoSolicitado(models.Model):
         verbose_name_plural = "Trabajos solicitados"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar trabajos solicitados de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3343,7 +3344,7 @@ class OrdenSintoma(models.Model):
         verbose_name_plural = "Síntomas de cliente"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar los síntomas de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3404,7 +3405,7 @@ class OrdenChecklistRecepcion(models.Model):
         verbose_name_plural = "Checklists de recepción"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se puede modificar el checklist de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3446,7 +3447,7 @@ class OrdenObjetoAdicional(models.Model):
         verbose_name_plural = "Objetos adicionales"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar objetos adicionales de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3514,7 +3515,7 @@ class FotoRecepcionVehiculo(models.Model):
         verbose_name_plural = "Fotos de recepción"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar fotografías de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3574,7 +3575,7 @@ class OrdenCroquisDanio(models.Model):
         verbose_name_plural = "Croquis de daños"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se puede modificar el croquis de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3687,7 +3688,7 @@ class OrdenServicioDetalle(models.Model):
         verbose_name_plural = "Detalles de servicios"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar servicios de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3822,7 +3823,7 @@ class OrdenInsumoDetalle(models.Model):
         verbose_name_plural = "Detalles de insumos"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar repuestos de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -3969,7 +3970,7 @@ class OrdenServicioProcedimientoDetalle(models.Model):
     def validar_orden_editable(self):
         if (
             self.detalle_servicio
-            and self.detalle_servicio.orden.estado in ["CERRADA", "ANULADA"]
+            and not self.detalle_servicio.orden.puede_editarse()
         ):
             raise ValidationError(
                 "No se pueden modificar procedimientos de una orden cerrada o anulada. Primero debe reabrirse."
@@ -4037,7 +4038,7 @@ class OrdenServicioHistorico(models.Model):
         verbose_name_plural = "Servicios históricos migrados"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar servicios históricos de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -4126,7 +4127,7 @@ class OrdenInsumoHistorico(models.Model):
         verbose_name_plural = "Insumos históricos migrados"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar insumos históricos de una orden cerrada o anulada. Primero debe reabrirse."
             )
@@ -4756,7 +4757,7 @@ class OrdenRecomendacion(models.Model):
         verbose_name_plural = "Recomendaciones de órdenes"
 
     def validar_orden_editable(self):
-        if self.orden and self.orden.estado in ["CERRADA", "ANULADA"]:
+        if self.orden and not self.orden.puede_editarse():
             raise ValidationError(
                 "No se pueden modificar las recomendaciones de una orden cerrada o anulada. Primero debe reabrirse."
             )

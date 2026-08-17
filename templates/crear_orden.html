@@ -359,6 +359,52 @@
 
         if (pasoActual === 5) setTimeout(redimensionarCanvas, 150);
     }
+
+    function limpiarDatosClienteFormulario({
+    limpiarIdentificacion = false
+} = {}) {
+
+    const campos = [
+        'id_nombre',
+        'id_telefono',
+        'id_telefono_secundario',
+        'id_telefono_trabajo',
+        'id_email',
+        'id_direccion'
+    ];
+
+    campos.forEach(id => {
+        const input = document.getElementById(id);
+
+        if (input) {
+            input.value = '';
+        }
+    });
+
+    const identificacionPaso2 =
+        document.getElementById('id_identificacion_cliente');
+
+    if (identificacionPaso2) {
+        identificacionPaso2.value = '';
+        identificacionPaso2.readOnly = false;
+    }
+
+    if (limpiarIdentificacion) {
+        const identificacionPaso1 =
+            document.getElementById('id_identificacion');
+
+        if (identificacionPaso1) {
+            identificacionPaso1.value = '';
+        }
+    }
+
+    const nombre =
+        document.getElementById('id_nombre');
+
+    if (nombre) {
+        nombre.readOnly = false;
+    }
+}
 function buscarPlaca() {
     const placaInput = document.getElementById('id_placa');
     const placa = placaInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -381,7 +427,10 @@ function buscarPlaca() {
             Consultando vehículo...
         </div>
     `;
-
+        // Evitar arrastrar información del cliente de una búsqueda anterior.
+        limpiarDatosClienteFormulario({
+            limpiarIdentificacion: true
+        });
     fetch(`/api/regcheck/?placa=${encodeURIComponent(placa)}`)
         .then(res => res.json())
         .then(data => {
@@ -393,26 +442,148 @@ function buscarPlaca() {
                 const chasis = data.numero_chasis || '';
                 
                 // === NUEVO: DATOS DEL ÚLTIMO DUEÑO ===
+                // =====================================================
+                // DATOS DEL CLIENTE ASOCIADO A LA PLACA
+                // =====================================================
+
                 const cedulaAnterior = data.identificacion || '';
                 const nombreAnterior = data.nombre_completo || '';
+
+                const telefonoAnterior = data.telefono || '';
+                const telefonoSecundarioAnterior = data.telefono_secundario || '';
+                const telefonoTrabajoAnterior = data.telefono_trabajo || '';
+                const emailAnterior = data.email || '';
+                const direccionAnterior = data.direccion || '';
+
                 let alertaDuenoHtml = '';
 
                 if (cedulaAnterior && nombreAnterior) {
-                    // Llenamos el input de la cédula (Paso 1)
-                    document.getElementById('id_identificacion').value = cedulaAnterior;
-                    
-                    // Llenamos los inputs ocultos o del Paso 2
-                    if (document.getElementById('id_identificacion_cliente')) {
-                        document.getElementById('id_identificacion_cliente').value = cedulaAnterior;
-                    }
-                    if (document.getElementById('id_nombre')) {
-                        document.getElementById('id_nombre').value = nombreAnterior;
+
+                    // ==========================================
+                    // CÉDULA PASO 1
+                    // ==========================================
+
+                    const inputIdentificacion =
+                        document.getElementById('id_identificacion');
+
+                    if (inputIdentificacion) {
+                        inputIdentificacion.value = cedulaAnterior;
                     }
 
-                    // Armamos la alerta visual amigable
+
+                    // ==========================================
+                    // CÉDULA PASO 2
+                    // ==========================================
+
+                    const inputIdentificacionCliente =
+                        document.getElementById('id_identificacion_cliente');
+
+                    if (inputIdentificacionCliente) {
+                        inputIdentificacionCliente.value = cedulaAnterior;
+                        inputIdentificacionCliente.readOnly = true;
+                    }
+
+
+                    // ==========================================
+                    // NOMBRE
+                    // ==========================================
+
+                    const inputNombre =
+                        document.getElementById('id_nombre');
+
+                    if (inputNombre) {
+                        inputNombre.value = nombreAnterior;
+                        inputNombre.readOnly = true;
+                    }
+
+
+                    // ==========================================
+                    // TELÉFONO PRINCIPAL
+                    // ==========================================
+
+                    const inputTelefono =
+                        document.getElementById('id_telefono');
+
+                    if (inputTelefono) {
+                        inputTelefono.value = telefonoAnterior;
+                    }
+
+
+                    // ==========================================
+                    // TELÉFONO SECUNDARIO
+                    // ==========================================
+
+                    const inputTelefonoSecundario =
+                        document.getElementById('id_telefono_secundario');
+
+                    if (inputTelefonoSecundario) {
+                        inputTelefonoSecundario.value =
+                            telefonoSecundarioAnterior;
+                    }
+
+
+                    // ==========================================
+                    // TELÉFONO TRABAJO
+                    // ==========================================
+
+                    const inputTelefonoTrabajo =
+                        document.getElementById('id_telefono_trabajo');
+
+                    if (inputTelefonoTrabajo) {
+                        inputTelefonoTrabajo.value =
+                            telefonoTrabajoAnterior;
+                    }
+
+
+                    // ==========================================
+                    // CORREO
+                    // ==========================================
+
+                    const inputEmail =
+                        document.getElementById('id_email');
+
+                    if (inputEmail) {
+                        inputEmail.value = emailAnterior;
+                    }
+
+
+                    // ==========================================
+                    // DIRECCIÓN
+                    // ==========================================
+
+                    const inputDireccion =
+                        document.getElementById('id_direccion');
+
+                    if (inputDireccion) {
+                        inputDireccion.value = direccionAnterior;
+                    }
+
+
+                    // ==========================================
+                    // MENSAJE VISUAL
+                    // ==========================================
+
                     alertaDuenoHtml = `
-                        <div class="alert alert-info mt-3 shadow-sm border-0" style="font-size: 13px; background-color: #f5f5f7; border-left: 4px solid var(--apple-blue) !important;">
-                            Dueño registrado <b>${nombreAnterior}</b>.<br>
+                        <div
+                            class="alert alert-info mt-3 shadow-sm border-0"
+                            style="
+                                font-size: 13px;
+                                background-color: #f5f5f7;
+                                border-left: 4px solid var(--apple-blue) !important;
+                            "
+                        >
+                            <strong>Cliente registrado en MAO</strong><br>
+                            ${nombreAnterior}
+
+                            ${telefonoAnterior
+                                ? `<br><strong>Celular:</strong> ${telefonoAnterior}`
+                                : ''
+                            }
+
+                            ${emailAnterior
+                                ? `<br><strong>Correo:</strong> ${emailAnterior}`
+                                : ''
+                            }
                         </div>
                     `;
                 }
@@ -534,22 +705,20 @@ function buscarCedula() {
         .then(res => res.json())
         .then(data => {
             if (!data.exito) {
-                msg.innerHTML = `
-                    <div class="alert alert-warning mt-3">
-                        <strong>Cliente no encontrado.</strong><br>
-                        Puede ingresar los datos manualmente.
-                    </div>
-                `;
+
+                limpiarDatosClienteFormulario();
 
                 if (inputCedulaPaso2) {
                     inputCedulaPaso2.value = identificacion;
                     inputCedulaPaso2.readOnly = false;
                 }
 
-                if (inputNombre) {
-                    inputNombre.value = '';
-                    inputNombre.readOnly = false;
-                }
+                msg.innerHTML = `
+                    <div class="alert alert-warning mt-3">
+                        <strong>Cliente no encontrado.</strong><br>
+                        Puede ingresar los datos manualmente.
+                    </div>
+                `;
 
                 return;
             }

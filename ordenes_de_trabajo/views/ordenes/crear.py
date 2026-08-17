@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
-from ..api import clasificar_vehiculo_con_ia
 from ...models import (
     Cliente,
     OrdenTrabajo,
@@ -88,33 +87,6 @@ def crear_orden(request):
 
         observaciones_recepcion = request.POST.get("observaciones_recepcion", "").strip()
 
-        # =====================================================
-        # IA: CLASIFICAR VEHÍCULO
-        # =====================================================
-        try:
-            clasificacion_ia = clasificar_vehiculo_con_ia(
-                marca=vehiculo.split(" ")[0] if vehiculo else "",
-                modelo=vehiculo,
-                anio=anio,
-                descripcion=vehiculo,
-            )
-
-            print("CLASIFICACIÓN IA:", clasificacion_ia)
-
-            tipo_tarifa_vehiculo = (
-                clasificacion_ia.get("tipo_tarifa_vehiculo")
-                or tipo_tarifa_vehiculo
-                or "NO_APLICA"
-            )
-
-            gama_vehiculo = (
-                clasificacion_ia.get("gama_vehiculo")
-                or gama_vehiculo
-                or "NO_APLICA"
-            )
-
-        except Exception as e:
-            print("ERROR GENERAL IA:", str(e))
 
         sintomas_json = cargar_json_lista(request.POST.get("sintomas_json", ""))
         trabajos_json = cargar_json_lista(request.POST.get("trabajos_json", ""))

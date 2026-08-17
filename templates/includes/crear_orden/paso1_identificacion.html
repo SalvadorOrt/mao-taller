@@ -1,114 +1,313 @@
 <div class="step-container active" id="step_1">
+
     <div class="section-header">
-        <i class="bi bi-search" style="color: #0071e3; margin-right: 8px;"></i>
+        <i class="bi bi-search"
+           style="color:#0071e3; margin-right:8px;"></i>
         1. Identificación Inicial
     </div>
 
+
     <div class="ot-card"
-         style="padding: 25px;
-                border: 1px solid #e5e5ea;
-                box-shadow: none;
-                border-radius: 12px;
-                margin-bottom: 20px;">
+         style="
+            padding:25px;
+            border:1px solid #e5e5ea;
+            box-shadow:none;
+            border-radius:12px;
+            margin-bottom:20px;
+         ">
 
         <div class="row g-4">
 
+
+            <!-- =====================================================
+                 PLACA
+            ====================================================== -->
+
             <div class="col-md-6">
-                <label style="font-size: 12px; font-weight: 600; color: #86868b; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">
+
+                <label for="id_placa"
+                       style="
+                            font-size:12px;
+                            font-weight:600;
+                            color:#86868b;
+                            display:block;
+                            margin-bottom:8px;
+                            letter-spacing:.5px;
+                       ">
                     PLACA DEL VEHÍCULO
                 </label>
 
-                <div style="display: flex; gap: 10px;">
-                    <input type="text"
-                           name="placa"
-                           id="id_placa"
-                           class="form-control-apple"
-                           style="font-weight: 600; flex: 1; letter-spacing: 2px; text-transform: uppercase;"
-                           placeholder="Ej: PBC-7984"
-                           autocomplete="off"
-                           autocorrect="off"
-                           autocapitalize="characters"
-                           spellcheck="false"
-                           maxlength="10"
-                           required
-                           oninput="
-                                this.value = this.value
-                                    .toUpperCase()
-                                    .replace(/[^A-Z0-9-]/g, '');
-                           "
-                           onkeydown="
-                                if(event.key === 'Enter'){
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    buscarPlaca();
-                                    return false;
-                                }
-                           ">
 
-                    <button type="button"
-                            onclick="buscarPlaca()"
-                            style="background: #0071e3; color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <div style="display:flex; gap:10px;">
+
+                    <input
+                        type="text"
+                        name="placa"
+                        id="id_placa"
+                        class="form-control-apple"
+
+                        style="
+                            font-weight:600;
+                            flex:1;
+                            letter-spacing:2px;
+                            text-transform:uppercase;
+                        "
+
+                        placeholder="Ej: PBC-7984"
+
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="characters"
+                        spellcheck="false"
+
+                        maxlength="10"
+                        required
+
+                        oninput="
+                            this.value = this.value
+                                .toUpperCase()
+                                .replace(/[^A-Z0-9-]/g, '');
+                        "
+
+                        onkeydown="
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                buscarPlaca();
+                                return false;
+                            }
+                        "
+                    >
+
+
+                    <button
+                        type="button"
+                        id="btn_buscar_placa"
+                        onclick="buscarPlaca()"
+                        aria-label="Buscar vehículo por placa"
+
+                        style="
+                            background:#0071e3;
+                            color:white;
+                            border:none;
+                            border-radius:8px;
+                            padding:0 20px;
+                            font-weight:600;
+                            font-size:14px;
+                            cursor:pointer;
+                            transition:background .2s;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:6px;
+                            white-space:nowrap;
+                        "
+                    >
+
                         <i class="bi bi-search"></i>
                         Buscar
+
                     </button>
+
                 </div>
 
-                <div id="msg_busqueda_placa" style="margin-top: 8px; font-size: 12px;"></div>
+
+                <div
+                    id="msg_busqueda_placa"
+                    style="
+                        margin-top:8px;
+                        font-size:12px;
+                    ">
+                </div>
+
+
+                <div style="
+                    margin-top:8px;
+                    font-size:11px;
+                    color:#86868b;
+                    line-height:1.4;
+                ">
+                    Si el vehículo ya está registrado en MAO,
+                    se recuperarán automáticamente sus datos
+                    y el cliente asociado.
+                </div>
+
             </div>
 
+
+
+            <!-- =====================================================
+                 CÉDULA / RUC
+            ====================================================== -->
+
             <div class="col-md-6">
-                <label style="font-size: 12px; font-weight: 600; color: #86868b; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">
-                    DOCUMENTO DEL CLIENTE
+
+                <label for="id_identificacion"
+                       style="
+                            font-size:12px;
+                            font-weight:600;
+                            color:#86868b;
+                            display:block;
+                            margin-bottom:8px;
+                            letter-spacing:.5px;
+                       ">
+                    CÉDULA / RUC DEL CLIENTE
                 </label>
 
-                <div style="display: flex; gap: 10px;">
-                    <input type="text"
-                           name="identificacion"
-                           id="id_identificacion"
-                           class="form-control-apple"
-                           style="flex: 1;"
-                           placeholder="Cédula o RUC"
-                           autocomplete="off"
-                           inputmode="numeric"
-                           maxlength="13"
-                           spellcheck="false"
-                           oninput="
-                                this.value = this.value.replace(/[^0-9]/g, '');
-                           "
-                           onkeydown="
-                                if(event.key === 'Enter'){
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    buscarCedula();
-                                    return false;
-                                }
-                           ">
 
-                    <button type="button"
-                            id="btn_buscar_cedula"
-                            onclick="buscarCedula()"
-                            style="background: #f5f5f7; color: #1d1d1f; border: 1px solid #e5e5ea; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <div style="display:flex; gap:10px;">
+
+                    <!--
+                        IMPORTANTE:
+                        Este campo es para búsqueda.
+                        No lleva name='identificacion'.
+
+                        El valor definitivo que se envía al backend
+                        está en id_identificacion_cliente del Paso 2.
+                    -->
+
+                    <input
+                        type="text"
+                        id="id_identificacion"
+                        class="form-control-apple"
+
+                        style="flex:1;"
+
+                        placeholder="10 o 13 dígitos"
+
+                        autocomplete="off"
+                        inputmode="numeric"
+                        maxlength="13"
+                        spellcheck="false"
+
+                        oninput="
+                            this.value = this.value.replace(/[^0-9]/g, '');
+
+                            const destino =
+                                document.getElementById(
+                                    'id_identificacion_cliente'
+                                );
+
+                            if (destino) {
+                                destino.value = this.value;
+                            }
+                        "
+
+                        onkeydown="
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                buscarCedula();
+                                return false;
+                            }
+                        "
+                    >
+
+
+                    <button
+                        type="button"
+                        id="btn_buscar_cedula"
+                        onclick="buscarCedula()"
+                        aria-label="Buscar cliente por cédula o RUC"
+
+                        style="
+                            background:#f5f5f7;
+                            color:#1d1d1f;
+                            border:1px solid #e5e5ea;
+                            border-radius:8px;
+                            padding:0 20px;
+                            font-weight:600;
+                            font-size:14px;
+                            cursor:pointer;
+                            transition:background .2s;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:6px;
+                            white-space:nowrap;
+                        "
+                    >
+
                         <i class="bi bi-person-bounding-box"></i>
                         Buscar
+
                     </button>
+
                 </div>
 
-                <div id="msg_busqueda_cedula" style="margin-top: 8px; font-size: 12px;"></div>
+
+                <div
+                    id="msg_busqueda_cedula"
+                    style="
+                        margin-top:8px;
+                        font-size:12px;
+                    ">
+                </div>
+
+
+                <div style="
+                    margin-top:8px;
+                    font-size:11px;
+                    color:#86868b;
+                    line-height:1.4;
+                ">
+                    Si la placa tiene un cliente registrado,
+                    la identificación se completará automáticamente.
+                    También puede escribir otra cédula o RUC
+                    para consultar un cliente diferente.
+                </div>
+
             </div>
 
         </div>
+
     </div>
+
+
+
+    <!-- =========================================================
+         CONTINUAR SIN CONSULTAR
+    ========================================================== -->
 
     <div class="text-center mt-4">
-        <button type="button"
-                onclick="cambiarPaso(1)"
-                style="background: transparent; color: #0071e3; border: none; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-            Continuar y llenar manualmente
-            <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
+
+        <button
+            type="button"
+            onclick="cambiarPaso(1)"
+
+            style="
+                background:transparent;
+                color:#0071e3;
+                border:none;
+                font-size:14px;
+                font-weight:600;
+                cursor:pointer;
+                text-decoration:none;
+                display:inline-flex;
+                align-items:center;
+                gap:5px;
+            "
+        >
+
+            Continuar sin consultar
+
+            <i
+                class="bi bi-chevron-right"
+                style="font-size:11px;">
+            </i>
+
         </button>
 
-        <p style="font-size: 12px; color: #86868b; margin-top: 5px;">
-            Opción de respaldo sin conexión a las APIs.
+
+        <p style="
+            font-size:12px;
+            color:#86868b;
+            margin-top:5px;
+        ">
+            Puede continuar e ingresar los datos manualmente
+            si las consultas externas no están disponibles.
         </p>
+
     </div>
+
 </div>
