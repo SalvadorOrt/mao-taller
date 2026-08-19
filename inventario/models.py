@@ -212,35 +212,145 @@ class Usuario(AbstractUser):
             f"{sucursal}"
         )
 # =========================================================
-# CATEGORÍAS
+# FAMILIAS DE PRODUCTOS
 # =========================================================
-class Categoria(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
-    prefijo_sku = models.CharField(max_length=20, unique=True)
+class FamiliaProducto(models.Model):
+    nombre = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    descripcion = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    imagen = models.ImageField(
+        upload_to="familias_productos/",
+        blank=True,
+        null=True,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    orden = models.PositiveIntegerField(
+        default=0,
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["nombre"]
-        verbose_name = "Categoría"
-        verbose_name_plural = "Categorías"
+        ordering = [
+            "orden",
+            "nombre",
+        ]
+
+        verbose_name = "Familia de producto"
+        verbose_name_plural = "Familias de productos"
+
+        indexes = [
+            models.Index(
+                fields=["activo", "orden"],
+            ),
+        ]
 
     def clean(self):
         if not self.nombre or not self.nombre.strip():
-            raise ValidationError("El nombre de la categoría es obligatorio.")
-        if not self.prefijo_sku or not self.prefijo_sku.strip():
-            raise ValidationError("El prefijo SKU es obligatorio.")
+            raise ValidationError(
+                "El nombre de la familia es obligatorio."
+            )
 
     def save(self, *args, **kwargs):
         if self.nombre:
             self.nombre = self.nombre.strip()
-        if self.prefijo_sku:
-            self.prefijo_sku = self.prefijo_sku.strip().upper()
+
+        if self.descripcion:
+            self.descripcion = self.descripcion.strip()
 
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nombre
-    
+
+
+# =========================================================
+# CATEGORÍAS
+# =========================================================
+class Categoria(models.Model):
+    familia = models.ForeignKey(
+        FamiliaProducto,
+        on_delete=models.PROTECT,
+        related_name="categorias",
+        null=True,
+        blank=True,
+    )
+
+    nombre = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    prefijo_sku = models.CharField(
+        max_length=20,
+        unique=True,
+    )
+
+    imagen = models.ImageField(
+        upload_to="categorias_productos/",
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        ordering = [
+            "nombre",
+        ]
+
+        verbose_name = "Categoría"
+        verbose_name_plural = "Categorías"
+
+        indexes = [
+            models.Index(
+                fields=["familia", "nombre"],
+            ),
+        ]
+
+    def clean(self):
+        if not self.nombre or not self.nombre.strip():
+            raise ValidationError(
+                "El nombre de la categoría es obligatorio."
+            )
+
+        if not self.prefijo_sku or not self.prefijo_sku.strip():
+            raise ValidationError(
+                "El prefijo SKU es obligatorio."
+            )
+
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+
+        if self.prefijo_sku:
+            self.prefijo_sku = (
+                self.prefijo_sku
+                .strip()
+                .upper()
+            )
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nombre
 
 class TerminoCategoria(models.Model):
     TIPOS = [
