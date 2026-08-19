@@ -5,6 +5,7 @@ from .models import (
     Atributo,
     Categoria,
     CodigoProducto,
+    FamiliaProducto,
     ImagenProducto,
     MarcaRepuesto,
     Producto,
@@ -135,6 +136,17 @@ class UsuarioForm(forms.ModelForm):
 
 class ProductoForm(forms.ModelForm):
 
+    familia = forms.ModelChoiceField(
+        queryset=FamiliaProducto.objects.none(),
+        required=False,
+        label="Familia",
+        empty_label="Seleccione una familia",
+        widget=forms.Select(attrs={
+            "class": "form-control-apple",
+            "id": "id_familia",
+        }),
+    )
+
     class Meta:
         model = Producto
 
@@ -149,22 +161,28 @@ class ProductoForm(forms.ModelForm):
 
         widgets = {
             "categoria": forms.Select(attrs={
-                "class": "form-control-apple select2 searchable-select",
+                "class": "form-control-apple",
+                "id": "id_categoria",
             }),
+
             "nombre_base": forms.TextInput(attrs={
                 "class": "form-control-apple",
                 "style": "text-transform:uppercase;",
             }),
+
             "descripcion": forms.Textarea(attrs={
                 "class": "form-control-apple",
                 "style": "min-height:80px;",
             }),
+
             "activo": forms.CheckboxInput(attrs={
                 "class": "form-check-input",
             }),
+
             "datos_incompletos": forms.CheckboxInput(attrs={
                 "class": "form-check-input",
             }),
+
             "descontinuado": forms.CheckboxInput(attrs={
                 "class": "form-check-input",
             }),
@@ -179,19 +197,186 @@ class ProductoForm(forms.ModelForm):
             "descontinuado": "Descontinuado",
         }
 
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            **kwargs,
+        )
+
+        self.order_fields([
+            "familia",
+            "categoria",
+            "nombre_base",
+            "descripcion",
+            "activo",
+            "datos_incompletos",
+            "descontinuado",
+        ])
+
+        # =================================================
+        # FAMILIAS DISPONIBLES
+        # =================================================
+
+        self.fields["familia"].queryset = (
+            FamiliaProducto.objects
+            .filter(
+                activo=True
+            )
+            .order_by(
+                "orden",
+                "nombre",
+            )
+        )
+
+        # =================================================
+        # CATEGORÍAS DISPONIBLES
+        #
+        # Importante:
+        # dejamos TODAS disponibles inicialmente.
+        #
+        # JavaScript filtra cuando el usuario selecciona
+        # una familia.
+        #
+        # Esto también permite:
+        #
+        # Categoría -> Familia automática
+        # =================================================
+
+        self.fields["categoria"].queryset = (
+            Categoria.objects
+            .select_related(
+                "familia"
+            )
+            .filter(
+                familia__isnull=False,
+                familia__activo=True,
+            )
+            .order_by(
+                "familia__orden",
+                "familia__nombre",
+                "nombre",
+            )
+        )
+
+        # =================================================
+        # EDICIÓN
+        # =================================================
+
+        if (
+            self.instance
+            and self.instance.pk
+            and self.instance.categoria_id
+        ):
+            self.fields["familia"].initial = (
+                self.instance
+                .categoria
+                .familia_id
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        familia = cleaned_data.get(
+            "familia"
+        )
+
+        categoria = cleaned_data.get(
+            "categoria"
+        )
+
+        # =============================================
+        # SI ELIGIÓ CATEGORÍA PRIMERO
+        # DEDUCIR FAMILIA
+        # =============================================
+
+        if (
+            categoria
+            and not familia
+        ):
+            if not categoria.familia_id:
+                self.add_error(
+                    "categoria",
+                    (
+                        "La categoría seleccionada "
+                        "no tiene una familia configurada."
+                    ),
+                )
+
+                return cleaned_data
+
+            familia = (
+                categoria.familia
+            )
+
+            cleaned_data[
+                "familia"
+            ] = familia
+
+        # =============================================
+        # SI NO ELIGIÓ NINGUNA CLASIFICACIÓN
+        # =============================================
+
+        if (
+            not familia
+            and not categoria
+        ):
+            self.add_error(
+                "familia",
+                (
+                    "Seleccione una familia "
+                    "o una categoría."
+                ),
+            )
+
+        # =============================================
+        # EVITAR INCONSISTENCIAS
+        # =============================================
+
+        if (
+            familia
+            and categoria
+            and categoria.familia_id
+            != familia.id
+        ):
+            self.add_error(
+                "categoria",
+                (
+                    "La categoría seleccionada "
+                    "no pertenece a la familia."
+                ),
+            )
+
+        return cleaned_data
+
     def clean_nombre_base(self):
-        nombre = self.cleaned_data.get("nombre_base", "")
-        return nombre.strip().upper()
+        nombre = self.cleaned_data.get(
+            "nombre_base",
+            "",
+        )
+
+        return (
+            nombre
+            .strip()
+            .upper()
+        )
 
     def clean_descripcion(self):
-        descripcion = self.cleaned_data.get("descripcion")
+        descripcion = (
+            self.cleaned_data.get(
+                "descripcion"
+            )
+        )
 
         if descripcion:
-            return descripcion.strip()
+            return (
+                descripcion.strip()
+            )
 
         return None
-
-
 # =========================================================
 # CÓDIGO / REFERENCIA COMERCIAL
 # =========================================================
@@ -385,7 +570,6 @@ class ValorAtributoProductoForm(forms.ModelForm):
         valor = self.cleaned_data.get("valor", "")
         return valor.strip() if valor else ""
 
-
 # =========================================================
 # CATEGORÍAS
 # =========================================================
@@ -396,11 +580,15 @@ class CategoriaForm(forms.ModelForm):
         model = Categoria
 
         fields = [
+            "familia",
             "nombre",
             "prefijo_sku",
         ]
 
         widgets = {
+            "familia": forms.Select(attrs={
+                "class": "form-control-apple select2 searchable-select",
+            }),
             "nombre": forms.TextInput(attrs={
                 "class": "form-control-apple",
             }),
@@ -410,8 +598,28 @@ class CategoriaForm(forms.ModelForm):
             }),
         }
 
+        labels = {
+            "familia": "Familia",
+            "nombre": "Categoría",
+            "prefijo_sku": "Prefijo SKU",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["familia"].required = True
+
+        self.fields["familia"].queryset = (
+            FamiliaProducto.objects
+            .all()
+            .order_by(
+                "orden",
+                "nombre",
+            )
+        )
+
     def clean_nombre(self):
-        nombre = self.cleaned_data["nombre"].strip().upper()
+        nombre = self.cleaned_data["nombre"].strip()
 
         existe = (
             Categoria.objects
@@ -428,9 +636,12 @@ class CategoriaForm(forms.ModelForm):
         return nombre
 
     def clean_prefijo_sku(self):
-        prefijo = self.cleaned_data.get("prefijo_sku", "")
-        return prefijo.strip().upper()
+        prefijo = self.cleaned_data.get(
+            "prefijo_sku",
+            "",
+        )
 
+        return prefijo.strip().upper()
 
 # =========================================================
 # MARCAS
@@ -468,7 +679,6 @@ class MarcaRepuestoForm(forms.ModelForm):
 
         return nombre
 
-
 # =========================================================
 # ATRIBUTOS MAESTROS
 # =========================================================
@@ -481,6 +691,7 @@ class AtributoForm(forms.ModelForm):
         fields = [
             "nombre",
             "unidad",
+            "tipo_dato",
         ]
 
         widgets = {
@@ -489,19 +700,33 @@ class AtributoForm(forms.ModelForm):
             }),
             "unidad": forms.TextInput(attrs={
                 "class": "form-control-apple",
-                "style": "text-transform:uppercase;",
+            }),
+            "tipo_dato": forms.Select(attrs={
+                "class": "form-control-apple",
             }),
         }
 
+        labels = {
+            "nombre": "Atributo",
+            "unidad": "Unidad",
+            "tipo_dato": "Tipo de dato",
+        }
+
     def clean_nombre(self):
-        nombre = self.cleaned_data.get("nombre", "")
-        return nombre.strip().upper()
+        nombre = self.cleaned_data.get(
+            "nombre",
+            "",
+        )
+
+        return nombre.strip()
 
     def clean_unidad(self):
-        unidad = self.cleaned_data.get("unidad")
+        unidad = self.cleaned_data.get(
+            "unidad"
+        )
 
         if unidad:
-            return unidad.strip().upper()
+            return unidad.strip()
 
         return None
 

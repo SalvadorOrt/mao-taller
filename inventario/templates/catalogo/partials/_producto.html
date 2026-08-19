@@ -2,6 +2,66 @@
 
 
     <!-- ==================================================
+         FAMILIA
+    =================================================== -->
+
+    <div class="producto-field">
+
+        <label class="field-label">
+            Familia
+        </label>
+
+        <div
+            class="apple-dropdown"
+            data-dropdown-tipo="familia"
+        >
+
+            <input
+                type="text"
+                class="
+                    form-control-apple
+                    apple-dropdown-input
+                "
+                placeholder="Buscar familia..."
+                autocomplete="off"
+            >
+
+            <input
+                type="hidden"
+                name="{{ producto_form.familia.html_name }}"
+                class="apple-dropdown-hidden"
+                value="{{ producto_form.familia.value|default:'' }}"
+            >
+
+            <div class="apple-dropdown-menu">
+
+                {% for familia in producto_form.familia.field.queryset %}
+
+                    <div
+                        class="apple-dropdown-item"
+                        data-id="{{ familia.id }}"
+                        data-nombre="{{ familia.nombre }}"
+                    >
+                        {{ familia.nombre }}
+                    </div>
+
+                {% endfor %}
+
+                <div class="apple-dropdown-no-result">
+                    Sin coincidencias
+                </div>
+
+            </div>
+
+        </div>
+
+        {{ producto_form.familia.errors }}
+
+    </div>
+
+
+
+    <!-- ==================================================
          CATEGORÍA
     =================================================== -->
 
@@ -11,61 +71,49 @@
             Categoría
         </label>
 
-        <div class="field-with-action">
+        <div
+            class="apple-dropdown"
+            data-dropdown-tipo="categoria"
+        >
 
-            <div
-                class="apple-dropdown"
-                data-dropdown-tipo="categoria"
+            <input
+                type="text"
+                class="
+                    form-control-apple
+                    apple-dropdown-input
+                "
+                placeholder="Buscar categoría..."
+                autocomplete="off"
             >
 
-                <input
-                    type="text"
-                    class="
-                        form-control-apple
-                        apple-dropdown-input
-                    "
-                    placeholder="Buscar categoría..."
-                    autocomplete="off"
-                >
+            <input
+                type="hidden"
+                name="{{ producto_form.categoria.html_name }}"
+                class="apple-dropdown-hidden"
+                value="{{ producto_form.categoria.value|default:'' }}"
+            >
 
-                <input
-                    type="hidden"
-                    name="categoria"
-                    class="apple-dropdown-hidden"
-                    value="{{ producto_form.categoria.value|default:'' }}"
-                >
+            <div class="apple-dropdown-menu">
 
-                <div class="apple-dropdown-menu">
+                {% for categoria in producto_form.categoria.field.queryset %}
 
-                    {% for categoria in producto_form.categoria.field.queryset %}
-
-                        <div
-                            class="apple-dropdown-item"
-                            data-id="{{ categoria.id }}"
-                            data-nombre="{{ categoria.nombre }}"
-                        >
-                            {{ categoria.nombre }}
-                        </div>
-
-                    {% endfor %}
-
-                    <div class="apple-dropdown-no-result">
-                        Sin coincidencias
+                    <div
+                        class="apple-dropdown-item"
+                        data-id="{{ categoria.id }}"
+                        data-nombre="{{ categoria.nombre }}"
+                        data-familia-id="{{ categoria.familia_id|default:'' }}"
+                        data-familia-nombre="{% if categoria.familia %}{{ categoria.familia.nombre }}{% endif %}"
+                    >
+                        {{ categoria.nombre }}
                     </div>
 
+                {% endfor %}
+
+                <div class="apple-dropdown-no-result">
+                    Sin coincidencias
                 </div>
 
             </div>
-
-
-            <button
-                type="button"
-                class="btn-login btn-mini"
-                onclick="abrirModalBootstrap('modalCategoria')"
-                title="Crear nueva categoría"
-            >
-                <i class="bi bi-plus-lg"></i>
-            </button>
 
         </div>
 
@@ -97,7 +145,7 @@
          DESCRIPCIÓN
     =================================================== -->
 
-    <div class="producto-field producto-full">
+    <div class="producto-field">
 
         <label class="field-label">
             Descripción
@@ -160,6 +208,10 @@
     </div>
 
 
+
+    <!-- ==================================================
+         IMÁGENES
+    =================================================== -->
 
     <div class="producto-field producto-full">
 

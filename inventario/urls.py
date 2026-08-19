@@ -17,15 +17,33 @@ urlpatterns = [
     # USUARIOS
     # =====================================================
 
-    path("usuarios/", views.lista_usuarios, name="lista_usuarios"),
-    path("usuarios/nuevo/", views.gestionar_usuario, name="crear_usuario"),
-    path("usuarios/editar/<int:pk>/", views.gestionar_usuario, name="editar_usuario"),
+    path(
+        "usuarios/",
+        views.lista_usuarios,
+        name="lista_usuarios",
+    ),
+
+    path(
+        "usuarios/nuevo/",
+        views.gestionar_usuario,
+        name="crear_usuario",
+    ),
+
+    path(
+        "usuarios/editar/<int:pk>/",
+        views.gestionar_usuario,
+        name="editar_usuario",
+    ),
 
     # =====================================================
     # DASHBOARD
     # =====================================================
 
-    path("", dashboard.dashboard_inventario, name="inventario_dashboard"),
+    path(
+        "",
+        dashboard.dashboard_inventario,
+        name="inventario_dashboard",
+    ),
 
     # =====================================================
     # CATÁLOGO
@@ -47,19 +65,30 @@ urlpatterns = [
     # API INTELIGENTE DEL CATÁLOGO
     # =====================================================
 
-    # Analiza descripción/código y devuelve:
-    # - productos parecidos
-    # - categoría sugerida
-    # - marca/código relacionado
-    # - confianza
+    # -----------------------------------------------------
+    # MOTOR DE SUGERENCIAS
+    # -----------------------------------------------------
+
     path(
         "catalogo/api/sugerir/",
         catalogo.catalogo_sugerir_producto,
         name="inventario_catalogo_sugerir",
     ),
 
-    # Devuelve los atributos técnicos configurados
-    # para una categoría.
+    # -----------------------------------------------------
+    # FAMILIA -> CATEGORÍAS
+    # -----------------------------------------------------
+
+    path(
+        "catalogo/api/familia/<int:familia_id>/categorias/",
+        catalogo.catalogo_categorias_familia,
+        name="inventario_catalogo_categorias_familia",
+    ),
+
+    # -----------------------------------------------------
+    # CATEGORÍA -> ATRIBUTOS
+    # -----------------------------------------------------
+
     path(
         "catalogo/api/categoria/<int:categoria_id>/atributos/",
         catalogo.catalogo_atributos_categoria,
@@ -116,6 +145,8 @@ urlpatterns = [
         name="categoria_editar",
     ),
 
+    # Se conserva por compatibilidad.
+    # NO se mostrará en Nuevo repuesto.
     path(
         "maestros/categorias/crear-rapida/",
         maestros.categoria_crear_rapida,
@@ -172,6 +203,8 @@ urlpatterns = [
         name="atributo_editar",
     ),
 
+    # Se conserva por compatibilidad.
+    # NO se mostrará en Nuevo repuesto.
     path(
         "maestros/atributos/crear-rapido/",
         maestros.atributo_crear_rapido,
@@ -256,6 +289,14 @@ urlpatterns = [
         name="inventario_fisico",
     ),
 
+    # Alias necesario porque fisico.py utiliza
+    # redirect("inventario_fisico_lista")
+    path(
+        "fisico/",
+        fisico.inventario_fisico_lista,
+        name="inventario_fisico_lista",
+    ),
+
     path(
         "fisico/nuevo/",
         fisico.inventario_fisico_crear,
@@ -266,5 +307,55 @@ urlpatterns = [
         "fisico/<int:inventario_id>/",
         fisico.inventario_fisico_detalle,
         name="inventario_fisico_detalle",
+    ),
+
+    # -----------------------------------------------------
+    # GENERAR LÍNEAS DEL CONTEO
+    # -----------------------------------------------------
+
+    path(
+        "fisico/<int:inventario_id>/generar-detalles/",
+        fisico.inventario_fisico_generar_detalles,
+        name="inventario_fisico_generar_detalles",
+    ),
+
+    # -----------------------------------------------------
+    # AGREGAR / ESCANEAR PRODUCTO
+    # -----------------------------------------------------
+
+    path(
+        "fisico/<int:inventario_id>/agregar-linea/",
+        fisico.inventario_fisico_agregar_linea,
+        name="inventario_fisico_agregar_linea",
+    ),
+
+    # -----------------------------------------------------
+    # ACTUALIZAR CONTEO
+    # -----------------------------------------------------
+
+    path(
+        "fisico/detalle/<int:detalle_id>/actualizar/",
+        fisico.inventario_fisico_actualizar_conteo,
+        name="inventario_fisico_actualizar_conteo",
+    ),
+
+    # -----------------------------------------------------
+    # CERRAR INVENTARIO
+    # -----------------------------------------------------
+
+    path(
+        "fisico/<int:inventario_id>/cerrar/",
+        fisico.inventario_fisico_cerrar,
+        name="inventario_fisico_cerrar",
+    ),
+
+    # -----------------------------------------------------
+    # APLICAR AJUSTES
+    # -----------------------------------------------------
+
+    path(
+        "fisico/<int:inventario_id>/aplicar-ajustes/",
+        fisico.inventario_fisico_aplicar_ajustes,
+        name="inventario_fisico_aplicar_ajustes",
     ),
 ]

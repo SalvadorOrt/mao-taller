@@ -2,43 +2,66 @@
      ATRIBUTOS TÉCNICOS
 ===================================================== -->
 
-<div
-    class="section-title"
-    style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding-right:10px;
-    "
->
+<div class="section-title">
 
-    <span>
-        Atributos técnicos
-    </span>
-    
+    <div>
 
-    <button
-        type="button"
-        class="btn-login catalogo-section-action"
-        onclick="agregarAtributo()"
-    >
-        <i
-            class="bi bi-plus-lg"
-            style="margin-right:4px;"
-        ></i>
+        <span>
+            Características técnicas
+        </span>
 
-        Agregar atributo
-    </button>
+        <div
+            style="
+                margin-top:3px;
+                color:var(--muted);
+                font-size:8px;
+                font-weight:500;
+            "
+        >
+            Se cargan automáticamente según la categoría.
+            Complete únicamente las características que conozca.
+        </div>
+
+    </div>
+
+    <i
+        class="bi bi-sliders"
+        style="
+            color:var(--accent);
+            font-size:12px;
+        "
+    ></i>
 
 </div>
 
 
-
 <!-- =====================================================
-     TABLA
+     MENSAJE SIN CATEGORÍA
 ===================================================== -->
 
-<div class="ot-table-wrap">
+<div
+    id="atributosEstadoVacio"
+    style="
+        padding:18px 15px;
+        text-align:center;
+        color:var(--muted);
+        font-size:9px;
+    "
+>
+    Seleccione una categoría para cargar
+    sus características técnicas.
+</div>
+
+
+<!-- =====================================================
+     TABLA DE ATRIBUTOS
+===================================================== -->
+
+<div
+    class="ot-table-wrap"
+    id="atributosTablaWrap"
+    style="display:none;"
+>
 
     <table
         class="ot-table"
@@ -49,21 +72,12 @@
 
             <tr>
 
-                <th style="width:48%;">
-                    Atributo
+                <th style="width:44%;">
+                    Característica
                 </th>
 
-                <th style="width:47%;">
+                <th style="width:56%;">
                     Valor
-                </th>
-
-                <th
-                    style="
-                        width:5%;
-                        text-align:center;
-                    "
-                >
-                    Acción
                 </th>
 
             </tr>
@@ -71,139 +85,146 @@
         </thead>
 
 
-
-        <!-- =================================================
-             FILAS EXISTENTES DEL FORMSET
-        ================================================== -->
-
         <tbody id="atributosContainer">
+
+            <!-- =============================================
+                 FILAS EXISTENTES DEL FORMSET
+            ============================================== -->
 
             {% for form in atributo_formset %}
 
-                <tr class="atributo-form">
-
-
-                    <!-- CAMPOS OCULTOS DEL FORMSET -->
-
-                    {% for hidden in form.hidden_fields %}
-
-                        {{ hidden }}
-
-                    {% endfor %}
-
-
+                <tr
+                    class="atributo-form"
+                    style="display:none;"
+                >
 
                     <!-- =====================================
-                         ATRIBUTO
+                         CARACTERÍSTICA
                     ====================================== -->
 
                     <td>
 
-                        <div class="field-with-action">
+                        <!-- ===============================
+                             CAMPOS OCULTOS DEL MODELFORMSET
+
+                             IMPORTANTE:
+                             deben estar DENTRO del TD.
+
+                             Aquí normalmente Django coloca:
+                             - id del ValorAtributoProducto
+                        ================================ -->
+
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
 
 
-                            <!-- DROPDOWN -->
+                        <!-- ===============================
+                             ATRIBUTO REAL
 
-                            <div
-                                class="apple-dropdown"
-                                data-dropdown-tipo="atributo"
-                            >
+                             No mostramos el select del
+                             ModelForm porque la categoría
+                             determina automáticamente
+                             qué atributo corresponde.
+                        ================================ -->
 
-
-                                <!-- BUSCADOR VISUAL -->
-
-                                <input
-                                    type="text"
-                                    class="
-                                        form-control-apple
-                                        apple-dropdown-input
-                                    "
-                                    placeholder="Buscar atributo..."
-                                    autocomplete="off"
-                                >
+                        <input
+                            type="hidden"
+                            name="{{ form.atributo.html_name }}"
+                            value="{{ form.atributo.value|default:'' }}"
+                            class="atributo-id-input"
+                        >
 
 
-                                <!-- ID REAL QUE SE ENVÍA A DJANGO -->
+                        <!-- ===============================
+                             DELETE DEL FORMSET
 
-                                <input
-                                    type="hidden"
-                                    name="{{ form.atributo.html_name }}"
-                                    class="apple-dropdown-hidden"
-                                    value="{{ form.atributo.value|default:'' }}"
-                                >
+                             Se utiliza cuando:
+                             - se cambia la categoría;
+                             - se elimina un valor existente;
+                             - queda un atributo sin valor.
+                        ================================ -->
 
-
-
-                                <!-- OPCIONES -->
-
-                                <div class="apple-dropdown-menu">
+                        <span style="display:none;">
+                            {{ form.DELETE }}
+                        </span>
 
 
-                                    {% for atributo in atributos_catalogo %}
+                        <!-- ===============================
+                             NOMBRE VISIBLE
+                        ================================ -->
 
-                                        <div
-                                            class="apple-dropdown-item"
-                                            data-id="{{ atributo.id }}"
-                                            data-nombre="{{ atributo.nombre }}"
-                                        >
-
-                                            <span>
-                                                {{ atributo.nombre }}
-                                            </span>
-
-
-                                            {% if atributo.unidad %}
-
-                                                <span
-                                                    style="
-                                                        color:#86868b;
-                                                        margin-left:4px;
-                                                        font-size:8px;
-                                                    "
-                                                >
-                                                    ({{ atributo.unidad }})
-                                                </span>
-
-                                            {% endif %}
-
-                                        </div>
-
-                                    {% endfor %}
-
-
-
-                                    <!-- SIN RESULTADOS -->
-
-                                    <div class="apple-dropdown-no-result">
-                                        Sin coincidencias
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-
-                            <!-- CREAR NUEVO ATRIBUTO -->
-
-                            <button
-                                type="button"
-                                class="btn-login btn-mini"
-                                onclick="abrirModalBootstrap('modalAtributo')"
-                                title="Crear nuevo atributo"
-                            >
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-
+                        <div
+                            class="atributo-nombre"
+                            style="
+                                font-size:9px;
+                                font-weight:650;
+                                color:var(--text);
+                            "
+                        >
+                            {% if form.instance.pk %}
+                                {{ form.instance.atributo.nombre }}
+                            {% else %}
+                                Característica
+                            {% endif %}
                         </div>
 
 
-                        <!-- ERRORES -->
+                        <!-- ===============================
+                             TIPO / INFORMACIÓN ADICIONAL
 
-                        {{ form.atributo.errors }}
+                             atributos.js completará aquí
+                             información como:
+                             Decimal · mm
+                             Opción
+                             Sí / No
+                             etc.
+                        ================================ -->
+
+                        <div
+                            class="atributo-meta"
+                            style="
+                                margin-top:2px;
+                                color:var(--muted);
+                                font-size:8px;
+                            "
+                        ></div>
+
+
+                        <!-- ===============================
+                             ERRORES
+                        ================================ -->
+
+                        {% if form.atributo.errors %}
+
+                            <div
+                                style="
+                                    margin-top:4px;
+                                    color:var(--danger);
+                                    font-size:8px;
+                                "
+                            >
+                                {{ form.atributo.errors }}
+                            </div>
+
+                        {% endif %}
+
+
+                        {% if form.non_field_errors %}
+
+                            <div
+                                style="
+                                    margin-top:4px;
+                                    color:var(--danger);
+                                    font-size:8px;
+                                "
+                            >
+                                {{ form.non_field_errors }}
+                            </div>
+
+                        {% endif %}
 
                     </td>
-
 
 
                     <!-- =====================================
@@ -212,47 +233,63 @@
 
                     <td>
 
-                        {{ form.valor }}
+                        <div
+                            class="atributo-valor-wrap"
+                        >
 
-                        {{ form.valor.errors }}
+                            <!--
+                                Este control inicial puede ser
+                                reemplazado por atributos.js según:
 
-                    </td>
+                                TEXTO
+                                ENTERO
+                                DECIMAL
+                                BOOLEANO
+                                OPCION
+
+                                El name debe conservarse siempre:
+                                atributos-X-valor
+                            -->
+
+                            {{ form.valor }}
 
 
+                            <!-- ===========================
+                                 UNIDAD
 
-                    <!-- =====================================
-                         ELIMINAR
-                    ====================================== -->
+                                 atributos.js la muestra
+                                 cuando corresponda.
+                            ============================ -->
 
-                    <td style="text-align:center;">
-
-
-                        <!-- DELETE REAL DEL FORMSET -->
-
-                        <div style="display:none;">
-
-                            {{ form.DELETE }}
+                            <span
+                                class="atributo-unidad"
+                                style="
+                                    display:none;
+                                    margin-left:6px;
+                                    color:var(--muted);
+                                    font-size:8px;
+                                    white-space:nowrap;
+                                "
+                            ></span>
 
                         </div>
 
 
-                        <button
-                            type="button"
-                            class="
-                                btn-login
-                                danger
-                                small
-                                catalogo-delete-btn
-                            "
-                            onclick="eliminarAtributo(this)"
-                            title="Eliminar atributo"
-                            aria-label="Eliminar atributo"
-                        >
-                            <i class="bi bi-trash3"></i>
-                        </button>
+                        {% if form.valor.errors %}
+
+                            <div
+                                style="
+                                    margin-top:4px;
+                                    color:var(--danger);
+                                    font-size:8px;
+                                "
+                            >
+                                {{ form.valor.errors }}
+                            </div>
+
+                        {% endif %}
 
                     </td>
-
 
                 </tr>
 
@@ -265,174 +302,115 @@
 </div>
 
 
-
 <!-- =====================================================
-     TEMPLATE PARA NUEVAS FILAS
+     TEMPLATE PARA FILAS AUTOMÁTICAS
 ===================================================== -->
 
 <template id="atributoEmptyFormTemplate">
 
+    <tr
+        class="atributo-form"
+        style="display:none;"
+    >
 
-    <tr class="atributo-form">
-
-
-        <!-- CAMPOS OCULTOS -->
-
-        {% for hidden in atributo_formset.empty_form.hidden_fields %}
-
-            {{ hidden }}
-
-        {% endfor %}
-
-
-
-        <!-- =================================================
-             ATRIBUTO
-        ================================================== -->
+        <!-- =============================================
+             CARACTERÍSTICA
+        ============================================== -->
 
         <td>
 
-            <div class="field-with-action">
+            <!-- =========================================
+                 CAMPOS OCULTOS DEL FORMSET
+
+                 __prefix__ será reemplazado por JS
+                 cuando se cree una nueva fila.
+            ========================================== -->
+
+            {% for hidden in atributo_formset.empty_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
 
 
-                <div
-                    class="apple-dropdown"
-                    data-dropdown-tipo="atributo"
-                >
+            <!-- =========================================
+                 ATRIBUTO REAL
+            ========================================== -->
 
-
-                    <!-- BUSCADOR -->
-
-                    <input
-                        type="text"
-                        class="
-                            form-control-apple
-                            apple-dropdown-input
-                        "
-                        placeholder="Buscar atributo..."
-                        autocomplete="off"
-                    >
-
-
-                    <!-- ID REAL -->
-
-                    <input
-                        type="hidden"
-                        name="{{ atributo_formset.empty_form.atributo.html_name }}"
-                        class="apple-dropdown-hidden"
-                        value=""
-                    >
-
-
-
-                    <!-- CATÁLOGO -->
-
-                    <div class="apple-dropdown-menu">
-
-
-                        {% for atributo in atributos_catalogo %}
-
-                            <div
-                                class="apple-dropdown-item"
-                                data-id="{{ atributo.id }}"
-                                data-nombre="{{ atributo.nombre }}"
-                            >
-
-                                <span>
-                                    {{ atributo.nombre }}
-                                </span>
-
-
-                                {% if atributo.unidad %}
-
-                                    <span
-                                        style="
-                                            color:#86868b;
-                                            margin-left:4px;
-                                            font-size:8px;
-                                        "
-                                    >
-                                        ({{ atributo.unidad }})
-                                    </span>
-
-                                {% endif %}
-
-                            </div>
-
-                        {% endfor %}
-
-
-
-                        <div class="apple-dropdown-no-result">
-                            Sin coincidencias
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- CREAR ATRIBUTO RÁPIDO -->
-
-                <button
-                    type="button"
-                    class="btn-login btn-mini"
-                    onclick="abrirModalBootstrap('modalAtributo')"
-                    title="Crear nuevo atributo"
-                >
-                    <i class="bi bi-plus-lg"></i>
-                </button>
-
-            </div>
-
-        </td>
-
-
-
-        <!-- =================================================
-             VALOR
-        ================================================== -->
-
-        <td>
-
-            {{ atributo_formset.empty_form.valor }}
-
-        </td>
-
-
-
-        <!-- =================================================
-             ELIMINAR
-        ================================================== -->
-
-        <td style="text-align:center;">
-
-
-            <div style="display:none;">
-
-                {{ atributo_formset.empty_form.DELETE }}
-
-            </div>
-
-
-            <button
-                type="button"
-                class="
-                    btn-login
-                    danger
-                    small
-                    catalogo-delete-btn
-                "
-                onclick="eliminarAtributo(this)"
-                title="Eliminar atributo"
-                aria-label="Eliminar atributo"
+            <input
+                type="hidden"
+                name="{{ atributo_formset.empty_form.atributo.html_name }}"
+                value=""
+                class="atributo-id-input"
             >
-                <i class="bi bi-trash3"></i>
-            </button>
+
+
+            <!-- =========================================
+                 DELETE
+            ========================================== -->
+
+            <span style="display:none;">
+                {{ atributo_formset.empty_form.DELETE }}
+            </span>
+
+
+            <!-- =========================================
+                 NOMBRE
+            ========================================== -->
+
+            <div
+                class="atributo-nombre"
+                style="
+                    font-size:9px;
+                    font-weight:650;
+                    color:var(--text);
+                "
+            >
+                Característica
+            </div>
+
+
+            <!-- =========================================
+                 META
+            ========================================== -->
+
+            <div
+                class="atributo-meta"
+                style="
+                    margin-top:2px;
+                    color:var(--muted);
+                    font-size:8px;
+                "
+            ></div>
 
         </td>
 
+
+        <!-- =============================================
+             VALOR
+        ============================================== -->
+
+        <td>
+
+            <div
+                class="atributo-valor-wrap"
+            >
+
+                {{ atributo_formset.empty_form.valor }}
+
+
+                <span
+                    class="atributo-unidad"
+                    style="
+                        display:none;
+                        margin-left:6px;
+                        color:var(--muted);
+                        font-size:8px;
+                        white-space:nowrap;
+                    "
+                ></span>
+
+            </div>
+
+        </td>
 
     </tr>
 

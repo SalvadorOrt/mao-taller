@@ -1,227 +1,145 @@
-<!-- ===================================================== -->
-<!-- MODAL CATEGORÍA -->
-<!-- ===================================================== -->
+<!-- =====================================================
+     MODALES - NUEVO REPUESTO
+===================================================== -->
 
-<div class="modal fade" id="modalCategoria" tabindex="-1" aria-hidden="true">
+<!--
+    IMPORTANTE:
 
-    <div class="modal-dialog modal-dialog-centered">
+    Desde el formulario operativo "Nuevo repuesto"
+    NO se permite crear:
 
-        <div class="modal-content">
+    - Familias
+    - Categorías
+    - Atributos técnicos
+    - Opciones de atributos
+    - Configuraciones Categoría ↔ Atributo
 
-            <div class="modal-header">
+    Esa configuración se administra exclusivamente
+    desde el módulo de Maestros.
 
-                <h5 class="modal-title">
-                    Nueva categoría
-                </h5>
-
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-                </button>
-
-            </div>
-
-            <div class="modal-body">
-
-                <div class="mb-3">
-
-                    <label class="field-label">
-                        Nombre
-                    </label>
-
-                    <input
-                        id="categoriaNombre"
-                        type="text"
-                        class="form-control-apple"
-                        autocomplete="off">
-
-                </div>
-
-                <div>
-
-                    <label class="field-label">
-                        Prefijo SKU
-                    </label>
-
-                    <input
-                        id="categoriaPrefijo"
-                        type="text"
-                        class="form-control-apple"
-                        autocomplete="off">
-
-                </div>
-
-            </div>
-
-            <div class="modal-footer">
-
-                <button
-                    type="button"
-                    class="btn-login"
-                    data-bs-dismiss="modal">
-
-                    Cancelar
-
-                </button>
-
-                <button
-                    type="button"
-                    class="btn-login primary"
-                    onclick="guardarCategoria()">
-
-                    Guardar
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
+    Aquí únicamente se conserva la creación rápida
+    de MARCAS comerciales.
+-->
 
 
-<!-- ===================================================== -->
-<!-- MODAL MARCA -->
-<!-- ===================================================== -->
+<!-- =====================================================
+     MODAL MARCA
+===================================================== -->
 
-<div class="modal fade" id="modalMarca" tabindex="-1" aria-hidden="true">
+<div
+    class="modal fade"
+    id="modalMarca"
+    tabindex="-1"
+    aria-labelledby="modalMarcaLabel"
+    aria-hidden="true"
+>
 
-    <div class="modal-dialog modal-dialog-centered">
+    <div
+        class="
+            modal-dialog
+            modal-dialog-centered
+        "
+    >
 
         <div class="modal-content">
 
+
+            <!-- =========================================
+                 CABECERA
+            ========================================== -->
+
             <div class="modal-header">
 
-                <h5 class="modal-title">
+                <h5
+                    class="modal-title"
+                    id="modalMarcaLabel"
+                >
                     Nueva marca
                 </h5>
 
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-                </button>
-
-            </div>
-
-            <div class="modal-body">
-
-                <label class="field-label">
-                    Nombre
-                </label>
-
-                <input
-                    id="marcaNombre"
-                    type="text"
-                    class="form-control-apple"
-                    autocomplete="off">
-
-            </div>
-
-            <div class="modal-footer">
-
-                <button
-                    type="button"
-                    class="btn-login"
-                    data-bs-dismiss="modal">
-
-                    Cancelar
-
-                </button>
-
-                <button
-                    type="button"
-                    class="btn-login primary"
-                    onclick="guardarMarca()">
-
-                    Guardar
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- MODAL ATRIBUTO -->
-<!-- ===================================================== -->
-
-<div class="modal fade" id="modalAtributo" tabindex="-1" aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <h5 class="modal-title">
-                    Nuevo atributo
-                </h5>
 
                 <button
                     type="button"
                     class="btn-close"
-                    data-bs-dismiss="modal">
-                </button>
+                    data-bs-dismiss="modal"
+                    aria-label="Cerrar"
+                ></button>
 
             </div>
 
+
+            <!-- =========================================
+                 CUERPO
+            ========================================== -->
+
             <div class="modal-body">
-
-                <div class="mb-3">
-
-                    <label class="field-label">
-                        Nombre
-                    </label>
-
-                    <input
-                        id="atributoNombre"
-                        type="text"
-                        class="form-control-apple"
-                        autocomplete="off">
-
-                </div>
 
                 <div>
 
-                    <label class="field-label">
-                        Unidad
+                    <label
+                        class="field-label"
+                        for="marcaNombre"
+                    >
+                        Nombre
                     </label>
 
+
                     <input
-                        id="atributoUnidad"
+                        id="marcaNombre"
                         type="text"
                         class="form-control-apple"
                         autocomplete="off"
-                        placeholder="Ej: mm, cm, L, Kg">
+                        maxlength="120"
+                        placeholder="Ej: BOSCH"
+                    >
 
                 </div>
 
+
+                <!-- =====================================
+                     MENSAJE DE ERROR
+                ====================================== -->
+
+                <div
+                    id="marcaModalError"
+                    style="
+                        display:none;
+                        margin-top:8px;
+                        font-size:9px;
+                        font-weight:600;
+                        color:var(--danger);
+                    "
+                ></div>
+
             </div>
+
+
+            <!-- =========================================
+                 PIE
+            ========================================== -->
 
             <div class="modal-footer">
 
                 <button
                     type="button"
                     class="btn-login"
-                    data-bs-dismiss="modal">
-
+                    data-bs-dismiss="modal"
+                >
                     Cancelar
-
                 </button>
+
 
                 <button
                     type="button"
                     class="btn-login primary"
-                    onclick="guardarAtributo()">
+                    id="btnGuardarMarca"
+                    onclick="guardarMarca()"
+                >
+
+                    <i
+                        class="bi bi-check-lg"
+                        style="margin-right:4px;"
+                    ></i>
 
                     Guardar
 

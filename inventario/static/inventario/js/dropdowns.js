@@ -109,15 +109,50 @@ class AppleDropdownManager {
 
         if (!input || !menu) return;
 
-        const filtro = input.value.toLowerCase().trim();
+        const filtro = input.value
+            .toLowerCase()
+            .trim();
 
         let visibles = 0;
 
         this.obtenerItems(wrap).forEach((item) => {
-            const texto = (item.dataset.nombre || item.textContent || "")
-                .toLowerCase();
 
-            if (texto.includes(filtro)) {
+            // =================================================
+            // FILTROS EXTERNOS
+            // =================================================
+            //
+            // Si otro módulo, por ejemplo atributos.js,
+            // marca:
+            //
+            // data-filtro-familia="0"
+            //
+            // este dropdown NO debe volver a mostrarlo.
+            //
+            // Los dropdowns que no usen este atributo
+            // siguen funcionando exactamente como antes.
+            // =================================================
+
+            if (
+                item.dataset.filtroFamilia === "0"
+            ) {
+                item.style.display = "none";
+                return;
+            }
+
+
+            // =================================================
+            // BÚSQUEDA NORMAL
+            // =================================================
+
+            const texto = (
+                item.dataset.nombre
+                || item.textContent
+                || ""
+            ).toLowerCase();
+
+            if (
+                texto.includes(filtro)
+            ) {
                 item.style.display = "block";
                 visibles++;
             } else {
@@ -125,11 +160,17 @@ class AppleDropdownManager {
             }
         });
 
+
         if (noResult) {
-            noResult.style.display = visibles === 0 ? "block" : "none";
+            noResult.style.display = (
+                visibles === 0
+                    ? "block"
+                    : "none"
+            );
         }
 
         this.indiceActivo = -1;
+
         this.limpiarActivo(wrap);
     }
 

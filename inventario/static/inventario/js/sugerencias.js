@@ -1,29 +1,65 @@
 // =========================================================
 // MOTOR INTELIGENTE DE SUGERENCIAS - CATÁLOGO
 // =========================================================
+//
+// RESPONSABILIDADES:
+//
+// - Analizar nombre / descripción / código / barcode.
+// - Sugerir categoría.
+// - Sugerir productos existentes.
+// - Sugerir marca.
+// - Aplicar categoría sugerida.
+// - Aplicar marca sugerida.
+//
+// IMPORTANTE:
+//
+// Este archivo NO administra atributos técnicos.
+//
+// La lógica:
+//
+// Categoría
+//     ↓
+// atributos.js
+//     ↓
+// Familia automática
+//     ↓
+// Características técnicas
+//
+// =========================================================
 
 (function () {
     "use strict";
 
+
+    // =====================================================
+    // CONFIGURACIÓN
+    // =====================================================
+
     const DEBOUNCE_MS = 550;
+
     const MIN_TEXTO = 3;
     const MIN_CODIGO = 2;
 
     const CONFIANZA_AUTO_CATEGORIA = 75;
     const CONFIANZA_AUTO_MARCA = 80;
 
+
+    // =====================================================
+    // ESTADO
+    // =====================================================
+
     let form = null;
 
     let urlSugerencias = "";
-    let urlAtributosCategoria = "";
 
     let temporizador = null;
+
     let controladorPeticion = null;
-    let controladorAtributos = null;
 
     let filaCodigoActiva = null;
 
     let categoriaTocadaManual = false;
+
     let aplicandoAutomaticamente = false;
 
     const marcasTocadasManual = new WeakSet();
@@ -34,6 +70,7 @@
     // =====================================================
 
     function inicializarSugerencias() {
+
         form = document.getElementById(
             "catalogoForm"
         );
@@ -42,55 +79,44 @@
             return;
         }
 
+
+        // Evitar inicialización doble.
+        if (
+            form.dataset.sugerenciasInicializadas
+            === "1"
+        ) {
+            return;
+        }
+
+        form.dataset.sugerenciasInicializadas = "1";
+
+
         urlSugerencias = (
             form.dataset.urlSugerencias
             || ""
         );
 
-        urlAtributosCategoria = (
-            form.dataset.urlAtributosCategoria
-            || ""
-        );
 
         if (!urlSugerencias) {
             console.warn(
-                "MAO: falta data-url-sugerencias en catalogoForm."
+                "MAO: falta data-url-sugerencias "
+                + "en catalogoForm."
             );
         }
 
-        if (!urlAtributosCategoria) {
-            console.warn(
-                "MAO: falta data-url-atributos-categoria en catalogoForm."
-            );
-        }
 
         conectarEventos();
+
         conectarCerrarPanel();
-
-        // ---------------------------------------------
-        // CATEGORÍA INICIAL
-        // ---------------------------------------------
-
-        const categoriaInicial = (
-            obtenerDropdownCategoria()
-        );
-
-        if (
-            categoriaInicial?.hidden?.value
-            && urlAtributosCategoria
-        ) {
-            cargarAtributosCategoria(
-                categoriaInicial.hidden.value
-            );
-        }
     }
 
 
     // =====================================================
-    // EVENTOS GENERALES
+    // EVENTOS
     // =====================================================
 
     function conectarEventos() {
+
 
         // =================================================
         // INPUT
@@ -99,11 +125,15 @@
         form.addEventListener(
             "input",
             function (event) {
-                const target = event.target;
 
-                // -----------------------------------------
+                const target = (
+                    event.target
+                );
+
+
+                // =========================================
                 // CATEGORÍA ESCRITA MANUALMENTE
-                // -----------------------------------------
+                // =========================================
 
                 if (
                     target.classList.contains(
@@ -113,16 +143,20 @@
                         '.apple-dropdown[data-dropdown-tipo="categoria"]'
                     )
                 ) {
+
                     if (
                         !aplicandoAutomaticamente
                     ) {
                         categoriaTocadaManual = true;
                     }
+
+                    return;
                 }
 
-                // -----------------------------------------
+
+                // =========================================
                 // MARCA ESCRITA MANUALMENTE
-                // -----------------------------------------
+                // =========================================
 
                 if (
                     target.classList.contains(
@@ -132,8 +166,11 @@
                         '.apple-dropdown[data-dropdown-tipo="marca"]'
                     )
                 ) {
-                    const fila = target.closest(
-                        ".codigo-form"
+
+                    const fila = (
+                        target.closest(
+                            ".codigo-form"
+                        )
                     );
 
                     if (
@@ -144,15 +181,21 @@
                             fila
                         );
                     }
+
+                    return;
                 }
 
-                // -----------------------------------------
-                // MOTOR
-                // -----------------------------------------
+
+                // =========================================
+                // CAMPOS DEL PRODUCTO
+                // =========================================
 
                 if (
-                    esCampoProducto(target)
+                    esCampoProducto(
+                        target
+                    )
                 ) {
+
                     programarAnalisis(
                         obtenerPrimeraFilaCodigoVisible()
                     );
@@ -160,9 +203,17 @@
                     return;
                 }
 
+
+                // =========================================
+                // CAMPOS DE CÓDIGO
+                // =========================================
+
                 if (
-                    esCampoCodigo(target)
+                    esCampoCodigo(
+                        target
+                    )
                 ) {
+
                     filaCodigoActiva = (
                         target.closest(
                             ".codigo-form"
@@ -184,11 +235,25 @@
         form.addEventListener(
             "change",
             function (event) {
-                const target = event.target;
 
-                // -----------------------------------------
+                const target = (
+                    event.target
+                );
+
+
+                // =========================================
                 // CATEGORÍA SELECCIONADA
-                // -----------------------------------------
+                // =========================================
+                //
+                // NO cargamos atributos aquí.
+                //
+                // atributos.js escucha este mismo evento
+                // y se encarga de:
+                //
+                // categoría -> familia
+                // categoría -> atributos técnicos
+                //
+                // =========================================
 
                 if (
                     target.classList.contains(
@@ -198,32 +263,20 @@
                         '.apple-dropdown[data-dropdown-tipo="categoria"]'
                     )
                 ) {
+
                     if (
                         !aplicandoAutomaticamente
                     ) {
                         categoriaTocadaManual = true;
                     }
 
-                    const categoriaId = (
-                        target.value
-                    );
-
-                    if (categoriaId) {
-                        cargarAtributosCategoria(
-                            categoriaId
-                        );
-                    } else {
-                        limpiarAtributosAutomaticosAnteriores(
-                            null
-                        );
-                    }
-
                     return;
                 }
 
-                // -----------------------------------------
+
+                // =========================================
                 // MARCA SELECCIONADA
-                // -----------------------------------------
+                // =========================================
 
                 if (
                     target.classList.contains(
@@ -233,27 +286,37 @@
                         '.apple-dropdown[data-dropdown-tipo="marca"]'
                     )
                 ) {
-                    const fila = target.closest(
-                        ".codigo-form"
+
+                    const fila = (
+                        target.closest(
+                            ".codigo-form"
+                        )
                     );
 
                     if (
                         fila
                         && !aplicandoAutomaticamente
                     ) {
+
                         marcasTocadasManual.add(
                             fila
                         );
                     }
+
+                    return;
                 }
 
-                // -----------------------------------------
-                // MOTOR
-                // -----------------------------------------
+
+                // =========================================
+                // MOTOR - PRODUCTO
+                // =========================================
 
                 if (
-                    esCampoProducto(target)
+                    esCampoProducto(
+                        target
+                    )
                 ) {
+
                     programarAnalisis(
                         obtenerPrimeraFilaCodigoVisible()
                     );
@@ -261,9 +324,17 @@
                     return;
                 }
 
+
+                // =========================================
+                // MOTOR - CÓDIGO
+                // =========================================
+
                 if (
-                    esCampoCodigo(target)
+                    esCampoCodigo(
+                        target
+                    )
                 ) {
+
                     filaCodigoActiva = (
                         target.closest(
                             ".codigo-form"
@@ -279,55 +350,40 @@
 
 
         // =================================================
-        // CLICK EN OPCIÓN DE CATEGORÍA
+        // CLICK EN CATEGORÍA
         // =================================================
         //
-        // No dependemos únicamente de que dropdowns.js
-        // dispare un "change" sobre el hidden.
-        //
-        // Esto garantiza:
-        //
-        // Categoría seleccionada
-        //      ↓
-        // cargarAtributosCategoria()
+        // Respaldo para detectar intención humana incluso
+        // antes de que dropdowns.js emita el change.
         //
         // =================================================
 
         form.addEventListener(
             "click",
             function (event) {
+
                 const itemCategoria = (
                     event.target.closest(
-                        '.apple-dropdown[data-dropdown-tipo="categoria"] .apple-dropdown-item'
+                        '.apple-dropdown'
+                        + '[data-dropdown-tipo="categoria"] '
+                        + '.apple-dropdown-item'
                     )
                 );
 
-                if (itemCategoria) {
-                    const categoriaId = (
-                        itemCategoria.dataset.id
-                    );
 
-                    if (categoriaId) {
-                        categoriaTocadaManual = true;
+                if (
+                    itemCategoria
+                    && !aplicandoAutomaticamente
+                ) {
 
-                        // Esperamos a que AppleDropdown
-                        // termine de escribir el hidden.
-                        setTimeout(
-                            function () {
-                                cargarAtributosCategoria(
-                                    categoriaId
-                                );
-                            },
-                            0
-                        );
-                    }
+                    categoriaTocadaManual = true;
                 }
             }
         );
 
 
         // =================================================
-        // BOTONES DEL MOTOR
+        // BOTONES DEL PANEL DE SUGERENCIAS
         // =================================================
 
         const contenido = (
@@ -336,7 +392,9 @@
             )
         );
 
+
         if (contenido) {
+
             contenido.addEventListener(
                 "click",
                 manejarAccionSugerencia
@@ -346,13 +404,17 @@
 
 
     // =====================================================
-    // CAMPOS DEL MOTOR
+    // CAMPOS QUE ACTIVAN EL MOTOR
     // =====================================================
 
-    function esCampoProducto(elemento) {
+    function esCampoProducto(
+        elemento
+    ) {
+
         if (!elemento?.name) {
             return false;
         }
+
 
         return [
             "nombre_base",
@@ -363,18 +425,24 @@
     }
 
 
-    function esCampoCodigo(elemento) {
+    function esCampoCodigo(
+        elemento
+    ) {
+
         if (!elemento?.name) {
             return false;
         }
+
 
         return (
             elemento.name.endsWith(
                 "-codigo"
             )
+
             || elemento.name.endsWith(
                 "-codigo_barras"
             )
+
             || elemento.name.endsWith(
                 "-nombre_comercial"
             )
@@ -389,15 +457,18 @@
     function programarAnalisis(
         filaCodigo = null
     ) {
+
         clearTimeout(
             temporizador
         );
+
 
         filaCodigoActiva = (
             filaCodigo
             || filaCodigoActiva
             || obtenerPrimeraFilaCodigoVisible()
         );
+
 
         temporizador = setTimeout(
             analizarFormulario,
@@ -411,12 +482,14 @@
     // =====================================================
 
     function obtenerDatosMotor() {
+
         const nombre = (
             form.querySelector(
                 '[name="nombre_base"]'
             )?.value
             || ""
         ).trim();
+
 
         const descripcion = (
             form.querySelector(
@@ -425,10 +498,12 @@
             || ""
         ).trim();
 
+
         const fila = (
             filaCodigoActiva
             || obtenerPrimeraFilaCodigoVisible()
         );
+
 
         const nombreComercial = (
             fila?.querySelector(
@@ -437,13 +512,16 @@
             || ""
         ).trim();
 
+
         const codigo = (
             obtenerCodigoFila(
                 fila
             )
         );
 
+
         const partes = [];
+
 
         [
             nombre,
@@ -451,14 +529,23 @@
             nombreComercial,
         ].forEach(
             function (valor) {
+
                 if (
                     valor
                     && !partes.some(
-                        existente =>
-                            existente.toLowerCase()
-                            === valor.toLowerCase()
+                        function (existente) {
+
+                            return (
+                                existente
+                                .toLowerCase()
+                                ===
+                                valor
+                                .toLowerCase()
+                            );
+                        }
                     )
                 ) {
+
                     partes.push(
                         valor
                     );
@@ -466,9 +553,13 @@
             }
         );
 
+
         const texto = (
-            partes.join(" | ").trim()
+            partes
+            .join(" | ")
+            .trim()
         );
+
 
         return {
             texto,
@@ -481,10 +572,18 @@
     }
 
 
-    function obtenerCodigoFila(fila) {
+    // =====================================================
+    // CÓDIGO DE LA FILA
+    // =====================================================
+
+    function obtenerCodigoFila(
+        fila
+    ) {
+
         if (!fila) {
             return "";
         }
+
 
         const codigo = (
             fila.querySelector(
@@ -493,10 +592,14 @@
             || ""
         ).trim();
 
+
+        // Preferimos referencia comercial.
         if (codigo) {
             return codigo;
         }
 
+
+        // Si no existe, usamos barcode.
         return (
             fila.querySelector(
                 'input[name$="-codigo_barras"]'
@@ -511,128 +614,175 @@
     // =====================================================
 
     async function analizarFormulario() {
+
         if (!urlSugerencias) {
             return;
         }
+
 
         const datos = (
             obtenerDatosMotor()
         );
 
+
         guardarTextoAprendizaje(
             datos.texto
         );
+
 
         const textoValido = (
             datos.texto.length
             >= MIN_TEXTO
         );
 
+
         const codigoValido = (
             datos.codigo.length
             >= MIN_CODIGO
         );
 
+
         if (
             !textoValido
             && !codigoValido
         ) {
+
             ocultarPanel();
+
             return;
         }
+
+
+        // =================================================
+        // CANCELAR CONSULTA ANTERIOR
+        // =================================================
 
         if (
             controladorPeticion
         ) {
+
             controladorPeticion.abort();
         }
+
 
         controladorPeticion = (
             new AbortController()
         );
 
+
         mostrarPanelAnalizando();
 
+
         try {
+
             const parametros = (
                 new URLSearchParams()
             );
 
+
             if (datos.texto) {
+
                 parametros.set(
                     "texto",
                     datos.texto
                 );
             }
 
+
             if (datos.codigo) {
+
                 parametros.set(
                     "codigo",
                     datos.codigo
                 );
             }
 
+
             const respuesta = await fetch(
-                `${urlSugerencias}?${parametros.toString()}`,
+                (
+                    `${urlSugerencias}`
+                    + `?${parametros.toString()}`
+                ),
                 {
                     method: "GET",
+
                     headers: {
-                        "X-Requested-With": (
-                            "XMLHttpRequest"
-                        ),
-                        "Accept": (
-                            "application/json"
-                        ),
+
+                        "X-Requested-With":
+                            "XMLHttpRequest",
+
+                        "Accept":
+                            "application/json",
                     },
-                    signal: (
-                        controladorPeticion.signal
-                    ),
+
+                    signal:
+                        controladorPeticion.signal,
                 }
             );
 
-            const resultado = await (
-                respuesta.json()
+
+            const resultado = (
+                await respuesta.json()
             );
 
+
             if (!respuesta.ok) {
+
                 throw new Error(
                     resultado.error
-                    || "No se pudo analizar el producto."
+                    || (
+                        "No se pudo analizar "
+                        + "el producto."
+                    )
                 );
             }
 
+
             if (
-                resultado.ok === false
+                resultado.ok
+                === false
             ) {
+
                 throw new Error(
                     resultado.error
-                    || "No se pudo analizar el producto."
+                    || (
+                        "No se pudo analizar "
+                        + "el producto."
+                    )
                 );
             }
+
 
             procesarResultado(
                 resultado,
                 datos
             );
 
+
         } catch (error) {
+
             if (
                 error.name
                 === "AbortError"
             ) {
+
                 return;
             }
 
+
             console.error(
-                "Error en MotorSugerenciasProducto:",
+                "MAO - MotorSugerenciasProducto:",
                 error
             );
+
 
             mostrarErrorMotor(
                 error.message
             );
 
+
         } finally {
+
             controladorPeticion = null;
         }
     }
@@ -646,6 +796,7 @@
         resultado,
         datosEntrada
     ) {
+
         const categorias = (
             Array.isArray(
                 resultado.categorias
@@ -653,6 +804,7 @@
                 ? resultado.categorias
                 : []
         );
+
 
         const productos = (
             Array.isArray(
@@ -662,10 +814,12 @@
                 : []
         );
 
+
         const mejorCategoria = (
             categorias[0]
             || null
         );
+
 
         const mejorProducto = (
             productos[0]
@@ -674,7 +828,7 @@
 
 
         // =================================================
-        // AUTO CATEGORÍA
+        // CATEGORÍA AUTOMÁTICA
         // =================================================
 
         if (
@@ -685,10 +839,12 @@
             )
             >= CONFIANZA_AUTO_CATEGORIA
         ) {
+
             autoAplicarCategoria(
                 mejorCategoria
             );
         }
+
 
         else if (
             !mejorCategoria
@@ -699,25 +855,22 @@
             )
             >= CONFIANZA_AUTO_CATEGORIA
         ) {
+
             autoAplicarCategoria({
-                id: (
-                    mejorProducto
-                    .categoria_id
-                ),
-                nombre: (
-                    mejorProducto
-                    .categoria
-                ),
-                confianza: (
-                    mejorProducto
-                    .confianza
-                ),
+                id:
+                    mejorProducto.categoria_id,
+
+                nombre:
+                    mejorProducto.categoria,
+
+                confianza:
+                    mejorProducto.confianza,
             });
         }
 
 
         // =================================================
-        // AUTO MARCA
+        // MARCA AUTOMÁTICA
         // =================================================
 
         if (
@@ -728,12 +881,17 @@
             )
             >= CONFIANZA_AUTO_MARCA
         ) {
+
             autoAplicarMarca(
                 datosEntrada.fila,
                 mejorProducto
             );
         }
 
+
+        // =================================================
+        // MOSTRAR RESULTADOS
+        // =================================================
 
         renderizarResultado(
             resultado
@@ -742,26 +900,42 @@
 
 
     // =====================================================
-    // APLICAR CATEGORÍA
+    // AUTO APLICAR CATEGORÍA
     // =====================================================
 
     function autoAplicarCategoria(
         categoria
     ) {
+
         const dropdown = (
             obtenerDropdownCategoria()
         );
 
-        if (!dropdown) {
+
+        if (
+            !dropdown
+            || !categoria?.id
+        ) {
+
             return;
         }
 
-        // Nunca reemplazar una decisión humana.
+
+        // =================================================
+        // NO PISAR DECISIÓN HUMANA
+        // =================================================
+
         if (
             categoriaTocadaManual
         ) {
+
             return;
         }
+
+
+        // =================================================
+        // NO CAMBIAR UNA CATEGORÍA YA SELECCIONADA
+        // =================================================
 
         if (
             dropdown.hidden.value
@@ -772,8 +946,34 @@
                 categoria.id
             )
         ) {
+
             return;
         }
+
+
+        // =================================================
+        // RESPETAR FAMILIA SELECCIONADA
+        // =================================================
+        //
+        // Si el usuario eligió:
+        //
+        // Familia = Frenos
+        //
+        // el motor no debe autoasignar:
+        //
+        // Categoría = Filtro de aire
+        //
+        // =================================================
+
+        if (
+            !categoriaPerteneceFamiliaActual(
+                categoria.id
+            )
+        ) {
+
+            return;
+        }
+
 
         seleccionarDropdownLocal(
             dropdown.wrap,
@@ -784,17 +984,24 @@
     }
 
 
+    // =====================================================
+    // APLICAR CATEGORÍA DESDE BOTÓN "APLICAR"
+    // =====================================================
+
     function aplicarCategoriaForzada(
         categoriaId,
         categoriaNombre
     ) {
+
         const dropdown = (
             obtenerDropdownCategoria()
         );
 
+
         if (!dropdown) {
             return;
         }
+
 
         seleccionarDropdownLocal(
             dropdown.wrap,
@@ -803,47 +1010,131 @@
             true
         );
 
+
+        // A partir de aquí se considera
+        // una decisión explícita del usuario.
         categoriaTocadaManual = true;
 
-        // Garantía adicional.
-        cargarAtributosCategoria(
-            categoriaId
+
+        // NO cargamos atributos aquí.
+        //
+        // seleccionarDropdownLocal() dispara "change".
+        //
+        // atributos.js escucha ese evento y realiza:
+        //
+        // categoría -> familia
+        // categoría -> características
+    }
+
+
+    // =====================================================
+    // VALIDAR FAMILIA ACTUAL
+    // =====================================================
+
+    function categoriaPerteneceFamiliaActual(
+        categoriaId
+    ) {
+
+        const familia = (
+            obtenerDropdownFamilia()
+        );
+
+
+        if (
+            !familia
+            || !familia.hidden?.value
+        ) {
+
+            return true;
+        }
+
+
+        const dropdownCategoria = (
+            obtenerDropdownCategoria()
+        );
+
+
+        if (!dropdownCategoria) {
+            return true;
+        }
+
+
+        const item = (
+            buscarItemDropdown(
+                dropdownCategoria.wrap,
+                categoriaId
+            )
+        );
+
+
+        // Si por alguna razón no encontramos el item,
+        // no bloqueamos la sugerencia.
+        if (!item) {
+            return true;
+        }
+
+
+        const familiaCategoria = String(
+            item.dataset.familiaId
+            || ""
+        );
+
+
+        if (!familiaCategoria) {
+            return true;
+        }
+
+
+        return (
+            familiaCategoria
+            === String(
+                familia.hidden.value
+            )
         );
     }
 
 
     // =====================================================
-    // APLICAR MARCA
+    // AUTO APLICAR MARCA
     // =====================================================
 
     function autoAplicarMarca(
         fila,
         producto
     ) {
+
         if (
             !fila
             || !producto?.marca_id
         ) {
+
             return;
         }
 
+
+        // No pisar selección manual.
         if (
             marcasTocadasManual.has(
                 fila
             )
         ) {
+
             return;
         }
 
+
         const wrap = (
             fila.querySelector(
-                '.apple-dropdown[data-dropdown-tipo="marca"]'
+                '.apple-dropdown'
+                + '[data-dropdown-tipo="marca"]'
             )
         );
+
 
         if (!wrap) {
             return;
         }
+
 
         const hidden = (
             wrap.querySelector(
@@ -851,15 +1142,20 @@
             )
         );
 
+
         if (
             hidden?.value
-            && String(hidden.value)
+            && String(
+                hidden.value
+            )
             !== String(
                 producto.marca_id
             )
         ) {
+
             return;
         }
+
 
         seleccionarDropdownLocal(
             wrap,
@@ -870,28 +1166,38 @@
     }
 
 
+    // =====================================================
+    // APLICAR MARCA MANUAL DESDE MOTOR
+    // =====================================================
+
     function aplicarMarcaForzada(
         marcaId,
         marcaNombre
     ) {
+
         const fila = (
             filaCodigoActiva
             || obtenerPrimeraFilaCodigoVisible()
         );
 
+
         if (!fila) {
             return;
         }
 
+
         const wrap = (
             fila.querySelector(
-                '.apple-dropdown[data-dropdown-tipo="marca"]'
+                '.apple-dropdown'
+                + '[data-dropdown-tipo="marca"]'
             )
         );
+
 
         if (!wrap) {
             return;
         }
+
 
         seleccionarDropdownLocal(
             wrap,
@@ -900,6 +1206,7 @@
             true
         );
 
+
         marcasTocadasManual.add(
             fila
         );
@@ -907,7 +1214,7 @@
 
 
     // =====================================================
-    // APPLE DROPDOWN LOCAL
+    // SELECCIONAR APPLE DROPDOWN
     // =====================================================
 
     function seleccionarDropdownLocal(
@@ -916,13 +1223,16 @@
         nombre = "",
         automatico = false
     ) {
+
         if (
             !wrap
             || id === null
             || id === undefined
         ) {
+
             return false;
         }
+
 
         const input = (
             wrap.querySelector(
@@ -930,35 +1240,35 @@
             )
         );
 
+
         const hidden = (
             wrap.querySelector(
                 ".apple-dropdown-hidden"
             )
         );
 
+
         if (
             !input
             || !hidden
         ) {
+
             return false;
         }
+
 
         const idTexto = (
             String(id)
         );
 
-        const item = Array.from(
-            wrap.querySelectorAll(
-                ".apple-dropdown-item"
+
+        const item = (
+            buscarItemDropdown(
+                wrap,
+                idTexto
             )
-        ).find(
-            elemento =>
-                String(
-                    elemento.dataset.id
-                    || ""
-                )
-                === idTexto
         );
+
 
         const nombreFinal = (
             item?.dataset.nombre
@@ -967,14 +1277,17 @@
             || ""
         );
 
+
         aplicandoAutomaticamente = (
             automatico
         );
 
+
         try {
-            // ---------------------------------------------
-            // USAR API DEL APPLE DROPDOWN
-            // ---------------------------------------------
+
+            // =================================================
+            // APPLE DROPDOWN
+            // =================================================
 
             if (
                 item
@@ -984,59 +1297,37 @@
                     .seleccionarItem
                 ) === "function"
             ) {
+
                 window.AppleDropdown
                     .seleccionarItem(
                         wrap,
                         item
                     );
 
-                // Nos aseguramos de que los valores
-                // realmente queden establecidos.
-                hidden.value = idTexto;
-
-                if (
-                    nombreFinal
-                    && !input.value
-                ) {
-                    input.value = (
-                        nombreFinal
-                    );
-                }
-
-                // MUY IMPORTANTE:
-                // garantizamos que sugerencias.js
-                // reciba el cambio.
-                hidden.dispatchEvent(
-                    new Event(
-                        "change",
-                        {
-                            bubbles: true,
-                        }
-                    )
-                );
-            }
-
-            // ---------------------------------------------
-            // FALLBACK
-            // ---------------------------------------------
-
-            else {
-                input.value = (
-                    nombreFinal
-                );
 
                 hidden.value = (
                     idTexto
                 );
 
-                input.dispatchEvent(
-                    new Event(
-                        "change",
-                        {
-                            bubbles: true,
-                        }
-                    )
+
+                input.value = (
+                    nombreFinal
                 );
+
+
+                // =============================================
+                // EVENTO FUNDAMENTAL
+                // =============================================
+                //
+                // Este evento lo recibe atributos.js.
+                //
+                // Categoría seleccionada
+                //        ↓
+                // familia automática
+                //        ↓
+                // atributos automáticos
+                //
+                // =============================================
 
                 hidden.dispatchEvent(
                     new Event(
@@ -1048,11 +1339,79 @@
                 );
             }
 
+
+            // =================================================
+            // FALLBACK
+            // =================================================
+
+            else {
+
+                input.value = (
+                    nombreFinal
+                );
+
+
+                hidden.value = (
+                    idTexto
+                );
+
+
+                hidden.dispatchEvent(
+                    new Event(
+                        "change",
+                        {
+                            bubbles: true,
+                        }
+                    )
+                );
+            }
+
+
         } finally {
+
             aplicandoAutomaticamente = false;
         }
 
+
         return true;
+    }
+
+
+    // =====================================================
+    // BUSCAR ITEM DROPDOWN
+    // =====================================================
+
+    function buscarItemDropdown(
+        wrap,
+        id
+    ) {
+
+        if (!wrap) {
+            return null;
+        }
+
+
+        const idTexto = (
+            String(id)
+        );
+
+
+        return Array.from(
+            wrap.querySelectorAll(
+                ".apple-dropdown-item"
+            )
+        ).find(
+            function (elemento) {
+
+                return (
+                    String(
+                        elemento.dataset.id
+                        || ""
+                    )
+                    === idTexto
+                );
+            }
+        ) || null;
     }
 
 
@@ -1061,23 +1420,29 @@
     // =====================================================
 
     function obtenerDropdownCategoria() {
+
         const wrap = (
             form.querySelector(
-                '.apple-dropdown[data-dropdown-tipo="categoria"]'
+                '.apple-dropdown'
+                + '[data-dropdown-tipo="categoria"]'
             )
         );
+
 
         if (!wrap) {
             return null;
         }
 
+
         return {
             wrap,
+
             input: (
                 wrap.querySelector(
                     ".apple-dropdown-input"
                 )
             ),
+
             hidden: (
                 wrap.querySelector(
                     ".apple-dropdown-hidden"
@@ -1088,631 +1453,54 @@
 
 
     // =====================================================
-    // ATRIBUTOS DE CATEGORÍA
+    // DROPDOWN FAMILIA
     // =====================================================
 
-    async function cargarAtributosCategoria(
-        categoriaId
-    ) {
-        if (
-            !categoriaId
-            || !urlAtributosCategoria
-        ) {
-            return;
-        }
-
-        // -------------------------------------------------
-        // Cancelamos solicitud anterior.
-        // -------------------------------------------------
-
-        if (
-            controladorAtributos
-        ) {
-            controladorAtributos.abort();
-        }
-
-        controladorAtributos = (
-            new AbortController()
-        );
-
-        try {
-            const url = (
-                construirUrlAtributos(
-                    categoriaId
-                )
-            );
-
-            if (!url) {
-                throw new Error(
-                    "No se pudo construir la URL "
-                    + "de atributos de categoría."
-                );
-            }
-
-            const respuesta = await fetch(
-                url,
-                {
-                    method: "GET",
-                    headers: {
-                        "X-Requested-With": (
-                            "XMLHttpRequest"
-                        ),
-                        "Accept": (
-                            "application/json"
-                        ),
-                    },
-                    signal: (
-                        controladorAtributos
-                        .signal
-                    ),
-                }
-            );
-
-            const resultado = await (
-                respuesta.json()
-            );
-
-            if (!respuesta.ok) {
-                throw new Error(
-                    resultado.error
-                    || "No se pudieron obtener los atributos."
-                );
-            }
-
-            const atributos = (
-                Array.isArray(
-                    resultado.atributos
-                )
-                    ? resultado.atributos
-                    : []
-            );
-
-            aplicarAtributosRecomendados(
-                categoriaId,
-                atributos
-            );
-
-        } catch (error) {
-            if (
-                error.name
-                === "AbortError"
-            ) {
-                return;
-            }
-
-            console.error(
-                "MAO: error cargando atributos de categoría:",
-                error
-            );
-
-        } finally {
-            controladorAtributos = null;
-        }
-    }
-
-
-    // =====================================================
-    // CONSTRUIR URL
-    // =====================================================
-
-    function construirUrlAtributos(
-        categoriaId
-    ) {
-        if (
-            !urlAtributosCategoria
-        ) {
-            return "";
-        }
-
-        const id = (
-            encodeURIComponent(
-                String(
-                    categoriaId
-                )
-            )
-        );
-
-        // Ejemplo esperado:
-        //
-        // /inventario/catalogo/api/categoria/0/atributos/
-        //
-        // pasa a:
-        //
-        // /inventario/catalogo/api/categoria/12/atributos/
-
-        if (
-            urlAtributosCategoria.includes(
-                "/0/"
-            )
-        ) {
-            return (
-                urlAtributosCategoria
-                .replace(
-                    "/0/",
-                    `/${id}/`
-                )
-            );
-        }
-
-        // Compatibilidad con URL sin slash final.
-        return (
-            urlAtributosCategoria
-            .replace(
-                /\/0$/,
-                `/${id}`
-            )
-        );
-    }
-
-
-    // =====================================================
-    // APLICAR ATRIBUTOS AL FORMSET
-    // =====================================================
-
-    function aplicarAtributosRecomendados(
-        categoriaId,
-        atributos
-    ) {
-        if (
-            !Array.isArray(
-                atributos
-            )
-        ) {
-            return;
-        }
-
-        // Primero retiramos únicamente las sugerencias
-        // automáticas de otra categoría.
-        limpiarAtributosAutomaticosAnteriores(
-            categoriaId
-        );
-
-        if (
-            atributos.length === 0
-        ) {
-            return;
-        }
-
-        for (
-            const atributo
-            of atributos
-        ) {
-            if (
-                !atributo?.id
-            ) {
-                continue;
-            }
-
-            let fila = (
-                buscarFilaAtributo(
-                    atributo.id
-                )
-            );
-
-            // ---------------------------------------------
-            // BUSCAR FILA VACÍA
-            // ---------------------------------------------
-
-            if (!fila) {
-                fila = (
-                    obtenerFilaAtributoVacia()
-                );
-            }
-
-            // ---------------------------------------------
-            // CREAR NUEVA FILA
-            // ---------------------------------------------
-
-            if (!fila) {
-                fila = (
-                    crearNuevaFilaAtributo()
-                );
-            }
-
-            if (!fila) {
-                console.warn(
-                    "MAO: no fue posible crear "
-                    + "una fila para el atributo "
-                    + atributo.id
-                );
-
-                continue;
-            }
-
-            colocarAtributoEnFila(
-                fila,
-                atributo,
-                categoriaId
-            );
-        }
-    }
-
-
-    // =====================================================
-    // CREAR FILA DINÁMICA
-    // =====================================================
-
-    function crearNuevaFilaAtributo() {
-        let nuevaFila = null;
-
-        if (
-            typeof window.agregarAtributo
-            === "function"
-        ) {
-            nuevaFila = (
-                window.agregarAtributo()
-            );
-        }
-
-        else if (
-            typeof agregarAtributo
-            === "function"
-        ) {
-            nuevaFila = (
-                agregarAtributo()
-            );
-        }
-
-        // Si atributos.js no retorna la fila,
-        // recuperamos la última visible.
-        return (
-            nuevaFila
-            || obtenerUltimaFilaAtributoVisible()
-        );
-    }
-
-
-    // =====================================================
-    // BUSCAR ATRIBUTO EXISTENTE
-    // =====================================================
-
-    function buscarFilaAtributo(
-        atributoId
-    ) {
-        return Array.from(
-            document.querySelectorAll(
-                "#atributosContainer .atributo-form"
-            )
-        ).find(
-            function (fila) {
-                if (
-                    fila.style.display
-                    === "none"
-                ) {
-                    return false;
-                }
-
-                const deleteInput = (
-                    fila.querySelector(
-                        'input[type="checkbox"][name$="-DELETE"]'
-                    )
-                );
-
-                if (
-                    deleteInput?.checked
-                ) {
-                    return false;
-                }
-
-                const hidden = (
-                    fila.querySelector(
-                        'input[type="hidden"][name$="-atributo"]'
-                    )
-                );
-
-                return (
-                    hidden
-                    && String(
-                        hidden.value
-                    )
-                    === String(
-                        atributoId
-                    )
-                );
-            }
-        ) || null;
-    }
-
-
-    // =====================================================
-    // FILA VACÍA
-    // =====================================================
-
-    function obtenerFilaAtributoVacia() {
-        return Array.from(
-            document.querySelectorAll(
-                "#atributosContainer .atributo-form"
-            )
-        ).find(
-            function (fila) {
-                if (
-                    fila.style.display
-                    === "none"
-                ) {
-                    return false;
-                }
-
-                const deleteInput = (
-                    fila.querySelector(
-                        'input[type="checkbox"][name$="-DELETE"]'
-                    )
-                );
-
-                if (
-                    deleteInput?.checked
-                ) {
-                    return false;
-                }
-
-                const atributo = (
-                    fila.querySelector(
-                        'input[type="hidden"][name$="-atributo"]'
-                    )
-                );
-
-                const valor = (
-                    fila.querySelector(
-                        'input[name$="-valor"]'
-                    )
-                );
-
-                return (
-                    !atributo?.value
-                    && !valor?.value?.trim()
-                );
-            }
-        ) || null;
-    }
-
-
-    // =====================================================
-    // ÚLTIMA FILA
-    // =====================================================
-
-    function obtenerUltimaFilaAtributoVisible() {
-        const filas = Array.from(
-            document.querySelectorAll(
-                "#atributosContainer .atributo-form"
-            )
-        ).filter(
-            function (fila) {
-                return (
-                    fila.style.display
-                    !== "none"
-                );
-            }
-        );
-
-        return (
-            filas.at(-1)
-            || null
-        );
-    }
-
-
-    // =====================================================
-    // COLOCAR ATRIBUTO
-    // =====================================================
-
-    function colocarAtributoEnFila(
-        fila,
-        atributo,
-        categoriaId
-    ) {
-        if (
-            !fila
-            || !atributo
-        ) {
-            return;
-        }
+    function obtenerDropdownFamilia() {
 
         const wrap = (
-            fila.querySelector(
-                '.apple-dropdown[data-dropdown-tipo="atributo"], .apple-dropdown'
+            form.querySelector(
+                '.apple-dropdown'
+                + '[data-dropdown-tipo="familia"]'
             )
         );
 
-        const hidden = (
-            fila.querySelector(
-                'input[type="hidden"][name$="-atributo"]'
-            )
-        );
 
-        if (
-            !wrap
-            || !hidden
-        ) {
-            return;
+        if (!wrap) {
+            return null;
         }
 
-        // ---------------------------------------------
-        // NO PISAR ATRIBUTO MANUAL
-        // ---------------------------------------------
 
-        if (
-            hidden.value
-            && String(
-                hidden.value
-            )
-            !== String(
-                atributo.id
-            )
-        ) {
-            return;
-        }
-
-        const deleteInput = (
-            fila.querySelector(
-                'input[type="checkbox"][name$="-DELETE"]'
-            )
-        );
-
-        if (deleteInput) {
-            deleteInput.checked = false;
-        }
-
-        fila.style.display = "";
-
-        seleccionarDropdownLocal(
+        return {
             wrap,
-            atributo.id,
-            construirNombreAtributo(
-                atributo
+
+            input: (
+                wrap.querySelector(
+                    ".apple-dropdown-input"
+                )
             ),
-            true
-        );
 
-        fila.dataset.sugerido = "1";
-
-        fila.dataset.categoriaSugerida = (
-            String(
-                categoriaId
-            )
-        );
-
-        fila.dataset.requerido = (
-            atributo.requerido
-                ? "1"
-                : "0"
-        );
-
-        const valor = (
-            fila.querySelector(
-                'input[name$="-valor"]'
-            )
-        );
-
-        if (valor) {
-            valor.dataset.atributoRequerido = (
-                atributo.requerido
-                    ? "1"
-                    : "0"
-            );
-
-            valor.dataset.atributoSugerido = "1";
-        }
+            hidden: (
+                wrap.querySelector(
+                    ".apple-dropdown-hidden"
+                )
+            ),
+        };
     }
 
 
     // =====================================================
-    // NOMBRE ATRIBUTO
-    // =====================================================
-
-    function construirNombreAtributo(
-        atributo
-    ) {
-        if (!atributo) {
-            return "";
-        }
-
-        if (
-            atributo.unidad
-        ) {
-            return (
-                `${atributo.nombre} `
-                + `(${atributo.unidad})`
-            );
-        }
-
-        return (
-            atributo.nombre
-            || ""
-        );
-    }
-
-
-    // =====================================================
-    // LIMPIAR ATRIBUTOS DE OTRA CATEGORÍA
-    // =====================================================
-
-    function limpiarAtributosAutomaticosAnteriores(
-        nuevaCategoriaId
-    ) {
-        document.querySelectorAll(
-            "#atributosContainer .atributo-form"
-        ).forEach(
-            function (fila) {
-                if (
-                    fila.dataset.sugerido
-                    !== "1"
-                ) {
-                    return;
-                }
-
-                const categoriaAnterior = (
-                    fila.dataset
-                    .categoriaSugerida
-                    || ""
-                );
-
-                if (
-                    nuevaCategoriaId
-                    && String(
-                        categoriaAnterior
-                    )
-                    === String(
-                        nuevaCategoriaId
-                    )
-                ) {
-                    return;
-                }
-
-                const valor = (
-                    fila.querySelector(
-                        'input[name$="-valor"]'
-                    )
-                );
-
-                // -----------------------------------------
-                // SI USUARIO ESCRIBIÓ VALOR:
-                // LA FILA PASA A SER MANUAL
-                // -----------------------------------------
-
-                if (
-                    valor?.value?.trim()
-                ) {
-                    delete (
-                        fila.dataset.sugerido
-                    );
-
-                    delete (
-                        fila.dataset
-                        .categoriaSugerida
-                    );
-
-                    delete (
-                        fila.dataset.requerido
-                    );
-
-                    return;
-                }
-
-                const deleteInput = (
-                    fila.querySelector(
-                        'input[type="checkbox"][name$="-DELETE"]'
-                    )
-                );
-
-                if (deleteInput) {
-                    deleteInput.checked = true;
-                }
-
-                fila.style.display = "none";
-            }
-        );
-    }
-
-
-    // =====================================================
-    // PANEL DEL MOTOR
+    // PANEL - ANALIZANDO
     // =====================================================
 
     function mostrarPanelAnalizando() {
+
         const panel = (
             document.getElementById(
                 "motorSugerencias"
             )
         );
+
 
         const estado = (
             document.getElementById(
@@ -1720,31 +1508,42 @@
             )
         );
 
+
         const contenido = (
             document.getElementById(
                 "motorSugerenciasContenido"
             )
         );
 
+
         if (!panel) {
             return;
         }
 
+
         panel.hidden = false;
 
+
         if (estado) {
+
             estado.textContent = (
                 "Analizando producto..."
             );
         }
 
+
         if (contenido) {
+
             contenido.innerHTML = `
                 <div class="motor-sugerencia-bloque">
+
                     <div class="motor-sugerencia-valor">
+
                         Buscando coincidencias en catálogo,
                         compras y aprendizaje...
+
                     </div>
+
                 </div>
             `;
         }
@@ -1752,17 +1551,19 @@
 
 
     // =====================================================
-    // RESULTADOS
+    // RENDER RESULTADO
     // =====================================================
 
     function renderizarResultado(
         resultado
     ) {
+
         const panel = (
             document.getElementById(
                 "motorSugerencias"
             )
         );
+
 
         const estado = (
             document.getElementById(
@@ -1770,18 +1571,22 @@
             )
         );
 
+
         const contenido = (
             document.getElementById(
                 "motorSugerenciasContenido"
             )
         );
 
+
         if (
             !panel
             || !contenido
         ) {
+
             return;
         }
+
 
         const categorias = (
             Array.isArray(
@@ -1791,6 +1596,7 @@
                 : []
         );
 
+
         const productos = (
             Array.isArray(
                 resultado.productos
@@ -1799,34 +1605,53 @@
                 : []
         );
 
+
+        // =================================================
+        // SIN RESULTADOS
+        // =================================================
+
         if (
             !categorias.length
             && !productos.length
         ) {
+
             panel.hidden = false;
 
+
             if (estado) {
+
                 estado.textContent = (
                     "Sin coincidencias suficientes"
                 );
             }
 
+
             contenido.innerHTML = `
                 <div class="motor-sugerencia-bloque">
+
                     <div class="motor-sugerencia-valor">
-                        No encontré un producto existente con
-                        suficiente confianza. Puede continuar
-                        creando una referencia nueva.
+
+                        No encontré un producto existente
+                        con suficiente confianza.
+
+                        Puede continuar creando una
+                        referencia nueva.
+
                     </div>
+
                 </div>
             `;
+
 
             return;
         }
 
+
         panel.hidden = false;
 
+
         if (estado) {
+
             estado.textContent = (
                 resultado.hay_codigo_exacto
                     ? "Código encontrado en el catálogo"
@@ -1834,19 +1659,22 @@
             );
         }
 
+
         let html = "";
 
 
         // =================================================
-        // CATEGORÍA
+        // CATEGORÍA SUGERIDA
         // =================================================
 
         if (
             categorias.length
         ) {
+
             const categoria = (
                 categorias[0]
             );
+
 
             html += `
                 <div class="motor-sugerencia-bloque">
@@ -1863,22 +1691,28 @@
                         )}
 
                         <span class="motor-confianza">
+
                             ${formatearConfianza(
                                 categoria.confianza
                             )}
+
                         </span>
 
                         <button
                             type="button"
                             class="btn-login"
+
                             data-motor-accion="categoria"
+
                             data-categoria-id="${escaparAtributo(
                                 categoria.id
                             )}"
+
                             data-categoria-nombre="${escaparAtributo(
                                 categoria.nombre
                                 || ""
                             )}"
+
                             style="
                                 margin-left:8px;
                                 height:25px;
@@ -1897,12 +1731,13 @@
 
 
         // =================================================
-        // PRODUCTOS
+        // PRODUCTOS EXISTENTES
         // =================================================
 
         if (
             productos.length
         ) {
+
             html += `
                 <div class="motor-sugerencia-bloque">
 
@@ -1911,20 +1746,27 @@
                     </div>
             `;
 
+
             productos
-                .slice(0, 3)
+                .slice(
+                    0,
+                    3
+                )
                 .forEach(
                     function (producto) {
+
                         html += `
                             <div class="motor-producto-item">
 
                                 <div>
 
                                     <div class="motor-producto-nombre">
+
                                         ${escaparHTML(
                                             producto.producto
                                             || "Producto"
                                         )}
+
                                     </div>
 
                                     <div class="motor-producto-meta">
@@ -1936,23 +1778,30 @@
 
                                         ${
                                             producto.marca
-                                                ? ` · ${escaparHTML(
-                                                    producto.marca
-                                                )}`
+                                                ? (
+                                                    " · "
+                                                    + escaparHTML(
+                                                        producto.marca
+                                                    )
+                                                )
                                                 : ""
                                         }
 
                                         ${
                                             producto.codigo
-                                                ? ` · ${escaparHTML(
-                                                    producto.codigo
-                                                )}`
+                                                ? (
+                                                    " · "
+                                                    + escaparHTML(
+                                                        producto.codigo
+                                                    )
+                                                )
                                                 : ""
                                         }
 
                                     </div>
 
                                 </div>
+
 
                                 <div
                                     style="
@@ -1964,25 +1813,34 @@
                                 >
 
                                     <span class="motor-confianza">
+
                                         ${formatearConfianza(
                                             producto.confianza
                                         )}
+
                                     </span>
+
 
                                     ${
                                         producto.marca_id
+
                                             ? `
                                                 <button
                                                     type="button"
+
                                                     class="btn-login"
+
                                                     data-motor-accion="marca"
+
                                                     data-marca-id="${escaparAtributo(
                                                         producto.marca_id
                                                     )}"
+
                                                     data-marca-nombre="${escaparAtributo(
                                                         producto.marca
                                                         || ""
                                                     )}"
+
                                                     style="
                                                         height:25px;
                                                         padding:0 7px;
@@ -1992,6 +1850,7 @@
                                                     Usar marca
                                                 </button>
                                             `
+
                                             : ""
                                     }
 
@@ -2002,12 +1861,16 @@
                     }
                 );
 
+
             html += `
                 </div>
             `;
         }
 
-        contenido.innerHTML = html;
+
+        contenido.innerHTML = (
+            html
+        );
     }
 
 
@@ -2018,11 +1881,13 @@
     function mostrarErrorMotor(
         mensaje
     ) {
+
         const panel = (
             document.getElementById(
                 "motorSugerencias"
             )
         );
+
 
         const estado = (
             document.getElementById(
@@ -2030,33 +1895,44 @@
             )
         );
 
+
         const contenido = (
             document.getElementById(
                 "motorSugerenciasContenido"
             )
         );
 
+
         if (!panel) {
             return;
         }
 
+
         panel.hidden = false;
 
+
         if (estado) {
+
             estado.textContent = (
                 "No se pudo completar el análisis"
             );
         }
 
+
         if (contenido) {
+
             contenido.innerHTML = `
                 <div class="motor-sugerencia-bloque">
+
                     <div class="motor-sugerencia-valor">
+
                         ${escaparHTML(
                             mensaje
                             || "Error consultando el motor."
                         )}
+
                     </div>
+
                 </div>
             `;
         }
@@ -2068,28 +1944,38 @@
     // =====================================================
 
     function ocultarPanel() {
+
         const panel = (
             document.getElementById(
                 "motorSugerencias"
             )
         );
 
+
         if (panel) {
+
             panel.hidden = true;
         }
     }
 
 
+    // =====================================================
+    // CERRAR PANEL
+    // =====================================================
+
     function conectarCerrarPanel() {
+
         const boton = (
             document.getElementById(
                 "cerrarMotorSugerencias"
             )
         );
 
+
         if (!boton) {
             return;
         }
+
 
         boton.addEventListener(
             "click",
@@ -2099,29 +1985,38 @@
 
 
     // =====================================================
-    // ACCIONES MOTOR
+    // ACCIONES DEL PANEL
     // =====================================================
 
     function manejarAccionSugerencia(
         event
     ) {
+
         const boton = (
             event.target.closest(
                 "[data-motor-accion]"
             )
         );
 
+
         if (!boton) {
             return;
         }
+
 
         const accion = (
             boton.dataset.motorAccion
         );
 
+
+        // =================================================
+        // CATEGORÍA
+        // =================================================
+
         if (
             accion === "categoria"
         ) {
+
             aplicarCategoriaForzada(
                 boton.dataset.categoriaId,
                 boton.dataset.categoriaNombre
@@ -2130,9 +2025,15 @@
             return;
         }
 
+
+        // =================================================
+        // MARCA
+        // =================================================
+
         if (
             accion === "marca"
         ) {
+
             aplicarMarcaForzada(
                 boton.dataset.marcaId,
                 boton.dataset.marcaNombre
@@ -2142,21 +2043,24 @@
 
 
     // =====================================================
-    // TEXTO APRENDIZAJE
+    // TEXTO DE APRENDIZAJE
     // =====================================================
 
     function guardarTextoAprendizaje(
         texto
     ) {
+
         const input = (
             document.getElementById(
                 "textoAprendizaje"
             )
         );
 
+
         if (!input) {
             return;
         }
+
 
         input.value = (
             String(
@@ -2168,28 +2072,33 @@
 
 
     // =====================================================
-    // FILA DE CÓDIGO
+    // PRIMERA FILA DE CÓDIGO
     // =====================================================
 
     function obtenerPrimeraFilaCodigoVisible() {
+
         return Array.from(
             document.querySelectorAll(
                 "#codigosContainer .codigo-form"
             )
         ).find(
             function (fila) {
+
                 if (
                     fila.style.display
                     === "none"
                 ) {
+
                     return false;
                 }
+
 
                 const deleteInput = (
                     fila.querySelector(
                         'input[type="checkbox"][name$="-DELETE"]'
                     )
                 );
+
 
                 return (
                     !deleteInput?.checked
@@ -2200,10 +2109,13 @@
 
 
     // =====================================================
-    // SEGURIDAD HTML
+    // ESCAPAR HTML
     // =====================================================
 
-    function escaparHTML(valor) {
+    function escaparHTML(
+        valor
+    ) {
+
         return String(
             valor
             ?? ""
@@ -2231,30 +2143,43 @@
     }
 
 
+    // =====================================================
+    // ESCAPAR ATRIBUTO HTML
+    // =====================================================
+
     function escaparAtributo(
         valor
     ) {
+
         return escaparHTML(
             valor
         );
     }
 
 
+    // =====================================================
+    // CONFIANZA
+    // =====================================================
+
     function formatearConfianza(
         valor
     ) {
+
         const numero = Number(
             valor
             || 0
         );
+
 
         if (
             !Number.isFinite(
                 numero
             )
         ) {
+
             return "0%";
         }
+
 
         return (
             `${Math.round(numero)}%`
@@ -2263,13 +2188,13 @@
 
 
     // =====================================================
-    // EXPORTACIÓN
+    // API PÚBLICA
     // =====================================================
 
     window.MAOSugerencias = {
-        analizar: analizarFormulario,
 
-        cargarAtributosCategoria,
+        analizar:
+            analizarFormulario,
 
         aplicarCategoria:
             aplicarCategoriaForzada,
@@ -2287,11 +2212,14 @@
         document.readyState
         === "loading"
     ) {
+
         document.addEventListener(
             "DOMContentLoaded",
             inicializarSugerencias
         );
+
     } else {
+
         inicializarSugerencias();
     }
 

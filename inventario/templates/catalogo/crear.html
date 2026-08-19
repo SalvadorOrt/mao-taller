@@ -30,10 +30,6 @@ Crear una nueva referencia en el inventario
     href="{% static 'inventario/css/catalogo_form.css' %}"
 >
 
-<!--
-    Las imágenes tienen su propio archivo.
-    Aquí solamente lo cargamos.
--->
 <link
     rel="stylesheet"
     href="{% static 'inventario/css/imagenes_producto.css' %}"
@@ -365,6 +361,22 @@ Crear una nueva referencia en el inventario
         min-width: 650px;
     }
 
+    .atributo-valor-wrap {
+        display: flex;
+        align-items: center;
+
+        gap: 5px;
+    }
+
+    .atributo-valor-input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .atributo-unidad {
+        flex-shrink: 0;
+    }
+
 
     /* =====================================================
        ELIMINAR FILAS
@@ -673,7 +685,6 @@ Crear una nueva referencia en el inventario
     ===================================================== */
 
     .catalogo-sticky-actions {
-
         display: flex;
         justify-content: flex-end;
         align-items: center;
@@ -681,7 +692,6 @@ Crear una nueva referencia en el inventario
         gap: 8px;
 
         position: sticky;
-
         bottom: 8px;
 
         z-index: 50;
@@ -711,18 +721,23 @@ Crear una nueva referencia en el inventario
             rgba(0, 0, 0, 0.08);
     }
 
+
     /* =====================================================
-    MOTOR DE SUGERENCIAS
+       MOTOR DE SUGERENCIAS
     ===================================================== */
 
     .motor-sugerencias {
         margin: 0 15px 15px;
         padding: 10px 12px;
 
-        border: 1px solid rgba(0, 113, 227, 0.18);
+        border:
+            1px solid
+            rgba(0, 113, 227, 0.18);
+
         border-radius: 9px;
 
-        background: rgba(0, 113, 227, 0.035);
+        background:
+            rgba(0, 113, 227, 0.035);
     }
 
     .motor-sugerencias[hidden] {
@@ -733,28 +748,34 @@ Crear una nueva referencia en el inventario
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+
         gap: 10px;
     }
 
     .motor-sugerencias-title {
         display: flex;
         align-items: center;
+
         gap: 5px;
 
         font-size: 10px;
         font-weight: 700;
+
         color: var(--accent);
     }
 
     .motor-sugerencias-subtitle {
         margin-top: 2px;
+
         font-size: 8px;
+
         color: var(--muted);
     }
 
     .motor-sugerencias-cerrar {
         width: 24px;
         height: 24px;
+
         padding: 0;
 
         display: inline-flex;
@@ -766,50 +787,66 @@ Crear una nueva referencia en el inventario
 
         background: transparent;
         color: var(--muted);
+
         cursor: pointer;
     }
 
     .motor-sugerencias-cerrar:hover {
-        background: rgba(0, 0, 0, 0.05);
+        background:
+            rgba(0, 0, 0, 0.05);
+
         color: var(--text);
     }
 
     .motor-sugerencia-bloque {
         margin-top: 9px;
         padding-top: 8px;
-        border-top: 1px solid rgba(0, 113, 227, 0.10);
+
+        border-top:
+            1px solid
+            rgba(0, 113, 227, 0.10);
     }
 
     .motor-sugerencia-label {
         margin-bottom: 3px;
+
         font-size: 8px;
         font-weight: 700;
+
         text-transform: uppercase;
+
         color: var(--muted);
     }
 
     .motor-sugerencia-valor {
         font-size: 10px;
         font-weight: 650;
+
         color: var(--text);
     }
 
     .motor-confianza {
         margin-left: 5px;
+
         font-size: 8px;
         font-weight: 700;
+
         color: var(--accent);
     }
 
     .motor-producto-item {
         display: flex;
         justify-content: space-between;
+
         gap: 10px;
 
         margin-top: 5px;
         padding: 7px 8px;
 
-        border: 1px solid var(--border-soft);
+        border:
+            1px solid
+            var(--border-soft);
+
         border-radius: 7px;
 
         background: #fff;
@@ -818,14 +855,19 @@ Crear una nueva referencia en el inventario
     .motor-producto-nombre {
         font-size: 9px;
         font-weight: 650;
+
         color: var(--text);
     }
 
     .motor-producto-meta {
         margin-top: 2px;
+
         font-size: 8px;
+
         color: var(--muted);
     }
+
+
     /* =====================================================
        RESPONSIVE
     ===================================================== */
@@ -845,7 +887,6 @@ Crear una nueva referencia en el inventario
 
             grid-template-columns: 1fr;
         }
-
     }
 
 </style>
@@ -890,12 +931,14 @@ Crear una nueva referencia en el inventario
             href="{% url 'inventario_catalogo' %}"
             class="btn-login"
         >
+
             <i
                 class="bi bi-arrow-left"
                 style="margin-right:5px;"
             ></i>
 
             Volver
+
         </a>
 
     </div>
@@ -911,9 +954,7 @@ Crear una nueva referencia en el inventario
         enctype="multipart/form-data"
         id="catalogoForm"
 
-        data-url-categoria-rapida="{% url 'categoria_crear_rapida' %}"
         data-url-marca-rapida="{% url 'marca_crear_rapida' %}"
-        data-url-atributo-rapido="{% url 'atributo_crear_rapido' %}"
 
         data-url-sugerencias="{% url 'inventario_catalogo_sugerir' %}"
 
@@ -922,17 +963,25 @@ Crear una nueva referencia en el inventario
 
         {% csrf_token %}
 
+
+        <!-- ==================================================
+             APRENDIZAJE DEL MOTOR
+        =================================================== -->
+
         <input
             type="hidden"
             name="texto_aprendizaje"
             id="textoAprendizaje"
             value=""
         >
+
+
         <!-- ==================================================
              MANAGEMENT FORMS
         =================================================== -->
 
         {{ codigo_formset.management_form }}
+
         {{ atributo_formset.management_form }}
 
 
@@ -999,44 +1048,67 @@ Crear una nueva referencia en el inventario
 
 
             {% include "catalogo/partials/_producto.html" %}
-                <div
-                    id="motorSugerencias"
-                    class="motor-sugerencias"
-                    hidden
-                >
-                    <div class="motor-sugerencias-header">
-                        <div>
-                            <div class="motor-sugerencias-title">
-                                <i class="bi bi-stars"></i>
-                                Sugerencia MAO
-                            </div>
 
-                            <div
-                                class="motor-sugerencias-subtitle"
-                                id="motorSugerenciasEstado"
-                            >
-                                Analizando producto...
-                            </div>
+
+            <!-- ==================================================
+                 MOTOR DE SUGERENCIAS
+            =================================================== -->
+
+            <div
+                id="motorSugerencias"
+                class="motor-sugerencias"
+                hidden
+            >
+
+                <div class="motor-sugerencias-header">
+
+                    <div>
+
+                        <div class="motor-sugerencias-title">
+
+                            <i class="bi bi-stars"></i>
+
+                            Sugerencia MAO
+
                         </div>
 
-                        <button
-                            type="button"
-                            class="motor-sugerencias-cerrar"
-                            id="cerrarMotorSugerencias"
-                            aria-label="Cerrar sugerencia"
+
+                        <div
+                            class="motor-sugerencias-subtitle"
+                            id="motorSugerenciasEstado"
                         >
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                            Analizando producto...
+                        </div>
+
                     </div>
 
-                    <div id="motorSugerenciasContenido"></div>
+
+                    <button
+                        type="button"
+                        class="motor-sugerencias-cerrar"
+                        id="cerrarMotorSugerencias"
+                        aria-label="Cerrar sugerencia"
+                    >
+
+                        <i class="bi bi-x-lg"></i>
+
+                    </button>
+
                 </div>
+
+
+                <div
+                    id="motorSugerenciasContenido"
+                ></div>
+
+            </div>
+
         </div>
 
 
 
         <!-- ==================================================
-             ATRIBUTOS
+             ATRIBUTOS TÉCNICOS
         =================================================== -->
 
         <div
@@ -1053,7 +1125,7 @@ Crear una nueva referencia en el inventario
 
 
         <!-- ==================================================
-             CÓDIGOS
+             CÓDIGOS COMERCIALES
         =================================================== -->
 
         <div
@@ -1072,6 +1144,17 @@ Crear una nueva referencia en el inventario
         <!-- ==================================================
              MODALES
         =================================================== -->
+        <!--
+            _modales.html puede seguir existiendo porque
+            todavía usamos creación rápida de MARCA.
+
+            Desde Nuevo repuesto ya NO enviamos URLs para:
+            - crear categoría
+            - crear atributo
+
+            Además, _producto.html y _atributos.html
+            ya no deben mostrar botones para crearlos.
+        -->
 
         {% include "catalogo/partials/_modales.html" %}
 
@@ -1090,13 +1173,17 @@ Crear una nueva referencia en el inventario
                 style="
                     background:
                         #e5e5ea;
+
                     border-color:
                         #e5e5ea;
+
                     color:
                         var(--text);
                 "
             >
+
                 Cancelar
+
             </a>
 
 
@@ -1120,21 +1207,27 @@ Crear una nueva referencia en el inventario
 
 </div>
 
-
 {% endblock %}
+
 
 {% block extra_js %}
 
 <script src="{% static 'inventario/js/utilidades.js' %}?v=3"></script>
-<script src="{% static 'inventario/js/dropdowns.js' %}?v=3"></script>
+
+<script src="{% static 'inventario/js/dropdowns.js' %}?v=4"></script>
+
 <script src="{% static 'inventario/js/imagenes.js' %}?v=3"></script>
-<script src="{% static 'inventario/js/atributos.js' %}?v=3"></script>
+
+<script src="{% static 'inventario/js/atributos.js' %}?v=4"></script>
+
 <script src="{% static 'inventario/js/codigos.js' %}?v=3"></script>
-<script src="{% static 'inventario/js/modales.js' %}?v=3"></script>
 
-<script src="{% static 'inventario/js/sugerencias.js' %}?v=3"></script>
+<script src="{% static 'inventario/js/modales.js' %}?v=4"></script>
 
-<script src="{% static 'inventario/js/catalogo_form.js' %}?v=3"></script>
-<script src="{% static 'inventario/js/index.js' %}?v=3"></script>
+<script src="{% static 'inventario/js/sugerencias.js' %}?v=4"></script>
+
+<script src="{% static 'inventario/js/catalogo_form.js' %}?v=4"></script>
+
+<script src="{% static 'inventario/js/index.js' %}?v=4"></script>
 
 {% endblock %}

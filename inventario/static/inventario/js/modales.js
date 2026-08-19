@@ -1,303 +1,967 @@
-// =====================================================
-// MODALES RÁPIDOS: CATEGORÍA, MARCA, ATRIBUTO
-// Compatible con AppleDropdown
-// =====================================================
+// =========================================================
+// MODALES RÁPIDOS - CATÁLOGO MAO
+// =========================================================
+//
+// En "Nuevo repuesto" únicamente permitimos
+// creación rápida de MARCAS.
+//
+// NO se permite crear desde esta pantalla:
+//
+// - Familias
+// - Categorías
+// - Atributos
+// - Opciones
+// - Configuraciones Categoría ↔ Atributo
+//
+// Todo eso pertenece a Maestros.
+//
+// =========================================================
 
-function obtenerCSRFToken() {
-    const input = document.querySelector("input[name='csrfmiddlewaretoken']");
-    return input ? input.value : "";
-}
+(function () {
+    "use strict";
 
-function obtenerFormularioCatalogo() {
-    return document.getElementById("catalogoForm");
-}
 
-function abrirModalBootstrap(idModal) {
-    const modalElement = document.getElementById(idModal);
+    // =====================================================
+    // CSRF
+    // =====================================================
 
-    if (!modalElement || typeof bootstrap === "undefined") {
-        alert("No se pudo abrir el modal.");
-        return;
+    function obtenerCSRFToken() {
+
+        const input = (
+            document.querySelector(
+                "input[name='csrfmiddlewaretoken']"
+            )
+        );
+
+        return (
+            input
+                ? input.value
+                : ""
+        );
     }
 
-    const modal = bootstrap.Modal.getInstance(modalElement)
-        || new bootstrap.Modal(modalElement);
 
-    modal.show();
-}
+    // =====================================================
+    // FORMULARIO PRINCIPAL
+    // =====================================================
 
-function cerrarModalPorId(idModal) {
-    const modalElement = document.getElementById(idModal);
+    function obtenerFormularioCatalogo() {
 
-    if (!modalElement || typeof bootstrap === "undefined") return;
-
-    const modal = bootstrap.Modal.getInstance(modalElement)
-        || new bootstrap.Modal(modalElement);
-
-    modal.hide();
-}
-
-function limpiarInput(id) {
-    const input = document.getElementById(id);
-
-    if (input) {
-        input.value = "";
-    }
-}
-
-function normalizarTexto(valor) {
-    return (valor || "").toString().trim();
-}
-
-async function enviarCreacionRapida(url, payload) {
-    if (!url) {
-        throw new Error("Falta configurar la URL de creación rápida.");
+        return document.getElementById(
+            "catalogoForm"
+        );
     }
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": obtenerCSRFToken(),
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-    });
 
-    let data = {};
+    // =====================================================
+    // NORMALIZAR TEXTO
+    // =====================================================
 
-    try {
-        data = await response.json();
-    } catch (error) {
-        throw new Error("La respuesta del servidor no es JSON válido.");
+    function normalizarTexto(
+        valor
+    ) {
+
+        return String(
+            valor
+            || ""
+        ).trim();
     }
 
-    if (!response.ok || !data.ok) {
-        throw new Error(data.error || "No se pudo guardar.");
+
+    // =====================================================
+    // ABRIR MODAL BOOTSTRAP
+    // =====================================================
+
+    function abrirModalBootstrap(
+        idModal
+    ) {
+
+        const modalElement = (
+            document.getElementById(
+                idModal
+            )
+        );
+
+
+        if (!modalElement) {
+
+            console.error(
+                `MAO: no existe el modal ${idModal}.`
+            );
+
+            return;
+        }
+
+
+        if (
+            typeof bootstrap
+            === "undefined"
+        ) {
+
+            console.error(
+                "MAO: Bootstrap no está disponible."
+            );
+
+            return;
+        }
+
+
+        const modal = (
+            bootstrap.Modal.getInstance(
+                modalElement
+            )
+            || new bootstrap.Modal(
+                modalElement
+            )
+        );
+
+
+        modal.show();
     }
 
-    return data;
-}
 
-function agregarOpcionADropdowns(tipo, id, nombre, seleccionar = true) {
-    if (window.AppleDropdown && typeof window.AppleDropdown.agregarOpcion === "function") {
-        window.AppleDropdown.agregarOpcion(tipo, id, nombre, seleccionar);
-        return;
+    // =====================================================
+    // CERRAR MODAL
+    // =====================================================
+
+    function cerrarModalPorId(
+        idModal
+    ) {
+
+        const modalElement = (
+            document.getElementById(
+                idModal
+            )
+        );
+
+
+        if (
+            !modalElement
+            || typeof bootstrap
+                === "undefined"
+        ) {
+
+            return;
+        }
+
+
+        const modal = (
+            bootstrap.Modal.getInstance(
+                modalElement
+            )
+        );
+
+
+        if (modal) {
+
+            modal.hide();
+        }
     }
 
-    const dropdowns = document.querySelectorAll(
-        `.apple-dropdown[data-dropdown-tipo="${tipo}"]`
+
+    // =====================================================
+    // ERROR DEL MODAL MARCA
+    // =====================================================
+
+    function mostrarErrorMarca(
+        mensaje
+    ) {
+
+        const error = (
+            document.getElementById(
+                "marcaModalError"
+            )
+        );
+
+
+        if (!error) {
+
+            if (mensaje) {
+                alert(mensaje);
+            }
+
+            return;
+        }
+
+
+        if (!mensaje) {
+
+            error.textContent = "";
+
+            error.style.display = (
+                "none"
+            );
+
+            return;
+        }
+
+
+        error.textContent = (
+            mensaje
+        );
+
+        error.style.display = (
+            "block"
+        );
+    }
+
+
+    // =====================================================
+    // ESTADO BOTÓN GUARDAR
+    // =====================================================
+
+    function establecerGuardandoMarca(
+        guardando
+    ) {
+
+        const boton = (
+            document.getElementById(
+                "btnGuardarMarca"
+            )
+        );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        boton.disabled = (
+            Boolean(
+                guardando
+            )
+        );
+
+
+        if (guardando) {
+
+            boton.dataset.textoOriginal = (
+                boton.innerHTML
+            );
+
+
+            boton.innerHTML = `
+                <span
+                    class="spinner-border spinner-border-sm"
+                    aria-hidden="true"
+                    style="
+                        width:10px;
+                        height:10px;
+                        margin-right:5px;
+                    "
+                ></span>
+
+                Guardando...
+            `;
+
+        } else {
+
+            if (
+                boton.dataset.textoOriginal
+            ) {
+
+                boton.innerHTML = (
+                    boton.dataset
+                    .textoOriginal
+                );
+            }
+        }
+    }
+
+
+    // =====================================================
+    // CREACIÓN RÁPIDA
+    // =====================================================
+    //
+    // IMPORTANTE:
+    //
+    // Django está leyendo request.POST.
+    //
+    // Por eso enviamos:
+    //
+    // application/x-www-form-urlencoded
+    //
+    // y NO application/json.
+    //
+    // =====================================================
+
+    async function enviarCreacionRapida(
+        url,
+        payload
+    ) {
+
+        if (!url) {
+
+            throw new Error(
+                "No está configurada la URL "
+                + "de creación rápida."
+            );
+        }
+
+
+        const parametros = (
+            new URLSearchParams()
+        );
+
+
+        Object.entries(
+            payload || {}
+        ).forEach(
+            function (
+                [clave, valor]
+            ) {
+
+                parametros.append(
+                    clave,
+                    valor ?? ""
+                );
+            }
+        );
+
+
+        const response = await fetch(
+            url,
+            {
+                method: "POST",
+
+                headers: {
+
+                    "X-CSRFToken":
+                        obtenerCSRFToken(),
+
+                    "X-Requested-With":
+                        "XMLHttpRequest",
+
+                    "Content-Type":
+                        "application/x-www-form-urlencoded; charset=UTF-8",
+
+                    "Accept":
+                        "application/json",
+                },
+
+                body:
+                    parametros.toString(),
+            }
+        );
+
+
+        let data;
+
+
+        try {
+
+            data = await response.json();
+
+        } catch (error) {
+
+            throw new Error(
+                "El servidor devolvió una "
+                + "respuesta no válida."
+            );
+        }
+
+
+        if (
+            !response.ok
+            || data.ok === false
+        ) {
+
+            throw new Error(
+                data.error
+                || "No se pudo guardar."
+            );
+        }
+
+
+        return data;
+    }
+
+
+    // =====================================================
+    // AGREGAR MARCA A LOS DROPDOWNS
+    // =====================================================
+
+    function agregarMarcaADropdowns(
+        id,
+        nombre,
+        seleccionar = true
+    ) {
+
+        // =================================================
+        // API DEL APPLE DROPDOWN
+        // =================================================
+
+        if (
+            window.AppleDropdown
+            && typeof (
+                window.AppleDropdown
+                .agregarOpcion
+            ) === "function"
+        ) {
+
+            window.AppleDropdown
+                .agregarOpcion(
+                    "marca",
+                    id,
+                    nombre,
+                    seleccionar
+                );
+
+
+            // Respaldo:
+            // aseguramos change para que otros módulos,
+            // por ejemplo sugerencias.js, detecten
+            // la selección.
+            if (seleccionar) {
+
+                setTimeout(
+                    function () {
+
+                        document
+                            .querySelectorAll(
+                                '.apple-dropdown'
+                                + '[data-dropdown-tipo="marca"]'
+                                + ' .apple-dropdown-hidden'
+                            )
+                            .forEach(
+                                function (hidden) {
+
+                                    if (
+                                        String(
+                                            hidden.value
+                                        )
+                                        === String(
+                                            id
+                                        )
+                                    ) {
+
+                                        hidden.dispatchEvent(
+                                            new Event(
+                                                "change",
+                                                {
+                                                    bubbles:
+                                                        true,
+                                                }
+                                            )
+                                        );
+                                    }
+                                }
+                            );
+
+                    },
+                    0
+                );
+            }
+
+
+            return;
+        }
+
+
+        // =================================================
+        // FALLBACK
+        // =================================================
+
+        const dropdowns = (
+            document.querySelectorAll(
+                '.apple-dropdown'
+                + '[data-dropdown-tipo="marca"]'
+            )
+        );
+
+
+        dropdowns.forEach(
+            function (wrap) {
+
+                const input = (
+                    wrap.querySelector(
+                        ".apple-dropdown-input"
+                    )
+                );
+
+
+                const hidden = (
+                    wrap.querySelector(
+                        ".apple-dropdown-hidden"
+                    )
+                );
+
+
+                const menu = (
+                    wrap.querySelector(
+                        ".apple-dropdown-menu"
+                    )
+                );
+
+
+                if (
+                    !input
+                    || !hidden
+                    || !menu
+                ) {
+
+                    return;
+                }
+
+
+                let item = Array.from(
+                    menu.querySelectorAll(
+                        ".apple-dropdown-item"
+                    )
+                ).find(
+                    function (elemento) {
+
+                        return (
+                            String(
+                                elemento.dataset.id
+                                || ""
+                            )
+                            === String(
+                                id
+                            )
+                        );
+                    }
+                );
+
+
+                // =========================================
+                // CREAR OPCIÓN
+                // =========================================
+
+                if (!item) {
+
+                    item = (
+                        document.createElement(
+                            "div"
+                        )
+                    );
+
+
+                    item.className = (
+                        "apple-dropdown-item"
+                    );
+
+
+                    item.dataset.id = (
+                        String(id)
+                    );
+
+
+                    item.dataset.nombre = (
+                        nombre
+                    );
+
+
+                    item.textContent = (
+                        nombre
+                    );
+
+
+                    const noResult = (
+                        menu.querySelector(
+                            ".apple-dropdown-no-result"
+                        )
+                    );
+
+
+                    if (noResult) {
+
+                        menu.insertBefore(
+                            item,
+                            noResult
+                        );
+
+                    } else {
+
+                        menu.appendChild(
+                            item
+                        );
+                    }
+                }
+
+
+                // =========================================
+                // SELECCIONAR
+                // =========================================
+
+                if (seleccionar) {
+
+                    input.value = (
+                        nombre
+                    );
+
+
+                    hidden.value = (
+                        String(id)
+                    );
+
+
+                    menu.style.display = (
+                        "none"
+                    );
+
+
+                    hidden.dispatchEvent(
+                        new Event(
+                            "change",
+                            {
+                                bubbles: true,
+                            }
+                        )
+                    );
+                }
+            }
+        );
+    }
+
+
+    // =====================================================
+    // GUARDAR MARCA
+    // =====================================================
+
+    async function guardarMarca() {
+
+        const form = (
+            obtenerFormularioCatalogo()
+        );
+
+
+        if (!form) {
+
+            console.error(
+                "MAO: no se encontró catalogoForm."
+            );
+
+            return;
+        }
+
+
+        const nombreInput = (
+            document.getElementById(
+                "marcaNombre"
+            )
+        );
+
+
+        if (!nombreInput) {
+
+            console.error(
+                "MAO: no se encontró marcaNombre."
+            );
+
+            return;
+        }
+
+
+        mostrarErrorMarca(
+            ""
+        );
+
+
+        const nombre = (
+            normalizarTexto(
+                nombreInput.value
+            )
+            .toUpperCase()
+        );
+
+
+        // =================================================
+        // VALIDACIÓN
+        // =================================================
+
+        if (!nombre) {
+
+            mostrarErrorMarca(
+                "Ingrese el nombre de la marca."
+            );
+
+
+            nombreInput.focus();
+
+            return;
+        }
+
+
+        const url = (
+            form.dataset.urlMarcaRapida
+            || ""
+        );
+
+
+        if (!url) {
+
+            mostrarErrorMarca(
+                "No está configurada la creación "
+                + "rápida de marcas."
+            );
+
+            return;
+        }
+
+
+        establecerGuardandoMarca(
+            true
+        );
+
+
+        try {
+
+            const data = (
+                await enviarCreacionRapida(
+                    url,
+                    {
+                        nombre:
+                            nombre,
+                    }
+                )
+            );
+
+
+            // =============================================
+            // AGREGAR Y SELECCIONAR
+            // =============================================
+
+            agregarMarcaADropdowns(
+                data.id,
+                data.nombre,
+                true
+            );
+
+
+            // =============================================
+            // LIMPIAR MODAL
+            // =============================================
+
+            nombreInput.value = "";
+
+
+            mostrarErrorMarca(
+                ""
+            );
+
+
+            cerrarModalPorId(
+                "modalMarca"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "MAO: error creando marca:",
+                error
+            );
+
+
+            mostrarErrorMarca(
+                error.message
+                || (
+                    "No se pudo crear "
+                    + "la marca."
+                )
+            );
+
+
+        } finally {
+
+            establecerGuardandoMarca(
+                false
+            );
+        }
+    }
+
+
+    // =====================================================
+    // ENTER EN MODAL
+    // =====================================================
+
+    function prepararEnterModal(
+        inputId,
+        callback
+    ) {
+
+        const input = (
+            document.getElementById(
+                inputId
+            )
+        );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        if (
+            input.dataset.enterInicializado
+            === "1"
+        ) {
+
+            return;
+        }
+
+
+        input.dataset.enterInicializado = (
+            "1"
+        );
+
+
+        input.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key
+                    !== "Enter"
+                ) {
+
+                    return;
+                }
+
+
+                event.preventDefault();
+
+
+                callback();
+            }
+        );
+    }
+
+
+    // =====================================================
+    // EVENTOS DEL MODAL
+    // =====================================================
+
+    function prepararModalMarca() {
+
+        const modal = (
+            document.getElementById(
+                "modalMarca"
+            )
+        );
+
+
+        if (!modal) {
+            return;
+        }
+
+
+        // =================================================
+        // AL ABRIR
+        // =================================================
+
+        modal.addEventListener(
+            "shown.bs.modal",
+            function () {
+
+                mostrarErrorMarca(
+                    ""
+                );
+
+
+                const input = (
+                    document.getElementById(
+                        "marcaNombre"
+                    )
+                );
+
+
+                if (input) {
+
+                    setTimeout(
+                        function () {
+
+                            input.focus();
+
+                        },
+                        50
+                    );
+                }
+            }
+        );
+
+
+        // =================================================
+        // AL CERRAR
+        // =================================================
+
+        modal.addEventListener(
+            "hidden.bs.modal",
+            function () {
+
+                mostrarErrorMarca(
+                    ""
+                );
+
+
+                establecerGuardandoMarca(
+                    false
+                );
+            }
+        );
+    }
+
+
+    // =====================================================
+    // INICIALIZACIÓN
+    // =====================================================
+
+    function inicializarModales() {
+
+        prepararEnterModal(
+            "marcaNombre",
+            guardarMarca
+        );
+
+
+        prepararModalMarca();
+    }
+
+
+    // =====================================================
+    // EXPORTACIÓN GLOBAL
+    // =====================================================
+    //
+    // Necesario porque el HTML utiliza:
+    //
+    // onclick="abrirModalBootstrap(...)"
+    // onclick="guardarMarca()"
+    //
+    // =====================================================
+
+    window.abrirModalBootstrap = (
+        abrirModalBootstrap
     );
 
-    dropdowns.forEach((wrap) => {
-        const input = wrap.querySelector(".apple-dropdown-input");
-        const hidden = wrap.querySelector(".apple-dropdown-hidden");
-        const menu = wrap.querySelector(".apple-dropdown-menu");
 
-        if (!input || !hidden || !menu) return;
-
-        let item = menu.querySelector(`.apple-dropdown-item[data-id="${id}"]`);
-
-        if (!item) {
-            item = document.createElement("div");
-            item.className = "apple-dropdown-item";
-            item.dataset.id = id;
-            item.dataset.nombre = nombre;
-            item.textContent = nombre;
-
-            item.addEventListener("click", () => {
-                input.value = nombre;
-                hidden.value = id;
-                menu.style.display = "none";
-            });
-
-            const noResult = menu.querySelector(".apple-dropdown-no-result");
-
-            if (noResult) {
-                menu.insertBefore(item, noResult);
-            } else {
-                menu.appendChild(item);
-            }
-        }
-
-        if (seleccionar) {
-            input.value = nombre;
-            hidden.value = id;
-            menu.style.display = "none";
-        }
-    });
-}
+    window.cerrarModalPorId = (
+        cerrarModalPorId
+    );
 
 
-// =====================================================
-// INICIALIZACIÓN
-// =====================================================
-
-function inicializarModales() {
-    prepararEnterModal("categoriaNombre", guardarCategoria);
-    prepararEnterModal("categoriaPrefijo", guardarCategoria);
-
-    prepararEnterModal("marcaNombre", guardarMarca);
-
-    prepararEnterModal("atributoNombre", guardarAtributo);
-    prepararEnterModal("atributoUnidad", guardarAtributo);
-}
-
-function prepararEnterModal(inputId, callback) {
-    const input = document.getElementById(inputId);
-
-    if (!input) return;
-
-    if (input.dataset.enterInicializado === "1") return;
-
-    input.dataset.enterInicializado = "1";
-
-    input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            callback();
-        }
-    });
-}
+    window.guardarMarca = (
+        guardarMarca
+    );
 
 
-// =====================================================
-// CATEGORÍA RÁPIDA
-// =====================================================
+    // =====================================================
+    // ARRANQUE
+    // =====================================================
 
-async function guardarCategoria() {
-    const form = obtenerFormularioCatalogo();
+    if (
+        document.readyState
+        === "loading"
+    ) {
 
-    if (!form) {
-        alert("No se encontró el formulario del catálogo.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("categoriaNombre");
-    const prefijoInput = document.getElementById("categoriaPrefijo");
-
-    const nombre = normalizarTexto(nombreInput?.value).toUpperCase();
-    const prefijo = normalizarTexto(prefijoInput?.value).toUpperCase();
-
-    if (!nombre) {
-        alert("Ingrese el nombre de la categoría.");
-        if (nombreInput) nombreInput.focus();
-        return;
-    }
-
-    if (!prefijo) {
-        alert("Ingrese el prefijo SKU.");
-        if (prefijoInput) prefijoInput.focus();
-        return;
-    }
-
-    try {
-        const data = await enviarCreacionRapida(
-            form.dataset.urlCategoriaRapida,
-            {
-                nombre: nombre,
-                prefijo_sku: prefijo,
-            }
+        document.addEventListener(
+            "DOMContentLoaded",
+            inicializarModales
         );
 
-        agregarOpcionADropdowns("categoria", data.id, data.nombre, true);
+    } else {
 
-        limpiarInput("categoriaNombre");
-        limpiarInput("categoriaPrefijo");
-
-        cerrarModalPorId("modalCategoria");
-
-    } catch (error) {
-        alert(error.message || "No se pudo crear la categoría.");
-    }
-}
-
-
-// =====================================================
-// MARCA RÁPIDA
-// =====================================================
-
-async function guardarMarca() {
-    const form = obtenerFormularioCatalogo();
-
-    if (!form) {
-        alert("No se encontró el formulario del catálogo.");
-        return;
+        inicializarModales();
     }
 
-    const nombreInput = document.getElementById("marcaNombre");
-    const nombre = normalizarTexto(nombreInput?.value).toUpperCase();
-
-    if (!nombre) {
-        alert("Ingrese el nombre de la marca.");
-        if (nombreInput) nombreInput.focus();
-        return;
-    }
-
-    try {
-        const data = await enviarCreacionRapida(
-            form.dataset.urlMarcaRapida,
-            {
-                nombre: nombre,
-            }
-        );
-
-        agregarOpcionADropdowns("marca", data.id, data.nombre, true);
-
-        limpiarInput("marcaNombre");
-
-        cerrarModalPorId("modalMarca");
-
-    } catch (error) {
-        alert(error.message || "No se pudo crear la marca.");
-    }
-}
-
-
-// =====================================================
-// ATRIBUTO RÁPIDO
-// =====================================================
-
-async function guardarAtributo() {
-    const form = obtenerFormularioCatalogo();
-
-    if (!form) {
-        alert("No se encontró el formulario del catálogo.");
-        return;
-    }
-
-    const nombreInput = document.getElementById("atributoNombre");
-    const unidadInput = document.getElementById("atributoUnidad");
-
-    const nombre = normalizarTexto(nombreInput?.value).toUpperCase();
-    const unidad = normalizarTexto(unidadInput?.value).toUpperCase();
-
-    if (!nombre) {
-        alert("Ingrese el nombre del atributo.");
-        if (nombreInput) nombreInput.focus();
-        return;
-    }
-
-    try {
-        const data = await enviarCreacionRapida(
-            form.dataset.urlAtributoRapido,
-            {
-                nombre: nombre,
-                unidad: unidad,
-            }
-        );
-
-        agregarOpcionADropdowns("atributo", data.id, data.nombre, true);
-
-        limpiarInput("atributoNombre");
-        limpiarInput("atributoUnidad");
-
-        cerrarModalPorId("modalAtributo");
-
-    } catch (error) {
-        alert(error.message || "No se pudo crear el atributo.");
-    }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    inicializarModales();
-});
+})();
