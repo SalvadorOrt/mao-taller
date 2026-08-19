@@ -225,11 +225,6 @@ class FamiliaProducto(models.Model):
         null=True,
     )
 
-    imagen = models.ImageField(
-        upload_to="familias_productos/",
-        blank=True,
-        null=True,
-    )
 
     activo = models.BooleanField(
         default=True,
@@ -304,11 +299,6 @@ class Categoria(models.Model):
         unique=True,
     )
 
-    imagen = models.ImageField(
-        upload_to="categorias_productos/",
-        blank=True,
-        null=True,
-    )
 
     class Meta:
         ordering = [
