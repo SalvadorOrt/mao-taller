@@ -1075,8 +1075,29 @@ class CodigoProducto(models.Model):
 # ATRIBUTOS TÉCNICOS
 # =========================================================
 class Atributo(models.Model):
-    nombre = models.CharField(max_length=100)
-    unidad = models.CharField(max_length=20, blank=True, null=True)
+    TIPO_DATO_CHOICES = [
+        ("TEXTO", "Texto"),
+        ("ENTERO", "Número entero"),
+        ("DECIMAL", "Número decimal"),
+        ("BOOLEANO", "Sí / No"),
+        ("OPCION", "Lista de opciones"),
+    ]
+
+    nombre = models.CharField(
+        max_length=100,
+    )
+
+    unidad = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+    )
+
+    tipo_dato = models.CharField(
+        max_length=20,
+        choices=TIPO_DATO_CHOICES,
+        default="TEXTO",
+    )
 
     class Meta:
         ordering = ["nombre"]
@@ -1086,19 +1107,25 @@ class Atributo(models.Model):
 
     def clean(self):
         if not self.nombre or not self.nombre.strip():
-            raise ValidationError("El nombre del atributo es obligatorio.")
+            raise ValidationError(
+                "El nombre del atributo es obligatorio."
+            )
 
     def save(self, *args, **kwargs):
         if self.nombre:
             self.nombre = self.nombre.strip()
+
         if self.unidad:
             self.unidad = self.unidad.strip()
+
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.nombre if not self.unidad else f"{self.nombre} ({self.unidad})"
+        if self.unidad:
+            return f"{self.nombre} ({self.unidad})"
 
+        return self.nombre
 # =========================================================
 # ATRIBUTOS RECOMENDADOS POR CATEGORÍA
 # =========================================================
@@ -1176,6 +1203,72 @@ class CategoriaAtributo(models.Model):
             f"{self.atributo} - "
             f"{obligatorio}"
         )
+
+# =========================================================
+# OPCIONES PERMITIDAS POR ATRIBUTO DE CATEGORÍA
+# =========================================================
+class OpcionCategoriaAtributo(models.Model):
+    categoria_atributo = models.ForeignKey(
+        CategoriaAtributo,
+        on_delete=models.CASCADE,
+        related_name="opciones",
+    )
+
+    valor = models.CharField(
+        max_length=100,
+    )
+
+    orden = models.PositiveIntegerField(
+        default=0,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    class Meta:
+        ordering = [
+            "orden",
+            "valor",
+        ]
+
+        verbose_name = "Opción de atributo"
+        verbose_name_plural = "Opciones de atributos"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "categoria_atributo",
+                    "valor",
+                ],
+                name="opcion_categoria_atributo_unica",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "categoria_atributo",
+                    "activo",
+                ],
+            ),
+        ]
+
+    def clean(self):
+        if not self.valor or not self.valor.strip():
+            raise ValidationError(
+                "El valor de la opción es obligatorio."
+            )
+
+    def save(self, *args, **kwargs):
+        if self.valor:
+            self.valor = self.valor.strip()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.valor
 class ValorAtributoProducto(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="valores_atributos")
     atributo = models.ForeignKey(Atributo, on_delete=models.CASCADE, related_name="valores_producto")
