@@ -72,6 +72,14 @@ urlpatterns = [
         "inventario/",
         include("inventario.urls"),
     ),
+    # =====================================================
+    # INTEGRACIONES
+    # =====================================================
+
+    path(
+        "integraciones/",
+        include("integraciones.urls"),
+    ),
 ]
 
 

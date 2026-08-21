@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "cotizaciones",
     "avaluos",
     "accesos",
+    "integraciones",
 ]
 
 
@@ -295,3 +296,31 @@ PLACA_API_USERNAME = os.getenv(
 CEDULA_API_TOKEN = os.getenv(
     "CEDULA_API_TOKEN"
 )
+
+# =========================================================
+# MAO ASISTENTE - SSO
+# =========================================================
+
+ASISTENTE_SSO_CALLBACK_URL = os.getenv(
+    "ASISTENTE_SSO_CALLBACK_URL",
+    "http://127.0.0.1:8001/integraciones/mao-erp/sso/entrada/",
+)
+
+ASISTENTE_SSO_EXCHANGE_SECRET = os.getenv(
+    "ASISTENTE_SSO_EXCHANGE_SECRET",
+    "",
+)
+
+ASISTENTE_SSO_TTL_SECONDS = int(
+    os.getenv(
+        "ASISTENTE_SSO_TTL_SECONDS",
+        "60",
+    )
+)
+
+# =========================================================
+# COOKIES ERP
+# =========================================================
+
+SESSION_COOKIE_NAME = "mao_erp_sessionid"
+CSRF_COOKIE_NAME = "mao_erp_csrftoken"
