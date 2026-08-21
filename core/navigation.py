@@ -1,3 +1,4 @@
+from django.conf import settings
 def get_menu_lateral(user):
     menu = []
 
@@ -12,7 +13,14 @@ def get_menu_lateral(user):
     # MAO ASISTENTE
     # =====================================================
 
-    if user.is_active:
+    if (
+        getattr(
+            settings,
+            "MAO_ASISTENTE_HABILITADO",
+            False,
+        )
+        and user.is_active
+    ):
         menu.append({
             "titulo": "Asistente",
             "items": [
