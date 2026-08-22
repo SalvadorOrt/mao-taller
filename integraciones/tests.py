@@ -227,7 +227,8 @@ class CodigoSSOServiceTests(BaseSSOTestCase):
 
 
 @override_settings(
-    ASISTENTE_SSO_EXCHANGE_SECRET="secreto-prueba-sso"
+    MAO_ASISTENTE_HABILITADO=True,
+    ASISTENTE_SSO_EXCHANGE_SECRET="secreto-prueba-sso",
 )
 class CanjeSSOEndpointTests(BaseSSOTestCase):
 
@@ -428,6 +429,7 @@ class CanjeSSOEndpointTests(BaseSSOTestCase):
 
 @override_settings(
     DEBUG=True,
+    MAO_ASISTENTE_HABILITADO=True,
     ASISTENTE_SSO_CALLBACK_URL=(
         "http://127.0.0.1:8001/"
         "integraciones/mao-erp/sso/entrada/"
@@ -461,6 +463,10 @@ class EntradaAsistenteTests(BaseSSOTestCase):
         self.client.force_login(
             self.usuario
         )
+
+        session = self.client.session
+        session["sucursal_activa_id"] = self.sucursal.pk
+        session.save()
 
         response = self.client.get(
             self.url
@@ -498,12 +504,17 @@ class EntradaAsistenteTests(BaseSSOTestCase):
             )
         )
 
-        self.assertTrue(
-            CodigoAccesoAsistente.objects.filter(
-                usuario=self.usuario,
-                codigo_hash=codigo_hash,
-                usado_en__isnull=True,
-            ).exists()
+        registro = CodigoAccesoAsistente.objects.get(
+            usuario=self.usuario,
+            codigo_hash=codigo_hash,
+            usado_en__isnull=True,
+        )
+
+        # Ahora también verificamos que el código SSO
+        # haya conservado la sucursal operativa activa.
+        self.assertEqual(
+            registro.sucursal_id,
+            self.sucursal.pk,
         )
 
         # El código original jamás debe almacenarse.

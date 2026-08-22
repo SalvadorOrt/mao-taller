@@ -15,16 +15,29 @@ class CodigoSSOInvalido(Exception):
     pass
 
 
-def generar_codigo_sso(usuario):
+# =========================================================
+# GENERAR CÓDIGO SSO
+# =========================================================
+
+def generar_codigo_sso(usuario, sucursal=None):
     """
     Genera un código criptográficamente seguro de un solo uso.
 
     El código original se devuelve únicamente al navegador.
     En la base de datos se guarda solo su SHA-256.
+
+    También se conserva la sucursal operativa seleccionada
+    al momento de generar el acceso.
+
+    Esto permite que usuarios que pueden cambiar de sucursal
+    (por ejemplo, administradores) ingresen al Asistente con
+    la sucursal que tienen activa en su sesión ERP.
     """
 
     if not usuario or not usuario.pk:
-        raise ValueError("Se requiere un usuario persistido.")
+        raise ValueError(
+            "Se requiere un usuario persistido."
+        )
 
     if not usuario.is_active:
         raise ValueError(
@@ -45,6 +58,7 @@ def generar_codigo_sso(usuario):
 
     registro = CodigoAccesoAsistente.objects.create(
         usuario=usuario,
+        sucursal=sucursal,
         codigo_hash=codigo_hash,
         expira_en=(
             timezone.now()
@@ -53,6 +67,11 @@ def generar_codigo_sso(usuario):
     )
 
     return codigo, registro
+
+
+# =========================================================
+# CANJEAR CÓDIGO SSO
+# =========================================================
 
 def canjear_codigo_sso(codigo):
     """
@@ -63,6 +82,9 @@ def canjear_codigo_sso(codigo):
 
     Si el usuario fue desactivado después de generar el código,
     el código se consume igualmente antes de rechazar el acceso.
+
+    La sucursal utilizada es la que quedó registrada cuando
+    se generó el código SSO.
     """
 
     if not codigo:
@@ -123,8 +145,10 @@ def canjear_codigo_sso(codigo):
         # =====================================================
 
         if not usuario.is_active:
+
             # El código debe quedar consumido incluso aunque
             # posteriormente rechacemos el acceso.
+
             registro.usado_en = ahora
 
             registro.save(
@@ -136,6 +160,7 @@ def canjear_codigo_sso(codigo):
             usuario_inactivo = True
 
         else:
+
             # =================================================
             # CONSUMIR CÓDIGO
             # =================================================
@@ -149,10 +174,22 @@ def canjear_codigo_sso(codigo):
             )
 
             # =================================================
-            # IDENTIDAD ERP
+            # SUCURSAL ERP
             # =================================================
 
-            sucursal = usuario.sucursal
+            # La sucursal principal es la que estaba activa
+            # cuando se generó este código SSO.
+            sucursal = registro.sucursal
+
+            # Compatibilidad con códigos antiguos generados
+            # antes de que CodigoAccesoAsistente almacenara
+            # explícitamente una sucursal.
+            if sucursal is None:
+                sucursal = usuario.sucursal
+
+            # =================================================
+            # IDENTIDAD ERP
+            # =================================================
 
             sucursal_data = None
 

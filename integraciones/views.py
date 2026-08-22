@@ -11,6 +11,8 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from ordenes_de_trabajo.views.utils import obtener_sucursal_activa
+
 from .services import (
     CodigoSSOInvalido,
     generar_codigo_sso,
@@ -125,9 +127,16 @@ def entrar_asistente(request):
 
     El empleado ya debe tener una sesión ERP válida.
 
+    La sucursal utilizada por MAO Asistente será la
+    sucursal operativa activa en la sesión actual del ERP.
+
     Este endpoint no existe funcionalmente cuando
     MAO_ASISTENTE_HABILITADO=False.
     """
+
+    # =====================================================
+    # VALIDAR USUARIO
+    # =====================================================
 
     if not request.user.is_active:
         return JsonResponse(
@@ -137,6 +146,10 @@ def entrar_asistente(request):
             },
             status=403,
         )
+
+    # =====================================================
+    # CALLBACK
+    # =====================================================
 
     callback_url = getattr(
         settings,
@@ -174,9 +187,38 @@ def entrar_asistente(request):
             status=503,
         )
 
-    codigo, _ = generar_codigo_sso(
-        request.user
+    # =====================================================
+    # SUCURSAL OPERATIVA ACTIVA
+    # =====================================================
+
+    sucursal_activa = obtener_sucursal_activa(
+        request
     )
+
+    if not sucursal_activa:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": (
+                    "Debes seleccionar una sucursal operativa "
+                    "antes de ingresar a MAO Asistente."
+                ),
+            },
+            status=400,
+        )
+
+    # =====================================================
+    # GENERAR CÓDIGO SSO
+    # =====================================================
+
+    codigo, _ = generar_codigo_sso(
+        request.user,
+        sucursal=sucursal_activa,
+    )
+
+    # =====================================================
+    # REDIRECCIÓN AL ASISTENTE
+    # =====================================================
 
     parametros = urlencode(
         {
@@ -216,6 +258,10 @@ def canjear_codigo_asistente(request):
     este endpoint responde 404.
     """
 
+    # =====================================================
+    # VALIDAR SERVICIO
+    # =====================================================
+
     if not _servicio_asistente_autorizado(
         request
     ):
@@ -226,6 +272,10 @@ def canjear_codigo_asistente(request):
             },
             status=401,
         )
+
+    # =====================================================
+    # LEER PAYLOAD
+    # =====================================================
 
     try:
         payload = json.loads(
@@ -263,16 +313,22 @@ def canjear_codigo_asistente(request):
         "",
     )
 
+    # =====================================================
+    # CANJEAR SSO
+    # =====================================================
+
     try:
         identidad = canjear_codigo_sso(
             codigo
         )
 
     except CodigoSSOInvalido:
+
         # No revelamos si el código:
         # - no existe;
         # - expiró;
         # - ya fue utilizado.
+
         return JsonResponse(
             {
                 "ok": False,
@@ -282,6 +338,10 @@ def canjear_codigo_asistente(request):
             },
             status=400,
         )
+
+    # =====================================================
+    # RESPUESTA
+    # =====================================================
 
     return JsonResponse(
         {
