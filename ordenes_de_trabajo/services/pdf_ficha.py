@@ -11,12 +11,17 @@ def generar_pdf_desde_html(
     """
     Convierte HTML ya renderizado por Django en un PDF.
 
-    Se utiliza Chromium para conservar al máximo:
+    Se utiliza Chromium para conservar:
     - CSS
     - Grid
     - tamaños A4
     - imágenes
     - estilos de impresión
+
+    IMPORTANTE:
+    No esperamos "networkidle" porque la ficha puede cargar
+    recursos externos (por ejemplo Google Fonts) y eso puede
+    bloquear innecesariamente la generación del PDF.
 
     Devuelve los bytes del PDF.
     """
@@ -33,14 +38,6 @@ def generar_pdf_desde_html(
 
     # =========================================================
     # BASE URL
-    # =========================================================
-    #
-    # Permite resolver correctamente:
-    #
-    # /static/...
-    # /media/...
-    #
-    # dentro de Chromium.
     # =========================================================
 
     base_tag = (
@@ -65,6 +62,7 @@ def generar_pdf_desde_html(
         )
 
         try:
+
             page = browser.new_page(
                 viewport={
                     "width": 1240,
@@ -75,10 +73,18 @@ def generar_pdf_desde_html(
             # =================================================
             # CARGAR HTML
             # =================================================
+            #
+            # NO usar networkidle.
+            #
+            # Solo necesitamos que el DOM esté construido.
+            # Fuentes e imágenes se esperan por separado
+            # con límites controlados.
+            # =================================================
 
             page.set_content(
                 html,
-                wait_until="networkidle",
+                wait_until="domcontentloaded",
+                timeout=15000,
             )
 
             # =================================================
@@ -92,16 +98,35 @@ def generar_pdf_desde_html(
             # =================================================
             # ESPERAR FUENTES
             # =================================================
+            #
+            # Máximo 5 segundos.
+            #
+            # Si Google Fonts u otra fuente externa tarda,
+            # continuamos utilizando las fuentes fallback.
+            # =================================================
 
             page.evaluate(
                 """
                 async () => {
+
                     if (
-                        document.fonts &&
-                        document.fonts.ready
+                        !document.fonts ||
+                        !document.fonts.ready
                     ) {
-                        await document.fonts.ready;
+                        return;
                     }
+
+                    await Promise.race([
+                        document.fonts.ready,
+
+                        new Promise(
+                            resolve =>
+                                setTimeout(
+                                    resolve,
+                                    5000
+                                )
+                        )
+                    ]);
                 }
                 """
             )
@@ -109,44 +134,72 @@ def generar_pdf_desde_html(
             # =================================================
             # ESPERAR IMÁGENES
             # =================================================
+            #
+            # Máximo 10 segundos.
+            #
+            # Una imagen problemática no debe detener todo
+            # el envío de WhatsApp.
+            # =================================================
 
             page.evaluate(
                 """
                 async () => {
-                    const imagenes =
-                        Array.from(
-                            document.images
-                        );
 
-                    await Promise.all(
-                        imagenes.map(
-                            imagen => {
-                                if (imagen.complete) {
-                                    return Promise.resolve();
-                                }
+                    const esperarImagenes =
+                        async () => {
 
-                                return new Promise(
-                                    resolve => {
-                                        imagen.addEventListener(
-                                            'load',
-                                            resolve,
-                                            {
-                                                once: true
-                                            }
-                                        );
+                            const imagenes =
+                                Array.from(
+                                    document.images
+                                );
 
-                                        imagen.addEventListener(
-                                            'error',
-                                            resolve,
-                                            {
-                                                once: true
+                            await Promise.all(
+                                imagenes.map(
+                                    imagen => {
+
+                                        if (
+                                            imagen.complete
+                                        ) {
+                                            return Promise.resolve();
+                                        }
+
+                                        return new Promise(
+                                            resolve => {
+
+                                                imagen.addEventListener(
+                                                    'load',
+                                                    resolve,
+                                                    {
+                                                        once: true
+                                                    }
+                                                );
+
+                                                imagen.addEventListener(
+                                                    'error',
+                                                    resolve,
+                                                    {
+                                                        once: true
+                                                    }
+                                                );
                                             }
                                         );
                                     }
-                                );
-                            }
+                                )
+                            );
+                        };
+
+
+                    await Promise.race([
+                        esperarImagenes(),
+
+                        new Promise(
+                            resolve =>
+                                setTimeout(
+                                    resolve,
+                                    10000
+                                )
                         )
-                    );
+                    ]);
                 }
                 """
             )
@@ -164,4 +217,5 @@ def generar_pdf_desde_html(
             return pdf_bytes
 
         finally:
+
             browser.close()
