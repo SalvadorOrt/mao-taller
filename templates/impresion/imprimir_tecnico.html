@@ -615,8 +615,8 @@
 
 
     <!-- =====================================================
-     PÁGINA 2 - TRASERA
-     Solo se incluye cuando se solicita expresamente
+         PÁGINA 2 - TRASERA
+         Solo se incluye cuando se solicita expresamente
     ====================================================== -->
 
     {% if incluir_trasera %}
@@ -626,193 +626,201 @@
 
     <!-- =====================================================
          IMPRESIÓN AUTOMÁTICA + NOMBRE AUTOMÁTICO DEL PDF
+
+         NUEVO:
+         modo_pdf=True impide abrir window.print().
+         La lógica de impresión normal sigue igual.
     ====================================================== -->
 
-    <script>
-        (function () {
-            "use strict";
+    {% if not modo_pdf %}
 
-            /*
-             * Evita que la impresión se ejecute dos veces
-             * accidentalmente.
-             */
-            if (window.__maoPrintStarted) {
-                return;
-            }
+        <script>
+            (function () {
+                "use strict";
 
-            window.__maoPrintStarted = true;
-
-
-            // =================================================
-            // NOMBRE DEL ARCHIVO
-            // =================================================
-            //
-            // Ejemplo:
-            //
-            // OT-24522_PDI4385_ORTEGA-MARTINEZ-SALVADOR-ANDRES_FICHA-TECNICA
-            //
-            // =================================================
-
-            const nombreArchivo =
-                "{{ nombre_archivo|escapejs }}";
-
-
-            // =================================================
-            // TÍTULO DEL DOCUMENTO ACTUAL
-            // =================================================
-
-            document.title = nombreArchivo;
-
-
-            // =================================================
-            // TÍTULO DE LA PÁGINA PADRE
-            // =================================================
-            //
-            // Chrome puede utilizar el título de la página
-            // principal cuando este documento se imprime
-            // desde un iframe.
-            //
-            // Por eso cambiamos temporalmente también el título
-            // de window.top.
-            //
-            // =================================================
-
-            let tituloOriginalPrincipal = null;
-
-            try {
-
-                if (window.top !== window) {
-
-                    tituloOriginalPrincipal =
-                        window.top.document.title;
-
-                    window.top.document.title =
-                        nombreArchivo;
+                /*
+                 * Evita que la impresión se ejecute dos veces
+                 * accidentalmente.
+                 */
+                if (window.__maoPrintStarted) {
+                    return;
                 }
 
-            } catch (error) {
-
-                console.warn(
-                    "No se pudo modificar el título de la página principal:",
-                    error
-                );
-            }
+                window.__maoPrintStarted = true;
 
 
-            // =================================================
-            // RESTAURAR TÍTULO
-            // =================================================
+                // =================================================
+                // NOMBRE DEL ARCHIVO
+                // =================================================
+                //
+                // Ejemplo:
+                //
+                // OT-24522_PDI4385_ORTEGA-MARTINEZ-SALVADOR-ANDRES_FICHA-TECNICA
+                //
+                // =================================================
 
-            function restaurarTituloPrincipal() {
+                const nombreArchivo =
+                    "{{ nombre_archivo|escapejs }}";
+
+
+                // =================================================
+                // TÍTULO DEL DOCUMENTO ACTUAL
+                // =================================================
+
+                document.title = nombreArchivo;
+
+
+                // =================================================
+                // TÍTULO DE LA PÁGINA PADRE
+                // =================================================
+                //
+                // Chrome puede utilizar el título de la página
+                // principal cuando este documento se imprime
+                // desde un iframe.
+                //
+                // Por eso cambiamos temporalmente también el título
+                // de window.top.
+                //
+                // =================================================
+
+                let tituloOriginalPrincipal = null;
 
                 try {
 
-                    if (
-                        tituloOriginalPrincipal !== null &&
-                        window.top !== window
-                    ) {
+                    if (window.top !== window) {
+
+                        tituloOriginalPrincipal =
+                            window.top.document.title;
 
                         window.top.document.title =
-                            tituloOriginalPrincipal;
+                            nombreArchivo;
                     }
 
                 } catch (error) {
 
                     console.warn(
-                        "No se pudo restaurar el título de la página principal:",
+                        "No se pudo modificar el título de la página principal:",
                         error
                     );
                 }
-            }
 
 
-            // =================================================
-            // AFTER PRINT
-            // =================================================
+                // =================================================
+                // RESTAURAR TÍTULO
+                // =================================================
 
-            window.addEventListener(
-                "afterprint",
-                restaurarTituloPrincipal,
-                {
-                    once: true
-                }
-            );
+                function restaurarTituloPrincipal() {
 
+                    try {
 
-            // =================================================
-            // ABRIR VENTANA DE IMPRESIÓN
-            // =================================================
+                        if (
+                            tituloOriginalPrincipal !== null &&
+                            window.top !== window
+                        ) {
 
-            function abrirImpresionUnaVez() {
+                            window.top.document.title =
+                                tituloOriginalPrincipal;
+                        }
 
-                /*
-                 * Una pequeña espera permite que Chrome:
-                 *
-                 * 1. actualice document.title,
-                 * 2. actualice el título del iframe/padre,
-                 * 3. cargue correctamente la segunda hoja.
-                 */
+                    } catch (error) {
 
-                window.setTimeout(
-                    function () {
-
-                        window.print();
-
-                    },
-                    500
-                );
-            }
-
-
-            // =================================================
-            // ESPERAR FUENTES
-            // =================================================
-
-            function esperarRecursos() {
-
-                if (
-                    document.fonts &&
-                    document.fonts.ready
-                ) {
-
-                    document.fonts.ready
-                        .then(
-                            abrirImpresionUnaVez
-                        )
-                        .catch(
-                            abrirImpresionUnaVez
+                        console.warn(
+                            "No se pudo restaurar el título de la página principal:",
+                            error
                         );
-
-                } else {
-
-                    abrirImpresionUnaVez();
+                    }
                 }
-            }
 
 
-            // =================================================
-            // ESPERAR CARGA COMPLETA
-            // =================================================
-
-            if (
-                document.readyState === "complete"
-            ) {
-
-                esperarRecursos();
-
-            } else {
+                // =================================================
+                // AFTER PRINT
+                // =================================================
 
                 window.addEventListener(
-                    "load",
-                    esperarRecursos,
+                    "afterprint",
+                    restaurarTituloPrincipal,
                     {
                         once: true
                     }
                 );
-            }
 
-        })();
-    </script>
+
+                // =================================================
+                // ABRIR VENTANA DE IMPRESIÓN
+                // =================================================
+
+                function abrirImpresionUnaVez() {
+
+                    /*
+                     * Una pequeña espera permite que Chrome:
+                     *
+                     * 1. actualice document.title,
+                     * 2. actualice el título del iframe/padre,
+                     * 3. cargue correctamente la segunda hoja.
+                     */
+
+                    window.setTimeout(
+                        function () {
+
+                            window.print();
+
+                        },
+                        500
+                    );
+                }
+
+
+                // =================================================
+                // ESPERAR FUENTES
+                // =================================================
+
+                function esperarRecursos() {
+
+                    if (
+                        document.fonts &&
+                        document.fonts.ready
+                    ) {
+
+                        document.fonts.ready
+                            .then(
+                                abrirImpresionUnaVez
+                            )
+                            .catch(
+                                abrirImpresionUnaVez
+                            );
+
+                    } else {
+
+                        abrirImpresionUnaVez();
+                    }
+                }
+
+
+                // =================================================
+                // ESPERAR CARGA COMPLETA
+                // =================================================
+
+                if (
+                    document.readyState === "complete"
+                ) {
+
+                    esperarRecursos();
+
+                } else {
+
+                    window.addEventListener(
+                        "load",
+                        esperarRecursos,
+                        {
+                            once: true
+                        }
+                    );
+                }
+
+            })();
+        </script>
+
+    {% endif %}
 
 </body>
 </html>

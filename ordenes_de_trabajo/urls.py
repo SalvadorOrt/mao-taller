@@ -6,6 +6,7 @@ from .views import (
     dashboard,
     impresion,
     ordenes,
+    whatsapp,
 )
 
 
@@ -14,6 +15,7 @@ urlpatterns = [
     # ==========================================================
     # DASHBOARD
     # ==========================================================
+
     path(
         "",
         dashboard.dashboard_taller,
@@ -36,6 +38,7 @@ urlpatterns = [
     # ==========================================================
     # ÓRDENES DE TRABAJO
     # ==========================================================
+
     path(
         "ordenes/",
         ordenes.lista_ordenes,
@@ -80,8 +83,20 @@ urlpatterns = [
 
 
     # ==========================================================
+    # WHATSAPP
+    # ==========================================================
+
+    path(
+        "orden/<int:pk>/whatsapp/enviar/",
+        whatsapp.enviar_ficha_whatsapp,
+        name="enviar_ficha_whatsapp",
+    ),
+
+
+    # ==========================================================
     # COTIZACIONES
     # ==========================================================
+
     path(
         "cotizacion/nueva/",
         ordenes.crear_cotizacion,
@@ -116,6 +131,7 @@ urlpatterns = [
     # ==========================================================
     # IMPRESIÓN
     # ==========================================================
+
     path(
         "orden/<int:pk>/imprimir/",
         impresion.imprimir_tecnico,
@@ -128,10 +144,21 @@ urlpatterns = [
         name="imprimir_resumen",
     ),
 
+    # ----------------------------------------------------------
+    # PDF AUTOMÁTICO - SOLO FICHA FRONTAL
+    # ----------------------------------------------------------
+
+    path(
+        "orden/<int:pk>/ficha-tecnica/pdf/",
+        impresion.descargar_pdf_ficha_frontal,
+        name="descargar_pdf_ficha_frontal",
+    ),
+
 
     # ==========================================================
     # VEHÍCULOS / HISTORIAL
     # ==========================================================
+
     path(
         "vehiculos/",
         ordenes.historial_vehiculos,
@@ -148,6 +175,7 @@ urlpatterns = [
     # ==========================================================
     # CLIENTES
     # ==========================================================
+
     path(
         "clientes/",
         clientes.lista_clientes,
@@ -176,6 +204,7 @@ urlpatterns = [
     # ==========================================================
     # API - VEHÍCULOS
     # ==========================================================
+
     path(
         "api/regcheck/",
         api.consultar_regcheck,
@@ -192,6 +221,7 @@ urlpatterns = [
     # ==========================================================
     # API - CLIENTES
     # ==========================================================
+
     path(
         "api/consultar_cedula/",
         api.consultar_cedula_api,
@@ -208,6 +238,7 @@ urlpatterns = [
     # ==========================================================
     # API - REPUESTOS
     # ==========================================================
+
     path(
         "api/buscar-repuestos/",
         api.api_buscar_repuestos_ot,
@@ -218,6 +249,7 @@ urlpatterns = [
     # ==========================================================
     # API - SERVICIOS
     # ==========================================================
+
     path(
         "api/buscar-servicios-ot/",
         api.api_buscar_servicios_ot,

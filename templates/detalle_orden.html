@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load l10n %}
+
 {% block title %}
     Detalle OT | MAO
 {% endblock %}
@@ -112,6 +113,10 @@
             {% endif %}
         </div>
 
+
+        <!-- =================================================
+             ACCIONES SUPERIORES
+        ================================================== -->
         <div
             style="
                 display: flex;
@@ -120,6 +125,30 @@
             "
         >
 
+            <!-- =============================================
+                 ENVIAR DOCUMENTO
+            ============================================== -->
+            <button
+                type="button"
+                onclick="abrirModalEnviarDocumento()"
+                class="btn-login"
+                style="
+                    background: #f5f5f7;
+                    color: var(--text);
+                "
+            >
+                <i
+                    class="bi bi-send"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Enviar
+            </button>
+
+
+            <!-- =============================================
+                 EDITAR / VER RECEPCIÓN
+            ============================================== -->
             <button
                 type="button"
                 onclick="abrirModalRecepcion()"
@@ -150,6 +179,7 @@
                 {% endif %}
             </button>
 
+
             {% if puede_reabrir and orden.estado != "ABIERTA" %}
 
                 <button
@@ -175,6 +205,7 @@
         </div>
 
     </div>
+
 
     <!-- =====================================================
          FORMULARIO PRINCIPAL DE LA ORDEN
@@ -202,23 +233,42 @@
             value="{{ orden.porcentaje_iva|default_if_none:'0.00'|unlocalize }}"
         >
 
-        <!-- Información general -->
+
+        <!-- =================================================
+             INFORMACIÓN GENERAL
+        ================================================== -->
         {% include "includes/detalle_orden/info_general.html" %}
 
-        <!-- Repuestos -->
+
+        <!-- =================================================
+             REPUESTOS
+        ================================================== -->
         {% include "includes/detalle_orden/tabla_repuestos.html" %}
 
-        <!-- Mano de obra interna -->
+
+        <!-- =================================================
+             MANO DE OBRA INTERNA
+        ================================================== -->
         {% include "includes/detalle_orden/tabla_moi.html" %}
 
-        <!-- Mano de obra externa -->
+
+        <!-- =================================================
+             MANO DE OBRA EXTERNA
+        ================================================== -->
         {% include "includes/detalle_orden/tabla_moe.html" %}
 
-        <!-- Resumen económico -->
+
+        <!-- =================================================
+             RESUMEN ECONÓMICO
+        ================================================== -->
         {% include "includes/detalle_orden/resumen.html" %}
 
-        <!-- Recomendaciones -->
+
+        <!-- =================================================
+             RECOMENDACIONES
+        ================================================== -->
         {% include "includes/detalle_orden/recomendaciones.html" %}
+
 
         <!-- =================================================
              ACCIONES INFERIORES
@@ -272,12 +322,14 @@
 
     </form>
 
+
     <!-- =====================================================
          FORMULARIOS INDEPENDIENTES DE ACCIONES
 
          Se colocan después del formulario principal para evitar
          formularios anidados.
     ====================================================== -->
+
     <form
         id="form_cerrar_orden"
         method="post"
@@ -287,6 +339,7 @@
         {% csrf_token %}
     </form>
 
+
     <form
         id="form_anular_orden"
         method="post"
@@ -295,6 +348,7 @@
     >
         {% csrf_token %}
     </form>
+
 
     <form
         id="formReabrir"
@@ -308,12 +362,33 @@
 </div>
 
 
+<!-- =========================================================
+     MODALES
+
+     Se mantienen fuera de formDetalleOT para evitar
+     formularios HTML anidados.
+========================================================= -->
+
 {% include "includes/detalle_orden/modal_editar_recepcion.html" %}
+
+{% include "includes/detalle_orden/modal_enviar_documento.html" %}
+
+
+<!-- =========================================================
+     SWEETALERT
+========================================================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
 <script>
+
+    /* =========================================================
+       GUARDAR DETALLE OT
+    ========================================================= */
+
     function guardarOTDirecto() {
+
         const formulario = document.getElementById(
             "formDetalleOT"
         );
@@ -322,7 +397,9 @@
             "btnGuardarDetalleOT"
         );
 
+
         if (!formulario) {
+
             Swal.fire({
                 title: "Error",
                 text: "No se encontró el formulario de la orden.",
@@ -333,13 +410,16 @@
             return;
         }
 
+
         if (
             typeof mostrarEstadoDescuento === "function" &&
             !mostrarEstadoDescuento()
         ) {
+
             const mensajeError = document.getElementById(
                 "descuentoError"
             );
+
 
             Swal.fire({
                 title: "Descuento inválido",
@@ -350,12 +430,15 @@
                 confirmButtonColor: "#ff9500"
             });
 
+
             document.getElementById(
                 "descuento_ingresado"
             )?.focus();
 
+
             return;
         }
+
 
         /*
          * Verificación de seguridad:
@@ -370,10 +453,12 @@
             '[name="moi_descripcion[]"]'
         );
 
+
         if (
             campoRepuesto &&
             campoRepuesto.form !== formulario
         ) {
+
             Swal.fire({
                 title: "Error de formulario",
                 text:
@@ -387,10 +472,12 @@
             return;
         }
 
+
         if (
             campoManoObra &&
             campoManoObra.form !== formulario
         ) {
+
             Swal.fire({
                 title: "Error de formulario",
                 text:
@@ -404,9 +491,11 @@
             return;
         }
 
+
         if (botonGuardar) {
             botonGuardar.disabled = true;
         }
+
 
         Swal.fire({
             title: "Guardando...",
@@ -417,7 +506,9 @@
             allowEscapeKey: false,
 
             didOpen: function () {
+
                 Swal.showLoading();
+
 
                 /*
                  * requestSubmit respeta el envío normal del formulario
@@ -427,8 +518,12 @@
                     typeof formulario.requestSubmit ===
                     "function"
                 ) {
+
                     formulario.requestSubmit();
-                } else {
+
+                }
+                else {
+
                     formulario.submit();
                 }
             }
@@ -436,7 +531,12 @@
     }
 
 
+    /* =========================================================
+       REABRIR ORDEN
+    ========================================================= */
+
     function confirmarReabrir(formId) {
+
         Swal.fire({
             title: "¿Reabrir Orden Histórica?",
             text:
@@ -449,25 +549,36 @@
             cancelButtonColor: "#6e6e73",
             confirmButtonText: "Sí, reabrir",
             cancelButtonText: "Cancelar"
-        }).then(function (result) {
-            if (!result.isConfirmed) {
-                return;
-            }
+        })
+        .then(
+            function (result) {
 
-            const formulario = document.getElementById(
-                formId
-            );
+                if (!result.isConfirmed) {
+                    return;
+                }
 
-            if (formulario) {
-                formulario.submit();
+
+                const formulario = document.getElementById(
+                    formId
+                );
+
+
+                if (formulario) {
+                    formulario.submit();
+                }
             }
-        });
+        );
     }
 
+
+    /* =========================================================
+       DOM READY
+    ========================================================= */
 
     document.addEventListener(
         "DOMContentLoaded",
         function () {
+
             {% if messages %}
 
                 {% for message in messages %}
@@ -507,15 +618,23 @@
 
             {% endif %}
 
+
             if (
                 typeof recalcularTotales ===
                 "function"
             ) {
+
                 recalcularTotales();
             }
         }
     );
+
 </script>
+
+
+<!-- =========================================================
+     JAVASCRIPT MODULAR
+========================================================= -->
 
 <script
     src="{% static 'js/detalle_orden/base.js' %}?v=21"

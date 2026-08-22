@@ -414,7 +414,71 @@ ASISTENTE_SSO_TTL_SECONDS = int(
         "60",
     )
 )
+# =========================================================
+# MAO ASISTENTE - API SERVIDOR A SERVIDOR
+# =========================================================
+#
+# Esta configuración se utiliza para que el ERP pueda
+# realizar llamadas privadas hacia MAO Asistente.
+#
+# Ejemplo actual:
+#
+# ERP
+#   |
+#   | PDF frontal + teléfono de la OT
+#   |
+#   v
+# MAO Asistente
+#   |
+#   v
+# Meta / WhatsApp
+#
+#
+# LOCAL:
+#
+# MAO_ASISTENTE_BASE_URL=http://127.0.0.1:8001
+#
+#
+# PRODUCCIÓN:
+#
+# MAO_ASISTENTE_BASE_URL=https://asistente.maotaller.com
+#
+#
+# MAO_ASISTENTE_SERVICE_TOKEN debe contener exactamente
+# el mismo secreto que MAO_ERP_SERVICE_TOKEN en el
+# .env de MAO Asistente.
+#
+# IMPORTANTE:
+#
+# Este secreto NO es el secreto utilizado por el SSO.
+#
+# =========================================================
 
+MAO_ASISTENTE_BASE_URL = (
+    os.getenv(
+        "MAO_ASISTENTE_BASE_URL",
+        "http://127.0.0.1:8001",
+    )
+    .strip()
+    .rstrip("/")
+)
+
+
+MAO_ASISTENTE_SERVICE_TOKEN = (
+    os.getenv(
+        "MAO_ASISTENTE_SERVICE_TOKEN",
+        "",
+    )
+    .strip()
+)
+
+
+MAO_ASISTENTE_TIMEOUT_SECONDS = int(
+    os.getenv(
+        "MAO_ASISTENTE_TIMEOUT_SECONDS",
+        "30",
+    )
+)
 
 # =========================================================
 # COOKIES ERP
