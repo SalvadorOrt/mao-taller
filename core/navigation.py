@@ -1,4 +1,3 @@
-from django.conf import settings
 def get_menu_lateral(user):
     menu = []
 
@@ -9,28 +8,7 @@ def get_menu_lateral(user):
     if not user.is_authenticated:
         return menu
 
-    # =====================================================
-    # MAO ASISTENTE
-    # =====================================================
 
-    if (
-        getattr(
-            settings,
-            "MAO_ASISTENTE_HABILITADO",
-            False,
-        )
-        and user.is_active
-    ):
-        menu.append({
-            "titulo": "Asistente",
-            "items": [
-                {
-                    "label": "MAO Asistente",
-                    "url_name": "integraciones:entrar_asistente",
-                    "icon": "bi-stars",
-                },
-            ],
-        })
     # =====================================================
     # OPERACIÓN TALLER
     # =====================================================

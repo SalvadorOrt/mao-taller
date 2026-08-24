@@ -5,9 +5,7 @@ import unicodedata
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
-from django.template.loader import render_to_string
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from empresa.models import EmpresaEmisora
@@ -20,19 +18,12 @@ from ..models import (
     OrdenTrabajo,
 )
 
-from ..services.pdf_ficha import (
-    generar_pdf_desde_html,
-)
-
 
 # ==========================================================
 # UTILIDADES
 # ==========================================================
 
-def limpiar_nombre_archivo(
-    valor,
-    valor_defecto="SIN-DATO",
-):
+def limpiar_nombre_archivo(valor, valor_defecto="SIN-DATO"):
     """
     Convierte cualquier valor en un texto seguro para utilizar
     como nombre de archivo.
@@ -91,13 +82,7 @@ def nombre_documento_orden(
     orden,
     tipo_documento,
 ):
-    """
-    Genera el nombre estándar para documentos de una OT.
-
-    Ejemplo:
-
-        OT-24522_PDI4385_CLIENTE_FICHA-TECNICA
-    """
+   
 
     numero_orden = limpiar_nombre_archivo(
         orden.numero_orden,
@@ -126,10 +111,7 @@ def nombre_documento_orden(
         f"{tipo_documento}"
     )
 
-
-def nombre_documento_cotizacion(
-    cotizacion,
-):
+def nombre_documento_cotizacion(cotizacion):
     """
     Estructura estándar:
 
@@ -185,25 +167,19 @@ def obtener_porcentaje_iva_activo():
 
 
 # ==========================================================
-# CONTEXTO FICHA TÉCNICA
+# IMPRIMIR FICHA TÉCNICA
 # ==========================================================
-
-def obtener_contexto_ficha_tecnica(
-    orden,
-    *,
-    incluir_trasera=False,
-    modo_pdf=False,
-):
-    """
-    Construye el contexto común de la ficha técnica.
-
-    Se utiliza tanto para:
-
-    - impresión normal desde el navegador;
-    - generación automática del PDF.
-
-    No cambia la lógica existente de la ficha.
-    """
+@login_required
+@xframe_options_sameorigin
+def imprimir_tecnico(request, pk):
+    orden = get_object_or_404(
+        OrdenTrabajo.objects.select_related(
+            "sucursal__empresa",
+            "cliente",
+            "expediente",
+        ),
+        pk=pk,
+    )
 
     # ======================================================
     # EMPRESA
@@ -225,7 +201,7 @@ def obtener_contexto_ficha_tecnica(
         )
 
     # ======================================================
-    # CHECKLIST
+    # CHECKLIST / CROQUIS
     # ======================================================
 
     chk = (
@@ -236,16 +212,34 @@ def obtener_contexto_ficha_tecnica(
         .first()
     )
 
-    # ======================================================
-    # CROQUIS
-    # ======================================================
-
     croquis = (
         OrdenCroquisDanio.objects
         .filter(
             orden=orden
         )
         .first()
+    )
+
+    # ======================================================
+    # HOJA ADICIONAL / PARTE TRASERA
+    # ======================================================
+    #
+    # Por defecto:
+    #
+    #   /imprimir-tecnico/123/
+    #
+    # muestra únicamente la primera hoja.
+    #
+    # Cuando llega:
+    #
+    #   ?trasera=1
+    #
+    # se mostrará también la segunda hoja.
+    #
+    # ======================================================
+
+    incluir_trasera = (
+        request.GET.get("trasera") == "1"
     )
 
     # ======================================================
@@ -258,196 +252,25 @@ def obtener_contexto_ficha_tecnica(
     )
 
     # ======================================================
-    # CONTEXTO
-    # ======================================================
-
-    return {
-        "orden": orden,
-        "empresa": empresa_ligada,
-        "chk": chk,
-        "croquis": croquis,
-
-        # Control frontal / trasera.
-        "incluir_trasera": incluir_trasera,
-
-        # Controla si se debe ejecutar window.print().
-        "modo_pdf": modo_pdf,
-
-        "nombre_archivo": nombre_archivo,
-    }
-
-
-# ==========================================================
-# IMPRIMIR FICHA TÉCNICA
-# ==========================================================
-
-@login_required
-@xframe_options_sameorigin
-def imprimir_tecnico(
-    request,
-    pk,
-):
-    """
-    Mantiene exactamente la lógica de impresión existente.
-
-    Sin ?trasera=1:
-        frontal.
-
-    Con ?trasera=1:
-        frontal + trasera.
-    """
-
-    orden = get_object_or_404(
-        OrdenTrabajo.objects.select_related(
-            "sucursal__empresa",
-            "cliente",
-            "expediente",
-        ),
-        pk=pk,
-    )
-
-    # ======================================================
-    # HOJA TRASERA
-    # ======================================================
-
-    incluir_trasera = (
-        request.GET.get("trasera") == "1"
-    )
-
-    # ======================================================
-    # CONTEXTO
-    # ======================================================
-
-    contexto = obtener_contexto_ficha_tecnica(
-        orden,
-        incluir_trasera=incluir_trasera,
-        modo_pdf=False,
-    )
-
-    # ======================================================
     # RENDER
     # ======================================================
 
     return render(
         request,
         "impresion/imprimir_tecnico.html",
-        contexto,
+        {
+            "orden": orden,
+            "empresa": empresa_ligada,
+            "chk": chk,
+            "croquis": croquis,
+
+            # Control de segunda hoja
+            "incluir_trasera": incluir_trasera,
+
+            # Nombre para impresión / PDF
+            "nombre_archivo": nombre_archivo,
+        },
     )
-
-
-# ==========================================================
-# DESCARGAR PDF FICHA TÉCNICA FRONTAL
-# ==========================================================
-
-@login_required
-def descargar_pdf_ficha_frontal(
-    request,
-    pk,
-):
-    """
-    Genera automáticamente el PDF de la ficha técnica.
-
-    IMPORTANTE:
-
-    Esta función SIEMPRE genera únicamente la cara frontal.
-
-    No modifica ni afecta la impresión normal de la ficha.
-    """
-
-    # ======================================================
-    # ORDEN
-    # ======================================================
-
-    orden = get_object_or_404(
-        OrdenTrabajo.objects.select_related(
-            "sucursal__empresa",
-            "cliente",
-            "expediente",
-        ),
-        pk=pk,
-    )
-
-    # ======================================================
-    # CONTEXTO
-    # ======================================================
-    #
-    # incluir_trasera=False:
-    #
-    #   garantiza que NO se renderice
-    #   imprimir_tecnico_trasera.html
-    #
-    # modo_pdf=True:
-    #
-    #   evita que imprimir_tecnico.html
-    #   ejecute window.print().
-    #
-    # ======================================================
-
-    contexto = obtener_contexto_ficha_tecnica(
-        orden,
-        incluir_trasera=False,
-        modo_pdf=True,
-    )
-
-    # ======================================================
-    # RENDERIZAR HTML
-    # ======================================================
-
-    html = render_to_string(
-        "impresion/imprimir_tecnico.html",
-        contexto,
-        request=request,
-    )
-
-    # ======================================================
-    # URL BASE
-    # ======================================================
-    #
-    # Se utiliza para que Chromium pueda resolver:
-    #
-    # /static/
-    # /media/
-    #
-    # ======================================================
-
-    base_url = (
-        request.build_absolute_uri("/")
-    )
-
-    # ======================================================
-    # GENERAR PDF
-    # ======================================================
-
-    pdf_bytes = generar_pdf_desde_html(
-        html=html,
-        base_url=base_url,
-    )
-
-    # ======================================================
-    # NOMBRE DEL ARCHIVO
-    # ======================================================
-
-    nombre_archivo = (
-        contexto["nombre_archivo"]
-    )
-
-    # ======================================================
-    # RESPUESTA
-    # ======================================================
-
-    response = HttpResponse(
-        pdf_bytes,
-        content_type="application/pdf",
-    )
-
-    response[
-        "Content-Disposition"
-    ] = (
-        f'attachment; '
-        f'filename="{nombre_archivo}.pdf"'
-    )
-
-    return response
 
 
 # ==========================================================
@@ -456,10 +279,7 @@ def descargar_pdf_ficha_frontal(
 
 @login_required
 @xframe_options_sameorigin
-def imprimir_resumen_orden(
-    request,
-    pk,
-):
+def imprimir_resumen_orden(request, pk):
     orden = get_object_or_404(
         OrdenTrabajo.objects
         .select_related(
@@ -650,6 +470,12 @@ def imprimir_resumen_orden(
     # ======================================================
     # NOMBRE DEL DOCUMENTO
     # ======================================================
+    #
+    # Ejemplo:
+    #
+    # OT-24522_PDI4385_RESUMEN-ORDEN
+    #
+    # ======================================================
 
     nombre_archivo = nombre_documento_orden(
         orden,
@@ -664,17 +490,11 @@ def imprimir_resumen_orden(
         request,
         "impresion/resumen_orden.html",
         {
-            "orden":
-                orden,
+            "orden": orden,
+            "empresa": empresa_ligada,
 
-            "empresa":
-                empresa_ligada,
-
-            "repuestos":
-                repuestos,
-
-            "servicios":
-                servicios,
+            "repuestos": repuestos,
+            "servicios": servicios,
 
             "repuestos_historicos":
                 repuestos_historicos,
@@ -712,6 +532,7 @@ def imprimir_resumen_orden(
             "total_final":
                 total_final,
 
+            # Nombre para impresión / PDF
             "nombre_archivo":
                 nombre_archivo,
         },
@@ -724,10 +545,7 @@ def imprimir_resumen_orden(
 
 @login_required
 @xframe_options_sameorigin
-def imprimir_cotizacion(
-    request,
-    pk,
-):
+def imprimir_cotizacion(request, pk):
     cotizacion = get_object_or_404(
         Cotizacion.objects.select_related(
             "sucursal__empresa",
@@ -852,6 +670,12 @@ def imprimir_cotizacion(
     # ======================================================
     # NOMBRE DEL DOCUMENTO
     # ======================================================
+    #
+    # Ejemplo:
+    #
+    # COT-00125_PDI4385_COTIZACION
+    #
+    # ======================================================
 
     nombre_archivo = (
         nombre_documento_cotizacion(
@@ -900,6 +724,7 @@ def imprimir_cotizacion(
             "total":
                 total,
 
+            # Nombre para impresión / PDF
             "nombre_archivo":
                 nombre_archivo,
         },
