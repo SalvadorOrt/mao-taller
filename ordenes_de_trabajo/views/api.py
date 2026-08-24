@@ -196,12 +196,6 @@ def consultar_regcheck(request):
             "color": ultima_ot.color if ultima_ot else "",
             "kilometraje": ultima_ot.kilometraje if ultima_ot else "",
             **_datos_contacto_cliente(expediente.cliente),
-            "tipo_tarifa_vehiculo": (
-                ultima_ot.tipo_tarifa_vehiculo if ultima_ot else "NO_APLICA"
-            ),
-            "gama_vehiculo": (
-                ultima_ot.gama_vehiculo if ultima_ot else "NO_APLICA"
-            ),
         })
 
     # 2. No está en MAO: consultar API externa de placa.
@@ -289,8 +283,6 @@ def consultar_regcheck(request):
             "numero_chasis": expediente.numero_chasis or numero_chasis or "",
             "imagen_url": expediente.imagen_url_api or imagen_url or "",
             **_datos_contacto_cliente(None),
-            "tipo_tarifa_vehiculo": "NO_APLICA",
-            "gama_vehiculo": "NO_APLICA",
         })
 
     except requests.RequestException as e:
@@ -958,17 +950,6 @@ def api_buscar_servicios_ot(request):
         .lower()
     )
 
-    tipo_tarifa_vehiculo = (
-        request.GET
-        .get(
-            "tipo_tarifa_vehiculo",
-            "NO_APLICA",
-        )
-        .strip()
-        .upper()
-        or "NO_APLICA"
-    )
-
     variante_precio = (
         request.GET
         .get(
@@ -1067,7 +1048,6 @@ def api_buscar_servicios_ot(request):
         precio = (
             item.obtener_precio_inteligente(
                 sucursal=sucursal_activa,
-                tipo_tarifa=tipo_tarifa_vehiculo,
                 variante=variante_precio,
             )
         )
@@ -1123,16 +1103,8 @@ def api_buscar_servicios_ot(request):
                 or "0.00"
             ),
 
-            "requiere_tipo_tarifa": (
-                item.requiere_tipo_tarifa
-            ),
-
             "requiere_variante": (
                 item.requiere_variante
-            ),
-
-            "tipo_tarifa_aplicada": (
-                tipo_tarifa_vehiculo
             ),
 
             "variante_aplicada": (

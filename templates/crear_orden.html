@@ -194,8 +194,6 @@
         <input type="hidden" name="sintomas_json" id="id_sintomas_json">
         <input type="hidden" name="trabajos_json" id="id_trabajos_json">
         <input type="hidden" name="objetos_json" id="id_objetos_json">
-        <input type="hidden" name="tipo_tarifa_vehiculo" id="id_tipo_tarifa_vehiculo" value="NO_APLICA">
-        <input type="hidden" name="gama_vehiculo" id="id_gama_vehiculo" value="NO_APLICA">
         <div class="card-recepcion">
 
             {% include 'includes/crear_orden/paso1_identificacion.html' %}
@@ -613,7 +611,7 @@ function buscarPlaca() {
                     </div>
                 `;
 
-                // ... (El resto de tus asignaciones de color, km, tarifa se quedan igual)
+                // Completar los demás datos disponibles del vehículo.
                 document.getElementById('id_vehiculo').value = descripcion;
                 document.getElementById('id_anio').value = data.anio || '';
 
@@ -626,8 +624,6 @@ function buscarPlaca() {
                 //if (document.getElementById('id_kilometraje') && data.kilometraje) {
                 //    document.getElementById('id_kilometraje').value = data.kilometraje;
                 //}
-                document.getElementById('id_tipo_tarifa_vehiculo').value = data.tipo_tarifa_vehiculo || 'NO_APLICA';
-                document.getElementById('id_gama_vehiculo').value = data.gama_vehiculo || 'NO_APLICA';
 
             } else {
                 msg.innerHTML = `
@@ -649,8 +645,6 @@ function buscarPlaca() {
                     </div>
                 `;
 
-                document.getElementById('id_tipo_tarifa_vehiculo').value = 'NO_APLICA';
-                document.getElementById('id_gama_vehiculo').value = 'NO_APLICA';
             }
         })
         .catch(() => {

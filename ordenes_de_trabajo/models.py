@@ -11,28 +11,7 @@ from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.dateparse import parse_date
 
-TIPOS_TARIFA_VEHICULO = [
-        ("NO_APLICA", "No aplica"),
-        ("AUTO", "Auto"),
-        ("AUTO_3P", "Auto 3 puertas"),
-        ("AUTO_5P", "Auto 5 puertas"),
-        ("SUV_3P", "SUV 3 puertas"),
-        ("SUV_5P", "SUV 5 puertas"),
-        ("CAMIONETA_CS", "Camioneta cabina sencilla"),
-        ("CAMIONETA_DC", "Camioneta doble cabina"),
-        ("CAMIONETA_GRANDE", "Camioneta grande"),
-    ]
-GAMAS_VEHICULO = [
-        ("NO_APLICA", "No aplica"),
-        ("ECONOMICA", "Económica"),
-        ("MEDIA", "Media"),
-        ("MEDIA_ALTA", "Media alta"),
-        ("ALTA", "Alta"),
-        ("PREMIUM", "Premium"),
-        ("LUJO", "Lujo"),
-        ("COMERCIAL", "Comercial"),
-        ("DEPORTIVA", "Deportiva"),
-    ]
+
 # ==========================================
 # 1. SUCURSALES
 # ==========================================
@@ -1919,20 +1898,7 @@ class OrdenTrabajo(models.Model):
         blank=True,
     )
 
-    # ==========================================================
-    # TARIFA VEHÍCULO
-    # ==========================================================
 
-    tipo_tarifa_vehiculo = models.CharField(
-        max_length=20,
-        choices=TIPOS_TARIFA_VEHICULO,
-        default="NO_APLICA",
-    )
-
-    gama_vehiculo = models.CharField(
-        max_length=20,
-        default="NO_APLICA",
-    )
 
     # ==========================================================
     # ESTADO
@@ -3660,10 +3626,7 @@ class OrdenServicioDetalle(models.Model):
 
     orden_item = models.PositiveIntegerField(default=1)
 
-    tipo_tarifa_aplicada = models.CharField(
-        max_length=20,
-        default="NO_APLICA",
-    )
+
 
     variante_precio_aplicada = models.CharField(
         max_length=20,
@@ -3714,11 +3677,7 @@ class OrdenServicioDetalle(models.Model):
     def save(self, *args, **kwargs):
         self.validar_orden_editable()
 
-        if not self.tipo_tarifa_aplicada:
-            self.tipo_tarifa_aplicada = (
-                self.orden.tipo_tarifa_vehiculo or "NO_APLICA"
-            )
-
+ 
         if not self.variante_precio_aplicada:
             self.variante_precio_aplicada = "NORMAL"
 
@@ -4226,17 +4185,6 @@ class Cotizacion(models.Model):
 
     anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
 
-    tipo_tarifa_vehiculo = models.CharField(
-        max_length=20,
-        choices=TIPOS_TARIFA_VEHICULO,
-        default="NO_APLICA",
-    )
-
-    gama_vehiculo = models.CharField(
-        max_length=20,
-        choices=GAMAS_VEHICULO,
-        default="NO_APLICA",
-    )
 
     estado = models.CharField(
         max_length=15,
@@ -4442,8 +4390,6 @@ class Cotizacion(models.Model):
             self.cliente = self.orden.cliente
             self.cliente_respaldo = self.orden.cliente_respaldo
             self.anio_vehiculo = self.orden.anio_vehiculo
-            self.tipo_tarifa_vehiculo = self.orden.tipo_tarifa_vehiculo
-            self.gama_vehiculo = self.orden.gama_vehiculo
 
         self._normalizar_campos_texto()
 
@@ -4496,10 +4442,7 @@ class CotizacionServicioDetalle(models.Model):
 
     orden_item = models.PositiveIntegerField(default=1)
 
-    tipo_tarifa_aplicada = models.CharField(
-        max_length=20,
-        default="NO_APLICA",
-    )
+
 
     variante_precio_aplicada = models.CharField(
         max_length=20,
@@ -4525,10 +4468,7 @@ class CotizacionServicioDetalle(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        if not self.tipo_tarifa_aplicada:
-            self.tipo_tarifa_aplicada = (
-                self.cotizacion.tipo_tarifa_vehiculo or "NO_APLICA"
-            )
+        
 
         if not self.variante_precio_aplicada:
             self.variante_precio_aplicada = "NORMAL"

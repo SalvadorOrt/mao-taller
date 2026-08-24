@@ -361,8 +361,6 @@ class Command(BaseCommand):
             "sintomas_cliente": texto_sintomas,
             "observaciones_tecnicas": texto_observaciones,
 
-            "tipo_tarifa_vehiculo": "NO_APLICA",
-            "gama_vehiculo": "NO_APLICA",
 
             "subtotal_repuestos": self.to_decimal(totales.get("subtotal_repuestos")),
             "subtotal_mano_obra": self.to_decimal(totales.get("subtotal_mano_obra")),

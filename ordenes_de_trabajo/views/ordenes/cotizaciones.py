@@ -310,7 +310,6 @@ def merge_servicios_cotizacion(request, cotizacion):
                 detalle.precio_unitario = precio
                 detalle.orden_item = i + 1
                 detalle.tipo_servicio = tipo_bd
-                detalle.tipo_tarifa_aplicada = cotizacion.tipo_tarifa_vehiculo or "NO_APLICA"
                 detalle.variante_precio_aplicada = variante
                 detalle.save()
 
@@ -332,7 +331,6 @@ def merge_servicios_cotizacion(request, cotizacion):
                     precio_unitario=precio,
                     orden_item=i + 1,
                     tipo_servicio=tipo_bd,
-                    tipo_tarifa_aplicada=cotizacion.tipo_tarifa_vehiculo or "NO_APLICA",
                     variante_precio_aplicada=variante,
                 )
 
@@ -457,8 +455,6 @@ def nueva_cotizacion_desde_ot(request, pk_orden):
             "placa": orden.placa,
             "vehiculo": orden.vehiculo,
             "anio_vehiculo": orden.anio_vehiculo,
-            "tipo_tarifa_vehiculo": orden.tipo_tarifa_vehiculo,
-            "gama_vehiculo": orden.gama_vehiculo,
             "estado": "PENDIENTE",
         },
     )
@@ -577,8 +573,6 @@ def aprobar_cotizacion(request, pk):
                     placa=cotizacion.placa,
                     vehiculo=cotizacion.vehiculo,
                     anio_vehiculo=cotizacion.anio_vehiculo,
-                    tipo_tarifa_vehiculo=cotizacion.tipo_tarifa_vehiculo,
-                    gama_vehiculo=cotizacion.gama_vehiculo,
                     observaciones_tecnicas=cotizacion.observaciones,
                     estado="ABIERTA",
                 )
@@ -607,7 +601,6 @@ def aprobar_cotizacion(request, pk):
                     cantidad=serv.cantidad,
                     precio_unitario=serv.precio_unitario,
                     orden_item=serv.orden_item,
-                    tipo_tarifa_aplicada=serv.tipo_tarifa_aplicada,
                     variante_precio_aplicada=serv.variante_precio_aplicada,
                 )
 

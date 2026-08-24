@@ -312,7 +312,6 @@ def merge_servicios(request, orden):
                 detalle.precio_unitario = precio
                 detalle.orden_item = i + 1
                 detalle.tipo_servicio = tipo_bd
-                detalle.tipo_tarifa_aplicada = orden.tipo_tarifa_vehiculo or "NO_APLICA"
                 detalle.variante_precio_aplicada = variante
                 detalle.save()
 
@@ -334,7 +333,6 @@ def merge_servicios(request, orden):
                     precio_unitario=precio,
                     orden_item=i + 1,
                     tipo_servicio=tipo_bd,
-                    tipo_tarifa_aplicada=orden.tipo_tarifa_vehiculo or "NO_APLICA",
                     variante_precio_aplicada=variante,
                 )
 

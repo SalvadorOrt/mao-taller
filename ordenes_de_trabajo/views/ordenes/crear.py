@@ -17,7 +17,6 @@ from ...models import (
 from ..utils import (
     parse_int, cargar_json_lista, procesar_imagen_base64,
     obtener_sucursal_activa, obtener_o_crear_expediente, generar_numero_orden,
-   
 )
 # =========================================================
 # CREAR ORDEN
@@ -41,31 +40,6 @@ def crear_orden(request):
         nivel_combustible = request.POST.get("nivel_combustible", "1/2").strip()
         clave_encendido = request.POST.get("clave_encendido", "").strip()
 
-        tipo_tarifa_vehiculo = request.POST.get(
-            "tipo_tarifa_vehiculo",
-            "NO_APLICA"
-        ).strip().upper() or "NO_APLICA"
-
-        gama_vehiculo = request.POST.get(
-            "gama_vehiculo",
-            "NO_APLICA"
-        ).strip().upper() or "NO_APLICA"
-
-        tipos_validos = {
-            "NO_APLICA", "AUTO", "AUTO_3P", "AUTO_5P", "SUV_3P", "SUV_5P",
-            "CAMIONETA_CS", "CAMIONETA_DC", "CAMIONETA_GRANDE",
-        }
-
-        gamas_validas = {
-            "NO_APLICA", "ECONOMICA", "MEDIA", "MEDIA_ALTA", "ALTA",
-            "PREMIUM", "LUJO", "COMERCIAL", "DEPORTIVA",
-        }
-
-        if tipo_tarifa_vehiculo not in tipos_validos:
-            tipo_tarifa_vehiculo = "NO_APLICA"
-
-        if gama_vehiculo not in gamas_validas:
-            gama_vehiculo = "NO_APLICA"
 
         identificacion = request.POST.get("identificacion", "").strip().upper()
 
@@ -225,8 +199,6 @@ def crear_orden(request):
                 observaciones_recepcion=observaciones_recepcion,
                 fecha_ingreso=timezone.now(),
                 estado="ABIERTA",
-                tipo_tarifa_vehiculo=tipo_tarifa_vehiculo,
-                gama_vehiculo=gama_vehiculo,
                 clave_encendido=clave_encendido,
                 configuracion_iva=configuracion_iva,
                 porcentaje_iva=porcentaje_iva,
