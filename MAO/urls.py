@@ -18,6 +18,7 @@ urlpatterns = [
         name="dashboard",
     ),
 
+
     # =====================================================
     # VER OT PARA FACTURAR
     # =====================================================
@@ -28,8 +29,9 @@ urlpatterns = [
         name="detalle_orden_facturacion",
     ),
 
+
     # =====================================================
-    # CREAR FACTURA DESDE OT
+    # CREAR / EMITIR FACTURA DESDE OT
     # =====================================================
 
     path(
@@ -37,6 +39,7 @@ urlpatterns = [
         views.crear_factura_desde_ot,
         name="crear_factura_desde_ot",
     ),
+
 
     # =====================================================
     # DETALLE DE FACTURA YA CREADA
@@ -48,8 +51,9 @@ urlpatterns = [
         name="detalle_factura",
     ),
 
+
     # =====================================================
-    # COMPRADOR
+    # ACTUALIZAR COMPRADOR DE FACTURA
     # =====================================================
 
     path(
@@ -57,6 +61,7 @@ urlpatterns = [
         views.actualizar_comprador,
         name="actualizar_comprador",
     ),
+
 
     # =====================================================
     # FORMA DE PAGO
@@ -68,6 +73,7 @@ urlpatterns = [
         name="guardar_forma_pago",
     ),
 
+
     # =====================================================
     # EMISIÓN ELECTRÓNICA
     # =====================================================
@@ -77,4 +83,5 @@ urlpatterns = [
         views.emitir_factura,
         name="emitir_factura",
     ),
+
 ]
