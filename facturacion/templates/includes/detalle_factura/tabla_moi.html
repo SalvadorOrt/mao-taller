@@ -57,7 +57,34 @@
         font-size: 12px;
         background: #ffffff;
     }
+    .fila-hijas-moi-factura td {
+    background: #fafafa;
+    border-top: 0 !important;
+    border-bottom: 1px solid #e5e5ea;
+    padding: 8px 10px 14px 10px !important;
+}
 
+.procedimientos-moi-factura {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.procedimiento-item-moi-factura {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.procedimiento-item-moi-factura input {
+    width: 100%;
+    height: 30px;
+    font-size: 12px;
+    background: #ffffff;
+}
 </style>
 
 
@@ -262,10 +289,12 @@
 
                         <tr class="fila-hijas-moi-factura form-readonly">
 
+                            <!-- CÓDIGO / REFERENCIA -->
                             <td></td>
 
 
-                            <td colspan="4">
+                            <!-- DESCRIPCIÓN / PROCEDIMIENTOS -->
+                            <td>
 
                                 <div class="procedimientos-moi-factura">
 
@@ -287,6 +316,18 @@
                                 </div>
 
                             </td>
+
+
+                            <!-- P.U. -->
+                            <td></td>
+
+
+                            <!-- CANTIDAD -->
+                            <td></td>
+
+
+                            <!-- VALOR -->
+                            <td></td>
 
                         </tr>
 
