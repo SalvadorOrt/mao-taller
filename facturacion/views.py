@@ -83,6 +83,17 @@ def _factura_editable(factura):
 
 @login_required
 def dashboard_facturacion(request):
+    """
+    Muestra únicamente las Órdenes de Trabajo listas para facturar.
+
+    Criterios:
+    - estado CERRADA
+    - no migrada
+    - sin factura asociada
+
+    El dashboard no crea facturas.
+    Solo presenta la lista pendiente.
+    """
 
     ordenes_pendientes = (
         OrdenTrabajo.objects
@@ -95,84 +106,18 @@ def dashboard_facturacion(request):
             "cliente",
             "sucursal",
         )
-        .order_by("-fecha_ingreso")
-    )
-
-    facturas_borrador = (
-        FacturaVenta.objects
-        .filter(
-            estado="BORRADOR",
+        .order_by(
+            "-fecha_ingreso",
+            "-pk",
         )
-        .select_related(
-            "orden",
-            "sucursal",
-            "empresa",
-        )
-        .order_by("-created_at")[:20]
-    )
-
-    ultimas_facturas = (
-        FacturaVenta.objects
-        .exclude(
-            estado="BORRADOR",
-        )
-        .select_related(
-            "orden",
-            "sucursal",
-            "empresa",
-        )
-        .order_by("-created_at")[:20]
-    )
-
-    total_pendientes = (
-        ordenes_pendientes.count()
-    )
-
-    total_borradores = (
-        FacturaVenta.objects
-        .filter(
-            estado="BORRADOR",
-        )
-        .count()
-    )
-
-    total_autorizadas = (
-        FacturaVenta.objects
-        .filter(
-            estado="AUTORIZADO",
-        )
-        .count()
-    )
-
-    total_errores = (
-        FacturaVenta.objects
-        .filter(
-            estado="RECHAZADO",
-        )
-        .count()
     )
 
     context = {
         "ordenes_pendientes":
             ordenes_pendientes,
 
-        "facturas_borrador":
-            facturas_borrador,
-
-        "ultimas_facturas":
-            ultimas_facturas,
-
         "total_pendientes":
-            total_pendientes,
-
-        "total_borradores":
-            total_borradores,
-
-        "total_autorizadas":
-            total_autorizadas,
-
-        "total_errores":
-            total_errores,
+            ordenes_pendientes.count(),
     }
 
     return render(
@@ -180,8 +125,6 @@ def dashboard_facturacion(request):
         "facturacion/dashboard.html",
         context,
     )
-
-
 # =========================================================
 # CREAR FACTURA DESDE OT
 # =========================================================
@@ -1015,4 +958,152 @@ def emitir_factura(
     return redirect(
         "facturacion:detalle_factura",
         factura_id=factura.pk,
+    )
+
+# =========================================================
+# DETALLE DE OT PARA FACTURACIÓN
+# =========================================================
+
+@login_required
+def detalle_orden_facturacion(
+    request,
+    orden_id,
+):
+    """
+    Pantalla de consulta previa a la emisión.
+
+    IMPORTANTE:
+    - NO crea FacturaVenta.
+    - NO consume secuencial.
+    - NO genera XML.
+    - NO envía nada al SRI.
+
+    Únicamente muestra la OT cerrada con toda la información
+    necesaria para decidir si se factura.
+    """
+
+    orden = get_object_or_404(
+        OrdenTrabajo.objects
+        .select_related(
+            "cliente",
+            "sucursal",
+            "sucursal__empresa",
+        )
+        .prefetch_related(
+            "servicios_detalles__procedimientos_detalle",
+            "insumos_detalles",
+        ),
+        pk=orden_id,
+        estado="CERRADA",
+        es_migrada=False,
+    )
+
+    # =====================================================
+    # SI YA EXISTE FACTURA
+    # =====================================================
+
+    factura_existente = (
+        FacturaVenta.objects
+        .filter(
+            orden=orden,
+        )
+        .first()
+    )
+
+    if factura_existente:
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_existente.pk,
+        )
+
+    # =====================================================
+    # REPUESTOS
+    # =====================================================
+
+    repuestos = list(
+        orden.insumos_detalles.all()
+    )
+
+    # =====================================================
+    # SERVICIOS
+    # =====================================================
+
+    servicios = list(
+        orden.servicios_detalles.all()
+    )
+
+    mano_obra_interna = [
+        item
+        for item in servicios
+        if item.tipo_servicio == "MEC"
+    ]
+
+    mano_obra_externa = [
+        item
+        for item in servicios
+        if item.tipo_servicio == "EXT"
+    ]
+
+    # =====================================================
+    # CONTEXTO
+    # =====================================================
+
+    context = {
+        "orden": orden,
+
+        # -----------------------------------------
+        # DETALLES
+        # -----------------------------------------
+
+        "repuestos": repuestos,
+
+        "mano_obra_interna":
+            mano_obra_interna,
+
+        "mano_obra_externa":
+            mano_obra_externa,
+
+        # -----------------------------------------
+        # TOTALES
+        # -----------------------------------------
+
+        "subtotal_repuestos":
+            orden.subtotal_repuestos,
+
+        "subtotal_moi":
+            orden.subtotal_mano_obra_interna,
+
+        "subtotal_moe":
+            orden.subtotal_mano_obra_externa,
+
+        "subtotal_sin_iva":
+            orden.subtotal_sin_iva,
+
+        "descuento":
+            orden.valor_descuento,
+
+        "porcentaje_iva":
+            orden.porcentaje_iva,
+
+        "valor_iva":
+            orden.valor_iva,
+
+        "total_final":
+            orden.total_final,
+
+        # -----------------------------------------
+        # CHOICES PARA FACTURACIÓN
+        # -----------------------------------------
+
+        "tipos_identificacion":
+            FacturaVenta.TIPOS_IDENTIFICACION,
+
+        "formas_pago":
+            FacturaVenta.FORMAS_PAGO,
+    }
+
+    return render(
+        request,
+        "facturacion/detalle_orden_facturacion.html",
+        context,
     )

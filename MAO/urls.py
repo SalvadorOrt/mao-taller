@@ -1,90 +1,80 @@
-from django.contrib import admin
-from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
+from django.urls import path
 
-from django.contrib.auth import views as auth_views
-from django.views.generic import RedirectView
+from . import views
+
+
+app_name = "facturacion"
 
 
 urlpatterns = [
-    path(
-        "admin/",
-        admin.site.urls,
-    ),
-
-    path(
-        "login/",
-        auth_views.LoginView.as_view(
-            template_name="login.html",
-            redirect_authenticated_user=True,
-        ),
-        name="login",
-    ),
-
-    path(
-        "logout/",
-        auth_views.LogoutView.as_view(
-            next_page="login",
-        ),
-        name="logout",
-    ),
 
     # =====================================================
-    # RAÍZ DEL SISTEMA
+    # DASHBOARD FACTURACIÓN
     # =====================================================
+
     path(
         "",
-        RedirectView.as_view(
-            url="/dashboard/",
-            permanent=False,
-        ),
+        views.dashboard_facturacion,
+        name="dashboard",
     ),
 
     # =====================================================
-    # ACCESOS / ROLES / PERMISOS
+    # VER OT PARA FACTURAR
     # =====================================================
+
     path(
-        "accesos/",
-        include("accesos.urls"),
+        "orden/<int:orden_id>/",
+        views.detalle_orden_facturacion,
+        name="detalle_orden_facturacion",
     ),
 
     # =====================================================
-    # ÓRDENES DE TRABAJO
+    # CREAR FACTURA DESDE OT
     # =====================================================
+
     path(
-        "",
-        include("ordenes_de_trabajo.urls"),
+        "orden/<int:orden_id>/facturar/",
+        views.crear_factura_desde_ot,
+        name="crear_factura_desde_ot",
     ),
 
     # =====================================================
-    # AVALÚOS
+    # DETALLE DE FACTURA YA CREADA
     # =====================================================
+
     path(
-        "avaluos/",
-        include("avaluos.urls"),
+        "facturas/<int:factura_id>/",
+        views.detalle_factura,
+        name="detalle_factura",
     ),
 
     # =====================================================
-    # INVENTARIO
+    # COMPRADOR
     # =====================================================
+
     path(
-        "inventario/",
-        include("inventario.urls"),
+        "facturas/<int:factura_id>/comprador/",
+        views.actualizar_comprador,
+        name="actualizar_comprador",
     ),
 
     # =====================================================
-    # FACTURACIÓN
+    # FORMA DE PAGO
     # =====================================================
+
     path(
-        "facturacion/",
-        include("facturacion.urls"),
+        "facturas/<int:factura_id>/pago/",
+        views.guardar_forma_pago,
+        name="guardar_forma_pago",
+    ),
+
+    # =====================================================
+    # EMISIÓN ELECTRÓNICA
+    # =====================================================
+
+    path(
+        "facturas/<int:factura_id>/emitir/",
+        views.emitir_factura,
+        name="emitir_factura",
     ),
 ]
-
-
-if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
-    )
