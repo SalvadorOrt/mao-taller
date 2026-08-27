@@ -1,43 +1,436 @@
-<div class="d-flex align-items-center gap-2">
+{% load humanize %}
 
-    <button
-        type="button"
-        class="btn-login"
-        onclick="abrirModalComprador()"
-    >
-        <i class="bi bi-person-gear me-1"></i>
-        Cambiar comprador
-    </button>
+<style>
+    .info-general-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+        gap: 15px;
+        align-items: stretch;
+    }
 
-    <button
-        type="button"
-        class="btn-login"
-        disabled
-    >
-        <i class="bi bi-printer me-1"></i>
-        Imprimir factura
-    </button>
+    .info-general-card {
+        background: #fbfbfd;
+        border: 1px solid #efeff2;
+        border-radius: 12px;
+        padding: 12px;
+        min-width: 0;
+    }
 
-    <button
-        type="submit"
-        class="btn-login primary"
-    >
-        <i class="bi bi-receipt me-1"></i>
-        Emitir factura
-    </button>
+    .info-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--muted, #6e6e73);
+        text-transform: uppercase;
+    }
+
+    .vehiculo-operacion-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .vehiculo-operacion-item {
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+        border-radius: 8px;
+        padding: 8px 9px;
+        min-width: 0;
+    }
+
+    .vehiculo-operacion-label {
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--muted, #6e6e73);
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+
+    .vehiculo-operacion-valor {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1d1d1f;
+        line-height: 1.2;
+    }
+
+    @media (max-width: 1050px) {
+        .info-general-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .info-general-card-vehiculo {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .info-general-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-general-card-vehiculo {
+            grid-column: auto;
+        }
+
+        .vehiculo-operacion-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .vehiculo-operacion-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+
+<div
+    class="ot-card"
+    style="margin-bottom: 20px;"
+>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <div
         style="
-            background:#fff8e5;
-            color:#b76e00;
-            border:1px solid #ffe0a3;
-            border-radius:8px;
-            padding:6px 12px;
-            font-size:11px;
-            font-weight:700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border, #d2d2d7);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
         "
     >
-        POR FACTURAR
+
+        <div>
+
+            <div
+                style="
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: var(--text, #1d1d1f);
+                "
+            >
+                Orden de Trabajo {{ orden.numero_orden }}
+            </div>
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    flex-wrap: wrap;
+                "
+            >
+
+                <i class="bi bi-calendar-event"></i>
+
+                <span>
+                    Ingresada el
+                    {{ orden.fecha_ingreso|date:"d/m/Y" }}
+                    a las
+                    {{ orden.fecha_ingreso|time:"H:i" }}
+                </span>
+
+                {% if orden.sucursal %}
+                    <span>·</span>
+                    <span>{{ orden.sucursal.nombre }}</span>
+                {% endif %}
+
+            </div>
+
+            <p
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin: 4px 0 0 0;
+                "
+            >
+                Información original de la orden para facturación
+            </p>
+
+        </div>
+
+
+        <div
+            style="
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                flex-wrap: wrap;
+            "
+        >
+
+            <span
+                class="ot-badge"
+                style="
+                    background: #f5f5f7;
+                    color: var(--muted);
+                    border-color: var(--border);
+                "
+            >
+                <i
+                    class="bi bi-lock"
+                    style="margin-right: 4px;"
+                ></i>
+
+                SOLO LECTURA
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TARJETAS
+    ====================================================== -->
+
+    <div class="info-general-grid">
+
+
+        <!-- =================================================
+             CLIENTE ORIGINAL DE LA OT
+        ================================================== -->
+
+        <div class="info-general-card">
+
+            <div
+                class="info-label"
+                style="margin-bottom: 5px;"
+            >
+                Cliente de la OT
+            </div>
+
+
+            <div
+                style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text, #1d1d1f);
+                "
+            >
+                {{ orden.nombre_cliente_final|default:"NO REGISTRADO"|upper }}
+            </div>
+
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+                C.I./RUC:
+
+                {% if orden.cliente %}
+                    {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
+                {% else %}
+                    NO REGISTRADO
+                {% endif %}
+            </div>
+
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+                Celular:
+
+                {% if orden.cliente and orden.cliente.telefono %}
+                    {{ orden.cliente.telefono }}
+                {% else %}
+                    NO REGISTRADO
+                {% endif %}
+            </div>
+
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+                Correo:
+
+                {% if orden.cliente and orden.cliente.email %}
+                    {{ orden.cliente.email|lower }}
+                {% else %}
+                    NO REGISTRADO
+                {% endif %}
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             VEHÍCULO
+        ================================================== -->
+
+        <div class="info-general-card">
+
+            <div
+                class="info-label"
+                style="margin-bottom: 5px;"
+            >
+                Vehículo
+            </div>
+
+
+            <div
+                style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text, #1d1d1f);
+                "
+            >
+                {{ orden.vehiculo|upper|default:"SIN ESPECIFICAR" }}
+            </div>
+
+
+            <div
+                style="
+                    font-size: 11px;
+                    color: var(--muted, #6e6e73);
+                    margin-top: 4px;
+                "
+            >
+
+                Año:
+                {{ orden.anio_vehiculo|default:"-" }}
+
+                |
+
+                Color:
+                {{ orden.color|upper|default:"-" }}
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PLACA / KM
+        ================================================== -->
+
+        <div
+            class="
+                info-general-card
+                info-general-card-vehiculo
+            "
+        >
+
+            <div
+                class="info-label"
+                style="margin-bottom: 5px;"
+            >
+                Placa
+            </div>
+
+
+            <div
+                style="
+                    font-size: 16px;
+                    font-weight: 800;
+                    color: #0071e3;
+                    letter-spacing: 1px;
+                "
+            >
+                {{ orden.placa|upper|default:"S/P" }}
+            </div>
+
+
+            <div class="vehiculo-operacion-grid">
+
+                <div class="vehiculo-operacion-item">
+
+                    <div class="vehiculo-operacion-label">
+                        Kilometraje
+                    </div>
+
+                    <div class="vehiculo-operacion-valor">
+
+                        {% if orden.kilometraje is not None %}
+
+                            {{ orden.kilometraje|intcomma }}
+
+                            <span
+                                style="
+                                    font-size: 10px;
+                                    color: #6e6e73;
+                                "
+                            >
+                                km
+                            </span>
+
+                        {% else %}
+
+                            <span
+                                style="
+                                    font-size: 11px;
+                                    color: #86868b;
+                                "
+                            >
+                                NO REGISTRADO
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="vehiculo-operacion-item">
+
+                    <div class="vehiculo-operacion-label">
+                        Combustible
+                    </div>
+
+                    <div
+                        class="vehiculo-operacion-valor"
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        "
+                    >
+
+                        <i
+                            class="bi bi-fuel-pump-fill"
+                            style="
+                                color: #ff9500;
+                                font-size: 12px;
+                            "
+                        ></i>
+
+                        <span>
+                            {{ orden.get_nivel_combustible_display|default:"-" }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
 </div>
