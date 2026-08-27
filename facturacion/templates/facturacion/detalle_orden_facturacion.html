@@ -1,11 +1,19 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
+{% load l10n %}
 
-{% block title %}Detalle para Facturación | MAO{% endblock %}
-{% block page_title %}Detalle para Facturación{% endblock %}
-{% block page_subtitle %}
+{% block title %}
+    Facturación OT | MAO
+{% endblock %}
+
+{% block page_title %}
     Orden {{ orden.numero_orden }}
 {% endblock %}
+
+{% block page_subtitle %}
+    Detalle para facturación
+{% endblock %}
+
 
 {% block content %}
 
@@ -14,319 +22,600 @@
     href="{% static 'facturacion/css/detalle_factura.css' %}"
 >
 
+
 <div class="container ot-wrapper">
 
-    <div class="ot-card">
+    <!-- =====================================================
+         CABECERA / ESTADO
+    ====================================================== -->
 
-        <div class="section-title">
-            Información general
-        </div>
+    <div
+        class="ot-card ot-header"
+        style="
+            margin-bottom: 15px;
+            align-items: center;
+            padding: 15px;
+        "
+    >
 
-        <div class="info-grid">
+        <!-- =================================================
+             IZQUIERDA
+        ================================================== -->
 
-            <div class="info-box">
-                <div class="info-label">Orden</div>
-                <div class="info-value">
-                    {{ orden.numero_orden }}
-                </div>
+        <div>
+
+            <div
+                style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                "
+            >
+
+                <span
+                    style="
+                        font-size: 14px;
+                        font-weight: 700;
+                        color: var(--text);
+                    "
+                >
+                    Facturación:
+                </span>
+
+
+                <span
+                    class="ot-badge"
+                    style="
+                        background: #fff8e5;
+                        color: #b76e00;
+                        border-color: #ffe0a3;
+                    "
+                >
+                    <i class="bi bi-receipt"></i>
+
+                    POR FACTURAR
+                </span>
+
+
+                <span
+                    class="ot-badge"
+                    style="
+                        background: #f5f5f7;
+                        color: var(--muted);
+                        border-color: var(--border);
+                    "
+                >
+                    OT {{ orden.numero_orden }}
+                </span>
+
             </div>
 
-            <div class="info-box">
-                <div class="info-label">Cliente</div>
-                <div class="info-value">
-                    {{ orden.nombre_cliente_final|default:"-" }}
-                </div>
-            </div>
 
-            <div class="info-box">
-                <div class="info-label">Placa</div>
-                <div class="info-value">
-                    {{ orden.placa|default:"-" }}
-                </div>
-            </div>
+            <div
+                style="
+                    margin-top: 6px;
+                    font-size: 10px;
+                    color: var(--muted);
+                "
+            >
 
-            <div class="info-box">
-                <div class="info-label">Vehículo</div>
-                <div class="info-value">
-                    {{ orden.vehiculo|default:"-" }}
-                </div>
-            </div>
+                <i class="bi bi-calendar-event"></i>
 
-        </div>
+                Ingresada el
+                {{ orden.fecha_ingreso|date:"d/m/Y" }}
 
-    </div>
+                a las
+                {{ orden.fecha_ingreso|time:"H:i" }}
 
+                {% if orden.sucursal %}
+                    · {{ orden.sucursal.nombre }}
+                {% endif %}
 
-    <div class="ot-card">
-
-        <div class="section-title">
-            Repuestos
-        </div>
-
-        <div class="ot-table-wrap">
-
-            <table class="ot-table">
-
-                <thead>
-                    <tr>
-                        <th>Descripción</th>
-                        <th style="text-align:right;">Cantidad</th>
-                        <th style="text-align:right;">P. Unitario</th>
-                        <th style="text-align:right;">Subtotal</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for item in repuestos %}
-
-                        <tr>
-                            <td>
-                                {{ item.descripcion_factura|default:item.producto }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                {{ item.cantidad }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                ${{ item.precio_unitario|floatformat:2 }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                ${{ item.subtotal|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                    {% empty %}
-
-                        <tr>
-                            <td colspan="4">
-                                No hay repuestos.
-                            </td>
-                        </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="subtotal-box">
-            <div class="subtotal-pill">
-                Subtotal repuestos:
-                ${{ subtotal_repuestos|floatformat:2 }}
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="ot-card">
-
-        <div class="section-title">
-            Mano de Obra Interna
-        </div>
-
-        <div class="ot-table-wrap">
-
-            <table class="ot-table">
-
-                <thead>
-                    <tr>
-                        <th>Servicio</th>
-                        <th style="text-align:right;">Cantidad</th>
-                        <th style="text-align:right;">P. Unitario</th>
-                        <th style="text-align:right;">Subtotal</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for item in mano_obra_interna %}
-
-                        <tr>
-                            <td>
-                                {{ item.descripcion_servicio|default:"Servicio" }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                {{ item.cantidad }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                ${{ item.precio_unitario|floatformat:2 }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                ${{ item.subtotal|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                    {% empty %}
-
-                        <tr>
-                            <td colspan="4">
-                                No hay mano de obra interna.
-                            </td>
-                        </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="subtotal-box">
-            <div class="subtotal-pill">
-                Subtotal MOI:
-                ${{ subtotal_moi|floatformat:2 }}
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="ot-card">
-
-        <div class="section-title">
-            Mano de Obra Externa
-        </div>
-
-        <div class="ot-table-wrap">
-
-            <table class="ot-table">
-
-                <thead>
-                    <tr>
-                        <th>Servicio</th>
-                        <th style="text-align:right;">Cantidad</th>
-                        <th style="text-align:right;">P. Unitario</th>
-                        <th style="text-align:right;">Subtotal</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for item in mano_obra_externa %}
-
-                        <tr>
-                            <td>
-                                {{ item.descripcion_servicio|default:"Servicio externo" }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                {{ item.cantidad }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                ${{ item.precio_unitario|floatformat:2 }}
-                            </td>
-
-                            <td style="text-align:right;">
-                                ${{ item.subtotal|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                    {% empty %}
-
-                        <tr>
-                            <td colspan="4">
-                                No hay mano de obra externa.
-                            </td>
-                        </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="subtotal-box">
-            <div class="subtotal-pill">
-                Subtotal MOE:
-                ${{ subtotal_moe|floatformat:2 }}
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="ot-card">
-
-        <div class="section-title">
-            Resumen económico
-        </div>
-
-        <div class="totals-grid">
-
-            <div class="total-box">
-                <div class="total-label">Subtotal</div>
-                <div class="total-value">
-                    ${{ subtotal_sin_iva|floatformat:2 }}
-                </div>
-            </div>
-
-            <div class="total-box">
-                <div class="total-label">Descuento</div>
-                <div class="total-value">
-                    ${{ descuento|floatformat:2 }}
-                </div>
-            </div>
-
-            <div class="total-box">
-                <div class="total-label">
-                    IVA {{ porcentaje_iva|floatformat:0 }}%
-                </div>
-                <div class="total-value">
-                    ${{ valor_iva|floatformat:2 }}
-                </div>
-            </div>
-
-            <div class="total-box final">
-                <div class="total-label">Total</div>
-                <div class="total-value">
-                    ${{ total_final|floatformat:2 }}
-                </div>
             </div>
 
         </div>
 
-    </div>
 
+        <!-- =================================================
+             ACCIONES SUPERIORES
+        ================================================== -->
 
-    <div class="sticky-actions">
-
-        <a
-            href="{% url 'facturacion:dashboard' %}"
-            class="btn-login"
+        <div
+            style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            "
         >
-            Volver
-        </a>
 
-        <form
-            method="post"
-            action="{% url 'facturacion:crear_factura_desde_ot' orden.pk %}"
-        >
-            {% csrf_token %}
+            <!-- CAMBIAR COMPRADOR -->
 
             <button
-                type="submit"
-                class="btn-login primary"
+                type="button"
+                class="btn-login"
+                onclick="abrirModalComprador()"
             >
-                <i class="bi bi-receipt"></i>
-                Emitir factura
+
+                <i
+                    class="bi bi-person-gear"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Cambiar comprador
+
             </button>
-        </form>
+
+
+            <!-- IMPRESIÓN DESHABILITADA HASTA EMITIR -->
+
+            <button
+                type="button"
+                class="btn-login"
+                disabled
+                title="Disponible después de emitir la factura"
+                style="
+                    opacity: .55;
+                    cursor: not-allowed;
+                "
+            >
+
+                <i
+                    class="bi bi-printer"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Imprimir factura
+
+            </button>
+
+        </div>
 
     </div>
 
+
+
+    <!-- =====================================================
+         FORMULARIO DE EMISIÓN
+
+         IMPORTANTE:
+         Este es el único formulario principal de esta pantalla.
+
+         Los includes NO deben contener otros <form>.
+    ====================================================== -->
+
+    <form
+        method="post"
+        action="{% url 'facturacion:crear_factura_desde_ot' orden.pk %}"
+        id="formEmitirFactura"
+        novalidate
+    >
+
+        {% csrf_token %}
+
+
+        <!-- =================================================
+             DATOS ORIGEN
+        ================================================== -->
+
+        <input
+            type="hidden"
+            name="orden_id"
+            value="{{ orden.pk }}"
+        >
+
+
+        <!-- =================================================
+             INFORMACIÓN GENERAL
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/info_general.html" %}
+
+
+
+        <!-- =================================================
+             COMPRADOR / DATOS FISCALES
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/comprador.html" %}
+
+
+
+        <!-- =================================================
+             REPUESTOS
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/tabla_repuestos.html" %}
+
+
+
+        <!-- =================================================
+             MANO DE OBRA INTERNA
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/tabla_moi.html" %}
+
+
+
+        <!-- =================================================
+             MANO DE OBRA EXTERNA
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/tabla_moe.html" %}
+
+
+
+        <!-- =================================================
+             RESUMEN ECONÓMICO
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/resumen.html" %}
+
+
+
+        <!-- =================================================
+             RECOMENDACIONES TÉCNICAS
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/recomendaciones.html" %}
+
+
+
+        <!-- =================================================
+             FORMA DE PAGO
+        ================================================== -->
+
+        {% include "facturacion/includes/detalle_factura/forma_pago.html" %}
+
+
+
+        <!-- =================================================
+             ACCIONES INFERIORES
+        ================================================== -->
+
+        <div class="sticky-actions">
+
+            <!-- VOLVER -->
+
+            <a
+                href="{% url 'facturacion:dashboard' %}"
+                class="btn-login"
+                style="
+                    background: #e5e5ea;
+                    border-color: #e5e5ea;
+                    color: var(--text);
+                "
+            >
+
+                <i
+                    class="bi bi-arrow-left"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Volver
+
+            </a>
+
+
+            <!-- EMITIR -->
+
+            <button
+                type="button"
+                id="btnEmitirFactura"
+                class="btn-login primary"
+                onclick="confirmarEmisionFactura()"
+            >
+
+                <i
+                    class="bi bi-receipt"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Emitir factura
+
+            </button>
+
+        </div>
+
+    </form>
+
 </div>
+
+
+
+<!-- =========================================================
+     SWEETALERT
+========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script>
+
+    /* =========================================================
+       ABRIR MODAL COMPRADOR
+    ========================================================= */
+
+    function abrirModalComprador() {
+
+        const modal = document.getElementById(
+            "modalCompradorFactura"
+        );
+
+        if (!modal) {
+
+            Swal.fire({
+                title: "Comprador",
+                text: "No se encontró el modal de comprador.",
+                icon: "warning",
+                confirmButtonColor: "#0071e3"
+            });
+
+            return;
+        }
+
+        modal.style.display = "flex";
+    }
+
+
+
+    /* =========================================================
+       CERRAR MODAL COMPRADOR
+    ========================================================= */
+
+    function cerrarModalComprador() {
+
+        const modal = document.getElementById(
+            "modalCompradorFactura"
+        );
+
+        if (!modal) {
+            return;
+        }
+
+        modal.style.display = "none";
+    }
+
+
+
+    /* =========================================================
+       VALIDAR DATOS ANTES DE EMITIR
+    ========================================================= */
+
+    function validarDatosFactura() {
+
+        const identificacion = document.getElementById(
+            "facturaIdentificacion"
+        );
+
+        const razonSocial = document.getElementById(
+            "facturaRazonSocial"
+        );
+
+        const formaPago = document.getElementById(
+            "formaPagoFactura"
+        );
+
+
+        if (
+            identificacion &&
+            !String(identificacion.value || "").trim()
+        ) {
+
+            Swal.fire({
+                title: "Identificación requerida",
+                text: "Ingrese la identificación del comprador.",
+                icon: "warning",
+                confirmButtonColor: "#ff9500"
+            });
+
+            return false;
+        }
+
+
+        if (
+            razonSocial &&
+            !String(razonSocial.value || "").trim()
+        ) {
+
+            Swal.fire({
+                title: "Comprador requerido",
+                text: "Ingrese el nombre o razón social del comprador.",
+                icon: "warning",
+                confirmButtonColor: "#ff9500"
+            });
+
+            return false;
+        }
+
+
+        if (
+            formaPago &&
+            !String(formaPago.value || "").trim()
+        ) {
+
+            Swal.fire({
+                title: "Forma de pago requerida",
+                text: "Seleccione una forma de pago.",
+                icon: "warning",
+                confirmButtonColor: "#ff9500"
+            });
+
+            return false;
+        }
+
+
+        return true;
+    }
+
+
+
+    /* =========================================================
+       CONFIRMAR EMISIÓN
+    ========================================================= */
+
+    function confirmarEmisionFactura() {
+
+        const formulario = document.getElementById(
+            "formEmitirFactura"
+        );
+
+        const boton = document.getElementById(
+            "btnEmitirFactura"
+        );
+
+
+        if (!formulario) {
+
+            Swal.fire({
+                title: "Error",
+                text: "No se encontró el formulario de facturación.",
+                icon: "error",
+                confirmButtonColor: "#ff3b30"
+            });
+
+            return;
+        }
+
+
+        if (!validarDatosFactura()) {
+            return;
+        }
+
+
+        Swal.fire({
+
+            title: "¿Emitir factura?",
+
+            html: `
+                <div style="
+                    font-size:13px;
+                    line-height:1.5;
+                    color:#444;
+                ">
+                    Se creará la factura electrónica correspondiente
+                    a la orden
+                    <strong>{{ orden.numero_orden|escapejs }}</strong>.
+                    <br><br>
+                    Total a facturar:
+                    <strong>
+                        ${{ total_final|default:0|floatformat:2 }}
+                    </strong>
+                </div>
+            `,
+
+            icon: "question",
+
+            showCancelButton: true,
+
+            confirmButtonColor: "#0071e3",
+
+            cancelButtonColor: "#6e6e73",
+
+            confirmButtonText:
+                "Sí, emitir factura",
+
+            cancelButtonText:
+                "Cancelar"
+
+        }).then(function (result) {
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+
+            if (boton) {
+
+                boton.disabled = true;
+
+                boton.innerHTML = `
+                    <i class="bi bi-hourglass-split"
+                       style="margin-right:5px;">
+                    </i>
+                    Emitiendo...
+                `;
+            }
+
+
+            Swal.fire({
+
+                title:
+                    "Procesando factura",
+
+                html:
+                    "Preparando la información para emisión...",
+
+                allowOutsideClick:
+                    false,
+
+                allowEscapeKey:
+                    false,
+
+                didOpen:
+                    function () {
+
+                        Swal.showLoading();
+
+                        formulario.submit();
+                    }
+
+            });
+
+        });
+    }
+
+
+
+    /* =========================================================
+       MENSAJES DJANGO
+    ========================================================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    {% if message.tags == "success" %}
+
+                        Swal.fire({
+                            title: "Proceso completado",
+                            text: "{{ message|escapejs }}",
+                            icon: "success",
+                            confirmButtonColor: "#34c759"
+                        });
+
+                    {% elif message.tags == "error" %}
+
+                        Swal.fire({
+                            title: "No se pudo procesar",
+                            text: "{{ message|escapejs }}",
+                            icon: "error",
+                            confirmButtonColor: "#ff3b30"
+                        });
+
+                    {% elif message.tags == "warning" %}
+
+                        Swal.fire({
+                            title: "Advertencia",
+                            text: "{{ message|escapejs }}",
+                            icon: "warning",
+                            confirmButtonColor: "#ff9500"
+                        });
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% endif %}
+
+        }
+    );
+
+</script>
 
 {% endblock %}

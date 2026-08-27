@@ -1,0 +1,191 @@
+<style>
+    #tablaRecomendacionesFactura {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    #tablaRecomendacionesFactura td,
+    #tablaRecomendacionesFactura th {
+        vertical-align: top;
+    }
+
+    .recomendacion-factura-titulo {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.3;
+    }
+
+    .recomendacion-factura-texto {
+        margin-top: 4px;
+
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text);
+
+        line-height: 1.45;
+
+        white-space: pre-line;
+        word-break: break-word;
+    }
+
+    .recomendacion-factura-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 25px;
+        padding: 0 8px;
+
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        border: 1px solid var(--border);
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .recomendacion-factura-item {
+        padding: 10px 12px;
+
+        background: #fbfbfd;
+
+        border: 1px solid #efeff2;
+        border-radius: 9px;
+    }
+
+    .recomendaciones-factura-lista {
+        display: grid;
+        gap: 8px;
+    }
+</style>
+
+
+<!-- =========================================================
+     RECOMENDACIONES TÉCNICAS - FACTURACIÓN
+
+     SOLO LECTURA.
+
+     Provienen de la Orden de Trabajo cerrada.
+
+     Aquí NO se permite:
+     - agregar
+     - eliminar
+     - editar título
+     - editar texto
+========================================================= -->
+
+<div class="ot-card">
+
+    <!-- =====================================================
+         TÍTULO
+    ====================================================== -->
+
+    <div
+        class="section-title"
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 10px;
+        "
+    >
+
+        <span>
+            Recomendaciones técnicas
+        </span>
+
+        <span class="recomendacion-factura-badge">
+
+            <i
+                class="bi bi-lock"
+                style="margin-right: 4px;"
+            ></i>
+
+            SOLO LECTURA
+
+        </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         CONTENIDO
+    ====================================================== -->
+
+    {% if orden.recomendaciones_items.exists %}
+
+        <div class="recomendaciones-factura-lista">
+
+            {% for rec in orden.recomendaciones_items.all %}
+
+                <div class="recomendacion-factura-item">
+
+                    <!-- TÍTULO -->
+                    <div class="recomendacion-factura-titulo">
+
+                        {% if rec.titulo %}
+
+                            {{ rec.titulo|upper }}
+
+                        {% else %}
+
+                            RECOMENDACIÓN TÉCNICA
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- TEXTO -->
+                    <div class="recomendacion-factura-texto">
+
+                        {% if rec.texto %}
+
+                            {{ rec.texto }}
+
+                        {% else %}
+
+                            Sin detalle adicional.
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div
+            style="
+                padding: 25px 15px;
+                text-align: center;
+                color: var(--muted);
+                font-size: 11px;
+            "
+        >
+
+            <i
+                class="bi bi-clipboard-check"
+                style="
+                    display: block;
+                    margin-bottom: 6px;
+                    font-size: 18px;
+                    opacity: .5;
+                "
+            ></i>
+
+            No hay recomendaciones técnicas registradas.
+
+        </div>
+
+    {% endif %}
+
+</div>

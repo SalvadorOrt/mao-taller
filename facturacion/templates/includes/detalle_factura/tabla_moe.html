@@ -1,0 +1,396 @@
+{% load l10n %}
+
+<style>
+    .moe-factura-card,
+    .moe-factura-table-wrap {
+        overflow: visible !important;
+    }
+
+    .badge-solo-lectura-moe {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 25px;
+        padding: 0 8px;
+
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        border: 1px solid var(--border);
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .badge-manual-moe {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 27px;
+        padding: 0 8px;
+
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+
+        color: #86868b;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .badge-externo-moe {
+        display: inline-flex;
+        align-items: center;
+
+        margin-top: 4px;
+        padding: 3px 6px;
+
+        border-radius: 5px;
+
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+
+        color: #c2410c;
+
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: .03em;
+    }
+</style>
+
+
+<!-- =========================================================
+     MANO DE OBRA EXTERNA - FACTURACIÓN
+
+     SOLO LECTURA.
+
+     Los valores vienen directamente de la OT cerrada.
+
+     Aquí NO se permite:
+     - agregar MOE
+     - eliminar MOE
+     - modificar descripción
+     - modificar precio
+     - modificar cantidad
+========================================================= -->
+
+<div class="ot-card moe-factura-card">
+
+    <!-- =====================================================
+         TÍTULO
+    ====================================================== -->
+
+    <div
+        class="section-title"
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 10px;
+        "
+    >
+
+        <span>
+            Mano de Obra Externa
+        </span>
+
+        <span class="badge-solo-lectura-moe">
+
+            <i
+                class="bi bi-lock"
+                style="margin-right: 4px;"
+            ></i>
+
+            SOLO LECTURA
+
+        </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLA
+    ====================================================== -->
+
+    <div class="ot-table-wrap moe-factura-table-wrap">
+
+        <table
+            class="ot-table"
+            id="tablaMOEFactura"
+            style="min-width: 900px;"
+        >
+
+            <thead>
+
+                <tr>
+
+                    <th style="width: 18%;">
+                        Cód. / Referencia
+                    </th>
+
+                    <th style="width: 42%;">
+                        Descripción
+                    </th>
+
+                    <th
+                        style="
+                            width: 13%;
+                            text-align: right;
+                        "
+                    >
+                        P.U.
+                    </th>
+
+                    <th
+                        style="
+                            width: 12%;
+                            text-align: right;
+                        "
+                    >
+                        Cantidad
+                    </th>
+
+                    <th
+                        style="
+                            width: 15%;
+                            text-align: right;
+                        "
+                    >
+                        Valor
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for item in mano_obra_externa %}
+
+                    <tr>
+
+                        <!-- =================================
+                             CÓDIGO / REFERENCIA
+                        ================================== -->
+
+                        <td>
+
+                            {% if item.servicio %}
+
+                                <div
+                                    style="
+                                        font-size: 11px;
+                                        font-weight: 700;
+                                        color: var(--text);
+                                        line-height: 1.25;
+                                    "
+                                >
+                                    {{ item.servicio.codigo|default:"S/C" }}
+                                </div>
+
+                                <div class="badge-externo-moe">
+                                    SERVICIO EXTERNO
+                                </div>
+
+                            {% else %}
+
+                                <span class="badge-manual-moe">
+                                    MANUAL
+                                </span>
+
+                                <div class="badge-externo-moe">
+                                    SERVICIO EXTERNO
+                                </div>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- =================================
+                             DESCRIPCIÓN
+                        ================================== -->
+
+                        <td>
+
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: var(--text);
+                                    line-height: 1.3;
+                                "
+                            >
+                                {{ item.descripcion_servicio|default:"SERVICIO EXTERNO SIN DESCRIPCIÓN"|upper }}
+                            </div>
+
+                        </td>
+
+
+                        <!-- =================================
+                             PRECIO UNITARIO
+                        ================================== -->
+
+                        <td style="text-align: right;">
+
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: var(--text);
+                                    white-space: nowrap;
+                                "
+                            >
+                                $
+                                {{ item.precio_unitario|default:0|floatformat:2 }}
+                            </div>
+
+                        </td>
+
+
+                        <!-- =================================
+                             CANTIDAD
+                        ================================== -->
+
+                        <td style="text-align: right;">
+
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: var(--text);
+                                    white-space: nowrap;
+                                "
+                            >
+                                {{ item.cantidad|default:0|floatformat:2 }}
+                            </div>
+
+                        </td>
+
+
+                        <!-- =================================
+                             VALOR
+                        ================================== -->
+
+                        <td style="text-align: right;">
+
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    color: var(--text);
+                                    white-space: nowrap;
+                                "
+                            >
+                                $
+                                {{ item.subtotal|default:0|floatformat:2 }}
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+
+                {% empty %}
+
+                    <!-- =====================================
+                         SIN MOE
+                    ====================================== -->
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            style="
+                                padding: 25px 15px;
+                                text-align: center;
+                                color: var(--muted);
+                                font-size: 11px;
+                            "
+                        >
+
+                            <i
+                                class="bi bi-box-arrow-up-right"
+                                style="
+                                    display: block;
+                                    margin-bottom: 5px;
+                                    font-size: 18px;
+                                    opacity: .5;
+                                "
+                            ></i>
+
+                            Esta orden no tiene mano de obra externa registrada.
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =====================================================
+         PIE / SUBTOTAL
+    ====================================================== -->
+
+    <div class="table-footer-actions">
+
+        <div>
+
+            {% if mano_obra_externa %}
+
+                <span
+                    style="
+                        font-size: 10px;
+                        color: var(--muted);
+                    "
+                >
+
+                    {{ mano_obra_externa|length }}
+
+                    {% if mano_obra_externa|length == 1 %}
+                        servicio externo
+                    {% else %}
+                        servicios externos
+                    {% endif %}
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="subtotal-box">
+
+            <div class="subtotal-pill">
+
+                Sub total M.O.E:
+
+                <span
+                    style="
+                        margin-left: 4px;
+                        font-weight: 800;
+                    "
+                >
+                    ${{ subtotal_moe|default:0|floatformat:2 }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

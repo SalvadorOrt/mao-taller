@@ -1,0 +1,467 @@
+{% load l10n %}
+
+<style>
+    .totals-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-items: start;
+    }
+
+    .total-box {
+        min-width: 0;
+        min-height: 0;
+        height: auto;
+        padding: 11px 13px;
+        align-self: start;
+    }
+
+    .total-box.final {
+        grid-column: 1 / -1;
+        width: 100%;
+        padding: 12px 14px;
+    }
+
+    .total-label {
+        margin-bottom: 4px;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    .total-value {
+        font-size: 18px;
+        line-height: 1.2;
+    }
+
+    .total-box-composicion {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .total-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+
+        gap: 4px;
+
+        margin-top: 6px;
+
+        color: #6e6e73;
+
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .total-meta strong {
+        color: #1d1d1f;
+        font-weight: 700;
+    }
+
+    .total-separador {
+        color: #b0b0b5;
+    }
+
+    .total-barra {
+        width: 100%;
+        height: 5px;
+
+        margin-top: 7px;
+
+        overflow: hidden;
+
+        border-radius: 999px;
+
+        background: #e8e8ed;
+    }
+
+    .total-barra-valor {
+        height: 100%;
+
+        border-radius: inherit;
+
+        background: #0a74da;
+    }
+
+    .total-box-moi .total-barra-valor {
+        background: #34c759;
+    }
+
+    .total-box-moe .total-barra-valor {
+        background: #ff9500;
+    }
+
+    .descuento-lectura {
+        display: flex;
+        flex-direction: column;
+
+        gap: 5px;
+
+        margin-top: 5px;
+    }
+
+    .descuento-chip {
+        display: inline-flex;
+        align-items: center;
+
+        width: fit-content;
+
+        padding: 5px 8px;
+
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+
+        color: #6e6e73;
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .iva-chip {
+        display: inline-flex;
+        align-items: center;
+
+        margin-top: 5px;
+
+        padding: 5px 8px;
+
+        border-radius: 7px;
+
+        background: #edf6ff;
+        border: 1px solid rgba(0, 113, 227, 0.2);
+
+        color: #0071e3;
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+        .totals-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .totals-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .total-box.final {
+            grid-column: auto;
+        }
+    }
+</style>
+
+
+<div class="ot-card">
+
+    <!-- =====================================================
+         TÍTULO
+    ====================================================== -->
+
+    <div
+        class="section-title"
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        "
+    >
+
+        <span>
+            Resumen económico
+        </span>
+
+        <span
+            class="ot-badge"
+            style="
+                background: #f5f5f7;
+                color: var(--muted);
+                border-color: var(--border);
+                font-size: 9px;
+                min-height: 25px;
+            "
+        >
+            <i
+                class="bi bi-lock"
+                style="margin-right: 3px;"
+            ></i>
+
+            SOLO LECTURA
+        </span>
+
+    </div>
+
+
+    <div class="totals-grid">
+
+        <!-- =================================================
+             REPUESTOS
+        ================================================== -->
+
+        <div
+            class="
+                total-box
+                total-box-composicion
+                total-box-repuestos
+            "
+        >
+
+            <div class="total-label">
+                Subtotal repuestos
+            </div>
+
+            <div class="total-value">
+                ${{ subtotal_repuestos|default:0|floatformat:2 }}
+            </div>
+
+            <div class="total-meta">
+
+                <span>
+                    {{ repuestos|length }}
+                </span>
+
+                <span>
+                    {% if repuestos|length == 1 %}
+                        producto
+                    {% else %}
+                        productos
+                    {% endif %}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             MOI
+        ================================================== -->
+
+        <div
+            class="
+                total-box
+                total-box-composicion
+                total-box-moi
+            "
+        >
+
+            <div class="total-label">
+                Subtotal M.O. interna
+            </div>
+
+            <div class="total-value">
+                ${{ subtotal_moi|default:0|floatformat:2 }}
+            </div>
+
+            <div class="total-meta">
+
+                <span>
+                    {{ mano_obra_interna|length }}
+                </span>
+
+                <span>
+                    {% if mano_obra_interna|length == 1 %}
+                        servicio
+                    {% else %}
+                        servicios
+                    {% endif %}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             MOE
+        ================================================== -->
+
+        <div
+            class="
+                total-box
+                total-box-composicion
+                total-box-moe
+            "
+        >
+
+            <div class="total-label">
+                Subtotal M.O. externa
+            </div>
+
+            <div class="total-value">
+                ${{ subtotal_moe|default:0|floatformat:2 }}
+            </div>
+
+            <div class="total-meta">
+
+                <span>
+                    {{ mano_obra_externa|length }}
+                </span>
+
+                <span>
+                    {% if mano_obra_externa|length == 1 %}
+                        servicio externo
+                    {% else %}
+                        servicios externos
+                    {% endif %}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SUBTOTAL BRUTO
+        ================================================== -->
+
+        <div class="total-box">
+
+            <div class="total-label">
+                Subtotal bruto
+            </div>
+
+            <div class="total-value">
+                ${{ subtotal_bruto|default:0|floatformat:2 }}
+            </div>
+
+            <div class="total-meta">
+                Repuestos + MOI + MOE
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             DESCUENTO
+        ================================================== -->
+
+        <div class="total-box">
+
+            <div class="total-label">
+                Descuento
+            </div>
+
+            <div class="total-value">
+                -${{ descuento|default:0|floatformat:2 }}
+            </div>
+
+            <div class="descuento-lectura">
+
+                <span class="descuento-chip">
+
+                    {% if orden.tipo_descuento == "PORCENTAJE" %}
+
+                        <i
+                            class="bi bi-percent"
+                            style="margin-right: 4px;"
+                        ></i>
+
+                        PORCENTAJE
+
+                    {% elif orden.tipo_descuento == "VALOR_FIJO" %}
+
+                        <i
+                            class="bi bi-cash"
+                            style="margin-right: 4px;"
+                        ></i>
+
+                        VALOR FIJO
+
+                    {% else %}
+
+                        SIN DESCUENTO
+
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SUBTOTAL SIN IVA
+        ================================================== -->
+
+        <div class="total-box">
+
+            <div class="total-label">
+                Subtotal sin IVA
+            </div>
+
+            <div class="total-value">
+                ${{ subtotal_sin_iva|default:0|floatformat:2 }}
+            </div>
+
+            <div class="total-meta">
+                Después del descuento
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             IVA
+        ================================================== -->
+
+        <div class="total-box">
+
+            <div class="total-label">
+                IVA
+            </div>
+
+            <div class="total-value">
+                ${{ valor_iva|default:0|floatformat:2 }}
+            </div>
+
+            <div>
+
+                <span class="iva-chip">
+
+                    <i
+                        class="bi bi-receipt"
+                        style="margin-right: 4px;"
+                    ></i>
+
+                    IVA
+                    {{ porcentaje_iva|default:0|floatformat:2 }}%
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             TOTAL FINAL
+        ================================================== -->
+
+        <div class="total-box final">
+
+            <div class="total-label">
+                Total a facturar
+            </div>
+
+            <div
+                class="total-value"
+                style="
+                    font-size: 22px;
+                "
+            >
+                ${{ total_final|default:0|floatformat:2 }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

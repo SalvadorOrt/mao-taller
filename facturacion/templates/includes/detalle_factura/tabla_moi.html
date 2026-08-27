@@ -1,0 +1,455 @@
+{% load l10n %}
+
+<style>
+    .moi-factura-card,
+    .moi-factura-table-wrap {
+        overflow: visible !important;
+    }
+
+    .fila-procedimientos-factura td {
+        background: #fafafa;
+        border-top: 0 !important;
+        border-bottom: 1px solid #e5e5ea;
+        padding: 8px 10px 14px 10px !important;
+    }
+
+    .procedimientos-factura {
+        display: grid;
+        gap: 6px;
+    }
+
+    .procedimiento-factura-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+
+        padding: 7px 9px;
+
+        background: #ffffff;
+        border: 1px solid #e5e5ea;
+        border-radius: 8px;
+
+        font-size: 10px;
+        color: #1d1d1f;
+        line-height: 1.35;
+    }
+
+    .procedimiento-factura-item i {
+        color: #0071e3;
+        font-size: 10px;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .badge-solo-lectura {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 25px;
+
+        padding: 0 8px;
+
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        border: 1px solid var(--border);
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .badge-manual-moi {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 27px;
+
+        padding: 0 8px;
+
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+
+        color: #86868b;
+
+        font-size: 9px;
+        font-weight: 700;
+    }
+</style>
+
+
+<!-- =========================================================
+     MANO DE OBRA INTERNA - FACTURACIÓN
+
+     SOLO LECTURA.
+
+     La información proviene de la OT cerrada.
+
+     Aquí NO se permite:
+     - agregar servicios
+     - eliminar servicios
+     - editar precio
+     - editar cantidad
+     - editar descripción
+     - editar procedimientos
+========================================================= -->
+
+<div class="ot-card moi-factura-card">
+
+    <!-- =====================================================
+         TÍTULO
+    ====================================================== -->
+
+    <div
+        class="section-title"
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 10px;
+        "
+    >
+
+        <span>
+            Mano de Obra Interna
+        </span>
+
+        <span class="badge-solo-lectura">
+
+            <i
+                class="bi bi-lock"
+                style="margin-right: 4px;"
+            ></i>
+
+            SOLO LECTURA
+
+        </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLA
+    ====================================================== -->
+
+    <div class="ot-table-wrap moi-factura-table-wrap">
+
+        <table
+            class="ot-table"
+            id="tablaMOIFactura"
+            style="
+                min-width: 900px;
+            "
+        >
+
+            <thead>
+
+                <tr>
+
+                    <th style="width: 18%;">
+                        Cód. / Referencia
+                    </th>
+
+                    <th style="width: 42%;">
+                        Descripción
+                    </th>
+
+                    <th
+                        style="
+                            width: 13%;
+                            text-align: right;
+                        "
+                    >
+                        P.U.
+                    </th>
+
+                    <th
+                        style="
+                            width: 12%;
+                            text-align: right;
+                        "
+                    >
+                        Cantidad
+                    </th>
+
+                    <th
+                        style="
+                            width: 15%;
+                            text-align: right;
+                        "
+                    >
+                        Valor
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for item in mano_obra_interna %}
+
+                    <!-- =====================================
+                         SERVICIO PRINCIPAL
+                    ====================================== -->
+
+                    <tr>
+
+                        <!-- CÓDIGO -->
+                        <td>
+
+                            {% if item.servicio %}
+
+                                <div
+                                    style="
+                                        font-size: 11px;
+                                        font-weight: 700;
+                                        color: var(--text);
+                                        line-height: 1.25;
+                                    "
+                                >
+                                    {{ item.servicio.codigo|default:"S/C" }}
+                                </div>
+
+                                <div
+                                    style="
+                                        margin-top: 3px;
+                                        font-size: 9px;
+                                        color: var(--muted);
+                                    "
+                                >
+                                    SERVICIO INTERNO
+                                </div>
+
+                            {% else %}
+
+                                <span class="badge-manual-moi">
+                                    MANUAL
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- DESCRIPCIÓN -->
+                        <td>
+
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: var(--text);
+                                    line-height: 1.3;
+                                "
+                            >
+                                {{ item.descripcion_servicio|default:"SERVICIO SIN DESCRIPCIÓN"|upper }}
+                            </div>
+
+                        </td>
+
+
+                        <!-- PRECIO UNITARIO -->
+                        <td style="text-align: right;">
+
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: var(--text);
+                                    white-space: nowrap;
+                                "
+                            >
+                                $
+                                {{ item.precio_unitario|default:0|floatformat:2 }}
+                            </div>
+
+                        </td>
+
+
+                        <!-- CANTIDAD -->
+                        <td style="text-align: right;">
+
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: var(--text);
+                                    white-space: nowrap;
+                                "
+                            >
+                                {{ item.cantidad|default:0|floatformat:2 }}
+                            </div>
+
+                        </td>
+
+
+                        <!-- VALOR -->
+                        <td style="text-align: right;">
+
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    color: var(--text);
+                                    white-space: nowrap;
+                                "
+                            >
+                                $
+                                {{ item.subtotal|default:0|floatformat:2 }}
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- =====================================
+                         PROCEDIMIENTOS
+                    ====================================== -->
+
+                    {% if item.procedimientos_detalle.exists %}
+
+                        <tr class="fila-procedimientos-factura">
+
+                            <td></td>
+
+                            <td colspan="4">
+
+                                <div
+                                    style="
+                                        font-size: 9px;
+                                        font-weight: 700;
+                                        color: var(--muted);
+                                        text-transform: uppercase;
+                                        letter-spacing: .04em;
+                                        margin-bottom: 6px;
+                                    "
+                                >
+                                    Procedimientos incluidos
+                                </div>
+
+
+                                <div class="procedimientos-factura">
+
+                                    {% for proc in item.procedimientos_detalle.all %}
+
+                                        <div class="procedimiento-factura-item">
+
+                                            <i class="bi bi-arrow-return-right"></i>
+
+                                            <span>
+                                                {{ proc.descripcion|default:"-"|upper }}
+                                            </span>
+
+                                        </div>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
+
+
+                {% empty %}
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            style="
+                                padding: 25px 15px;
+                                text-align: center;
+                                color: var(--muted);
+                                font-size: 11px;
+                            "
+                        >
+
+                            <i
+                                class="bi bi-wrench-adjustable"
+                                style="
+                                    display: block;
+                                    margin-bottom: 5px;
+                                    font-size: 18px;
+                                    opacity: .5;
+                                "
+                            ></i>
+
+                            Esta orden no tiene mano de obra interna registrada.
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =====================================================
+         SUBTOTAL
+    ====================================================== -->
+
+    <div class="table-footer-actions">
+
+        <div>
+
+            {% if mano_obra_interna %}
+
+                <span
+                    style="
+                        font-size: 10px;
+                        color: var(--muted);
+                    "
+                >
+
+                    {{ mano_obra_interna|length }}
+
+                    {% if mano_obra_interna|length == 1 %}
+                        servicio
+                    {% else %}
+                        servicios
+                    {% endif %}
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="subtotal-box">
+
+            <div class="subtotal-pill">
+
+                Sub total M.O.I:
+
+                <span
+                    style="
+                        margin-left: 4px;
+                        font-weight: 800;
+                    "
+                >
+                    ${{ subtotal_moi|default:0|floatformat:2 }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
