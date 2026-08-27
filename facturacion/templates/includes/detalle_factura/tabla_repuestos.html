@@ -4,11 +4,12 @@
 
     /* =========================================================
        REPUESTOS - FACTURACIÓN
-       MISMO DISEÑO VISUAL QUE LA OT
+       MISMO LENGUAJE VISUAL QUE LA OT
     ========================================================= */
 
     #tablaRepuestosFactura {
         width: 100%;
+        min-width: 920px;
     }
 
     #tablaRepuestosFactura tbody tr:empty {
@@ -26,28 +27,7 @@
     }
 
     #tablaRepuestosFactura .producto-cell {
-        min-width: 320px;
-    }
-
-    .factura-item-fijo {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 28px;
-        padding: 0 8px;
-
-        border-radius: 7px;
-
-        background: #f5f5f7;
-        border: 1px solid #e5e5ea;
-
-        color: #86868b;
-
-        font-size: 9px;
-        font-weight: 700;
-
-        white-space: nowrap;
+        min-width: 300px;
     }
 
     .factura-item-manual {
@@ -86,24 +66,6 @@
             Repuestos
         </span>
 
-        <span
-            style="
-                background: #f5f5f7;
-                color: #86868b;
-
-                padding: 4px 8px;
-
-                border-radius: 6px;
-
-                font-weight: 700;
-                font-size: 9px;
-
-                border: 1px solid #e5e5ea;
-            "
-        >
-            SOLO LECTURA
-        </span>
-
     </div>
 
 
@@ -122,34 +84,24 @@
 
                 <tr>
 
-                    <!-- MISMO ANCHO QUE OT -->
-
-                    <th style="width: 30%;">
+                    <th style="width: 32%;">
                         Producto inventario
                     </th>
 
-                    <th style="width: 22%;">
+                    <th style="width: 30%;">
                         Descripción
                     </th>
 
-                    <th style="width: 8%;">
-                        Stock
-                    </th>
-
-                    <th style="width: 10%;">
+                    <th style="width: 13%;">
                         P.U.
                     </th>
 
-                    <th style="width: 8%;">
+                    <th style="width: 10%;">
                         Cantidad
                     </th>
 
-                    <th style="width: 10%;">
+                    <th style="width: 15%;">
                         Valor
-                    </th>
-
-                    <th style="width: 12%;">
-                        Estado
                     </th>
 
                 </tr>
@@ -164,7 +116,7 @@
                     <tr class="form-readonly">
 
                         <!-- =====================================
-                             PRODUCTO INVENTARIO
+                             PRODUCTO
                         ====================================== -->
 
                         <td class="producto-cell">
@@ -217,29 +169,6 @@
                                 value="{{ item.descripcion_factura|default:'' }}"
                                 readonly
                             >
-
-                        </td>
-
-
-                        <!-- =====================================
-                             STOCK
-                        ====================================== -->
-
-                        <td>
-
-                            <div class="stock-chip stock-view">
-
-                                {% if item.producto %}
-
-                                    {{ item.producto.stock.cantidad|default:0 }}
-
-                                {% else %}
-
-                                    -
-
-                                {% endif %}
-
-                            </div>
 
                         </td>
 
@@ -300,26 +229,6 @@
 
                         </td>
 
-
-                        <!-- =====================================
-                             ESTADO
-                        ====================================== -->
-
-                        <td style="text-align: center;">
-
-                            <span class="factura-item-fijo">
-
-                                <i
-                                    class="bi bi-lock"
-                                    style="margin-right: 4px;"
-                                ></i>
-
-                                FIJO
-
-                            </span>
-
-                        </td>
-
                     </tr>
 
 
@@ -328,7 +237,7 @@
                     <tr>
 
                         <td
-                            colspan="7"
+                            colspan="5"
                             style="
                                 text-align: center;
                                 color: #86868b;
@@ -350,12 +259,10 @@
 
 
     <!-- =====================================================
-         PIE / SUBTOTAL
+         SUBTOTAL
     ====================================================== -->
 
     <div class="table-footer-actions">
-
-        <!-- Mantiene el espacio del botón de la OT -->
 
         <div></div>
 
