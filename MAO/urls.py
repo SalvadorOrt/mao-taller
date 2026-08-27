@@ -72,6 +72,14 @@ urlpatterns = [
         "inventario/",
         include("inventario.urls"),
     ),
+
+    # =====================================================
+    # FACTURACIÓN
+    # =====================================================
+    path(
+        "facturacion/",
+        include("facturacion.urls"),
+    ),
 ]
 
 
