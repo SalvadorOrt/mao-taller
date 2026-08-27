@@ -959,7 +959,6 @@ def emitir_factura(
         "facturacion:detalle_factura",
         factura_id=factura.pk,
     )
-
 # =========================================================
 # DETALLE DE OT PARA FACTURACIÓN
 # =========================================================
@@ -970,7 +969,7 @@ def detalle_orden_facturacion(
     orden_id,
 ):
     """
-    Pantalla de consulta previa a la emisión.
+    Pantalla de consulta de una OT cerrada antes de emitir.
 
     IMPORTANTE:
     - NO crea FacturaVenta.
@@ -978,8 +977,12 @@ def detalle_orden_facturacion(
     - NO genera XML.
     - NO envía nada al SRI.
 
-    Únicamente muestra la OT cerrada con toda la información
-    necesaria para decidir si se factura.
+    Solo muestra la OT con:
+    - repuestos
+    - mano de obra interna
+    - mano de obra externa
+    - procedimientos
+    - resumen económico
     """
 
     orden = get_object_or_404(
@@ -1045,17 +1048,105 @@ def detalle_orden_facturacion(
     ]
 
     # =====================================================
+    # SUBTOTALES
+    # =====================================================
+
+    subtotal_repuestos = sum(
+        (
+            _decimal(item.subtotal)
+            for item in repuestos
+        ),
+        Decimal("0.00"),
+    )
+
+    subtotal_moi = sum(
+        (
+            _decimal(item.subtotal)
+            for item in mano_obra_interna
+        ),
+        Decimal("0.00"),
+    )
+
+    subtotal_moe = sum(
+        (
+            _decimal(item.subtotal)
+            for item in mano_obra_externa
+        ),
+        Decimal("0.00"),
+    )
+
+    subtotal_bruto = (
+        subtotal_repuestos
+        + subtotal_moi
+        + subtotal_moe
+    )
+
+    # =====================================================
+    # TOTALES DE LA OT
+    # =====================================================
+
+    descuento = _decimal(
+        getattr(
+            orden,
+            "valor_descuento",
+            0,
+        )
+    )
+
+    subtotal_sin_iva = (
+        subtotal_bruto
+        - descuento
+    )
+
+    if subtotal_sin_iva < Decimal("0.00"):
+        subtotal_sin_iva = Decimal("0.00")
+
+    porcentaje_iva = _decimal(
+        getattr(
+            orden,
+            "porcentaje_iva",
+            15,
+        )
+    )
+
+    valor_iva = (
+        subtotal_sin_iva
+        * porcentaje_iva
+        / Decimal("100")
+    ).quantize(
+        Decimal("0.01")
+    )
+
+    total_calculado = (
+        subtotal_sin_iva
+        + valor_iva
+    ).quantize(
+        Decimal("0.01")
+    )
+
+    # Si la OT ya tiene total_final, usamos el valor oficial.
+    total_final = _decimal(
+        getattr(
+            orden,
+            "total_final",
+            total_calculado,
+        )
+    )
+
+    # =====================================================
     # CONTEXTO
     # =====================================================
 
     context = {
-        "orden": orden,
+        "orden":
+            orden,
 
         # -----------------------------------------
         # DETALLES
         # -----------------------------------------
 
-        "repuestos": repuestos,
+        "repuestos":
+            repuestos,
 
         "mano_obra_interna":
             mano_obra_interna,
@@ -1064,35 +1155,42 @@ def detalle_orden_facturacion(
             mano_obra_externa,
 
         # -----------------------------------------
-        # TOTALES
+        # SUBTOTALES
         # -----------------------------------------
 
         "subtotal_repuestos":
-            orden.subtotal_repuestos,
+            subtotal_repuestos,
 
         "subtotal_moi":
-            orden.subtotal_mano_obra_interna,
+            subtotal_moi,
 
         "subtotal_moe":
-            orden.subtotal_mano_obra_externa,
+            subtotal_moe,
 
-        "subtotal_sin_iva":
-            orden.subtotal_sin_iva,
-
-        "descuento":
-            orden.valor_descuento,
-
-        "porcentaje_iva":
-            orden.porcentaje_iva,
-
-        "valor_iva":
-            orden.valor_iva,
-
-        "total_final":
-            orden.total_final,
+        "subtotal_bruto":
+            subtotal_bruto,
 
         # -----------------------------------------
-        # CHOICES PARA FACTURACIÓN
+        # TOTALES
+        # -----------------------------------------
+
+        "subtotal_sin_iva":
+            subtotal_sin_iva,
+
+        "descuento":
+            descuento,
+
+        "porcentaje_iva":
+            porcentaje_iva,
+
+        "valor_iva":
+            valor_iva,
+
+        "total_final":
+            total_final,
+
+        # -----------------------------------------
+        # FACTURACIÓN
         # -----------------------------------------
 
         "tipos_identificacion":
