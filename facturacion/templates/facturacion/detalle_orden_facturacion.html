@@ -210,65 +210,25 @@
              INFORMACIÓN GENERAL
         ================================================== -->
 
-        {% include "facturacion/includes/detalle_factura/info_general.html" %}
+        {% include "includes/detalle_factura/info_general.html" %}
 
 
 
-        <!-- =================================================
-             COMPRADOR / DATOS FISCALES
-        ================================================== -->
+            {% include "includes/detalle_factura/info_general.html" %}
 
-        {% include "facturacion/includes/detalle_factura/comprador.html" %}
+            {% include "includes/detalle_factura/comprador.html" %}
 
+            {% include "includes/detalle_factura/tabla_repuestos.html" %}
 
+            {% include "includes/detalle_factura/tabla_moi.html" %}
 
-        <!-- =================================================
-             REPUESTOS
-        ================================================== -->
+            {% include "includes/detalle_factura/tabla_moe.html" %}
 
-        {% include "facturacion/includes/detalle_factura/tabla_repuestos.html" %}
+            {% include "includes/detalle_factura/resumen.html" %}
 
+            {% include "includes/detalle_factura/recomendaciones.html" %}
 
-
-        <!-- =================================================
-             MANO DE OBRA INTERNA
-        ================================================== -->
-
-        {% include "facturacion/includes/detalle_factura/tabla_moi.html" %}
-
-
-
-        <!-- =================================================
-             MANO DE OBRA EXTERNA
-        ================================================== -->
-
-        {% include "facturacion/includes/detalle_factura/tabla_moe.html" %}
-
-
-
-        <!-- =================================================
-             RESUMEN ECONÓMICO
-        ================================================== -->
-
-        {% include "facturacion/includes/detalle_factura/resumen.html" %}
-
-
-
-        <!-- =================================================
-             RECOMENDACIONES TÉCNICAS
-        ================================================== -->
-
-        {% include "facturacion/includes/detalle_factura/recomendaciones.html" %}
-
-
-
-        <!-- =================================================
-             FORMA DE PAGO
-        ================================================== -->
-
-        {% include "facturacion/includes/detalle_factura/forma_pago.html" %}
-
-
+            {% include "includes/detalle_factura/forma_pago.html" %}
 
         <!-- =================================================
              ACCIONES INFERIORES
