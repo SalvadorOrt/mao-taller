@@ -1,0 +1,731 @@
+{% extends "base.html" %}
+{% load static %}
+{% load l10n %}
+
+{% block title %}
+    Factura {{ factura.numero_factura }} | MAO
+{% endblock %}
+
+{% block page_title %}
+    Factura {{ factura.numero_factura }}
+{% endblock %}
+
+{% block page_subtitle %}
+    Comprobante electrónico · OT {{ factura.numero_orden_origen }}
+{% endblock %}
+
+
+{% block content %}
+
+<!-- =====================================================
+     REUTILIZAMOS EL MISMO ESTILO DE LA ORDEN
+====================================================== -->
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
+
+
+<style>
+
+    /* =====================================================
+       PEQUEÑOS AJUSTES EXCLUSIVOS DE FACTURACIÓN
+    ====================================================== */
+
+    .factura-header-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+
+    .factura-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+
+    .factura-estado {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 27px;
+        padding: 5px 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 999px;
+
+        font-size: 10px;
+        font-weight: 800;
+
+        letter-spacing: .03em;
+    }
+
+
+    .factura-estado.borrador {
+        background: #f5f5f7;
+        color: var(--muted);
+        border-color: var(--border);
+    }
+
+
+    .factura-estado.generado {
+        background: #edf6ff;
+        color: #0071e3;
+        border-color: #cfe6ff;
+    }
+
+
+    .factura-estado.firmado {
+        background: #f0efff;
+        color: #5856d6;
+        border-color: #d9d8ff;
+    }
+
+
+    .factura-estado.recibido {
+        background: #eaf7ff;
+        color: #0077b6;
+        border-color: #cceeff;
+    }
+
+
+    .factura-estado.autorizado {
+        background: #e5fbe4;
+        color: #1f8939;
+        border-color: #b7efc5;
+    }
+
+
+    .factura-estado.rechazado {
+        background: #ffebe9;
+        color: var(--danger);
+        border-color: #ffd6d6;
+    }
+
+
+    .factura-origen-badge {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 27px;
+        padding: 5px 10px;
+
+        background: #f5f5f7;
+
+        border:
+            1px solid
+            var(--border);
+
+        border-radius: 999px;
+
+        color: var(--text);
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+
+    .factura-nota-bloqueo {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+
+        margin-bottom: 15px;
+        padding: 10px 12px;
+
+        border:
+            1px solid
+            #d9eaff;
+
+        border-radius: 10px;
+
+        background: #f4f9ff;
+
+        color: #4a5568;
+
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+
+    .factura-nota-bloqueo i {
+        color: #0071e3;
+        margin-top: 1px;
+    }
+
+
+    @media (max-width: 700px) {
+
+        .factura-header-actions {
+            width: 100%;
+        }
+
+        .factura-header-actions .btn-login {
+            flex: 1;
+        }
+
+    }
+
+</style>
+
+
+<div
+    class="container ot-wrapper"
+    data-estado-factura="{{ factura.estado }}"
+    data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
+>
+
+
+    <!-- =====================================================
+         ESTADO Y ACCIONES SUPERIORES
+    ====================================================== -->
+
+    <div
+        class="ot-card ot-header"
+        style="
+            margin-bottom: 15px;
+            align-items: center;
+            padding: 15px;
+        "
+    >
+
+        <!-- =============================================
+             ESTADO
+        ============================================== -->
+
+        <div class="factura-header-info">
+
+            <span
+                style="
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: var(--text);
+                "
+            >
+                Estado de Factura:
+            </span>
+
+
+            {% if factura.estado == "BORRADOR" %}
+
+                <span class="factura-estado borrador">
+                    BORRADOR
+                </span>
+
+            {% elif factura.estado == "GENERADO" %}
+
+                <span class="factura-estado generado">
+                    XML GENERADO
+                </span>
+
+            {% elif factura.estado == "FIRMADO" %}
+
+                <span class="factura-estado firmado">
+                    FIRMADO
+                </span>
+
+            {% elif factura.estado == "RECIBIDO" %}
+
+                <span class="factura-estado recibido">
+                    RECIBIDO POR SRI
+                </span>
+
+            {% elif factura.estado == "AUTORIZADO" %}
+
+                <span class="factura-estado autorizado">
+                    AUTORIZADO
+                </span>
+
+            {% elif factura.estado == "RECHAZADO" %}
+
+                <span class="factura-estado rechazado">
+                    RECHAZADO
+                </span>
+
+            {% endif %}
+
+
+            <span class="factura-origen-badge">
+
+                <i
+                    class="bi bi-wrench-adjustable"
+                    style="margin-right:5px;"
+                ></i>
+
+                OT {{ factura.numero_orden_origen }}
+
+            </span>
+
+
+            {% if factura.ambiente == "1" %}
+
+                <span
+                    class="factura-origen-badge"
+                    style="
+                        background:#fff8e5;
+                        color:#b76e00;
+                        border-color:#ffe0a3;
+                    "
+                >
+                    AMBIENTE DE PRUEBAS
+                </span>
+
+            {% else %}
+
+                <span
+                    class="factura-origen-badge"
+                    style="
+                        background:#e5fbe4;
+                        color:#1f8939;
+                        border-color:#b7efc5;
+                    "
+                >
+                    PRODUCCIÓN
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =============================================
+             ACCIONES
+        ============================================== -->
+
+        <div class="factura-header-actions">
+
+            {% if factura.orden %}
+
+                <a
+                    href="{% url 'detalle_orden' factura.orden.pk %}"
+                    class="btn-login"
+                    style="
+                        background: #f5f5f7;
+                        color: var(--text);
+                        text-decoration: none;
+                    "
+                >
+                    <i
+                        class="bi bi-wrench-adjustable"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Ver OT
+                </a>
+
+            {% endif %}
+
+
+            <a
+                href="{% url 'facturacion:dashboard' %}"
+                class="btn-login"
+                style="
+                    background: #f5f5f7;
+                    color: var(--text);
+                    text-decoration: none;
+                "
+            >
+                <i
+                    class="bi bi-grid"
+                    style="margin-right:5px;"
+                ></i>
+
+                Dashboard
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         AVISO DE INMUTABILIDAD
+    ====================================================== -->
+
+    {% if factura.estado == "BORRADOR" %}
+
+        <div class="factura-nota-bloqueo">
+
+            <i class="bi bi-lock"></i>
+
+            <div>
+                Los repuestos, mano de obra, descuentos,
+                IVA y totales fueron congelados desde la
+                Orden de Trabajo.
+
+                <strong>
+                    Solo puedes modificar el comprador
+                    y la forma de pago antes de emitir.
+                </strong>
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <div class="factura-nota-bloqueo">
+
+            <i class="bi bi-shield-lock"></i>
+
+            <div>
+                Este comprobante ya inició el proceso
+                de emisión electrónica.
+
+                <strong>
+                    Sus datos se encuentran bloqueados.
+                </strong>
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         INFORMACIÓN GENERAL
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/info_general.html"
+    %}
+
+
+    <!-- =====================================================
+         COMPRADOR
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/comprador.html"
+    %}
+
+
+    <!-- =====================================================
+         REPUESTOS
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/tabla_repuestos.html"
+    %}
+
+
+    <!-- =====================================================
+         MANO DE OBRA INTERNA
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/tabla_moi.html"
+    %}
+
+
+    <!-- =====================================================
+         MANO DE OBRA EXTERNA
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/tabla_moe.html"
+    %}
+
+
+    <!-- =====================================================
+         RESUMEN ECONÓMICO
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/resumen.html"
+    %}
+
+
+    <!-- =====================================================
+         FORMA DE PAGO
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/forma_pago.html"
+    %}
+
+
+    <!-- =====================================================
+         ESTADO SRI
+    ====================================================== -->
+
+    {% include
+        "facturacion/includes/detalle_factura/estado_sri.html"
+    %}
+
+
+    <!-- =====================================================
+         ACCIONES INFERIORES
+    ====================================================== -->
+
+    <div class="sticky-actions">
+
+        <a
+            href="{% url 'facturacion:dashboard' %}"
+            class="btn-login"
+            style="
+                background: #e5e5ea;
+                border-color: #e5e5ea;
+                color: var(--text);
+                text-decoration: none;
+            "
+        >
+            <i
+                class="fas fa-arrow-left"
+                style="margin-right:6px;"
+            ></i>
+
+            Volver a Facturación
+        </a>
+
+
+        {% if puede_emitir %}
+
+            {% if factura.estado == "BORRADOR" %}
+
+                <button
+                    type="button"
+                    id="btnEmitirFactura"
+                    class="btn-login primary"
+                    onclick="confirmarEmisionFactura()"
+                >
+                    <i
+                        class="bi bi-send-check"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Emitir Factura
+                </button>
+
+            {% elif factura.estado == "RECIBIDO" %}
+
+                <button
+                    type="button"
+                    id="btnEmitirFactura"
+                    class="btn-login primary"
+                    onclick="confirmarEmisionFactura()"
+                >
+                    <i
+                        class="bi bi-arrow-clockwise"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Consultar SRI
+                </button>
+
+            {% endif %}
+
+        {% endif %}
+
+
+        {% if factura.estado == "AUTORIZADO" %}
+
+            {% if factura.pdf_ride %}
+
+                <a
+                    href="{{ factura.pdf_ride.url }}"
+                    target="_blank"
+                    class="btn-login primary"
+                    style="text-decoration:none;"
+                >
+                    <i
+                        class="bi bi-file-earmark-pdf"
+                        style="margin-right:5px;"
+                    ></i>
+
+                    Ver RIDE
+                </a>
+
+            {% endif %}
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         FORMULARIO EMISIÓN
+         FUERA DE CUALQUIER OTRO FORMULARIO
+    ====================================================== -->
+
+    {% if puede_emitir %}
+
+        <form
+            id="formEmitirFactura"
+            method="post"
+            action="{% url 'facturacion:emitir_factura' factura.pk %}"
+            style="display:none;"
+        >
+            {% csrf_token %}
+        </form>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =====================================================
+     SWEETALERT
+====================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script>
+
+    function confirmarEmisionFactura() {
+
+        const formulario =
+            document.getElementById(
+                "formEmitirFactura"
+            );
+
+        if (!formulario) {
+
+            Swal.fire({
+                title: "No disponible",
+                text:
+                    "La factura no se encuentra " +
+                    "en un estado que permita emitir.",
+                icon: "warning",
+                confirmButtonColor: "#ff9500"
+            });
+
+            return;
+        }
+
+
+        Swal.fire({
+
+            title: "¿Emitir factura?",
+
+            html:
+                "Se iniciará el proceso de " +
+                "<strong>facturación electrónica</strong>." +
+                "<br><br>" +
+                "Se generará el XML, se firmará y " +
+                "se enviará al SRI." +
+                "<br><br>" +
+                "<strong>" +
+                "Después de iniciar este proceso " +
+                "los datos ya no podrán editarse." +
+                "</strong>",
+
+            icon: "warning",
+
+            showCancelButton: true,
+
+            confirmButtonColor: "#0071e3",
+            cancelButtonColor: "#6e6e73",
+
+            confirmButtonText:
+                "Sí, emitir factura",
+
+            cancelButtonText:
+                "Cancelar"
+
+        }).then(function (result) {
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+
+            const boton =
+                document.getElementById(
+                    "btnEmitirFactura"
+                );
+
+            if (boton) {
+                boton.disabled = true;
+            }
+
+
+            Swal.fire({
+
+                title:
+                    "Procesando factura...",
+
+                html:
+                    "Generando XML, firmando " +
+                    "y comunicando con el SRI.",
+
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+
+                didOpen: function () {
+
+                    Swal.showLoading();
+
+                    formulario.submit();
+
+                }
+
+            });
+
+        });
+
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    {% if message.tags == "success" %}
+
+                        Swal.fire({
+                            title: "Proceso completado",
+                            text: "{{ message|escapejs }}",
+                            icon: "success",
+                            confirmButtonColor: "#34c759",
+                            confirmButtonText: "Entendido"
+                        });
+
+                    {% elif message.tags == "error" %}
+
+                        Swal.fire({
+                            title: "Error",
+                            text: "{{ message|escapejs }}",
+                            icon: "error",
+                            confirmButtonColor: "#ff3b30"
+                        });
+
+                    {% elif message.tags == "warning" %}
+
+                        Swal.fire({
+                            title: "Advertencia",
+                            text: "{{ message|escapejs }}",
+                            icon: "warning",
+                            confirmButtonColor: "#ff9500"
+                        });
+
+                    {% elif message.tags == "info" %}
+
+                        Swal.fire({
+                            title: "Información",
+                            text: "{{ message|escapejs }}",
+                            icon: "info",
+                            confirmButtonColor: "#0071e3"
+                        });
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% endif %}
+
+        }
+    );
+
+</script>
+
+{% endblock %}

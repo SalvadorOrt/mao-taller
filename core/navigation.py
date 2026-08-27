@@ -230,6 +230,38 @@ def get_menu_lateral(user):
 
 
     # =====================================================
+    # FACTURACIÓN
+    # =====================================================
+
+    items_facturacion = []
+
+
+    # -----------------------------------------------------
+    # DASHBOARD FACTURACIÓN
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "facturacion.view_facturaventa"
+    ):
+        items_facturacion.append({
+            "label": "Dashboard Facturación",
+            "url_name": "facturacion:dashboard",
+            "icon": "bi-receipt",
+        })
+
+
+    # -----------------------------------------------------
+    # AGREGAR SECCIÓN
+    # -----------------------------------------------------
+
+    if items_facturacion:
+        menu.append({
+            "titulo": "Facturación",
+            "items": items_facturacion,
+        })
+
+
+    # =====================================================
     # ADMINISTRACIÓN
     # =====================================================
 

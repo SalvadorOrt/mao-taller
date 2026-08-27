@@ -1,0 +1,146 @@
+<div class="ot-card">
+
+    <div class="section-title">
+        Información general
+    </div>
+
+    <div class="info-grid">
+
+        <div class="info-box">
+            <div class="info-label">
+                N° Factura
+            </div>
+
+            <div class="info-value">
+                {{ factura.numero_factura }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Orden de Trabajo
+            </div>
+
+            <div class="info-value">
+                {{ factura.numero_orden_origen|default:"-" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Fecha de emisión
+            </div>
+
+            <div class="info-value">
+                {{ factura.fecha_emision|date:"d/m/Y" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Sucursal
+            </div>
+
+            <div class="info-value">
+                {{ factura.sucursal.nombre|default:"-" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Placa
+            </div>
+
+            <div class="info-value">
+                {{ factura.placa_snapshot|default:"-" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Vehículo
+            </div>
+
+            <div class="info-value">
+                {{ factura.vehiculo_snapshot|default:"-" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Año
+            </div>
+
+            <div class="info-value">
+                {{ factura.anio_vehiculo_snapshot|default:"-" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Color
+            </div>
+
+            <div class="info-value">
+                {{ factura.color_snapshot|default:"-" }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Kilometraje
+            </div>
+
+            <div class="info-value">
+                {% if factura.kilometraje_snapshot %}
+                    {{ factura.kilometraje_snapshot }} km
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Ambiente
+            </div>
+
+            <div class="info-value">
+                {{ factura.get_ambiente_display }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Estado
+            </div>
+
+            <div class="info-value">
+                {{ factura.get_estado_display }}
+            </div>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-label">
+                Emisor
+            </div>
+
+            <div class="info-value">
+                {{ factura.empresa.razon_social|default:"-" }}
+            </div>
+        </div>
+
+    </div>
+
+</div>

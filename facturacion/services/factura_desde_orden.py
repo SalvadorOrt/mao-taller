@@ -6,6 +6,7 @@ from django.db import transaction
 from facturacion.models import (
     FacturaVenta,
     DetalleFacturaVenta,
+    ProcedimientoDetalleFactura,
 )
 
 from ordenes_de_trabajo.models import (
@@ -159,13 +160,15 @@ def _datos_comprador(
 
 def _obtener_lineas_facturables(orden):
     """
-    Obtiene exactamente:
+    Obtiene un snapshot estructurado de las líneas facturables de la OT.
 
-    - Mano de obra interna
-    - Mano de obra externa
-    - Repuestos
+    Conserva:
+    - tipo_origen: REP / MOI / MOE
+    - orden_origen: orden_item real de la OT
+    - datos económicos
+    - procedimientos de MOI
 
-    desde la OT.
+    La factura queda independiente de cambios posteriores en la OT.
     """
 
     lineas = []
@@ -176,9 +179,7 @@ def _obtener_lineas_facturables(orden):
 
     for item in orden.servicios_detalles.all():
 
-        subtotal = _q2(
-            item.subtotal
-        )
+        subtotal = _q2(item.subtotal)
 
         codigo = (
             f"SRV-{item.servicio_id}"
@@ -191,13 +192,37 @@ def _obtener_lineas_facturables(orden):
             or "SERVICIO"
         ).strip()
 
-        tipo_mano_obra = (
-            "Mano de Obra Externa"
-            if item.tipo_servicio == "EXT"
-            else "Mano de Obra Interna"
-        )
+        if item.tipo_servicio == "EXT":
+            tipo_origen = "MOE"
+            tipo_mano_obra = "Mano de Obra Externa"
+        else:
+            tipo_origen = "MOI"
+            tipo_mano_obra = "Mano de Obra Interna"
+
+        procedimientos = []
+
+        if tipo_origen == "MOI":
+            for procedimiento in item.procedimientos_detalle.all():
+                descripcion_procedimiento = (
+                    procedimiento.descripcion
+                    or ""
+                ).strip()
+
+                if descripcion_procedimiento:
+                    procedimientos.append({
+                        "descripcion":
+                            descripcion_procedimiento[:500],
+                        "orden":
+                            procedimiento.orden_item,
+                    })
 
         lineas.append({
+            "tipo_origen":
+                tipo_origen,
+
+            "orden_origen":
+                item.orden_item,
+
             "codigo_principal":
                 codigo[:50],
 
@@ -221,6 +246,9 @@ def _obtener_lineas_facturables(orden):
 
             "observaciones":
                 tipo_mano_obra,
+
+            "procedimientos":
+                procedimientos,
         })
 
     # =====================================================
@@ -229,9 +257,7 @@ def _obtener_lineas_facturables(orden):
 
     for item in orden.insumos_detalles.all():
 
-        subtotal = _q2(
-            item.subtotal
-        )
+        subtotal = _q2(item.subtotal)
 
         codigo = (
             f"REP-{item.producto_id}"
@@ -260,6 +286,12 @@ def _obtener_lineas_facturables(orden):
         )
 
         lineas.append({
+            "tipo_origen":
+                "REP",
+
+            "orden_origen":
+                item.orden_item,
+
             "codigo_principal":
                 codigo[:50],
 
@@ -283,6 +315,9 @@ def _obtener_lineas_facturables(orden):
 
             "observaciones":
                 "",
+
+            "procedimientos":
+                [],
         })
 
     return lineas
@@ -584,6 +619,10 @@ def crear_factura_desde_orden(
             "sucursal",
             "sucursal__empresa",
             "cliente",
+        )
+        .prefetch_related(
+            "servicios_detalles__procedimientos_detalle",
+            "insumos_detalles",
         )
         .get(
             pk=orden.pk
@@ -970,6 +1009,28 @@ def crear_factura_desde_orden(
                 firma,
 
             # -----------------------------------------
+            # SNAPSHOT DE ORIGEN
+            # -----------------------------------------
+
+            numero_orden_origen=
+                str(orden.numero_orden),
+
+            placa_snapshot=
+                (orden.placa or "").strip(),
+
+            vehiculo_snapshot=
+                (orden.vehiculo or "").strip(),
+
+            anio_vehiculo_snapshot=
+                orden.anio_vehiculo,
+
+            color_snapshot=
+                (getattr(orden, "color", None) or "").strip(),
+
+            kilometraje_snapshot=
+                orden.kilometraje,
+
+            # -----------------------------------------
             # COMPRADOR
             # -----------------------------------------
 
@@ -1041,6 +1102,16 @@ def crear_factura_desde_orden(
 
                 factura=
                     factura,
+
+                tipo_origen=
+                    linea[
+                        "tipo_origen"
+                    ],
+
+                orden_origen=
+                    linea[
+                        "orden_origen"
+                    ],
 
                 codigo_principal=
                     linea[
@@ -1118,9 +1189,43 @@ def crear_factura_desde_orden(
             detalle
         )
 
-    DetalleFacturaVenta.objects.bulk_create(
-        detalles_factura
+    detalles_creados = (
+        DetalleFacturaVenta.objects.bulk_create(
+            detalles_factura
+        )
     )
+
+    # =====================================================
+    # CONGELAR PROCEDIMIENTOS DE M.O.I.
+    # =====================================================
+
+    procedimientos_factura = []
+
+    for detalle, linea in zip(
+        detalles_creados,
+        lineas,
+    ):
+        if linea["tipo_origen"] != "MOI":
+            continue
+
+        for procedimiento in linea.get(
+            "procedimientos",
+            [],
+        ):
+            procedimientos_factura.append(
+                ProcedimientoDetalleFactura(
+                    detalle=detalle,
+                    descripcion=
+                        procedimiento["descripcion"],
+                    orden=
+                        procedimiento["orden"],
+                )
+            )
+
+    if procedimientos_factura:
+        ProcedimientoDetalleFactura.objects.bulk_create(
+            procedimientos_factura
+        )
 
     # =====================================================
     # VERIFICACIÓN FINAL

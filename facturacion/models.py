@@ -103,6 +103,47 @@ class FacturaVenta(models.Model):
     )
 
     # -----------------------------------------------------
+    # SNAPSHOT DE ORIGEN
+    # -----------------------------------------------------
+    # Estos campos congelan la información visible de la OT
+    # al momento de crear la factura. La relación "orden" se
+    # conserva para trazabilidad, pero la factura no depende
+    # de cambios posteriores en la OT para mostrar su origen.
+    numero_orden_origen = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+
+    placa_snapshot = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+    )
+
+    vehiculo_snapshot = models.CharField(
+        max_length=250,
+        blank=True,
+        null=True,
+    )
+
+    anio_vehiculo_snapshot = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+    )
+
+    color_snapshot = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
+
+    kilometraje_snapshot = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+    )
+
+    # -----------------------------------------------------
     # DATOS DEL COMPROBANTE
     # -----------------------------------------------------
     guia_remision = models.CharField(max_length=20, blank=True, null=True)
@@ -726,10 +767,32 @@ class DetalleFacturaVenta(models.Model):
         ("4", "IVA vigente"),
     ]
 
+    TIPOS_ORIGEN = [
+        ("REP", "Repuesto"),
+        ("MOI", "Mano de Obra Interna"),
+        ("MOE", "Mano de Obra Externa"),
+        ("OTRO", "Otro"),
+    ]
+
     factura = models.ForeignKey(
         FacturaVenta,
         on_delete=models.CASCADE,
         related_name="detalles",
+    )
+
+    # Identifica de qué sección de la OT provino la línea.
+    # Permite reconstruir el detalle visual de la factura como:
+    # Repuestos / M.O.I. / M.O.E.
+    tipo_origen = models.CharField(
+        max_length=10,
+        choices=TIPOS_ORIGEN,
+        default="OTRO",
+        db_index=True,
+    )
+
+    # Posición congelada de la línea dentro de su sección.
+    orden_origen = models.PositiveIntegerField(
+        default=0,
     )
 
     codigo_principal = models.CharField(max_length=50)
@@ -799,7 +862,7 @@ class DetalleFacturaVenta(models.Model):
     class Meta:
         verbose_name = "Detalle de factura"
         verbose_name_plural = "Detalles de factura"
-        ordering = ["id"]
+        ordering = ["tipo_origen", "orden_origen", "id"]
 
     def __str__(self):
         return f"{self.descripcion} - {self.factura_id}"
@@ -913,6 +976,42 @@ class DetalleFacturaVenta(models.Model):
         if factura:
             factura.recalcular_totales(guardar=True)
 
+
+# =========================================================
+# PROCEDIMIENTOS DE M.O.I. CONGELADOS EN FACTURA
+# =========================================================
+
+class ProcedimientoDetalleFactura(models.Model):
+    detalle = models.ForeignKey(
+        DetalleFacturaVenta,
+        on_delete=models.CASCADE,
+        related_name="procedimientos",
+    )
+
+    descripcion = models.CharField(
+        max_length=500,
+    )
+
+    orden = models.PositiveIntegerField(
+        default=0,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = "Procedimiento de detalle de factura"
+        verbose_name_plural = "Procedimientos de detalles de factura"
+        ordering = ["orden", "id"]
+
+    def __str__(self):
+        return self.descripcion
+
+
+# =========================================================
+# PAGOS DE FACTURA
+# =========================================================
 
 class PagoFacturaVenta(models.Model):
     factura = models.ForeignKey(
