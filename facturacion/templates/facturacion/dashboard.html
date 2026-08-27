@@ -553,34 +553,14 @@
                                 <div class="fact-actions">
 
                                     <a
-                                        href="{% url 'detalle_orden' orden.pk %}"
-                                        class="fact-action"
-                                        target="_blank"
+                                        href="{% url 'facturacion:previsualizar_factura' orden.pk %}"
+                                        class="fact-action primary"
                                     >
                                         <i class="bi bi-eye"></i>
-                                        Ver OT
+                                        Ver
                                     </a>
 
-                                    <button
-                                        type="button"
-                                        class="fact-action primary"
-                                        onclick="confirmarFacturacion({{ orden.pk }}, '{{ orden.numero_orden|escapejs }}')"
-                                    >
-                                        <i class="bi bi-receipt"></i>
-                                        Facturar
-                                    </button>
-
                                 </div>
-
-                                <form
-                                    id="form-facturar-{{ orden.pk }}"
-                                    method="post"
-                                    action="{% url 'facturacion:crear_factura_desde_ot' orden.pk %}"
-                                    style="display:none;"
-                                >
-                                    {% csrf_token %}
-                                </form>
-
                             </td>
 
                         </tr>
@@ -937,57 +917,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    function confirmarFacturacion(ordenId, numeroOrden) {
-
-        Swal.fire({
-            title: "¿Crear factura?",
-            html:
-                "Se creará una factura en <strong>BORRADOR</strong> " +
-                "desde la Orden <strong>" +
-                numeroOrden +
-                "</strong>.<br><br>" +
-                "Todavía no será enviada al SRI.",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: "#0071e3",
-            cancelButtonColor: "#6e6e73",
-            confirmButtonText: "Crear factura",
-            cancelButtonText: "Cancelar"
-        }).then(function (result) {
-
-            if (!result.isConfirmed) {
-                return;
-            }
-
-            const formulario = document.getElementById(
-                "form-facturar-" + ordenId
-            );
-
-            if (!formulario) {
-                Swal.fire({
-                    title: "Error",
-                    text: "No se encontró el formulario de facturación.",
-                    icon: "error",
-                    confirmButtonColor: "#ff3b30"
-                });
-
-                return;
-            }
-
-            Swal.fire({
-                title: "Creando factura...",
-                text: "Copiando los datos de la Orden de Trabajo.",
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-
-                didOpen: function () {
-                    Swal.showLoading();
-                    formulario.submit();
-                }
-            });
-        });
-    }
-
 
     document.addEventListener(
         "DOMContentLoaded",
