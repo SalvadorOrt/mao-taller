@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle para Facturación | MAO{% endblock %}
+{% block page_title %}Detalle para Facturación{% endblock %}
+{% block page_subtitle %}
+    Orden {{ orden.numero_orden }}
+{% endblock %}
+
+{% block content %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'facturacion/css/detalle_factura.css' %}"
+>
+
+<div class="container ot-wrapper">
+
+    <div class="ot-card">
+
+        <div class="section-title">
+            Información general
+        </div>
+
+        <div class="info-grid">
+
+            <div class="info-box">
+                <div class="info-label">Orden</div>
+                <div class="info-value">
+                    {{ orden.numero_orden }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Cliente</div>
+                <div class="info-value">
+                    {{ orden.nombre_cliente_final|default:"-" }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Placa</div>
+                <div class="info-value">
+                    {{ orden.placa|default:"-" }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Vehículo</div>
+                <div class="info-value">
+                    {{ orden.vehiculo|default:"-" }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="ot-card">
+
+        <div class="section-title">
+            Repuestos
+        </div>
+
+        <div class="ot-table-wrap">
+
+            <table class="ot-table">
+
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th style="text-align:right;">Cantidad</th>
+                        <th style="text-align:right;">P. Unitario</th>
+                        <th style="text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for item in repuestos %}
+
+                        <tr>
+                            <td>
+                                {{ item.descripcion_factura|default:item.producto }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                {{ item.cantidad }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                ${{ item.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                ${{ item.subtotal|floatformat:2 }}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="4">
+                                No hay repuestos.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="subtotal-box">
+            <div class="subtotal-pill">
+                Subtotal repuestos:
+                ${{ subtotal_repuestos|floatformat:2 }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="ot-card">
+
+        <div class="section-title">
+            Mano de Obra Interna
+        </div>
+
+        <div class="ot-table-wrap">
+
+            <table class="ot-table">
+
+                <thead>
+                    <tr>
+                        <th>Servicio</th>
+                        <th style="text-align:right;">Cantidad</th>
+                        <th style="text-align:right;">P. Unitario</th>
+                        <th style="text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for item in mano_obra_interna %}
+
+                        <tr>
+                            <td>
+                                {{ item.descripcion_servicio|default:"Servicio" }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                {{ item.cantidad }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                ${{ item.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                ${{ item.subtotal|floatformat:2 }}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="4">
+                                No hay mano de obra interna.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="subtotal-box">
+            <div class="subtotal-pill">
+                Subtotal MOI:
+                ${{ subtotal_moi|floatformat:2 }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="ot-card">
+
+        <div class="section-title">
+            Mano de Obra Externa
+        </div>
+
+        <div class="ot-table-wrap">
+
+            <table class="ot-table">
+
+                <thead>
+                    <tr>
+                        <th>Servicio</th>
+                        <th style="text-align:right;">Cantidad</th>
+                        <th style="text-align:right;">P. Unitario</th>
+                        <th style="text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for item in mano_obra_externa %}
+
+                        <tr>
+                            <td>
+                                {{ item.descripcion_servicio|default:"Servicio externo" }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                {{ item.cantidad }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                ${{ item.precio_unitario|floatformat:2 }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                ${{ item.subtotal|floatformat:2 }}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="4">
+                                No hay mano de obra externa.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="subtotal-box">
+            <div class="subtotal-pill">
+                Subtotal MOE:
+                ${{ subtotal_moe|floatformat:2 }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="ot-card">
+
+        <div class="section-title">
+            Resumen económico
+        </div>
+
+        <div class="totals-grid">
+
+            <div class="total-box">
+                <div class="total-label">Subtotal</div>
+                <div class="total-value">
+                    ${{ subtotal_sin_iva|floatformat:2 }}
+                </div>
+            </div>
+
+            <div class="total-box">
+                <div class="total-label">Descuento</div>
+                <div class="total-value">
+                    ${{ descuento|floatformat:2 }}
+                </div>
+            </div>
+
+            <div class="total-box">
+                <div class="total-label">
+                    IVA {{ porcentaje_iva|floatformat:0 }}%
+                </div>
+                <div class="total-value">
+                    ${{ valor_iva|floatformat:2 }}
+                </div>
+            </div>
+
+            <div class="total-box final">
+                <div class="total-label">Total</div>
+                <div class="total-value">
+                    ${{ total_final|floatformat:2 }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="sticky-actions">
+
+        <a
+            href="{% url 'facturacion:dashboard' %}"
+            class="btn-login"
+        >
+            Volver
+        </a>
+
+        <form
+            method="post"
+            action="{% url 'facturacion:crear_factura_desde_ot' orden.pk %}"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="btn-login primary"
+            >
+                <i class="bi bi-receipt"></i>
+                Emitir factura
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
