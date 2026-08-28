@@ -135,7 +135,9 @@
 
     .modal-comprador-body {
         overflow-y: auto;
+        overflow-x: visible;
         padding: 25px;
+        position: relative;
     }
 
     .modal-comprador-footer {
@@ -157,7 +159,8 @@
         background: #fbfbfd;
         border: 1px solid var(--border-soft, #e5e5ea);
         border-radius: 14px;
-        overflow: hidden;
+        overflow: visible;
+        position: relative;
     }
 
     .comprador-modal-title {
@@ -167,12 +170,15 @@
         letter-spacing: 0.04em;
         font-weight: 800;
         color: var(--muted, #6e6e73);
+        border-radius: 14px 14px 0 0;
     }
 
     .comprador-modal-content {
         padding: 14px;
         border-top: 1px solid var(--border-soft, #e5e5ea);
         background: #fff;
+        border-radius: 0 0 14px 14px;
+        position: relative;
     }
 
 
@@ -183,6 +189,11 @@
     .mao-dropdown {
         position: relative;
         width: 100%;
+        z-index: 20;
+    }
+
+    .mao-dropdown.abierto {
+        z-index: 100;
     }
 
     .mao-dropdown-button {
@@ -226,20 +237,27 @@
     .mao-dropdown-menu {
         display: none;
         position: absolute;
-        top: calc(100% + 5px);
+        top: calc(100% + 6px);
         left: 0;
         right: 0;
-        z-index: 10080;
+        z-index: 101;
         background: #fff;
         border: 1px solid #d2d2d7;
         border-radius: 11px;
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
         padding: 5px;
         overflow: hidden;
+        min-width: 260px;
     }
 
     .mao-dropdown.abierto .mao-dropdown-menu {
         display: block;
+    }
+
+    @media (max-width: 700px) {
+        .mao-dropdown-menu {
+            min-width: 100%;
+        }
     }
 
     .mao-dropdown-item {
@@ -1029,8 +1047,9 @@
                         </div>
 
                         <div class="consumidor-final-texto">
-                            Se utilizarán los datos correspondientes
-                            a consumidor final para la factura.
+                            Se emitirá la factura con tipo de identificación
+                            <strong>07 - Consumidor Final</strong> y
+                            identificación <strong>9999999999999</strong>.
                         </div>
 
                     </div>
@@ -1768,7 +1787,11 @@
         ).textContent =
             comprador.tipo_identificacion === '07'
                 ? 'Consumidor Final'
-                : `C.I./RUC: ${comprador.identificacion}`;
+                : comprador.tipo_identificacion === '06'
+                    ? `Pasaporte: ${comprador.identificacion}`
+                    : comprador.tipo_identificacion === '04'
+                        ? `RUC: ${comprador.identificacion}`
+                        : `C.I.: ${comprador.identificacion}`;
 
 
         const contacto = [];
@@ -1802,7 +1825,11 @@
         ).textContent =
             comprador.tipo_identificacion === '07'
                 ? 'Consumidor Final'
-                : comprador.identificacion;
+                : comprador.tipo_identificacion === '06'
+                    ? `Pasaporte: ${comprador.identificacion}`
+                    : comprador.tipo_identificacion === '04'
+                        ? `RUC: ${comprador.identificacion}`
+                        : `C.I.: ${comprador.identificacion}`;
     }
 
 
