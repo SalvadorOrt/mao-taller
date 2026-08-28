@@ -1,342 +1,1525 @@
 {% load static %}
 
 
-<div class="page">
+<!-- =========================================================
+     AJUSTES DE IMPRESIÓN
+     
+     IMPORTANTE:
+     - NO cambia grids
+     - NO cambia columnas
+     - NO cambia vehicle-row
+     - NO cambia tamaños del croquis
+     - NO cambia la distribución legal
+     - NO cambia el diseño normal en pantalla
+     
+     Solo afecta la impresión:
+     - negro puro
+     - blanco puro
+     - letra legible
+     - una sola hoja cuando sea posible
+========================================================= -->
+<style>
+
+    @page {
+        size: A4 portrait;
+        margin: 5mm;
+    }
+
+
+    @media print {
+
+        html,
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+        }
+
+
+        /* =====================================================
+           NEGRO PURO
+           ===================================================== */
+
+        #printPage,
+        #printPage * {
+            color: #000000 !important;
+            text-shadow: none !important;
+        }
+
+
+        /* =====================================================
+           QUITAR GRISES
+           
+           Solo modificamos COLOR.
+           No tocamos display, width, gap, grid, height, etc.
+           ===================================================== */
+
+        #printPage,
+        #printPage .panel,
+        #printPage .field,
+        #printPage .report,
+        #printPage .fuel-box,
+        #printPage .check-card,
+        #printPage .legal-card,
+        #printPage .legal-body,
+        #printPage .legal-title,
+        #printPage .parking-warning,
+        #printPage .meta-table,
+        #printPage .meta-table td,
+        #printPage .trabajos-table,
+        #printPage .trabajos-table th,
+        #printPage .trabajos-table td {
+            background-color: #ffffff !important;
+            background-image: none !important;
+        }
+
+
+        /* =====================================================
+           BORDES NEGROS
+           ===================================================== */
+
+        #printPage table,
+        #printPage th,
+        #printPage td,
+        #printPage .panel,
+        #printPage .report,
+        #printPage .fuel-box,
+        #printPage .check-card,
+        #printPage .legal-card,
+        #printPage .legal-title,
+        #printPage .parking-warning,
+        #printPage .legal-signature,
+        #printPage .legal-name-line,
+        #printPage .check-box {
+            border-color: #000000 !important;
+        }
+
+
+        /* =====================================================
+           ENCABEZADO
+           ===================================================== */
+
+        #printPage .titulo-ot {
+            color: #000000 !important;
+            font-size: 16pt !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .numero-ot {
+            color: #000000 !important;
+            font-size: 13pt !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .company {
+            color: #000000 !important;
+            font-size: 9pt !important;
+            font-weight: 600 !important;
+        }
+
+
+        /* =====================================================
+           SUCURSAL / FECHA / ESTADO
+           ===================================================== */
+
+        #printPage .meta-table td {
+            color: #000000 !important;
+            font-size: 9pt !important;
+            font-weight: 700 !important;
+        }
+
+        #printPage .meta-table span {
+            color: #000000 !important;
+            font-size: 8pt !important;
+            font-weight: 700 !important;
+        }
+
+
+        /* =====================================================
+           TÍTULOS
+           ===================================================== */
+
+        #printPage .section-title {
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: 10.5pt !important;
+            font-weight: 800 !important;
+            border-color: #000000 !important;
+        }
+
+
+        /* =====================================================
+           DATOS DEL VEHÍCULO / CLIENTE
+           ===================================================== */
+
+        #printPage .label {
+            color: #000000 !important;
+            font-size: 8.5pt !important;
+            font-weight: 700 !important;
+        }
+
+        #printPage .value {
+            color: #000000 !important;
+            font-size: 10pt !important;
+            font-weight: 600 !important;
+        }
+
+
+        /* =====================================================
+           CHECKLIST
+           ===================================================== */
+
+        #printPage .check-title {
+            color: #000000 !important;
+            font-size: 9pt !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .check-list li {
+            color: #000000 !important;
+            font-size: 8.5pt !important;
+            font-weight: 600 !important;
+        }
+
+        #printPage .check-box {
+            background: #ffffff !important;
+            border-color: #000000 !important;
+        }
+
+        #printPage .check-box.checked {
+            background: #000000 !important;
+            border-color: #000000 !important;
+        }
+
+
+        /* =====================================================
+           REPORTE DEL CLIENTE
+           ===================================================== */
+
+        #printPage .report {
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: 9.5pt !important;
+            font-weight: 600 !important;
+        }
+
+
+        /* =====================================================
+           TRABAJOS
+           ===================================================== */
+
+        #printPage .trabajos-table {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+
+        #printPage .trabajos-table th {
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: 9.5pt !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .trabajos-table td {
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: 9.5pt !important;
+            font-weight: 600 !important;
+        }
+
+
+        /* =====================================================
+           PARTE LEGAL
+           ===================================================== */
+
+        #printPage .legal-title {
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: 9pt !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .legal-text {
+            color: #000000 !important;
+            font-size: 8pt !important;
+            font-weight: 500 !important;
+        }
+
+        #printPage .legal-text strong {
+            color: #000000 !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .parking-warning {
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: 8pt !important;
+            font-weight: 800 !important;
+        }
+
+        #printPage .legal-signature-label {
+            color: #000000 !important;
+            font-size: 7.8pt !important;
+            font-weight: 700 !important;
+        }
+
+        #printPage .legal-name {
+            color: #000000 !important;
+            font-size: 7.8pt !important;
+            font-weight: 600 !important;
+        }
+
+        #printPage .delivery-meta {
+            color: #000000 !important;
+            font-size: 8pt !important;
+            font-weight: 700 !important;
+        }
+
+
+        /* =====================================================
+           MANTENER CALIDAD DE IMPRESIÓN
+           ===================================================== */
+
+        #printPage {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+
+            transform-origin: top left !important;
+        }
+
+
+        /* =====================================================
+           EVITAR CORTES INTERNOS
+           
+           NO modifica la distribución.
+           ===================================================== */
+
+        #printPage .legal-grid,
+        #printPage .legal-card {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+
+    }
+
+</style>
+
+
+
+<div class="page" id="printPage">
 
     <table class="top-table">
         <tr>
             <td class="top-left">
+
                 <div class="logo">
+
                     {% if empresa and empresa.logo %}
-                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+
+                        <img
+                            src="{{ empresa.logo.url }}"
+                            alt="Logo Empresa"
+                        >
+
                     {% else %}
-                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+
+                        <img
+                            src="{% static 'logo.png' %}"
+                            alt="Logo MAO"
+                        >
+
                     {% endif %}
+
                 </div>
+
 
                 <div class="company">
-                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+
+                    RUC:
+                    {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
+                    <br>
+
                     {{ empresa.direccion|default:"Quito, Ecuador" }}
+
                 </div>
+
             </td>
+
 
             <td class="top-right">
-                <div class="titulo-ot">Orden de Trabajo</div>
-                <div class="numero-ot">N° {{ orden.numero_orden|default:"000000" }}</div>
+
+                <div class="titulo-ot">
+                    Orden de Trabajo
+                </div>
+
+                <div class="numero-ot">
+                    N° {{ orden.numero_orden|default:"000000" }}
+                </div>
+
 
                 <table class="meta-table">
+
                     <tr>
+
                         <td>
-                            <span>Sucursal</span>
+
+                            <span>
+                                Sucursal
+                            </span>
+
                             {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+
                         </td>
+
+
                         <td>
-                            <span>Fecha impresión</span>
+
+                            <span>
+                                Fecha impresión
+                            </span>
+
                             {% now "d/m/Y H:i" %}
+
                         </td>
+
+
                         <td>
-                            <span>Estado</span>
+
+                            <span>
+                                Estado
+                            </span>
+
                             {{ orden.get_estado_display|default:"ABIERTA" }}
+
                         </td>
+
                     </tr>
+
                 </table>
+
             </td>
+
         </tr>
+
     </table>
 
+
+
+    <!-- =========================================================
+         CLIENTE Y VEHÍCULO
+    ========================================================== -->
+
     <div class="section">
-        <div class="section-title">Cliente y vehículo</div>
+
+        <div class="section-title">
+            Cliente y vehículo
+        </div>
+
 
         <div class="panel">
+
             <div class="grid-2">
+
+
                 <div>
+
+
                     <div class="field">
-                        <div class="label">Cliente / Razón social</div>
-                        <div class="value">
-                            {{ orden.cliente.nombre_completo|upper|default:orden.cliente_respaldo|upper|default:"CLIENTE MOSTRADOR" }}
+
+                        <div class="label">
+                            Cliente / Razón social
                         </div>
+
+                        <div class="value">
+
+                            {{ orden.cliente.nombre_completo|upper|default:orden.cliente_respaldo|upper|default:"CLIENTE MOSTRADOR" }}
+
+                        </div>
+
                     </div>
+
+
 
                     <div class="grid-2">
-                        <div class="field">
-                            <div class="label">RUC / C.I.</div>
-                            <div class="value">{{ orden.cliente.identificacion|default:"-" }}</div>
-                        </div>
+
 
                         <div class="field">
-                            <div class="label">Teléfono</div>
-                            <div class="value">{{ orden.cliente.telefono|default:"-" }}</div>
+
+                            <div class="label">
+                                RUC / C.I.
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.cliente.identificacion|default:"-" }}
+
+                            </div>
+
                         </div>
+
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Teléfono
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.cliente.telefono|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
                     </div>
+
+
                 </div>
+
+
 
                 <div>
+
+
                     <div class="grid-3">
-                        <div class="field">
-                            <div class="label">Placa</div>
-                            <div class="value">{{ orden.placa|upper|default:"S/P" }}</div>
-                        </div>
+
 
                         <div class="field">
-                            <div class="label">Kilometraje</div>
-                            <div class="value">{{ orden.kilometraje|default:"0" }} KM</div>
-                        </div>
 
-                        <div class="field">
-                            <div class="label">Clave / PIN</div>
-                            <div class="value">
-                                {{ orden.clave_encendido|default:"-" }}
+                            <div class="label">
+                                Placa
                             </div>
+
+                            <div class="value">
+
+                                {{ orden.placa|upper|default:"S/P" }}
+
+                            </div>
+
                         </div>
+
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Kilometraje
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.kilometraje|default:"0" }} KM
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Clave / PIN
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.clave_encendido|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
                     </div>
+
+
 
                     <div class="grid-2">
-                        <div class="field">
-                            <div class="label">Marca / Modelo</div>
-                            <div class="value">{{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}</div>
-                        </div>
+
 
                         <div class="field">
-                            <div class="label">Color / Año</div>
-                            <div class="value">
-                                {{ orden.color|upper|default:"-" }} / {{ orden.anio_vehiculo|default:"-" }}
+
+                            <div class="label">
+                                Marca / Modelo
                             </div>
+
+                            <div class="value">
+
+                                {{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}
+
+                            </div>
+
                         </div>
+
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Color / Año
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.color|upper|default:"-" }}
+                                /
+                                {{ orden.anio_vehiculo|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
                     </div>
+
+
                 </div>
+
+
             </div>
+
         </div>
+
     </div>
 
+
+
+    <!-- =========================================================
+         ESTADO DEL VEHÍCULO
+    ========================================================== -->
+
     <div class="section">
-        <div class="section-title">Estado del vehículo al ingreso</div>
+
+        <div class="section-title">
+            Estado del vehículo al ingreso
+        </div>
+
 
         <div class="panel">
+
+
             <div class="vehicle-row">
 
+
                 <div class="sketch-box">
-                    <img src="{% static 'base_autos.svg' %}?v=4" class="img-auto-base" alt="Croquis vehículo">
+
+
+                    <img
+                        src="{% static 'base_autos.svg' %}?v=4"
+                        class="img-auto-base"
+                        alt="Croquis vehículo"
+                    >
+
 
                     {% if croquis and croquis.imagen_generada %}
-                        <img src="{{ croquis.imagen_generada.url }}" class="img-croquis-danios" alt="Daños registrados">
+
+                        <img
+                            src="{{ croquis.imagen_generada.url }}"
+                            class="img-croquis-danios"
+                            alt="Daños registrados"
+                        >
+
                     {% endif %}
+
+
                 </div>
+
+
 
                 <div class="fuel-box">
-                    <div class="field">
-                        <div class="label">Combustible</div>
-                        <div class="value">{{ orden.get_nivel_combustible_display|default:"1/2" }}</div>
-                    </div>
+
 
                     <div class="field">
-                        <div class="label">Ingreso</div>
-                        <div class="value">
-                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+
+                        <div class="label">
+                            Combustible
                         </div>
+
+                        <div class="value">
+
+                            {{ orden.get_nivel_combustible_display|default:"1/2" }}
+
+                        </div>
+
                     </div>
+
+
+
+                    <div class="field">
+
+                        <div class="label">
+                            Ingreso
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+
+                        </div>
+
+                    </div>
+
+
                 </div>
+
+
 
                 <div class="vehicle-checks">
+
+
                     <div class="grid-3">
-                        <div class="check-card">
-                            <div class="check-title">Exterior</div>
-                            <ul class="check-list">
-                                <li><span class="check-box {% if chk.tapacubos %}checked{% endif %}"></span> Tapacubos</li>
-                                <li><span class="check-box {% if chk.plumas %}checked{% endif %}"></span> Plumas</li>
-                                <li><span class="check-box {% if chk.antena %}checked{% endif %}"></span> Antena</li>
-                                <li><span class="check-box {% if chk.faros_lunas %}checked{% endif %}"></span> Faros</li>
-                            </ul>
-                        </div>
+
+
+                        <!-- EXTERIOR -->
 
                         <div class="check-card">
-                            <div class="check-title">Interior</div>
+
+                            <div class="check-title">
+                                Exterior
+                            </div>
+
+
                             <ul class="check-list">
-                                <li><span class="check-box {% if chk.radio %}checked{% endif %}"></span> Radio / LCD</li>
-                                <li><span class="check-box {% if chk.encendedor_cig %}checked{% endif %}"></span> Encendedor</li>
-                                <li><span class="check-box {% if chk.matricula %}checked{% endif %}"></span> Matrícula</li>
-                                <li><span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}"></span> Tuerca Seg.</li>
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.tapacubos %}checked{% endif %}"
+                                    ></span>
+
+                                    Tapacubos
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.plumas %}checked{% endif %}"
+                                    ></span>
+
+                                    Plumas
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.antena %}checked{% endif %}"
+                                    ></span>
+
+                                    Antena
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.faros_lunas %}checked{% endif %}"
+                                    ></span>
+
+                                    Faros
+
+                                </li>
+
                             </ul>
+
                         </div>
 
+
+
+                        <!-- INTERIOR -->
+
                         <div class="check-card">
-                            <div class="check-title">Baúl</div>
+
+                            <div class="check-title">
+                                Interior
+                            </div>
+
+
                             <ul class="check-list">
-                                <li><span class="check-box {% if chk.gata %}checked{% endif %}"></span> Gata</li>
-                                <li><span class="check-box {% if chk.herramientas %}checked{% endif %}"></span> Herr.</li>
-                                <li><span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}"></span> Llanta E.</li>
-                                <li><span class="check-box {% if chk.triangulos %}checked{% endif %}"></span> Triángulos</li>
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.radio %}checked{% endif %}"
+                                    ></span>
+
+                                    Radio / LCD
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.encendedor_cig %}checked{% endif %}"
+                                    ></span>
+
+                                    Encendedor
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.matricula %}checked{% endif %}"
+                                    ></span>
+
+                                    Matrícula
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}"
+                                    ></span>
+
+                                    Tuerca Seg.
+
+                                </li>
+
                             </ul>
+
                         </div>
+
+
+
+                        <!-- BAÚL -->
+
+                        <div class="check-card">
+
+                            <div class="check-title">
+                                Baúl
+                            </div>
+
+
+                            <ul class="check-list">
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.gata %}checked{% endif %}"
+                                    ></span>
+
+                                    Gata
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.herramientas %}checked{% endif %}"
+                                    ></span>
+
+                                    Herr.
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.llanta_emergencia %}checked{% endif %}"
+                                    ></span>
+
+                                    Llanta E.
+
+                                </li>
+
+
+                                <li>
+
+                                    <span
+                                        class="check-box {% if chk.triangulos %}checked{% endif %}"
+                                    ></span>
+
+                                    Triángulos
+
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+
                     </div>
+
+
                 </div>
 
-                <div class="field" style="margin-top: 7px; margin-bottom: 0;">
-                    <div class="label">Objetos adicionales</div>
+
+
+                <!-- OBJETOS ADICIONALES -->
+
+                <div
+                    class="field"
+                    style="margin-top: 7px; margin-bottom: 0;"
+                >
+
+                    <div class="label">
+                        Objetos adicionales
+                    </div>
+
+
                     <div class="value">
+
+
                         {% for obj in orden.ordenobjetoadicional_set.all %}
-                            {{ obj.cantidad }}x {{ obj.descripcion|upper }}{% if obj.observacion %} ({{ obj.observacion }}){% endif %}{% if not forloop.last %}, {% endif %}
+
+                            {{ obj.cantidad }}x
+                            {{ obj.descripcion|upper }}
+
+                            {% if obj.observacion %}
+
+                                ({{ obj.observacion }})
+
+                            {% endif %}
+
+
+                            {% if not forloop.last %}
+
+                                ,
+
+                            {% endif %}
+
+
                         {% empty %}
+
                             NINGUNO REPORTADO
+
                         {% endfor %}
+
+
                     </div>
+
                 </div>
+
 
             </div>
+
         </div>
+
     </div>
 
+
+
+    <!-- =========================================================
+         REPORTE DEL CLIENTE
+    ========================================================== -->
+
     <div class="section">
-        <div class="section-title">Reporte del cliente / motivo de ingreso</div>
+
+        <div class="section-title">
+            Reporte del cliente / motivo de ingreso
+        </div>
+
 
         <div class="report">
+
+
             {% if orden.sintomas_cliente %}
+
                 {{ orden.sintomas_cliente|upper }}
+
+
             {% else %}
+
+
                 {% for s in orden.sintomas_items.all %}
+
                     • {{ s.descripcion|upper }}<br>
+
+
                 {% empty %}
+
                     REVISIÓN TÉCNICA GENERAL / NO ESPECIFICADO
+
+
                 {% endfor %}
+
+
             {% endif %}
+
+
         </div>
+
     </div>
+
+
+
+    <!-- =========================================================
+         TRABAJOS A REALIZAR
+    ========================================================== -->
 
     <div class="section">
-        <div class="section-title">Trabajos a realizar</div>
+
+        <div class="section-title">
+            Trabajos a realizar
+        </div>
+
 
         <table class="trabajos-table">
+
+
             <thead>
+
                 <tr>
-                    <th style="width: 40px;" class="center">#</th>
-                    <th>Descripción de las Operaciones</th>
+
+                    <th
+                        style="width: 40px;"
+                        class="center"
+                    >
+                        #
+                    </th>
+
+
+                    <th>
+                        Descripción de las Operaciones
+                    </th>
+
                 </tr>
+
             </thead>
 
+
+
             <tbody>
+
+
                 {% for t in orden.trabajos_solicitados_items.all %}
+
                     <tr>
-                        <td class="center">{{ forloop.counter }}</td>
-                        <td>{{ t.descripcion_manual|upper }}</td>
+
+                        <td class="center">
+                            {{ forloop.counter }}
+                        </td>
+
+                        <td>
+                            {{ t.descripcion_manual|upper }}
+                        </td>
+
                     </tr>
+
                 {% endfor %}
+
+
 
                 {% for s in orden.servicios_detalles.all %}
+
                     <tr>
-                        <td class="center">-</td>
-                        <td>{{ s.servicio.descripcion|upper }}</td>
+
+                        <td class="center">
+                            -
+                        </td>
+
+                        <td>
+                            {{ s.servicio.descripcion|upper }}
+                        </td>
+
                     </tr>
+
                 {% endfor %}
 
-                {% for i in "1"|make_list %}
+
+
+                <!--
+                    Conservamos una fila vacía SOLO si realmente
+                    no existen trabajos ni servicios.
+
+                    Así mantenemos la apariencia del formato vacío,
+                    pero no desperdiciamos espacio cuando la OT
+                    tiene bastantes registros.
+                -->
+
+                {% if not orden.trabajos_solicitados_items.all and not orden.servicios_detalles.all %}
+
                     <tr>
+
                         <td style="height: 18px;"></td>
+
                         <td></td>
+
                     </tr>
-                {% endfor %}
+
+                {% endif %}
+
+
             </tbody>
+
         </table>
+
     </div>
+
+
 
     <!-- =========================================================
          AUTORIZACIÓN Y RECIBÍ CONFORME — PRIMERA HOJA
     ========================================================== -->
+
     <div class="legal-grid">
 
+
+        <!-- =====================================================
+             AUTORIZACIÓN DEL CLIENTE
+        ====================================================== -->
+
         <div class="legal-card">
-            <div class="legal-title">Autorización del cliente (ingreso)</div>
+
+
+            <div class="legal-title">
+                Autorización del cliente (ingreso)
+            </div>
+
+
 
             <div class="legal-body">
+
+
                 <div class="legal-text">
-                    Autorizo a <strong>MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)</strong>
-                    a realizar la revisión, diagnóstico, comprobación y los trabajos descritos
-                    en esta orden de trabajo. También autorizo el desmontaje de componentes,
-                    las pruebas de funcionamiento y la movilización del vehículo dentro o fuera
-                    de las instalaciones cuando sea necesaria para el diagnóstico o la verificación
-                    de la reparación. Declaro que los datos, objetos, accesorios, nivel de combustible,
-                    kilometraje y estado exterior registrados corresponden a las condiciones del
-                    vehículo al momento de su ingreso.
+
+                    Autorizo a
+                    <strong>
+                        MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)
+                    </strong>
+
+                    a realizar la revisión, diagnóstico,
+                    comprobación y los trabajos descritos
+                    en esta orden de trabajo.
+
+                    También autorizo el desmontaje de componentes,
+                    las pruebas de funcionamiento y la movilización
+                    del vehículo dentro o fuera de las instalaciones
+                    cuando sea necesaria para el diagnóstico o la
+                    verificación de la reparación.
+
+                    Declaro que los datos, objetos, accesorios,
+                    nivel de combustible, kilometraje y estado
+                    exterior registrados corresponden a las
+                    condiciones del vehículo al momento de su ingreso.
+
                 </div>
+
+
 
                 <div class="parking-warning">
-                    Vehículo no retirado en la fecha indicada: se cobrará $4,00 de parqueadero diario.
+
+                    Vehículo no retirado en la fecha indicada:
+                    se cobrará $4,00 de parqueadero diario.
+
                 </div>
 
+
+
                 <div class="legal-signatures">
+
+
+                    <!-- CLIENTE -->
+
                     <div>
-                        <div class="legal-signature digital-signature-wrap">
+
+
+                        <div
+                            class="legal-signature digital-signature-wrap"
+                        >
+
+
                             {% if orden.firma_cliente %}
+
                                 <img
                                     src="{{ orden.firma_cliente.url }}"
                                     class="img-firma"
                                     alt="Firma del cliente"
                                 >
+
                             {% endif %}
-                            <div class="legal-signature-label">Entregado por / cliente</div>
+
+
+                            <div class="legal-signature-label">
+
+                                Entregado por / cliente
+
+                            </div>
+
+
                         </div>
 
+
+
                         <div class="legal-name">
+
                             Nombre:
+
                             <span class="legal-name-line">
+
                                 {{ orden.cliente.nombre_completo|default:orden.cliente_respaldo|default:"" }}
+
                             </span>
+
                         </div>
+
+
                     </div>
+
+
+
+                    <!-- MAO -->
 
                     <div>
+
+
                         <div class="legal-signature">
-                            <div class="legal-signature-label">Recibido por / MAO</div>
+
+                            <div class="legal-signature-label">
+
+                                Recibido por / MAO
+
+                            </div>
+
                         </div>
 
+
+
                         <div class="legal-name">
-                            Nombre: <span class="legal-name-line"></span>
+
+                            Nombre:
+
+                            <span class="legal-name-line"></span>
+
                         </div>
+
+
                     </div>
+
+
                 </div>
+
+
             </div>
+
+
         </div>
+
+
+
+        <!-- =====================================================
+             RECIBÍ CONFORME
+        ====================================================== -->
 
         <div class="legal-card">
-            <div class="legal-title">Recibí conforme (entrega)</div>
+
+
+            <div class="legal-title">
+                Recibí conforme (entrega)
+            </div>
+
+
 
             <div class="legal-body">
+
+
                 <div class="legal-text">
-                    Declaro haber revisado las condiciones de entrega del vehículo, las reparaciones,
-                    servicios y trabajos efectuados. Recibo el vehículo a satisfacción y sin reclamos
-                    pendientes visibles al momento de la entrega. Se recomienda realizar cualquier
-                    observación relacionada con la reparación dentro de los <strong>15 días</strong>
-                    posteriores a la entrega. Declaro también haber recibido los repuestos reemplazados,
-                    cuando hayan sido solicitados y se encuentren disponibles.
+
+                    Declaro haber revisado las condiciones de entrega
+                    del vehículo, las reparaciones, servicios y trabajos
+                    efectuados.
+
+                    Recibo el vehículo a satisfacción y sin reclamos
+                    pendientes visibles al momento de la entrega.
+
+                    Se recomienda realizar cualquier observación
+                    relacionada con la reparación dentro de los
+
+                    <strong>
+                        15 días
+                    </strong>
+
+                    posteriores a la entrega.
+
+                    Declaro también haber recibido los repuestos
+                    reemplazados, cuando hayan sido solicitados
+                    y se encuentren disponibles.
+
                 </div>
+
+
 
                 <div class="legal-signatures">
-                    <div>
-                        <div class="legal-signature">
-                            <div class="legal-signature-label">Entregado por / MAO</div>
-                        </div>
 
-                        <div class="legal-name">
-                            Nombre: <span class="legal-name-line"></span>
-                        </div>
-                    </div>
+
+                    <!-- MAO -->
 
                     <div>
+
+
                         <div class="legal-signature">
-                            <div class="legal-signature-label">Recibido por / cliente</div>
+
+                            <div class="legal-signature-label">
+
+                                Entregado por / MAO
+
+                            </div>
+
                         </div>
 
+
+
                         <div class="legal-name">
-                            Nombre: <span class="legal-name-line"></span>
+
+                            Nombre:
+
+                            <span class="legal-name-line"></span>
+
                         </div>
+
+
                     </div>
+
+
+
+                    <!-- CLIENTE -->
+
+                    <div>
+
+
+                        <div class="legal-signature">
+
+                            <div class="legal-signature-label">
+
+                                Recibido por / cliente
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="legal-name">
+
+                            Nombre:
+
+                            <span class="legal-name-line"></span>
+
+                        </div>
+
+
+                    </div>
+
+
                 </div>
+
+
 
                 <div class="delivery-meta">
-                    <div><strong>Fecha:</strong></div>
-                    <div><strong>Hora:</strong></div>
+
+
+                    <div>
+
+                        <strong>
+                            Fecha:
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Hora:
+                        </strong>
+
+                    </div>
+
+
                 </div>
+
+
             </div>
+
+
         </div>
+
 
     </div>
 
+
 </div>
+
+
+
+<!-- =========================================================
+     AJUSTE AUTOMÁTICO PARA IMPRESIÓN
+     
+     NO reconstruye el diseño.
+     NO toca grids.
+     NO mete un div nuevo alrededor del contenido.
+     
+     Usa zoom sobre .page completa, por lo que todas las
+     proporciones originales se conservan.
+========================================================= -->
+<script>
+
+    (function () {
+
+        const page =
+            document.getElementById("printPage");
+
+
+        if (!page) {
+            return;
+        }
+
+
+        /*
+         * Guardamos cualquier zoom que pudiera existir.
+         */
+        let zoomAnterior = "";
+
+
+        function mmAPixeles(mm) {
+
+            return (
+                mm * 96 / 25.4
+            );
+
+        }
+
+
+        function prepararImpresionOT() {
+
+            /*
+             * Primero restauramos el documento.
+             */
+            page.style.zoom = "";
+
+            page.style.transform = "";
+
+            page.style.transformOrigin = "";
+
+
+            /*
+             * Esperamos el recálculo.
+             */
+            void page.offsetHeight;
+
+
+            /*
+             * A4 mide 297 mm.
+             *
+             * Usamos aproximadamente 285 mm útiles
+             * para dejar margen de seguridad arriba
+             * y abajo.
+             */
+            const altoDisponible =
+                mmAPixeles(285);
+
+
+            const altoDocumento =
+                page.scrollHeight;
+
+
+            /*
+             * Si ya cabe:
+             * NO SE MODIFICA ABSOLUTAMENTE NADA.
+             */
+            if (
+                altoDocumento <= altoDisponible
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+             * Si es más alto que A4,
+             * calculamos exactamente cuánto reducir.
+             */
+            let escala =
+                altoDisponible /
+                altoDocumento;
+
+
+            /*
+             * Margen mínimo de seguridad para que
+             * Chrome no mande una línea a página 2.
+             */
+            escala *= 0.99;
+
+
+            /*
+             * Nunca aumentar el tamaño.
+             */
+            escala =
+                Math.min(
+                    1,
+                    escala
+                );
+
+
+            /*
+             * ZOOM mantiene las proporciones
+             * originales del documento completo.
+             *
+             * Esto es distinto a cambiar:
+             * - grid-template-columns
+             * - width
+             * - gap
+             * - padding
+             * - alturas
+             *
+             * Por eso el diseño NO se amontona.
+             */
+            page.style.zoom =
+                escala;
+
+        }
+
+
+
+        function restaurarDocumento() {
+
+            page.style.zoom =
+                zoomAnterior;
+
+            page.style.transform = "";
+
+            page.style.transformOrigin = "";
+
+        }
+
+
+
+        window.addEventListener(
+            "beforeprint",
+            function () {
+
+                zoomAnterior =
+                    page.style.zoom;
+
+                prepararImpresionOT();
+
+            }
+        );
+
+
+
+        window.addEventListener(
+            "afterprint",
+            restaurarDocumento
+        );
+
+
+    })();
+
+</script>
