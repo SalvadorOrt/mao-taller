@@ -1,6 +1,11 @@
 {% load humanize %}
 
 <style>
+
+    /* =========================================================
+       INFORMACIÓN GENERAL
+    ========================================================= */
+
     .info-general-grid {
         display: grid;
         grid-template-columns:
@@ -8,6 +13,7 @@
         gap: 15px;
         align-items: stretch;
     }
+
 
     .info-general-card {
         background: #fbfbfd;
@@ -17,12 +23,18 @@
         min-width: 0;
     }
 
+
     .info-label {
         font-size: 10px;
         font-weight: 700;
         color: var(--muted, #6e6e73);
         text-transform: uppercase;
     }
+
+
+    /* =========================================================
+       VEHÍCULO
+    ========================================================= */
 
     .vehiculo-operacion-grid {
         display: grid;
@@ -32,6 +44,7 @@
         margin-top: 10px;
     }
 
+
     .vehiculo-operacion-item {
         background: #f5f5f7;
         border: 1px solid #e5e5ea;
@@ -39,6 +52,7 @@
         padding: 8px 9px;
         min-width: 0;
     }
+
 
     .vehiculo-operacion-label {
         font-size: 9px;
@@ -48,6 +62,7 @@
         margin-bottom: 3px;
     }
 
+
     .vehiculo-operacion-valor {
         font-size: 14px;
         font-weight: 800;
@@ -55,14 +70,47 @@
         line-height: 1.2;
     }
 
+
+    /* =========================================================
+       ACCIONES
+    ========================================================= */
+
     .info-general-header-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: flex-end;
+        gap: 7px;
         flex-wrap: wrap;
     }
 
+
+    .factura-action-disabled {
+        opacity: .48;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+
+    .factura-action-danger {
+        background: #fff5f5 !important;
+        border-color: #ffd1d1 !important;
+        color: #c62828 !important;
+    }
+
+
+    .factura-action-warning {
+        background: #fff9eb !important;
+        border-color: #ffe4a8 !important;
+        color: #b26a00 !important;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
     @media (max-width: 1050px) {
+
         .info-general-grid {
             grid-template-columns:
                 repeat(2, minmax(0, 1fr));
@@ -71,9 +119,22 @@
         .info-general-card-vehiculo {
             grid-column: 1 / -1;
         }
+
     }
 
+
+    @media (max-width: 850px) {
+
+        .info-general-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+    }
+
+
     @media (max-width: 700px) {
+
         .info-general-grid {
             grid-template-columns: 1fr;
         }
@@ -91,17 +152,42 @@
         }
 
         .info-general-header-actions .btn-login {
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+
+    }
+
+
+    @media (max-width: 500px) {
+
+        .info-general-header-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .info-general-header-actions .btn-login {
             width: 100%;
             justify-content: center;
         }
+
     }
 
+
     @media (max-width: 420px) {
+
         .vehiculo-operacion-grid {
             grid-template-columns: 1fr;
         }
+
+        .info-general-header-actions {
+            grid-template-columns: 1fr;
+        }
+
     }
+
 </style>
+
 
 
 <div
@@ -121,12 +207,14 @@
             border-bottom: 1px solid var(--border, #d2d2d7);
             padding-bottom: 15px;
             margin-bottom: 20px;
-            gap: 12px;
+            gap: 15px;
             flex-wrap: wrap;
         "
     >
 
-        <!-- IZQUIERDA -->
+        <!-- =================================================
+             IZQUIERDA
+        ================================================== -->
 
         <div>
 
@@ -139,6 +227,7 @@
             >
                 Orden de Trabajo {{ orden.numero_orden }}
             </div>
+
 
             <div
                 style="
@@ -161,12 +250,19 @@
                     {{ orden.fecha_ingreso|time:"H:i" }}
                 </span>
 
+
                 {% if orden.sucursal %}
+
                     <span>·</span>
-                    <span>{{ orden.sucursal.nombre }}</span>
+
+                    <span>
+                        {{ orden.sucursal.nombre }}
+                    </span>
+
                 {% endif %}
 
             </div>
+
 
             <p
                 style="
@@ -181,9 +277,19 @@
         </div>
 
 
-        <!-- DERECHA / ACCIONES -->
+
+        <!-- =================================================
+             DERECHA / ACCIONES DE FACTURACIÓN
+        ================================================== -->
 
         <div class="info-general-header-actions">
+
+
+            <!-- =============================================
+                 EMITIR FACTURA
+
+                 Activo mientras todavía no existe factura.
+            ============================================== -->
 
             <button
                 type="button"
@@ -191,17 +297,151 @@
                 class="btn-login primary"
                 onclick="confirmarEmisionFactura()"
             >
+
                 <i
                     class="bi bi-receipt"
                     style="margin-right: 5px;"
                 ></i>
 
                 Emitir factura
+
+            </button>
+
+
+
+            <!-- =============================================
+                 IMPRIMIR
+
+                 Se habilitará cuando la factura esté
+                 autorizada y tengamos generado el RIDE.
+            ============================================== -->
+
+            <button
+                type="button"
+                class="btn-login factura-action-disabled"
+                disabled
+                title="Disponible después de autorizar la factura"
+            >
+
+                <i
+                    class="bi bi-printer"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Imprimir
+
+            </button>
+
+
+
+            <!-- =============================================
+                 XML
+
+                 Se habilitará cuando exista XML de la factura.
+            ============================================== -->
+
+            <button
+                type="button"
+                class="btn-login factura-action-disabled"
+                disabled
+                title="Disponible después de generar la factura"
+            >
+
+                <i
+                    class="bi bi-file-earmark-code"
+                    style="margin-right: 5px;"
+                ></i>
+
+                XML
+
+            </button>
+
+
+
+            <!-- =============================================
+                 ENVIAR POR CORREO
+
+                 Se habilitará después de autorización.
+            ============================================== -->
+
+            <button
+                type="button"
+                class="btn-login factura-action-disabled"
+                disabled
+                title="Disponible después de autorizar la factura"
+            >
+
+                <i
+                    class="bi bi-envelope"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Enviar correo
+
+            </button>
+
+
+
+            <!-- =============================================
+                 REINTENTAR
+
+                 Solo tendrá sentido si la emisión falla
+                 o el SRI devuelve un estado recuperable.
+            ============================================== -->
+
+            <button
+                type="button"
+                class="
+                    btn-login
+                    factura-action-warning
+                    factura-action-disabled
+                "
+                disabled
+                title="Disponible si ocurre un error de emisión"
+            >
+
+                <i
+                    class="bi bi-arrow-clockwise"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Reintentar
+
+            </button>
+
+
+
+            <!-- =============================================
+                 ANULAR
+
+                 Solo se habilitará cuando exista una factura
+                 emitida que pueda entrar al proceso de anulación.
+            ============================================== -->
+
+            <button
+                type="button"
+                class="
+                    btn-login
+                    factura-action-danger
+                    factura-action-disabled
+                "
+                disabled
+                title="Disponible después de emitir la factura"
+            >
+
+                <i
+                    class="bi bi-x-circle"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Anular
+
             </button>
 
         </div>
 
     </div>
+
 
 
     <!-- =====================================================
@@ -246,9 +486,13 @@
                 C.I./RUC:
 
                 {% if orden.cliente %}
+
                     {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
+
                 {% else %}
+
                     NO REGISTRADO
+
                 {% endif %}
             </div>
 
@@ -263,9 +507,13 @@
                 Celular:
 
                 {% if orden.cliente and orden.cliente.telefono %}
+
                     {{ orden.cliente.telefono }}
+
                 {% else %}
+
                     NO REGISTRADO
+
                 {% endif %}
             </div>
 
@@ -280,13 +528,18 @@
                 Correo:
 
                 {% if orden.cliente and orden.cliente.email %}
+
                     {{ orden.cliente.email|lower }}
+
                 {% else %}
+
                     NO REGISTRADO
+
                 {% endif %}
             </div>
 
         </div>
+
 
 
         <!-- =================================================
@@ -335,8 +588,9 @@
         </div>
 
 
+
         <!-- =================================================
-             PLACA / KM
+             PLACA / KM / COMBUSTIBLE
         ================================================== -->
 
         <div
@@ -366,13 +620,20 @@
             </div>
 
 
+
             <div class="vehiculo-operacion-grid">
+
+
+                <!-- =========================================
+                     KILOMETRAJE
+                ========================================== -->
 
                 <div class="vehiculo-operacion-item">
 
                     <div class="vehiculo-operacion-label">
                         Kilometraje
                     </div>
+
 
                     <div class="vehiculo-operacion-valor">
 
@@ -407,11 +668,17 @@
                 </div>
 
 
+
+                <!-- =========================================
+                     COMBUSTIBLE
+                ========================================== -->
+
                 <div class="vehiculo-operacion-item">
 
                     <div class="vehiculo-operacion-label">
                         Combustible
                     </div>
+
 
                     <div
                         class="vehiculo-operacion-valor"
@@ -429,6 +696,7 @@
                                 font-size: 12px;
                             "
                         ></i>
+
 
                         <span>
                             {{ orden.get_nivel_combustible_display|default:"-" }}

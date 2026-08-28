@@ -26,7 +26,10 @@
 <div class="container ot-wrapper">
 
     <!-- =====================================================
-         CABECERA / ESTADO
+         CABECERA GENERAL DE FACTURACIÓN
+
+         Aquí NO van acciones.
+         Las acciones viven en info_general.html
     ====================================================== -->
 
     <div
@@ -37,10 +40,6 @@
             padding: 15px;
         "
     >
-
-        <!-- =================================================
-             IZQUIERDA
-        ================================================== -->
 
         <div>
 
@@ -116,74 +115,14 @@
 
         </div>
 
-
-        <!-- =================================================
-             ACCIONES SUPERIORES
-        ================================================== -->
-
-        <div
-            style="
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                flex-wrap: wrap;
-            "
-        >
-
-            <!-- EMITIR FACTURA -->
-
-            <button
-                type="button"
-                id="btnEmitirFactura"
-                class="btn-login primary"
-                onclick="confirmarEmisionFactura()"
-            >
-
-                <i
-                    class="bi bi-receipt"
-                    style="margin-right: 5px;"
-                ></i>
-
-                Emitir factura
-
-            </button>
-
-
-            <!-- IMPRESIÓN DESHABILITADA HASTA EMITIR -->
-
-            <button
-                type="button"
-                class="btn-login"
-                disabled
-                title="Disponible después de emitir la factura"
-                style="
-                    opacity: .55;
-                    cursor: not-allowed;
-                "
-            >
-
-                <i
-                    class="bi bi-printer"
-                    style="margin-right: 5px;"
-                ></i>
-
-                Imprimir factura
-
-            </button>
-
-        </div>
-
     </div>
 
 
 
     <!-- =====================================================
-         FORMULARIO DE EMISIÓN
+         FORMULARIO PRINCIPAL
 
-         IMPORTANTE:
-         Este es el único formulario principal de esta pantalla.
-
-         Los includes NO deben contener otros <form>.
+         Los includes NO deben crear otro <form>.
     ====================================================== -->
 
     <form
@@ -197,7 +136,7 @@
 
 
         <!-- =================================================
-             DATOS ORIGEN
+             ORDEN DE ORIGEN
         ================================================== -->
 
         <input
@@ -208,14 +147,14 @@
 
 
         <!-- =================================================
-             INFORMACIÓN GENERAL
+             INFORMACIÓN GENERAL + ACCIONES
         ================================================== -->
 
         {% include "includes/detalle_factura/info_general.html" %}
 
 
         <!-- =================================================
-             COMPRADOR
+             COMPRADOR DE LA FACTURA
         ================================================== -->
 
         {% include "includes/detalle_factura/comprador.html" %}
@@ -324,7 +263,7 @@
 
 
     /* =========================================================
-       VALIDAR DATOS ANTES DE EMITIR
+       VALIDAR DATOS DE FACTURA
     ========================================================= */
 
     function validarDatosFactura() {
@@ -434,16 +373,20 @@
 
             html: `
                 <div style="
-                    font-size:13px;
-                    line-height:1.5;
-                    color:#444;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #444;
                 ">
                     Se creará la factura electrónica correspondiente
                     a la orden
-                    <strong>{{ orden.numero_orden|escapejs }}</strong>.
+                    <strong>
+                        {{ orden.numero_orden|escapejs }}
+                    </strong>.
+
                     <br><br>
 
                     Total a facturar:
+
                     <strong>
                         ${{ total_final|default:0|floatformat:2 }}
                     </strong>
