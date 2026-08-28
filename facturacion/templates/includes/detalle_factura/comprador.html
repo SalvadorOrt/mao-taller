@@ -1,20 +1,17 @@
-{% load static %}
-
 <style>
 
     /* =========================================================
-       COMPRADOR DE FACTURA
+       COMPRADOR - RESUMEN
     ========================================================= */
 
-    .comprador-factura-box {
+    .comprador-box {
         background: #fbfbfd;
         border: 1px solid var(--border-soft, #e5e5ea);
         border-radius: 14px;
         overflow: hidden;
     }
 
-
-    .comprador-factura-title {
+    .comprador-box-title {
         padding: 11px 14px 7px;
         font-size: 0.69rem;
         text-transform: uppercase;
@@ -23,25 +20,22 @@
         color: var(--muted, #6e6e73);
     }
 
-
-    .comprador-factura-row {
+    .comprador-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 15px;
-        padding: 13px 14px;
+        padding: 12px 14px;
         border-top: 1px solid var(--border-soft, #e5e5ea);
         background: #fff;
     }
 
-
-    .comprador-factura-info {
+    .comprador-info {
         min-width: 0;
         flex: 1;
     }
 
-
-    .comprador-factura-label {
+    .comprador-label {
         font-size: 0.68rem;
         color: var(--muted, #6e6e73);
         text-transform: uppercase;
@@ -49,23 +43,20 @@
         margin-bottom: 3px;
     }
 
-
-    .comprador-factura-principal {
+    .comprador-principal {
         font-size: 0.9rem;
         font-weight: 700;
         color: #111;
         overflow-wrap: anywhere;
     }
 
-
-    .comprador-factura-secundario {
+    .comprador-secundario {
         font-size: 0.76rem;
         color: var(--muted, #6e6e73);
-        margin-top: 3px;
+        margin-top: 2px;
         overflow-wrap: anywhere;
         line-height: 1.4;
     }
-
 
     .btn-cambiar-comprador {
         border: 1px solid #d2d2d7;
@@ -78,9 +69,7 @@
         cursor: pointer;
         transition: all 0.15s ease;
         white-space: nowrap;
-        flex-shrink: 0;
     }
-
 
     .btn-cambiar-comprador:hover {
         background: #f2f2f7;
@@ -106,12 +95,11 @@
         padding: 20px;
     }
 
-
     .modal-comprador-contenedor {
         background: #fff;
         width: 100%;
-        max-width: 720px;
-        max-height: 92vh;
+        max-width: 760px;
+        max-height: 95vh;
         border-radius: 20px;
         overflow: hidden;
         display: flex;
@@ -119,42 +107,36 @@
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
     }
 
-
     .modal-comprador-header {
         padding: 15px 25px;
         border-bottom: 1px solid var(--border-soft, #e5e5ea);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 15px;
         background: var(--head, #fbfbfd);
     }
 
-
-    .modal-comprador-header h3 {
+    .modal-comprador-titulo {
         margin: 0;
         font-size: 1.2rem;
         font-weight: 700;
-        color: var(--primary, #0071e3);
+        color: #111;
     }
 
-
-    .modal-comprador-cerrar {
+    .modal-comprador-close {
         background: none;
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
         color: var(--muted, #6e6e73);
+        padding: 0;
         line-height: 1;
-        padding: 2px 5px;
     }
-
 
     .modal-comprador-body {
         overflow-y: auto;
         padding: 25px;
     }
-
 
     .modal-comprador-footer {
         padding: 15px 25px;
@@ -167,19 +149,18 @@
 
 
     /* =========================================================
-       BLOQUES INTERNOS
+       BLOQUES
     ========================================================= */
 
     .comprador-modal-box {
-        margin-bottom: 18px;
+        margin-bottom: 20px;
         background: #fbfbfd;
         border: 1px solid var(--border-soft, #e5e5ea);
         border-radius: 14px;
         overflow: hidden;
     }
 
-
-    .comprador-modal-box-title {
+    .comprador-modal-title {
         padding: 11px 14px 7px;
         font-size: 0.69rem;
         text-transform: uppercase;
@@ -188,23 +169,124 @@
         color: var(--muted, #6e6e73);
     }
 
-
-    .comprador-modal-box-body {
+    .comprador-modal-content {
+        padding: 14px;
         border-top: 1px solid var(--border-soft, #e5e5ea);
         background: #fff;
-        padding: 14px;
     }
 
 
-    .comprador-consulta-grid {
+    /* =========================================================
+       LISTA DESPLEGABLE MAO
+    ========================================================= */
+
+    .mao-dropdown {
+        position: relative;
+        width: 100%;
+    }
+
+    .mao-dropdown-button {
+        width: 100%;
+        height: 38px;
+        border: 1px solid #d2d2d7;
+        border-radius: 9px;
+        background: #fff;
+        padding: 0 11px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        color: #1d1d1f;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .mao-dropdown-button:hover {
+        background: #fbfbfd;
+    }
+
+    .mao-dropdown-button:focus {
+        outline: none;
+        border-color: #0071e3;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+    }
+
+    .mao-dropdown-chevron {
+        color: #6e6e73;
+        font-size: 0.72rem;
+        transition: transform .15s ease;
+    }
+
+    .mao-dropdown.abierto .mao-dropdown-chevron {
+        transform: rotate(180deg);
+    }
+
+    .mao-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        z-index: 10080;
+        background: #fff;
+        border: 1px solid #d2d2d7;
+        border-radius: 11px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+        padding: 5px;
+        overflow: hidden;
+    }
+
+    .mao-dropdown.abierto .mao-dropdown-menu {
+        display: block;
+    }
+
+    .mao-dropdown-item {
+        width: 100%;
+        border: none;
+        background: transparent;
+        text-align: left;
+        border-radius: 8px;
+        padding: 9px 10px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .mao-dropdown-item:hover {
+        background: #f2f2f7;
+    }
+
+    .mao-dropdown-item.activo {
+        background: #f0f7ff;
+    }
+
+    .mao-dropdown-item-principal {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #111;
+    }
+
+    .mao-dropdown-item-secundario {
+        font-size: 0.68rem;
+        color: #6e6e73;
+    }
+
+
+    /* =========================================================
+       CONSULTA
+    ========================================================= */
+
+    .consulta-comprador-grid {
         display: grid;
-        grid-template-columns: 160px 1fr auto;
+        grid-template-columns: 180px 1fr auto;
         gap: 8px;
         align-items: end;
     }
 
-
-    .comprador-modal-label {
+    .consulta-label {
         display: block;
         font-size: 0.68rem;
         text-transform: uppercase;
@@ -212,7 +294,6 @@
         color: var(--muted, #6e6e73);
         margin-bottom: 4px;
     }
-
 
     .btn-consultar-comprador {
         height: 38px;
@@ -227,7 +308,6 @@
         white-space: nowrap;
     }
 
-
     .btn-consultar-comprador:disabled {
         opacity: 0.55;
         cursor: default;
@@ -235,12 +315,29 @@
 
 
     /* =========================================================
-       ESTADO CONSULTA
+       DETECCIÓN
     ========================================================= */
 
-    .comprador-consulta-estado {
+    .tipo-detectado {
         display: none;
-        margin-top: 10px;
+        margin-top: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #0071e3;
+    }
+
+    .tipo-detectado.visible {
+        display: block;
+    }
+
+
+    /* =========================================================
+       ESTADO
+    ========================================================= */
+
+    .consulta-estado-comprador {
+        display: none;
+        margin-top: 9px;
         padding: 8px 10px;
         border-radius: 9px;
         font-size: 0.76rem;
@@ -252,22 +349,20 @@
        RESULTADO
     ========================================================= */
 
-    .comprador-resultado {
+    .resultado-comprador {
         display: none;
-        margin-top: 12px;
+        margin-top: 10px;
         border: 1px solid #d2d2d7;
         background: #fff;
         border-radius: 10px;
-        padding: 12px;
+        padding: 11px 12px;
     }
 
-
-    .comprador-resultado.visible {
+    .resultado-comprador.visible {
         display: block;
     }
 
-
-    .comprador-resultado-label {
+    .resultado-label {
         font-size: 0.65rem;
         text-transform: uppercase;
         font-weight: 800;
@@ -275,62 +370,54 @@
         margin-bottom: 5px;
     }
 
-
-    .comprador-resultado-nombre {
-        font-size: 0.9rem;
+    .resultado-nombre {
+        font-size: 0.87rem;
         font-weight: 800;
         color: #111;
     }
 
-
-    .comprador-resultado-identificacion {
-        font-size: 0.77rem;
+    .resultado-identificacion {
+        font-size: 0.75rem;
         color: #0071e3;
         font-weight: 700;
         margin-top: 3px;
     }
 
-
-    .comprador-resultado-datos {
+    .resultado-datos-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-top: 12px;
+        margin-top: 10px;
     }
 
-
-    .comprador-resultado-item {
+    .resultado-dato {
         background: #f8f8fa;
         border-radius: 8px;
-        padding: 9px;
-        min-width: 0;
+        padding: 8px;
     }
 
-
-    .comprador-resultado-item-full {
+    .resultado-dato-full {
         grid-column: 1 / -1;
     }
 
-
-    .comprador-resultado-item-label {
+    .resultado-dato-label {
         font-size: 0.63rem;
-        color: var(--muted, #6e6e73);
         text-transform: uppercase;
+        color: var(--muted, #6e6e73);
         font-weight: 800;
         margin-bottom: 3px;
     }
 
-
-    .comprador-resultado-item-valor {
-        font-size: 0.77rem;
+    .resultado-dato-valor {
+        font-size: 0.76rem;
         font-weight: 600;
-        color: #1d1d1f;
+        color: #111;
         overflow-wrap: anywhere;
     }
 
 
     /* =========================================================
-       PASAPORTE / MANUAL
+       PASAPORTE
     ========================================================= */
 
     .comprador-manual {
@@ -338,18 +425,15 @@
         margin-top: 14px;
     }
 
-
     .comprador-manual.visible {
         display: block;
     }
-
 
     .comprador-manual-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
     }
-
 
     .comprador-manual-full {
         grid-column: 1 / -1;
@@ -360,21 +444,30 @@
        CONSUMIDOR FINAL
     ========================================================= */
 
-    .comprador-consumidor-final {
+    .consumidor-final-box {
         display: none;
         margin-top: 12px;
-        padding: 11px 12px;
+        padding: 12px;
         border: 1px solid #d2d2d7;
-        background: #fbfbfd;
         border-radius: 10px;
-        font-size: 0.78rem;
-        color: #1d1d1f;
-        line-height: 1.45;
+        background: #fbfbfd;
     }
 
-
-    .comprador-consumidor-final.visible {
+    .consumidor-final-box.visible {
         display: block;
+    }
+
+    .consumidor-final-titulo {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .consumidor-final-texto {
+        margin-top: 3px;
+        font-size: 0.74rem;
+        color: #6e6e73;
+        line-height: 1.4;
     }
 
 
@@ -384,7 +477,7 @@
 
     @media (max-width: 700px) {
 
-        .comprador-consulta-grid {
+        .consulta-comprador-grid {
             grid-template-columns: 1fr;
         }
 
@@ -392,36 +485,23 @@
             width: 100%;
         }
 
-        .comprador-resultado-datos,
+        .resultado-datos-grid,
         .comprador-manual-grid {
             grid-template-columns: 1fr;
         }
 
-        .comprador-resultado-item-full,
+        .resultado-dato-full,
         .comprador-manual-full {
             grid-column: auto;
         }
 
-        .comprador-factura-row {
-            align-items: flex-start;
+        .comprador-row {
             flex-direction: column;
+            align-items: flex-start;
         }
 
         .btn-cambiar-comprador {
             width: 100%;
-        }
-
-        .modal-comprador-body {
-            padding: 18px;
-        }
-
-        .modal-comprador-footer {
-            padding: 12px 18px;
-        }
-
-        .modal-comprador-footer .btn-login {
-            flex: 1;
-            justify-content: center;
         }
 
     }
@@ -429,16 +509,15 @@
 </style>
 
 
-
 <!-- =========================================================
-     CAMPOS QUE VIAJAN CON EL FORMULARIO DE FACTURACIÓN
+     SNAPSHOT COMPRADOR
 ========================================================= -->
 
 <input
     type="hidden"
     name="tipo_identificacion_comprador"
     id="facturaTipoIdentificacion"
-    value="{% if orden.cliente and orden.cliente.identificacion %}{% if orden.cliente.identificacion|length == 13 %}04{% else %}05{% endif %}{% endif %}"
+    value="{% if orden.cliente and orden.cliente.identificacion %}{% if orden.cliente.identificacion|length == 13 %}04{% elif orden.cliente.identificacion|length == 10 %}05{% endif %}{% endif %}"
 >
 
 <input
@@ -484,78 +563,52 @@
 >
 
 
-
 <!-- =========================================================
      TARJETA COMPRADOR
 ========================================================= -->
 
-<div
-    class="ot-card"
-    style="margin-bottom:20px;"
->
+<div class="ot-card" style="margin-bottom:20px;">
 
-    <div
-        class="section-title"
-        style="margin-bottom:12px;"
-    >
-        Comprador de la factura
+    <div class="section-title" style="margin-bottom:12px;">
+        Datos del comprador
     </div>
 
+    <div class="comprador-box">
 
-    <div class="comprador-factura-box">
-
-        <div class="comprador-factura-title">
-            Datos para facturación
+        <div class="comprador-box-title">
+            Comprador de la factura
         </div>
 
+        <div class="comprador-row">
 
-        <div class="comprador-factura-row">
-
-            <div class="comprador-factura-info">
-
-                <div class="comprador-factura-label">
-                    Comprador
-                </div>
-
+            <div class="comprador-info">
 
                 <div
-                    class="comprador-factura-principal"
+                    class="comprador-principal"
                     id="compradorResumenNombre"
                 >
                     {% if orden.cliente %}
-
                         {{ orden.cliente.razon_social|default:orden.cliente.nombre_completo|default:"SIN NOMBRE" }}
-
                     {% else %}
-
                         {{ orden.cliente_respaldo|default:"SIN COMPRADOR" }}
-
                     {% endif %}
                 </div>
 
-
                 <div
-                    class="comprador-factura-secundario"
+                    class="comprador-secundario"
                     id="compradorResumenIdentificacion"
                 >
                     {% if orden.cliente and orden.cliente.identificacion %}
-
-                        C.I./RUC:
-                        {{ orden.cliente.identificacion }}
-
+                        C.I./RUC: {{ orden.cliente.identificacion }}
                     {% else %}
-
                         Sin identificación registrada
-
                     {% endif %}
                 </div>
 
-
                 <div
-                    class="comprador-factura-secundario"
+                    class="comprador-secundario"
                     id="compradorResumenContacto"
                 >
-
                     {% if orden.cliente %}
 
                         {% if orden.cliente.telefono %}
@@ -575,15 +628,11 @@
                         {% endif %}
 
                     {% else %}
-
                         Sin datos de contacto
-
                     {% endif %}
-
                 </div>
 
             </div>
-
 
             <button
                 type="button"
@@ -600,9 +649,8 @@
 </div>
 
 
-
 <!-- =========================================================
-     MODAL CAMBIAR COMPRADOR
+     MODAL
 ========================================================= -->
 
 <div
@@ -612,23 +660,18 @@
 
     <div class="modal-comprador-contenedor">
 
-
-        <!-- =====================================================
-             HEADER
-        ====================================================== -->
+        <!-- HEADER -->
 
         <div class="modal-comprador-header">
 
-            <h3>
+            <h3 class="modal-comprador-titulo">
                 Cambiar comprador
             </h3>
 
-
             <button
                 type="button"
-                class="modal-comprador-cerrar"
+                class="modal-comprador-close"
                 onclick="cerrarModalComprador()"
-                aria-label="Cerrar"
             >
                 &times;
             </button>
@@ -636,45 +679,33 @@
         </div>
 
 
-
-        <!-- =====================================================
-             BODY
-        ====================================================== -->
+        <!-- BODY -->
 
         <div class="modal-comprador-body">
 
-
-            <!-- =================================================
-                 COMPRADOR ACTUAL
-            ================================================== -->
+            <!-- COMPRADOR ACTUAL -->
 
             <div class="comprador-modal-box">
 
-                <div class="comprador-modal-box-title">
+                <div class="comprador-modal-title">
                     Comprador actual
                 </div>
 
-
-                <div class="comprador-modal-box-body">
+                <div class="comprador-modal-content">
 
                     <div
-                        class="comprador-factura-principal"
+                        class="comprador-principal"
                         id="modalCompradorActualNombre"
                     >
                         {% if orden.cliente %}
-
                             {{ orden.cliente.razon_social|default:orden.cliente.nombre_completo|default:"SIN NOMBRE" }}
-
                         {% else %}
-
                             {{ orden.cliente_respaldo|default:"SIN COMPRADOR" }}
-
                         {% endif %}
                     </div>
 
-
                     <div
-                        class="comprador-factura-secundario"
+                        class="comprador-secundario"
                         id="modalCompradorActualIdentificacion"
                     >
                         {% if orden.cliente and orden.cliente.identificacion %}
@@ -689,63 +720,108 @@
             </div>
 
 
-
-            <!-- =================================================
-                 NUEVO COMPRADOR
-            ================================================== -->
+            <!-- NUEVO COMPRADOR -->
 
             <div class="comprador-modal-box">
 
-                <div class="comprador-modal-box-title">
+                <div class="comprador-modal-title">
                     Nuevo comprador
                 </div>
 
+                <div class="comprador-modal-content">
 
-                <div class="comprador-modal-box-body">
+                    <div class="consulta-comprador-grid">
 
-
-                    <!-- =========================================
-                         TIPO DE IDENTIFICACIÓN
-                    ========================================== -->
-
-                    <div class="comprador-consulta-grid">
+                        <!-- TIPO GENERAL -->
 
                         <div>
 
-                            <label class="comprador-modal-label">
-                                Tipo
+                            <label class="consulta-label">
+                                Documento
                             </label>
 
-                            <select
-                                id="modalCompradorTipo"
-                                class="form-control-apple"
-                                onchange="cambiarTipoCompradorFactura()"
-                                style="height:38px;"
+                            <div
+                                class="mao-dropdown"
+                                id="dropdownTipoComprador"
                             >
-                                <option value="05">
-                                    Cédula
-                                </option>
 
-                                <option value="04">
-                                    RUC
-                                </option>
+                                <button
+                                    type="button"
+                                    class="mao-dropdown-button"
+                                    onclick="toggleDropdownTipoComprador(event)"
+                                >
+                                    <span id="textoTipoComprador">
+                                        Cédula / RUC
+                                    </span>
 
-                                <option value="06">
-                                    Pasaporte
-                                </option>
+                                    <i
+                                        class="bi bi-chevron-down mao-dropdown-chevron"
+                                    ></i>
+                                </button>
 
-                                <option value="07">
-                                    Consumidor final
-                                </option>
-                            </select>
+                                <div class="mao-dropdown-menu">
+
+                                    <button
+                                        type="button"
+                                        class="mao-dropdown-item activo"
+                                        data-tipo="identificacion"
+                                        onclick="seleccionarTipoComprador('identificacion', 'Cédula / RUC')"
+                                    >
+                                        <span class="mao-dropdown-item-principal">
+                                            Cédula / RUC
+                                        </span>
+
+                                        <span class="mao-dropdown-item-secundario">
+                                            Se detecta automáticamente
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="mao-dropdown-item"
+                                        data-tipo="pasaporte"
+                                        onclick="seleccionarTipoComprador('pasaporte', 'Pasaporte')"
+                                    >
+                                        <span class="mao-dropdown-item-principal">
+                                            Pasaporte
+                                        </span>
+
+                                        <span class="mao-dropdown-item-secundario">
+                                            Ingreso manual
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="mao-dropdown-item"
+                                        data-tipo="consumidor_final"
+                                        onclick="seleccionarTipoComprador('consumidor_final', 'Consumidor Final')"
+                                    >
+                                        <span class="mao-dropdown-item-principal">
+                                            Consumidor Final
+                                        </span>
+
+                                        <span class="mao-dropdown-item-secundario">
+                                            Facturación sin identificación individual
+                                        </span>
+                                    </button>
+
+                                </div>
+
+                            </div>
 
                         </div>
 
 
+                        <!-- IDENTIFICACIÓN -->
+
                         <div>
 
-                            <label class="comprador-modal-label">
-                                Identificación
+                            <label
+                                class="consulta-label"
+                                id="labelIdentificacionComprador"
+                            >
+                                Cédula / RUC
                             </label>
 
                             <input
@@ -753,9 +829,9 @@
                                 id="modalCompradorIdentificacion"
                                 class="form-control-apple"
                                 maxlength="13"
-                                autocomplete="off"
                                 inputmode="numeric"
-                                placeholder="Ingrese cédula o RUC"
+                                autocomplete="off"
+                                placeholder="Ingrese 10 o 13 dígitos"
                                 oninput="compradorIdentificacionModificada()"
                                 onkeydown="if(event.key === 'Enter') { event.preventDefault(); consultarCompradorFactura(); }"
                                 style="
@@ -765,8 +841,15 @@
                                 "
                             >
 
+                            <div
+                                id="tipoIdentificacionDetectado"
+                                class="tipo-detectado"
+                            ></div>
+
                         </div>
 
+
+                        <!-- CONSULTAR -->
 
                         <button
                             type="button"
@@ -780,95 +863,76 @@
                     </div>
 
 
-
-                    <!-- =========================================
-                         ESTADO
-                    ========================================== -->
+                    <!-- ESTADO -->
 
                     <div
                         id="modalCompradorEstado"
-                        class="comprador-consulta-estado"
-                    >
-                    </div>
+                        class="consulta-estado-comprador"
+                    ></div>
 
 
-
-                    <!-- =========================================
-                         RESULTADO API / MAO
-                    ========================================== -->
+                    <!-- RESULTADO -->
 
                     <div
                         id="modalCompradorResultado"
-                        class="comprador-resultado"
+                        class="resultado-comprador"
                     >
 
-                        <div class="comprador-resultado-label">
+                        <div class="resultado-label">
                             Comprador encontrado
                         </div>
 
-
                         <div
                             id="modalCompradorResultadoNombre"
-                            class="comprador-resultado-nombre"
-                        >
-                        </div>
-
+                            class="resultado-nombre"
+                        ></div>
 
                         <div
                             id="modalCompradorResultadoIdentificacion"
-                            class="comprador-resultado-identificacion"
-                        >
-                        </div>
+                            class="resultado-identificacion"
+                        ></div>
 
+                        <div class="resultado-datos-grid">
 
-                        <div class="comprador-resultado-datos">
+                            <div class="resultado-dato">
 
-                            <div class="comprador-resultado-item">
-
-                                <div class="comprador-resultado-item-label">
+                                <div class="resultado-dato-label">
                                     Teléfono
                                 </div>
 
                                 <div
                                     id="modalCompradorResultadoTelefono"
-                                    class="comprador-resultado-item-valor"
+                                    class="resultado-dato-valor"
                                 >
                                     -
                                 </div>
 
                             </div>
 
+                            <div class="resultado-dato">
 
-                            <div class="comprador-resultado-item">
-
-                                <div class="comprador-resultado-item-label">
+                                <div class="resultado-dato-label">
                                     Correo
                                 </div>
 
                                 <div
                                     id="modalCompradorResultadoCorreo"
-                                    class="comprador-resultado-item-valor"
+                                    class="resultado-dato-valor"
                                 >
                                     -
                                 </div>
 
                             </div>
 
+                            <div class="resultado-dato resultado-dato-full">
 
-                            <div
-                                class="
-                                    comprador-resultado-item
-                                    comprador-resultado-item-full
-                                "
-                            >
-
-                                <div class="comprador-resultado-item-label">
+                                <div class="resultado-dato-label">
                                     Dirección
                                 </div>
 
                                 <div
                                     id="modalCompradorResultadoDireccion"
-                                    class="comprador-resultado-item-valor"
+                                    class="resultado-dato-valor"
                                 >
                                     -
                                 </div>
@@ -880,13 +944,10 @@
                     </div>
 
 
-
-                    <!-- =========================================
-                         PASAPORTE / DATOS MANUALES
-                    ========================================== -->
+                    <!-- PASAPORTE -->
 
                     <div
-                        id="modalCompradorManual"
+                        id="compradorManual"
                         class="comprador-manual"
                     >
 
@@ -894,61 +955,57 @@
 
                             <div class="comprador-manual-full">
 
-                                <label class="comprador-modal-label">
+                                <label class="consulta-label">
                                     Nombre / Razón social
                                 </label>
 
                                 <input
                                     type="text"
-                                    id="modalCompradorManualNombre"
+                                    id="compradorManualNombre"
                                     class="form-control-apple"
                                     autocomplete="off"
-                                    style="text-transform:uppercase;"
                                 >
 
                             </div>
 
-
                             <div>
 
-                                <label class="comprador-modal-label">
+                                <label class="consulta-label">
                                     Teléfono
                                 </label>
 
                                 <input
                                     type="text"
-                                    id="modalCompradorManualTelefono"
+                                    id="compradorManualTelefono"
                                     class="form-control-apple"
                                     autocomplete="off"
                                 >
 
                             </div>
 
-
                             <div>
 
-                                <label class="comprador-modal-label">
+                                <label class="consulta-label">
                                     Correo
                                 </label>
 
                                 <input
                                     type="email"
-                                    id="modalCompradorManualCorreo"
+                                    id="compradorManualCorreo"
                                     class="form-control-apple"
                                     autocomplete="off"
                                 >
 
                             </div>
 
-
                             <div class="comprador-manual-full">
 
-                                <label class="comprador-modal-label">
+                                <label class="consulta-label">
                                     Dirección
                                 </label>
 
                                 <textarea
-                                    id="modalCompradorManualDireccion"
+                                    id="compradorManualDireccion"
                                     class="form-control-apple"
                                     style="min-height:70px;"
                                 ></textarea>
@@ -960,26 +1017,20 @@
                     </div>
 
 
-
-                    <!-- =========================================
-                         CONSUMIDOR FINAL
-                    ========================================== -->
+                    <!-- CONSUMIDOR FINAL -->
 
                     <div
-                        id="modalCompradorConsumidorFinal"
-                        class="comprador-consumidor-final"
+                        id="compradorConsumidorFinal"
+                        class="consumidor-final-box"
                     >
 
-                        <strong>Consumidor Final</strong>
+                        <div class="consumidor-final-titulo">
+                            Consumidor Final
+                        </div>
 
-                        <div
-                            style="
-                                color:#6e6e73;
-                                margin-top:4px;
-                            "
-                        >
-                            La factura se emitirá sin asociarla a la
-                            cédula o RUC del cliente de la orden.
+                        <div class="consumidor-final-texto">
+                            Se utilizarán los datos correspondientes
+                            a consumidor final para la factura.
                         </div>
 
                     </div>
@@ -991,10 +1042,7 @@
         </div>
 
 
-
-        <!-- =====================================================
-             FOOTER
-        ====================================================== -->
+        <!-- FOOTER -->
 
         <div class="modal-comprador-footer">
 
@@ -1007,15 +1055,11 @@
                 Cancelar
             </button>
 
-
             <button
                 type="button"
                 id="btnUsarComprador"
                 class="btn-login primary"
-                style="
-                    width:auto;
-                    padding:0 20px;
-                "
+                style="width:auto; padding:0 20px;"
                 onclick="usarCompradorFactura()"
                 disabled
             >
@@ -1029,113 +1073,14 @@
 </div>
 
 
-
 <script>
 
-    /* =========================================================
-       ESTADO DEL MODAL
-    ========================================================= */
-
+    let modoComprador = 'identificacion';
     let compradorFacturaConsultado = null;
 
 
     /* =========================================================
-       UTILIDADES
-    ========================================================= */
-
-    function escaparHtmlComprador(texto) {
-
-        return String(texto ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-
-    function limpiarTextoComprador(valor) {
-
-        return String(valor || '').trim();
-    }
-
-
-    function mostrarEstadoComprador(mensaje, tipo = 'cargando') {
-
-        const box =
-            document.getElementById('modalCompradorEstado');
-
-        if (!box) {
-            return;
-        }
-
-
-        box.style.display = 'block';
-        box.textContent = mensaje;
-
-
-        if (tipo === 'ok') {
-
-            box.style.background = '#ecfdf3';
-            box.style.border = '1px solid #abefc6';
-            box.style.color = '#067647';
-
-        }
-        else if (tipo === 'error') {
-
-            box.style.background = '#fef3f2';
-            box.style.border = '1px solid #fecdca';
-            box.style.color = '#b42318';
-
-        }
-        else {
-
-            box.style.background = '#fffaeb';
-            box.style.border = '1px solid #fedf89';
-            box.style.color = '#b54708';
-
-        }
-    }
-
-
-    function ocultarEstadoComprador() {
-
-        const box =
-            document.getElementById('modalCompradorEstado');
-
-        if (!box) {
-            return;
-        }
-
-        box.style.display = 'none';
-        box.textContent = '';
-    }
-
-
-    function limpiarResultadoComprador() {
-
-        compradorFacturaConsultado = null;
-
-
-        const resultado =
-            document.getElementById('modalCompradorResultado');
-
-        const btnUsar =
-            document.getElementById('btnUsarComprador');
-
-
-        if (resultado) {
-            resultado.classList.remove('visible');
-        }
-
-        if (btnUsar) {
-            btnUsar.disabled = true;
-        }
-    }
-
-
-    /* =========================================================
-       ABRIR / CERRAR
+       MODAL
     ========================================================= */
 
     function abrirModalComprador() {
@@ -1143,55 +1088,18 @@
         const modal =
             document.getElementById('modalCompradorFactura');
 
-        if (!modal) {
-            return;
-        }
-
+        if (!modal) return;
 
         modal.style.display = 'flex';
-
         document.body.style.overflow = 'hidden';
 
-
-        limpiarResultadoComprador();
-        ocultarEstadoComprador();
-
-
-        const tipoActual =
-            document.getElementById(
-                'facturaTipoIdentificacion'
-            )?.value || '05';
-
-
-        const selectTipo =
-            document.getElementById('modalCompradorTipo');
-
-
-        if (selectTipo) {
-
-            selectTipo.value =
-                ['04', '05', '06', '07'].includes(tipoActual)
-                    ? tipoActual
-                    : '05';
-        }
-
-
-        cambiarTipoCompradorFactura();
-
+        reiniciarModalComprador();
 
         setTimeout(() => {
 
-            const identificacion =
-                document.getElementById(
-                    'modalCompradorIdentificacion'
-                );
-
-            if (
-                identificacion &&
-                !identificacion.disabled
-            ) {
-                identificacion.focus();
-            }
+            document
+                .getElementById('modalCompradorIdentificacion')
+                ?.focus();
 
         }, 100);
     }
@@ -1202,202 +1110,255 @@
         const modal =
             document.getElementById('modalCompradorFactura');
 
-        if (!modal) {
-            return;
-        }
-
+        if (!modal) return;
 
         modal.style.display = 'none';
-
         document.body.style.overflow = '';
 
-
-        limpiarResultadoComprador();
-        ocultarEstadoComprador();
+        cerrarDropdownTipoComprador();
     }
 
 
     /* =========================================================
-       TIPO DE IDENTIFICACIÓN
+       DROPDOWN
     ========================================================= */
 
-    function cambiarTipoCompradorFactura() {
+    function toggleDropdownTipoComprador(event) {
 
-        const tipo =
-            document.getElementById('modalCompradorTipo')?.value || '05';
+        event.stopPropagation();
 
-        const identificacion =
-            document.getElementById('modalCompradorIdentificacion');
+        document
+            .getElementById('dropdownTipoComprador')
+            ?.classList.toggle('abierto');
+    }
+
+
+    function cerrarDropdownTipoComprador() {
+
+        document
+            .getElementById('dropdownTipoComprador')
+            ?.classList.remove('abierto');
+    }
+
+
+    function seleccionarTipoComprador(tipo, texto) {
+
+        modoComprador = tipo;
+
+        document.getElementById(
+            'textoTipoComprador'
+        ).textContent = texto;
+
+
+        document
+            .querySelectorAll(
+                '#dropdownTipoComprador .mao-dropdown-item'
+            )
+            .forEach(item => {
+
+                item.classList.toggle(
+                    'activo',
+                    item.dataset.tipo === tipo
+                );
+
+            });
+
+
+        cerrarDropdownTipoComprador();
+
+        configurarModoComprador();
+    }
+
+
+    /* =========================================================
+       CONFIGURAR MODO
+    ========================================================= */
+
+    function configurarModoComprador() {
+
+        const input =
+            document.getElementById(
+                'modalCompradorIdentificacion'
+            );
+
+        const label =
+            document.getElementById(
+                'labelIdentificacionComprador'
+            );
 
         const btnConsultar =
-            document.getElementById('btnConsultarComprador');
+            document.getElementById(
+                'btnConsultarComprador'
+            );
 
         const manual =
-            document.getElementById('modalCompradorManual');
+            document.getElementById(
+                'compradorManual'
+            );
 
         const consumidor =
             document.getElementById(
-                'modalCompradorConsumidorFinal'
+                'compradorConsumidorFinal'
             );
 
         const btnUsar =
-            document.getElementById('btnUsarComprador');
+            document.getElementById(
+                'btnUsarComprador'
+            );
 
+
+        compradorFacturaConsultado = null;
 
         limpiarResultadoComprador();
         ocultarEstadoComprador();
 
-
         manual?.classList.remove('visible');
         consumidor?.classList.remove('visible');
 
+        input.value = '';
 
-        if (!identificacion || !btnConsultar || !btnUsar) {
-            return;
-        }
-
-
-        identificacion.value = '';
+        document
+            .getElementById('tipoIdentificacionDetectado')
+            ?.classList.remove('visible');
 
 
-        /* =====================================================
-           CÉDULA
-        ====================================================== */
+        if (modoComprador === 'identificacion') {
 
-        if (tipo === '05') {
+            label.textContent = 'Cédula / RUC';
 
-            identificacion.disabled = false;
-            identificacion.maxLength = 10;
-            identificacion.inputMode = 'numeric';
-            identificacion.placeholder = 'Ingrese cédula';
+            input.disabled = false;
+            input.maxLength = 13;
+            input.inputMode = 'numeric';
+            input.placeholder = 'Ingrese 10 o 13 dígitos';
 
             btnConsultar.style.display = '';
             btnConsultar.disabled = false;
 
+            btnUsar.disabled = true;
         }
 
-        /* =====================================================
-           RUC
-        ====================================================== */
 
-        else if (tipo === '04') {
+        else if (modoComprador === 'pasaporte') {
 
-            identificacion.disabled = false;
-            identificacion.maxLength = 13;
-            identificacion.inputMode = 'numeric';
-            identificacion.placeholder = 'Ingrese RUC';
+            label.textContent = 'Pasaporte';
 
-            btnConsultar.style.display = '';
-            btnConsultar.disabled = false;
-
-        }
-
-        /* =====================================================
-           PASAPORTE
-        ====================================================== */
-
-        else if (tipo === '06') {
-
-            identificacion.disabled = false;
-            identificacion.maxLength = 20;
-            identificacion.inputMode = 'text';
-            identificacion.placeholder = 'Ingrese pasaporte';
+            input.disabled = false;
+            input.maxLength = 20;
+            input.inputMode = 'text';
+            input.placeholder = 'Ingrese número de pasaporte';
 
             btnConsultar.style.display = 'none';
 
             manual?.classList.add('visible');
 
             btnUsar.disabled = false;
-
         }
 
-        /* =====================================================
-           CONSUMIDOR FINAL
-        ====================================================== */
 
-        else if (tipo === '07') {
+        else if (modoComprador === 'consumidor_final') {
 
-            identificacion.disabled = true;
-            identificacion.value = '';
+            label.textContent = 'Identificación';
+
+            input.disabled = true;
+            input.placeholder = '';
 
             btnConsultar.style.display = 'none';
 
             consumidor?.classList.add('visible');
 
             btnUsar.disabled = false;
-
         }
 
     }
 
 
     /* =========================================================
-       CAMBIO DE IDENTIFICACIÓN
+       AUTO-DETECTAR CÉDULA / RUC
     ========================================================= */
 
     function compradorIdentificacionModificada() {
 
-        const tipo =
-            document.getElementById('modalCompradorTipo')?.value || '';
-
         const input =
-            document.getElementById('modalCompradorIdentificacion');
+            document.getElementById(
+                'modalCompradorIdentificacion'
+            );
+
+        const detectado =
+            document.getElementById(
+                'tipoIdentificacionDetectado'
+            );
+
+        if (!input || !detectado) return;
 
 
-        if (!input) {
+        compradorFacturaConsultado = null;
+
+        limpiarResultadoComprador();
+        ocultarEstadoComprador();
+
+
+        if (modoComprador !== 'identificacion') {
             return;
         }
 
 
-        if (tipo === '04' || tipo === '05') {
+        input.value =
+            input.value.replace(/\D/g, '');
 
-            input.value =
-                input.value.replace(/[^0-9]/g, '');
 
-            limpiarResultadoComprador();
-            ocultarEstadoComprador();
+        const valor =
+            input.value.trim();
 
+
+        detectado.classList.remove('visible');
+        detectado.textContent = '';
+
+
+        if (valor.length === 10) {
+
+            detectado.textContent =
+                'Cédula detectada';
+
+            detectado.classList.add('visible');
+        }
+
+        else if (valor.length === 13) {
+
+            detectado.textContent =
+                'RUC detectado';
+
+            detectado.classList.add('visible');
         }
     }
 
 
     /* =========================================================
-       CONSULTAR CÉDULA / RUC
+       CONSULTAR API
     ========================================================= */
 
     async function consultarCompradorFactura() {
 
-        const tipo =
-            document.getElementById('modalCompradorTipo')?.value || '';
-
-        const identificacion =
-            limpiarTextoComprador(
-                document.getElementById(
-                    'modalCompradorIdentificacion'
-                )?.value
-            );
-
-
-        if (!['04', '05'].includes(tipo)) {
+        if (modoComprador !== 'identificacion') {
             return;
         }
 
 
-        const longitudEsperada =
-            tipo === '04'
-                ? 13
-                : 10;
+        const identificacion =
+            document
+                .getElementById(
+                    'modalCompradorIdentificacion'
+                )
+                ?.value
+                .trim() || '';
 
 
         if (
             !/^\d+$/.test(identificacion) ||
-            identificacion.length !== longitudEsperada
+            ![10, 13].includes(identificacion.length)
         ) {
 
             mostrarEstadoComprador(
-                tipo === '04'
-                    ? 'El RUC debe contener exactamente 13 dígitos.'
-                    : 'La cédula debe contener exactamente 10 dígitos.',
+                'Ingrese una cédula de 10 dígitos o un RUC de 13 dígitos.',
                 'error'
             );
 
@@ -1405,21 +1366,23 @@
         }
 
 
+        const tipoIdentificacion =
+            identificacion.length === 13
+                ? '04'
+                : '05';
+
+
         const btn =
-            document.getElementById('btnConsultarComprador');
+            document.getElementById(
+                'btnConsultarComprador'
+            );
 
         const textoOriginal =
-            btn ? btn.innerHTML : 'Consultar';
+            btn.innerHTML;
 
 
-        if (btn) {
-
-            btn.disabled = true;
-            btn.innerHTML = 'Consultando...';
-        }
-
-
-        limpiarResultadoComprador();
+        btn.disabled = true;
+        btn.innerHTML = 'Consultando...';
 
 
         mostrarEstadoComprador(
@@ -1446,7 +1409,6 @@
                 url.toString(),
                 {
                     method: 'GET',
-
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -1475,13 +1437,12 @@
                 data.cliente;
 
 
-            const razonSocial =
-                limpiarTextoComprador(
-                    cliente.razon_social
-                ) ||
-                limpiarTextoComprador(
-                    cliente.nombre_completo
-                );
+            const nombre =
+                (
+                    cliente.razon_social ||
+                    cliente.nombre_completo ||
+                    ''
+                ).trim();
 
 
             compradorFacturaConsultado = {
@@ -1490,14 +1451,14 @@
                     cliente.id || '',
 
                 tipo_identificacion:
-                    tipo,
+                    tipoIdentificacion,
 
                 identificacion:
                     cliente.identificacion ||
                     identificacion,
 
                 razon_social:
-                    razonSocial,
+                    nombre,
 
                 direccion:
                     cliente.direccion || '',
@@ -1525,58 +1486,38 @@
             );
 
 
-            const btnUsar =
-                document.getElementById(
-                    'btnUsarComprador'
-                );
-
-            if (btnUsar) {
-                btnUsar.disabled = false;
-            }
+            document.getElementById(
+                'btnUsarComprador'
+            ).disabled = false;
 
         }
+
         catch (error) {
 
             console.error(error);
 
-
             compradorFacturaConsultado = null;
-
 
             mostrarEstadoComprador(
                 error.message ||
                 'No fue posible consultar el comprador.',
                 'error'
             );
-
         }
+
         finally {
 
-            if (btn) {
-
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
         }
     }
 
 
     /* =========================================================
-       RENDER RESULTADO
+       RENDER
     ========================================================= */
 
     function renderResultadoComprador(comprador) {
-
-        const resultado =
-            document.getElementById(
-                'modalCompradorResultado'
-            );
-
-
-        if (!resultado || !comprador) {
-            return;
-        }
-
 
         document.getElementById(
             'modalCompradorResultadoNombre'
@@ -1588,8 +1529,7 @@
         document.getElementById(
             'modalCompradorResultadoIdentificacion'
         ).textContent =
-            comprador.identificacion ||
-            'SIN IDENTIFICACIÓN';
+            comprador.identificacion;
 
 
         document.getElementById(
@@ -1613,7 +1553,9 @@
             'NO REGISTRADA';
 
 
-        resultado.classList.add('visible');
+        document
+            .getElementById('modalCompradorResultado')
+            .classList.add('visible');
     }
 
 
@@ -1623,61 +1565,50 @@
 
     function usarCompradorFactura() {
 
-        const tipo =
-            document.getElementById('modalCompradorTipo')?.value || '';
-
-
         let comprador = null;
 
 
-        /* =====================================================
-           CÉDULA / RUC
-        ====================================================== */
-
-        if (tipo === '04' || tipo === '05') {
+        if (modoComprador === 'identificacion') {
 
             if (!compradorFacturaConsultado) {
 
                 mostrarEstadoComprador(
-                    'Primero debes consultar la cédula o RUC.',
+                    'Primero consulta la cédula o RUC.',
                     'error'
                 );
 
                 return;
             }
 
-
             comprador =
                 compradorFacturaConsultado;
         }
 
 
-        /* =====================================================
-           PASAPORTE
-        ====================================================== */
-
-        else if (tipo === '06') {
+        else if (modoComprador === 'pasaporte') {
 
             const identificacion =
-                limpiarTextoComprador(
-                    document.getElementById(
+                document
+                    .getElementById(
                         'modalCompradorIdentificacion'
-                    )?.value
-                );
+                    )
+                    ?.value
+                    .trim() || '';
 
 
             const nombre =
-                limpiarTextoComprador(
-                    document.getElementById(
-                        'modalCompradorManualNombre'
-                    )?.value
-                );
+                document
+                    .getElementById(
+                        'compradorManualNombre'
+                    )
+                    ?.value
+                    .trim() || '';
 
 
             if (!identificacion) {
 
                 mostrarEstadoComprador(
-                    'Ingresa el número de pasaporte.',
+                    'Ingrese el número de pasaporte.',
                     'error'
                 );
 
@@ -1688,7 +1619,7 @@
             if (!nombre) {
 
                 mostrarEstadoComprador(
-                    'Ingresa el nombre o razón social.',
+                    'Ingrese el nombre del comprador.',
                     'error'
                 );
 
@@ -1709,35 +1640,36 @@
                     nombre.toUpperCase(),
 
                 telefono:
-                    limpiarTextoComprador(
-                        document.getElementById(
-                            'modalCompradorManualTelefono'
-                        )?.value
-                    ),
+                    document
+                        .getElementById(
+                            'compradorManualTelefono'
+                        )
+                        ?.value
+                        .trim() || '',
 
                 correo:
-                    limpiarTextoComprador(
-                        document.getElementById(
-                            'modalCompradorManualCorreo'
-                        )?.value
-                    ).toLowerCase(),
+                    document
+                        .getElementById(
+                            'compradorManualCorreo'
+                        )
+                        ?.value
+                        .trim() || '',
 
                 direccion:
-                    limpiarTextoComprador(
-                        document.getElementById(
-                            'modalCompradorManualDireccion'
-                        )?.value
-                    )
+                    document
+                        .getElementById(
+                            'compradorManualDireccion'
+                        )
+                        ?.value
+                        .trim() || ''
 
             };
         }
 
 
-        /* =====================================================
-           CONSUMIDOR FINAL
-        ====================================================== */
-
-        else if (tipo === '07') {
+        else if (
+            modoComprador === 'consumidor_final'
+        ) {
 
             comprador = {
 
@@ -1745,29 +1677,21 @@
 
                 tipo_identificacion: '07',
 
-                identificacion: '9999999999999',
+                identificacion:
+                    '9999999999999',
 
-                razon_social: 'CONSUMIDOR FINAL',
+                razon_social:
+                    'CONSUMIDOR FINAL',
 
+                direccion: '',
                 telefono: '',
-
-                correo: '',
-
-                direccion: ''
+                correo: ''
 
             };
         }
 
 
-        if (!comprador) {
-
-            mostrarEstadoComprador(
-                'No fue posible determinar el comprador.',
-                'error'
-            );
-
-            return;
-        }
+        if (!comprador) return;
 
 
         aplicarCompradorFactura(
@@ -1780,21 +1704,18 @@
 
 
     /* =========================================================
-       APLICAR AL FORMULARIO DE FACTURACIÓN
+       SNAPSHOT
     ========================================================= */
 
     function aplicarCompradorFactura(comprador) {
 
-        const asignar = (
-            id,
-            valor
-        ) => {
+        const asignar = (id, valor) => {
 
-            const input =
+            const elemento =
                 document.getElementById(id);
 
-            if (input) {
-                input.value = valor || '';
+            if (elemento) {
+                elemento.value = valor || '';
             }
         };
 
@@ -1835,122 +1756,185 @@
         );
 
 
-        /* =====================================================
-           ACTUALIZAR RESUMEN VISUAL
-        ====================================================== */
-
-        const nombre =
-            document.getElementById(
-                'compradorResumenNombre'
-            );
-
-        const identificacion =
-            document.getElementById(
-                'compradorResumenIdentificacion'
-            );
-
-        const contacto =
-            document.getElementById(
-                'compradorResumenContacto'
-            );
+        document.getElementById(
+            'compradorResumenNombre'
+        ).textContent =
+            comprador.razon_social ||
+            'SIN NOMBRE';
 
 
-        if (nombre) {
+        document.getElementById(
+            'compradorResumenIdentificacion'
+        ).textContent =
+            comprador.tipo_identificacion === '07'
+                ? 'Consumidor Final'
+                : `C.I./RUC: ${comprador.identificacion}`;
 
-            nombre.textContent =
-                comprador.razon_social ||
-                'SIN NOMBRE';
+
+        const contacto = [];
+
+        if (comprador.telefono) {
+            contacto.push(comprador.telefono);
+        }
+
+        if (comprador.correo) {
+            contacto.push(comprador.correo);
         }
 
 
-        if (identificacion) {
-
-            identificacion.textContent =
-                comprador.tipo_identificacion === '07'
-                    ? 'Consumidor Final'
-                    : `Identificación: ${
-                        comprador.identificacion ||
-                        'NO REGISTRADA'
-                    }`;
-        }
+        document.getElementById(
+            'compradorResumenContacto'
+        ).textContent =
+            contacto.length
+                ? contacto.join(' · ')
+                : 'Sin teléfono ni correo registrado';
 
 
-        if (contacto) {
-
-            const datos = [];
-
-            if (comprador.telefono) {
-                datos.push(comprador.telefono);
-            }
-
-            if (comprador.correo) {
-                datos.push(comprador.correo);
-            }
+        document.getElementById(
+            'modalCompradorActualNombre'
+        ).textContent =
+            comprador.razon_social ||
+            'SIN NOMBRE';
 
 
-            contacto.textContent =
-                datos.length
-                    ? datos.join(' · ')
-                    : 'Sin teléfono ni correo registrado';
-        }
-
-
-        /* =====================================================
-           ACTUALIZAR "COMPRADOR ACTUAL" DEL MODAL
-        ====================================================== */
-
-        const modalNombre =
-            document.getElementById(
-                'modalCompradorActualNombre'
-            );
-
-        const modalIdentificacion =
-            document.getElementById(
-                'modalCompradorActualIdentificacion'
-            );
-
-
-        if (modalNombre) {
-
-            modalNombre.textContent =
-                comprador.razon_social ||
-                'SIN NOMBRE';
-        }
-
-
-        if (modalIdentificacion) {
-
-            modalIdentificacion.textContent =
-                comprador.tipo_identificacion === '07'
-                    ? 'Consumidor Final'
-                    : comprador.identificacion ||
-                      'Sin identificación registrada';
-        }
+        document.getElementById(
+            'modalCompradorActualIdentificacion'
+        ).textContent =
+            comprador.tipo_identificacion === '07'
+                ? 'Consumidor Final'
+                : comprador.identificacion;
     }
 
 
     /* =========================================================
-       CERRAR AL HACER CLIC FUERA
+       ESTADO
+    ========================================================= */
+
+    function mostrarEstadoComprador(
+        mensaje,
+        tipo
+    ) {
+
+        const box =
+            document.getElementById(
+                'modalCompradorEstado'
+            );
+
+        box.style.display = 'block';
+        box.textContent = mensaje;
+
+
+        if (tipo === 'ok') {
+
+            box.style.background = '#ecfdf3';
+            box.style.border =
+                '1px solid #abefc6';
+            box.style.color = '#067647';
+
+        }
+
+        else if (tipo === 'error') {
+
+            box.style.background = '#fef3f2';
+            box.style.border =
+                '1px solid #fecdca';
+            box.style.color = '#b42318';
+
+        }
+
+        else {
+
+            box.style.background = '#fffaeb';
+            box.style.border =
+                '1px solid #fedf89';
+            box.style.color = '#b54708';
+
+        }
+    }
+
+
+    function ocultarEstadoComprador() {
+
+        const box =
+            document.getElementById(
+                'modalCompradorEstado'
+            );
+
+        box.style.display = 'none';
+        box.textContent = '';
+    }
+
+
+    function limpiarResultadoComprador() {
+
+        document
+            .getElementById(
+                'modalCompradorResultado'
+            )
+            ?.classList.remove('visible');
+
+        document.getElementById(
+            'btnUsarComprador'
+        ).disabled =
+            modoComprador === 'identificacion';
+    }
+
+
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    function reiniciarModalComprador() {
+
+        compradorFacturaConsultado = null;
+
+        seleccionarTipoComprador(
+            'identificacion',
+            'Cédula / RUC'
+        );
+
+        ocultarEstadoComprador();
+
+        document.getElementById(
+            'modalCompradorIdentificacion'
+        ).value = '';
+    }
+
+
+    /* =========================================================
+       CERRAR DROPDOWN AL HACER CLICK FUERA
     ========================================================= */
 
     document.addEventListener(
         'click',
         function(event) {
 
+            const dropdown =
+                document.getElementById(
+                    'dropdownTipoComprador'
+                );
+
+            if (
+                dropdown &&
+                !dropdown.contains(event.target)
+            ) {
+                cerrarDropdownTipoComprador();
+            }
+
+
             const modal =
                 document.getElementById(
                     'modalCompradorFactura'
                 );
-
 
             if (
                 modal &&
                 modal.style.display === 'flex' &&
                 event.target === modal
             ) {
-
                 cerrarModalComprador();
             }
+
         }
     );
 
@@ -1968,19 +1952,34 @@
             }
 
 
+            const dropdown =
+                document.getElementById(
+                    'dropdownTipoComprador'
+                );
+
+            if (
+                dropdown?.classList.contains(
+                    'abierto'
+                )
+            ) {
+
+                cerrarDropdownTipoComprador();
+                return;
+            }
+
+
             const modal =
                 document.getElementById(
                     'modalCompradorFactura'
                 );
 
-
             if (
                 modal &&
                 modal.style.display === 'flex'
             ) {
-
                 cerrarModalComprador();
             }
+
         }
     );
 
