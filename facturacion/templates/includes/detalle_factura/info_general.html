@@ -55,6 +55,13 @@
         line-height: 1.2;
     }
 
+    .info-general-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
     @media (max-width: 1050px) {
         .info-general-grid {
             grid-template-columns:
@@ -77,6 +84,15 @@
 
         .vehiculo-operacion-grid {
             grid-template-columns: 1fr 1fr;
+        }
+
+        .info-general-header-actions {
+            width: 100%;
+        }
+
+        .info-general-header-actions .btn-login {
+            width: 100%;
+            justify-content: center;
         }
     }
 
@@ -109,6 +125,8 @@
             flex-wrap: wrap;
         "
     >
+
+        <!-- IZQUIERDA -->
 
         <div>
 
@@ -162,6 +180,26 @@
 
         </div>
 
+
+        <!-- DERECHA / ACCIONES -->
+
+        <div class="info-general-header-actions">
+
+            <button
+                type="button"
+                id="btnEmitirFactura"
+                class="btn-login primary"
+                onclick="confirmarEmisionFactura()"
+            >
+                <i
+                    class="bi bi-receipt"
+                    style="margin-right: 5px;"
+                ></i>
+
+                Emitir factura
+            </button>
+
+        </div>
 
     </div>
 
