@@ -1,0 +1,768 @@
+{% load l10n %}
+
+<style>
+.modal-emision-overlay{
+    display:none;position:fixed;inset:0;width:100%;height:100%;
+    background:rgba(0,0,0,.60);z-index:10100;justify-content:center;
+    align-items:center;backdrop-filter:blur(4px);padding:20px;
+}
+.modal-emision-contenedor{
+    background:#fff;width:100%;max-width:760px;max-height:95vh;
+    border-radius:20px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 20px 50px rgba(0,0,0,.30);
+}
+.modal-emision-header{
+    padding:15px 25px;border-bottom:1px solid var(--border-soft,#e5e5ea);
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--head,#fbfbfd);
+}
+.modal-emision-titulo{margin:0;font-size:1.2rem;font-weight:700;color:#111;}
+.modal-emision-close{
+    background:none;border:none;font-size:1.5rem;cursor:pointer;
+    color:var(--muted,#6e6e73);padding:0;line-height:1;
+}
+.modal-emision-body{
+    overflow-y:auto;overflow-x:visible;padding:25px;position:relative;
+}
+.modal-emision-footer{
+    padding:15px 25px;border-top:1px solid var(--border-soft,#e5e5ea);
+    display:flex;justify-content:flex-end;gap:10px;background:var(--head,#fbfbfd);
+}
+.emision-box{
+    margin-bottom:20px;background:#fbfbfd;
+    border:1px solid var(--border-soft,#e5e5ea);
+    border-radius:14px;overflow:visible;position:relative;
+}
+.emision-box:last-child{margin-bottom:0;}
+.emision-box-title{
+    padding:11px 14px 7px;font-size:.69rem;text-transform:uppercase;
+    letter-spacing:.04em;font-weight:800;color:var(--muted,#6e6e73);
+    border-radius:14px 14px 0 0;
+}
+.emision-box-content{
+    padding:14px;border-top:1px solid var(--border-soft,#e5e5ea);
+    background:#fff;border-radius:0 0 14px 14px;position:relative;
+}
+.emision-facturacion-row{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:15px;
+}
+.emision-facturacion-info{min-width:0;flex:1;}
+.emision-principal{
+    font-size:.90rem;font-weight:800;color:#111;overflow-wrap:anywhere;
+}
+.emision-secundario{
+    margin-top:3px;font-size:.76rem;color:var(--muted,#6e6e73);
+    line-height:1.4;overflow-wrap:anywhere;
+}
+.btn-emision-cambiar-datos{
+    border:1px solid #d2d2d7;background:#fff;color:#0071e3;
+    border-radius:9px;padding:7px 12px;font-size:.76rem;font-weight:700;
+    cursor:pointer;transition:all .15s ease;white-space:nowrap;
+}
+.btn-emision-cambiar-datos:hover{background:#f2f2f7;border-color:#b8b8bd;}
+.emision-pago-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.emision-pago-full{grid-column:1/-1;}
+.emision-label{
+    display:block;font-size:.68rem;text-transform:uppercase;font-weight:800;
+    color:var(--muted,#6e6e73);margin-bottom:4px;
+}
+.emision-ayuda{
+    margin-top:5px;font-size:.68rem;color:var(--muted,#6e6e73);line-height:1.35;
+}
+.emision-dropdown{position:relative;width:100%;z-index:20;}
+.emision-dropdown.abierto{z-index:120;}
+.emision-dropdown-button{
+    width:100%;min-height:38px;border:1px solid #d2d2d7;border-radius:9px;
+    background:#fff;padding:0 11px;display:flex;justify-content:space-between;
+    align-items:center;gap:10px;color:#1d1d1f;font-size:.82rem;font-weight:600;
+    cursor:pointer;text-align:left;
+}
+.emision-dropdown-button:hover{background:#fbfbfd;}
+.emision-dropdown-button:focus{
+    outline:none;border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,.10);
+}
+.emision-dropdown-chevron{
+    color:#6e6e73;font-size:.72rem;transition:transform .15s ease;flex-shrink:0;
+}
+.emision-dropdown.abierto .emision-dropdown-chevron{transform:rotate(180deg);}
+.emision-dropdown-menu{
+    display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:121;
+    background:#fff;border:1px solid #d2d2d7;border-radius:11px;
+    box-shadow:0 12px 28px rgba(0,0,0,.16);padding:5px;overflow:hidden;
+}
+.emision-dropdown.abierto .emision-dropdown-menu{display:block;}
+.emision-dropdown-item{
+    width:100%;border:none;background:transparent;text-align:left;border-radius:8px;
+    padding:9px 10px;cursor:pointer;display:flex;justify-content:space-between;
+    align-items:center;gap:12px;
+}
+.emision-dropdown-item:hover{background:#f2f2f7;}
+.emision-dropdown-item.activo{background:#f0f7ff;}
+.emision-dropdown-item-info{min-width:0;}
+.emision-dropdown-item-principal{
+    display:block;font-size:.80rem;font-weight:700;color:#111;
+}
+.emision-dropdown-item-secundario{
+    display:block;margin-top:2px;font-size:.68rem;color:#6e6e73;
+}
+.emision-dropdown-item-codigo{
+    flex-shrink:0;min-width:28px;text-align:center;padding:3px 6px;
+    border-radius:999px;background:#f2f2f7;color:#6e6e73;
+    font-size:.65rem;font-weight:800;
+}
+.emision-campo-condicional{display:none;}
+.emision-campo-condicional.visible{display:block;}
+.emision-total-box{
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+    padding:14px;border:1px solid #d2d2d7;border-radius:12px;background:#fbfbfd;
+}
+.emision-total-label{
+    font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;
+    font-weight:800;color:var(--muted,#6e6e73);
+}
+.emision-total-subtexto{
+    margin-top:3px;font-size:.70rem;color:var(--muted,#6e6e73);
+}
+.emision-total-valor{font-size:1.35rem;font-weight:800;color:#111;white-space:nowrap;}
+.emision-estado{
+    display:none;margin-top:12px;padding:9px 11px;border-radius:9px;
+    font-size:.76rem;font-weight:600;line-height:1.4;
+}
+.emision-aviso{
+    margin-top:12px;padding:10px 12px;border:1px solid #fedf89;
+    border-radius:10px;background:#fffaeb;color:#b54708;
+    font-size:.72rem;line-height:1.45;
+}
+.btn-confirmar-emision{
+    border:none;background:#0071e3;color:#fff;border-radius:9px;
+    min-height:38px;padding:0 18px;font-size:.78rem;font-weight:700;
+    cursor:pointer;white-space:nowrap;
+}
+.btn-confirmar-emision:hover{background:#0062c4;}
+.btn-confirmar-emision:disabled{opacity:.55;cursor:default;}
+
+@media(max-width:700px){
+    .emision-pago-grid{grid-template-columns:1fr;}
+    .emision-pago-full{grid-column:auto;}
+    .emision-facturacion-row{flex-direction:column;}
+    .btn-emision-cambiar-datos{width:100%;}
+    .emision-total-box{align-items:flex-start;flex-direction:column;}
+    .modal-emision-footer{flex-direction:column-reverse;}
+    .modal-emision-footer .btn-login,
+    .modal-emision-footer .btn-confirmar-emision{width:100%!important;}
+}
+</style>
+
+<input type="hidden" name="metodo_pago" id="formaPagoFactura"
+       form="formEmitirFactura" value="">
+<input type="hidden" name="codigo_sri_pago" id="codigoSriPagoFactura"
+       form="formEmitirFactura" value="">
+<input type="hidden" name="monto_pago" id="montoPagoFactura"
+       form="formEmitirFactura" value="{{ total_final|default:0|unlocalize }}">
+<input type="hidden" name="referencia_pago" id="referenciaPagoFacturaHidden"
+       form="formEmitirFactura" value="">
+<input type="hidden" name="banco_pago" id="bancoPagoFacturaHidden"
+       form="formEmitirFactura" value="">
+<input type="hidden" name="observacion_pago" id="observacionPagoFacturaHidden"
+       form="formEmitirFactura" value="">
+
+<div id="modalEmisionFactura" class="modal-emision-overlay">
+    <div class="modal-emision-contenedor">
+
+        <div class="modal-emision-header">
+            <h3 class="modal-emision-titulo">Emitir factura</h3>
+
+            <button type="button"
+                    class="modal-emision-close"
+                    onclick="cerrarModalEmisionFactura()"
+                    aria-label="Cerrar">
+                &times;
+            </button>
+        </div>
+
+        <div class="modal-emision-body">
+
+            <div class="emision-box">
+                <div class="emision-box-title">
+                    Datos de facturación
+                </div>
+
+                <div class="emision-box-content">
+                    <div class="emision-facturacion-row">
+
+                        <div class="emision-facturacion-info">
+                            <div class="emision-principal"
+                                 id="emisionRazonSocial">-</div>
+
+                            <div class="emision-secundario"
+                                 id="emisionIdentificacion">-</div>
+
+                            <div class="emision-secundario"
+                                 id="emisionContacto">-</div>
+                        </div>
+
+                        <button type="button"
+                                class="btn-emision-cambiar-datos"
+                                onclick="cambiarDatosDesdeEmision()">
+                            Cambiar datos
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="emision-box">
+                <div class="emision-box-title">
+                    Forma de pago
+                </div>
+
+                <div class="emision-box-content">
+
+                    <div class="emision-pago-grid">
+
+                        <div class="emision-pago-full">
+                            <label class="emision-label">
+                                Método de pago
+                            </label>
+
+                            <div class="emision-dropdown"
+                                 id="dropdownFormaPagoFactura">
+
+                                <button type="button"
+                                        class="emision-dropdown-button"
+                                        onclick="toggleDropdownFormaPagoFactura(event)">
+                                    <span id="textoFormaPagoFactura">
+                                        Seleccione una forma de pago
+                                    </span>
+
+                                    <i class="bi bi-chevron-down emision-dropdown-chevron"></i>
+                                </button>
+
+                                <div class="emision-dropdown-menu">
+
+                                    <button type="button"
+                                            class="emision-dropdown-item"
+                                            data-metodo="EFECTIVO"
+                                            onclick="seleccionarFormaPagoFactura('EFECTIVO','01','Efectivo')">
+                                        <span class="emision-dropdown-item-info">
+                                            <span class="emision-dropdown-item-principal">
+                                                Efectivo
+                                            </span>
+                                            <span class="emision-dropdown-item-secundario">
+                                                Pago en efectivo
+                                            </span>
+                                        </span>
+
+                                        <span class="emision-dropdown-item-codigo">01</span>
+                                    </button>
+
+                                    <button type="button"
+                                            class="emision-dropdown-item"
+                                            data-metodo="TRANSFERENCIA"
+                                            onclick="seleccionarFormaPagoFactura('TRANSFERENCIA','20','Transferencia')">
+                                        <span class="emision-dropdown-item-info">
+                                            <span class="emision-dropdown-item-principal">
+                                                Transferencia
+                                            </span>
+                                            <span class="emision-dropdown-item-secundario">
+                                                Transferencia bancaria
+                                            </span>
+                                        </span>
+
+                                        <span class="emision-dropdown-item-codigo">20</span>
+                                    </button>
+
+                                    <button type="button"
+                                            class="emision-dropdown-item"
+                                            data-metodo="TARJETA_DEBITO"
+                                            onclick="seleccionarFormaPagoFactura('TARJETA_DEBITO','16','Tarjeta de débito')">
+                                        <span class="emision-dropdown-item-info">
+                                            <span class="emision-dropdown-item-principal">
+                                                Tarjeta de débito
+                                            </span>
+                                            <span class="emision-dropdown-item-secundario">
+                                                Pago con débito
+                                            </span>
+                                        </span>
+
+                                        <span class="emision-dropdown-item-codigo">16</span>
+                                    </button>
+
+                                    <button type="button"
+                                            class="emision-dropdown-item"
+                                            data-metodo="TARJETA_CREDITO"
+                                            onclick="seleccionarFormaPagoFactura('TARJETA_CREDITO','19','Tarjeta de crédito')">
+                                        <span class="emision-dropdown-item-info">
+                                            <span class="emision-dropdown-item-principal">
+                                                Tarjeta de crédito
+                                            </span>
+                                            <span class="emision-dropdown-item-secundario">
+                                                Pago con crédito
+                                            </span>
+                                        </span>
+
+                                        <span class="emision-dropdown-item-codigo">19</span>
+                                    </button>
+
+                                </div>
+                            </div>
+
+                            <div class="emision-ayuda">
+                                La forma de pago se enviará junto con la factura.
+                            </div>
+                        </div>
+
+                        <div id="grupoBancoPagoFactura"
+                             class="emision-campo-condicional">
+                            <label class="emision-label">Banco</label>
+
+                            <input type="text"
+                                   id="bancoPagoFactura"
+                                   class="form-control-apple"
+                                   autocomplete="off"
+                                   placeholder="Opcional">
+                        </div>
+
+                        <div id="grupoReferenciaPagoFactura"
+                             class="emision-campo-condicional">
+                            <label class="emision-label">Referencia</label>
+
+                            <input type="text"
+                                   id="referenciaPagoFactura"
+                                   class="form-control-apple"
+                                   autocomplete="off"
+                                   placeholder="N.º de comprobante / referencia">
+                        </div>
+
+                        <div class="emision-pago-full">
+                            <label class="emision-label">
+                                Observación
+                            </label>
+
+                            <textarea id="observacionPagoFactura"
+                                      class="form-control-apple"
+                                      style="min-height:65px;"
+                                      placeholder="Opcional"></textarea>
+                        </div>
+
+                    </div>
+
+                    <div id="emisionFacturaEstado"
+                         class="emision-estado"></div>
+
+                </div>
+            </div>
+
+            <div class="emision-box">
+                <div class="emision-box-title">
+                    Resumen
+                </div>
+
+                <div class="emision-box-content">
+
+                    <div class="emision-total-box">
+                        <div>
+                            <div class="emision-total-label">
+                                Total a pagar
+                            </div>
+
+                            <div class="emision-total-subtexto">
+                                OT {{ orden.numero_orden }}
+                            </div>
+                        </div>
+
+                        <div class="emision-total-valor">
+                            $ {{ total_final|default:"0.00"|floatformat:2 }}
+                        </div>
+                    </div>
+
+                    <div class="emision-aviso">
+                        Al confirmar, se crearán los datos de la factura con la
+                        información mostrada en esta pantalla y se iniciará el
+                        proceso de emisión.
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="modal-emision-footer">
+
+            <button type="button"
+                    class="btn-login"
+                    style="width:auto;"
+                    onclick="cerrarModalEmisionFactura()">
+                Cancelar
+            </button>
+
+            <button type="button"
+                    id="btnConfirmarEmisionFactura"
+                    class="btn-confirmar-emision"
+                    onclick="confirmarYEmitirFactura()">
+                Confirmar y emitir
+            </button>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+let metodoPagoFacturaSeleccionado = '';
+let codigoSriPagoFacturaSeleccionado = '';
+
+function abrirModalEmisionFactura() {
+    const modal = document.getElementById('modalEmisionFactura');
+
+    if (!modal) {
+        console.error('No se encontró #modalEmisionFactura.');
+        return;
+    }
+
+    if (!sincronizarDatosFacturacionEnModal()) {
+        return;
+    }
+
+    reiniciarModalEmisionFactura();
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalEmisionFactura() {
+    const modal = document.getElementById('modalEmisionFactura');
+    if (!modal) return;
+
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+
+    cerrarDropdownFormaPagoFactura();
+}
+
+function sincronizarDatosFacturacionEnModal() {
+    const tipo = document.getElementById('facturaTipoIdentificacion')?.value?.trim() || '';
+    const identificacion = document.getElementById('facturaIdentificacion')?.value?.trim() || '';
+    const razonSocial = document.getElementById('facturaRazonSocial')?.value?.trim() || '';
+    const telefono = document.getElementById('facturaTelefono')?.value?.trim() || '';
+    const correo = document.getElementById('facturaCorreo')?.value?.trim() || '';
+
+    if (!tipo || !identificacion || !razonSocial) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Datos de facturación incompletos',
+                text: 'Completa los datos de facturación antes de emitir.',
+                confirmButtonText: 'Aceptar'
+            });
+        } else {
+            alert('Completa los datos de facturación antes de emitir.');
+        }
+        return false;
+    }
+
+    const nombreBox = document.getElementById('emisionRazonSocial');
+    const identificacionBox = document.getElementById('emisionIdentificacion');
+    const contactoBox = document.getElementById('emisionContacto');
+
+    if (nombreBox) {
+        nombreBox.textContent = razonSocial;
+    }
+
+    if (identificacionBox) {
+        let etiqueta = 'Identificación';
+
+        if (tipo === '04') etiqueta = 'RUC';
+        else if (tipo === '05') etiqueta = 'C.I.';
+        else if (tipo === '06') etiqueta = 'Pasaporte';
+        else if (tipo === '07') etiqueta = 'Consumidor Final';
+
+        identificacionBox.textContent =
+            tipo === '07'
+                ? 'Consumidor Final'
+                : `${etiqueta}: ${identificacion}`;
+    }
+
+    const contacto = [];
+
+    if (telefono) contacto.push(telefono);
+    if (correo) contacto.push(correo);
+
+    if (contactoBox) {
+        contactoBox.textContent =
+            contacto.length
+                ? contacto.join(' · ')
+                : 'Sin teléfono ni correo registrado';
+    }
+
+    return true;
+}
+
+function cambiarDatosDesdeEmision() {
+    cerrarModalEmisionFactura();
+
+    if (typeof abrirModalComprador === 'function') {
+        abrirModalComprador();
+    }
+}
+
+function toggleDropdownFormaPagoFactura(event) {
+    event.stopPropagation();
+
+    document
+        .getElementById('dropdownFormaPagoFactura')
+        ?.classList.toggle('abierto');
+}
+
+function cerrarDropdownFormaPagoFactura() {
+    document
+        .getElementById('dropdownFormaPagoFactura')
+        ?.classList.remove('abierto');
+}
+
+function seleccionarFormaPagoFactura(metodo, codigoSri, texto) {
+    metodoPagoFacturaSeleccionado = metodo;
+    codigoSriPagoFacturaSeleccionado = codigoSri;
+
+    const metodoHidden = document.getElementById('formaPagoFactura');
+    const sriHidden = document.getElementById('codigoSriPagoFactura');
+
+    if (metodoHidden) metodoHidden.value = metodo;
+    if (sriHidden) sriHidden.value = codigoSri;
+
+    const textoBox = document.getElementById('textoFormaPagoFactura');
+
+    if (textoBox) {
+        textoBox.textContent = texto;
+    }
+
+    document
+        .querySelectorAll('#dropdownFormaPagoFactura .emision-dropdown-item')
+        .forEach(item => {
+            item.classList.toggle(
+                'activo',
+                item.dataset.metodo === metodo
+            );
+        });
+
+    configurarCamposFormaPagoFactura(metodo);
+    ocultarEstadoEmisionFactura();
+    cerrarDropdownFormaPagoFactura();
+}
+
+function configurarCamposFormaPagoFactura(metodo) {
+    const grupoBanco = document.getElementById('grupoBancoPagoFactura');
+    const grupoReferencia = document.getElementById('grupoReferenciaPagoFactura');
+
+    const requiereReferencia = [
+        'TRANSFERENCIA',
+        'TARJETA_DEBITO',
+        'TARJETA_CREDITO'
+    ].includes(metodo);
+
+    grupoBanco?.classList.toggle('visible', requiereReferencia);
+    grupoReferencia?.classList.toggle('visible', requiereReferencia);
+
+    if (!requiereReferencia) {
+        const banco = document.getElementById('bancoPagoFactura');
+        const referencia = document.getElementById('referenciaPagoFactura');
+
+        if (banco) banco.value = '';
+        if (referencia) referencia.value = '';
+    }
+}
+
+function reiniciarModalEmisionFactura() {
+    metodoPagoFacturaSeleccionado = '';
+    codigoSriPagoFacturaSeleccionado = '';
+
+    const idsHidden = [
+        'formaPagoFactura',
+        'codigoSriPagoFactura',
+        'referenciaPagoFacturaHidden',
+        'bancoPagoFacturaHidden',
+        'observacionPagoFacturaHidden'
+    ];
+
+    idsHidden.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    const textoForma = document.getElementById('textoFormaPagoFactura');
+
+    if (textoForma) {
+        textoForma.textContent = 'Seleccione una forma de pago';
+    }
+
+    document
+        .querySelectorAll('#dropdownFormaPagoFactura .emision-dropdown-item')
+        .forEach(item => item.classList.remove('activo'));
+
+    const banco = document.getElementById('bancoPagoFactura');
+    const referencia = document.getElementById('referenciaPagoFactura');
+    const observacion = document.getElementById('observacionPagoFactura');
+
+    if (banco) banco.value = '';
+    if (referencia) referencia.value = '';
+    if (observacion) observacion.value = '';
+
+    configurarCamposFormaPagoFactura('');
+    ocultarEstadoEmisionFactura();
+}
+
+function validarModalEmisionFactura() {
+    const tipo = document.getElementById('facturaTipoIdentificacion')?.value?.trim() || '';
+    const identificacion = document.getElementById('facturaIdentificacion')?.value?.trim() || '';
+    const razonSocial = document.getElementById('facturaRazonSocial')?.value?.trim() || '';
+
+    if (!tipo || !identificacion || !razonSocial) {
+        mostrarEstadoEmisionFactura(
+            'Los datos de facturación están incompletos.',
+            'error'
+        );
+        return false;
+    }
+
+    if (!metodoPagoFacturaSeleccionado) {
+        mostrarEstadoEmisionFactura(
+            'Seleccione una forma de pago.',
+            'error'
+        );
+        return false;
+    }
+
+    const requiereReferencia = [
+        'TRANSFERENCIA',
+        'TARJETA_DEBITO',
+        'TARJETA_CREDITO'
+    ].includes(metodoPagoFacturaSeleccionado);
+
+    const referencia =
+        document.getElementById('referenciaPagoFactura')?.value?.trim() || '';
+
+    if (requiereReferencia && !referencia) {
+        mostrarEstadoEmisionFactura(
+            'Ingrese la referencia o número de comprobante del pago.',
+            'error'
+        );
+
+        document.getElementById('referenciaPagoFactura')?.focus();
+        return false;
+    }
+
+    return true;
+}
+
+function confirmarYEmitirFactura() {
+    if (!validarModalEmisionFactura()) {
+        return;
+    }
+
+    const form = document.getElementById('formEmitirFactura');
+
+    if (!form) {
+        mostrarEstadoEmisionFactura(
+            'No se encontró el formulario de emisión.',
+            'error'
+        );
+        return;
+    }
+
+    const referencia =
+        document.getElementById('referenciaPagoFactura')?.value?.trim() || '';
+
+    const banco =
+        document.getElementById('bancoPagoFactura')?.value?.trim() || '';
+
+    const observacion =
+        document.getElementById('observacionPagoFactura')?.value?.trim() || '';
+
+    document.getElementById('referenciaPagoFacturaHidden').value = referencia;
+    document.getElementById('bancoPagoFacturaHidden').value = banco;
+    document.getElementById('observacionPagoFacturaHidden').value = observacion;
+
+    const btn = document.getElementById('btnConfirmarEmisionFactura');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Emitiendo...';
+    }
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
+}
+
+function mostrarEstadoEmisionFactura(mensaje, tipo) {
+    const box = document.getElementById('emisionFacturaEstado');
+    if (!box) return;
+
+    box.style.display = 'block';
+    box.textContent = mensaje;
+
+    if (tipo === 'ok') {
+        box.style.background = '#ecfdf3';
+        box.style.border = '1px solid #abefc6';
+        box.style.color = '#067647';
+    } else if (tipo === 'error') {
+        box.style.background = '#fef3f2';
+        box.style.border = '1px solid #fecdca';
+        box.style.color = '#b42318';
+    } else {
+        box.style.background = '#fffaeb';
+        box.style.border = '1px solid #fedf89';
+        box.style.color = '#b54708';
+    }
+}
+
+function ocultarEstadoEmisionFactura() {
+    const box = document.getElementById('emisionFacturaEstado');
+    if (!box) return;
+
+    box.style.display = 'none';
+    box.textContent = '';
+}
+
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('dropdownFormaPagoFactura');
+
+    if (dropdown && !dropdown.contains(event.target)) {
+        cerrarDropdownFormaPagoFactura();
+    }
+
+    const modal = document.getElementById('modalEmisionFactura');
+
+    if (
+        modal &&
+        modal.style.display === 'flex' &&
+        event.target === modal
+    ) {
+        cerrarModalEmisionFactura();
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape') {
+        return;
+    }
+
+    const dropdown = document.getElementById('dropdownFormaPagoFactura');
+
+    if (dropdown?.classList.contains('abierto')) {
+        cerrarDropdownFormaPagoFactura();
+        return;
+    }
+
+    const modal = document.getElementById('modalEmisionFactura');
+
+    if (
+        modal &&
+        modal.style.display === 'flex'
+    ) {
+        cerrarModalEmisionFactura();
+    }
+});
+</script>
