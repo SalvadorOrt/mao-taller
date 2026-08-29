@@ -1010,10 +1010,66 @@ class ProcedimientoDetalleFactura(models.Model):
 
 
 # =========================================================
+# ENTIDADES FINANCIERAS
+# =========================================================
+
+class EntidadFinanciera(models.Model):
+    TIPOS = [
+        ("BANCO", "Banco"),
+        ("COOPERATIVA", "Cooperativa"),
+        ("MUTUALISTA", "Mutualista"),
+        ("OTRA", "Otra"),
+    ]
+
+    nombre = models.CharField(
+        max_length=150,
+        unique=True,
+    )
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPOS,
+        default="BANCO",
+        db_index=True,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
+
+    orden = models.PositiveIntegerField(
+        default=0,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        verbose_name = "Entidad financiera"
+        verbose_name_plural = "Entidades financieras"
+        ordering = ["orden", "tipo", "nombre"]
+        indexes = [
+            models.Index(fields=["activo", "tipo"]),
+            models.Index(fields=["orden", "nombre"]),
+        ]
+
+    def __str__(self):
+        return self.nombre
+
+
+# =========================================================
 # PAGOS DE FACTURA
 # =========================================================
 
 class PagoFacturaVenta(models.Model):
+    FORMAS_PAGO_CON_ENTIDAD = {"16", "19", "20"}
+
     factura = models.ForeignKey(
         FacturaVenta,
         on_delete=models.CASCADE,
@@ -1030,6 +1086,33 @@ class PagoFacturaVenta(models.Model):
         decimal_places=2,
     )
 
+    entidad_financiera = models.ForeignKey(
+        EntidadFinanciera,
+        on_delete=models.SET_NULL,
+        related_name="pagos",
+        null=True,
+        blank=True,
+    )
+
+    entidad_financiera_nombre = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+    )
+
+    referencia = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="Número de transferencia, voucher, autorización u otra referencia.",
+    )
+
+    observacion = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+    )
+
     plazo = models.PositiveIntegerField(default=0)
     unidad_tiempo = models.CharField(max_length=20, default="Días")
 
@@ -1039,21 +1122,53 @@ class PagoFacturaVenta(models.Model):
     class Meta:
         verbose_name = "Pago de factura"
         verbose_name_plural = "Pagos de factura"
+        ordering = ["id"]
+        indexes = [
+            models.Index(fields=["factura", "forma_pago"]),
+            models.Index(fields=["entidad_financiera"]),
+        ]
 
     def __str__(self):
-        return f"{self.factura.numero_factura} - {self.get_forma_pago_display()} - {self.total}"
+        return (
+            f"{self.factura.numero_factura} - "
+            f"{self.get_forma_pago_display()} - {self.total}"
+        )
+
+    @property
+    def nombre_entidad_financiera(self):
+        if self.entidad_financiera_nombre:
+            return self.entidad_financiera_nombre
+
+        if self.entidad_financiera_id:
+            return self.entidad_financiera.nombre
+
+        return ""
 
     def clean(self):
         super().clean()
 
-        if self.total <= Decimal("0.00"):
+        if self.total is None or self.total <= Decimal("0.00"):
             raise ValidationError({
                 "total": "El valor del pago debe ser mayor a 0."
             })
 
+        if self.forma_pago in self.FORMAS_PAGO_CON_ENTIDAD:
+            nombre_entidad = (self.entidad_financiera_nombre or "").strip()
+
+            if not self.entidad_financiera_id and not nombre_entidad:
+                raise ValidationError({
+                    "entidad_financiera": (
+                        "Debes seleccionar una entidad financiera o ingresar "
+                        "el nombre de otra institución."
+                    )
+                })
+
         if self.factura_id:
             total_otros_pagos = (
-                self.factura.pagos.exclude(pk=self.pk).aggregate(total=Sum("total")).get("total")
+                self.factura.pagos
+                .exclude(pk=self.pk)
+                .aggregate(total=Sum("total"))
+                .get("total")
                 or Decimal("0.00")
             )
 
@@ -1061,9 +1176,22 @@ class PagoFacturaVenta(models.Model):
 
             if total_con_este > self.factura.importe_total:
                 raise ValidationError({
-                    "total": "La suma de los pagos no puede exceder el importe total de la factura."
+                    "total": (
+                        "La suma de los pagos no puede exceder "
+                        "el importe total de la factura."
+                    )
                 })
 
     def save(self, *args, **kwargs):
+        if self.entidad_financiera_id and not self.entidad_financiera_nombre:
+            self.entidad_financiera_nombre = self.entidad_financiera.nombre
+
+        self.entidad_financiera_nombre = (
+            self.entidad_financiera_nombre or ""
+        ).strip()
+
+        self.referencia = (self.referencia or "").strip()
+        self.observacion = (self.observacion or "").strip()
+
         self.full_clean()
         super().save(*args, **kwargs)

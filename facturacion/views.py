@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -14,6 +16,7 @@ from django.views.decorators.http import require_POST
 from ordenes_de_trabajo.models import OrdenTrabajo
 
 from facturacion.models import (
+    EntidadFinanciera,
     FacturaVenta,
     PagoFacturaVenta,
 )
@@ -77,6 +80,19 @@ def _factura_editable(factura):
     return factura.estado == "BORRADOR"
 
 
+def _entidades_financieras_activas():
+    """
+    Devuelve el catálogo activo de entidades financieras
+    para los formularios de pago.
+    """
+
+    return (
+        EntidadFinanciera.objects
+        .filter(activo=True)
+        .order_by("orden", "tipo", "nombre")
+    )
+
+
 # =========================================================
 # DASHBOARD
 # =========================================================
@@ -84,18 +100,129 @@ def _factura_editable(factura):
 @login_required
 def dashboard_facturacion(request):
     """
-    Muestra únicamente las Órdenes de Trabajo listas para facturar.
+    Dashboard principal de facturación.
 
-    Criterios:
-    - estado CERRADA
-    - no migrada
-    - sin factura asociada
+    Muestra FACTURAS existentes, no órdenes de trabajo.
 
-    El dashboard no crea facturas.
-    Solo presenta la lista pendiente.
+    Permite buscar por:
+    - número de factura
+    - número de OT de origen
+    - placa
+    - vehículo
+    - nombre / razón social
+    - cédula / RUC / identificación
+
+    Las órdenes pendientes se buscan únicamente desde
+    el modal "+ Nueva factura".
     """
 
-    ordenes_pendientes = (
+    q = (
+        request.GET.get("q", "")
+        .strip()
+    )
+
+    facturas = (
+        FacturaVenta.objects
+        .select_related(
+            "orden",
+            "empresa",
+            "sucursal",
+        )
+        .order_by(
+            "-created_at",
+            "-pk",
+        )
+    )
+
+    if q:
+        facturas = facturas.filter(
+            Q(numero_factura__icontains=q)
+            | Q(numero_orden_origen__icontains=q)
+            | Q(placa_snapshot__icontains=q)
+            | Q(vehiculo_snapshot__icontains=q)
+            | Q(razon_social_comprador__icontains=q)
+            | Q(identificacion_comprador__icontains=q)
+        )
+
+    total_facturas = facturas.count()
+
+    total_borradores = (
+        FacturaVenta.objects
+        .filter(estado="BORRADOR")
+        .count()
+    )
+
+    total_autorizadas = (
+        FacturaVenta.objects
+        .filter(estado="AUTORIZADO")
+        .count()
+    )
+
+    total_rechazadas = (
+        FacturaVenta.objects
+        .filter(estado="RECHAZADO")
+        .count()
+    )
+
+    context = {
+        "facturas":
+            facturas[:150],
+
+        "q":
+            q,
+
+        "total_facturas":
+            total_facturas,
+
+        "total_borradores":
+            total_borradores,
+
+        "total_autorizadas":
+            total_autorizadas,
+
+        "total_rechazadas":
+            total_rechazadas,
+    }
+
+    return render(
+        request,
+        "facturacion/dashboard.html",
+        context,
+    )
+
+
+# =========================================================
+# BUSCAR OT PARA NUEVA FACTURA
+# =========================================================
+
+@login_required
+def buscar_ordenes_facturacion(request):
+    """
+    Endpoint JSON para el modal "+ Nueva factura".
+
+    Solo devuelve órdenes:
+    - CERRADAS
+    - no migradas
+    - sin factura asociada
+
+    Busca por OT, placa, identificación, cliente o vehículo.
+    """
+
+    q = (
+        request.GET.get("q", "")
+        .strip()
+    )
+
+    if len(q) < 2:
+        return JsonResponse(
+            {
+                "ok": True,
+                "resultados": [],
+                "mensaje": "Escribe al menos 2 caracteres para buscar.",
+            }
+        )
+
+    ordenes = (
         OrdenTrabajo.objects
         .filter(
             estado="CERRADA",
@@ -106,25 +233,118 @@ def dashboard_facturacion(request):
             "cliente",
             "sucursal",
         )
+        .filter(
+            Q(numero_orden__icontains=q)
+            | Q(placa__icontains=q)
+            | Q(cliente__identificacion__icontains=q)
+            | Q(cliente__nombre_completo__icontains=q)
+            | Q(vehiculo__icontains=q)
+        )
         .order_by(
             "-fecha_ingreso",
             "-pk",
+        )[:20]
+    )
+
+    resultados = []
+
+    for orden in ordenes:
+        cliente = getattr(
+            orden,
+            "cliente",
+            None,
         )
+
+        resultados.append(
+            {
+                "id": orden.pk,
+                "numero_orden": str(
+                    getattr(
+                        orden,
+                        "numero_orden",
+                        "",
+                    )
+                    or ""
+                ),
+                "fecha": (
+                    orden.fecha_ingreso.strftime("%d/%m/%Y")
+                    if getattr(orden, "fecha_ingreso", None)
+                    else ""
+                ),
+                "placa": str(
+                    getattr(
+                        orden,
+                        "placa",
+                        "",
+                    )
+                    or ""
+                ),
+                "cliente": str(
+                    getattr(
+                        orden,
+                        "nombre_cliente_final",
+                        "",
+                    )
+                    or getattr(
+                        cliente,
+                        "nombre_completo",
+                        "",
+                    )
+                    or "-"
+                ),
+                "identificacion": str(
+                    getattr(
+                        cliente,
+                        "identificacion",
+                        "",
+                    )
+                    or ""
+                ),
+                "vehiculo": str(
+                    getattr(
+                        orden,
+                        "vehiculo",
+                        "",
+                    )
+                    or "-"
+                ),
+                "sucursal": str(
+                    getattr(
+                        getattr(
+                            orden,
+                            "sucursal",
+                            None,
+                        ),
+                        "nombre",
+                        "",
+                    )
+                    or "-"
+                ),
+                "total": format(
+                    _decimal(
+                        getattr(
+                            orden,
+                            "total_final",
+                            0,
+                        )
+                    ),
+                    ".2f",
+                ),
+                "url": (
+                    f"/facturacion/orden/{orden.pk}/"
+                ),
+            }
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "resultados": resultados,
+            "total": len(resultados),
+        }
     )
 
-    context = {
-        "ordenes_pendientes":
-            ordenes_pendientes,
 
-        "total_pendientes":
-            ordenes_pendientes.count(),
-    }
-
-    return render(
-        request,
-        "facturacion/dashboard.html",
-        context,
-    )
 # =========================================================
 # CREAR FACTURA DESDE OT
 # =========================================================
@@ -388,6 +608,9 @@ def detalle_factura(
 
         "formas_pago":
             FacturaVenta.FORMAS_PAGO,
+
+        "entidades_financieras":
+            _entidades_financieras_activas(),
     }
 
     return render(
@@ -641,9 +864,7 @@ def guardar_forma_pago(
         pk=factura_id,
     )
 
-    if not _factura_editable(
-        factura
-    ):
+    if not _factura_editable(factura):
 
         messages.error(
             request,
@@ -659,13 +880,14 @@ def guardar_forma_pago(
             factura_id=factura.pk,
         )
 
+    # =====================================================
+    # FORMA DE PAGO
+    # =====================================================
+
     forma_pago = (
-        request.POST.get(
-            "forma_pago",
-            "",
-        )
-        .strip()
-    )
+        request.POST.get("forma_pago", "")
+        or request.POST.get("codigo_sri_pago", "")
+    ).strip()
 
     formas_validas = {
         codigo
@@ -685,19 +907,16 @@ def guardar_forma_pago(
             factura_id=factura.pk,
         )
 
+    # =====================================================
+    # PLAZO
+    # =====================================================
+
     try:
         plazo = int(
-            request.POST.get(
-                "plazo",
-                "0",
-            )
+            request.POST.get("plazo", "0")
             or 0
         )
-
-    except (
-        TypeError,
-        ValueError,
-    ):
+    except (TypeError, ValueError):
         plazo = 0
 
     if plazo < 0:
@@ -707,25 +926,78 @@ def guardar_forma_pago(
         request.POST.get(
             "unidad_tiempo",
             "Días",
-        )
-        .strip()
+        ).strip()
         or "Días"
     )
 
     # =====================================================
-    # POR AHORA:
-    # UNA SOLA FORMA DE PAGO POR EL TOTAL
+    # ENTIDAD FINANCIERA
     # =====================================================
-    #
-    # El modelo permite múltiples pagos.
-    # La interfaz inicial utilizará una sola forma
-    # por el importe total.
-    #
-    # Posteriormente podemos agregar pagos mixtos:
-    #
-    # $100 efectivo
-    # $200 tarjeta
-    # etc.
+
+    entidad_financiera = None
+
+    entidad_financiera_id = (
+        request.POST.get(
+            "entidad_financiera_id",
+            "",
+        ).strip()
+    )
+
+    entidad_financiera_nombre = (
+        request.POST.get(
+            "entidad_financiera_nombre",
+            "",
+        ).strip()
+    )
+
+    referencia = (
+        request.POST.get("referencia_pago", "")
+        or request.POST.get("referencia", "")
+    ).strip()
+
+    observacion = (
+        request.POST.get("observacion_pago", "")
+        or request.POST.get("observacion", "")
+    ).strip()
+
+    if entidad_financiera_id:
+
+        try:
+            entidad_financiera = (
+                EntidadFinanciera.objects
+                .get(
+                    pk=entidad_financiera_id,
+                    activo=True,
+                )
+            )
+
+        except (
+            EntidadFinanciera.DoesNotExist,
+            ValueError,
+        ):
+
+            messages.error(
+                request,
+                (
+                    "La entidad financiera seleccionada "
+                    "no existe o está inactiva."
+                ),
+            )
+
+            return redirect(
+                "facturacion:detalle_factura",
+                factura_id=factura.pk,
+            )
+
+    # Si la forma de pago no usa sistema financiero,
+    # eliminamos cualquier dato residual del formulario.
+    if forma_pago not in PagoFacturaVenta.FORMAS_PAGO_CON_ENTIDAD:
+        entidad_financiera = None
+        entidad_financiera_nombre = ""
+        referencia = ""
+
+    # =====================================================
+    # UNA SOLA FORMA DE PAGO POR EL TOTAL
     # =====================================================
 
     factura.pagos.all().delete()
@@ -736,6 +1008,10 @@ def guardar_forma_pago(
             factura=factura,
             forma_pago=forma_pago,
             total=factura.importe_total,
+            entidad_financiera=entidad_financiera,
+            entidad_financiera_nombre=entidad_financiera_nombre,
+            referencia=referencia,
+            observacion=observacion,
             plazo=plazo,
             unidad_tiempo=unidad_tiempo,
         )
@@ -1198,6 +1474,9 @@ def detalle_orden_facturacion(
 
         "formas_pago":
             FacturaVenta.FORMAS_PAGO,
+
+        "entidades_financieras":
+            _entidades_financieras_activas(),
     }
 
     return render(

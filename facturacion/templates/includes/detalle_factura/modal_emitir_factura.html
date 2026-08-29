@@ -141,6 +141,30 @@
 .btn-confirmar-emision:hover{background:#0062c4;}
 .btn-confirmar-emision:disabled{opacity:.55;cursor:default;}
 
+
+.emision-entidad-menu{
+    max-height:230px;
+    overflow-y:auto;
+}
+.emision-entidad-otra{
+    border-top:1px solid var(--border-soft,#e5e5ea);
+    margin-top:4px;
+    padding-top:4px;
+}
+.emision-entidad-tipo{
+    display:inline-flex;
+    align-items:center;
+    margin-top:3px;
+    padding:2px 6px;
+    border-radius:999px;
+    background:#f2f2f7;
+    color:#6e6e73;
+    font-size:.62rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+}
+
 @media(max-width:700px){
     .emision-pago-grid{grid-template-columns:1fr;}
     .emision-pago-full{grid-column:auto;}
@@ -161,7 +185,11 @@
        form="formEmitirFactura" value="{{ total_final|default:0|unlocalize }}">
 <input type="hidden" name="referencia_pago" id="referenciaPagoFacturaHidden"
        form="formEmitirFactura" value="">
-<input type="hidden" name="banco_pago" id="bancoPagoFacturaHidden"
+<input type="hidden" name="entidad_financiera_id"
+       id="entidadFinancieraIdFactura"
+       form="formEmitirFactura" value="">
+<input type="hidden" name="entidad_financiera_nombre"
+       id="entidadFinancieraNombreFactura"
        form="formEmitirFactura" value="">
 <input type="hidden" name="observacion_pago" id="observacionPagoFacturaHidden"
        form="formEmitirFactura" value="">
@@ -312,15 +340,87 @@
                             </div>
                         </div>
 
-                        <div id="grupoBancoPagoFactura"
-                             class="emision-campo-condicional">
-                            <label class="emision-label">Banco</label>
+                        <div id="grupoEntidadFinancieraFactura"
+                             class="emision-campo-condicional emision-pago-full">
+                            <label class="emision-label">
+                                Entidad financiera
+                            </label>
+
+                            <div class="emision-dropdown"
+                                 id="dropdownEntidadFinancieraFactura">
+
+                                <button type="button"
+                                        class="emision-dropdown-button"
+                                        onclick="toggleDropdownEntidadFinancieraFactura(event)">
+                                    <span id="textoEntidadFinancieraFactura">
+                                        Seleccione una entidad financiera
+                                    </span>
+
+                                    <i class="bi bi-chevron-down emision-dropdown-chevron"></i>
+                                </button>
+
+                                <div class="emision-dropdown-menu emision-entidad-menu">
+
+                                    {% for entidad in entidades_financieras %}
+                                        <button type="button"
+                                                class="emision-dropdown-item"
+                                                data-entidad-id="{{ entidad.pk }}"
+                                                onclick="seleccionarEntidadFinancieraFactura(
+                                                    '{{ entidad.pk }}',
+                                                    '{{ entidad.nombre|escapejs }}'
+                                                )">
+                                            <span class="emision-dropdown-item-info">
+                                                <span class="emision-dropdown-item-principal">
+                                                    {{ entidad.nombre }}
+                                                </span>
+                                                <span class="emision-entidad-tipo">
+                                                    {{ entidad.get_tipo_display }}
+                                                </span>
+                                            </span>
+                                        </button>
+                                    {% empty %}
+                                        <div class="emision-ayuda"
+                                             style="padding:10px 8px;">
+                                            No hay entidades financieras cargadas.
+                                        </div>
+                                    {% endfor %}
+
+                                    <div class="emision-entidad-otra">
+                                        <button type="button"
+                                                class="emision-dropdown-item"
+                                                data-entidad-id="OTRA"
+                                                onclick="seleccionarOtraEntidadFinancieraFactura()">
+                                            <span class="emision-dropdown-item-info">
+                                                <span class="emision-dropdown-item-principal">
+                                                    Otra institución financiera
+                                                </span>
+                                                <span class="emision-dropdown-item-secundario">
+                                                    Ingresar el nombre manualmente
+                                                </span>
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="emision-ayuda">
+                                Seleccione el banco, cooperativa, mutualista u otra institución usada en el pago.
+                            </div>
+                        </div>
+
+                        <div id="grupoOtraEntidadFinancieraFactura"
+                             class="emision-campo-condicional emision-pago-full">
+                            <label class="emision-label">
+                                Nombre de la institución financiera
+                            </label>
 
                             <input type="text"
-                                   id="bancoPagoFactura"
+                                   id="otraEntidadFinancieraFactura"
                                    class="form-control-apple"
                                    autocomplete="off"
-                                   placeholder="Opcional">
+                                   maxlength="150"
+                                   placeholder="Ej.: Cooperativa XYZ">
                         </div>
 
                         <div id="grupoReferenciaPagoFactura"
@@ -411,6 +511,7 @@
 <script>
 let metodoPagoFacturaSeleccionado = '';
 let codigoSriPagoFacturaSeleccionado = '';
+let entidadFinancieraFacturaSeleccionada = '';
 
 function abrirModalEmisionFactura() {
     const modal = document.getElementById('modalEmisionFactura');
@@ -438,6 +539,7 @@ function cerrarModalEmisionFactura() {
     document.body.style.overflow = '';
 
     cerrarDropdownFormaPagoFactura();
+    cerrarDropdownEntidadFinancieraFactura();
 }
 
 function sincronizarDatosFacturacionEnModal() {
@@ -551,36 +653,177 @@ function seleccionarFormaPagoFactura(metodo, codigoSri, texto) {
 }
 
 function configurarCamposFormaPagoFactura(metodo) {
-    const grupoBanco = document.getElementById('grupoBancoPagoFactura');
-    const grupoReferencia = document.getElementById('grupoReferenciaPagoFactura');
+    const grupoEntidad =
+        document.getElementById('grupoEntidadFinancieraFactura');
 
-    const requiereReferencia = [
+    const grupoOtraEntidad =
+        document.getElementById('grupoOtraEntidadFinancieraFactura');
+
+    const grupoReferencia =
+        document.getElementById('grupoReferenciaPagoFactura');
+
+    const requiereEntidad = [
         'TRANSFERENCIA',
         'TARJETA_DEBITO',
         'TARJETA_CREDITO'
     ].includes(metodo);
 
-    grupoBanco?.classList.toggle('visible', requiereReferencia);
-    grupoReferencia?.classList.toggle('visible', requiereReferencia);
+    grupoEntidad?.classList.toggle('visible', requiereEntidad);
+    grupoReferencia?.classList.toggle('visible', requiereEntidad);
 
-    if (!requiereReferencia) {
-        const banco = document.getElementById('bancoPagoFactura');
-        const referencia = document.getElementById('referenciaPagoFactura');
+    if (!requiereEntidad) {
+        grupoOtraEntidad?.classList.remove('visible');
+        limpiarEntidadFinancieraFactura();
 
-        if (banco) banco.value = '';
+        const referencia =
+            document.getElementById('referenciaPagoFactura');
+
         if (referencia) referencia.value = '';
     }
+}
+
+function toggleDropdownEntidadFinancieraFactura(event) {
+    event.stopPropagation();
+
+    document
+        .getElementById('dropdownEntidadFinancieraFactura')
+        ?.classList.toggle('abierto');
+}
+
+function cerrarDropdownEntidadFinancieraFactura() {
+    document
+        .getElementById('dropdownEntidadFinancieraFactura')
+        ?.classList.remove('abierto');
+}
+
+function seleccionarEntidadFinancieraFactura(id, nombre) {
+    entidadFinancieraFacturaSeleccionada = String(id);
+
+    const hiddenId =
+        document.getElementById('entidadFinancieraIdFactura');
+
+    const hiddenNombre =
+        document.getElementById('entidadFinancieraNombreFactura');
+
+    const texto =
+        document.getElementById('textoEntidadFinancieraFactura');
+
+    const grupoOtra =
+        document.getElementById('grupoOtraEntidadFinancieraFactura');
+
+    const otra =
+        document.getElementById('otraEntidadFinancieraFactura');
+
+    if (hiddenId) hiddenId.value = String(id);
+    if (hiddenNombre) hiddenNombre.value = nombre;
+    if (texto) texto.textContent = nombre;
+    if (otra) otra.value = '';
+
+    grupoOtra?.classList.remove('visible');
+
+    document
+        .querySelectorAll(
+            '#dropdownEntidadFinancieraFactura .emision-dropdown-item'
+        )
+        .forEach(item => {
+            item.classList.toggle(
+                'activo',
+                item.dataset.entidadId === String(id)
+            );
+        });
+
+    ocultarEstadoEmisionFactura();
+    cerrarDropdownEntidadFinancieraFactura();
+}
+
+function seleccionarOtraEntidadFinancieraFactura() {
+    entidadFinancieraFacturaSeleccionada = 'OTRA';
+
+    const hiddenId =
+        document.getElementById('entidadFinancieraIdFactura');
+
+    const hiddenNombre =
+        document.getElementById('entidadFinancieraNombreFactura');
+
+    const texto =
+        document.getElementById('textoEntidadFinancieraFactura');
+
+    const grupoOtra =
+        document.getElementById('grupoOtraEntidadFinancieraFactura');
+
+    if (hiddenId) hiddenId.value = '';
+    if (hiddenNombre) hiddenNombre.value = '';
+    if (texto) texto.textContent = 'Otra institución financiera';
+
+    grupoOtra?.classList.add('visible');
+
+    document
+        .querySelectorAll(
+            '#dropdownEntidadFinancieraFactura .emision-dropdown-item'
+        )
+        .forEach(item => {
+            item.classList.toggle(
+                'activo',
+                item.dataset.entidadId === 'OTRA'
+            );
+        });
+
+    cerrarDropdownEntidadFinancieraFactura();
+
+    setTimeout(() => {
+        document
+            .getElementById('otraEntidadFinancieraFactura')
+            ?.focus();
+    }, 0);
+}
+
+function limpiarEntidadFinancieraFactura() {
+    entidadFinancieraFacturaSeleccionada = '';
+
+    const hiddenId =
+        document.getElementById('entidadFinancieraIdFactura');
+
+    const hiddenNombre =
+        document.getElementById('entidadFinancieraNombreFactura');
+
+    const texto =
+        document.getElementById('textoEntidadFinancieraFactura');
+
+    const otra =
+        document.getElementById('otraEntidadFinancieraFactura');
+
+    const grupoOtra =
+        document.getElementById('grupoOtraEntidadFinancieraFactura');
+
+    if (hiddenId) hiddenId.value = '';
+    if (hiddenNombre) hiddenNombre.value = '';
+    if (texto) {
+        texto.textContent = 'Seleccione una entidad financiera';
+    }
+    if (otra) otra.value = '';
+
+    grupoOtra?.classList.remove('visible');
+
+    document
+        .querySelectorAll(
+            '#dropdownEntidadFinancieraFactura .emision-dropdown-item'
+        )
+        .forEach(item => item.classList.remove('activo'));
+
+    cerrarDropdownEntidadFinancieraFactura();
 }
 
 function reiniciarModalEmisionFactura() {
     metodoPagoFacturaSeleccionado = '';
     codigoSriPagoFacturaSeleccionado = '';
+    entidadFinancieraFacturaSeleccionada = '';
 
     const idsHidden = [
         'formaPagoFactura',
         'codigoSriPagoFactura',
         'referenciaPagoFacturaHidden',
-        'bancoPagoFacturaHidden',
+        'entidadFinancieraIdFactura',
+        'entidadFinancieraNombreFactura',
         'observacionPagoFacturaHidden'
     ];
 
@@ -599,14 +842,13 @@ function reiniciarModalEmisionFactura() {
         .querySelectorAll('#dropdownFormaPagoFactura .emision-dropdown-item')
         .forEach(item => item.classList.remove('activo'));
 
-    const banco = document.getElementById('bancoPagoFactura');
     const referencia = document.getElementById('referenciaPagoFactura');
     const observacion = document.getElementById('observacionPagoFactura');
 
-    if (banco) banco.value = '';
     if (referencia) referencia.value = '';
     if (observacion) observacion.value = '';
 
+    limpiarEntidadFinancieraFactura();
     configurarCamposFormaPagoFactura('');
     ocultarEstadoEmisionFactura();
 }
@@ -632,16 +874,48 @@ function validarModalEmisionFactura() {
         return false;
     }
 
-    const requiereReferencia = [
+    const requiereEntidad = [
         'TRANSFERENCIA',
         'TARJETA_DEBITO',
         'TARJETA_CREDITO'
     ].includes(metodoPagoFacturaSeleccionado);
 
+    if (requiereEntidad && !entidadFinancieraFacturaSeleccionada) {
+        mostrarEstadoEmisionFactura(
+            'Seleccione la entidad financiera utilizada en el pago.',
+            'error'
+        );
+        return false;
+    }
+
+    if (
+        requiereEntidad &&
+        entidadFinancieraFacturaSeleccionada === 'OTRA'
+    ) {
+        const otraEntidad =
+            document
+                .getElementById('otraEntidadFinancieraFactura')
+                ?.value
+                ?.trim() || '';
+
+        if (!otraEntidad) {
+            mostrarEstadoEmisionFactura(
+                'Ingrese el nombre de la institución financiera.',
+                'error'
+            );
+
+            document
+                .getElementById('otraEntidadFinancieraFactura')
+                ?.focus();
+
+            return false;
+        }
+    }
+
     const referencia =
         document.getElementById('referenciaPagoFactura')?.value?.trim() || '';
 
-    if (requiereReferencia && !referencia) {
+    if (requiereEntidad && !referencia) {
         mostrarEstadoEmisionFactura(
             'Ingrese la referencia o número de comprobante del pago.',
             'error'
@@ -672,14 +946,27 @@ function confirmarYEmitirFactura() {
     const referencia =
         document.getElementById('referenciaPagoFactura')?.value?.trim() || '';
 
-    const banco =
-        document.getElementById('bancoPagoFactura')?.value?.trim() || '';
+    let entidadId =
+        document.getElementById('entidadFinancieraIdFactura')?.value?.trim() || '';
+
+    let entidadNombre =
+        document.getElementById('entidadFinancieraNombreFactura')?.value?.trim() || '';
+
+    if (entidadFinancieraFacturaSeleccionada === 'OTRA') {
+        entidadId = '';
+        entidadNombre =
+            document
+                .getElementById('otraEntidadFinancieraFactura')
+                ?.value
+                ?.trim() || '';
+    }
 
     const observacion =
         document.getElementById('observacionPagoFactura')?.value?.trim() || '';
 
     document.getElementById('referenciaPagoFacturaHidden').value = referencia;
-    document.getElementById('bancoPagoFacturaHidden').value = banco;
+    document.getElementById('entidadFinancieraIdFactura').value = entidadId;
+    document.getElementById('entidadFinancieraNombreFactura').value = entidadNombre;
     document.getElementById('observacionPagoFacturaHidden').value = observacion;
 
     const btn = document.getElementById('btnConfirmarEmisionFactura');
@@ -733,6 +1020,16 @@ document.addEventListener('click', function(event) {
         cerrarDropdownFormaPagoFactura();
     }
 
+    const dropdownEntidad =
+        document.getElementById('dropdownEntidadFinancieraFactura');
+
+    if (
+        dropdownEntidad &&
+        !dropdownEntidad.contains(event.target)
+    ) {
+        cerrarDropdownEntidadFinancieraFactura();
+    }
+
     const modal = document.getElementById('modalEmisionFactura');
 
     if (
@@ -753,6 +1050,14 @@ document.addEventListener('keydown', function(event) {
 
     if (dropdown?.classList.contains('abierto')) {
         cerrarDropdownFormaPagoFactura();
+        return;
+    }
+
+    const dropdownEntidad =
+        document.getElementById('dropdownEntidadFinancieraFactura');
+
+    if (dropdownEntidad?.classList.contains('abierto')) {
+        cerrarDropdownEntidadFinancieraFactura();
         return;
     }
 

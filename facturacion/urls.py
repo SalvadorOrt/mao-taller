@@ -7,11 +7,16 @@ app_name = "facturacion"
 
 
 urlpatterns = [
-
     path(
         "",
         views.dashboard_facturacion,
         name="dashboard",
+    ),
+
+    path(
+        "buscar-ordenes/",
+        views.buscar_ordenes_facturacion,
+        name="buscar_ordenes_facturacion",
     ),
 
     path(
