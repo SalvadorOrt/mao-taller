@@ -1,0 +1,333 @@
+{% load static %}
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>{{ nombre_archivo }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#123b7a;--primary-soft:#eef4ff;--text:#111827;--muted:#4b5563;--line:#d9dee8;--danger:#c1121f;--dark:#0f172a;--radius:9px}
+@page{size:A4 portrait;margin:6mm}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;min-height:100%}
+body{background:#e5e7eb;color:var(--text);font-family:"Inter",Arial,sans-serif;font-size:8.7px;line-height:1.22;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+.page{width:198mm;min-height:285mm;margin:0 auto;padding:4mm 5mm;background:#fff;overflow:visible;transform-origin:top left}
+.top-table{width:100%;table-layout:fixed;border-collapse:collapse;border-bottom:2px solid var(--primary);margin-bottom:4px}
+.top-table td{border:none;vertical-align:top;padding:0 0 5px}
+.top-left{width:44%;padding-right:10px}.top-right{width:56%;text-align:right}
+.logo img{display:block;max-width:150px;max-height:48px;object-fit:contain}
+.company{margin-top:3px;font-size:7.5px;color:var(--muted);line-height:1.45;font-weight:500}
+.doc-title{font-family:"Montserrat","Helvetica Neue",Arial,sans-serif;font-size:16px;font-weight:500;letter-spacing:.8px;color:#1d4f91;text-transform:uppercase}
+.doc-number{display:inline-block;margin-top:4px;padding:3px 7px;border:1px solid var(--line);border-radius:999px;background:var(--primary-soft);color:var(--danger);font-size:8.2px;font-weight:900}
+.doc-date,.doc-state{margin-top:4px;font-size:7.8px;color:var(--muted);font-weight:700}.doc-state{font-size:7px;text-transform:uppercase}
+.info-grid{width:calc(100% + 12px);table-layout:fixed;border-collapse:separate;border-spacing:3px;margin:0 -3px 6px}
+.info-grid td{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:4px 5px;vertical-align:top;overflow-wrap:anywhere}
+.label{display:block;margin-bottom:3px;font-size:6.6px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.value{display:block;font-size:8.7px;font-weight:800;color:var(--dark);overflow-wrap:anywhere}.value-small{font-size:8.7px;font-weight:700}
+.sri-box{width:100%;margin:5px 0 6px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden}
+.sri-title{padding:4px 5px;background:var(--primary-soft);color:var(--primary);font-size:7px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line)}
+.sri-table{width:100%;table-layout:fixed;border-collapse:collapse}.sri-table td{padding:4px 5px;border-bottom:1px solid var(--line);vertical-align:top}.sri-table tr:last-child td{border-bottom:none}
+.sri-key{font-family:"Courier New",monospace;font-size:7.2px;font-weight:700;word-break:break-all}
+.section{width:100%;margin-top:6px}.section-title{display:flex;align-items:center;gap:9px;margin-bottom:4px;font-size:7.8px;font-weight:900;color:var(--primary);text-transform:uppercase;letter-spacing:.08em}
+.section-title::after{content:"";flex:1;height:1px;background:var(--primary);opacity:.24}
+.detail-table,.payment-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:5px;background:#fff}
+.detail-table th{background:var(--primary);color:#fff;padding:3px 4px;font-size:7px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;text-align:left}
+.detail-table td,.payment-table td{border-bottom:1px solid var(--line);padding:3px 4px;font-size:8px;font-weight:500;vertical-align:top;overflow-wrap:anywhere}
+.detail-table tbody tr:last-child td,.payment-table tbody tr:last-child td{border-bottom:none}.detail-table tbody tr:nth-child(even) td{background:#fafbfc}
+.payment-table th{background:#f4f6f8;color:var(--dark);padding:3px 4px;font-size:7.8px;font-weight:900;text-transform:uppercase;border-bottom:1px solid var(--line);text-align:left}
+.text-right{text-align:right!important}.text-center{text-align:center!important}.muted{color:var(--muted);font-size:7px;font-weight:600}
+.procedimientos-list{display:block;margin-top:2px;padding-left:6px;color:var(--muted);font-size:7px;line-height:1.4;font-weight:500}.procedimiento-item{display:block;margin-bottom:1px}
+.empty-row td{color:var(--muted);font-style:italic;text-align:center;padding:9px;font-size:8.2px}
+.section-subtotal{width:100%;text-align:right;font-size:7.8px;font-weight:900;color:var(--dark);margin:2px 0 4px;padding-right:2px}.section-subtotal span{color:var(--danger);font-size:8.7px}
+.totals-wrap{width:100%;margin-top:7px}.totals-table{width:48%;margin-left:auto;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+.totals-table td{padding:4px 6px;font-size:8px;border-bottom:1px solid var(--line)}.totals-table tr:last-child td{border-bottom:none;background:var(--primary-soft)}
+.total-label{font-weight:900;color:var(--dark);text-transform:uppercase}.total-final-label{font-size:9px!important;color:var(--danger);font-weight:900}.total-value{text-align:right;font-weight:900;color:var(--danger);font-size:11px!important}
+.footer-note{margin-top:6px;padding-top:4px;border-top:1px solid var(--line);text-align:center;font-size:6.6px;color:var(--muted);line-height:1.45}
+@media print{
+html,body{width:210mm!important;height:297mm!important;overflow:hidden!important}
+body{background:#fff!important}
+.page{
+    width:198mm!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+    transform-origin:top left!important;
+}
+
+html,body{width:auto;min-height:auto;background:#fff;margin:0;padding:0}.page{width:auto;min-height:auto;margin:0;padding:0;overflow:visible;box-shadow:none}
+.top-table,.info-grid,.sri-box,.totals-wrap,.totals-table,.payment-table,.footer-note{page-break-inside:avoid;break-inside:avoid}
+.section,.detail-table,.detail-table tbody{page-break-inside:auto;break-inside:auto}.detail-table thead{display:table-header-group}.detail-table tbody{display:table-row-group}
+.detail-table tr,.detail-table th,.detail-table td{page-break-inside:avoid;break-inside:avoid}.section-title{page-break-after:avoid;break-after:avoid}.section-subtotal{page-break-before:avoid;break-before:avoid}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<table class="top-table"><tbody><tr>
+<td class="top-left">
+<div class="logo">{% if empresa and empresa.logo %}<img src="{{ empresa.logo.url }}" alt="Logo Empresa">{% else %}<img src="{% static 'logo.png' %}" alt="Logo MAO">{% endif %}</div>
+<div class="company">
+{% if empresa.razon_social %}<strong>{{ empresa.razon_social|upper }}</strong><br>{% endif %}
+RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+{% if empresa.dir_matriz %}{{ empresa.dir_matriz }}{% elif empresa.direccion %}{{ empresa.direccion }}{% else %}Quito, Ecuador{% endif %}
+{% if empresa.nombre_comercial %}<br>{{ empresa.nombre_comercial|upper }}{% endif %}
+</div>
+</td>
+<td class="top-right">
+<div class="doc-title">Factura Electrónica</div>
+<div class="doc-number">N.º {{ numero_factura }}</div>
+<div class="doc-date">Fecha emisión: {{ factura.fecha_emision|date:"d/m/Y"|default:"-" }}</div>
+<div class="doc-state">Estado: {{ factura.get_estado_display|upper }}</div>
+</td>
+</tr></tbody></table>
+
+<table class="info-grid"><tbody>
+<tr>
+<td><span class="label">Comprador</span><span class="value">{{ factura.razon_social_comprador|upper|default:"CONSUMIDOR FINAL" }}</span></td>
+<td><span class="label">Identificación</span><span class="value">{{ factura.identificacion_comprador|default:"-" }}</span></td>
+<td><span class="label">Tipo identificación</span><span class="value">{{ factura.get_tipo_identificacion_comprador_display|default:"-" }}</span></td>
+</tr>
+<tr>
+<td><span class="label">Dirección</span><span class="value value-small">{{ factura.direccion_comprador|default:"NO REGISTRADA" }}</span></td>
+<td><span class="label">Teléfono</span><span class="value value-small">{{ factura.telefono_comprador|default:"NO REGISTRADO" }}</span></td>
+<td><span class="label">Correo</span><span class="value value-small">{{ factura.correo_comprador|default:"NO REGISTRADO" }}</span></td>
+</tr>
+</tbody></table>
+
+{% if factura.numero_orden_origen or factura.placa_snapshot or factura.vehiculo_snapshot or factura.anio_vehiculo_snapshot or factura.color_snapshot or factura.kilometraje_snapshot is not None %}
+<table class="info-grid"><tbody>
+<tr>
+<td><span class="label">Orden origen</span><span class="value">{{ factura.numero_orden_origen|default:"-" }}</span></td>
+<td><span class="label">Placa</span><span class="value">{{ factura.placa_snapshot|upper|default:"S/P" }}</span></td>
+<td><span class="label">Vehículo</span><span class="value">{{ factura.vehiculo_snapshot|upper|default:"-" }}</span></td>
+</tr>
+<tr>
+<td><span class="label">Año</span><span class="value">{{ factura.anio_vehiculo_snapshot|default:"-" }}</span></td>
+<td><span class="label">Color</span><span class="value">{{ factura.color_snapshot|upper|default:"-" }}</span></td>
+<td><span class="label">Kilometraje</span><span class="value">{% if factura.kilometraje_snapshot is not None %}{{ factura.kilometraje_snapshot }} km{% else %}-{% endif %}</span></td>
+</tr>
+</tbody></table>
+{% endif %}
+
+<div class="sri-box">
+<div class="sri-title">Información del comprobante electrónico</div>
+<table class="sri-table"><tbody>
+<tr>
+<td style="width:28%"><span class="label">Ambiente</span><span class="value value-small">{{ factura.get_ambiente_display|upper }}</span></td>
+<td style="width:28%"><span class="label">Tipo de emisión</span><span class="value value-small">{{ factura.get_tipo_emision_display|upper }}</span></td>
+<td style="width:44%"><span class="label">Fecha autorización</span><span class="value value-small">{% if factura.fecha_autorizacion %}{{ factura.fecha_autorizacion|date:"d/m/Y H:i:s" }}{% else %}-{% endif %}</span></td>
+</tr>
+{% if mostrar_autorizacion %}
+<tr><td colspan="3"><span class="label">Número de autorización</span><span class="sri-key">{{ numero_autorizacion }}</span></td></tr>
+{% endif %}
+{% if mostrar_clave_acceso %}
+<tr><td colspan="3"><span class="label">Clave de acceso</span><span class="sri-key">{{ clave_acceso }}</span></td></tr>
+{% endif %}
+</tbody></table>
+</div>
+
+{% if repuestos %}
+<div class="section">
+<div class="section-title">Repuestos e Insumos</div>
+<table class="detail-table">
+<colgroup><col style="width:10%"><col style="width:56%"><col style="width:17%"><col style="width:17%"></colgroup>
+<thead><tr><th class="text-center">Cant.</th><th>Descripción</th><th class="text-right">P.U.</th><th class="text-right">Valor</th></tr></thead>
+<tbody>
+{% for item in repuestos %}
+<tr><td class="text-center">{{ item.cantidad|floatformat:2 }}</td><td>{{ item.descripcion|default:"-" }}{% if item.codigo_principal %}<div class="muted">Cód. {{ item.codigo_principal }}</div>{% endif %}</td><td class="text-right">${{ item.precio_unitario|floatformat:2 }}</td><td class="text-right">${{ item.precio_total_sin_impuesto|floatformat:2 }}</td></tr>
+{% empty %}<tr class="empty-row"><td colspan="4">No existen repuestos registrados en la factura.</td></tr>{% endfor %}
+</tbody></table>
+<div class="section-subtotal">Subtotal repuestos: <span>${{ subtotal_repuestos|floatformat:2 }}</span></div>
+</div>
+{% endif %}
+
+{% if servicios_moi %}
+<div class="section">
+<div class="section-title">Mano de Obra Interna</div>
+<table class="detail-table">
+<colgroup><col style="width:10%"><col style="width:56%"><col style="width:17%"><col style="width:17%"></colgroup>
+<thead><tr><th class="text-center">Cant.</th><th>Descripción del trabajo</th><th class="text-right">P.U.</th><th class="text-right">Valor</th></tr></thead>
+<tbody>
+{% for item in servicios_moi %}
+<tr><td class="text-center">{{ item.cantidad|floatformat:1 }}</td><td>{{ item.descripcion|default:"-" }}{% if item.procedimientos.all %}<div class="procedimientos-list">{% for proc in item.procedimientos.all %}<span class="procedimiento-item">&bull; {{ proc.descripcion }}</span>{% endfor %}</div>{% endif %}</td><td class="text-right">${{ item.precio_unitario|floatformat:2 }}</td><td class="text-right">${{ item.precio_total_sin_impuesto|floatformat:2 }}</td></tr>
+{% empty %}<tr class="empty-row"><td colspan="4">No existen trabajos internos registrados en la factura.</td></tr>{% endfor %}
+</tbody></table>
+<div class="section-subtotal">Subtotal M.O. interna: <span>${{ subtotal_moi|floatformat:2 }}</span></div>
+</div>
+{% endif %}
+
+{% if servicios_moe %}
+<div class="section">
+<div class="section-title">Trabajos y Servicios Externos</div>
+<table class="detail-table">
+<colgroup><col style="width:10%"><col style="width:56%"><col style="width:17%"><col style="width:17%"></colgroup>
+<thead><tr><th class="text-center">Cant.</th><th>Descripción del trabajo</th><th class="text-right">P.U.</th><th class="text-right">Valor</th></tr></thead>
+<tbody>
+{% for item in servicios_moe %}
+<tr><td class="text-center">{{ item.cantidad|floatformat:1 }}</td><td>{{ item.descripcion|default:"-" }}{% if item.procedimientos.all %}<div class="procedimientos-list">{% for proc in item.procedimientos.all %}<span class="procedimiento-item">&bull; {{ proc.descripcion }}</span>{% endfor %}</div>{% endif %}</td><td class="text-right">${{ item.precio_unitario|floatformat:2 }}</td><td class="text-right">${{ item.precio_total_sin_impuesto|floatformat:2 }}</td></tr>
+{% empty %}<tr class="empty-row"><td colspan="4">No existen trabajos externos registrados en la factura.</td></tr>{% endfor %}
+</tbody></table>
+<div class="section-subtotal">Subtotal M.O. externa: <span>${{ subtotal_moe|floatformat:2 }}</span></div>
+</div>
+{% endif %}
+
+{% if detalles_manuales %}
+<div class="section">
+<div class="section-title">Venta Directa</div>
+<table class="detail-table">
+<colgroup><col style="width:10%"><col style="width:56%"><col style="width:17%"><col style="width:17%"></colgroup>
+<thead><tr><th class="text-center">Cant.</th><th>Descripción</th><th class="text-right">P.U.</th><th class="text-right">Valor</th></tr></thead>
+<tbody>
+{% for item in detalles_manuales %}
+<tr>
+<td class="text-center">{{ item.cantidad|floatformat:2 }}</td>
+<td>
+{{ item.descripcion|default:"-" }}
+{% if item.codigo_principal %}<div class="muted">Cód. {{ item.codigo_principal }}</div>{% endif %}
+{% if item.observaciones %}<div class="muted">{{ item.observaciones }}</div>{% endif %}
+</td>
+<td class="text-right">${{ item.precio_unitario|floatformat:2 }}</td>
+<td class="text-right">${{ item.precio_total_sin_impuesto|floatformat:2 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<div class="section-subtotal">Subtotal venta directa: <span>${{ subtotal_manual|floatformat:2 }}</span></div>
+</div>
+{% endif %}
+
+<div class="totals-wrap">
+<table class="totals-table"><tbody>
+<tr><td class="total-label">Total sin impuestos</td><td class="text-right">${{ total_sin_impuestos|floatformat:2 }}</td></tr>
+{% if descuento > 0 %}<tr><td class="total-label">Descuento</td><td class="text-right">-${{ descuento|floatformat:2 }}</td></tr>{% endif %}
+{% if subtotal_iva_0 > 0 %}<tr><td class="total-label">Subtotal IVA 0%</td><td class="text-right">${{ subtotal_iva_0|floatformat:2 }}</td></tr>{% endif %}
+<tr><td class="total-label">Subtotal IVA {{ porcentaje_iva|floatformat:2 }}%</td><td class="text-right">${{ subtotal_gravado|floatformat:2 }}</td></tr>
+<tr><td class="total-label">IVA {{ porcentaje_iva|floatformat:2 }}%</td><td class="text-right">${{ iva|floatformat:2 }}</td></tr>
+{% if propina > 0 %}<tr><td class="total-label">Propina</td><td class="text-right">${{ propina|floatformat:2 }}</td></tr>{% endif %}
+<tr><td class="total-label total-final-label">Total a pagar</td><td class="total-value">${{ total_final|floatformat:2 }}</td></tr>
+</tbody></table>
+</div>
+
+<div class="section">
+<div class="section-title">Forma de Pago</div>
+<table class="payment-table">
+<thead><tr><th style="width:27%">Forma</th><th style="width:23%">Institución / Entidad</th><th style="width:18%">Referencia</th><th style="width:16%">Plazo</th><th style="width:16%" class="text-right">Valor</th></tr></thead>
+<tbody>
+{% for pago in pagos %}
+<tr>
+<td>{{ pago.get_forma_pago_display }}</td>
+<td>{{ pago.nombre_entidad_financiera|default:"-" }}</td>
+<td>{{ pago.referencia|default:"-" }}</td>
+<td>{% if pago.plazo %}{{ pago.plazo }} {{ pago.unidad_tiempo|default:"Días" }}{% else %}0 días{% endif %}</td>
+<td class="text-right">${{ pago.total|floatformat:2 }}</td>
+</tr>
+{% empty %}<tr><td colspan="5" class="text-center muted">No existe una forma de pago registrada.</td></tr>{% endfor %}
+</tbody></table>
+</div>
+
+{% if factura.observaciones or factura.comentario %}
+<div class="section">
+<div class="section-title">Información adicional</div>
+<table class="detail-table"><tbody>
+{% if factura.comentario %}<tr><td style="width:25%"><strong>Comentario</strong></td><td>{{ factura.comentario }}</td></tr>{% endif %}
+{% if factura.observaciones %}<tr><td style="width:25%"><strong>Observaciones</strong></td><td>{{ factura.observaciones|linebreaksbr }}</td></tr>{% endif %}
+</tbody></table>
+</div>
+{% endif %}
+
+<div class="footer-note">
+Documento generado electrónicamente por {{ empresa.nombre_comercial|default:empresa.razon_social|default:"MAO" }}.
+{% if factura.estado == "AUTORIZADO" %}<br>Comprobante autorizado electrónicamente.{% elif factura.estado == "BORRADOR" %}<br><strong>DOCUMENTO EN BORRADOR — NO CONSTITUYE COMPROBANTE AUTORIZADO POR EL SRI.</strong>{% endif %}
+</div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+    const nombreArchivo="{{ nombre_archivo|escapejs }}";
+    document.title=nombreArchivo;
+
+    let tituloOriginalPrincipal=null;
+
+    try{
+        if(window.top!==window){
+            tituloOriginalPrincipal=window.top.document.title;
+            window.top.document.title=nombreArchivo;
+        }
+    }catch(error){
+        console.warn("No se pudo cambiar el título de la ventana principal:",error);
+    }
+
+    window.addEventListener("afterprint",function(){
+        try{
+            if(tituloOriginalPrincipal!==null&&window.top!==window){
+                window.top.document.title=tituloOriginalPrincipal;
+            }
+        }catch(error){
+            console.warn("No se pudo restaurar el título:",error);
+        }
+    },{once:true});
+
+    function ajustarAUnaHojaA4(){
+        const pagina = document.querySelector(".page");
+        if(!pagina){
+            return;
+        }
+
+        // Área útil aproximada con @page margin: 6mm.
+        const anchoDisponibleMm = 198;
+        const altoDisponibleMm = 285;
+
+        const pxPorMm = 96 / 25.4;
+        const anchoDisponiblePx = anchoDisponibleMm * pxPorMm;
+        const altoDisponiblePx = altoDisponibleMm * pxPorMm;
+
+        // Quitar escala previa antes de medir.
+        pagina.style.transform = "none";
+        pagina.style.width = anchoDisponibleMm + "mm";
+
+        const anchoReal = pagina.scrollWidth;
+        const altoReal = pagina.scrollHeight;
+
+        let escala = Math.min(
+            1,
+            anchoDisponiblePx / anchoReal,
+            altoDisponiblePx / altoReal
+        );
+
+        // Margen de seguridad para Chrome.
+        // No imponemos una escala mínima: la prioridad de este
+        // documento es permanecer en una sola hoja A4.
+        escala = Math.min(1, escala * 0.985);
+
+        pagina.style.transform = `scale(${escala})`;
+        pagina.style.transformOrigin = "top left";
+
+        // Compensar el ancho visual después de escalar.
+        pagina.style.width = `${anchoDisponibleMm / escala}mm`;
+    }
+
+    function imprimirCuandoEsteListo(){
+        ajustarAUnaHojaA4();
+
+        setTimeout(function(){
+            ajustarAUnaHojaA4();
+            window.print();
+        },350);
+    }
+
+    if(document.fonts && document.fonts.ready){
+        document.fonts.ready
+            .then(imprimirCuandoEsteListo)
+            .catch(imprimirCuandoEsteListo);
+    }else{
+        imprimirCuandoEsteListo();
+    }
+});
+</script>
+
+</body>
+</html>

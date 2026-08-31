@@ -1,7 +1,7 @@
 <style>
 
     /* =========================================================
-       COMPRADOR - RESUMEN
+       DATOS DE FACTURACIÓN - RESUMEN
     ========================================================= */
 
     .comprador-box {
@@ -528,8 +528,19 @@
 
 
 <!-- =========================================================
-     SNAPSHOT COMPRADOR
+     SNAPSHOT DE DATOS DE FACTURACIÓN
 ========================================================= -->
+
+<!--
+    Estos campos viajan con el formulario principal de
+    detalle_orden_facturacion.html.
+
+    Importante:
+    - NO modifican el cliente original de la OT.
+    - Son los datos que se copiarán como snapshot a FacturaVenta.
+    - comprador_cliente_id solo sirve como referencia si los datos
+      corresponden a un Cliente existente en MAO.
+-->
 
 <input
     type="hidden"
@@ -582,7 +593,7 @@
 
 
 <!-- =========================================================
-     TARJETA COMPRADOR
+     TARJETA DE DATOS DE FACTURACIÓN
 ========================================================= -->
 
 <div class="ot-card" style="margin-bottom:20px;">
@@ -897,7 +908,7 @@
                     >
 
                         <div class="resultado-label">
-                            Comprador encontrado
+                            Datos encontrados
                         </div>
 
                         <div
@@ -1499,8 +1510,8 @@
             mostrarEstadoComprador(
                 data.origen === 'bd' ||
                 data.origen === 'bd_fresca'
-                    ? 'Comprador encontrado en MAO.'
-                    : 'Comprador consultado correctamente.',
+                    ? 'Datos encontrados en MAO.'
+                    : 'Datos consultados correctamente.',
                 'ok'
             );
 
@@ -1519,7 +1530,7 @@
 
             mostrarEstadoComprador(
                 error.message ||
-                'No fue posible consultar el comprador.',
+                'No fue posible consultar los datos de facturación.',
                 'error'
             );
         }
@@ -1638,7 +1649,7 @@
             if (!nombre) {
 
                 mostrarEstadoComprador(
-                    'Ingrese el nombre del comprador.',
+                    'Ingrese el nombre o razón social para facturación.',
                     'error'
                 );
 

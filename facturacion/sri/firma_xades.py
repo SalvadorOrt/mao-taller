@@ -63,6 +63,7 @@ from .excepciones import (
     FirmaXADESError,
     ValidacionSRIError,
 )
+from .validaciones import validar_factura_para_firma
 
 
 # =========================================================
@@ -215,7 +216,11 @@ def _validar_xml_factura(
 ) -> None:
     """
     Valida el vínculo entre el XML y la FacturaVenta antes
-    de aplicar una firma criptográfica.
+    y después de aplicar la firma criptográfica.
+
+    Si se recibe una FacturaVenta, los datos fiscales críticos
+    deben existir tanto en el XML como en el snapshot fiscal y
+    deben coincidir exactamente.
     """
 
     if _local_name(root) != "factura":
@@ -236,25 +241,33 @@ def _validar_xml_factura(
     if factura is None:
         return
 
+    clave_factura = _texto(
+        getattr(
+            factura,
+            "clave_acceso",
+            "",
+        )
+    )
     clave_xml = _buscar_texto(
         root,
         "claveAcceso",
     )
 
-    if (
-        factura.clave_acceso
-        and clave_xml
-        and clave_xml != factura.clave_acceso
-    ):
+    if not clave_factura:
+        raise ValidacionSRIError(
+            "La factura no tiene clave de acceso."
+        )
+
+    if not clave_xml:
+        raise ValidacionSRIError(
+            "El XML no contiene clave de acceso."
+        )
+
+    if clave_xml != clave_factura:
         raise ValidacionSRIError(
             "La clave de acceso del XML no coincide "
             "con la clave de acceso de la factura."
         )
-
-    ruc_xml = _buscar_texto(
-        root,
-        "ruc",
-    )
 
     ruc_factura = _texto(
         getattr(
@@ -263,74 +276,114 @@ def _validar_xml_factura(
             "",
         )
     )
+    ruc_xml = _buscar_texto(
+        root,
+        "ruc",
+    )
 
-    if (
-        ruc_xml
-        and ruc_factura
-        and ruc_xml != ruc_factura
-    ):
+    if not ruc_factura:
+        raise ValidacionSRIError(
+            "La empresa emisora no tiene RUC."
+        )
+
+    if not ruc_xml:
+        raise ValidacionSRIError(
+            "El XML no contiene el RUC del emisor."
+        )
+
+    if ruc_xml != ruc_factura:
         raise ValidacionSRIError(
             "El RUC emisor del XML no coincide "
             "con la empresa de la factura."
         )
 
+    ambiente_factura = _texto(
+        getattr(
+            factura,
+            "ambiente",
+            "",
+        )
+    )
     ambiente_xml = _buscar_texto(
         root,
         "ambiente",
     )
 
-    if (
-        ambiente_xml
-        and factura.ambiente
-        and ambiente_xml != factura.ambiente
-    ):
+    if not ambiente_xml:
+        raise ValidacionSRIError(
+            "El XML no contiene el ambiente."
+        )
+
+    if ambiente_xml != ambiente_factura:
         raise ValidacionSRIError(
             "El ambiente del XML no coincide "
             "con el ambiente de la factura."
         )
 
+    establecimiento_factura = _texto(
+        getattr(
+            factura,
+            "establecimiento",
+            "",
+        )
+    )
     establecimiento_xml = _buscar_texto(
         root,
         "estab",
     )
 
-    if (
-        establecimiento_xml
-        and factura.establecimiento
-        and establecimiento_xml
-        != factura.establecimiento
-    ):
+    if not establecimiento_xml:
+        raise ValidacionSRIError(
+            "El XML no contiene el establecimiento."
+        )
+
+    if establecimiento_xml != establecimiento_factura:
         raise ValidacionSRIError(
             "El establecimiento del XML no coincide "
             "con la factura."
         )
 
+    punto_emision_factura = _texto(
+        getattr(
+            factura,
+            "punto_emision",
+            "",
+        )
+    )
     punto_emision_xml = _buscar_texto(
         root,
         "ptoEmi",
     )
 
-    if (
-        punto_emision_xml
-        and factura.punto_emision
-        and punto_emision_xml
-        != factura.punto_emision
-    ):
+    if not punto_emision_xml:
+        raise ValidacionSRIError(
+            "El XML no contiene el punto de emisión."
+        )
+
+    if punto_emision_xml != punto_emision_factura:
         raise ValidacionSRIError(
             "El punto de emisión del XML no coincide "
             "con la factura."
         )
 
+    secuencial_factura = _texto(
+        getattr(
+            factura,
+            "secuencial",
+            "",
+        )
+    )
     secuencial_xml = _buscar_texto(
         root,
         "secuencial",
     )
 
-    if (
-        secuencial_xml
-        and factura.secuencial
-        and secuencial_xml != factura.secuencial
-    ):
+    if not secuencial_xml:
+        raise ValidacionSRIError(
+            "El XML no contiene el secuencial."
+        )
+
+    if secuencial_xml != secuencial_factura:
         raise ValidacionSRIError(
             "El secuencial del XML no coincide "
             "con la factura."
@@ -716,52 +769,22 @@ def firmar_xml_xades(
 def _validar_factura_para_firma(
     factura,
 ) -> None:
-    if factura is None or not factura.pk:
-        raise ValidacionSRIError(
-            "La factura debe existir "
-            "y estar guardada."
-        )
+    """
+    Mantiene una única puerta de validación para la firma.
 
-    if factura.estado == "AUTORIZADO":
-        raise EstadoFacturaSRIError(
-            "La factura ya está AUTORIZADA "
-            "y no puede volver a firmarse."
-        )
+    Las reglas tributarias/estado se centralizan en
+    sri.validaciones.validar_factura_para_firma().
+    Aquí únicamente añadimos la comprobación específica del
+    certificado que utilizará este módulo.
+    """
+    validar_factura_para_firma(
+        factura
+    )
 
-    if factura.estado != "GENERADO":
-        raise EstadoFacturaSRIError(
-            "Solo se puede firmar una factura "
-            "en estado GENERADO."
-        )
-
-    if not factura.xml_generado:
-        raise ValidacionSRIError(
-            "La factura no tiene XML generado."
-        )
-
-    if not factura.firma_electronica:
-        raise CertificadoFirmaError(
-            "La factura no tiene una firma "
-            "electrónica asignada."
-        )
-
-    # Reutiliza las reglas actuales de FacturaVenta.
-    if hasattr(
-        factura,
-        "puede_firmarse",
-    ):
-        puede, mensaje = (
-            factura.puede_firmarse()
-        )
-
-        if not puede:
-            raise ValidacionSRIError(
-                mensaje
-                or (
-                    "La factura todavía no puede "
-                    "firmarse."
-                )
-            )
+    _validar_firma_modelo(
+        factura.firma_electronica,
+        factura=factura,
+    )
 
 
 @transaction.atomic
@@ -782,6 +805,21 @@ def firmar_factura(
             ↓
         FIRMADO
     """
+
+    if factura is None or not getattr(factura, "pk", None):
+        raise ValidacionSRIError(
+            "La factura debe existir y estar guardada."
+        )
+
+    factura = (
+        factura.__class__.objects
+        .select_for_update()
+        .select_related(
+            "empresa",
+            "firma_electronica",
+        )
+        .get(pk=factura.pk)
+    )
 
     _validar_factura_para_firma(
         factura
@@ -845,6 +883,8 @@ def firmar_factura(
                 "updated_at",
             ]
         )
+
+        factura.refresh_from_db()
 
         return factura
 

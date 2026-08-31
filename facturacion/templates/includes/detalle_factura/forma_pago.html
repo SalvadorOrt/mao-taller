@@ -1,0 +1,636 @@
+<style>
+    /* =========================================================
+       FORMA DE PAGO
+    ========================================================= */
+
+    .pago-box {
+        background: #fbfbfd;
+        border: 1px solid var(--border-soft, #e5e5ea);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .pago-box-title {
+        padding: 11px 14px 7px;
+        font-size: 0.69rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 800;
+        color: var(--muted, #6e6e73);
+    }
+
+    .pago-box-content {
+        border-top: 1px solid var(--border-soft, #e5e5ea);
+        background: #fff;
+        padding: 14px;
+    }
+
+    .pago-grid {
+        display: grid;
+        grid-template-columns: minmax(220px, 1.2fr) minmax(160px, 0.8fr);
+        gap: 12px;
+        align-items: end;
+    }
+
+    .pago-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .pago-field {
+        min-width: 0;
+    }
+
+    .pago-field-full {
+        grid-column: 1 / -1;
+    }
+
+    .pago-label {
+        display: block;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: var(--muted, #6e6e73);
+        margin-bottom: 4px;
+    }
+
+    .pago-control {
+        width: 100%;
+        height: 38px;
+        border: 1px solid #d2d2d7;
+        border-radius: 9px;
+        background: #fff;
+        padding: 0 11px;
+        color: #1d1d1f;
+        font-size: 0.82rem;
+        font-weight: 600;
+        outline: none;
+        transition: all .15s ease;
+    }
+
+    .pago-control:focus {
+        border-color: #0071e3;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, .10);
+    }
+
+    textarea.pago-control {
+        min-height: 72px;
+        height: auto;
+        padding: 9px 11px;
+        resize: vertical;
+        line-height: 1.4;
+    }
+
+    .pago-total-box {
+        height: 38px;
+        border: 1px solid #d2d2d7;
+        border-radius: 9px;
+        background: #f5f5f7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 11px;
+    }
+
+    .pago-total-label {
+        font-size: .76rem;
+        color: #6e6e73;
+        font-weight: 700;
+    }
+
+    .pago-total-value {
+        font-size: .9rem;
+        color: #111;
+        font-weight: 800;
+    }
+
+    .pago-entidad-box {
+        display: none;
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid #d2d2d7;
+        border-radius: 11px;
+        background: #fbfbfd;
+    }
+
+    .pago-entidad-box.visible {
+        display: block;
+    }
+
+    .pago-ayuda {
+        margin-top: 5px;
+        color: #6e6e73;
+        font-size: .68rem;
+        line-height: 1.4;
+    }
+
+    .pago-alerta {
+        margin-top: 10px;
+        padding: 9px 11px;
+        border: 1px solid #b9dcff;
+        border-radius: 9px;
+        background: #f0f7ff;
+        color: #0057a8;
+        font-size: .72rem;
+        line-height: 1.45;
+    }
+
+    .pago-entidad-otra {
+        display: none;
+        margin-top: 10px;
+    }
+
+    .pago-entidad-otra.visible {
+        display: block;
+    }
+
+    @media (max-width: 800px) {
+        .pago-grid,
+        .pago-grid-3 {
+            grid-template-columns: 1fr;
+        }
+
+        .pago-field-full {
+            grid-column: auto;
+        }
+    }
+</style>
+
+
+<!-- =========================================================
+     FORMA DE PAGO
+========================================================= -->
+
+<div class="ot-card" style="margin-bottom:20px;">
+
+    <div class="section-title" style="margin-bottom:12px;">
+        Forma de pago
+    </div>
+
+    <div class="pago-box">
+
+        <div class="pago-box-title">
+            Pago de la factura
+        </div>
+
+        <div class="pago-box-content">
+
+            <div class="pago-grid">
+
+                <div class="pago-field">
+
+                    <label
+                        class="pago-label"
+                        for="formaPagoFactura"
+                    >
+                        Forma de pago SRI
+                    </label>
+
+                    <select
+                        name="forma_pago"
+                        id="formaPagoFactura"
+                        class="pago-control"
+                        onchange="actualizarCamposFormaPago()"
+                        required
+                    >
+                        <option value="">
+                            Seleccione una forma de pago
+                        </option>
+
+                        {% for codigo, nombre in formas_pago %}
+                            <option value="{{ codigo }}">
+                                {{ codigo }} - {{ nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="pago-ayuda">
+                        Se registrará una sola forma de pago por el total de la factura.
+                    </div>
+
+                </div>
+
+
+                <div class="pago-field">
+
+                    <label class="pago-label">
+                        Total a registrar
+                    </label>
+
+                    <div class="pago-total-box">
+                        <span class="pago-total-label">
+                            Total
+                        </span>
+
+                        <span class="pago-total-value">
+                            ${{ total_final|default:0|floatformat:2 }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ENTIDAD FINANCIERA
+            ================================================== -->
+
+            <div
+                class="pago-entidad-box"
+                id="pagoEntidadFinancieraBox"
+            >
+
+                <div class="pago-grid">
+
+                    <div class="pago-field">
+
+                        <label
+                            class="pago-label"
+                            for="entidadFinancieraFactura"
+                        >
+                            Entidad financiera
+                        </label>
+
+                        <select
+                            name="entidad_financiera_id"
+                            id="entidadFinancieraFactura"
+                            class="pago-control"
+                            onchange="actualizarEntidadFinanciera()"
+                        >
+                            <option value="">
+                                Seleccione una entidad
+                            </option>
+
+                            {% for entidad in entidades_financieras %}
+                                <option
+                                    value="{{ entidad.pk }}"
+                                    data-nombre="{{ entidad.nombre|escape }}"
+                                >
+                                    {{ entidad.nombre }}
+                                </option>
+                            {% endfor %}
+
+                            <option value="OTRA">
+                                Otra institución financiera
+                            </option>
+                        </select>
+
+                        <input
+                            type="hidden"
+                            name="entidad_financiera_nombre"
+                            id="entidadFinancieraNombreFactura"
+                            value=""
+                        >
+
+                    </div>
+
+
+                    <div class="pago-field">
+
+                        <label
+                            class="pago-label"
+                            for="referenciaPagoFactura"
+                        >
+                            Referencia
+                        </label>
+
+                        <input
+                            type="text"
+                            name="referencia_pago"
+                            id="referenciaPagoFactura"
+                            class="pago-control"
+                            maxlength="120"
+                            autocomplete="off"
+                            placeholder="Ej. comprobante, voucher o transferencia"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="pagoEntidadOtraBox"
+                    class="pago-entidad-otra"
+                >
+
+                    <label
+                        class="pago-label"
+                        for="entidadFinancieraOtraFactura"
+                    >
+                        Nombre de la institución
+                    </label>
+
+                    <input
+                        type="text"
+                        id="entidadFinancieraOtraFactura"
+                        class="pago-control"
+                        maxlength="150"
+                        autocomplete="off"
+                        placeholder="Ingrese el nombre de la institución"
+                        oninput="sincronizarEntidadOtra()"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PLAZO
+            ================================================== -->
+
+            <div class="pago-grid-3">
+
+                <div class="pago-field">
+
+                    <label
+                        class="pago-label"
+                        for="plazoPagoFactura"
+                    >
+                        Plazo
+                    </label>
+
+                    <input
+                        type="number"
+                        name="plazo"
+                        id="plazoPagoFactura"
+                        class="pago-control"
+                        value="0"
+                        min="0"
+                        step="1"
+                    >
+
+                </div>
+
+
+                <div class="pago-field">
+
+                    <label
+                        class="pago-label"
+                        for="unidadTiempoPagoFactura"
+                    >
+                        Unidad de tiempo
+                    </label>
+
+                    <select
+                        name="unidad_tiempo"
+                        id="unidadTiempoPagoFactura"
+                        class="pago-control"
+                    >
+                        <option value="Días" selected>
+                            Días
+                        </option>
+                        <option value="Meses">
+                            Meses
+                        </option>
+                        <option value="Años">
+                            Años
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="pago-field">
+
+                    <label
+                        class="pago-label"
+                        for="observacionPagoFactura"
+                    >
+                        Observación
+                    </label>
+
+                    <input
+                        type="text"
+                        name="observacion_pago"
+                        id="observacionPagoFactura"
+                        class="pago-control"
+                        maxlength="255"
+                        autocomplete="off"
+                        placeholder="Opcional"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="pago-alerta">
+                Guardar la factura solo crea el comprobante en estado
+                <strong>BORRADOR</strong>. Esta acción no envía nada al SRI.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+    /* =========================================================
+       FORMAS QUE REQUIEREN ENTIDAD FINANCIERA
+
+       16 - Tarjeta de débito
+       19 - Tarjeta de crédito
+       20 - Otros con utilización del sistema financiero
+    ========================================================= */
+
+    const formasPagoConEntidad = new Set([
+        '16',
+        '19',
+        '20'
+    ]);
+
+
+    function actualizarCamposFormaPago() {
+
+        const formaPago =
+            document.getElementById(
+                'formaPagoFactura'
+            );
+
+        const boxEntidad =
+            document.getElementById(
+                'pagoEntidadFinancieraBox'
+            );
+
+        if (!formaPago || !boxEntidad) {
+            return;
+        }
+
+        const usaEntidad =
+            formasPagoConEntidad.has(
+                String(formaPago.value || '')
+            );
+
+        boxEntidad.classList.toggle(
+            'visible',
+            usaEntidad
+        );
+
+        if (!usaEntidad) {
+
+            const selectEntidad =
+                document.getElementById(
+                    'entidadFinancieraFactura'
+                );
+
+            const nombreEntidad =
+                document.getElementById(
+                    'entidadFinancieraNombreFactura'
+                );
+
+            const referencia =
+                document.getElementById(
+                    'referenciaPagoFactura'
+                );
+
+            const otraEntidad =
+                document.getElementById(
+                    'entidadFinancieraOtraFactura'
+                );
+
+            const otraBox =
+                document.getElementById(
+                    'pagoEntidadOtraBox'
+                );
+
+            if (selectEntidad) {
+                selectEntidad.value = '';
+            }
+
+            if (nombreEntidad) {
+                nombreEntidad.value = '';
+            }
+
+            if (referencia) {
+                referencia.value = '';
+            }
+
+            if (otraEntidad) {
+                otraEntidad.value = '';
+            }
+
+            otraBox?.classList.remove(
+                'visible'
+            );
+        }
+    }
+
+
+    function actualizarEntidadFinanciera() {
+
+        const select =
+            document.getElementById(
+                'entidadFinancieraFactura'
+            );
+
+        const hiddenNombre =
+            document.getElementById(
+                'entidadFinancieraNombreFactura'
+            );
+
+        const otraBox =
+            document.getElementById(
+                'pagoEntidadOtraBox'
+            );
+
+        const inputOtra =
+            document.getElementById(
+                'entidadFinancieraOtraFactura'
+            );
+
+        if (
+            !select ||
+            !hiddenNombre
+        ) {
+            return;
+        }
+
+        const valor =
+            String(select.value || '');
+
+        const esOtra =
+            valor === 'OTRA';
+
+        otraBox?.classList.toggle(
+            'visible',
+            esOtra
+        );
+
+        if (esOtra) {
+
+            hiddenNombre.value =
+                inputOtra?.value.trim() || '';
+
+            setTimeout(() => {
+                inputOtra?.focus();
+            }, 50);
+
+            return;
+        }
+
+        if (!valor) {
+            hiddenNombre.value = '';
+            return;
+        }
+
+        const opcion =
+            select.options[
+                select.selectedIndex
+            ];
+
+        hiddenNombre.value =
+            opcion?.dataset.nombre ||
+            opcion?.textContent?.trim() ||
+            '';
+    }
+
+
+    function sincronizarEntidadOtra() {
+
+        const input =
+            document.getElementById(
+                'entidadFinancieraOtraFactura'
+            );
+
+        const hidden =
+            document.getElementById(
+                'entidadFinancieraNombreFactura'
+            );
+
+        const select =
+            document.getElementById(
+                'entidadFinancieraFactura'
+            );
+
+        if (
+            !input ||
+            !hidden ||
+            !select ||
+            select.value !== 'OTRA'
+        ) {
+            return;
+        }
+
+        hidden.value =
+            input.value.trim();
+    }
+
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+
+            actualizarCamposFormaPago();
+            actualizarEntidadFinanciera();
+
+        }
+    );
+</script>

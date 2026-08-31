@@ -12,7 +12,13 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.utils.dateparse import parse_datetime
+
+from .validaciones import (
+    validar_factura_para_consulta,
+    validar_factura_para_envio,
+)
 
 
 # =========================================================
@@ -846,51 +852,47 @@ def consultar_autorizacion(
 # INTEGRACIÓN CON FacturaVenta
 # =========================================================
 
+@transaction.atomic
 def enviar_factura_al_sri(
     factura,
 ) -> ResultadoRecepcion:
     """
-    Envía factura.xml_firmado al SRI.
+    Envía exclusivamente factura.xml_firmado al WS de recepción.
 
-    Si el SRI responde RECIBIDA:
+    Estados aceptados por la validación central:
+        - FIRMADO
+        - RECHAZADO, únicamente cuando el flujo superior haya
+          decidido reenviar exactamente el mismo XML firmado.
+
+    Si SRI responde RECIBIDA:
         factura.estado -> RECIBIDO
 
-    Si responde DEVUELTA:
+    Cualquier respuesta definitiva distinta de RECIBIDA:
         factura.estado -> RECHAZADO
 
-    NO consulta autorización.
+    Una falla de red/HTTP/SOAP no convierte automáticamente la
+    factura en RECHAZADA porque no demuestra que el comprobante
+    haya sido rechazado por el SRI.
     """
 
-    if factura is None or not factura.pk:
+    if factura is None or not getattr(factura, "pk", None):
         raise ValidationError(
-            "La factura debe existir "
-            "y estar guardada."
+            "La factura debe existir y estar guardada."
         )
 
-    if not factura.clave_acceso:
-        raise ValidationError(
-            "La factura no tiene clave de acceso."
+    factura = (
+        factura.__class__.objects
+        .select_for_update()
+        .select_related(
+            "empresa",
+            "sucursal",
         )
+        .get(pk=factura.pk)
+    )
 
-    if not factura.xml_firmado:
-        raise ValidationError(
-            "La factura no tiene XML firmado."
-        )
-
-    if factura.estado == "AUTORIZADO":
-        raise ValidationError(
-            "La factura ya está autorizada."
-        )
-
-    if factura.estado not in {
-        "FIRMADO",
-        "RECIBIDO",
-        "RECHAZADO",
-    }:
-        raise ValidationError(
-            "La factura debe estar FIRMADA "
-            "antes de enviarla al SRI."
-        )
+    validar_factura_para_envio(
+        factura
+    )
 
     contenido = _leer_archivo_django(
         factura.xml_firmado
@@ -901,21 +903,36 @@ def enviar_factura_al_sri(
         ambiente=factura.ambiente,
     )
 
+    # Si el WS devuelve una clave, debe corresponder al mismo
+    # comprobante. Nunca sustituimos la clave local.
+    clave_respuesta = _texto(
+        resultado.clave_acceso
+    )
+    clave_factura = _texto(
+        factura.clave_acceso
+    )
+
+    if (
+        clave_respuesta
+        and clave_respuesta != clave_factura
+    ):
+        raise RespuestaSRIError(
+            "La clave de acceso devuelta por recepción no "
+            "coincide con la factura enviada."
+        )
+
     resumen = _resumen_mensajes(
         resultado.mensajes
     )
 
     if resultado.recibida:
-
         factura.marcar_como_recibido(
             mensaje=(
                 resumen
                 or "Comprobante RECIBIDO por el SRI."
             )
         )
-
     else:
-
         factura.marcar_como_rechazado(
             mensaje=(
                 resumen
@@ -926,48 +943,73 @@ def enviar_factura_al_sri(
             )
         )
 
+    factura.refresh_from_db()
+
     return resultado
 
 
+@transaction.atomic
 def consultar_factura_en_sri(
     factura,
 ) -> ResultadoAutorizacion:
     """
-    Consulta por clave de acceso y actualiza FacturaVenta.
+    Consulta el comprobante por su clave de acceso y actualiza
+    únicamente el estado/documentos derivados de la respuesta SRI.
 
     AUTORIZADO:
-        - guarda número de autorización
-        - guarda fecha de autorización
-        - guarda XML de autorización
-        - estado -> AUTORIZADO
+        - número de autorización
+        - fecha de autorización
+        - XML de autorización
+        - estado AUTORIZADO
 
     RECHAZADO / NO AUTORIZADO:
-        - estado -> RECHAZADO
+        - estado RECHAZADO
 
     EN_PROCESO:
-        - mantiene el estado actual
+        - conserva el estado actual
+
+    Nunca genera otra clave ni otro secuencial.
     """
 
-    if factura is None or not factura.pk:
+    if factura is None or not getattr(factura, "pk", None):
         raise ValidationError(
-            "La factura debe existir "
-            "y estar guardada."
+            "La factura debe existir y estar guardada."
         )
 
-    if not factura.clave_acceso:
-        raise ValidationError(
-            "La factura no tiene clave de acceso."
+    factura = (
+        factura.__class__.objects
+        .select_for_update()
+        .select_related(
+            "empresa",
+            "sucursal",
         )
+        .get(pk=factura.pk)
+    )
 
-    if factura.estado == "AUTORIZADO":
-        raise ValidationError(
-            "La factura ya está autorizada."
-        )
+    validar_factura_para_consulta(
+        factura
+    )
 
     resultado = consultar_autorizacion(
         clave_acceso=factura.clave_acceso,
         ambiente=factura.ambiente,
     )
+
+    clave_consultada = _texto(
+        resultado.clave_acceso_consultada
+    )
+    clave_factura = _texto(
+        factura.clave_acceso
+    )
+
+    if (
+        clave_consultada
+        and clave_consultada != clave_factura
+    ):
+        raise RespuestaSRIError(
+            "La clave de acceso devuelta por autorización no "
+            "coincide con la factura consultada."
+        )
 
     mensajes = (
         resultado.mensajes
@@ -979,13 +1021,40 @@ def consultar_factura_en_sri(
     )
 
     if resultado.autorizado:
-
         if not resultado.numero_autorizacion:
             raise RespuestaSRIError(
-                "El SRI indicó AUTORIZADO "
-                "pero no devolvió número "
-                "de autorización."
+                "El SRI indicó AUTORIZADO pero no devolvió "
+                "número de autorización."
             )
+
+        if not resultado.xml_autorizacion:
+            raise RespuestaSRIError(
+                "El SRI indicó AUTORIZADO pero no devolvió "
+                "el XML de autorización."
+            )
+
+        nombre = (
+            f"{factura.clave_acceso}"
+            "_autorizado.xml"
+        )
+
+        # Primero dejamos preparado el archivo autorizado en el
+        # objeto. El estado AUTORIZADO se persiste después mediante
+        # el método del modelo.
+        factura.xml_autorizado.save(
+            nombre,
+            ContentFile(
+                resultado.xml_autorizacion
+            ),
+            save=False,
+        )
+
+        factura.save(
+            update_fields=[
+                "xml_autorizado",
+                "updated_at",
+            ]
+        )
 
         factura.marcar_como_autorizado(
             numero_autorizacion=(
@@ -1000,46 +1069,22 @@ def consultar_factura_en_sri(
             ),
         )
 
-        if resultado.xml_autorizacion:
-
-            nombre = (
-                f"{factura.clave_acceso}"
-                "_autorizado.xml"
-            )
-
-            factura.xml_autorizado.save(
-                nombre,
-                ContentFile(
-                    resultado.xml_autorizacion
-                ),
-                save=False,
-            )
-
-            factura.save(
-                update_fields=[
-                    "xml_autorizado",
-                    "updated_at",
-                ]
-            )
-
     elif resultado.estado in {
         "RECHAZADO",
         "NO AUTORIZADO",
         "NO_AUTORIZADO",
     }:
-
         factura.marcar_como_rechazado(
             mensaje=(
                 resumen
-                or (
-                    "El SRI no autorizó "
-                    "el comprobante."
-                )
+                or "El SRI no autorizó el comprobante."
             )
         )
 
     # EN_PROCESO u otro estado temporal:
     # no se fuerza RECHAZADO.
+
+    factura.refresh_from_db()
 
     return resultado
 
@@ -1054,13 +1099,11 @@ def enviar_y_consultar_factura(
     """
     Helper conveniente para pruebas/manual.
 
-    Para una vista web en producción es preferible:
-        1. enviar_factura_al_sri()
-        2. consultar_factura_en_sri()
-       como pasos separados.
+    En una vista web es preferible mantener recepción y
+    autorización como pasos separados.
 
-    El SRI trata recepción y autorización
-    como pasos independientes.
+    No debe usarse como mecanismo de reintento ciego:
+    un comprobante RECIBIDO debe consultarse, no reenviarse.
     """
 
     recepcion = enviar_factura_al_sri(
@@ -1077,13 +1120,27 @@ def enviar_y_consultar_factura(
 
     factura.refresh_from_db()
 
-    autorizacion = (
-        consultar_factura_en_sri(
-            factura
-        )
+    autorizacion = consultar_factura_en_sri(
+        factura
     )
 
     return (
         recepcion,
         autorizacion,
     )
+
+
+__all__ = [
+    "AMBIENTE_PRUEBAS",
+    "AMBIENTE_PRODUCCION",
+    "ClienteSRIError",
+    "ConexionSRIError",
+    "RespuestaSRIError",
+    "ResultadoRecepcion",
+    "ResultadoAutorizacion",
+    "enviar_comprobante",
+    "consultar_autorizacion",
+    "enviar_factura_al_sri",
+    "consultar_factura_en_sri",
+    "enviar_y_consultar_factura",
+]

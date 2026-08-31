@@ -184,6 +184,7 @@ class FacturaVenta(models.Model):
     secuencial = models.CharField(
         max_length=9,
         blank=True,
+        null=True,
         validators=[solo_9_digitos],
     )
 
@@ -192,6 +193,7 @@ class FacturaVenta(models.Model):
         unique=True,
         editable=False,
         blank=True,
+        null=True,
     )
 
     codigo_numerico = models.CharField(
@@ -344,11 +346,36 @@ class FacturaVenta(models.Model):
         ]
 
     def __str__(self):
-        return f"Factura {self.establecimiento}-{self.punto_emision}-{self.secuencial}"
+        if self.secuencial:
+            return f"Factura {self.numero_factura}"
+        return f"Factura borrador #{self.pk or 'NUEVA'}"
 
     @property
     def numero_factura(self):
-        return f"{self.establecimiento}-{self.punto_emision}-{self.secuencial}"
+        if not self.secuencial:
+            return "BORRADOR"
+
+        return (
+            f"{self.establecimiento or '---'}-"
+            f"{self.punto_emision or '---'}-"
+            f"{self.secuencial}"
+        )
+
+    @property
+    def es_factura_manual(self):
+        """
+        Una factura es manual cuando no proviene de una Orden de Trabajo.
+        Sirve para ventas directas de repuestos, aceites, filtros, etc.
+        """
+        return self.orden_id is None
+
+    @property
+    def esta_en_borrador(self):
+        return self.estado == "BORRADOR"
+
+    @property
+    def tiene_datos_emision(self):
+        return bool(self.secuencial and self.clave_acceso)
 
     # =====================================================
     # VALIDACIONES
@@ -697,20 +724,132 @@ class FacturaVenta(models.Model):
         self.save(update_fields=["estado", "mensaje_sri", "updated_at"])
 
     # =====================================================
+    # PREPARACIÓN PARA EMISIÓN
+    # =====================================================
+
+    def preparar_emision(self):
+        """
+        Reserva el secuencial y genera la clave de acceso únicamente
+        cuando la factura realmente va a entrar al flujo de emisión.
+
+        IMPORTANTE:
+        - Guardar una factura en BORRADOR NO consume secuencial.
+        - Guardar una factura en BORRADOR NO genera clave de acceso.
+        - El RIDE de BORRADOR puede mostrarse sin clave de acceso.
+        - Si la factura ya tiene secuencial/clave, se reutilizan.
+        """
+        if not self.pk:
+            raise ValidationError(
+                "Primero debes guardar la factura como BORRADOR."
+            )
+
+        if not self.empresa_id:
+            raise ValidationError(
+                {"empresa": "La empresa emisora es obligatoria."}
+            )
+
+        if not self.sucursal_id:
+            raise ValidationError(
+                {"sucursal": "La sucursal es obligatoria."}
+            )
+
+        with transaction.atomic():
+            empresa_model = type(self.empresa)
+            empresa_model.objects.select_for_update().get(pk=self.empresa_id)
+
+            factura = (
+                FacturaVenta.objects
+                .select_for_update()
+                .get(pk=self.pk)
+            )
+
+            if factura.sucursal:
+                if not factura.establecimiento:
+                    factura.establecimiento = getattr(
+                        factura.sucursal,
+                        "establecimiento",
+                        None,
+                    )
+
+                if not factura.punto_emision:
+                    factura.punto_emision = getattr(
+                        factura.sucursal,
+                        "punto_emision",
+                        None,
+                    )
+
+            if factura.empresa:
+                if not factura.establecimiento:
+                    factura.establecimiento = factura.empresa.establecimiento
+
+                if not factura.punto_emision:
+                    factura.punto_emision = factura.empresa.punto_emision
+
+            if not factura.establecimiento:
+                raise ValidationError({
+                    "establecimiento": "El establecimiento es obligatorio."
+                })
+
+            if not factura.punto_emision:
+                raise ValidationError({
+                    "punto_emision": "El punto de emisión es obligatorio."
+                })
+
+            if not factura.secuencial:
+                factura.secuencial = factura.generar_siguiente_secuencial(
+                    empresa=factura.empresa,
+                    establecimiento=factura.establecimiento,
+                    punto_emision=factura.punto_emision,
+                )
+
+            factura.secuencial = str(factura.secuencial).zfill(9)
+
+            if not factura.clave_acceso:
+                factura.clave_acceso = factura.generar_clave_acceso()
+
+            factura.full_clean()
+
+            super(FacturaVenta, factura).save(
+                update_fields=[
+                    "establecimiento",
+                    "punto_emision",
+                    "secuencial",
+                    "codigo_numerico",
+                    "clave_acceso",
+                    "updated_at",
+                ]
+            )
+
+        self.refresh_from_db()
+        return self
+
+    # =====================================================
     # GUARDADO
     # =====================================================
 
     def save(self, *args, **kwargs):
-        es_nuevo = self.pk is None
+        """
+        El guardado normal mantiene la factura como BORRADOR.
 
+        No genera secuencial fiscal ni clave de acceso. Esos datos se
+        crean únicamente al ejecutar preparar_emision().
+        """
         if self.sucursal_id and not self.empresa_id:
             empresa_sucursal = getattr(self.sucursal, "empresa", None)
             if empresa_sucursal:
                 self.empresa = empresa_sucursal
 
         if self.sucursal:
-            establecimiento_sucursal = getattr(self.sucursal, "establecimiento", None)
-            punto_emision_sucursal = getattr(self.sucursal, "punto_emision", None)
+            establecimiento_sucursal = getattr(
+                self.sucursal,
+                "establecimiento",
+                None,
+            )
+            punto_emision_sucursal = getattr(
+                self.sucursal,
+                "punto_emision",
+                None,
+            )
 
             if not self.establecimiento and establecimiento_sucursal:
                 self.establecimiento = establecimiento_sucursal
@@ -721,6 +860,7 @@ class FacturaVenta(models.Model):
         if self.empresa:
             if not self.establecimiento:
                 self.establecimiento = self.empresa.establecimiento
+
             if not self.punto_emision:
                 self.punto_emision = self.empresa.punto_emision
 
@@ -728,33 +868,16 @@ class FacturaVenta(models.Model):
             self.fecha_emision = timezone.localdate()
 
         if not self.secuencial:
-            self.secuencial = self.generar_siguiente_secuencial(
-                empresa=self.empresa,
-                establecimiento=self.establecimiento or "001",
-                punto_emision=self.punto_emision or "001",
-            )
+            self.secuencial = None
 
-        self.secuencial = str(self.secuencial).zfill(9)
+        if not self.clave_acceso:
+            self.clave_acceso = None
 
-        if not self.clave_acceso and self.empresa_id:
-            self.clave_acceso = self.generar_clave_acceso()
+        if not self.codigo_numerico:
+            self.codigo_numerico = ""
 
         self.full_clean()
-
-        for intento in range(3):
-            try:
-                with transaction.atomic():
-                    return super().save(*args, **kwargs)
-            except IntegrityError:
-                if intento == 2 or not es_nuevo:
-                    raise
-
-                self.secuencial = self.generar_siguiente_secuencial(
-                    empresa=self.empresa,
-                    establecimiento=self.establecimiento,
-                    punto_emision=self.punto_emision,
-                )
-                self.clave_acceso = self.generar_clave_acceso()
+        return super().save(*args, **kwargs)
 
 
 # =========================================================
@@ -771,7 +894,7 @@ class DetalleFacturaVenta(models.Model):
         ("REP", "Repuesto"),
         ("MOI", "Mano de Obra Interna"),
         ("MOE", "Mano de Obra Externa"),
-        ("OTRO", "Otro"),
+        ("MANUAL", "Venta manual"),
     ]
 
     factura = models.ForeignKey(
@@ -780,13 +903,13 @@ class DetalleFacturaVenta(models.Model):
         related_name="detalles",
     )
 
-    # Identifica de qué sección de la OT provino la línea.
-    # Permite reconstruir el detalle visual de la factura como:
-    # Repuestos / M.O.I. / M.O.E.
+    # Identifica el origen funcional de la línea:
+    # REP / MOI / MOE cuando viene de una OT.
+    # MANUAL cuando la factura se crea directamente, sin OT.
     tipo_origen = models.CharField(
         max_length=10,
         choices=TIPOS_ORIGEN,
-        default="OTRO",
+        default="MANUAL",
         db_index=True,
     )
 

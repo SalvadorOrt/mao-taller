@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -26,7 +26,12 @@ from facturacion.services.factura_desde_orden import (
 )
 
 from facturacion.services.emision_factura import (
+    consultar_comprobante_sri,
+    firmar_comprobante,
+    generar_comprobante,
     procesar_factura_completa,
+    reenviar_comprobante_rechazado,
+    enviar_comprobante_sri,
 )
 
 
@@ -93,6 +98,438 @@ def _entidades_financieras_activas():
     )
 
 
+def _datos_facturacion_desde_post(request):
+    """
+    Lee y valida los datos de facturación enviados desde la
+    pantalla de preparación de la OT.
+
+    Estos datos son un SNAPSHOT para FacturaVenta.
+    Nunca modifican OrdenTrabajo.cliente.
+    """
+
+    tipo_identificacion = (
+        request.POST.get(
+            "tipo_identificacion_comprador",
+            "",
+        )
+        .strip()
+    )
+
+    identificacion = (
+        request.POST.get(
+            "identificacion_comprador",
+            "",
+        )
+        .strip()
+    )
+
+    razon_social = (
+        request.POST.get(
+            "razon_social_comprador",
+            "",
+        )
+        .strip()
+    )
+
+    direccion = (
+        request.POST.get(
+            "direccion_comprador",
+            "",
+        )
+        .strip()
+    )
+
+    telefono = (
+        request.POST.get(
+            "telefono_comprador",
+            "",
+        )
+        .strip()
+    )
+
+    correo = (
+        request.POST.get(
+            "correo_comprador",
+            "",
+        )
+        .strip()
+        .lower()
+    )
+
+    # Consumidor final puede venir por el tipo 07 o por
+    # un campo explícito desde otros formularios.
+    consumidor_final = (
+        tipo_identificacion == "07"
+        or request.POST.get("consumidor_final") == "1"
+    )
+
+    if consumidor_final:
+        return {
+            "tipo_identificacion_comprador": "07",
+            "identificacion_comprador": "9999999999999",
+            "razon_social_comprador": "CONSUMIDOR FINAL",
+            "direccion_comprador": "",
+            "telefono_comprador": "",
+            "correo_comprador": "",
+        }
+
+    if tipo_identificacion not in {
+        "04",
+        "05",
+        "06",
+    }:
+        raise ValidationError(
+            "Selecciona un tipo de identificación válido "
+            "para facturación."
+        )
+
+    if not identificacion:
+        raise ValidationError(
+            "La identificación para facturación es obligatoria."
+        )
+
+    if not razon_social:
+        raise ValidationError(
+            "El nombre o razón social para facturación es obligatorio."
+        )
+
+    if tipo_identificacion == "04":
+        if not identificacion.isdigit() or len(identificacion) != 13:
+            raise ValidationError(
+                "El RUC debe contener exactamente 13 dígitos."
+            )
+
+    elif tipo_identificacion == "05":
+        if not identificacion.isdigit() or len(identificacion) != 10:
+            raise ValidationError(
+                "La cédula debe contener exactamente 10 dígitos."
+            )
+
+    elif tipo_identificacion == "06":
+        if len(identificacion) > 20:
+            raise ValidationError(
+                "El pasaporte no puede superar 20 caracteres."
+            )
+
+        identificacion = identificacion.upper()
+
+    return {
+        "tipo_identificacion_comprador":
+            tipo_identificacion,
+
+        "identificacion_comprador":
+            identificacion,
+
+        "razon_social_comprador":
+            razon_social,
+
+        "direccion_comprador":
+            direccion,
+
+        "telefono_comprador":
+            telefono,
+
+        "correo_comprador":
+            correo,
+    }
+
+
+def _datos_pago_desde_post(request):
+    """
+    Lee los datos de forma de pago.
+
+    Acepta los nombres actuales del formulario y algunos aliases
+    anteriores para mantener compatibilidad durante la migración
+    de la interfaz.
+    """
+
+    forma_pago = (
+        request.POST.get("forma_pago", "")
+        or request.POST.get("codigo_sri_pago", "")
+        or request.POST.get("metodo_pago", "")
+    ).strip()
+
+    if not forma_pago:
+        raise ValidationError(
+            "Selecciona una forma de pago."
+        )
+
+    formas_validas = {
+        codigo
+        for codigo, _nombre
+        in FacturaVenta.FORMAS_PAGO
+    }
+
+    if forma_pago not in formas_validas:
+        raise ValidationError(
+            "Selecciona una forma de pago válida."
+        )
+
+    try:
+        plazo = int(
+            request.POST.get("plazo", "0")
+            or 0
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        plazo = 0
+
+    if plazo < 0:
+        plazo = 0
+
+    unidad_tiempo = (
+        request.POST.get(
+            "unidad_tiempo",
+            "Días",
+        )
+        .strip()
+        or "Días"
+    )
+
+    entidad_financiera = None
+
+    entidad_financiera_id = (
+        request.POST.get(
+            "entidad_financiera_id",
+            "",
+        )
+        .strip()
+    )
+
+    entidad_financiera_nombre = (
+        request.POST.get(
+            "entidad_financiera_nombre",
+            "",
+        )
+        .strip()
+    )
+
+    # Compatibilidad con el nombre anterior del formulario.
+    if not entidad_financiera_nombre:
+        entidad_financiera_nombre = (
+            request.POST.get(
+                "banco_pago",
+                "",
+            )
+            .strip()
+        )
+
+    referencia = (
+        request.POST.get("referencia_pago", "")
+        or request.POST.get("referencia", "")
+    ).strip()
+
+    observacion = (
+        request.POST.get("observacion_pago", "")
+        or request.POST.get("observacion", "")
+    ).strip()
+
+    # "OTRA" es una opción funcional del formulario, no un PK real.
+    # En ese caso se guarda únicamente el nombre escrito manualmente.
+    if entidad_financiera_id == "OTRA":
+        entidad_financiera_id = ""
+
+        if (
+            forma_pago in PagoFacturaVenta.FORMAS_PAGO_CON_ENTIDAD
+            and not entidad_financiera_nombre
+        ):
+            raise ValidationError(
+                "Escribe el nombre de la entidad financiera."
+            )
+
+    if entidad_financiera_id:
+        try:
+            entidad_financiera = (
+                EntidadFinanciera.objects
+                .get(
+                    pk=entidad_financiera_id,
+                    activo=True,
+                )
+            )
+
+        except (
+            EntidadFinanciera.DoesNotExist,
+            ValidationError,
+            TypeError,
+            ValueError,
+        ) as exc:
+            raise ValidationError(
+                "La entidad financiera seleccionada "
+                "no existe o está inactiva."
+            ) from exc
+
+    if forma_pago not in PagoFacturaVenta.FORMAS_PAGO_CON_ENTIDAD:
+        entidad_financiera = None
+        entidad_financiera_nombre = ""
+        referencia = ""
+
+    return {
+        "forma_pago":
+            forma_pago,
+
+        "entidad_financiera":
+            entidad_financiera,
+
+        "entidad_financiera_nombre":
+            entidad_financiera_nombre,
+
+        "referencia":
+            referencia,
+
+        "observacion":
+            observacion,
+
+        "plazo":
+            plazo,
+
+        "unidad_tiempo":
+            unidad_tiempo,
+    }
+
+
+def _crear_pago_total(
+    factura,
+    datos_pago,
+):
+    """
+    Registra una sola forma de pago por el total de la factura.
+    """
+
+    pago = PagoFacturaVenta(
+        factura=factura,
+        forma_pago=datos_pago["forma_pago"],
+        total=factura.importe_total,
+        entidad_financiera=(
+            datos_pago["entidad_financiera"]
+        ),
+        entidad_financiera_nombre=(
+            datos_pago["entidad_financiera_nombre"]
+        ),
+        referencia=datos_pago["referencia"],
+        observacion=datos_pago["observacion"],
+        plazo=datos_pago["plazo"],
+        unidad_tiempo=datos_pago["unidad_tiempo"],
+    )
+
+    pago.full_clean()
+    pago.save()
+
+    return pago
+
+
+def _mensaje_resultado_emision(
+    request,
+    factura,
+):
+    """
+    Muestra un mensaje coherente con el estado persistido real.
+    """
+    factura.refresh_from_db()
+
+    if factura.estado == "AUTORIZADO":
+        messages.success(
+            request,
+            "Factura autorizada correctamente por el SRI.",
+        )
+
+    elif factura.estado == "RECIBIDO":
+        messages.info(
+            request,
+            (
+                "El SRI recibió la factura. "
+                "La autorización todavía está en procesamiento."
+            ),
+        )
+
+    elif factura.estado == "FIRMADO":
+        messages.info(
+            request,
+            (
+                "El XML está firmado. "
+                "Todavía no ha sido recibido por el SRI."
+            ),
+        )
+
+    elif factura.estado == "GENERADO":
+        messages.info(
+            request,
+            (
+                "El XML fue generado, pero el proceso de "
+                "emisión todavía no ha terminado."
+            ),
+        )
+
+    elif factura.estado == "RECHAZADO":
+        messages.error(
+            request,
+            (
+                "El SRI rechazó el comprobante. "
+                "Revisa el mensaje de recepción/autorización."
+            ),
+        )
+
+    else:
+        messages.info(
+            request,
+            f"Estado actual de la factura: {factura.estado}.",
+        )
+
+
+def _archivo_xml_disponible(factura):
+    """
+    Devuelve el XML más avanzado disponible sin regenerar nada.
+
+    Prioridad:
+        AUTORIZADO > FIRMADO > GENERADO
+    """
+    if factura.xml_autorizado:
+        return (
+            factura.xml_autorizado,
+            "AUTORIZADO",
+        )
+
+    if factura.xml_firmado:
+        return (
+            factura.xml_firmado,
+            "FIRMADO",
+        )
+
+    if factura.xml_generado:
+        return (
+            factura.xml_generado,
+            "GENERADO",
+        )
+
+    return (
+        None,
+        "",
+    )
+
+
+def _nombre_xml_factura(
+    factura,
+    etapa,
+):
+    """
+    Nombre seguro para descargar el XML.
+    """
+    if factura.secuencial:
+        numero = (
+            f"{factura.establecimiento or '000'}-"
+            f"{factura.punto_emision or '000'}-"
+            f"{factura.secuencial}"
+        )
+    else:
+        numero = f"BORRADOR-{factura.pk}"
+
+    return (
+        f"FACTURA_{numero}_{etapa}.xml"
+        .replace(" ", "_")
+    )
+
+
 # =========================================================
 # DASHBOARD
 # =========================================================
@@ -104,8 +541,10 @@ def dashboard_facturacion(request):
 
     Muestra FACTURAS existentes, no órdenes de trabajo.
 
+    Admite facturas provenientes de OT y facturas manuales sin OT.
+
     Permite buscar por:
-    - número de factura
+    - número/secuencial de factura
     - número de OT de origen
     - placa
     - vehículo
@@ -135,14 +574,31 @@ def dashboard_facturacion(request):
     )
 
     if q:
-        facturas = facturas.filter(
-            Q(numero_factura__icontains=q)
+        filtro = (
+            Q(secuencial__icontains=q)
+            | Q(establecimiento__icontains=q)
+            | Q(punto_emision__icontains=q)
             | Q(numero_orden_origen__icontains=q)
             | Q(placa_snapshot__icontains=q)
             | Q(vehiculo_snapshot__icontains=q)
             | Q(razon_social_comprador__icontains=q)
             | Q(identificacion_comprador__icontains=q)
         )
+
+        partes = [
+            parte.strip()
+            for parte in q.split("-")
+            if parte.strip()
+        ]
+
+        if len(partes) == 3:
+            filtro |= Q(
+                establecimiento__iexact=partes[0],
+                punto_emision__iexact=partes[1],
+                secuencial__iexact=partes[2],
+            )
+
+        facturas = facturas.filter(filtro)
 
     total_facturas = facturas.count()
 
@@ -355,6 +811,21 @@ def crear_factura_desde_ot(
     request,
     orden_id,
 ):
+    """
+    Guarda una FacturaVenta en estado BORRADOR a partir de una OT.
+
+    Flujo:
+    1. valida datos de facturación;
+    2. valida forma de pago;
+    3. crea el snapshot económico desde la OT;
+    4. reemplaza el receptor por el snapshot seleccionado;
+    5. registra una forma de pago por el total;
+    6. NO genera XML;
+    7. NO firma;
+    8. NO envía nada al SRI.
+
+    Si cualquier paso falla, toda la operación se revierte.
+    """
 
     orden = get_object_or_404(
         OrdenTrabajo,
@@ -363,11 +834,57 @@ def crear_factura_desde_ot(
 
     try:
 
-        factura = (
-            crear_factura_desde_orden(
-                orden=orden,
+        datos_facturacion = (
+            _datos_facturacion_desde_post(
+                request
             )
         )
+
+        datos_pago = (
+            _datos_pago_desde_post(
+                request
+            )
+        )
+
+        with transaction.atomic():
+
+            # El servicio crea el snapshot económico y los detalles.
+            # La factura nace obligatoriamente en BORRADOR.
+            factura = (
+                crear_factura_desde_orden(
+                    orden=orden,
+                )
+            )
+
+            # Reemplazamos únicamente el snapshot del receptor.
+            # NO modificamos orden.cliente.
+            for campo, valor in (
+                datos_facturacion.items()
+            ):
+                setattr(
+                    factura,
+                    campo,
+                    valor,
+                )
+
+            factura.full_clean()
+
+            factura.save(
+                update_fields=[
+                    "tipo_identificacion_comprador",
+                    "identificacion_comprador",
+                    "razon_social_comprador",
+                    "direccion_comprador",
+                    "telefono_comprador",
+                    "correo_comprador",
+                    "updated_at",
+                ]
+            )
+
+            _crear_pago_total(
+                factura,
+                datos_pago,
+            )
 
     except ValidationError as exc:
 
@@ -377,7 +894,8 @@ def crear_factura_desde_ot(
         )
 
         return redirect(
-            "facturacion:dashboard"
+            "facturacion:detalle_orden_facturacion",
+            orden_id=orden.pk,
         )
 
     except Exception as exc:
@@ -385,21 +903,23 @@ def crear_factura_desde_ot(
         messages.error(
             request,
             (
-                "No se pudo crear la factura. "
+                "No se pudo guardar la factura. "
                 f"Detalle: {exc}"
             ),
         )
 
         return redirect(
-            "facturacion:dashboard"
+            "facturacion:detalle_orden_facturacion",
+            orden_id=orden.pk,
         )
 
     messages.success(
         request,
         (
-            f"Factura "
-            f"{factura.numero_factura} "
-            "creada correctamente en borrador."
+            f"Factura borrador #{factura.pk} "
+            "guardada correctamente. "
+            "Todavía no se ha reservado secuencial ni generado "
+            "clave de acceso."
         ),
     )
 
@@ -460,10 +980,10 @@ def detalle_factura(
         if detalle.tipo_origen == "MOE"
     ]
 
-    otros_detalles = [
+    manual_detalles = [
         detalle
         for detalle in detalles
-        if detalle.tipo_origen == "OTRO"
+        if detalle.tipo_origen == "MANUAL"
     ]
 
     # =====================================================
@@ -488,9 +1008,9 @@ def detalle_factura(
         )
     )
 
-    subtotal_otros = (
+    subtotal_manual = (
         _subtotal_bruto(
-            otros_detalles
+            manual_detalles
         )
     )
 
@@ -498,7 +1018,7 @@ def detalle_factura(
         subtotal_repuestos
         + subtotal_moi
         + subtotal_moe
-        + subtotal_otros
+        + subtotal_manual
     )
 
     # =====================================================
@@ -528,13 +1048,38 @@ def detalle_factura(
     )
 
     puede_emitir = (
+        factura.estado == "BORRADOR"
+    )
+
+    puede_reintentar = (
         factura.estado
         in {
-            "BORRADOR",
             "GENERADO",
             "FIRMADO",
             "RECIBIDO",
+            "RECHAZADO",
         }
+    )
+
+    puede_consultar_sri = (
+        factura.estado
+        in {
+            "RECIBIDO",
+            "FIRMADO",
+            "RECHAZADO",
+        }
+        and bool(factura.clave_acceso)
+    )
+
+    puede_descargar_xml = bool(
+        factura.xml_autorizado
+        or factura.xml_firmado
+        or factura.xml_generado
+    )
+
+    puede_enviar_correo = (
+        factura.estado == "AUTORIZADO"
+        and bool(factura.xml_autorizado)
     )
 
     context = {
@@ -551,6 +1096,18 @@ def detalle_factura(
         "puede_emitir":
             puede_emitir,
 
+        "puede_reintentar":
+            puede_reintentar,
+
+        "puede_consultar_sri":
+            puede_consultar_sri,
+
+        "puede_descargar_xml":
+            puede_descargar_xml,
+
+        "puede_enviar_correo":
+            puede_enviar_correo,
+
         # -----------------------------------------
         # DETALLES
         # -----------------------------------------
@@ -564,8 +1121,12 @@ def detalle_factura(
         "mano_obra_externa":
             mano_obra_externa,
 
+        "manual_detalles":
+            manual_detalles,
+
+        # Compatibilidad temporal con templates antiguos.
         "otros_detalles":
-            otros_detalles,
+            manual_detalles,
 
         # -----------------------------------------
         # SUBTOTALES
@@ -580,8 +1141,12 @@ def detalle_factura(
         "subtotal_moe":
             subtotal_moe,
 
+        "subtotal_manual":
+            subtotal_manual,
+
+        # Compatibilidad temporal con templates antiguos.
         "subtotal_otros":
-            subtotal_otros,
+            subtotal_manual,
 
         "subtotal_bruto":
             subtotal_bruto,
@@ -645,7 +1210,7 @@ def actualizar_comprador(
         messages.error(
             request,
             (
-                "El comprador solo puede "
+                "Los datos de facturación solo pueden "
                 "modificarse mientras la factura "
                 "está en BORRADOR."
             ),
@@ -761,7 +1326,7 @@ def actualizar_comprador(
                 request,
                 (
                     "El nombre o razón social "
-                    "del comprador es obligatorio."
+                    "para facturación es obligatorio."
                 ),
             )
 
@@ -775,8 +1340,8 @@ def actualizar_comprador(
             messages.error(
                 request,
                 (
-                    "La identificación del "
-                    "comprador es obligatoria."
+                    "La identificación para "
+                    "facturación es obligatoria."
                 ),
             )
 
@@ -837,7 +1402,7 @@ def actualizar_comprador(
 
     messages.success(
         request,
-        "Comprador actualizado correctamente.",
+        "Datos de facturación actualizados correctamente.",
     )
 
     return redirect(
@@ -852,169 +1417,79 @@ def actualizar_comprador(
 
 @login_required
 @require_POST
-@transaction.atomic
 def guardar_forma_pago(
     request,
     factura_id,
 ):
+    """
+    Sustituye la forma de pago de una factura BORRADOR.
 
-    factura = get_object_or_404(
-        FacturaVenta.objects
-        .select_for_update(),
-        pk=factura_id,
-    )
-
-    if not _factura_editable(factura):
-
-        messages.error(
-            request,
-            (
-                "La forma de pago solo puede "
-                "modificarse mientras la factura "
-                "está en BORRADOR."
-            ),
-        )
-
-        return redirect(
-            "facturacion:detalle_factura",
-            factura_id=factura.pk,
-        )
-
-    # =====================================================
-    # FORMA DE PAGO
-    # =====================================================
-
-    forma_pago = (
-        request.POST.get("forma_pago", "")
-        or request.POST.get("codigo_sri_pago", "")
-    ).strip()
-
-    formas_validas = {
-        codigo
-        for codigo, _nombre
-        in FacturaVenta.FORMAS_PAGO
-    }
-
-    if forma_pago not in formas_validas:
-
-        messages.error(
-            request,
-            "Selecciona una forma de pago válida.",
-        )
-
-        return redirect(
-            "facturacion:detalle_factura",
-            factura_id=factura.pk,
-        )
-
-    # =====================================================
-    # PLAZO
-    # =====================================================
+    La sustitución es atómica:
+    si el nuevo pago no es válido, el pago anterior se conserva.
+    """
 
     try:
-        plazo = int(
-            request.POST.get("plazo", "0")
-            or 0
-        )
-    except (TypeError, ValueError):
-        plazo = 0
 
-    if plazo < 0:
-        plazo = 0
+        with transaction.atomic():
 
-    unidad_tiempo = (
-        request.POST.get(
-            "unidad_tiempo",
-            "Días",
-        ).strip()
-        or "Días"
-    )
+            factura = get_object_or_404(
+                FacturaVenta.objects
+                .select_for_update(),
+                pk=factura_id,
+            )
 
-    # =====================================================
-    # ENTIDAD FINANCIERA
-    # =====================================================
+            if not _factura_editable(
+                factura
+            ):
+                raise ValidationError(
+                    "La forma de pago solo puede "
+                    "modificarse mientras la factura "
+                    "está en BORRADOR."
+                )
 
-    entidad_financiera = None
-
-    entidad_financiera_id = (
-        request.POST.get(
-            "entidad_financiera_id",
-            "",
-        ).strip()
-    )
-
-    entidad_financiera_nombre = (
-        request.POST.get(
-            "entidad_financiera_nombre",
-            "",
-        ).strip()
-    )
-
-    referencia = (
-        request.POST.get("referencia_pago", "")
-        or request.POST.get("referencia", "")
-    ).strip()
-
-    observacion = (
-        request.POST.get("observacion_pago", "")
-        or request.POST.get("observacion", "")
-    ).strip()
-
-    if entidad_financiera_id:
-
-        try:
-            entidad_financiera = (
-                EntidadFinanciera.objects
-                .get(
-                    pk=entidad_financiera_id,
-                    activo=True,
+            datos_pago = (
+                _datos_pago_desde_post(
+                    request
                 )
             )
 
-        except (
-            EntidadFinanciera.DoesNotExist,
-            ValueError,
-        ):
-
-            messages.error(
-                request,
-                (
-                    "La entidad financiera seleccionada "
-                    "no existe o está inactiva."
+            # Primero construimos y validamos el pago nuevo.
+            nuevo_pago = PagoFacturaVenta(
+                factura=factura,
+                forma_pago=(
+                    datos_pago["forma_pago"]
+                ),
+                total=factura.importe_total,
+                entidad_financiera=(
+                    datos_pago[
+                        "entidad_financiera"
+                    ]
+                ),
+                entidad_financiera_nombre=(
+                    datos_pago[
+                        "entidad_financiera_nombre"
+                    ]
+                ),
+                referencia=(
+                    datos_pago["referencia"]
+                ),
+                observacion=(
+                    datos_pago["observacion"]
+                ),
+                plazo=(
+                    datos_pago["plazo"]
+                ),
+                unidad_tiempo=(
+                    datos_pago["unidad_tiempo"]
                 ),
             )
 
-            return redirect(
-                "facturacion:detalle_factura",
-                factura_id=factura.pk,
-            )
+            nuevo_pago.full_clean()
 
-    # Si la forma de pago no usa sistema financiero,
-    # eliminamos cualquier dato residual del formulario.
-    if forma_pago not in PagoFacturaVenta.FORMAS_PAGO_CON_ENTIDAD:
-        entidad_financiera = None
-        entidad_financiera_nombre = ""
-        referencia = ""
+            # Solo después de validar eliminamos el pago anterior.
+            factura.pagos.all().delete()
 
-    # =====================================================
-    # UNA SOLA FORMA DE PAGO POR EL TOTAL
-    # =====================================================
-
-    factura.pagos.all().delete()
-
-    try:
-
-        PagoFacturaVenta.objects.create(
-            factura=factura,
-            forma_pago=forma_pago,
-            total=factura.importe_total,
-            entidad_financiera=entidad_financiera,
-            entidad_financiera_nombre=entidad_financiera_nombre,
-            referencia=referencia,
-            observacion=observacion,
-            plazo=plazo,
-            unidad_tiempo=unidad_tiempo,
-        )
+            nuevo_pago.save()
 
     except ValidationError as exc:
 
@@ -1025,7 +1500,22 @@ def guardar_forma_pago(
 
         return redirect(
             "facturacion:detalle_factura",
-            factura_id=factura.pk,
+            factura_id=factura_id,
+        )
+
+    except Exception as exc:
+
+        messages.error(
+            request,
+            (
+                "No se pudo guardar la forma de pago. "
+                f"Detalle: {exc}"
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_id,
         )
 
     messages.success(
@@ -1035,7 +1525,7 @@ def guardar_forma_pago(
 
     return redirect(
         "facturacion:detalle_factura",
-        factura_id=factura.pk,
+        factura_id=factura_id,
     )
 
 
@@ -1124,10 +1614,16 @@ def emitir_factura(
         )
 
     # =====================================================
-    # PROCESAR
+    # PREPARAR Y PROCESAR
     # =====================================================
 
     try:
+        # BORRADOR no consume secuencial ni clave.
+        # Se reservan únicamente cuando el usuario decide emitir.
+        if not factura.tiene_datos_emision:
+            factura.preparar_emision()
+
+        factura.refresh_from_db()
 
         procesar_factura_completa(
             factura
@@ -1165,69 +1661,387 @@ def emitir_factura(
     # LEER ESTADO FINAL REAL
     # =====================================================
 
-    factura.refresh_from_db()
+    _mensaje_resultado_emision(
+        request,
+        factura,
+    )
 
-    if factura.estado == "AUTORIZADO":
+    return redirect(
+        "facturacion:detalle_factura",
+        factura_id=factura.pk,
+    )
 
-        messages.success(
+
+# =========================================================
+# REINTENTAR / CONTINUAR EMISIÓN
+# =========================================================
+
+@login_required
+@require_POST
+def reintentar_factura(
+    request,
+    factura_id,
+):
+    """
+    Continúa únicamente desde la etapa persistida.
+
+    GENERADO:
+        firma -> recepción -> autorización
+
+    FIRMADO:
+        recepción -> autorización
+
+    RECIBIDO:
+        solo autorización
+
+    RECHAZADO:
+        reenvía exactamente el XML firmado existente mediante
+        el flujo explícito del servicio. No genera otra clave,
+        secuencial, XML ni firma.
+
+    BORRADOR:
+        debe utilizar el botón Emitir factura.
+    """
+
+    factura = get_object_or_404(
+        FacturaVenta.objects
+        .select_related(
+            "empresa",
+            "sucursal",
+            "firma_electronica",
+        )
+        .prefetch_related(
+            "detalles",
+            "pagos",
+        ),
+        pk=factura_id,
+    )
+
+    try:
+        if factura.estado == "AUTORIZADO":
+            messages.info(
+                request,
+                "La factura ya está AUTORIZADA por el SRI.",
+            )
+
+            return redirect(
+                "facturacion:detalle_factura",
+                factura_id=factura.pk,
+            )
+
+        if factura.estado == "BORRADOR":
+            messages.info(
+                request,
+                (
+                    "La factura continúa en BORRADOR. "
+                    "Usa Emitir factura para iniciar la emisión."
+                ),
+            )
+
+            return redirect(
+                "facturacion:detalle_factura",
+                factura_id=factura.pk,
+            )
+
+        if factura.estado == "GENERADO":
+            firmar_comprobante(
+                factura
+            )
+            factura.refresh_from_db()
+
+            enviar_comprobante_sri(
+                factura
+            )
+            factura.refresh_from_db()
+
+            if factura.estado == "RECIBIDO":
+                consultar_comprobante_sri(
+                    factura
+                )
+
+        elif factura.estado == "FIRMADO":
+            enviar_comprobante_sri(
+                factura
+            )
+            factura.refresh_from_db()
+
+            if factura.estado == "RECIBIDO":
+                consultar_comprobante_sri(
+                    factura
+                )
+
+        elif factura.estado == "RECIBIDO":
+            consultar_comprobante_sri(
+                factura
+            )
+
+        elif factura.estado == "RECHAZADO":
+            reenviar_comprobante_rechazado(
+                factura
+            )
+            factura.refresh_from_db()
+
+            if factura.estado == "RECIBIDO":
+                consultar_comprobante_sri(
+                    factura
+                )
+
+        else:
+            raise ValidationError(
+                (
+                    "No existe una operación de reintento "
+                    f"para el estado {factura.estado}."
+                )
+            )
+
+    except ValidationError as exc:
+        messages.error(
             request,
-            (
-                "Factura autorizada correctamente "
-                "por el SRI."
-            ),
+            str(exc),
         )
 
-    elif factura.estado == "RECIBIDO":
-
-        messages.info(
-            request,
-            (
-                "El SRI recibió la factura. "
-                "La autorización todavía está "
-                "en procesamiento."
-            ),
-        )
-
-    elif factura.estado == "FIRMADO":
-
-        messages.info(
-            request,
-            (
-                "El XML quedó firmado. "
-                "Todavía no ha sido recibido "
-                "por el SRI."
-            ),
-        )
-
-    elif factura.estado == "GENERADO":
-
-        messages.info(
-            request,
-            (
-                "El XML fue generado, pero "
-                "el proceso de emisión aún "
-                "no ha terminado."
-            ),
-        )
-
-    elif factura.estado == "RECHAZADO":
-
+    except Exception as exc:
         messages.error(
             request,
             (
-                "El SRI rechazó el comprobante. "
-                "Revisa el mensaje mostrado "
-                "en la sección Estado SRI."
+                "No se pudo continuar la emisión. "
+                f"Detalle: {exc}"
             ),
         )
 
-    else:
+    _mensaje_resultado_emision(
+        request,
+        factura,
+    )
 
+    return redirect(
+        "facturacion:detalle_factura",
+        factura_id=factura.pk,
+    )
+
+
+# =========================================================
+# CONSULTAR ESTADO EN SRI
+# =========================================================
+
+@login_required
+@require_POST
+def consultar_estado_sri(
+    request,
+    factura_id,
+):
+    """
+    Consulta autorización sin reenviar ni regenerar el comprobante.
+    """
+
+    factura = get_object_or_404(
+        FacturaVenta.objects
+        .select_related(
+            "empresa",
+            "sucursal",
+        ),
+        pk=factura_id,
+    )
+
+    try:
+        consultar_comprobante_sri(
+            factura
+        )
+
+    except ValidationError as exc:
+        messages.error(
+            request,
+            str(exc),
+        )
+
+    except Exception as exc:
+        messages.error(
+            request,
+            (
+                "No se pudo consultar el comprobante en el SRI. "
+                f"Detalle: {exc}"
+            ),
+        )
+
+    _mensaje_resultado_emision(
+        request,
+        factura,
+    )
+
+    return redirect(
+        "facturacion:detalle_factura",
+        factura_id=factura.pk,
+    )
+
+
+# =========================================================
+# DESCARGAR XML
+# =========================================================
+
+@login_required
+def descargar_xml_factura(
+    request,
+    factura_id,
+):
+    """
+    Descarga el XML más avanzado ya almacenado.
+
+    No genera, firma ni envía nada.
+    """
+
+    factura = get_object_or_404(
+        FacturaVenta,
+        pk=factura_id,
+    )
+
+    archivo, etapa = (
+        _archivo_xml_disponible(
+            factura
+        )
+    )
+
+    if not archivo:
+        messages.error(
+            request,
+            (
+                "La factura todavía no tiene un XML "
+                "disponible para descargar."
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura.pk,
+        )
+
+    try:
+        archivo.open("rb")
+        contenido = archivo.read()
+    finally:
+        try:
+            archivo.close()
+        except Exception:
+            pass
+
+    response = HttpResponse(
+        contenido,
+        content_type="application/xml; charset=utf-8",
+    )
+
+    response["Content-Disposition"] = (
+        'attachment; filename="'
+        + _nombre_xml_factura(
+            factura,
+            etapa,
+        )
+        + '"'
+    )
+
+    return response
+
+
+# =========================================================
+# CORREO
+# =========================================================
+
+@login_required
+@require_POST
+def enviar_factura_correo(
+    request,
+    factura_id,
+):
+    """
+    Punto de entrada reservado para el envío de RIDE + XML.
+
+    No se simula un envío mientras el servicio de correo de
+    facturación no esté implementado.
+    """
+
+    factura = get_object_or_404(
+        FacturaVenta,
+        pk=factura_id,
+    )
+
+    if factura.estado != "AUTORIZADO":
+        messages.error(
+            request,
+            (
+                "Solo una factura AUTORIZADA puede enviarse "
+                "al cliente por correo."
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura.pk,
+        )
+
+    if not factura.correo_comprador:
+        messages.error(
+            request,
+            (
+                "La factura no tiene un correo del comprador "
+                "registrado."
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura.pk,
+        )
+
+    messages.info(
+        request,
+        (
+            "El servicio de correo de facturación todavía "
+            "no está implementado. No se envió ningún correo."
+        ),
+    )
+
+    return redirect(
+        "facturacion:detalle_factura",
+        factura_id=factura.pk,
+    )
+
+
+# =========================================================
+# ANULACIÓN
+# =========================================================
+
+@login_required
+@require_POST
+def anular_factura(
+    request,
+    factura_id,
+):
+    """
+    No altera localmente una factura electrónica autorizada.
+
+    La anulación SRI requiere su flujo tributario específico;
+    por seguridad este endpoint no cambia el estado por sí solo.
+    """
+
+    factura = get_object_or_404(
+        FacturaVenta,
+        pk=factura_id,
+    )
+
+    if factura.estado == "AUTORIZADO":
+        messages.error(
+            request,
+            (
+                "Una factura AUTORIZADA no puede anularse "
+                "cambiando únicamente el estado local. "
+                "Debe ejecutarse el procedimiento de anulación "
+                "correspondiente ante el SRI."
+            ),
+        )
+    else:
         messages.info(
             request,
             (
-                "Proceso ejecutado. "
-                f"Estado actual: {factura.estado}."
+                "La anulación todavía no está habilitada para "
+                "este flujo. No se modificó la factura."
             ),
         )
 
@@ -1235,6 +2049,59 @@ def emitir_factura(
         "facturacion:detalle_factura",
         factura_id=factura.pk,
     )
+
+
+# =========================================================
+# FACTURA MANUAL / VENTA DIRECTA
+# =========================================================
+
+@login_required
+def nueva_factura_manual(
+    request,
+):
+    """
+    La infraestructura de FacturaVenta ya admite orden=None,
+    pero la pantalla de captura de líneas manuales debe
+    implementarse junto con su template/servicio.
+    """
+
+    messages.info(
+        request,
+        (
+            "La pantalla de factura manual todavía está "
+            "pendiente de implementar."
+        ),
+    )
+
+    return redirect(
+        "facturacion:dashboard",
+    )
+
+
+@login_required
+@require_POST
+def crear_factura_manual(
+    request,
+):
+    """
+    Endpoint reservado para la creación de venta directa.
+
+    Se mantiene sin crear registros hasta implementar la captura
+    y validación de DetalleFacturaVenta manual.
+    """
+
+    messages.error(
+        request,
+        (
+            "La creación de factura manual todavía no está "
+            "implementada. No se creó ninguna factura."
+        ),
+    )
+
+    return redirect(
+        "facturacion:dashboard",
+    )
+
 # =========================================================
 # DETALLE DE OT PARA FACTURACIÓN
 # =========================================================
@@ -1245,11 +2112,11 @@ def detalle_orden_facturacion(
     orden_id,
 ):
     """
-    Pantalla de consulta de una OT cerrada antes de emitir.
+    Pantalla de preparación de una OT cerrada antes de guardar la factura.
 
     IMPORTANTE:
-    - NO crea FacturaVenta.
-    - NO consume secuencial.
+    - NO crea FacturaVenta hasta presionar Guardar factura.
+    - NO consume secuencial mientras solo se visualiza.
     - NO genera XML.
     - NO envía nada al SRI.
 

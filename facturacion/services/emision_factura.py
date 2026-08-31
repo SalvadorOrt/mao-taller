@@ -213,7 +213,7 @@ def _mensaje_estado(
     if estado == ESTADO_BORRADOR:
         return (
             "Factura en borrador. "
-            "Falta generar el XML."
+            "Todavía no se ha emitido ni generado el XML."
         )
 
     if estado == ESTADO_GENERADO:
@@ -276,6 +276,25 @@ def generar_comprobante(
     factura = _recargar_factura(
         factura
     )
+
+    # Una factura BORRADOR no consume secuencial ni genera clave.
+    # Justo antes de construir el XML reservamos ambos datos fiscales.
+    # Si ya fueron preparados previamente (por ejemplo desde views.py),
+    # este bloque no hace nada.
+    if (
+        factura.estado == ESTADO_BORRADOR
+        and not factura.tiene_datos_emision
+    ):
+        factura.preparar_emision()
+        factura = _recargar_factura(
+            factura
+        )
+
+    if not factura.tiene_datos_emision:
+        raise ValidacionSRIError(
+            "La factura no tiene secuencial y clave de acceso "
+            "preparados para la emisión."
+        )
 
     validar_factura_para_xml(
         factura
@@ -483,6 +502,9 @@ def procesar_factura_completa(
     Estados:
 
         BORRADOR
+            ↓
+        preparar_emision()
+        (reserva secuencial + genera clave)
             ↓
         GENERADO
             ↓
@@ -756,7 +778,10 @@ def obtener_estado_emision(
             factura.numero_factura,
 
         "clave_acceso":
-            factura.clave_acceso,
+            factura.clave_acceso or "",
+
+        "tiene_datos_emision":
+            factura.tiene_datos_emision,
 
         "ambiente":
             factura.ambiente,

@@ -76,7 +76,7 @@ def _datos_comprador(
         raise ValidationError(
             "La Orden de Trabajo no tiene un "
             "cliente válido para facturación. "
-            "Selecciona otro comprador o utiliza "
+            "Selecciona otros datos de facturación o utiliza "
             "Consumidor Final."
         )
 
@@ -129,7 +129,7 @@ def _datos_comprador(
 
     if not razon_social:
         raise ValidationError(
-            "El comprador no tiene nombre "
+            "Los datos de facturación no tienen nombre "
             "o razón social."
         )
 
@@ -227,7 +227,7 @@ def _obtener_lineas_facturables(orden):
                 codigo[:50],
 
             "codigo_auxiliar":
-                f"OT-{orden.numero_orden}"[:50],
+                str(orden.numero_orden)[:50],
 
             "descripcion":
                 descripcion[:500],
@@ -282,7 +282,7 @@ def _obtener_lineas_facturables(orden):
                 item.codigo_barras_referencia
                 or ""
             ).strip()
-            or f"OT-{orden.numero_orden}"
+            or str(orden.numero_orden)
         )
 
         lineas.append({
@@ -593,19 +593,20 @@ def crear_factura_desde_orden(
     consumidor_final=False,
 ):
     """
-    CREA UN SNAPSHOT DE LA OT.
+    CREA UN SNAPSHOT INMUTABLE DE LA OT.
 
-    NO modifica la Orden de Trabajo.
+    - NO modifica la Orden de Trabajo.
+    - NO vuelve a calcular el descuento global.
+    - NO cambia los precios de la OT.
+    - NO genera XML.
+    - NO firma XML.
+    - NO envía nada al SRI.
+    - La factura se crea en estado BORRADOR.
 
-    NO vuelve a calcular el descuento global.
-
-    NO cambia los precios de la OT.
-
-    NO genera XML.
-
-    NO envía al SRI.
-
-    La factura se crea en estado BORRADOR.
+    Por defecto toma el cliente de la OT como receptor.
+    La vista de preparación puede sustituir ese snapshot de
+    facturación dentro de la misma transacción, sin modificar
+    orden.cliente.
     """
 
     # =====================================================
@@ -1071,7 +1072,7 @@ def crear_factura_desde_orden(
 
             comentario=(
                 f"Factura generada desde "
-                f"OT {orden.numero_orden}"
+                f"{orden.numero_orden}"
             ),
 
             observaciones=(

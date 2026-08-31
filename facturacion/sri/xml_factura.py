@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
+from .validaciones import validar_factura_para_xml
+
 
 VERSION_XML_FACTURA = "2.1.0"
 CENTAVO = Decimal("0.01")
@@ -190,107 +192,28 @@ def _datos_emisor(factura):
 # =========================================================
 
 def _validar_factura(factura):
-    if factura is None or not factura.pk:
-        raise ValidationError("La factura debe existir y estar guardada antes de generar el XML.")
+    """
+    Valida la factura justo antes de construir el XML.
 
-    if factura.estado in {"FIRMADO", "RECIBIDO", "AUTORIZADO"}:
-        raise ValidationError(
-            "No se puede regenerar el XML de una factura firmada, recibida o autorizada."
-        )
+    La preparación fiscal (secuencial + clave de acceso) debe haberse
+    realizado previamente mediante FacturaVenta.preparar_emision().
+    """
+    validar_factura_para_xml(
+        factura
+    )
 
-    if not factura.sucursal_id or not factura.empresa_id:
-        raise ValidationError("La factura debe tener sucursal y empresa emisora.")
+    detalles = list(
+        factura.detalles
+        .all()
+        .order_by("id")
+    )
 
-    if not _digitos(factura.establecimiento) or len(factura.establecimiento) != 3:
-        raise ValidationError("El establecimiento debe tener exactamente 3 dígitos.")
-    if not _digitos(factura.punto_emision) or len(factura.punto_emision) != 3:
-        raise ValidationError("El punto de emisión debe tener exactamente 3 dígitos.")
-    if not _digitos(factura.secuencial) or len(factura.secuencial) != 9:
-        raise ValidationError("El secuencial debe tener exactamente 9 dígitos.")
-    if not _digitos(factura.clave_acceso) or len(factura.clave_acceso) != 49:
-        raise ValidationError("La clave de acceso debe tener exactamente 49 dígitos.")
-    if not factura.fecha_emision:
-        raise ValidationError("La factura no tiene fecha de emisión.")
+    pagos = list(
+        factura.pagos
+        .all()
+        .order_by("id")
+    )
 
-    tipo = factura.tipo_identificacion_comprador
-    identificacion = _texto(factura.identificacion_comprador)
-    if tipo not in {"04", "05", "06", "07"}:
-        raise ValidationError("Tipo de identificación del comprador no válido para SRI.")
-    if not _texto(factura.razon_social_comprador):
-        raise ValidationError("La factura no tiene razón social del comprador.")
-
-    if tipo == "04" and (not _digitos(identificacion) or len(identificacion) != 13):
-        raise ValidationError("Para RUC, la identificación debe tener 13 dígitos.")
-    if tipo == "05" and (not _digitos(identificacion) or len(identificacion) != 10):
-        raise ValidationError("Para cédula, la identificación debe tener 10 dígitos.")
-    if tipo == "06" and len(identificacion) < 3:
-        raise ValidationError("El pasaporte del comprador no es válido.")
-    if tipo == "07":
-        if identificacion != "9999999999999":
-            raise ValidationError("Consumidor Final debe usar 9999999999999.")
-        if _q2(factura.importe_total) > LIMITE_CONSUMIDOR_FINAL:
-            raise ValidationError(
-                "El SRI exige identificar al adquirente cuando la factura supera USD 50.00; "
-                "no puede emitirse como Consumidor Final."
-            )
-
-    detalles = list(factura.detalles.all().order_by("id"))
-    if not detalles:
-        raise ValidationError("La factura no tiene detalles.")
-
-    total_base = CERO
-    total_descuento = CERO
-    total_iva = CERO
-
-    for detalle in detalles:
-        if _d(detalle.cantidad) <= CERO:
-            raise ValidationError(f"El detalle {detalle.pk} tiene cantidad inválida.")
-        if _d(detalle.precio_unitario) < CERO:
-            raise ValidationError(f"El detalle {detalle.pk} tiene precio unitario inválido.")
-        if _q2(detalle.descuento) < CERO:
-            raise ValidationError(f"El detalle {detalle.pk} tiene descuento inválido.")
-        if detalle.codigo_impuesto != "2":
-            raise ValidationError(f"El detalle {detalle.pk} usa un impuesto no soportado.")
-        if detalle.codigo_porcentaje_iva not in {"0", "4"}:
-            raise ValidationError(f"El detalle {detalle.pk} usa una tarifa IVA no soportada.")
-        if detalle.codigo_porcentaje_iva == "4" and _q2(detalle.tarifa_iva) != Decimal("15.00"):
-            raise ValidationError(f"El detalle {detalle.pk} usa código IVA 4 pero tarifa distinta de 15%.")
-        if detalle.codigo_porcentaje_iva == "0" and _q2(detalle.tarifa_iva) != CERO:
-            raise ValidationError(f"El detalle {detalle.pk} usa código IVA 0 pero tarifa distinta de 0%.")
-
-        _maximo(detalle.codigo_principal, 25, "codigoPrincipal")
-        if detalle.codigo_auxiliar:
-            _maximo(detalle.codigo_auxiliar, 25, "codigoAuxiliar")
-        _maximo(detalle.descripcion, 300, "descripcion")
-
-        total_base += _q2(detalle.precio_total_sin_impuesto)
-        total_descuento += _q2(detalle.descuento)
-        total_iva += _q2(detalle.valor_iva)
-
-    total_base = _q2(total_base)
-    total_descuento = _q2(total_descuento)
-    total_iva = _q2(total_iva)
-
-    if total_base != _q2(factura.total_sin_impuestos):
-        raise ValidationError("La suma de detalles no coincide con total_sin_impuestos.")
-    if total_descuento != _q2(factura.total_descuento):
-        raise ValidationError("La suma de descuentos no coincide con total_descuento.")
-    if total_iva != _q2(factura.valor_iva):
-        raise ValidationError("La suma del IVA de detalles no coincide con valor_iva.")
-
-    total_esperado = _q2(total_base + total_iva + _q2(factura.propina))
-    if total_esperado != _q2(factura.importe_total):
-        raise ValidationError("El importe total no coincide con base + impuestos + propina.")
-
-    pagos = list(factura.pagos.all().order_by("id"))
-    if not pagos:
-        raise ValidationError("Debes declarar al menos una forma de pago antes de generar el XML.")
-
-    total_pagos = _q2(sum((_q2(p.total) for p in pagos), CERO))
-    if total_pagos != _q2(factura.importe_total):
-        raise ValidationError("La suma de las formas de pago debe ser igual al importe total.")
-
-    _datos_emisor(factura)
     return detalles, pagos
 
 
@@ -485,16 +408,19 @@ def _info_adicional(raiz, factura, ruc_proveedor=None):
     if factura.correo_comprador:
         campos.append(("Email", factura.correo_comprador))
 
-    if factura.orden_id:
-        orden = factura.orden
-        if orden.numero_orden:
-            campos.append(("OT", orden.numero_orden))
-        if orden.placa:
-            campos.append(("Placa", orden.placa))
-        if orden.vehiculo:
-            campos.append(("Vehículo", orden.vehiculo))
-        if orden.kilometraje is not None:
-            campos.append(("Kilometraje", orden.kilometraje))
+    # La factura es un snapshot fiscal independiente.
+    # Nunca leemos datos vivos de OrdenTrabajo para construir el XML.
+    if factura.numero_orden_origen:
+        campos.append(("OT", factura.numero_orden_origen))
+
+    if factura.placa_snapshot:
+        campos.append(("Placa", factura.placa_snapshot))
+
+    if factura.vehiculo_snapshot:
+        campos.append(("Vehículo", factura.vehiculo_snapshot))
+
+    if factura.kilometraje_snapshot is not None:
+        campos.append(("Kilometraje", factura.kilometraje_snapshot))
 
     if factura.comentario:
         campos.append(("Comentario", factura.comentario))
@@ -519,9 +445,23 @@ def _info_adicional(raiz, factura, ruc_proveedor=None):
 def construir_xml_factura(factura, ruc_proveedor=None):
     """
     Construye XML de Factura SRI 2.1.0.
+
+    Requiere que la factura ya tenga secuencial y clave de acceso.
     No firma, no envía al SRI y no cambia el estado.
     Retorna bytes UTF-8.
     """
+    if factura is None or not getattr(factura, "pk", None):
+        raise ValidationError(
+            "La factura debe existir y estar guardada antes "
+            "de generar el XML."
+        )
+
+    if not getattr(factura, "tiene_datos_emision", False):
+        raise ValidationError(
+            "La factura todavía no tiene secuencial y clave "
+            "de acceso. Primero debe prepararse para emisión."
+        )
+
     detalles, pagos = _validar_factura(factura)
     emisor = _datos_emisor(factura)
 
@@ -562,7 +502,32 @@ def generar_xml_factura(factura, guardar=True, ruc_proveedor=None):
         f"factura_{factura.establecimiento}-"
         f"{factura.punto_emision}-{factura.secuencial}.xml"
     )
-    factura.xml_generado.save(nombre, ContentFile(xml_bytes), save=False)
+    factura.xml_generado.save(
+
+        nombre,
+
+        ContentFile(xml_bytes),
+
+        save=False,
+
+    )
+
     factura.estado = "GENERADO"
-    factura.save(update_fields=["xml_generado", "estado", "updated_at"])
+
+    factura.save(
+
+        update_fields=[
+
+            "xml_generado",
+
+            "estado",
+
+            "updated_at",
+
+        ]
+
+    )
+
+    factura.refresh_from_db()
+
     return xml_bytes

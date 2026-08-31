@@ -85,7 +85,7 @@
                         border-color: var(--border);
                     "
                 >
-                    OT {{ orden.numero_orden }}
+                    {{ orden.numero_orden }}
                 </span>
 
             </div>
@@ -128,7 +128,7 @@
     <form
         method="post"
         action="{% url 'facturacion:crear_factura_desde_ot' orden.pk %}"
-        id="formEmitirFactura"
+        id="formGuardarFactura"
         novalidate
     >
 
@@ -151,10 +151,9 @@
         ================================================== -->
 
         {% include "includes/detalle_factura/info_general.html" %}
-        {% include "includes/detalle_factura/modal_emitir_factura.html" %}
 
         <!-- =================================================
-             COMPRADOR DE LA FACTURA
+             DATOS DE FACTURACIÓN
         ================================================== -->
 
         {% include "includes/detalle_factura/comprador.html" %}
@@ -288,7 +287,7 @@
 
             Swal.fire({
                 title: "Identificación requerida",
-                text: "Ingrese la identificación del comprador.",
+                text: "Ingrese la identificación para facturación.",
                 icon: "warning",
                 confirmButtonColor: "#ff9500"
             });
@@ -303,8 +302,8 @@
         ) {
 
             Swal.fire({
-                title: "Comprador requerido",
-                text: "Ingrese el nombre o razón social del comprador.",
+                title: "Datos de facturación requeridos",
+                text: "Ingrese el nombre o razón social para facturación.",
                 icon: "warning",
                 confirmButtonColor: "#ff9500"
             });
@@ -335,17 +334,17 @@
 
 
     /* =========================================================
-       CONFIRMAR EMISIÓN
+       CONFIRMAR GUARDADO DE FACTURA
     ========================================================= */
 
-    function confirmarEmisionFactura() {
+    function confirmarGuardadoFactura() {
 
         const formulario = document.getElementById(
-            "formEmitirFactura"
+            "formGuardarFactura"
         );
 
         const boton = document.getElementById(
-            "btnEmitirFactura"
+            "btnGuardarFactura"
         );
 
 
@@ -369,7 +368,7 @@
 
         Swal.fire({
 
-            title: "¿Emitir factura?",
+            title: "¿Guardar factura?",
 
             html: `
                 <div style="
@@ -377,15 +376,21 @@
                     line-height: 1.5;
                     color: #444;
                 ">
-                    Se creará la factura electrónica correspondiente
-                    a la orden
+                    Se creará una factura en estado
+                    <strong>BORRADOR</strong>
+                    a partir de la orden
                     <strong>
                         {{ orden.numero_orden|escapejs }}
                     </strong>.
 
                     <br><br>
 
-                    Total a facturar:
+                    Esto
+                    <strong>no enviará nada al SRI</strong>.
+
+                    <br><br>
+
+                    Total de la factura:
 
                     <strong>
                         ${{ total_final|default:0|floatformat:2 }}
@@ -402,7 +407,7 @@
             cancelButtonColor: "#6e6e73",
 
             confirmButtonText:
-                "Sí, emitir factura",
+                "Sí, guardar factura",
 
             cancelButtonText:
                 "Cancelar"
@@ -424,7 +429,7 @@
                         style="margin-right:5px;"
                     ></i>
 
-                    Emitiendo...
+                    Guardando...
                 `;
             }
 
@@ -432,10 +437,10 @@
             Swal.fire({
 
                 title:
-                    "Procesando factura",
+                    "Guardando factura",
 
                 html:
-                    "Preparando la información para emisión...",
+                    "Creando el borrador de la factura...",
 
                 allowOutsideClick:
                     false,

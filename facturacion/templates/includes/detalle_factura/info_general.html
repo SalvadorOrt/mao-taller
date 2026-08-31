@@ -284,154 +284,370 @@
 
         <div class="info-general-header-actions">
 
+            {% if factura %}
 
-            <!-- =============================================
-                 EMITIR FACTURA
+                <!-- =============================================
+                     GUARDAR CAMBIOS
+                     Los formularios de comprador/pago conservan
+                     sus propios submit. Este botón solo es visual
+                     cuando la factura ya no es editable.
+                ============================================== -->
 
-                 Activo mientras todavía no existe factura.
-            ============================================== -->
-
-            <button
-            type="button"
-            id="btnEmitirFactura"
-            class="btn-login primary"
-            onclick="abrirModalEmisionFactura()"
-        >
-            <i class="bi bi-receipt"></i>
-            Emitir factura
-        </button>
-
-
-
-
-            <!-- =============================================
-                 IMPRIMIR
-
-                 Se habilitará cuando la factura esté
-                 autorizada y tengamos generado el RIDE.
-            ============================================== -->
-
-            <button
-                type="button"
-                class="btn-login factura-action-disabled"
-                disabled
-                title="Disponible después de autorizar la factura"
-            >
-
-                <i
-                    class="bi bi-printer"
-                    style="margin-right: 5px;"
-                ></i>
-
-                Imprimir
-
-            </button>
+                {% if puede_editar %}
+                    <button
+                        type="button"
+                        class="btn-login primary"
+                        onclick="
+                            const formulario =
+                                document.getElementById('formGuardarFactura')
+                                || document.querySelector('form[data-form-factura]');
+                            if (formulario) {
+                                formulario.requestSubmit();
+                            }
+                        "
+                        title="Guardar los cambios del borrador"
+                    >
+                        <i class="bi bi-save"></i>
+                        Guardar cambios
+                    </button>
+                {% else %}
+                    <button
+                        type="button"
+                        class="btn-login factura-action-disabled"
+                        disabled
+                        title="La factura ya no puede modificarse"
+                    >
+                        <i class="bi bi-lock"></i>
+                        Guardar cambios
+                    </button>
+                {% endif %}
 
 
+                <!-- =============================================
+                     EMITIR
+                ============================================== -->
 
-            <!-- =============================================
-                 XML
+                {% if puede_emitir %}
+                    <form
+                        method="post"
+                        action="{% url 'facturacion:emitir_factura' factura.id %}"
+                        style="display:inline;"
+                        onsubmit="return confirmarEmisionFactura(this);"
+                    >
+                        {% csrf_token %}
 
-                 Se habilitará cuando exista XML de la factura.
-            ============================================== -->
-
-            <button
-                type="button"
-                class="btn-login factura-action-disabled"
-                disabled
-                title="Disponible después de generar la factura"
-            >
-
-                <i
-                    class="bi bi-file-earmark-code"
-                    style="margin-right: 5px;"
-                ></i>
-
-                XML
-
-            </button>
-
-
-
-            <!-- =============================================
-                 ENVIAR POR CORREO
-
-                 Se habilitará después de autorización.
-            ============================================== -->
-
-            <button
-                type="button"
-                class="btn-login factura-action-disabled"
-                disabled
-                title="Disponible después de autorizar la factura"
-            >
-
-                <i
-                    class="bi bi-envelope"
-                    style="margin-right: 5px;"
-                ></i>
-
-                Enviar correo
-
-            </button>
+                        <button
+                            type="submit"
+                            class="btn-login primary"
+                            title="Generar, firmar y enviar la factura al SRI"
+                        >
+                            <i class="bi bi-send-check"></i>
+                            Emitir factura
+                        </button>
+                    </form>
+                {% endif %}
 
 
+                <!-- =============================================
+                     FACTURA / RIDE
+                     Disponible desde BORRADOR.
+                ============================================== -->
 
-            <!-- =============================================
-                 REINTENTAR
-
-                 Solo tendrá sentido si la emisión falla
-                 o el SRI devuelve un estado recuperable.
-            ============================================== -->
-
-            <button
-                type="button"
-                class="
-                    btn-login
-                    factura-action-warning
-                    factura-action-disabled
-                "
-                disabled
-                title="Disponible si ocurre un error de emisión"
-            >
-
-                <i
-                    class="bi bi-arrow-clockwise"
-                    style="margin-right: 5px;"
-                ></i>
-
-                Reintentar
-
-            </button>
+                <button
+                    type="button"
+                    class="btn-login"
+                    onclick="imprimirFacturaDirecto(event)"
+                    title="Ver, imprimir o guardar la factura como PDF"
+                >
+                    <i
+                        class="bi bi-receipt"
+                        style="margin-right: 5px;"
+                    ></i>
+                    Factura
+                </button>
 
 
+                <!-- =============================================
+                     XML
+                ============================================== -->
 
-            <!-- =============================================
-                 ANULAR
+                {% if puede_descargar_xml %}
+                    <a
+                        href="{% url 'facturacion:descargar_xml_factura' factura.id %}"
+                        class="btn-login"
+                        title="Descargar el XML disponible de la factura"
+                        style="text-decoration:none;"
+                    >
+                        <i
+                            class="bi bi-file-earmark-code"
+                            style="margin-right: 5px;"
+                        ></i>
+                        XML
+                    </a>
+                {% else %}
+                    <button
+                        type="button"
+                        class="btn-login factura-action-disabled"
+                        disabled
+                        title="Todavía no existe un XML"
+                    >
+                        <i
+                            class="bi bi-file-earmark-code"
+                            style="margin-right: 5px;"
+                        ></i>
+                        XML
+                    </button>
+                {% endif %}
 
-                 Solo se habilitará cuando exista una factura
-                 emitida que pueda entrar al proceso de anulación.
-            ============================================== -->
 
-            <button
-                type="button"
-                class="
-                    btn-login
-                    factura-action-danger
-                    factura-action-disabled
-                "
-                disabled
-                title="Disponible después de emitir la factura"
-            >
+                <!-- =============================================
+                     CORREO
+                ============================================== -->
 
-                <i
-                    class="bi bi-x-circle"
-                    style="margin-right: 5px;"
-                ></i>
+                {% if puede_enviar_correo %}
+                    <form
+                        method="post"
+                        action="{% url 'facturacion:enviar_factura_correo' factura.id %}"
+                        style="display:inline;"
+                    >
+                        {% csrf_token %}
 
-                Anular
+                        <button
+                            type="submit"
+                            class="btn-login"
+                            title="Enviar la factura autorizada al correo del comprador"
+                        >
+                            <i
+                                class="bi bi-envelope"
+                                style="margin-right: 5px;"
+                            ></i>
+                            Enviar correo
+                        </button>
+                    </form>
+                {% else %}
+                    <button
+                        type="button"
+                        class="btn-login factura-action-disabled"
+                        disabled
+                        title="Disponible cuando la factura esté autorizada"
+                    >
+                        <i
+                            class="bi bi-envelope"
+                            style="margin-right: 5px;"
+                        ></i>
+                        Enviar correo
+                    </button>
+                {% endif %}
 
-            </button>
+
+                <!-- =============================================
+                     REINTENTAR
+                ============================================== -->
+
+                {% if puede_reintentar %}
+                    <form
+                        method="post"
+                        action="{% url 'facturacion:reintentar_factura' factura.id %}"
+                        style="display:inline;"
+                        onsubmit="return confirmarReintentoFactura(this);"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="btn-login factura-action-warning"
+                            title="Continuar la emisión desde el estado actual"
+                        >
+                            <i
+                                class="bi bi-arrow-clockwise"
+                                style="margin-right: 5px;"
+                            ></i>
+                            Reintentar
+                        </button>
+                    </form>
+                {% else %}
+                    <button
+                        type="button"
+                        class="
+                            btn-login
+                            factura-action-warning
+                            factura-action-disabled
+                        "
+                        disabled
+                        title="No hay una emisión pendiente para reintentar"
+                    >
+                        <i
+                            class="bi bi-arrow-clockwise"
+                            style="margin-right: 5px;"
+                        ></i>
+                        Reintentar
+                    </button>
+                {% endif %}
+
+
+                <!-- =============================================
+                     CONSULTAR SRI
+                     Separado de Reintentar: nunca reenvía.
+                ============================================== -->
+
+                {% if puede_consultar_sri %}
+                    <form
+                        method="post"
+                        action="{% url 'facturacion:consultar_estado_sri' factura.id %}"
+                        style="display:inline;"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="btn-login"
+                            title="Consultar autorización sin reenviar la factura"
+                        >
+                            <i
+                                class="bi bi-cloud-check"
+                                style="margin-right: 5px;"
+                            ></i>
+                            Consultar SRI
+                        </button>
+                    </form>
+                {% endif %}
+
+
+                <!-- =============================================
+                     ANULAR
+                     El endpoint actual NO cambia estados:
+                     protege la factura hasta implementar el
+                     procedimiento tributario real.
+                ============================================== -->
+
+                {% if factura.estado == "AUTORIZADO" %}
+                    <form
+                        method="post"
+                        action="{% url 'facturacion:anular_factura' factura.id %}"
+                        style="display:inline;"
+                        onsubmit="return confirmarAnulacionFactura();"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="btn-login factura-action-danger"
+                            title="Iniciar el procedimiento de anulación"
+                        >
+                            <i
+                                class="bi bi-x-circle"
+                                style="margin-right: 5px;"
+                            ></i>
+                            Anular
+                        </button>
+                    </form>
+                {% else %}
+                    <button
+                        type="button"
+                        class="
+                            btn-login
+                            factura-action-danger
+                            factura-action-disabled
+                        "
+                        disabled
+                        title="Disponible para una factura autorizada"
+                    >
+                        <i
+                            class="bi bi-x-circle"
+                            style="margin-right: 5px;"
+                        ></i>
+                        Anular
+                    </button>
+                {% endif %}
+
+            {% else %}
+
+                <!-- =============================================
+                     PREPARACIÓN DESDE OT
+                ============================================== -->
+
+                <button
+                    type="button"
+                    id="btnGuardarFactura"
+                    class="btn-login primary"
+                    onclick="confirmarGuardadoFactura()"
+                >
+                    <i class="bi bi-save"></i>
+                    Guardar factura
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-login factura-action-disabled"
+                    disabled
+                    title="Primero debes guardar la factura"
+                >
+                    <i
+                        class="bi bi-receipt"
+                        style="margin-right: 5px;"
+                    ></i>
+                    Factura
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-login factura-action-disabled"
+                    disabled
+                    title="Primero debes guardar y emitir la factura"
+                >
+                    <i
+                        class="bi bi-file-earmark-code"
+                        style="margin-right: 5px;"
+                    ></i>
+                    XML
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-login factura-action-disabled"
+                    disabled
+                    title="Disponible cuando la factura esté autorizada"
+                >
+                    <i
+                        class="bi bi-envelope"
+                        style="margin-right: 5px;"
+                    ></i>
+                    Enviar correo
+                </button>
+
+                <button
+                    type="button"
+                    class="
+                        btn-login
+                        factura-action-warning
+                        factura-action-disabled
+                    "
+                    disabled
+                >
+                    <i
+                        class="bi bi-arrow-clockwise"
+                        style="margin-right: 5px;"
+                    ></i>
+                    Reintentar
+                </button>
+
+                <button
+                    type="button"
+                    class="
+                        btn-login
+                        factura-action-danger
+                        factura-action-disabled
+                    "
+                    disabled
+                >
+                    <i
+                        class="bi bi-x-circle"
+                        style="margin-right: 5px;"
+                    ></i>
+                    Anular
+                </button>
+
+            {% endif %}
 
         </div>
 
@@ -708,3 +924,125 @@
     </div>
 
 </div>
+
+
+{% if factura %}
+<script>
+    function bloquearFormularioAccion(formulario, texto) {
+        if (!formulario) {
+            return true;
+        }
+
+        const boton = formulario.querySelector(
+            'button[type="submit"]'
+        );
+
+        if (!boton || boton.disabled) {
+            return false;
+        }
+
+        boton.disabled = true;
+
+        boton.dataset.htmlOriginal =
+            boton.innerHTML;
+
+        boton.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span> '
+            + texto;
+
+        return true;
+    }
+
+
+    function confirmarEmisionFactura(formulario) {
+        const confirmado = window.confirm(
+            "¿Emitir esta factura al SRI?\\n\\n"
+            + "Al continuar se reservará el secuencial, "
+            + "se generará la clave de acceso y la factura "
+            + "dejará de ser editable."
+        );
+
+        if (!confirmado) {
+            return false;
+        }
+
+        return bloquearFormularioAccion(
+            formulario,
+            "Emitiendo..."
+        );
+    }
+
+
+    function confirmarReintentoFactura(formulario) {
+        const confirmado = window.confirm(
+            "¿Continuar la emisión desde el estado actual?\\n\\n"
+            + "No se generará un nuevo secuencial ni una "
+            + "nueva clave de acceso."
+        );
+
+        if (!confirmado) {
+            return false;
+        }
+
+        return bloquearFormularioAccion(
+            formulario,
+            "Procesando..."
+        );
+    }
+
+
+    function confirmarAnulacionFactura() {
+        return window.confirm(
+            "¿Continuar con la opción de anulación?\\n\\n"
+            + "La factura no será anulada localmente sin "
+            + "el procedimiento tributario correspondiente."
+        );
+    }
+</script>
+{% endif %}
+
+
+{% if factura %}
+<script>
+    function imprimirFacturaDirecto(event) {
+        const boton = event?.currentTarget;
+
+        if (!boton || boton.disabled) {
+            return;
+        }
+
+        const htmlOriginal = boton.innerHTML;
+
+        boton.disabled = true;
+        boton.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span> Preparando factura...';
+
+        const iframeAnterior =
+            document.getElementById("iframeImpresionFactura");
+
+        if (iframeAnterior) {
+            iframeAnterior.remove();
+        }
+
+        const iframe = document.createElement("iframe");
+
+        iframe.id = "iframeImpresionFactura";
+        iframe.style.position = "absolute";
+        iframe.style.top = "-10000px";
+        iframe.style.left = "-10000px";
+        iframe.style.width = "1000px";
+        iframe.style.height = "1000px";
+        iframe.style.border = "none";
+
+        document.body.appendChild(iframe);
+
+        iframe.src =
+            "{% url 'facturacion:ride_factura' factura.id %}";
+
+        setTimeout(function () {
+            boton.disabled = false;
+            boton.innerHTML = htmlOriginal;
+        }, 2000);
+    }
+</script>
+{% endif %}

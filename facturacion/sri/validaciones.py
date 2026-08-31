@@ -227,6 +227,83 @@ def validar_clave_acceso(
     return True
 
 
+def validar_datos_emision(
+    factura,
+) -> bool:
+    """
+    Valida los datos fiscales que solo deben existir cuando
+    la factura va a entrar al flujo de emisión.
+
+    Un BORRADOR guardado puede existir sin secuencial y sin
+    clave de acceso. Esta validación se usa desde la generación
+    del XML en adelante.
+    """
+    validar_factura_guardada(
+        factura
+    )
+
+    establecimiento = _texto(
+        getattr(
+            factura,
+            "establecimiento",
+            "",
+        )
+    )
+
+    punto_emision = _texto(
+        getattr(
+            factura,
+            "punto_emision",
+            "",
+        )
+    )
+
+    secuencial = _texto(
+        getattr(
+            factura,
+            "secuencial",
+            "",
+        )
+    )
+
+    if (
+        not establecimiento.isdigit()
+        or len(establecimiento) != 3
+    ):
+        raise ConfiguracionSRIError(
+            "El establecimiento debe tener "
+            "exactamente 3 dígitos para emitir."
+        )
+
+    if (
+        not punto_emision.isdigit()
+        or len(punto_emision) != 3
+    ):
+        raise ConfiguracionSRIError(
+            "El punto de emisión debe tener "
+            "exactamente 3 dígitos para emitir."
+        )
+
+    if (
+        not secuencial.isdigit()
+        or len(secuencial) != 9
+    ):
+        raise ConfiguracionSRIError(
+            "La factura todavía no tiene un "
+            "secuencial fiscal válido de 9 dígitos."
+        )
+
+    validar_clave_acceso(
+        getattr(
+            factura,
+            "clave_acceso",
+            "",
+        )
+    )
+
+    return True
+
+
 # =========================================================
 # FACTURA BASE
 # =========================================================
@@ -400,19 +477,6 @@ def validar_emisor(
             "exactamente 3 dígitos."
         )
 
-    secuencial = _texto(
-        factura.secuencial
-    )
-
-    if (
-        not secuencial.isdigit()
-        or len(secuencial) != 9
-    ):
-        raise ConfiguracionSRIError(
-            "El secuencial debe tener "
-            "exactamente 9 dígitos."
-        )
-
     if factura.ambiente not in {
         AMBIENTE_PRUEBAS,
         AMBIENTE_PRODUCCION,
@@ -449,10 +513,6 @@ def validar_emisor(
             "La factura no tiene fecha "
             "de emisión."
         )
-
-    validar_clave_acceso(
-        factura.clave_acceso
-    )
 
     return True
 
@@ -1227,6 +1287,10 @@ def validar_factura_para_xml(
         factura
     )
 
+    validar_datos_emision(
+        factura
+    )
+
     validar_comprador(
         factura
     )
@@ -1273,6 +1337,10 @@ def validar_factura_para_firma(
         )
 
     validar_emisor(
+        factura
+    )
+
+    validar_datos_emision(
         factura
     )
 
@@ -1332,8 +1400,8 @@ def validar_factura_para_envio(
         factura
     )
 
-    validar_clave_acceso(
-        factura.clave_acceso
+    validar_datos_emision(
+        factura
     )
 
     return True
@@ -1367,8 +1435,8 @@ def validar_factura_para_consulta(
             "autorización."
         )
 
-    validar_clave_acceso(
-        factura.clave_acceso
+    validar_datos_emision(
+        factura
     )
 
     return True
@@ -1419,6 +1487,10 @@ def diagnosticar_factura(
         (
             "emisor",
             validar_emisor,
+        ),
+        (
+            "emision",
+            validar_datos_emision,
         ),
         (
             "comprador",
@@ -1475,6 +1547,7 @@ __all__ = [
     "LIMITE_CONSUMIDOR_FINAL",
     "calcular_digito_verificador",
     "validar_clave_acceso",
+    "validar_datos_emision",
     "validar_factura_guardada",
     "validar_emisor",
     "validar_comprador",

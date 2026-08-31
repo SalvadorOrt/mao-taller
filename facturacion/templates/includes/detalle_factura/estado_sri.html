@@ -1,0 +1,787 @@
+{% load humanize %}
+
+<style>
+    /* =========================================================
+       ESTADO SRI
+    ========================================================= */
+
+    .sri-card {
+        background: #ffffff;
+        border: 1px solid var(--border, #d2d2d7);
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 20px;
+    }
+
+    .sri-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #ececf0;
+    }
+
+    .sri-header-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0;
+        font-size: 15px;
+        font-weight: 800;
+        color: #1d1d1f;
+    }
+
+    .sri-header-title i {
+        font-size: 16px;
+        color: #0071e3;
+    }
+
+    .sri-header-subtitle {
+        margin-top: 4px;
+        font-size: 11px;
+        line-height: 1.45;
+        color: #6e6e73;
+    }
+
+
+    /* =========================================================
+       BADGE DE ESTADO
+    ========================================================= */
+
+    .sri-state-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 30px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font-size: 10px;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: .25px;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .sri-state-borrador {
+        color: #5f6368;
+        background: #f5f5f7;
+        border-color: #e5e5ea;
+    }
+
+    .sri-state-generado {
+        color: #0057b8;
+        background: #eef6ff;
+        border-color: #cfe5ff;
+    }
+
+    .sri-state-firmado {
+        color: #645000;
+        background: #fff9db;
+        border-color: #f3df8e;
+    }
+
+    .sri-state-recibido {
+        color: #0b5c4b;
+        background: #ecfbf6;
+        border-color: #bdebdc;
+    }
+
+    .sri-state-autorizado {
+        color: #0b6b35;
+        background: #edfbf2;
+        border-color: #bfe9cc;
+    }
+
+    .sri-state-rechazado {
+        color: #b42318;
+        background: #fff1f0;
+        border-color: #ffc9c5;
+    }
+
+
+    /* =========================================================
+       FLUJO
+    ========================================================= */
+
+    .sri-flow {
+        display: grid;
+        grid-template-columns:
+            repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 17px;
+    }
+
+    .sri-flow-step {
+        position: relative;
+        min-width: 0;
+        padding: 10px 8px;
+        text-align: center;
+        border: 1px solid #e5e5ea;
+        border-radius: 10px;
+        background: #f8f8fa;
+        color: #8a8a90;
+    }
+
+    .sri-flow-step i {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 15px;
+    }
+
+    .sri-flow-step-label {
+        display: block;
+        font-size: 9px;
+        line-height: 1.2;
+        font-weight: 800;
+        letter-spacing: .2px;
+        text-transform: uppercase;
+    }
+
+    .sri-flow-step.done {
+        color: #0b6b35;
+        background: #f1fbf4;
+        border-color: #c8ead2;
+    }
+
+    .sri-flow-step.current {
+        color: #0057b8;
+        background: #eef6ff;
+        border-color: #a8d0ff;
+        box-shadow:
+            0 0 0 1px rgba(0, 113, 227, .06);
+    }
+
+    .sri-flow-step.error {
+        color: #b42318;
+        background: #fff1f0;
+        border-color: #ffc9c5;
+    }
+
+
+    /* =========================================================
+       INFORMACIÓN
+    ========================================================= */
+
+    .sri-info-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .sri-info-item {
+        min-width: 0;
+        background: #fbfbfd;
+        border: 1px solid #efeff2;
+        border-radius: 10px;
+        padding: 11px 12px;
+    }
+
+    .sri-info-item-full {
+        grid-column: 1 / -1;
+    }
+
+    .sri-info-label {
+        display: block;
+        margin-bottom: 4px;
+        color: #6e6e73;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .2px;
+        text-transform: uppercase;
+    }
+
+    .sri-info-value {
+        display: block;
+        color: #1d1d1f;
+        font-size: 12px;
+        line-height: 1.45;
+        font-weight: 650;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .sri-info-value-key {
+        font-family:
+            ui-monospace,
+            SFMono-Regular,
+            Menlo,
+            Monaco,
+            Consolas,
+            "Liberation Mono",
+            monospace;
+        font-size: 11px;
+        letter-spacing: .12px;
+    }
+
+    .sri-muted {
+        color: #8a8a90;
+        font-weight: 500;
+    }
+
+
+    /* =========================================================
+       MENSAJES
+    ========================================================= */
+
+    .sri-message {
+        margin-top: 12px;
+        padding: 11px 12px;
+        border-radius: 10px;
+        border: 1px solid #d9e8fa;
+        background: #f4f9ff;
+        color: #264b72;
+        font-size: 11px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .sri-message strong {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 5px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: .2px;
+    }
+
+    .sri-message-error {
+        background: #fff3f2;
+        border-color: #ffcfc9;
+        color: #9f231b;
+    }
+
+    .sri-message-success {
+        background: #effaf3;
+        border-color: #c6e9d0;
+        color: #176b38;
+    }
+
+    .sri-message-warning {
+        background: #fff9eb;
+        border-color: #ffe3a3;
+        color: #8a5700;
+    }
+
+
+    /* =========================================================
+       ARCHIVOS
+    ========================================================= */
+
+    .sri-files {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        margin-top: 13px;
+    }
+
+    .sri-file-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 9px;
+        border: 1px solid #e0e0e5;
+        border-radius: 8px;
+        background: #fafafa;
+        color: #444;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .sri-file-chip.ok {
+        border-color: #c7e6d0;
+        background: #f1faf4;
+        color: #176b38;
+    }
+
+    .sri-file-chip.pending {
+        color: #8a8a90;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 850px) {
+        .sri-flow {
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 650px) {
+        .sri-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sri-info-item-full {
+            grid-column: auto;
+        }
+
+        .sri-flow {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 420px) {
+        .sri-flow {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+
+{% if factura %}
+
+<div class="sri-card">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="sri-header">
+
+        <div>
+            <h3 class="sri-header-title">
+                <i class="bi bi-cloud-check"></i>
+                Estado de Facturación Electrónica
+            </h3>
+
+            <div class="sri-header-subtitle">
+                Seguimiento del comprobante desde el borrador
+                hasta la autorización del SRI.
+            </div>
+        </div>
+
+
+        {% if factura.estado == "BORRADOR" %}
+            <span class="sri-state-badge sri-state-borrador">
+                <i class="bi bi-pencil-square"></i>
+                Borrador
+            </span>
+
+        {% elif factura.estado == "GENERADO" %}
+            <span class="sri-state-badge sri-state-generado">
+                <i class="bi bi-file-earmark-code"></i>
+                Generado
+            </span>
+
+        {% elif factura.estado == "FIRMADO" %}
+            <span class="sri-state-badge sri-state-firmado">
+                <i class="bi bi-pen"></i>
+                Firmado
+            </span>
+
+        {% elif factura.estado == "RECIBIDO" %}
+            <span class="sri-state-badge sri-state-recibido">
+                <i class="bi bi-cloud-arrow-up"></i>
+                Recibido
+            </span>
+
+        {% elif factura.estado == "AUTORIZADO" %}
+            <span class="sri-state-badge sri-state-autorizado">
+                <i class="bi bi-patch-check-fill"></i>
+                Autorizado
+            </span>
+
+        {% elif factura.estado == "RECHAZADO" %}
+            <span class="sri-state-badge sri-state-rechazado">
+                <i class="bi bi-x-octagon-fill"></i>
+                Rechazado
+            </span>
+
+        {% else %}
+            <span class="sri-state-badge sri-state-borrador">
+                {{ factura.get_estado_display|default:factura.estado }}
+            </span>
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         FLUJO DE EMISIÓN
+    ====================================================== -->
+
+    <div class="sri-flow">
+
+        <!-- BORRADOR -->
+        <div
+            class="
+                sri-flow-step
+                {% if factura.estado == 'BORRADOR' %}
+                    current
+                {% else %}
+                    done
+                {% endif %}
+            "
+        >
+            <i class="bi bi-pencil-square"></i>
+            <span class="sri-flow-step-label">
+                Borrador
+            </span>
+        </div>
+
+
+        <!-- GENERADO -->
+        <div
+            class="
+                sri-flow-step
+
+                {% if factura.estado == 'GENERADO' %}
+                    current
+                {% elif factura.estado == 'FIRMADO' or factura.estado == 'RECIBIDO' or factura.estado == 'AUTORIZADO' or factura.estado == 'RECHAZADO' %}
+                    done
+                {% endif %}
+            "
+        >
+            <i class="bi bi-file-earmark-code"></i>
+            <span class="sri-flow-step-label">
+                XML generado
+            </span>
+        </div>
+
+
+        <!-- FIRMADO -->
+        <div
+            class="
+                sri-flow-step
+
+                {% if factura.estado == 'FIRMADO' %}
+                    current
+                {% elif factura.estado == 'RECIBIDO' or factura.estado == 'AUTORIZADO' or factura.estado == 'RECHAZADO' %}
+                    done
+                {% endif %}
+            "
+        >
+            <i class="bi bi-pen"></i>
+            <span class="sri-flow-step-label">
+                Firmado
+            </span>
+        </div>
+
+
+        <!-- RECIBIDO -->
+        <div
+            class="
+                sri-flow-step
+
+                {% if factura.estado == 'RECIBIDO' %}
+                    current
+                {% elif factura.estado == 'AUTORIZADO' %}
+                    done
+                {% elif factura.estado == 'RECHAZADO' %}
+                    error
+                {% endif %}
+            "
+        >
+            <i class="bi bi-cloud-arrow-up"></i>
+            <span class="sri-flow-step-label">
+                Recibido SRI
+            </span>
+        </div>
+
+
+        <!-- AUTORIZADO -->
+        <div
+            class="
+                sri-flow-step
+
+                {% if factura.estado == 'AUTORIZADO' %}
+                    done
+                {% elif factura.estado == 'RECHAZADO' %}
+                    error
+                {% endif %}
+            "
+        >
+            {% if factura.estado == "RECHAZADO" %}
+                <i class="bi bi-x-octagon"></i>
+                <span class="sri-flow-step-label">
+                    Rechazado
+                </span>
+            {% else %}
+                <i class="bi bi-patch-check"></i>
+                <span class="sri-flow-step-label">
+                    Autorizado
+                </span>
+            {% endif %}
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         DATOS DEL COMPROBANTE
+    ====================================================== -->
+
+    <div class="sri-info-grid">
+
+        <!-- AMBIENTE -->
+        <div class="sri-info-item">
+            <span class="sri-info-label">
+                Ambiente
+            </span>
+
+            <span class="sri-info-value">
+                {% if factura.ambiente == "1" %}
+                    PRUEBAS
+                {% elif factura.ambiente == "2" %}
+                    PRODUCCIÓN
+                {% else %}
+                    {{ factura.get_ambiente_display|default:"NO DEFINIDO" }}
+                {% endif %}
+            </span>
+        </div>
+
+
+        <!-- NÚMERO DE FACTURA -->
+        <div class="sri-info-item">
+            <span class="sri-info-label">
+                Número de factura
+            </span>
+
+            <span class="sri-info-value">
+                {% if factura.secuencial %}
+                    {{ factura.establecimiento|default:"---" }}-{{ factura.punto_emision|default:"---" }}-{{ factura.secuencial }}
+                {% else %}
+                    <span class="sri-muted">
+                        Aún no asignado
+                    </span>
+                {% endif %}
+            </span>
+        </div>
+
+
+        <!-- CLAVE -->
+        <div class="sri-info-item sri-info-item-full">
+            <span class="sri-info-label">
+                Clave de acceso
+            </span>
+
+            {% if factura.clave_acceso %}
+                <span class="sri-info-value sri-info-value-key">
+                    {{ factura.clave_acceso }}
+                </span>
+            {% else %}
+                <span class="sri-info-value sri-muted">
+                    Se generará únicamente cuando se inicie la emisión.
+                </span>
+            {% endif %}
+        </div>
+
+
+        <!-- AUTORIZACIÓN -->
+        <div class="sri-info-item sri-info-item-full">
+            <span class="sri-info-label">
+                Número de autorización
+            </span>
+
+            {% if factura.numero_autorizacion %}
+                <span class="sri-info-value sri-info-value-key">
+                    {{ factura.numero_autorizacion }}
+                </span>
+            {% else %}
+                <span class="sri-info-value sri-muted">
+                    Todavía no existe autorización del SRI.
+                </span>
+            {% endif %}
+        </div>
+
+
+        <!-- FECHA FIRMA -->
+        <div class="sri-info-item">
+            <span class="sri-info-label">
+                Fecha de firma
+            </span>
+
+            <span class="sri-info-value">
+                {% if factura.fecha_firma %}
+                    {{ factura.fecha_firma|date:"d/m/Y H:i:s" }}
+                {% else %}
+                    <span class="sri-muted">
+                        Pendiente
+                    </span>
+                {% endif %}
+            </span>
+        </div>
+
+
+        <!-- FECHA AUTORIZACIÓN -->
+        <div class="sri-info-item">
+            <span class="sri-info-label">
+                Fecha de autorización
+            </span>
+
+            <span class="sri-info-value">
+                {% if factura.fecha_autorizacion %}
+                    {{ factura.fecha_autorizacion|date:"d/m/Y H:i:s" }}
+                {% else %}
+                    <span class="sri-muted">
+                        Pendiente
+                    </span>
+                {% endif %}
+            </span>
+        </div>
+
+
+        <!-- ÚLTIMA ACTUALIZACIÓN -->
+        <div class="sri-info-item sri-info-item-full">
+            <span class="sri-info-label">
+                Última actualización del registro
+            </span>
+
+            <span class="sri-info-value">
+                {% if factura.updated_at %}
+                    {{ factura.updated_at|date:"d/m/Y H:i:s" }}
+                {% else %}
+                    -
+                {% endif %}
+            </span>
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MENSAJE DE FIRMA
+    ====================================================== -->
+
+    {% if factura.mensaje_firma %}
+
+        <div
+            class="
+                sri-message
+
+                {% if factura.estado == 'RECHAZADO' %}
+                    sri-message-warning
+                {% elif factura.fecha_firma %}
+                    sri-message-success
+                {% else %}
+                    sri-message-error
+                {% endif %}
+            "
+        >
+            <strong>
+                <i class="bi bi-pen"></i>
+                Firma electrónica
+            </strong>
+
+            {{ factura.mensaje_firma }}
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         MENSAJE SRI
+    ====================================================== -->
+
+    {% if factura.mensaje_sri %}
+
+        <div
+            class="
+                sri-message
+
+                {% if factura.estado == 'AUTORIZADO' %}
+                    sri-message-success
+                {% elif factura.estado == 'RECHAZADO' %}
+                    sri-message-error
+                {% elif factura.estado == 'RECIBIDO' %}
+                    sri-message-warning
+                {% endif %}
+            "
+        >
+            <strong>
+                <i class="bi bi-cloud"></i>
+                Mensaje del SRI
+            </strong>
+
+            {{ factura.mensaje_sri }}
+        </div>
+
+    {% elif factura.estado == "RECIBIDO" %}
+
+        <div class="sri-message sri-message-warning">
+            <strong>
+                <i class="bi bi-hourglass-split"></i>
+                SRI
+            </strong>
+
+            El comprobante fue recibido y todavía está
+            pendiente de autorización.
+        </div>
+
+    {% elif factura.estado == "BORRADOR" %}
+
+        <div class="sri-message">
+            <strong>
+                <i class="bi bi-info-circle"></i>
+                Factura en preparación
+            </strong>
+
+            Aún no se ha generado XML, reservado secuencial
+            ni creado clave de acceso. Puedes seguir
+            modificando el borrador.
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         ARCHIVOS GENERADOS
+    ====================================================== -->
+
+    <div class="sri-files">
+
+        {% if factura.xml_generado %}
+            <span class="sri-file-chip ok">
+                <i class="bi bi-check-circle-fill"></i>
+                XML generado
+            </span>
+        {% else %}
+            <span class="sri-file-chip pending">
+                <i class="bi bi-circle"></i>
+                XML generado
+            </span>
+        {% endif %}
+
+
+        {% if factura.xml_firmado %}
+            <span class="sri-file-chip ok">
+                <i class="bi bi-check-circle-fill"></i>
+                XML firmado
+            </span>
+        {% else %}
+            <span class="sri-file-chip pending">
+                <i class="bi bi-circle"></i>
+                XML firmado
+            </span>
+        {% endif %}
+
+
+        {% if factura.xml_autorizado %}
+            <span class="sri-file-chip ok">
+                <i class="bi bi-check-circle-fill"></i>
+                XML autorizado
+            </span>
+        {% else %}
+            <span class="sri-file-chip pending">
+                <i class="bi bi-circle"></i>
+                XML autorizado
+            </span>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
