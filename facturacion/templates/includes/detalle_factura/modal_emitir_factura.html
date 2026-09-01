@@ -143,8 +143,44 @@
 
 
 .emision-entidad-menu{
-    max-height:230px;
+    max-height:280px;
     overflow-y:auto;
+}
+
+.emision-entidad-buscador-wrap{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding:4px 4px 8px;
+    background:#fff;
+    border-bottom:1px solid var(--border-soft,#e5e5ea);
+    margin-bottom:4px;
+}
+
+.emision-entidad-buscador{
+    width:100%;
+    min-height:38px;
+    border:1px solid #d2d2d7;
+    border-radius:9px;
+    background:#fff;
+    padding:0 11px;
+    color:#1d1d1f;
+    font-size:.82rem;
+    font-weight:500;
+}
+
+.emision-entidad-buscador:focus{
+    outline:none;
+    border-color:#0071e3;
+    box-shadow:0 0 0 3px rgba(0,113,227,.10);
+}
+
+.emision-entidad-sin-resultados{
+    display:none;
+    padding:12px 10px;
+    color:var(--muted,#6e6e73);
+    font-size:.76rem;
+    text-align:center;
 }
 .emision-entidad-otra{
     border-top:1px solid var(--border-soft,#e5e5ea);
@@ -361,10 +397,28 @@
 
                                 <div class="emision-dropdown-menu emision-entidad-menu">
 
+                                    <div class="emision-entidad-buscador-wrap"
+                                         onclick="event.stopPropagation()">
+                                        <input type="text"
+                                               id="buscarEntidadFinancieraFactura"
+                                               class="emision-entidad-buscador"
+                                               autocomplete="off"
+                                               placeholder="Buscar banco, cooperativa o mutualista..."
+                                               oninput="filtrarEntidadesFinancierasFactura(this.value)"
+                                               onkeydown="manejarTecladoBuscadorEntidadFactura(event)">
+                                    </div>
+
+                                    <div id="sinResultadosEntidadFinancieraFactura"
+                                         class="emision-entidad-sin-resultados">
+                                        No se encontraron entidades financieras.
+                                    </div>
+
                                     {% for entidad in entidades_financieras %}
                                         <button type="button"
-                                                class="emision-dropdown-item"
+                                                class="emision-dropdown-item emision-entidad-opcion"
                                                 data-entidad-id="{{ entidad.pk }}"
+                                                data-entidad-nombre="{{ entidad.nombre|escapejs }}"
+                                                data-entidad-tipo="{{ entidad.get_tipo_display|escapejs }}"
                                                 onclick="seleccionarEntidadFinancieraFactura(
                                                     '{{ entidad.pk }}',
                                                     '{{ entidad.nombre|escapejs }}'
@@ -996,19 +1050,145 @@ function configurarCamposFormaPagoFactura(
    ENTIDAD FINANCIERA
 ========================================================= */
 
+function normalizarTextoEntidadFactura(
+    valor
+) {
+    return String(
+        valor || ''
+    )
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+
+function filtrarEntidadesFinancierasFactura(
+    valor
+) {
+    const filtro =
+        normalizarTextoEntidadFactura(
+            valor
+        );
+
+    const opciones =
+        document.querySelectorAll(
+            '#dropdownEntidadFinancieraFactura .emision-entidad-opcion'
+        );
+
+    let visibles = 0;
+
+    opciones.forEach(
+        opcion => {
+            const nombre =
+                opcion.dataset.entidadNombre
+                || '';
+
+            const tipo =
+                opcion.dataset.entidadTipo
+                || '';
+
+            const texto =
+                normalizarTextoEntidadFactura(
+                    `${nombre} ${tipo}`
+                );
+
+            const mostrar =
+                !filtro
+                || texto.includes(
+                    filtro
+                );
+
+            opcion.style.display =
+                mostrar
+                    ? 'flex'
+                    : 'none';
+
+            if (mostrar) {
+                visibles++;
+            }
+        }
+    );
+
+    const sinResultados =
+        document.getElementById(
+            'sinResultadosEntidadFinancieraFactura'
+        );
+
+    if (sinResultados) {
+        sinResultados.style.display =
+            visibles === 0
+                ? 'block'
+                : 'none';
+    }
+}
+
+
+function limpiarBusquedaEntidadFinancieraFactura() {
+    const buscador =
+        document.getElementById(
+            'buscarEntidadFinancieraFactura'
+        );
+
+    if (buscador) {
+        buscador.value = '';
+    }
+
+    filtrarEntidadesFinancierasFactura(
+        ''
+    );
+}
+
+
+function enfocarBuscadorEntidadFinancieraFactura() {
+    setTimeout(
+        () => {
+            const buscador =
+                document.getElementById(
+                    'buscarEntidadFinancieraFactura'
+                );
+
+            if (buscador) {
+                buscador.focus();
+                buscador.select();
+            }
+        },
+        0
+    );
+}
+
+
 function toggleDropdownEntidadFinancieraFactura(
     event
 ) {
     event.stopPropagation();
 
-    document
-        .getElementById(
+    const dropdown =
+        document.getElementById(
             'dropdownEntidadFinancieraFactura'
-        )
-        ?.classList
-        .toggle(
+        );
+
+    if (!dropdown) {
+        return;
+    }
+
+    const seAbrira =
+        !dropdown.classList.contains(
             'abierto'
         );
+
+    cerrarDropdownFormaPagoFactura();
+
+    if (seAbrira) {
+        dropdown.classList.add(
+            'abierto'
+        );
+
+        limpiarBusquedaEntidadFinancieraFactura();
+        enfocarBuscadorEntidadFinancieraFactura();
+    } else {
+        cerrarDropdownEntidadFinancieraFactura();
+    }
 }
 
 
@@ -1021,6 +1201,48 @@ function cerrarDropdownEntidadFinancieraFactura() {
         .remove(
             'abierto'
         );
+
+    limpiarBusquedaEntidadFinancieraFactura();
+}
+
+
+function manejarTecladoBuscadorEntidadFactura(
+    event
+) {
+    if (
+        event.key ===
+        'Enter'
+    ) {
+        event.preventDefault();
+
+        const primeraVisible =
+            Array.from(
+                document.querySelectorAll(
+                    '#dropdownEntidadFinancieraFactura .emision-entidad-opcion'
+                )
+            )
+            .find(
+                opcion =>
+                    opcion.style.display !==
+                    'none'
+            );
+
+        if (primeraVisible) {
+            primeraVisible.click();
+        }
+
+        return;
+    }
+
+    if (
+        event.key ===
+        'Escape'
+    ) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        cerrarDropdownEntidadFinancieraFactura();
+    }
 }
 
 
