@@ -178,21 +178,21 @@
 </style>
 
 <input type="hidden" name="metodo_pago" id="formaPagoFactura"
-       form="formEmitirFactura" value="">
+        value="">
 <input type="hidden" name="codigo_sri_pago" id="codigoSriPagoFactura"
-       form="formEmitirFactura" value="">
+        value="">
 <input type="hidden" name="monto_pago" id="montoPagoFactura"
-       form="formEmitirFactura" value="{{ total_final|default:0|unlocalize }}">
+        value="{{ total_final|default:0|unlocalize }}">
 <input type="hidden" name="referencia_pago" id="referenciaPagoFacturaHidden"
-       form="formEmitirFactura" value="">
+        value="">
 <input type="hidden" name="entidad_financiera_id"
        id="entidadFinancieraIdFactura"
-       form="formEmitirFactura" value="">
+        value="">
 <input type="hidden" name="entidad_financiera_nombre"
        id="entidadFinancieraNombreFactura"
-       form="formEmitirFactura" value="">
+        value="">
 <input type="hidden" name="observacion_pago" id="observacionPagoFacturaHidden"
-       form="formEmitirFactura" value="">
+        value="">
 
 <div id="modalEmisionFactura" class="modal-emision-overlay">
     <div class="modal-emision-contenedor">
@@ -519,11 +519,138 @@ let metodoPagoFacturaSeleccionado = '';
 let codigoSriPagoFacturaSeleccionado = '';
 let entidadFinancieraFacturaSeleccionada = '';
 
+
+/* =========================================================
+   DETECTAR MODO
+   - formGuardarFactura = preparar/guardar BORRADOR
+   - formEmitirFactura  = emitir factura ya creada al SRI
+========================================================= */
+
+function obtenerFormularioDestinoFactura() {
+    return (
+        document.getElementById('formEmitirFactura')
+        || document.getElementById('formGuardarFactura')
+    );
+}
+
+
+function esModoGuardarBorradorFactura() {
+    return (
+        !document.getElementById('formEmitirFactura')
+        && !!document.getElementById('formGuardarFactura')
+    );
+}
+
+
+function asociarCamposModalAlFormularioDestino() {
+    const form = obtenerFormularioDestinoFactura();
+
+    if (!form) {
+        return false;
+    }
+
+    [
+        'formaPagoFactura',
+        'codigoSriPagoFactura',
+        'montoPagoFactura',
+        'referenciaPagoFacturaHidden',
+        'entidadFinancieraIdFactura',
+        'entidadFinancieraNombreFactura',
+        'observacionPagoFacturaHidden'
+    ].forEach(id => {
+        const campo = document.getElementById(id);
+
+        if (campo) {
+            campo.setAttribute('form', form.id);
+        }
+    });
+
+    return true;
+}
+
+
+function configurarTextoModalSegunModo() {
+    const esGuardar = esModoGuardarBorradorFactura();
+
+    const titulo =
+        document.querySelector(
+            '#modalEmisionFactura .modal-emision-titulo'
+        );
+
+    const aviso =
+        document.querySelector(
+            '#modalEmisionFactura .emision-aviso'
+        );
+
+    const boton =
+        document.getElementById(
+            'btnConfirmarEmisionFactura'
+        );
+
+    if (titulo) {
+        titulo.textContent =
+            esGuardar
+                ? 'Guardar factura'
+                : 'Emitir factura';
+    }
+
+    if (aviso) {
+        if (esGuardar) {
+            aviso.innerHTML =
+                'Al confirmar, se guardarán los datos de facturación '
+                + 'y la forma de pago seleccionada, y se creará la '
+                + 'factura en estado <strong>BORRADOR</strong>. '
+                + '<strong>Esta acción no envía nada al SRI.</strong>';
+        } else {
+            aviso.innerHTML =
+                'Al confirmar, se registrarán los datos de facturación '
+                + 'y la forma de pago seleccionada, y se iniciará el '
+                + 'proceso de emisión electrónica de esta factura.';
+        }
+    }
+
+    if (boton) {
+        boton.textContent =
+            esGuardar
+                ? 'Guardar factura'
+                : 'Confirmar y emitir';
+
+        boton.disabled = false;
+    }
+}
+
+
+/* =========================================================
+   ABRIR / CERRAR
+========================================================= */
+
 function abrirModalEmisionFactura() {
-    const modal = document.getElementById('modalEmisionFactura');
+    const modal =
+        document.getElementById(
+            'modalEmisionFactura'
+        );
 
     if (!modal) {
-        console.error('No se encontró #modalEmisionFactura.');
+        console.error(
+            'No se encontró #modalEmisionFactura.'
+        );
+        return;
+    }
+
+    if (!asociarCamposModalAlFormularioDestino()) {
+        console.error(
+            'No se encontró formGuardarFactura ni formEmitirFactura.'
+        );
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo abrir',
+                text: 'No se encontró el formulario de facturación.',
+                confirmButtonText: 'Aceptar'
+            });
+        }
+
         return;
     }
 
@@ -532,14 +659,22 @@ function abrirModalEmisionFactura() {
     }
 
     reiniciarModalEmisionFactura();
+    configurarTextoModalSegunModo();
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 
+
 function cerrarModalEmisionFactura() {
-    const modal = document.getElementById('modalEmisionFactura');
-    if (!modal) return;
+    const modal =
+        document.getElementById(
+            'modalEmisionFactura'
+        );
+
+    if (!modal) {
+        return;
+    }
 
     modal.style.display = 'none';
     document.body.style.overflow = '';
@@ -548,42 +683,117 @@ function cerrarModalEmisionFactura() {
     cerrarDropdownEntidadFinancieraFactura();
 }
 
-function sincronizarDatosFacturacionEnModal() {
-    const tipo = document.getElementById('facturaTipoIdentificacion')?.value?.trim() || '';
-    const identificacion = document.getElementById('facturaIdentificacion')?.value?.trim() || '';
-    const razonSocial = document.getElementById('facturaRazonSocial')?.value?.trim() || '';
-    const telefono = document.getElementById('facturaTelefono')?.value?.trim() || '';
-    const correo = document.getElementById('facturaCorreo')?.value?.trim() || '';
 
-    if (!tipo || !identificacion || !razonSocial) {
-        if (typeof Swal !== 'undefined') {
+/* =========================================================
+   COMPRADOR
+========================================================= */
+
+function sincronizarDatosFacturacionEnModal() {
+    const tipo =
+        document
+            .getElementById(
+                'facturaTipoIdentificacion'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    const identificacion =
+        document
+            .getElementById(
+                'facturaIdentificacion'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    const razonSocial =
+        document
+            .getElementById(
+                'facturaRazonSocial'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    const telefono =
+        document
+            .getElementById(
+                'facturaTelefono'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    const correo =
+        document
+            .getElementById(
+                'facturaCorreo'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    if (
+        !tipo
+        || !identificacion
+        || !razonSocial
+    ) {
+        if (
+            typeof Swal !==
+            'undefined'
+        ) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Datos de facturación incompletos',
-                text: 'Completa los datos de facturación antes de emitir.',
+                text: 'Completa los datos de facturación antes de continuar.',
                 confirmButtonText: 'Aceptar'
             });
         } else {
-            alert('Completa los datos de facturación antes de emitir.');
+            alert(
+                'Completa los datos de facturación antes de continuar.'
+            );
         }
+
         return false;
     }
 
-    const nombreBox = document.getElementById('emisionRazonSocial');
-    const identificacionBox = document.getElementById('emisionIdentificacion');
-    const contactoBox = document.getElementById('emisionContacto');
+    const nombreBox =
+        document.getElementById(
+            'emisionRazonSocial'
+        );
+
+    const identificacionBox =
+        document.getElementById(
+            'emisionIdentificacion'
+        );
+
+    const contactoBox =
+        document.getElementById(
+            'emisionContacto'
+        );
 
     if (nombreBox) {
-        nombreBox.textContent = razonSocial;
+        nombreBox.textContent =
+            razonSocial;
     }
 
     if (identificacionBox) {
-        let etiqueta = 'Identificación';
+        let etiqueta =
+            'Identificación';
 
-        if (tipo === '04') etiqueta = 'RUC';
-        else if (tipo === '05') etiqueta = 'C.I.';
-        else if (tipo === '06') etiqueta = 'Pasaporte';
-        else if (tipo === '07') etiqueta = 'Consumidor Final';
+        if (tipo === '04') {
+            etiqueta = 'RUC';
+        }
+        else if (tipo === '05') {
+            etiqueta = 'C.I.';
+        }
+        else if (tipo === '06') {
+            etiqueta = 'Pasaporte';
+        }
+        else if (tipo === '07') {
+            etiqueta = 'Consumidor Final';
+        }
 
         identificacionBox.textContent =
             tipo === '07'
@@ -593,8 +803,17 @@ function sincronizarDatosFacturacionEnModal() {
 
     const contacto = [];
 
-    if (telefono) contacto.push(telefono);
-    if (correo) contacto.push(correo);
+    if (telefono) {
+        contacto.push(
+            telefono
+        );
+    }
+
+    if (correo) {
+        contacto.push(
+            correo
+        );
+    }
 
     if (contactoBox) {
         contactoBox.textContent =
@@ -606,135 +825,272 @@ function sincronizarDatosFacturacionEnModal() {
     return true;
 }
 
+
 function cambiarDatosDesdeEmision() {
     cerrarModalEmisionFactura();
 
-    if (typeof abrirModalComprador === 'function') {
+    if (
+        typeof abrirModalComprador ===
+        'function'
+    ) {
         abrirModalComprador();
     }
 }
+
+
+/* =========================================================
+   FORMA DE PAGO
+========================================================= */
 
 function toggleDropdownFormaPagoFactura(event) {
     event.stopPropagation();
 
     document
-        .getElementById('dropdownFormaPagoFactura')
-        ?.classList.toggle('abierto');
+        .getElementById(
+            'dropdownFormaPagoFactura'
+        )
+        ?.classList
+        .toggle(
+            'abierto'
+        );
 }
+
 
 function cerrarDropdownFormaPagoFactura() {
     document
-        .getElementById('dropdownFormaPagoFactura')
-        ?.classList.remove('abierto');
+        .getElementById(
+            'dropdownFormaPagoFactura'
+        )
+        ?.classList
+        .remove(
+            'abierto'
+        );
 }
 
-function seleccionarFormaPagoFactura(metodo, codigoSri, texto) {
-    metodoPagoFacturaSeleccionado = metodo;
-    codigoSriPagoFacturaSeleccionado = codigoSri;
 
-    const metodoHidden = document.getElementById('formaPagoFactura');
-    const sriHidden = document.getElementById('codigoSriPagoFactura');
+function seleccionarFormaPagoFactura(
+    metodo,
+    codigoSri,
+    texto
+) {
+    metodoPagoFacturaSeleccionado =
+        metodo;
 
-    if (metodoHidden) metodoHidden.value = metodo;
-    if (sriHidden) sriHidden.value = codigoSri;
+    codigoSriPagoFacturaSeleccionado =
+        codigoSri;
 
-    const textoBox = document.getElementById('textoFormaPagoFactura');
+    const metodoHidden =
+        document.getElementById(
+            'formaPagoFactura'
+        );
+
+    const sriHidden =
+        document.getElementById(
+            'codigoSriPagoFactura'
+        );
+
+    if (metodoHidden) {
+        metodoHidden.value =
+            metodo;
+    }
+
+    if (sriHidden) {
+        sriHidden.value =
+            codigoSri;
+    }
+
+    const textoBox =
+        document.getElementById(
+            'textoFormaPagoFactura'
+        );
 
     if (textoBox) {
-        textoBox.textContent = texto;
+        textoBox.textContent =
+            texto;
     }
 
     document
-        .querySelectorAll('#dropdownFormaPagoFactura .emision-dropdown-item')
+        .querySelectorAll(
+            '#dropdownFormaPagoFactura .emision-dropdown-item'
+        )
         .forEach(item => {
+
             item.classList.toggle(
                 'activo',
-                item.dataset.metodo === metodo
+                item.dataset.metodo ===
+                    metodo
             );
         });
 
-    configurarCamposFormaPagoFactura(metodo);
+    configurarCamposFormaPagoFactura(
+        metodo
+    );
+
     ocultarEstadoEmisionFactura();
     cerrarDropdownFormaPagoFactura();
 }
 
-function configurarCamposFormaPagoFactura(metodo) {
+
+function configurarCamposFormaPagoFactura(
+    metodo
+) {
     const grupoEntidad =
-        document.getElementById('grupoEntidadFinancieraFactura');
+        document.getElementById(
+            'grupoEntidadFinancieraFactura'
+        );
 
     const grupoOtraEntidad =
-        document.getElementById('grupoOtraEntidadFinancieraFactura');
+        document.getElementById(
+            'grupoOtraEntidadFinancieraFactura'
+        );
 
     const grupoReferencia =
-        document.getElementById('grupoReferenciaPagoFactura');
+        document.getElementById(
+            'grupoReferenciaPagoFactura'
+        );
 
     const requiereEntidad = [
         'TRANSFERENCIA',
         'TARJETA_DEBITO',
         'TARJETA_CREDITO'
-    ].includes(metodo);
+    ].includes(
+        metodo
+    );
 
-    grupoEntidad?.classList.toggle('visible', requiereEntidad);
-    grupoReferencia?.classList.toggle('visible', requiereEntidad);
+    grupoEntidad
+        ?.classList
+        .toggle(
+            'visible',
+            requiereEntidad
+        );
+
+    grupoReferencia
+        ?.classList
+        .toggle(
+            'visible',
+            requiereEntidad
+        );
 
     if (!requiereEntidad) {
-        grupoOtraEntidad?.classList.remove('visible');
+        grupoOtraEntidad
+            ?.classList
+            .remove(
+                'visible'
+            );
+
         limpiarEntidadFinancieraFactura();
 
         const referencia =
-            document.getElementById('referenciaPagoFactura');
+            document.getElementById(
+                'referenciaPagoFactura'
+            );
 
-        if (referencia) referencia.value = '';
+        if (referencia) {
+            referencia.value = '';
+        }
     }
 }
 
-function toggleDropdownEntidadFinancieraFactura(event) {
+
+/* =========================================================
+   ENTIDAD FINANCIERA
+========================================================= */
+
+function toggleDropdownEntidadFinancieraFactura(
+    event
+) {
     event.stopPropagation();
 
     document
-        .getElementById('dropdownEntidadFinancieraFactura')
-        ?.classList.toggle('abierto');
+        .getElementById(
+            'dropdownEntidadFinancieraFactura'
+        )
+        ?.classList
+        .toggle(
+            'abierto'
+        );
 }
+
 
 function cerrarDropdownEntidadFinancieraFactura() {
     document
-        .getElementById('dropdownEntidadFinancieraFactura')
-        ?.classList.remove('abierto');
+        .getElementById(
+            'dropdownEntidadFinancieraFactura'
+        )
+        ?.classList
+        .remove(
+            'abierto'
+        );
 }
 
-function seleccionarEntidadFinancieraFactura(id, nombre) {
-    entidadFinancieraFacturaSeleccionada = String(id);
+
+function seleccionarEntidadFinancieraFactura(
+    id,
+    nombre
+) {
+    entidadFinancieraFacturaSeleccionada =
+        String(id);
 
     const hiddenId =
-        document.getElementById('entidadFinancieraIdFactura');
+        document.getElementById(
+            'entidadFinancieraIdFactura'
+        );
 
     const hiddenNombre =
-        document.getElementById('entidadFinancieraNombreFactura');
+        document.getElementById(
+            'entidadFinancieraNombreFactura'
+        );
 
     const texto =
-        document.getElementById('textoEntidadFinancieraFactura');
+        document.getElementById(
+            'textoEntidadFinancieraFactura'
+        );
 
     const grupoOtra =
-        document.getElementById('grupoOtraEntidadFinancieraFactura');
+        document.getElementById(
+            'grupoOtraEntidadFinancieraFactura'
+        );
 
     const otra =
-        document.getElementById('otraEntidadFinancieraFactura');
+        document.getElementById(
+            'otraEntidadFinancieraFactura'
+        );
 
-    if (hiddenId) hiddenId.value = String(id);
-    if (hiddenNombre) hiddenNombre.value = nombre;
-    if (texto) texto.textContent = nombre;
-    if (otra) otra.value = '';
+    if (hiddenId) {
+        hiddenId.value =
+            String(id);
+    }
 
-    grupoOtra?.classList.remove('visible');
+    if (hiddenNombre) {
+        hiddenNombre.value =
+            nombre;
+    }
+
+    if (texto) {
+        texto.textContent =
+            nombre;
+    }
+
+    if (otra) {
+        otra.value = '';
+    }
+
+    grupoOtra
+        ?.classList
+        .remove(
+            'visible'
+        );
 
     document
         .querySelectorAll(
             '#dropdownEntidadFinancieraFactura .emision-dropdown-item'
         )
         .forEach(item => {
+
             item.classList.toggle(
                 'activo',
-                item.dataset.entidadId === String(id)
+                item.dataset.entidadId ===
+                    String(id)
             );
         });
 
@@ -742,141 +1098,277 @@ function seleccionarEntidadFinancieraFactura(id, nombre) {
     cerrarDropdownEntidadFinancieraFactura();
 }
 
+
 function seleccionarOtraEntidadFinancieraFactura() {
-    entidadFinancieraFacturaSeleccionada = 'OTRA';
+    entidadFinancieraFacturaSeleccionada =
+        'OTRA';
 
     const hiddenId =
-        document.getElementById('entidadFinancieraIdFactura');
+        document.getElementById(
+            'entidadFinancieraIdFactura'
+        );
 
     const hiddenNombre =
-        document.getElementById('entidadFinancieraNombreFactura');
+        document.getElementById(
+            'entidadFinancieraNombreFactura'
+        );
 
     const texto =
-        document.getElementById('textoEntidadFinancieraFactura');
+        document.getElementById(
+            'textoEntidadFinancieraFactura'
+        );
 
     const grupoOtra =
-        document.getElementById('grupoOtraEntidadFinancieraFactura');
+        document.getElementById(
+            'grupoOtraEntidadFinancieraFactura'
+        );
 
-    if (hiddenId) hiddenId.value = '';
-    if (hiddenNombre) hiddenNombre.value = '';
-    if (texto) texto.textContent = 'Otra institución financiera';
+    if (hiddenId) {
+        hiddenId.value = '';
+    }
 
-    grupoOtra?.classList.add('visible');
+    if (hiddenNombre) {
+        hiddenNombre.value = '';
+    }
+
+    if (texto) {
+        texto.textContent =
+            'Otra institución financiera';
+    }
+
+    grupoOtra
+        ?.classList
+        .add(
+            'visible'
+        );
 
     document
         .querySelectorAll(
             '#dropdownEntidadFinancieraFactura .emision-dropdown-item'
         )
         .forEach(item => {
+
             item.classList.toggle(
                 'activo',
-                item.dataset.entidadId === 'OTRA'
+                item.dataset.entidadId ===
+                    'OTRA'
             );
         });
 
     cerrarDropdownEntidadFinancieraFactura();
 
-    setTimeout(() => {
-        document
-            .getElementById('otraEntidadFinancieraFactura')
-            ?.focus();
-    }, 0);
+    setTimeout(
+        () => {
+
+            document
+                .getElementById(
+                    'otraEntidadFinancieraFactura'
+                )
+                ?.focus();
+        },
+        0
+    );
 }
 
+
 function limpiarEntidadFinancieraFactura() {
-    entidadFinancieraFacturaSeleccionada = '';
+    entidadFinancieraFacturaSeleccionada =
+        '';
 
     const hiddenId =
-        document.getElementById('entidadFinancieraIdFactura');
+        document.getElementById(
+            'entidadFinancieraIdFactura'
+        );
 
     const hiddenNombre =
-        document.getElementById('entidadFinancieraNombreFactura');
+        document.getElementById(
+            'entidadFinancieraNombreFactura'
+        );
 
     const texto =
-        document.getElementById('textoEntidadFinancieraFactura');
+        document.getElementById(
+            'textoEntidadFinancieraFactura'
+        );
 
     const otra =
-        document.getElementById('otraEntidadFinancieraFactura');
+        document.getElementById(
+            'otraEntidadFinancieraFactura'
+        );
 
     const grupoOtra =
-        document.getElementById('grupoOtraEntidadFinancieraFactura');
+        document.getElementById(
+            'grupoOtraEntidadFinancieraFactura'
+        );
 
-    if (hiddenId) hiddenId.value = '';
-    if (hiddenNombre) hiddenNombre.value = '';
-    if (texto) {
-        texto.textContent = 'Seleccione una entidad financiera';
+    if (hiddenId) {
+        hiddenId.value = '';
     }
-    if (otra) otra.value = '';
 
-    grupoOtra?.classList.remove('visible');
+    if (hiddenNombre) {
+        hiddenNombre.value = '';
+    }
+
+    if (texto) {
+        texto.textContent =
+            'Seleccione una entidad financiera';
+    }
+
+    if (otra) {
+        otra.value = '';
+    }
+
+    grupoOtra
+        ?.classList
+        .remove(
+            'visible'
+        );
 
     document
         .querySelectorAll(
             '#dropdownEntidadFinancieraFactura .emision-dropdown-item'
         )
-        .forEach(item => item.classList.remove('activo'));
+        .forEach(
+            item =>
+                item.classList.remove(
+                    'activo'
+                )
+        );
 
     cerrarDropdownEntidadFinancieraFactura();
 }
 
-function reiniciarModalEmisionFactura() {
-    metodoPagoFacturaSeleccionado = '';
-    codigoSriPagoFacturaSeleccionado = '';
-    entidadFinancieraFacturaSeleccionada = '';
 
-    const idsHidden = [
+/* =========================================================
+   REINICIAR
+========================================================= */
+
+function reiniciarModalEmisionFactura() {
+    metodoPagoFacturaSeleccionado =
+        '';
+
+    codigoSriPagoFacturaSeleccionado =
+        '';
+
+    entidadFinancieraFacturaSeleccionada =
+        '';
+
+    [
         'formaPagoFactura',
         'codigoSriPagoFactura',
         'referenciaPagoFacturaHidden',
         'entidadFinancieraIdFactura',
         'entidadFinancieraNombreFactura',
         'observacionPagoFacturaHidden'
-    ];
+    ].forEach(id => {
 
-    idsHidden.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
+        const el =
+            document.getElementById(
+                id
+            );
+
+        if (el) {
+            el.value = '';
+        }
     });
 
-    const textoForma = document.getElementById('textoFormaPagoFactura');
+    const textoForma =
+        document.getElementById(
+            'textoFormaPagoFactura'
+        );
 
     if (textoForma) {
-        textoForma.textContent = 'Seleccione una forma de pago';
+        textoForma.textContent =
+            'Seleccione una forma de pago';
     }
 
     document
-        .querySelectorAll('#dropdownFormaPagoFactura .emision-dropdown-item')
-        .forEach(item => item.classList.remove('activo'));
+        .querySelectorAll(
+            '#dropdownFormaPagoFactura .emision-dropdown-item'
+        )
+        .forEach(
+            item =>
+                item.classList.remove(
+                    'activo'
+                )
+        );
 
-    const referencia = document.getElementById('referenciaPagoFactura');
-    const observacion = document.getElementById('observacionPagoFactura');
+    const referencia =
+        document.getElementById(
+            'referenciaPagoFactura'
+        );
 
-    if (referencia) referencia.value = '';
-    if (observacion) observacion.value = '';
+    const observacion =
+        document.getElementById(
+            'observacionPagoFactura'
+        );
+
+    if (referencia) {
+        referencia.value = '';
+    }
+
+    if (observacion) {
+        observacion.value = '';
+    }
 
     limpiarEntidadFinancieraFactura();
     configurarCamposFormaPagoFactura('');
     ocultarEstadoEmisionFactura();
 }
 
-function validarModalEmisionFactura() {
-    const tipo = document.getElementById('facturaTipoIdentificacion')?.value?.trim() || '';
-    const identificacion = document.getElementById('facturaIdentificacion')?.value?.trim() || '';
-    const razonSocial = document.getElementById('facturaRazonSocial')?.value?.trim() || '';
 
-    if (!tipo || !identificacion || !razonSocial) {
+/* =========================================================
+   VALIDAR
+========================================================= */
+
+function validarModalEmisionFactura() {
+    const tipo =
+        document
+            .getElementById(
+                'facturaTipoIdentificacion'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    const identificacion =
+        document
+            .getElementById(
+                'facturaIdentificacion'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    const razonSocial =
+        document
+            .getElementById(
+                'facturaRazonSocial'
+            )
+            ?.value
+            ?.trim()
+        || '';
+
+    if (
+        !tipo
+        || !identificacion
+        || !razonSocial
+    ) {
         mostrarEstadoEmisionFactura(
             'Los datos de facturación están incompletos.',
             'error'
         );
+
         return false;
     }
 
-    if (!metodoPagoFacturaSeleccionado) {
+    if (
+        !metodoPagoFacturaSeleccionado
+    ) {
         mostrarEstadoEmisionFactura(
             'Seleccione una forma de pago.',
             'error'
         );
+
         return false;
     }
 
@@ -884,25 +1376,35 @@ function validarModalEmisionFactura() {
         'TRANSFERENCIA',
         'TARJETA_DEBITO',
         'TARJETA_CREDITO'
-    ].includes(metodoPagoFacturaSeleccionado);
+    ].includes(
+        metodoPagoFacturaSeleccionado
+    );
 
-    if (requiereEntidad && !entidadFinancieraFacturaSeleccionada) {
+    if (
+        requiereEntidad
+        && !entidadFinancieraFacturaSeleccionada
+    ) {
         mostrarEstadoEmisionFactura(
             'Seleccione la entidad financiera utilizada en el pago.',
             'error'
         );
+
         return false;
     }
 
     if (
-        requiereEntidad &&
-        entidadFinancieraFacturaSeleccionada === 'OTRA'
+        requiereEntidad
+        && entidadFinancieraFacturaSeleccionada ===
+            'OTRA'
     ) {
         const otraEntidad =
             document
-                .getElementById('otraEntidadFinancieraFactura')
+                .getElementById(
+                    'otraEntidadFinancieraFactura'
+                )
                 ?.value
-                ?.trim() || '';
+                ?.trim()
+            || '';
 
         if (!otraEntidad) {
             mostrarEstadoEmisionFactura(
@@ -911,7 +1413,9 @@ function validarModalEmisionFactura() {
             );
 
             document
-                .getElementById('otraEntidadFinancieraFactura')
+                .getElementById(
+                    'otraEntidadFinancieraFactura'
+                )
                 ?.focus();
 
             return false;
@@ -919,161 +1423,367 @@ function validarModalEmisionFactura() {
     }
 
     const referencia =
-        document.getElementById('referenciaPagoFactura')?.value?.trim() || '';
+        document
+            .getElementById(
+                'referenciaPagoFactura'
+            )
+            ?.value
+            ?.trim()
+        || '';
 
-    if (requiereEntidad && !referencia) {
+    if (
+        requiereEntidad
+        && !referencia
+    ) {
         mostrarEstadoEmisionFactura(
             'Ingrese la referencia o número de comprobante del pago.',
             'error'
         );
 
-        document.getElementById('referenciaPagoFactura')?.focus();
+        document
+            .getElementById(
+                'referenciaPagoFactura'
+            )
+            ?.focus();
+
         return false;
     }
 
     return true;
 }
 
+
+/* =========================================================
+   CONFIRMAR
+   Funciona en LOS DOS FLUJOS.
+========================================================= */
+
 function confirmarYEmitirFactura() {
-    if (!validarModalEmisionFactura()) {
+    if (
+        !validarModalEmisionFactura()
+    ) {
         return;
     }
 
-    const form = document.getElementById('formEmitirFactura');
+    const form =
+        obtenerFormularioDestinoFactura();
 
     if (!form) {
         mostrarEstadoEmisionFactura(
-            'No se encontró el formulario de emisión.',
+            'No se encontró el formulario de facturación.',
             'error'
         );
+
         return;
     }
 
     const referencia =
-        document.getElementById('referenciaPagoFactura')?.value?.trim() || '';
+        document
+            .getElementById(
+                'referenciaPagoFactura'
+            )
+            ?.value
+            ?.trim()
+        || '';
 
     let entidadId =
-        document.getElementById('entidadFinancieraIdFactura')?.value?.trim() || '';
+        document
+            .getElementById(
+                'entidadFinancieraIdFactura'
+            )
+            ?.value
+            ?.trim()
+        || '';
 
     let entidadNombre =
-        document.getElementById('entidadFinancieraNombreFactura')?.value?.trim() || '';
+        document
+            .getElementById(
+                'entidadFinancieraNombreFactura'
+            )
+            ?.value
+            ?.trim()
+        || '';
 
-    if (entidadFinancieraFacturaSeleccionada === 'OTRA') {
+    if (
+        entidadFinancieraFacturaSeleccionada ===
+        'OTRA'
+    ) {
         entidadId = '';
+
         entidadNombre =
             document
-                .getElementById('otraEntidadFinancieraFactura')
+                .getElementById(
+                    'otraEntidadFinancieraFactura'
+                )
                 ?.value
-                ?.trim() || '';
+                ?.trim()
+            || '';
     }
 
     const observacion =
-        document.getElementById('observacionPagoFactura')?.value?.trim() || '';
+        document
+            .getElementById(
+                'observacionPagoFactura'
+            )
+            ?.value
+            ?.trim()
+        || '';
 
-    document.getElementById('referenciaPagoFacturaHidden').value = referencia;
-    document.getElementById('entidadFinancieraIdFactura').value = entidadId;
-    document.getElementById('entidadFinancieraNombreFactura').value = entidadNombre;
-    document.getElementById('observacionPagoFacturaHidden').value = observacion;
+    const referenciaHidden =
+        document.getElementById(
+            'referenciaPagoFacturaHidden'
+        );
 
-    const btn = document.getElementById('btnConfirmarEmisionFactura');
+    const entidadIdHidden =
+        document.getElementById(
+            'entidadFinancieraIdFactura'
+        );
+
+    const entidadNombreHidden =
+        document.getElementById(
+            'entidadFinancieraNombreFactura'
+        );
+
+    const observacionHidden =
+        document.getElementById(
+            'observacionPagoFacturaHidden'
+        );
+
+    if (referenciaHidden) {
+        referenciaHidden.value =
+            referencia;
+    }
+
+    if (entidadIdHidden) {
+        entidadIdHidden.value =
+            entidadId;
+    }
+
+    if (entidadNombreHidden) {
+        entidadNombreHidden.value =
+            entidadNombre;
+    }
+
+    if (observacionHidden) {
+        observacionHidden.value =
+            observacion;
+    }
+
+    asociarCamposModalAlFormularioDestino();
+
+    const btn =
+        document.getElementById(
+            'btnConfirmarEmisionFactura'
+        );
 
     if (btn) {
         btn.disabled = true;
-        btn.textContent = 'Emitiendo...';
+
+        btn.textContent =
+            esModoGuardarBorradorFactura()
+                ? 'Guardando...'
+                : 'Emitiendo...';
     }
 
-    if (typeof form.requestSubmit === 'function') {
+    cerrarModalEmisionFactura();
+
+    if (
+        typeof form.requestSubmit ===
+        'function'
+    ) {
         form.requestSubmit();
     } else {
         form.submit();
     }
 }
 
-function mostrarEstadoEmisionFactura(mensaje, tipo) {
-    const box = document.getElementById('emisionFacturaEstado');
-    if (!box) return;
+
+/* =========================================================
+   ESTADOS
+========================================================= */
+
+function mostrarEstadoEmisionFactura(
+    mensaje,
+    tipo
+) {
+    const box =
+        document.getElementById(
+            'emisionFacturaEstado'
+        );
+
+    if (!box) {
+        return;
+    }
 
     box.style.display = 'block';
     box.textContent = mensaje;
 
     if (tipo === 'ok') {
-        box.style.background = '#ecfdf3';
-        box.style.border = '1px solid #abefc6';
-        box.style.color = '#067647';
-    } else if (tipo === 'error') {
-        box.style.background = '#fef3f2';
-        box.style.border = '1px solid #fecdca';
-        box.style.color = '#b42318';
-    } else {
-        box.style.background = '#fffaeb';
-        box.style.border = '1px solid #fedf89';
-        box.style.color = '#b54708';
+        box.style.background =
+            '#ecfdf3';
+
+        box.style.border =
+            '1px solid #abefc6';
+
+        box.style.color =
+            '#067647';
+    }
+    else if (tipo === 'error') {
+        box.style.background =
+            '#fef3f2';
+
+        box.style.border =
+            '1px solid #fecdca';
+
+        box.style.color =
+            '#b42318';
+    }
+    else {
+        box.style.background =
+            '#fffaeb';
+
+        box.style.border =
+            '1px solid #fedf89';
+
+        box.style.color =
+            '#b54708';
     }
 }
 
+
 function ocultarEstadoEmisionFactura() {
-    const box = document.getElementById('emisionFacturaEstado');
-    if (!box) return;
+    const box =
+        document.getElementById(
+            'emisionFacturaEstado'
+        );
+
+    if (!box) {
+        return;
+    }
 
     box.style.display = 'none';
     box.textContent = '';
 }
 
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('dropdownFormaPagoFactura');
 
-    if (dropdown && !dropdown.contains(event.target)) {
-        cerrarDropdownFormaPagoFactura();
+/* =========================================================
+   EVENTOS GLOBALES
+========================================================= */
+
+document.addEventListener(
+    'click',
+    function(event) {
+
+        const dropdown =
+            document.getElementById(
+                'dropdownFormaPagoFactura'
+            );
+
+        if (
+            dropdown
+            && !dropdown.contains(
+                event.target
+            )
+        ) {
+            cerrarDropdownFormaPagoFactura();
+        }
+
+        const dropdownEntidad =
+            document.getElementById(
+                'dropdownEntidadFinancieraFactura'
+            );
+
+        if (
+            dropdownEntidad
+            && !dropdownEntidad.contains(
+                event.target
+            )
+        ) {
+            cerrarDropdownEntidadFinancieraFactura();
+        }
+
+        const modal =
+            document.getElementById(
+                'modalEmisionFactura'
+            );
+
+        if (
+            modal
+            && modal.style.display ===
+                'flex'
+            && event.target ===
+                modal
+        ) {
+            cerrarModalEmisionFactura();
+        }
     }
+);
 
-    const dropdownEntidad =
-        document.getElementById('dropdownEntidadFinancieraFactura');
 
-    if (
-        dropdownEntidad &&
-        !dropdownEntidad.contains(event.target)
-    ) {
-        cerrarDropdownEntidadFinancieraFactura();
+document.addEventListener(
+    'keydown',
+    function(event) {
+
+        if (
+            event.key !==
+            'Escape'
+        ) {
+            return;
+        }
+
+        const dropdown =
+            document.getElementById(
+                'dropdownFormaPagoFactura'
+            );
+
+        if (
+            dropdown
+            ?.classList
+            .contains(
+                'abierto'
+            )
+        ) {
+            cerrarDropdownFormaPagoFactura();
+            return;
+        }
+
+        const dropdownEntidad =
+            document.getElementById(
+                'dropdownEntidadFinancieraFactura'
+            );
+
+        if (
+            dropdownEntidad
+            ?.classList
+            .contains(
+                'abierto'
+            )
+        ) {
+            cerrarDropdownEntidadFinancieraFactura();
+            return;
+        }
+
+        const modal =
+            document.getElementById(
+                'modalEmisionFactura'
+            );
+
+        if (
+            modal
+            && modal.style.display ===
+                'flex'
+        ) {
+            cerrarModalEmisionFactura();
+        }
     }
+);
 
-    const modal = document.getElementById('modalEmisionFactura');
 
-    if (
-        modal &&
-        modal.style.display === 'flex' &&
-        event.target === modal
-    ) {
-        cerrarModalEmisionFactura();
+document.addEventListener(
+    'DOMContentLoaded',
+    function() {
+        asociarCamposModalAlFormularioDestino();
+        configurarTextoModalSegunModo();
     }
-});
-
-document.addEventListener('keydown', function(event) {
-    if (event.key !== 'Escape') {
-        return;
-    }
-
-    const dropdown = document.getElementById('dropdownFormaPagoFactura');
-
-    if (dropdown?.classList.contains('abierto')) {
-        cerrarDropdownFormaPagoFactura();
-        return;
-    }
-
-    const dropdownEntidad =
-        document.getElementById('dropdownEntidadFinancieraFactura');
-
-    if (dropdownEntidad?.classList.contains('abierto')) {
-        cerrarDropdownEntidadFinancieraFactura();
-        return;
-    }
-
-    const modal = document.getElementById('modalEmisionFactura');
-
-    if (
-        modal &&
-        modal.style.display === 'flex'
-    ) {
-        cerrarModalEmisionFactura();
-    }
-});
+);
 </script>
