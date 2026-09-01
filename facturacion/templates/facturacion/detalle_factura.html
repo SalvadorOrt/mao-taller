@@ -85,13 +85,13 @@
 
                 <div class="factura-actions">
                     {% if puede_editar %}
-                        <button type="button" class="factura-btn" onclick="document.getElementById('seccionDatosFacturacion')?.scrollIntoView({behavior:'smooth'});">
-                            <i class="bi bi-pencil-square"></i> Guardar cambios
+                        <button type="button" class="factura-btn" onclick="abrirModalComprador()">
+                            <i class="bi bi-person-gear"></i> Cambiar comprador
                         </button>
                     {% endif %}
 
                     {% if puede_emitir %}
-                        <button type="button" class="factura-btn primary" onclick="confirmarEmisionFacturaExistente()">
+                        <button type="button" class="factura-btn primary" onclick="abrirModalEmisionFactura()">
                             <i class="bi bi-send-check"></i> Emitir factura
                         </button>
                     {% else %}
@@ -100,15 +100,9 @@
                         </button>
                     {% endif %}
 
-                    {% if factura.pdf_ride %}
-                        <a href="{{ factura.pdf_ride.url }}" target="_blank" rel="noopener noreferrer" class="factura-btn">
-                            <i class="bi bi-receipt"></i> Factura
-                        </a>
-                    {% else %}
-                        <button type="button" class="factura-btn disabled" disabled title="Disponible cuando exista el RIDE">
-                            <i class="bi bi-receipt"></i> Factura
-                        </button>
-                    {% endif %}
+                    <button type="button" class="factura-btn" onclick="imprimirFacturaDirecto(event)">
+                        <i class="bi bi-receipt"></i> Factura
+                    </button>
 
                     {% if factura.xml_autorizado %}
                         <a href="{{ factura.xml_autorizado.url }}" target="_blank" rel="noopener noreferrer" class="factura-btn"><i class="bi bi-file-earmark-code"></i> XML</a>
@@ -158,77 +152,6 @@
         </div>
     </div>
 
-    <div class="factura-card" id="seccionDatosFacturacion">
-        <div class="factura-card-header">
-            <div>
-                <div class="factura-card-title">Datos de facturación</div>
-                <div class="factura-card-subtitle">Persona o empresa a quien se emitirá el comprobante.</div>
-            </div>
-        </div>
-        <div class="factura-card-body">
-            {% if puede_editar %}
-                <form method="post" action="{% url 'facturacion:actualizar_comprador' factura.pk %}">
-                    {% csrf_token %}
-                    <div class="factura-form-grid">
-                        <div>
-                            <label class="factura-label">Tipo de identificación</label>
-                            <select name="tipo_identificacion_comprador" class="factura-select">
-                                {% for codigo, nombre in tipos_identificacion %}
-                                    <option value="{{ codigo }}" {% if factura.tipo_identificacion_comprador == codigo %}selected{% endif %}>{{ nombre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="factura-label">Identificación</label>
-                            <input type="text" name="identificacion_comprador" value="{{ factura.identificacion_comprador|default:'' }}" class="factura-input" maxlength="20">
-                        </div>
-                        <div class="factura-form-full">
-                            <label class="factura-label">Nombre / razón social</label>
-                            <input type="text" name="razon_social_comprador" value="{{ factura.razon_social_comprador|default:'' }}" class="factura-input" maxlength="300">
-                        </div>
-                        <div class="factura-form-full">
-                            <label class="factura-label">Dirección</label>
-                            <input type="text" name="direccion_comprador" value="{{ factura.direccion_comprador|default:'' }}" class="factura-input" maxlength="500">
-                        </div>
-                        <div>
-                            <label class="factura-label">Teléfono</label>
-                            <input type="text" name="telefono_comprador" value="{{ factura.telefono_comprador|default:'' }}" class="factura-input" maxlength="20">
-                        </div>
-                        <div>
-                            <label class="factura-label">Correo</label>
-                            <input type="email" name="correo_comprador" value="{{ factura.correo_comprador|default:'' }}" class="factura-input">
-                        </div>
-                    </div>
-                    <div class="factura-form-actions">
-                        <button type="submit" class="factura-btn primary"><i class="bi bi-check2"></i> Guardar datos de facturación</button>
-                    </div>
-                </form>
-            {% else %}
-                <div class="factura-grid">
-                    <div class="factura-info-box">
-                        <div class="factura-label">Facturar a</div>
-                        <div class="factura-value">{{ factura.razon_social_comprador|default:"-" }}</div>
-                    </div>
-                    <div class="factura-info-box">
-                        <div class="factura-label">Identificación</div>
-                        <div class="factura-value">{{ factura.identificacion_comprador|default:"-" }}</div>
-                        <div class="factura-small">{{ factura.get_tipo_identificacion_comprador_display }}</div>
-                    </div>
-                    <div class="factura-info-box">
-                        <div class="factura-label">Contacto</div>
-                        <div class="factura-value">{{ factura.telefono_comprador|default:"-" }}</div>
-                        <div class="factura-small">{{ factura.correo_comprador|default:"-" }}</div>
-                    </div>
-                </div>
-                {% if factura.direccion_comprador %}
-                    <div class="factura-info-box" style="margin-top:12px;">
-                        <div class="factura-label">Dirección</div>
-                        <div class="factura-value">{{ factura.direccion_comprador }}</div>
-                    </div>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
 
     <div class="factura-card">
         <div class="factura-card-header"><div><div class="factura-card-title">Repuestos</div></div></div>
@@ -337,79 +260,6 @@
         </div>
     </div>
 
-    <div class="factura-card">
-        <div class="factura-card-header">
-            <div><div class="factura-card-title">Forma de pago</div><div class="factura-card-subtitle">El total registrado debe coincidir con el importe de la factura.</div></div>
-        </div>
-        <div class="factura-card-body">
-            {% if puede_editar %}
-                <form method="post" action="{% url 'facturacion:guardar_forma_pago' factura.pk %}">
-                    {% csrf_token %}
-                    <div class="factura-form-grid">
-                        <div>
-                            <label class="factura-label">Forma de pago</label>
-                            <select name="forma_pago" id="formaPagoDetalleFactura" class="factura-select" onchange="actualizarCamposEntidadFinanciera()" required>
-                                <option value="">Seleccione</option>
-                                {% for codigo, nombre in formas_pago %}
-                                    <option value="{{ codigo }}" {% if pagos and pagos.0.forma_pago == codigo %}selected{% endif %}>{{ codigo }} - {{ nombre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="factura-label">Total</label>
-                            <input type="text" class="factura-input" value="$ {{ factura.importe_total|floatformat:2 }}" readonly>
-                        </div>
-                        <div id="grupoEntidadFinancieraDetalle" style="display:none;">
-                            <label class="factura-label">Entidad financiera</label>
-                            <select name="entidad_financiera_id" class="factura-select">
-                                <option value="">Otra institución / sin seleccionar</option>
-                                {% for entidad in entidades_financieras %}
-                                    <option value="{{ entidad.pk }}" {% if pagos and pagos.0.entidad_financiera_id == entidad.pk %}selected{% endif %}>{{ entidad.nombre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div id="grupoEntidadFinancieraNombreDetalle" style="display:none;">
-                            <label class="factura-label">Nombre de la institución</label>
-                            <input type="text" name="entidad_financiera_nombre" class="factura-input" value="{% if pagos %}{{ pagos.0.entidad_financiera_nombre|default:'' }}{% endif %}" maxlength="150">
-                        </div>
-                        <div>
-                            <label class="factura-label">Referencia</label>
-                            <input type="text" name="referencia_pago" class="factura-input" value="{% if pagos %}{{ pagos.0.referencia|default:'' }}{% endif %}" maxlength="100" placeholder="Transferencia, voucher, autorización...">
-                        </div>
-                        <div>
-                            <label class="factura-label">Plazo</label>
-                            <input type="number" min="0" name="plazo" class="factura-input" value="{% if pagos %}{{ pagos.0.plazo|default:0 }}{% else %}0{% endif %}">
-                        </div>
-                        <div>
-                            <label class="factura-label">Unidad de tiempo</label>
-                            <input type="text" name="unidad_tiempo" class="factura-input" value="{% if pagos %}{{ pagos.0.unidad_tiempo|default:'Días' }}{% else %}Días{% endif %}" maxlength="20">
-                        </div>
-                        <div class="factura-form-full">
-                            <label class="factura-label">Observación</label>
-                            <textarea name="observacion_pago" class="factura-textarea" maxlength="500">{% if pagos %}{{ pagos.0.observacion|default:'' }}{% endif %}</textarea>
-                        </div>
-                    </div>
-                    <div class="factura-form-actions"><button type="submit" class="factura-btn primary"><i class="bi bi-check2"></i> Guardar forma de pago</button></div>
-                </form>
-            {% else %}
-                {% if pagos %}
-                    {% for pago in pagos %}
-                        <div class="factura-grid">
-                            <div class="factura-info-box"><div class="factura-label">Forma de pago</div><div class="factura-value">{{ pago.get_forma_pago_display }}</div><div class="factura-small">Código SRI {{ pago.forma_pago }}</div></div>
-                            <div class="factura-info-box"><div class="factura-label">Total</div><div class="factura-value">${{ pago.total|floatformat:2 }}</div></div>
-                            <div class="factura-info-box"><div class="factura-label">Entidad / referencia</div><div class="factura-value">{{ pago.nombre_entidad_financiera|default:"-" }}</div><div class="factura-small">{{ pago.referencia|default:"Sin referencia" }}</div></div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="factura-alert info">No existe una forma de pago registrada para esta factura.</div>
-                {% endif %}
-            {% endif %}
-            <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:20px;flex-wrap:wrap;font-size:11px;">
-                <div>Pagado: <strong>${{ total_pagado|floatformat:2 }}</strong></div>
-                <div>Saldo: <strong>${{ saldo_pendiente|floatformat:2 }}</strong></div>
-            </div>
-        </div>
-    </div>
 
     <div class="factura-card">
         <div class="factura-card-header"><div><div class="factura-card-title">Estado SRI</div><div class="factura-card-subtitle">Información técnica del comprobante electrónico.</div></div></div>
@@ -432,50 +282,506 @@
     </div>
 </div>
 
-<form id="formEmitirFacturaExistente" method="post" action="{% url 'facturacion:emitir_factura' factura.pk %}" style="display:none;">
+<!-- =========================================================
+     FORMULARIO DE EMISIÓN
+========================================================= -->
+
+<form
+    id="formEmitirFactura"
+    method="post"
+    action="{% url 'facturacion:emitir_factura' factura.pk %}"
+    style="display:none;"
+>
     {% csrf_token %}
 </form>
 
+
+<!-- =========================================================
+     DATOS DE COMPRADOR
+     Se reutiliza el modal existente, pero su tarjeta visual
+     queda oculta en esta pantalla.
+========================================================= -->
+
+<style>
+.detalle-factura-comprador-modal > .ot-card{
+    display:none!important;
+}
+</style>
+
+<div class="detalle-factura-comprador-modal">
+    {% include "includes/detalle_factura/comprador.html" %}
+</div>
+
+
+<!-- =========================================================
+     MODAL EMITIR FACTURA
+========================================================= -->
+
+{% include "includes/detalle_factura/modal_emitir_factura.html" %}
+
+
+<!-- =========================================================
+     IFRAME OCULTO PARA FACTURA / RIDE
+========================================================= -->
+
+<iframe
+    id="iframeImpresionFactura"
+    title="Factura"
+    style="
+        position:absolute;
+        top:-10000px;
+        left:-10000px;
+        width:1000px;
+        height:1000px;
+        border:none;
+    "
+></iframe>
+
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-function confirmarEmisionFacturaExistente(){
-    const formulario=document.getElementById("formEmitirFacturaExistente");
-    if(!formulario)return;
-    Swal.fire({
-        title:"¿Emitir factura?",
-        html:`<div style="font-size:13px;line-height:1.55;color:#444;">Se iniciará el proceso de emisión electrónica de la factura <strong>{{ factura.numero_factura|escapejs }}</strong>.<br><br>Total: <strong>${{ factura.importe_total|floatformat:2 }}</strong></div>`,
-        icon:"question",showCancelButton:true,confirmButtonColor:"#0071e3",cancelButtonColor:"#6e6e73",confirmButtonText:"Sí, emitir factura",cancelButtonText:"Cancelar"
-    }).then(function(result){
-        if(!result.isConfirmed)return;
-        Swal.fire({title:"Procesando factura",text:"Generando, firmando y procesando la factura electrónica...",allowOutsideClick:false,allowEscapeKey:false,didOpen:function(){Swal.showLoading();formulario.submit();}});
+/* =========================================================
+   SNAPSHOT ACTUAL DEL COMPRADOR
+   El include comprador.html originalmente se usa también
+   durante la preparación desde OT. Aquí sobrescribimos sus
+   campos con los datos YA GUARDADOS en FacturaVenta.
+========================================================= */
+
+function cargarSnapshotCompradorFacturaGuardada() {
+    const valores = {
+        facturaTipoIdentificacion: "{{ factura.tipo_identificacion_comprador|default:''|escapejs }}",
+        facturaIdentificacion: "{{ factura.identificacion_comprador|default:''|escapejs }}",
+        facturaRazonSocial: "{{ factura.razon_social_comprador|default:''|escapejs }}",
+        facturaDireccion: "{{ factura.direccion_comprador|default:''|escapejs }}",
+        facturaTelefono: "{{ factura.telefono_comprador|default:''|escapejs }}",
+        facturaCorreo: "{{ factura.correo_comprador|default:''|escapejs }}"
+    };
+
+    Object.entries(valores).forEach(([id, valor]) => {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = valor;
+    });
+
+    const nombre = document.getElementById("compradorResumenNombre");
+    const identificacion = document.getElementById("compradorResumenIdentificacion");
+    const contacto = document.getElementById("compradorResumenContacto");
+
+    if (nombre) {
+        nombre.textContent =
+            valores.facturaRazonSocial ||
+            "SIN NOMBRE";
+    }
+
+    if (identificacion) {
+        identificacion.textContent =
+            valores.facturaTipoIdentificacion === "07"
+                ? "Consumidor Final"
+                : (
+                    valores.facturaIdentificacion
+                        ? `C.I./RUC: ${valores.facturaIdentificacion}`
+                        : "Sin identificación registrada"
+                );
+    }
+
+    if (contacto) {
+        const partes = [];
+
+        if (valores.facturaTelefono) {
+            partes.push(valores.facturaTelefono);
+        }
+
+        if (valores.facturaCorreo) {
+            partes.push(valores.facturaCorreo);
+        }
+
+        contacto.textContent =
+            partes.length
+                ? partes.join(" · ")
+                : "Sin teléfono ni correo registrado";
+    }
+}
+
+
+/* =========================================================
+   ABRIR MODAL DE EMISIÓN
+   Antes de abrirlo se vuelven a cargar los datos guardados
+   de la factura. Si el usuario ya cambió comprador mediante
+   el modal, esos campos conservan el cambio en el DOM.
+========================================================= */
+
+const abrirModalEmisionFacturaOriginal =
+    typeof abrirModalEmisionFactura === "function"
+        ? abrirModalEmisionFactura
+        : null;
+
+function abrirModalEmisionFacturaDetalle() {
+    if (typeof sincronizarDatosFacturacionEnModal === "function") {
+        if (!sincronizarDatosFacturacionEnModal()) {
+            return;
+        }
+    }
+
+    const modal = document.getElementById("modalEmisionFactura");
+
+    if (!modal) {
+        Swal.fire({
+            icon: "error",
+            title: "No se pudo abrir",
+            text: "No se encontró el modal de emisión.",
+            confirmButtonColor: "#0071e3"
+        });
+        return;
+    }
+
+    if (typeof reiniciarModalEmisionFactura === "function") {
+        reiniciarModalEmisionFactura();
+    }
+
+    precargarPagoActualEnModal();
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+}
+
+
+/* Sustituimos el nombre global usado por el botón superior. */
+window.abrirModalEmisionFactura = abrirModalEmisionFacturaDetalle;
+
+
+/* =========================================================
+   PRECARGAR FORMA DE PAGO YA GUARDADA
+========================================================= */
+
+function precargarPagoActualEnModal() {
+    {% if pagos %}
+        {% with pago=pagos.0 %}
+            const forma = "{{ pago.forma_pago|default:''|escapejs }}";
+            const entidadId = "{{ pago.entidad_financiera_id|default:''|escapejs }}";
+            const entidadNombre = "{{ pago.nombre_entidad_financiera|default:''|escapejs }}";
+            const referencia = "{{ pago.referencia|default:''|escapejs }}";
+            const observacion = "{{ pago.observacion|default:''|escapejs }}";
+
+            const mapaForma = {
+                "01": ["EFECTIVO", "Efectivo"],
+                "16": ["TARJETA_DEBITO", "Tarjeta de débito"],
+                "19": ["TARJETA_CREDITO", "Tarjeta de crédito"],
+                "20": ["TRANSFERENCIA", "Transferencia"]
+            };
+
+            if (forma && mapaForma[forma] && typeof seleccionarFormaPagoFactura === "function") {
+                seleccionarFormaPagoFactura(
+                    mapaForma[forma][0],
+                    forma,
+                    mapaForma[forma][1]
+                );
+            }
+
+            if (entidadId && typeof seleccionarEntidadFinancieraFactura === "function") {
+                seleccionarEntidadFinancieraFactura(
+                    entidadId,
+                    entidadNombre
+                );
+            }
+
+            const referenciaInput =
+                document.getElementById("referenciaPagoFactura");
+
+            const observacionInput =
+                document.getElementById("observacionPagoFactura");
+
+            if (referenciaInput) {
+                referenciaInput.value = referencia;
+            }
+
+            if (observacionInput) {
+                observacionInput.value = observacion;
+            }
+        {% endwith %}
+    {% endif %}
+}
+
+
+/* =========================================================
+   ASOCIAR SNAPSHOT DEL COMPRADOR AL FORMULARIO DE EMISIÓN
+========================================================= */
+
+function asociarCamposCompradorAFormularioEmision() {
+    [
+        "facturaTipoIdentificacion",
+        "facturaIdentificacion",
+        "facturaRazonSocial",
+        "facturaDireccion",
+        "facturaTelefono",
+        "facturaCorreo",
+        "facturaCompradorClienteId"
+    ].forEach(id => {
+        const campo = document.getElementById(id);
+
+        if (campo) {
+            campo.setAttribute(
+                "form",
+                "formEmitirFactura"
+            );
+        }
     });
 }
 
-function actualizarCamposEntidadFinanciera(){
-    const forma=document.getElementById("formaPagoDetalleFactura")?.value||"";
-    const usaEntidad=["16","19","20"].includes(forma);
-    const grupoEntidad=document.getElementById("grupoEntidadFinancieraDetalle");
-    const grupoNombre=document.getElementById("grupoEntidadFinancieraNombreDetalle");
-    if(grupoEntidad)grupoEntidad.style.display=usaEntidad?"block":"none";
-    if(grupoNombre)grupoNombre.style.display=usaEntidad?"block":"none";
+
+/* =========================================================
+   CARGAR SNAPSHOT REAL DE FACTURAVENTA
+========================================================= */
+
+function cargarCompradorDesdeFactura() {
+    const valores = {
+        facturaTipoIdentificacion:
+            "{{ factura.tipo_identificacion_comprador|default_if_none:''|escapejs }}",
+        facturaIdentificacion:
+            "{{ factura.identificacion_comprador|default_if_none:''|escapejs }}",
+        facturaRazonSocial:
+            "{{ factura.razon_social_comprador|default_if_none:''|escapejs }}",
+        facturaDireccion:
+            "{{ factura.direccion_comprador|default_if_none:''|escapejs }}",
+        facturaTelefono:
+            "{{ factura.telefono_comprador|default_if_none:''|escapejs }}",
+        facturaCorreo:
+            "{{ factura.correo_comprador|default_if_none:''|escapejs }}"
+    };
+
+    Object.entries(valores).forEach(([id, valor]) => {
+        const campo = document.getElementById(id);
+
+        if (campo) {
+            campo.value = valor || "";
+        }
+    });
+
+    const clienteId =
+        document.getElementById(
+            "facturaCompradorClienteId"
+        );
+
+    if (clienteId) {
+        clienteId.value = "";
+    }
+
+    const comprador = {
+        cliente_id: "",
+        tipo_identificacion:
+            valores.facturaTipoIdentificacion,
+        identificacion:
+            valores.facturaIdentificacion,
+        razon_social:
+            valores.facturaRazonSocial,
+        direccion:
+            valores.facturaDireccion,
+        telefono:
+            valores.facturaTelefono,
+        correo:
+            valores.facturaCorreo
+    };
+
+    if (
+        typeof aplicarCompradorFactura === "function" &&
+        comprador.tipo_identificacion &&
+        comprador.identificacion &&
+        comprador.razon_social
+    ) {
+        aplicarCompradorFactura(
+            comprador
+        );
+    }
 }
 
-document.addEventListener("DOMContentLoaded",function(){
-    actualizarCamposEntidadFinanciera();
-    {% if messages %}
-        {% for message in messages %}
-            {% if message.tags == "success" %}
-                Swal.fire({title:"Proceso completado",text:"{{ message|escapejs }}",icon:"success",confirmButtonColor:"#34c759"});
-            {% elif message.tags == "error" %}
-                Swal.fire({title:"No se pudo procesar",text:"{{ message|escapejs }}",icon:"error",confirmButtonColor:"#ff3b30"});
-            {% elif message.tags == "warning" %}
-                Swal.fire({title:"Advertencia",text:"{{ message|escapejs }}",icon:"warning",confirmButtonColor:"#ff9500"});
-            {% else %}
-                Swal.fire({title:"Información",text:"{{ message|escapejs }}",icon:"info",confirmButtonColor:"#0071e3"});
-            {% endif %}
-        {% endfor %}
+
+/* =========================================================
+   ABRIR MODAL DE EMISIÓN
+========================================================= */
+
+const abrirModalEmisionFacturaBase =
+    typeof abrirModalEmisionFactura === "function"
+        ? abrirModalEmisionFactura
+        : null;
+
+function abrirModalEmisionFacturaDetalle() {
+    asociarCamposCompradorAFormularioEmision();
+
+    if (abrirModalEmisionFacturaBase) {
+        abrirModalEmisionFacturaBase();
+    }
+
+    precargarPagoExistenteEnModal();
+}
+
+window.abrirModalEmisionFactura =
+    abrirModalEmisionFacturaDetalle;
+
+
+/* =========================================================
+   PRECARGAR PAGO EXISTENTE
+========================================================= */
+
+function precargarPagoExistenteEnModal() {
+    {% if pagos %}
+        {% with pago=pagos.0 %}
+
+        const formaPago =
+            "{{ pago.forma_pago|default_if_none:''|escapejs }}";
+
+        const entidadId =
+            "{{ pago.entidad_financiera_id|default_if_none:''|escapejs }}";
+
+        const entidadNombre =
+            "{{ pago.entidad_financiera_nombre|default_if_none:''|escapejs }}";
+
+        const referencia =
+            "{{ pago.referencia|default_if_none:''|escapejs }}";
+
+        const observacion =
+            "{{ pago.observacion|default_if_none:''|escapejs }}";
+
+        const metodosModal = {
+            "01": ["EFECTIVO", "Efectivo"],
+            "16": ["TARJETA_DEBITO", "Tarjeta de débito"],
+            "19": ["TARJETA_CREDITO", "Tarjeta de crédito"],
+            "20": ["TRANSFERENCIA", "Transferencia"]
+        };
+
+        const datosForma =
+            metodosModal[formaPago];
+
+        if (
+            datosForma &&
+            typeof seleccionarFormaPagoFactura === "function"
+        ) {
+            seleccionarFormaPagoFactura(
+                datosForma[0],
+                formaPago,
+                datosForma[1]
+            );
+        }
+
+        if (
+            entidadId &&
+            entidadNombre &&
+            typeof seleccionarEntidadFinancieraFactura === "function"
+        ) {
+            seleccionarEntidadFinancieraFactura(
+                entidadId,
+                entidadNombre
+            );
+        }
+        else if (entidadNombre) {
+            entidadFinancieraFacturaSeleccionada =
+                "OTRA";
+
+            const hiddenNombre =
+                document.getElementById(
+                    "entidadFinancieraNombreFactura"
+                );
+
+            const texto =
+                document.getElementById(
+                    "textoEntidadFinancieraFactura"
+                );
+
+            const otra =
+                document.getElementById(
+                    "otraEntidadFinancieraFactura"
+                );
+
+            const grupoOtra =
+                document.getElementById(
+                    "grupoOtraEntidadFinancieraFactura"
+                );
+
+            if (hiddenNombre) {
+                hiddenNombre.value =
+                    entidadNombre;
+            }
+
+            if (texto) {
+                texto.textContent =
+                    "Otra institución financiera";
+            }
+
+            if (otra) {
+                otra.value =
+                    entidadNombre;
+            }
+
+            grupoOtra?.classList.add(
+                "visible"
+            );
+        }
+
+        const inputReferencia =
+            document.getElementById(
+                "referenciaPagoFactura"
+            );
+
+        const inputObservacion =
+            document.getElementById(
+                "observacionPagoFactura"
+            );
+
+        if (inputReferencia) {
+            inputReferencia.value =
+                referencia;
+        }
+
+        if (inputObservacion) {
+            inputObservacion.value =
+                observacion;
+        }
+
+        {% endwith %}
     {% endif %}
-});
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+        asociarCamposCompradorAFormularioEmision();
+        cargarCompradorDesdeFactura();
+        cargarSnapshotCompradorFacturaGuardada();
+
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == "success" %}
+                    Swal.fire({
+                        title:"Proceso completado",
+                        text:"{{ message|escapejs }}",
+                        icon:"success",
+                        confirmButtonColor:"#34c759"
+                    });
+                {% elif message.tags == "error" %}
+                    Swal.fire({
+                        title:"No se pudo procesar",
+                        text:"{{ message|escapejs }}",
+                        icon:"error",
+                        confirmButtonColor:"#ff3b30"
+                    });
+                {% elif message.tags == "warning" %}
+                    Swal.fire({
+                        title:"Advertencia",
+                        text:"{{ message|escapejs }}",
+                        icon:"warning",
+                        confirmButtonColor:"#ff9500"
+                    });
+                {% else %}
+                    Swal.fire({
+                        title:"Información",
+                        text:"{{ message|escapejs }}",
+                        icon:"info",
+                        confirmButtonColor:"#0071e3"
+                    });
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    }
+);
 </script>
 
 {% endblock %}

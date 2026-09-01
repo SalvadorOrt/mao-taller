@@ -467,7 +467,13 @@
                             </div>
 
                             <div class="emision-total-subtexto">
-                                OT {{ orden.numero_orden }}
+                                {% if factura and factura.numero_orden_origen %}
+                                    OT {{ factura.numero_orden_origen }}
+                                {% elif orden and orden.numero_orden %}
+                                    OT {{ orden.numero_orden }}
+                                {% else %}
+                                    Factura sin OT
+                                {% endif %}
                             </div>
                         </div>
 
@@ -477,9 +483,9 @@
                     </div>
 
                     <div class="emision-aviso">
-                        Al confirmar, se crearán los datos de la factura con la
-                        información mostrada en esta pantalla y se iniciará el
-                        proceso de emisión.
+                        Al confirmar, se registrarán los datos de facturación y la
+                        forma de pago seleccionada, y se iniciará el proceso
+                        de emisión electrónica de esta factura.
                     </div>
 
                 </div>

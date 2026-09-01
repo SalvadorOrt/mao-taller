@@ -1164,6 +1164,11 @@ def detalle_factura(
         "saldo_pendiente":
             saldo_pendiente,
 
+        # Total oficial congelado de la factura.
+        # Lo usa el modal de emisión.
+        "total_final":
+            factura.importe_total,
+
         # -----------------------------------------
         # CHOICES
         # -----------------------------------------
@@ -1539,6 +1544,162 @@ def emitir_factura(
     request,
     factura_id,
 ):
+    """
+    Emite una factura BORRADOR usando en un solo POST los datos
+    seleccionados en el modal de emisión.
+
+    Nunca modifica OrdenTrabajo.cliente.
+    """
+
+    # =====================================================
+    # GUARDAR SNAPSHOT + PAGO DEL MODAL
+    # =====================================================
+
+    try:
+        with transaction.atomic():
+
+            factura = get_object_or_404(
+                FacturaVenta.objects
+                .select_for_update(),
+                pk=factura_id,
+            )
+
+            if factura.estado == "AUTORIZADO":
+                raise ValidationError(
+                    "La factura ya se encuentra AUTORIZADA por el SRI."
+                )
+
+            if factura.estado == "RECHAZADO":
+                raise ValidationError(
+                    "La factura está RECHAZADA. "
+                    "No se reenviará automáticamente. "
+                    "Primero revisa el mensaje del SRI y utiliza "
+                    "la opción de reintento cuando corresponda."
+                )
+
+            if factura.estado != "BORRADOR":
+                raise ValidationError(
+                    "Esta factura ya inició su proceso de emisión. "
+                    "Utiliza la opción Reintentar para continuar "
+                    f"desde el estado {factura.estado}."
+                )
+
+            # ---------------------------------------------
+            # 1. Datos de facturación
+            # ---------------------------------------------
+
+            datos_facturacion = (
+                _datos_facturacion_desde_post(
+                    request
+                )
+            )
+
+            for campo, valor in (
+                datos_facturacion.items()
+            ):
+                setattr(
+                    factura,
+                    campo,
+                    valor,
+                )
+
+            factura.full_clean()
+
+            factura.save(
+                update_fields=[
+                    "tipo_identificacion_comprador",
+                    "identificacion_comprador",
+                    "razon_social_comprador",
+                    "direccion_comprador",
+                    "telefono_comprador",
+                    "correo_comprador",
+                    "updated_at",
+                ]
+            )
+
+            # ---------------------------------------------
+            # 2. Forma de pago
+            # ---------------------------------------------
+
+            datos_pago = (
+                _datos_pago_desde_post(
+                    request
+                )
+            )
+
+            nuevo_pago = PagoFacturaVenta(
+                factura=factura,
+                forma_pago=(
+                    datos_pago["forma_pago"]
+                ),
+                total=factura.importe_total,
+                entidad_financiera=(
+                    datos_pago[
+                        "entidad_financiera"
+                    ]
+                ),
+                entidad_financiera_nombre=(
+                    datos_pago[
+                        "entidad_financiera_nombre"
+                    ]
+                ),
+                referencia=(
+                    datos_pago["referencia"]
+                ),
+                observacion=(
+                    datos_pago["observacion"]
+                ),
+                plazo=(
+                    datos_pago["plazo"]
+                ),
+                unidad_tiempo=(
+                    datos_pago["unidad_tiempo"]
+                ),
+            )
+
+            # Validamos el nuevo pago antes de tocar el anterior.
+            nuevo_pago.full_clean()
+
+            factura.pagos.all().delete()
+            nuevo_pago.save()
+
+            if not factura.tiene_pagos_completos():
+                raise ValidationError(
+                    "La forma de pago debe cubrir exactamente "
+                    "el total de la factura antes de emitir."
+                )
+
+    except ValidationError as exc:
+
+        messages.error(
+            request,
+            str(exc),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_id,
+        )
+
+    except Exception as exc:
+
+        messages.error(
+            request,
+            (
+                "No se pudieron guardar los datos necesarios "
+                "para emitir la factura. "
+                f"Detalle: {exc}"
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_id,
+        )
+
+    # =====================================================
+    # RECARGAR DESPUÉS DEL COMMIT LOCAL
+    # =====================================================
 
     factura = get_object_or_404(
         FacturaVenta.objects
@@ -1555,71 +1716,12 @@ def emitir_factura(
     )
 
     # =====================================================
-    # YA AUTORIZADA
-    # =====================================================
-
-    if factura.estado == "AUTORIZADO":
-
-        messages.info(
-            request,
-            (
-                "La factura ya se encuentra "
-                "AUTORIZADA por el SRI."
-            ),
-        )
-
-        return redirect(
-            "facturacion:detalle_factura",
-            factura_id=factura.pk,
-        )
-
-    # =====================================================
-    # RECHAZADA
-    # =====================================================
-
-    if factura.estado == "RECHAZADO":
-
-        messages.error(
-            request,
-            (
-                "La factura está RECHAZADA. "
-                "No se reenviará automáticamente. "
-                "Primero revisa el mensaje del SRI."
-            ),
-        )
-
-        return redirect(
-            "facturacion:detalle_factura",
-            factura_id=factura.pk,
-        )
-
-    # =====================================================
-    # VALIDAR PAGO
-    # =====================================================
-
-    if not factura.tiene_pagos_completos():
-
-        messages.error(
-            request,
-            (
-                "Antes de emitir debes registrar "
-                "la forma de pago por el total "
-                "de la factura."
-            ),
-        )
-
-        return redirect(
-            "facturacion:detalle_factura",
-            factura_id=factura.pk,
-        )
-
-    # =====================================================
-    # PREPARAR Y PROCESAR
+    # PREPARAR Y PROCESAR SRI
     # =====================================================
 
     try:
         # BORRADOR no consume secuencial ni clave.
-        # Se reservan únicamente cuando el usuario decide emitir.
+        # Se reservan únicamente cuando el usuario confirma emitir.
         if not factura.tiene_datos_emision:
             factura.preparar_emision()
 
@@ -1656,10 +1758,6 @@ def emitir_factura(
             "facturacion:detalle_factura",
             factura_id=factura.pk,
         )
-
-    # =====================================================
-    # LEER ESTADO FINAL REAL
-    # =====================================================
 
     _mensaje_resultado_emision(
         request,
