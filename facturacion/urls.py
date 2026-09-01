@@ -39,6 +39,16 @@ urlpatterns = [
     ),
 
     # ======================================================
+    # VISTA PREVIA DE FACTURA DESDE OT
+    # NO crea FacturaVenta ni reserva datos fiscales.
+    # ======================================================
+    path(
+        "orden/<int:orden_id>/vista-previa-factura/",
+        impresion.vista_previa_factura_ot,
+        name="vista_previa_factura_ot",
+    ),
+
+    # ======================================================
     # FACTURA MANUAL / VENTA DIRECTA
     # ======================================================
     path(

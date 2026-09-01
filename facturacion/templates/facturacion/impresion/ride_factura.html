@@ -44,6 +44,7 @@ body{background:#e5e7eb;color:var(--text);font-family:"Inter",Arial,sans-serif;f
 .totals-table td{padding:4px 6px;font-size:8px;border-bottom:1px solid var(--line)}.totals-table tr:last-child td{border-bottom:none;background:var(--primary-soft)}
 .total-label{font-weight:900;color:var(--dark);text-transform:uppercase}.total-final-label{font-size:9px!important;color:var(--danger);font-weight:900}.total-value{text-align:right;font-weight:900;color:var(--danger);font-size:11px!important}
 .footer-note{margin-top:6px;padding-top:4px;border-top:1px solid var(--line);text-align:center;font-size:6.6px;color:var(--muted);line-height:1.45}
+.preview-banner{margin:0 0 6px;padding:6px 8px;border:1px solid #f5c26b;border-radius:var(--radius);background:#fff8e5;color:#8a5500;text-align:center;font-size:8px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
 @media print{
 html,body{width:210mm!important;height:297mm!important;overflow:hidden!important}
 body{background:#fff!important}
@@ -66,6 +67,10 @@ html,body{width:auto;min-height:auto;background:#fff;margin:0;padding:0}.page{wi
 <body>
 <div class="page">
 
+{% if es_vista_previa %}
+<div class="preview-banner">VISTA PREVIA — DOCUMENTO NO EMITIDO — NO VÁLIDO COMO COMPROBANTE TRIBUTARIO</div>
+{% endif %}
+
 <table class="top-table"><tbody><tr>
 <td class="top-left">
 <div class="logo">{% if empresa and empresa.logo %}<img src="{{ empresa.logo.url }}" alt="Logo Empresa">{% else %}<img src="{% static 'logo.png' %}" alt="Logo MAO">{% endif %}</div>
@@ -77,10 +82,10 @@ RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
 </div>
 </td>
 <td class="top-right">
-<div class="doc-title">Factura Electrónica</div>
+<div class="doc-title">{% if es_vista_previa %}Factura Electrónica — Vista previa{% else %}Factura Electrónica{% endif %}</div>
 <div class="doc-number">N.º {{ numero_factura }}</div>
-<div class="doc-date">Fecha emisión: {{ factura.fecha_emision|date:"d/m/Y"|default:"-" }}</div>
-<div class="doc-state">Estado: {{ factura.get_estado_display|upper }}</div>
+<div class="doc-date">{% if es_vista_previa %}Fecha referencial: {{ factura.fecha_emision|date:"d/m/Y"|default:"-" }}{% else %}Fecha emisión: {{ factura.fecha_emision|date:"d/m/Y"|default:"-" }}{% endif %}</div>
+<div class="doc-state">Estado: {% if es_vista_previa %}BORRADOR / NO EMITIDA{% else %}{{ factura.get_estado_display|upper }}{% endif %}</div>
 </td>
 </tr></tbody></table>
 
@@ -112,6 +117,7 @@ RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
 </tbody></table>
 {% endif %}
 
+{% if not es_vista_previa %}
 <div class="sri-box">
 <div class="sri-title">Información del comprobante electrónico</div>
 <table class="sri-table"><tbody>
@@ -128,6 +134,7 @@ RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
 {% endif %}
 </tbody></table>
 </div>
+{% endif %}
 
 {% if repuestos %}
 <div class="section">
@@ -224,7 +231,7 @@ RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
 <td>{% if pago.plazo %}{{ pago.plazo }} {{ pago.unidad_tiempo|default:"Días" }}{% else %}0 días{% endif %}</td>
 <td class="text-right">${{ pago.total|floatformat:2 }}</td>
 </tr>
-{% empty %}<tr><td colspan="5" class="text-center muted">No existe una forma de pago registrada.</td></tr>{% endfor %}
+{% empty %}<tr><td colspan="5" class="text-center muted">{% if es_vista_previa %}Forma de pago por definir al guardar la factura.{% else %}No existe una forma de pago registrada.{% endif %}</td></tr>{% endfor %}
 </tbody></table>
 </div>
 
@@ -240,7 +247,7 @@ RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
 
 <div class="footer-note">
 Documento generado electrónicamente por {{ empresa.nombre_comercial|default:empresa.razon_social|default:"MAO" }}.
-{% if factura.estado == "AUTORIZADO" %}<br>Comprobante autorizado electrónicamente.{% elif factura.estado == "BORRADOR" %}<br><strong>DOCUMENTO EN BORRADOR — NO CONSTITUYE COMPROBANTE AUTORIZADO POR EL SRI.</strong>{% endif %}
+{% if es_vista_previa %}<br><strong>VISTA PREVIA — NO SE HA RESERVADO SECUENCIAL, NO EXISTE CLAVE DE ACCESO Y NO SE HA ENVIADO NADA AL SRI.</strong>{% elif factura.estado == "AUTORIZADO" %}<br>Comprobante autorizado electrónicamente.{% elif factura.estado == "BORRADOR" %}<br><strong>DOCUMENTO EN BORRADOR — NO CONSTITUYE COMPROBANTE AUTORIZADO POR EL SRI.</strong>{% endif %}
 </div>
 
 </div>

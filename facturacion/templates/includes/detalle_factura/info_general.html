@@ -577,9 +577,9 @@
 
                 <button
                     type="button"
-                    class="btn-login factura-action-disabled"
-                    disabled
-                    title="Primero debes guardar la factura"
+                    class="btn-login"
+                    onclick="imprimirVistaPreviaFacturaOT(event)"
+                    title="Ver cómo quedará la factura antes de guardarla o emitirla"
                 >
                     <i
                         class="bi bi-receipt"
@@ -1042,6 +1042,220 @@
             boton.disabled = false;
             boton.innerHTML = htmlOriginal;
         }, 2000);
+    }
+</script>
+{% else %}
+<script>
+    function imprimirVistaPreviaFacturaOT(evento) {
+
+        const boton =
+            evento.currentTarget;
+
+        if (
+            !boton ||
+            boton.disabled
+        ) {
+            return;
+        }
+
+
+        // ======================================================
+        // DATOS ACTUALES DE FACTURACIÓN
+        // ======================================================
+        // La vista previa debe reflejar al comprador seleccionado
+        // actualmente en pantalla, sin guardar FacturaVenta.
+        // ======================================================
+
+        const tipo =
+            document.getElementById(
+                "facturaTipoIdentificacion"
+            )?.value?.trim() || "";
+
+        const identificacion =
+            document.getElementById(
+                "facturaIdentificacion"
+            )?.value?.trim() || "";
+
+        const razonSocial =
+            document.getElementById(
+                "facturaRazonSocial"
+            )?.value?.trim() || "";
+
+        if (
+            !tipo ||
+            !identificacion ||
+            !razonSocial
+        ) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    title: "Datos de facturación requeridos",
+                    text: "Completa los datos de facturación antes de visualizar la factura.",
+                    icon: "warning",
+                    confirmButtonColor: "#ff9500"
+                });
+            } else {
+                window.alert(
+                    "Completa los datos de facturación antes de visualizar la factura."
+                );
+            }
+
+            return;
+        }
+
+
+        // ======================================================
+        // BLOQUEAR BOTÓN
+        // ======================================================
+
+        const textoOriginal =
+            boton.innerHTML;
+
+        boton.disabled =
+            true;
+
+        boton.innerHTML =
+            '<i class="bi bi-hourglass-split"></i> Generando PDF...';
+
+
+        // ======================================================
+        // ELIMINAR IFRAME ANTERIOR
+        // ======================================================
+
+        const iframeAnterior =
+            document.getElementById(
+                "iframeImpresionFacturaPreview"
+            );
+
+        if (iframeAnterior) {
+            iframeAnterior.remove();
+        }
+
+
+        // ======================================================
+        // CREAR IFRAME OCULTO
+        // MISMA MECÁNICA QUE RESUMEN DE ORDEN
+        // ======================================================
+
+        const iframe =
+            document.createElement(
+                "iframe"
+            );
+
+        iframe.id =
+            "iframeImpresionFacturaPreview";
+
+        iframe.style.position =
+            "absolute";
+
+        iframe.style.top =
+            "-10000px";
+
+        iframe.style.left =
+            "-10000px";
+
+        iframe.style.width =
+            "1000px";
+
+        iframe.style.height =
+            "1000px";
+
+        iframe.style.border =
+            "none";
+
+        document.body.appendChild(
+            iframe
+        );
+
+
+        // ======================================================
+        // ENVIAR AL PREVIEW LOS DATOS DEL COMPRADOR ACTUAL
+        // ======================================================
+
+        const params =
+            new URLSearchParams();
+
+        const campos = [
+            [
+                "tipo_identificacion_comprador",
+                "facturaTipoIdentificacion"
+            ],
+            [
+                "identificacion_comprador",
+                "facturaIdentificacion"
+            ],
+            [
+                "razon_social_comprador",
+                "facturaRazonSocial"
+            ],
+            [
+                "direccion_comprador",
+                "facturaDireccion"
+            ],
+            [
+                "telefono_comprador",
+                "facturaTelefono"
+            ],
+            [
+                "correo_comprador",
+                "facturaCorreo"
+            ]
+        ];
+
+        campos.forEach(
+            function (item) {
+
+                const nombre =
+                    item[0];
+
+                const id =
+                    item[1];
+
+                const campo =
+                    document.getElementById(
+                        id
+                    );
+
+                if (campo) {
+                    params.set(
+                        nombre,
+                        String(
+                            campo.value || ""
+                        ).trim()
+                    );
+                }
+            }
+        );
+
+
+        // ======================================================
+        // URL DE VISTA PREVIA
+        // ======================================================
+
+        const baseUrl =
+            "{% url 'facturacion:vista_previa_factura_ot' orden.pk %}";
+
+        iframe.src =
+            baseUrl
+            + "?"
+            + params.toString();
+
+
+        // ======================================================
+        // RESTAURAR BOTÓN
+        // ======================================================
+
+        window.setTimeout(
+            function () {
+
+                boton.disabled =
+                    false;
+
+                boton.innerHTML =
+                    textoOriginal;
+
+            },
+            2000
+        );
     }
 </script>
 {% endif %}
