@@ -194,13 +194,25 @@
         {% include "includes/detalle_factura/recomendaciones.html" %}
 
 
-        <!-- =================================================
-             FORMA DE PAGO
-        ================================================== -->
-
-        {% include "includes/detalle_factura/forma_pago.html" %}
 
     </form>
+
+
+    <!-- =====================================================
+         MODAL DE DATOS DE FACTURACIÓN + FORMA DE PAGO
+
+         En esta pantalla todavía NO se emite al SRI.
+         El mismo modal se reutiliza únicamente para capturar:
+         - comprador
+         - forma de pago
+         - entidad financiera
+         - referencia
+         - observación
+
+         Al confirmar se crea FacturaVenta en BORRADOR.
+    ====================================================== -->
+
+    {% include "includes/detalle_factura/modal_emitir_factura.html" %}
 
 </div>
 
@@ -216,80 +228,175 @@
 <script>
 
     /* =========================================================
+       UTILIDADES
+    ========================================================= */
+
+    function obtenerFormularioGuardarFactura() {
+        return document.getElementById(
+            "formGuardarFactura"
+        );
+    }
+
+
+    function configurarModalComoGuardadoBorrador() {
+
+        const titulo =
+            document.querySelector(
+                "#modalEmisionFactura .modal-emision-titulo"
+            );
+
+        if (titulo) {
+            titulo.textContent =
+                "Guardar factura";
+        }
+
+
+        const aviso =
+            document.querySelector(
+                "#modalEmisionFactura .emision-aviso"
+            );
+
+        if (aviso) {
+            aviso.innerHTML = `
+                Al confirmar, se guardarán los datos de facturación y
+                la forma de pago seleccionada, y se creará la factura
+                en estado <strong>BORRADOR</strong>.
+                <br><br>
+                <strong>Esta acción no envía nada al SRI.</strong>
+            `;
+        }
+
+
+        const boton =
+            document.getElementById(
+                "btnConfirmarEmisionFactura"
+            );
+
+        if (boton) {
+            boton.textContent =
+                "Guardar factura";
+
+            boton.disabled =
+                false;
+        }
+
+
+        /*
+         * Los hidden del modal original apuntan a
+         * formEmitirFactura porque también se usa en el detalle
+         * de una factura ya creada.
+         *
+         * En esta pantalla deben viajar con formGuardarFactura.
+         */
+        [
+            "formaPagoFactura",
+            "codigoSriPagoFactura",
+            "montoPagoFactura",
+            "referenciaPagoFacturaHidden",
+            "entidadFinancieraIdFactura",
+            "entidadFinancieraNombreFactura",
+            "observacionPagoFacturaHidden"
+        ].forEach(function (id) {
+
+            const campo =
+                document.getElementById(id);
+
+            if (campo) {
+                campo.setAttribute(
+                    "form",
+                    "formGuardarFactura"
+                );
+            }
+        });
+    }
+
+
+    /* =========================================================
        ABRIR MODAL COMPRADOR
     ========================================================= */
 
-    function abrirModalComprador() {
+    /*
+     * comprador.html ya declara su propia función.
+     * Esta versión se conserva como respaldo por compatibilidad.
+     */
+    if (
+        typeof window.abrirModalComprador !== "function"
+    ) {
 
-        const modal = document.getElementById(
-            "modalCompradorFactura"
-        );
+        window.abrirModalComprador =
+            function () {
 
-        if (!modal) {
+                const modal =
+                    document.getElementById(
+                        "modalCompradorFactura"
+                    );
 
-            Swal.fire({
-                title: "Comprador",
-                text: "No se encontró el modal de comprador.",
-                icon: "warning",
-                confirmButtonColor: "#0071e3"
-            });
+                if (!modal) {
 
-            return;
-        }
+                    Swal.fire({
+                        title:
+                            "Comprador",
 
-        modal.style.display = "flex";
+                        text:
+                            "No se encontró el modal de comprador.",
+
+                        icon:
+                            "warning",
+
+                        confirmButtonColor:
+                            "#0071e3"
+                    });
+
+                    return;
+                }
+
+                modal.style.display =
+                    "flex";
+            };
     }
 
 
-
     /* =========================================================
-       CERRAR MODAL COMPRADOR
+       VALIDAR COMPRADOR ANTES DE ABRIR MODAL DE PAGO
     ========================================================= */
 
-    function cerrarModalComprador() {
+    function validarCompradorFactura() {
 
-        const modal = document.getElementById(
-            "modalCompradorFactura"
-        );
+        const tipo =
+            document.getElementById(
+                "facturaTipoIdentificacion"
+            );
 
-        if (!modal) {
-            return;
-        }
+        const identificacion =
+            document.getElementById(
+                "facturaIdentificacion"
+            );
 
-        modal.style.display = "none";
-    }
-
-
-
-    /* =========================================================
-       VALIDAR DATOS DE FACTURA
-    ========================================================= */
-
-    function validarDatosFactura() {
-
-        const identificacion = document.getElementById(
-            "facturaIdentificacion"
-        );
-
-        const razonSocial = document.getElementById(
-            "facturaRazonSocial"
-        );
-
-        const formaPago = document.getElementById(
-            "formaPagoFactura"
-        );
+        const razonSocial =
+            document.getElementById(
+                "facturaRazonSocial"
+            );
 
 
         if (
-            identificacion &&
-            !String(identificacion.value || "").trim()
+            !tipo ||
+            !String(
+                tipo.value || ""
+            ).trim()
         ) {
 
             Swal.fire({
-                title: "Identificación requerida",
-                text: "Ingrese la identificación para facturación.",
-                icon: "warning",
-                confirmButtonColor: "#ff9500"
+                title:
+                    "Datos de facturación requeridos",
+
+                text:
+                    "Selecciona los datos del comprador antes de guardar la factura.",
+
+                icon:
+                    "warning",
+
+                confirmButtonColor:
+                    "#ff9500"
             });
 
             return false;
@@ -297,15 +404,24 @@
 
 
         if (
-            razonSocial &&
-            !String(razonSocial.value || "").trim()
+            !identificacion ||
+            !String(
+                identificacion.value || ""
+            ).trim()
         ) {
 
             Swal.fire({
-                title: "Datos de facturación requeridos",
-                text: "Ingrese el nombre o razón social para facturación.",
-                icon: "warning",
-                confirmButtonColor: "#ff9500"
+                title:
+                    "Identificación requerida",
+
+                text:
+                    "Ingrese la identificación para facturación.",
+
+                icon:
+                    "warning",
+
+                confirmButtonColor:
+                    "#ff9500"
             });
 
             return false;
@@ -313,15 +429,24 @@
 
 
         if (
-            formaPago &&
-            !String(formaPago.value || "").trim()
+            !razonSocial ||
+            !String(
+                razonSocial.value || ""
+            ).trim()
         ) {
 
             Swal.fire({
-                title: "Forma de pago requerida",
-                text: "Seleccione una forma de pago.",
-                icon: "warning",
-                confirmButtonColor: "#ff9500"
+                title:
+                    "Datos de facturación requeridos",
+
+                text:
+                    "Ingrese el nombre o razón social para facturación.",
+
+                icon:
+                    "warning",
+
+                confirmButtonColor:
+                    "#ff9500"
             });
 
             return false;
@@ -332,49 +457,247 @@
     }
 
 
-
     /* =========================================================
-       CONFIRMAR GUARDADO DE FACTURA
+       GUARDAR FACTURA DESDE EL MODAL
     ========================================================= */
 
+    /*
+     * info_general.html llama confirmarGuardadoFactura().
+     * Ahora esa función NO envía el formulario directamente:
+     * abre el modal de pago.
+     */
     function confirmarGuardadoFactura() {
 
-        const formulario = document.getElementById(
-            "formGuardarFactura"
-        );
-
-        const boton = document.getElementById(
-            "btnGuardarFactura"
-        );
+        const formulario =
+            obtenerFormularioGuardarFactura();
 
 
         if (!formulario) {
 
             Swal.fire({
-                title: "Error",
-                text: "No se encontró el formulario de facturación.",
-                icon: "error",
-                confirmButtonColor: "#ff3b30"
+                title:
+                    "Error",
+
+                text:
+                    "No se encontró el formulario de facturación.",
+
+                icon:
+                    "error",
+
+                confirmButtonColor:
+                    "#ff3b30"
             });
 
             return;
         }
 
 
-        if (!validarDatosFactura()) {
+        if (
+            !validarCompradorFactura()
+        ) {
             return;
         }
 
 
+        configurarModalComoGuardadoBorrador();
+
+
+        if (
+            typeof abrirModalEmisionFactura ===
+            "function"
+        ) {
+
+            abrirModalEmisionFactura();
+
+            /*
+             * abrirModalEmisionFactura() reinicia elementos
+             * internos. Volvemos a aplicar el texto de preparación.
+             */
+            configurarModalComoGuardadoBorrador();
+
+        } else {
+
+            Swal.fire({
+                title:
+                    "Error",
+
+                text:
+                    "No se encontró el modal para guardar la factura.",
+
+                icon:
+                    "error",
+
+                confirmButtonColor:
+                    "#ff3b30"
+            });
+        }
+    }
+
+
+    /* =========================================================
+       CONFIRMAR DESDE EL MODAL
+    ========================================================= */
+
+    /*
+     * Esta función reemplaza la función del modal únicamente en
+     * detalle_orden_facturacion.html.
+     *
+     * NO EMITE AL SRI.
+     * Solo envía formGuardarFactura a crear_factura_desde_ot.
+     */
+    function confirmarYEmitirFactura() {
+
+        if (
+            typeof validarModalEmisionFactura ===
+                "function" &&
+            !validarModalEmisionFactura()
+        ) {
+            return;
+        }
+
+
+        const formulario =
+            obtenerFormularioGuardarFactura();
+
+
+        if (!formulario) {
+
+            if (
+                typeof mostrarEstadoEmisionFactura ===
+                "function"
+            ) {
+
+                mostrarEstadoEmisionFactura(
+                    "No se encontró el formulario para guardar la factura.",
+                    "error"
+                );
+            }
+
+            return;
+        }
+
+
+        /* ---------------------------------------------
+           Copiar valores visibles del modal a sus hidden
+        --------------------------------------------- */
+
+        const referencia =
+            document
+                .getElementById(
+                    "referenciaPagoFactura"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+
+        let entidadId =
+            document
+                .getElementById(
+                    "entidadFinancieraIdFactura"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+
+        let entidadNombre =
+            document
+                .getElementById(
+                    "entidadFinancieraNombreFactura"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+
+        if (
+            typeof entidadFinancieraFacturaSeleccionada !==
+                "undefined" &&
+            entidadFinancieraFacturaSeleccionada ===
+                "OTRA"
+        ) {
+
+            entidadId =
+                "";
+
+            entidadNombre =
+                document
+                    .getElementById(
+                        "otraEntidadFinancieraFactura"
+                    )
+                    ?.value
+                    ?.trim()
+                || "";
+        }
+
+
+        const observacion =
+            document
+                .getElementById(
+                    "observacionPagoFactura"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+
+        const referenciaHidden =
+            document.getElementById(
+                "referenciaPagoFacturaHidden"
+            );
+
+        const entidadIdHidden =
+            document.getElementById(
+                "entidadFinancieraIdFactura"
+            );
+
+        const entidadNombreHidden =
+            document.getElementById(
+                "entidadFinancieraNombreFactura"
+            );
+
+        const observacionHidden =
+            document.getElementById(
+                "observacionPagoFacturaHidden"
+            );
+
+
+        if (referenciaHidden) {
+            referenciaHidden.value =
+                referencia;
+        }
+
+        if (entidadIdHidden) {
+            entidadIdHidden.value =
+                entidadId;
+        }
+
+        if (entidadNombreHidden) {
+            entidadNombreHidden.value =
+                entidadNombre;
+        }
+
+        if (observacionHidden) {
+            observacionHidden.value =
+                observacion;
+        }
+
+
+        /* ---------------------------------------------
+           Confirmación final
+        --------------------------------------------- */
+
         Swal.fire({
 
-            title: "¿Guardar factura?",
+            title:
+                "¿Guardar factura?",
 
             html: `
                 <div style="
-                    font-size: 13px;
-                    line-height: 1.5;
-                    color: #444;
+                    font-size:13px;
+                    line-height:1.55;
+                    color:#444;
                 ">
                     Se creará una factura en estado
                     <strong>BORRADOR</strong>
@@ -385,26 +708,30 @@
 
                     <br><br>
 
-                    Esto
-                    <strong>no enviará nada al SRI</strong>.
+                    Total:
+                    <strong>
+                        ${{ total_final|default:0|floatformat:2 }}
+                    </strong>
 
                     <br><br>
 
-                    Total de la factura:
-
                     <strong>
-                        ${{ total_final|default:0|floatformat:2 }}
+                        No se enviará nada al SRI.
                     </strong>
                 </div>
             `,
 
-            icon: "question",
+            icon:
+                "question",
 
-            showCancelButton: true,
+            showCancelButton:
+                true,
 
-            confirmButtonColor: "#0071e3",
+            confirmButtonColor:
+                "#0071e3",
 
-            cancelButtonColor: "#6e6e73",
+            cancelButtonColor:
+                "#6e6e73",
 
             confirmButtonText:
                 "Sí, guardar factura",
@@ -414,24 +741,50 @@
 
         }).then(function (result) {
 
-            if (!result.isConfirmed) {
+            if (
+                !result.isConfirmed
+            ) {
                 return;
             }
 
 
-            if (boton) {
+            const botonModal =
+                document.getElementById(
+                    "btnConfirmarEmisionFactura"
+                );
 
-                boton.disabled = true;
+            const botonCabecera =
+                document.getElementById(
+                    "btnGuardarFactura"
+                );
 
-                boton.innerHTML = `
+
+            if (botonModal) {
+
+                botonModal.disabled =
+                    true;
+
+                botonModal.textContent =
+                    "Guardando...";
+            }
+
+
+            if (botonCabecera) {
+
+                botonCabecera.disabled =
+                    true;
+
+                botonCabecera.innerHTML = `
                     <i
                         class="bi bi-hourglass-split"
                         style="margin-right:5px;"
                     ></i>
-
                     Guardando...
                 `;
             }
+
+
+            cerrarModalEmisionFactura();
 
 
             Swal.fire({
@@ -453,14 +806,14 @@
 
                         Swal.showLoading();
 
+                        /*
+                         * submit() evita disparar otra confirmación.
+                         */
                         formulario.submit();
                     }
-
             });
-
         });
     }
-
 
 
     /* =========================================================
@@ -471,6 +824,9 @@
         "DOMContentLoaded",
         function () {
 
+            configurarModalComoGuardadoBorrador();
+
+
             {% if messages %}
 
                 {% for message in messages %}
@@ -478,28 +834,49 @@
                     {% if message.tags == "success" %}
 
                         Swal.fire({
-                            title: "Proceso completado",
-                            text: "{{ message|escapejs }}",
-                            icon: "success",
-                            confirmButtonColor: "#34c759"
+                            title:
+                                "Proceso completado",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "success",
+
+                            confirmButtonColor:
+                                "#34c759"
                         });
 
                     {% elif message.tags == "error" %}
 
                         Swal.fire({
-                            title: "No se pudo procesar",
-                            text: "{{ message|escapejs }}",
-                            icon: "error",
-                            confirmButtonColor: "#ff3b30"
+                            title:
+                                "No se pudo procesar",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "error",
+
+                            confirmButtonColor:
+                                "#ff3b30"
                         });
 
                     {% elif message.tags == "warning" %}
 
                         Swal.fire({
-                            title: "Advertencia",
-                            text: "{{ message|escapejs }}",
-                            icon: "warning",
-                            confirmButtonColor: "#ff9500"
+                            title:
+                                "Advertencia",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "warning",
+
+                            confirmButtonColor:
+                                "#ff9500"
                         });
 
                     {% endif %}
@@ -507,7 +884,6 @@
                 {% endfor %}
 
             {% endif %}
-
         }
     );
 
