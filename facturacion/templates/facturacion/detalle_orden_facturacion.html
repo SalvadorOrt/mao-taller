@@ -464,7 +464,7 @@
     /*
      * info_general.html llama confirmarGuardadoFactura().
      * Ahora esa función NO envía el formulario directamente:
-     * abre el modal de pago.
+     * abre directamente el modal de datos + pago.
      */
     function confirmarGuardadoFactura() {
 
@@ -502,20 +502,13 @@
         configurarModalComoGuardadoBorrador();
 
 
-        if (
-            typeof abrirModalEmisionFactura ===
-            "function"
-        ) {
+        const modal =
+            document.getElementById(
+                "modalEmisionFactura"
+            );
 
-            abrirModalEmisionFactura();
 
-            /*
-             * abrirModalEmisionFactura() reinicia elementos
-             * internos. Volvemos a aplicar el texto de preparación.
-             */
-            configurarModalComoGuardadoBorrador();
-
-        } else {
+        if (!modal) {
 
             Swal.fire({
                 title:
@@ -530,7 +523,151 @@
                 confirmButtonColor:
                     "#ff3b30"
             });
+
+            return;
         }
+
+
+        /*
+         * Abrimos el modal DIRECTAMENTE en esta pantalla.
+         * No utilizamos abrirModalEmisionFactura() porque esa
+         * función pertenece también al flujo de una factura ya
+         * creada y puede detenerse por validaciones propias de
+         * la etapa de emisión.
+         */
+
+        if (
+            typeof reiniciarModalEmisionFactura ===
+            "function"
+        ) {
+            reiniciarModalEmisionFactura();
+        }
+
+
+        configurarModalComoGuardadoBorrador();
+
+
+        /* ---------------------------------------------
+           Sincronizar comprador visible del modal
+        --------------------------------------------- */
+
+        const tipo =
+            document
+                .getElementById(
+                    "facturaTipoIdentificacion"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+        const identificacion =
+            document
+                .getElementById(
+                    "facturaIdentificacion"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+        const razonSocial =
+            document
+                .getElementById(
+                    "facturaRazonSocial"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+        const telefono =
+            document
+                .getElementById(
+                    "facturaTelefono"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+        const correo =
+            document
+                .getElementById(
+                    "facturaCorreo"
+                )
+                ?.value
+                ?.trim()
+            || "";
+
+
+        const nombreBox =
+            document.getElementById(
+                "emisionRazonSocial"
+            );
+
+        const identificacionBox =
+            document.getElementById(
+                "emisionIdentificacion"
+            );
+
+        const contactoBox =
+            document.getElementById(
+                "emisionContacto"
+            );
+
+
+        if (nombreBox) {
+            nombreBox.textContent =
+                razonSocial || "-";
+        }
+
+
+        if (identificacionBox) {
+
+            if (tipo === "07") {
+                identificacionBox.textContent =
+                    "Consumidor Final";
+            }
+            else if (tipo === "06") {
+                identificacionBox.textContent =
+                    "Pasaporte: " + identificacion;
+            }
+            else if (tipo === "04") {
+                identificacionBox.textContent =
+                    "RUC: " + identificacion;
+            }
+            else {
+                identificacionBox.textContent =
+                    "C.I.: " + identificacion;
+            }
+        }
+
+
+        if (contactoBox) {
+
+            const contacto = [];
+
+            if (telefono) {
+                contacto.push(
+                    telefono
+                );
+            }
+
+            if (correo) {
+                contacto.push(
+                    correo
+                );
+            }
+
+            contactoBox.textContent =
+                contacto.length
+                    ? contacto.join(" · ")
+                    : "Sin teléfono ni correo registrado";
+        }
+
+
+        modal.style.display =
+            "flex";
+
+        document.body.style.overflow =
+            "hidden";
     }
 
 
