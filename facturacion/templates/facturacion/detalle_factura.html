@@ -404,105 +404,6 @@ function cargarSnapshotCompradorFacturaGuardada() {
 
 
 /* =========================================================
-   ABRIR MODAL DE EMISIÓN
-   Antes de abrirlo se vuelven a cargar los datos guardados
-   de la factura. Si el usuario ya cambió comprador mediante
-   el modal, esos campos conservan el cambio en el DOM.
-========================================================= */
-
-const abrirModalEmisionFacturaOriginal =
-    typeof abrirModalEmisionFactura === "function"
-        ? abrirModalEmisionFactura
-        : null;
-
-function abrirModalEmisionFacturaDetalle() {
-    if (typeof sincronizarDatosFacturacionEnModal === "function") {
-        if (!sincronizarDatosFacturacionEnModal()) {
-            return;
-        }
-    }
-
-    const modal = document.getElementById("modalEmisionFactura");
-
-    if (!modal) {
-        Swal.fire({
-            icon: "error",
-            title: "No se pudo abrir",
-            text: "No se encontró el modal de emisión.",
-            confirmButtonColor: "#0071e3"
-        });
-        return;
-    }
-
-    if (typeof reiniciarModalEmisionFactura === "function") {
-        reiniciarModalEmisionFactura();
-    }
-
-    precargarPagoActualEnModal();
-
-    modal.style.display = "flex";
-    document.body.style.overflow = "hidden";
-}
-
-
-/* Sustituimos el nombre global usado por el botón superior. */
-window.abrirModalEmisionFactura = abrirModalEmisionFacturaDetalle;
-
-
-/* =========================================================
-   PRECARGAR FORMA DE PAGO YA GUARDADA
-========================================================= */
-
-function precargarPagoActualEnModal() {
-    {% if pagos %}
-        {% with pago=pagos.0 %}
-            const forma = "{{ pago.forma_pago|default:''|escapejs }}";
-            const entidadId = "{{ pago.entidad_financiera_id|default:''|escapejs }}";
-            const entidadNombre = "{{ pago.nombre_entidad_financiera|default:''|escapejs }}";
-            const referencia = "{{ pago.referencia|default:''|escapejs }}";
-            const observacion = "{{ pago.observacion|default:''|escapejs }}";
-
-            const mapaForma = {
-                "01": ["EFECTIVO", "Efectivo"],
-                "16": ["TARJETA_DEBITO", "Tarjeta de débito"],
-                "19": ["TARJETA_CREDITO", "Tarjeta de crédito"],
-                "20": ["TRANSFERENCIA", "Transferencia"]
-            };
-
-            if (forma && mapaForma[forma] && typeof seleccionarFormaPagoFactura === "function") {
-                seleccionarFormaPagoFactura(
-                    mapaForma[forma][0],
-                    forma,
-                    mapaForma[forma][1]
-                );
-            }
-
-            if (entidadId && typeof seleccionarEntidadFinancieraFactura === "function") {
-                seleccionarEntidadFinancieraFactura(
-                    entidadId,
-                    entidadNombre
-                );
-            }
-
-            const referenciaInput =
-                document.getElementById("referenciaPagoFactura");
-
-            const observacionInput =
-                document.getElementById("observacionPagoFactura");
-
-            if (referenciaInput) {
-                referenciaInput.value = referencia;
-            }
-
-            if (observacionInput) {
-                observacionInput.value = observacion;
-            }
-        {% endwith %}
-    {% endif %}
-}
-
-
-/* =========================================================
    ASOCIAR SNAPSHOT DEL COMPRADOR AL FORMULARIO DE EMISIÓN
 ========================================================= */
 
@@ -596,6 +497,14 @@ function cargarCompradorDesdeFactura() {
 
 /* =========================================================
    ABRIR MODAL DE EMISIÓN
+
+   IMPORTANTE:
+   - modal_emitir_factura.html ya define abrirModalEmisionFactura().
+   - Guardamos esa función original en abrirModalEmisionFacturaBase.
+   - Esta pantalla solo la envuelve para asociar el comprador
+     guardado y precargar la forma de pago existente.
+   - Debe existir UNA sola función abrirModalEmisionFacturaDetalle()
+     para evitar recursión.
 ========================================================= */
 
 const abrirModalEmisionFacturaBase =
