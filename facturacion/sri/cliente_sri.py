@@ -882,7 +882,9 @@ def enviar_factura_al_sri(
 
     factura = (
         factura.__class__.objects
-        .select_for_update()
+        .select_for_update(
+            of=("self",)
+        )
         .select_related(
             "empresa",
             "sucursal",

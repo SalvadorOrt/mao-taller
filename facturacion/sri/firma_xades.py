@@ -813,7 +813,9 @@ def firmar_factura(
 
     factura = (
         factura.__class__.objects
-        .select_for_update()
+        .select_for_update(
+            of=("self",)
+        )
         .select_related(
             "empresa",
             "firma_electronica",
