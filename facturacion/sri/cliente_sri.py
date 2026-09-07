@@ -980,7 +980,9 @@ def consultar_factura_en_sri(
 
     factura = (
         factura.__class__.objects
-        .select_for_update()
+        .select_for_update(
+            of=("self",)
+        )
         .select_related(
             "empresa",
             "sucursal",
