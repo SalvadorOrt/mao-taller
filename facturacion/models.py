@@ -160,7 +160,7 @@ class FacturaVenta(models.Model):
     ambiente = models.CharField(
         max_length=1,
         choices=AMBIENTES,
-        default="1",
+        default="2",
     )
 
     tipo_emision = models.CharField(
