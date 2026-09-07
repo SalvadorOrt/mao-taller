@@ -334,8 +334,14 @@ class FacturaVenta(models.Model):
         ordering = ["-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["empresa", "establecimiento", "punto_emision", "secuencial"],
-                name="unique_factura_serie_secuencial",
+                fields=[
+                    "empresa",
+                    "ambiente",
+                    "establecimiento",
+                    "punto_emision",
+                    "secuencial",
+                ],
+                name="unique_factura_ambiente_serie_secuencial",
             )
         ]
         indexes = [
@@ -479,10 +485,17 @@ class FacturaVenta(models.Model):
     # =====================================================
 
     @classmethod
-    def generar_siguiente_secuencial(cls, empresa, establecimiento="001", punto_emision="001"):
+    def generar_siguiente_secuencial(
+        cls,
+        empresa,
+        ambiente="1",
+        establecimiento="001",
+        punto_emision="001",
+    ):
         ultima = (
             cls.objects.filter(
                 empresa=empresa,
+                ambiente=ambiente,
                 establecimiento=establecimiento,
                 punto_emision=punto_emision,
             )
@@ -493,14 +506,18 @@ class FacturaVenta(models.Model):
         )
 
         if not ultima:
-            return "000000001"
-
-        try:
-            ultimo_numero = int(ultima.secuencial)
-        except ValueError:
             ultimo_numero = 0
+        else:
+            try:
+                ultimo_numero = int(
+                    ultima.secuencial
+                )
+            except (TypeError, ValueError):
+                ultimo_numero = 0
 
-        return str(ultimo_numero + 1).zfill(9)
+        return str(
+            ultimo_numero + 1
+        ).zfill(9)
 
     # =====================================================
     # CLAVE DE ACCESO
@@ -798,6 +815,7 @@ class FacturaVenta(models.Model):
             if not factura.secuencial:
                 factura.secuencial = factura.generar_siguiente_secuencial(
                     empresa=factura.empresa,
+                    ambiente=factura.ambiente,
                     establecimiento=factura.establecimiento,
                     punto_emision=factura.punto_emision,
                 )
