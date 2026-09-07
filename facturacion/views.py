@@ -1458,7 +1458,15 @@ def guardar_forma_pago(
                 )
             )
 
-            # Primero construimos y validamos el pago nuevo.
+            # IMPORTANTE:
+            # Eliminamos primero los pagos anteriores DENTRO de la misma
+            # transacción. Así PagoFacturaVenta.clean() no suma el pago
+            # anterior junto con el nuevo y no genera un falso exceso.
+            #
+            # Si la validación del nuevo pago falla, transaction.atomic()
+            # hace rollback y recupera automáticamente el pago anterior.
+            factura.pagos.all().delete()
+
             nuevo_pago = PagoFacturaVenta(
                 factura=factura,
                 forma_pago=(
@@ -1490,11 +1498,13 @@ def guardar_forma_pago(
             )
 
             nuevo_pago.full_clean()
-
-            # Solo después de validar eliminamos el pago anterior.
-            factura.pagos.all().delete()
-
             nuevo_pago.save()
+
+            if not factura.tiene_pagos_completos():
+                raise ValidationError(
+                    "La forma de pago debe cubrir exactamente "
+                    "el total de la factura."
+                )
 
     except ValidationError as exc:
 
@@ -1627,6 +1637,17 @@ def emitir_factura(
                 )
             )
 
+            # IMPORTANTE:
+            # La factura ya puede tener una forma de pago guardada.
+            # Debemos eliminarla primero DENTRO de esta transacción antes
+            # de validar el nuevo pago. De lo contrario, full_clean()
+            # suma el pago existente + el nuevo y concluye erróneamente
+            # que se excede el importe total.
+            #
+            # Si el nuevo pago falla, transaction.atomic() revierte
+            # también este delete y conserva el pago anterior.
+            factura.pagos.all().delete()
+
             nuevo_pago = PagoFacturaVenta(
                 factura=factura,
                 forma_pago=(
@@ -1657,10 +1678,7 @@ def emitir_factura(
                 ),
             )
 
-            # Validamos el nuevo pago antes de tocar el anterior.
             nuevo_pago.full_clean()
-
-            factura.pagos.all().delete()
             nuevo_pago.save()
 
             if not factura.tiene_pagos_completos():
