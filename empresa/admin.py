@@ -6,6 +6,33 @@ from .models import (
 )
 
 
+# =========================================================
+# FIRMA ELECTRÓNICA DENTRO DE EMPRESA
+# =========================================================
+
+class FirmaElectronicaInline(admin.StackedInline):
+    model = FirmaElectronica
+
+    extra = 0
+
+    fields = (
+        "nombre",
+        "titular",
+        "ruc",
+        "archivo_firma",
+        "password_firma",
+        "entidad_certificadora",
+        "fecha_inicio_vigencia",
+        "fecha_fin_vigencia",
+        "estado",
+        "observaciones",
+    )
+
+
+# =========================================================
+# EMPRESA EMISORA
+# =========================================================
+
 @admin.register(EmpresaEmisora)
 class EmpresaEmisoraAdmin(admin.ModelAdmin):
 
@@ -30,28 +57,67 @@ class EmpresaEmisoraAdmin(admin.ModelAdmin):
         "agente_retencion",
     )
 
-
-@admin.register(FirmaElectronica)
-class FirmaElectronicaAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "nombre",
-        "empresa",
-        "titular",
-        "ruc",
-        "fecha_inicio_vigencia",
-        "fecha_fin_vigencia",
-        "estado",
+    fieldsets = (
+        (
+            "Identidad",
+            {
+                "fields": (
+                    "logo",
+                    "razon_social",
+                    "nombre_comercial",
+                    "ruc",
+                )
+            },
+        ),
+        (
+            "Direcciones",
+            {
+                "fields": (
+                    "dir_matriz",
+                    "dir_establecimiento",
+                )
+            },
+        ),
+        (
+            "Facturación electrónica",
+            {
+                "fields": (
+                    "establecimiento",
+                    "punto_emision",
+                )
+            },
+        ),
+        (
+            "Información tributaria",
+            {
+                "fields": (
+                    "contribuyente_especial",
+                    "obligado_contabilidad",
+                    "agente_retencion",
+                    "resolucion_agente_retencion",
+                )
+            },
+        ),
+        (
+            "Contacto",
+            {
+                "fields": (
+                    "telefono",
+                    "email",
+                    "sitio_web",
+                )
+            },
+        ),
+        (
+            "Estado",
+            {
+                "fields": (
+                    "activo",
+                )
+            },
+        ),
     )
 
-    search_fields = (
-        "nombre",
-        "titular",
-        "ruc",
-        "empresa__razon_social",
-    )
-
-    list_filter = (
-        "estado",
-        "empresa",
-    )
+    inlines = [
+        FirmaElectronicaInline,
+    ]
