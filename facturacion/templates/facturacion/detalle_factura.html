@@ -717,6 +717,45 @@ document.addEventListener(
         {% endif %}
     }
 );
+function imprimirFacturaDirecto(event) {
+    const boton = event?.currentTarget;
+
+    if (!boton || boton.disabled) {
+        return;
+    }
+
+    const htmlOriginal = boton.innerHTML;
+
+    boton.disabled = true;
+    boton.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-1"></span> Preparando factura...';
+
+    let iframe =
+        document.getElementById("iframeImpresionFactura");
+
+    if (!iframe) {
+        iframe = document.createElement("iframe");
+
+        iframe.id = "iframeImpresionFactura";
+        iframe.title = "Factura";
+        iframe.style.position = "absolute";
+        iframe.style.top = "-10000px";
+        iframe.style.left = "-10000px";
+        iframe.style.width = "1000px";
+        iframe.style.height = "1000px";
+        iframe.style.border = "none";
+
+        document.body.appendChild(iframe);
+    }
+
+    iframe.src =
+        "{% url 'facturacion:ride_factura' factura.pk %}";
+
+    setTimeout(function () {
+        boton.disabled = false;
+        boton.innerHTML = htmlOriginal;
+    }, 2000);
+}
 </script>
 
 {% endblock %}
