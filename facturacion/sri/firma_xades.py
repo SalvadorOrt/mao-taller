@@ -78,9 +78,21 @@ C14N_ALGORITHM = (
     CanonicalizationMethod.CANONICAL_XML_1_0
 )
 
-# Se usa SHA-256 para firma y digest.
+# Firma XML y digest del documento.
+#
+# IMPORTANTE:
+# Esta corrección mantiene SHA-256. El problema diagnosticado
+# no está en el algoritmo criptográfico sino en que SignXML 5.1.0,
+# al activar el modo legacy, genera simultáneamente
+# SigningCertificateV2 + SigningCertificate, mientras su propio
+# verificador XAdES exige exactamente uno de los dos.
+#
+# El firmador SRI definido más abajo conserva únicamente
+# SigningCertificate (legacy) antes de calcular los digest de XAdES.
 SIGNATURE_ALGORITHM = SignatureMethod.RSA_SHA256
 DIGEST_ALGORITHM = DigestAlgorithm.SHA256
+
+XADES_NS = "http://uri.etsi.org/01903/v1.3.2#"
 
 
 # =========================================================
@@ -615,6 +627,98 @@ def _huella_sha256(
 # FIRMA XAdES
 # =========================================================
 
+class SRIXAdESSigner(XAdESSigner):
+    """
+    Adaptación de SignXML 5.1.x para el perfil XAdES usado
+    por comprobantes electrónicos del SRI.
+
+    SignXML 5.1.x, cuando
+    use_deprecated_legacy_signing_certificate=True,
+    genera simultáneamente:
+
+        xades:SigningCertificateV2
+        xades:SigningCertificate
+
+    Su propio XAdESVerifier exige exactamente uno de los dos,
+    por lo que esa combinación produce DocumentInvalid.
+
+    Esta subclase deja que SignXML construya el bloque legacy y,
+    ANTES de que el SignedProperties sea digerido/firmado:
+
+    1. elimina SigningCertificateV2;
+    2. conserva SigningCertificate;
+    3. si la cadena PKCS#12 produjo varios SigningCertificate,
+       los consolida en un único elemento con varios <Cert>.
+
+    No modifica el XML después de firmarlo.
+    """
+
+    def add_signing_certificate(
+        self,
+        signed_signature_properties,
+        sig_root,
+        signing_settings,
+    ):
+        # Pedimos a SignXML que genere el formato legacy.
+        self.use_deprecated_legacy_signing_certificate = True
+
+        super().add_signing_certificate(
+            signed_signature_properties,
+            sig_root,
+            signing_settings,
+        )
+
+        tag_v2 = (
+            f"{{{XADES_NS}}}SigningCertificateV2"
+        )
+        tag_legacy = (
+            f"{{{XADES_NS}}}SigningCertificate"
+        )
+
+        # -------------------------------------------------
+        # SignXML 5.1.x crea V2 incluso cuando se activa
+        # legacy. Lo retiramos aquí, antes del cálculo de
+        # referencias/digest de SignedProperties.
+        # -------------------------------------------------
+        for nodo_v2 in list(
+            signed_signature_properties.findall(
+                tag_v2
+            )
+        ):
+            signed_signature_properties.remove(
+                nodo_v2
+            )
+
+        legacy_nodes = list(
+            signed_signature_properties.findall(
+                tag_legacy
+            )
+        )
+
+        if not legacy_nodes:
+            raise FirmaXADESError(
+                "SignXML no generó "
+                "xades:SigningCertificate."
+            )
+
+        # -------------------------------------------------
+        # Si el PKCS#12 incluye certificados adicionales,
+        # SignXML puede generar más de un SigningCertificate.
+        # El esquema XAdES espera un solo contenedor con uno
+        # o más elementos Cert.
+        # -------------------------------------------------
+        principal = legacy_nodes[0]
+
+        for adicional in legacy_nodes[1:]:
+            for cert_node in list(adicional):
+                adicional.remove(cert_node)
+                principal.append(cert_node)
+
+            signed_signature_properties.remove(
+                adicional
+            )
+
+
 def firmar_xml_xades(
     xml_bytes: bytes,
     firma_electronica,
@@ -674,7 +778,7 @@ def firmar_xml_xades(
     )
 
     try:
-        signer = XAdESSigner(
+        signer = SRIXAdESSigner(
             method=methods.enveloped,
             signature_algorithm=(
                 SIGNATURE_ALGORITHM
@@ -685,15 +789,6 @@ def firmar_xml_xades(
             c14n_algorithm=(
                 C14N_ALGORITHM
             ),
-        )
-
-        # XAdES-BES tradicional usa SigningCertificate.
-        # SignXML actual usa SigningCertificateV2 por defecto;
-        # esta opción conserva la forma legacy para mejorar
-        # interoperabilidad con validadores que esperan el
-        # perfil XAdES-BES clásico.
-        signer.use_deprecated_legacy_signing_certificate = (
-            True
         )
 
         signed_root = signer.sign(
@@ -724,9 +819,14 @@ def firmar_xml_xades(
         )
 
     except Exception as exc:
+        detalle = (
+            f"{type(exc).__name__}: {exc}"
+        )
+
         raise FirmaXADESError(
             "La firma XAdES fue generada, pero "
-            "falló la verificación criptográfica local."
+            "falló la verificación criptográfica local. "
+            f"Detalle técnico: {detalle}"
         ) from exc
 
     try:
@@ -872,7 +972,7 @@ def firmar_factura(
         )
         factura.mensaje_firma = (
             "XML firmado electrónicamente "
-            "con XAdES y verificado localmente."
+            "con XAdES-BES y verificado localmente."
         )
 
         factura.save(
