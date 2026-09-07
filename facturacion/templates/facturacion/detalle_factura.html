@@ -115,7 +115,33 @@
                     {% endif %}
 
                     <button type="button" class="factura-btn disabled" disabled title="Pendiente de implementar"><i class="bi bi-envelope"></i> Enviar correo</button>
-                    <button type="button" class="factura-btn warning disabled" disabled title="Pendiente de implementar"><i class="bi bi-arrow-clockwise"></i> Reintentar</button>
+                    {% if puede_reintentar %}
+    <form
+        method="post"
+        action="{% url 'facturacion:reintentar_factura' factura.pk %}"
+        style="display:inline;"
+    >
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            class="factura-btn warning"
+            title="Continuar el proceso de emisión desde el estado actual"
+        >
+            <i class="bi bi-arrow-clockwise"></i>
+            Reintentar
+        </button>
+    </form>
+{% else %}
+    <button
+        type="button"
+        class="factura-btn warning disabled"
+        disabled
+    >
+        <i class="bi bi-arrow-clockwise"></i>
+        Reintentar
+    </button>
+{% endif %}
                     <button type="button" class="factura-btn danger disabled" disabled title="Pendiente de implementar"><i class="bi bi-x-circle"></i> Anular</button>
                 </div>
             </div>
