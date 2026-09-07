@@ -144,9 +144,23 @@ RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
 <thead><tr><th class="text-center">Cant.</th><th>Descripción</th><th class="text-right">P.U.</th><th class="text-right">Valor</th></tr></thead>
 <tbody>
 {% for item in repuestos %}
-<tr><td>
-    {{ item.descripcion|default:"-" }}
-</td></tr>
+<tr>
+    <td class="text-center">
+        {{ item.cantidad|floatformat:1 }}
+    </td>
+
+    <td>
+        {{ item.descripcion|default:"-" }}
+    </td>
+
+    <td class="text-right">
+        ${{ item.precio_unitario|floatformat:2 }}
+    </td>
+
+    <td class="text-right">
+        ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+    </td>
+</tr>
 {% empty %}<tr class="empty-row"><td colspan="4">No existen repuestos registrados en la factura.</td></tr>{% endfor %}
 </tbody></table>
 <div class="section-subtotal">Subtotal repuestos: <span>${{ subtotal_repuestos|floatformat:2 }}</span></div>
