@@ -24,6 +24,15 @@ NO:
 Dependencias:
     pip install "signxml>=5.1,<6" "cryptography>=45"
 
+Perfil fiscal aplicado:
+    - XAdES-BES 1.3.2
+    - RSA-SHA1
+    - SHA1 para referencias/digests
+    - RSA 2048 bits
+    - KeyInfo firmado
+    - X509Certificate + RSAKeyValue
+    - SigningCertificate legacy
+
 Notas:
     - El SRI exige firma electrónica XAdES-BES para sus comprobantes.
     - No se debe hacer pretty-print del XML después de firmarlo.
@@ -31,13 +40,14 @@ Notas:
 """
 
 from io import BytesIO
+import base64
 from datetime import datetime, timezone as dt_timezone
 from typing import Iterable
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives.serialization import Encoding, pkcs12
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -53,6 +63,7 @@ from signxml import (
     methods,
 )
 from signxml.xades import (
+    XAdESSignatureConfiguration,
     XAdESSigner,
     XAdESVerifier,
 )
@@ -78,20 +89,16 @@ C14N_ALGORITHM = (
     CanonicalizationMethod.CANONICAL_XML_1_0
 )
 
-# Firma XML y digest del documento.
+# Perfil de firma XAdES-BES utilizado por el SRI.
 #
-# IMPORTANTE:
-# Esta corrección mantiene SHA-256. El problema diagnosticado
-# no está en el algoritmo criptográfico sino en que SignXML 5.1.0,
-# al activar el modo legacy, genera simultáneamente
-# SigningCertificateV2 + SigningCertificate, mientras su propio
-# verificador XAdES exige exactamente uno de los dos.
-#
-# El firmador SRI definido más abajo conserva únicamente
-# SigningCertificate (legacy) antes de calcular los digest de XAdES.
-SIGNATURE_ALGORITHM = SignatureMethod.RSA_SHA256
-DIGEST_ALGORITHM = DigestAlgorithm.SHA256
+# SHA-1 está habilitado únicamente por interoperabilidad con
+# el perfil fiscal legacy del SRI. SignXML lo bloquea por
+# defecto para usos generales; SRIXAdESSigner limita la
+# excepción exclusivamente a RSA-SHA1 + SHA1 en este módulo.
+SIGNATURE_ALGORITHM = SignatureMethod.RSA_SHA1
+DIGEST_ALGORITHM = DigestAlgorithm.SHA1
 
+DS_NS = "http://www.w3.org/2000/09/xmldsig#"
 XADES_NS = "http://uri.etsi.org/01903/v1.3.2#"
 
 
@@ -539,6 +546,41 @@ def _cargar_pkcs12(
             "Se requiere una clave RSA."
         )
 
+    # Perfil fiscal SRI: RSA 2048 bits.
+    if private_key.key_size != 2048:
+        raise CertificadoFirmaError(
+            "La clave privada del certificado no tiene "
+            "2048 bits, longitud requerida por el "
+            "perfil de firma electrónica del SRI."
+        )
+
+    public_key = certificate.public_key()
+
+    if not isinstance(
+        public_key,
+        rsa.RSAPublicKey,
+    ):
+        raise CertificadoFirmaError(
+            "El certificado firmante no contiene "
+            "una clave pública RSA."
+        )
+
+    if public_key.key_size != 2048:
+        raise CertificadoFirmaError(
+            "La clave pública del certificado no tiene "
+            "2048 bits, longitud requerida por el "
+            "perfil de firma electrónica del SRI."
+        )
+
+    if (
+        public_key.public_numbers()
+        != private_key.public_key().public_numbers()
+    ):
+        raise CertificadoFirmaError(
+            "La clave privada del PKCS#12 no corresponde "
+            "al certificado firmante."
+        )
+
     extras_lista = list(
         extras or []
     )
@@ -629,29 +671,38 @@ def _huella_sha256(
 
 class SRIXAdESSigner(XAdESSigner):
     """
-    Adaptación de SignXML 5.1.x para el perfil XAdES usado
-    por comprobantes electrónicos del SRI.
+    Firmador XAdES-BES adaptado al perfil fiscal del SRI.
 
-    SignXML 5.1.x, cuando
-    use_deprecated_legacy_signing_certificate=True,
-    genera simultáneamente:
+    Cambios respecto de XAdESSigner 5.1.x:
 
-        xades:SigningCertificateV2
-        xades:SigningCertificate
+    - permite exclusivamente RSA-SHA1 + SHA1;
+    - genera únicamente xades:SigningCertificate legacy;
+    - usa únicamente el certificado hoja del firmante;
+    - KeyInfo contiene X509Certificate + RSAKeyValue;
+    - KeyInfo queda firmado por la referencia que
+      XAdESSigner agrega automáticamente;
+    - SignedProperties queda firmado por la referencia que
+      XAdESSigner agrega automáticamente.
 
-    Su propio XAdESVerifier exige exactamente uno de los dos,
-    por lo que esa combinación produce DocumentInvalid.
-
-    Esta subclase deja que SignXML construya el bloque legacy y,
-    ANTES de que el SignedProperties sea digerido/firmado:
-
-    1. elimina SigningCertificateV2;
-    2. conserva SigningCertificate;
-    3. si la cadena PKCS#12 produjo varios SigningCertificate,
-       los consolida en un único elemento con varios <Cert>.
-
-    No modifica el XML después de firmarlo.
+    El objetivo es evitar el perfil moderno
+    SigningCertificateV2 y producir el perfil XAdES-BES
+    legacy que espera el SRI.
     """
+
+    def check_deprecated_methods(self):
+        """
+        SignXML bloquea SHA-1 de manera global.
+
+        Aquí se habilita únicamente la combinación fiscal
+        exacta RSA-SHA1 + SHA1.
+        """
+        if (
+            self.sign_alg == SignatureMethod.RSA_SHA1
+            and self.digest_alg == DigestAlgorithm.SHA1
+        ):
+            return
+
+        return super().check_deprecated_methods()
 
     def add_signing_certificate(
         self,
@@ -659,64 +710,124 @@ class SRIXAdESSigner(XAdESSigner):
         sig_root,
         signing_settings,
     ):
-        # Pedimos a SignXML que genere el formato legacy.
-        self.use_deprecated_legacy_signing_certificate = True
+        """
+        Construye solo xades:SigningCertificate legacy.
 
-        super().add_signing_certificate(
-            signed_signature_properties,
-            sig_root,
-            signing_settings,
-        )
+        El método base de SignXML 5.1.x genera
+        SigningCertificateV2; por eso aquí construimos
+        directamente la variante legacy.
+        """
 
-        tag_v2 = (
-            f"{{{XADES_NS}}}SigningCertificateV2"
-        )
-        tag_legacy = (
-            f"{{{XADES_NS}}}SigningCertificate"
-        )
+        cert_chain = signing_settings.cert_chain
 
-        # -------------------------------------------------
-        # SignXML 5.1.x crea V2 incluso cuando se activa
-        # legacy. Lo retiramos aquí, antes del cálculo de
-        # referencias/digest de SignedProperties.
-        # -------------------------------------------------
-        for nodo_v2 in list(
-            signed_signature_properties.findall(
-                tag_v2
-            )
-        ):
-            signed_signature_properties.remove(
-                nodo_v2
-            )
-
-        legacy_nodes = list(
-            signed_signature_properties.findall(
-                tag_legacy
-            )
-        )
-
-        if not legacy_nodes:
+        if not cert_chain:
             raise FirmaXADESError(
-                "SignXML no generó "
+                "No existe certificado X.509 para construir "
                 "xades:SigningCertificate."
             )
 
-        # -------------------------------------------------
-        # Si el PKCS#12 incluye certificados adicionales,
-        # SignXML puede generar más de un SigningCertificate.
-        # El esquema XAdES espera un solo contenedor con uno
-        # o más elementos Cert.
-        # -------------------------------------------------
-        principal = legacy_nodes[0]
+        certificado = cert_chain[0]
 
-        for adicional in legacy_nodes[1:]:
-            for cert_node in list(adicional):
-                adicional.remove(cert_node)
-                principal.append(cert_node)
+        if not isinstance(
+            certificado,
+            x509.Certificate,
+        ):
+            try:
+                cert_bytes = (
+                    certificado.encode("utf-8")
+                    if isinstance(certificado, str)
+                    else certificado
+                )
 
-            signed_signature_properties.remove(
-                adicional
+                certificado = (
+                    x509.load_pem_x509_certificate(
+                        cert_bytes
+                    )
+                )
+            except Exception as exc:
+                raise FirmaXADESError(
+                    "No se pudo interpretar el certificado "
+                    "firmante al construir XAdES."
+                ) from exc
+
+        der_certificado = certificado.public_bytes(
+            Encoding.DER
+        )
+
+        if not der_certificado:
+            raise FirmaXADESError(
+                "El certificado firmante no pudo "
+                "serializarse en DER."
             )
+
+        digest_certificado = (
+            certificado.fingerprint(
+                hashes.SHA1()
+            )
+        )
+
+        signing_certificate = etree.SubElement(
+            signed_signature_properties,
+            f"{{{XADES_NS}}}SigningCertificate",
+            nsmap=self.namespaces,
+        )
+
+        cert_node = etree.SubElement(
+            signing_certificate,
+            f"{{{XADES_NS}}}Cert",
+            nsmap=self.namespaces,
+        )
+
+        cert_digest = etree.SubElement(
+            cert_node,
+            f"{{{XADES_NS}}}CertDigest",
+            nsmap=self.namespaces,
+        )
+
+        etree.SubElement(
+            cert_digest,
+            f"{{{DS_NS}}}DigestMethod",
+            nsmap=self.namespaces,
+            Algorithm=DigestAlgorithm.SHA1.value,
+        )
+
+        digest_value = etree.SubElement(
+            cert_digest,
+            f"{{{DS_NS}}}DigestValue",
+            nsmap=self.namespaces,
+        )
+
+        digest_value.text = (
+            base64.b64encode(
+                digest_certificado
+            ).decode("ascii")
+        )
+
+        issuer_serial = etree.SubElement(
+            cert_node,
+            f"{{{XADES_NS}}}IssuerSerial",
+            nsmap=self.namespaces,
+        )
+
+        issuer_name = etree.SubElement(
+            issuer_serial,
+            f"{{{DS_NS}}}X509IssuerName",
+            nsmap=self.namespaces,
+        )
+
+        issuer_name.text = (
+            certificado.issuer.rfc4514_string()
+        )
+
+        serial_number = etree.SubElement(
+            issuer_serial,
+            f"{{{DS_NS}}}X509SerialNumber",
+            nsmap=self.namespaces,
+        )
+
+        serial_number.text = str(
+            certificado.serial_number
+        )
 
 
 def firmar_xml_xades(
@@ -772,10 +883,10 @@ def firmar_xml_xades(
         certificado
     )
 
-    cadena = _cadena_certificados(
-        certificado,
-        certificados_adicionales,
-    )
+    # Los certificados adicionales del PKCS#12 se mantienen
+    # disponibles para diagnóstico, pero no se insertan en
+    # KeyInfo ni en SigningCertificate.
+    _ = certificados_adicionales
 
     try:
         signer = SRIXAdESSigner(
@@ -794,12 +905,21 @@ def firmar_xml_xades(
         signed_root = signer.sign(
             root,
             key=private_key,
-            cert=cadena,
+
+            # Solo se embebe el certificado hoja del firmante.
+            cert=[
+                certificado
+            ],
+
             reference_uri=(
                 f"#{ID_COMPROBANTE}"
             ),
             id_attribute="id",
-            always_add_key_value=False,
+
+            # El perfil SRI utiliza RSAKeyValue junto con
+            # X509Certificate dentro de KeyInfo. XAdESSigner
+            # firma KeyInfo mediante una referencia adicional.
+            always_add_key_value=True,
         )
 
     except Exception as exc:
@@ -813,9 +933,30 @@ def firmar_xml_xades(
     # -----------------------------------------------------
 
     try:
+        configuracion_verificacion = (
+            XAdESSignatureConfiguration(
+                expect_references=3,
+                signature_methods=frozenset({
+                    SignatureMethod.RSA_SHA1,
+                }),
+                digest_algorithms=frozenset({
+                    DigestAlgorithm.SHA1,
+                }),
+                default_reference_c14n_method=(
+                    C14N_ALGORITHM
+                ),
+                # Obliga a comprobar que RSAKeyValue y
+                # X509Data representan la misma clave.
+                ignore_ambiguous_key_info=False,
+            )
+        )
+
         XAdESVerifier().verify(
             signed_root,
             x509_cert=certificado,
+            expect_config=(
+                configuracion_verificacion
+            ),
         )
 
     except Exception as exc:
