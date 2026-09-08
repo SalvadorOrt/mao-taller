@@ -1,9 +1,14 @@
 # facturacion/impresion.py
 
+import base64
 import re
 import unicodedata
+from io import BytesIO
 from decimal import Decimal, ROUND_HALF_UP
 from types import SimpleNamespace
+
+from barcode.codex import Code128
+from barcode.writer import SVGWriter
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -227,6 +232,72 @@ def decimal_seguro(
 
     return Decimal(
         str(valor)
+    )
+
+
+# ==========================================================
+# CÓDIGO DE BARRAS DE LA CLAVE DE ACCESO
+# ==========================================================
+
+def generar_codigo_barras_clave_acceso(
+    clave_acceso,
+):
+    """
+    Genera un código de barras Code 128 en SVG a partir de la
+    clave de acceso SRI de 49 dígitos.
+
+    Devuelve una Data URI lista para usar directamente en:
+
+        <img src="{{ codigo_barras }}">
+
+    No crea archivos en disco y no modifica la factura.
+    """
+
+    clave = str(
+        clave_acceso or ""
+    ).strip()
+
+    if not clave:
+        return ""
+
+    if (
+        len(clave) != 49
+        or not clave.isdigit()
+    ):
+        return ""
+
+    buffer = BytesIO()
+
+    codigo = Code128(
+        clave,
+        writer=SVGWriter(),
+    )
+
+    codigo.write(
+        buffer,
+        options={
+            "module_width": 0.20,
+            "module_height": 10.0,
+            "quiet_zone": 1.5,
+            "font_size": 0,
+            "text_distance": 0,
+            "background": "white",
+            "foreground": "black",
+        },
+    )
+
+    svg = buffer.getvalue()
+
+    if not svg:
+        return ""
+
+    svg_base64 = base64.b64encode(
+        svg
+    ).decode("ascii")
+
+    return (
+        "data:image/svg+xml;base64,"
+        + svg_base64
     )
 
 
@@ -534,6 +605,7 @@ def vista_previa_factura_ot(request, orden_id):
             "numero_factura": "POR EMITIR",
             "numero_autorizacion": "",
             "clave_acceso": "",
+            "codigo_barras": "",
             "mostrar_clave_acceso": False,
             "mostrar_autorizacion": False,
             "detalles": detalles,
@@ -883,6 +955,12 @@ def ride_factura(
         or ""
     )
 
+    codigo_barras = (
+        generar_codigo_barras_clave_acceso(
+            clave_acceso
+        )
+    )
+
     # En BORRADOR no debe inventarse ni mostrarse una clave.
     # La plantilla puede usar estos booleanos para omitir por
     # completo las secciones todavía inexistentes.
@@ -937,6 +1015,9 @@ def ride_factura(
 
             "clave_acceso":
                 clave_acceso,
+
+            "codigo_barras":
+                codigo_barras,
 
             "mostrar_clave_acceso":
                 mostrar_clave_acceso,
