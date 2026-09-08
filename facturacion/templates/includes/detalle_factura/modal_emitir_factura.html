@@ -1541,7 +1541,6 @@ function reiniciarModalEmisionFactura() {
 /* =========================================================
    VALIDAR
 ========================================================= */
-
 function validarModalEmisionFactura() {
     const tipo =
         document
@@ -1570,6 +1569,10 @@ function validarModalEmisionFactura() {
             ?.trim()
         || '';
 
+    // =====================================================
+    // VALIDAR DATOS DE FACTURACIÓN
+    // =====================================================
+
     if (
         !tipo
         || !identificacion
@@ -1583,6 +1586,10 @@ function validarModalEmisionFactura() {
         return false;
     }
 
+    // =====================================================
+    // VALIDAR FORMA DE PAGO
+    // =====================================================
+
     if (
         !metodoPagoFacturaSeleccionado
     ) {
@@ -1594,6 +1601,10 @@ function validarModalEmisionFactura() {
         return false;
     }
 
+    // =====================================================
+    // MÉTODOS QUE REQUIEREN ENTIDAD FINANCIERA
+    // =====================================================
+
     const requiereEntidad = [
         'TRANSFERENCIA',
         'TARJETA_DEBITO',
@@ -1601,6 +1612,10 @@ function validarModalEmisionFactura() {
     ].includes(
         metodoPagoFacturaSeleccionado
     );
+
+    // =====================================================
+    // VALIDAR ENTIDAD FINANCIERA
+    // =====================================================
 
     if (
         requiereEntidad
@@ -1613,6 +1628,10 @@ function validarModalEmisionFactura() {
 
         return false;
     }
+
+    // =====================================================
+    // VALIDAR "OTRA" ENTIDAD FINANCIERA
+    // =====================================================
 
     if (
         requiereEntidad
@@ -1644,37 +1663,21 @@ function validarModalEmisionFactura() {
         }
     }
 
-    const referencia =
-        document
-            .getElementById(
-                'referenciaPagoFactura'
-            )
-            ?.value
-            ?.trim()
-        || '';
-
-    if (
-        requiereEntidad
-        && !referencia
-    ) {
-        mostrarEstadoEmisionFactura(
-            'Ingrese la referencia o número de comprobante del pago.',
-            'error'
-        );
-
-        document
-            .getElementById(
-                'referenciaPagoFactura'
-            )
-            ?.focus();
-
-        return false;
-    }
+    // =====================================================
+    // REFERENCIA
+    // =====================================================
+    //
+    // La referencia es OPCIONAL.
+    //
+    // Si el usuario escribe una referencia,
+    // se guardará normalmente.
+    //
+    // Si la deja vacía, se permite continuar.
+    //
+    // =====================================================
 
     return true;
 }
-
-
 /* =========================================================
    CONFIRMAR
    Funciona en LOS DOS FLUJOS.
