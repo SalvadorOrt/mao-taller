@@ -908,66 +908,127 @@
                     >
 
                         <div class="resultado-label">
-                            Datos encontrados
+                            Datos encontrados / datos para facturación
+                        </div>
+
+                        <div class="comprador-manual-grid">
+
+                            <!-- NOMBRE / RAZÓN SOCIAL -->
+
+                            <div class="comprador-manual-full">
+
+                                <label class="consulta-label">
+                                    Nombre / Razón social
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="modalCompradorResultadoNombre"
+                                    class="form-control-apple"
+                                    autocomplete="off"
+                                    maxlength="300"
+                                >
+
+                            </div>
+
+
+                            <!-- IDENTIFICACIÓN CONSULTADA -->
+
+                            <div class="comprador-manual-full">
+
+                                <label class="consulta-label">
+                                    Identificación consultada
+                                </label>
+
+                                <div
+                                    id="modalCompradorResultadoIdentificacion"
+                                    class="resultado-identificacion"
+                                    style="
+                                        min-height:38px;
+                                        display:flex;
+                                        align-items:center;
+                                        padding:0 11px;
+                                        border:1px solid #e5e5ea;
+                                        border-radius:9px;
+                                        background:#f8f8fa;
+                                        margin-top:0;
+                                    "
+                                ></div>
+
+                            </div>
+
+
+                            <!-- TELÉFONO -->
+
+                            <div>
+
+                                <label class="consulta-label">
+                                    Teléfono
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="modalCompradorResultadoTelefono"
+                                    class="form-control-apple"
+                                    autocomplete="off"
+                                    maxlength="50"
+                                    placeholder="Opcional"
+                                >
+
+                            </div>
+
+
+                            <!-- CORREO -->
+
+                            <div>
+
+                                <label class="consulta-label">
+                                    Correo
+                                </label>
+
+                                <input
+                                    type="email"
+                                    id="modalCompradorResultadoCorreo"
+                                    class="form-control-apple"
+                                    autocomplete="off"
+                                    maxlength="254"
+                                    placeholder="Opcional"
+                                >
+
+                            </div>
+
+
+                            <!-- DIRECCIÓN -->
+
+                            <div class="comprador-manual-full">
+
+                                <label class="consulta-label">
+                                    Dirección
+                                </label>
+
+                                <textarea
+                                    id="modalCompradorResultadoDireccion"
+                                    class="form-control-apple"
+                                    style="min-height:70px;"
+                                    maxlength="300"
+                                    placeholder="Opcional"
+                                ></textarea>
+
+                            </div>
+
                         </div>
 
                         <div
-                            id="modalCompradorResultadoNombre"
-                            class="resultado-nombre"
-                        ></div>
-
-                        <div
-                            id="modalCompradorResultadoIdentificacion"
-                            class="resultado-identificacion"
-                        ></div>
-
-                        <div class="resultado-datos-grid">
-
-                            <div class="resultado-dato">
-
-                                <div class="resultado-dato-label">
-                                    Teléfono
-                                </div>
-
-                                <div
-                                    id="modalCompradorResultadoTelefono"
-                                    class="resultado-dato-valor"
-                                >
-                                    -
-                                </div>
-
-                            </div>
-
-                            <div class="resultado-dato">
-
-                                <div class="resultado-dato-label">
-                                    Correo
-                                </div>
-
-                                <div
-                                    id="modalCompradorResultadoCorreo"
-                                    class="resultado-dato-valor"
-                                >
-                                    -
-                                </div>
-
-                            </div>
-
-                            <div class="resultado-dato resultado-dato-full">
-
-                                <div class="resultado-dato-label">
-                                    Dirección
-                                </div>
-
-                                <div
-                                    id="modalCompradorResultadoDireccion"
-                                    class="resultado-dato-valor"
-                                >
-                                    -
-                                </div>
-
-                            </div>
-
+                            style="
+                                margin-top:10px;
+                                font-size:.70rem;
+                                color:var(--muted,#6e6e73);
+                                line-height:1.4;
+                            "
+                        >
+                            Puede corregir o completar estos datos antes de
+                            utilizarlos para la factura. Esto no modifica
+                            el cliente original de la OT.
                         </div>
 
                     </div>
@@ -1549,43 +1610,70 @@
 
     function renderResultadoComprador(comprador) {
 
-        document.getElementById(
-            'modalCompradorResultadoNombre'
-        ).textContent =
-            comprador.razon_social ||
-            'SIN NOMBRE';
+        const nombre =
+            document.getElementById(
+                'modalCompradorResultadoNombre'
+            );
+
+        const identificacion =
+            document.getElementById(
+                'modalCompradorResultadoIdentificacion'
+            );
+
+        const telefono =
+            document.getElementById(
+                'modalCompradorResultadoTelefono'
+            );
+
+        const correo =
+            document.getElementById(
+                'modalCompradorResultadoCorreo'
+            );
+
+        const direccion =
+            document.getElementById(
+                'modalCompradorResultadoDireccion'
+            );
 
 
-        document.getElementById(
-            'modalCompradorResultadoIdentificacion'
-        ).textContent =
-            comprador.identificacion;
+        if (nombre) {
+            nombre.value =
+                comprador.razon_social || '';
+        }
 
 
-        document.getElementById(
-            'modalCompradorResultadoTelefono'
-        ).textContent =
-            comprador.telefono ||
-            'NO REGISTRADO';
+        if (identificacion) {
+            identificacion.textContent =
+                comprador.identificacion || '';
+        }
 
 
-        document.getElementById(
-            'modalCompradorResultadoCorreo'
-        ).textContent =
-            comprador.correo ||
-            'NO REGISTRADO';
+        if (telefono) {
+            telefono.value =
+                comprador.telefono || '';
+        }
 
 
-        document.getElementById(
-            'modalCompradorResultadoDireccion'
-        ).textContent =
-            comprador.direccion ||
-            'NO REGISTRADA';
+        if (correo) {
+            correo.value =
+                comprador.correo || '';
+        }
+
+
+        if (direccion) {
+            direccion.value =
+                comprador.direccion || '';
+        }
 
 
         document
-            .getElementById('modalCompradorResultado')
-            .classList.add('visible');
+            .getElementById(
+                'modalCompradorResultado'
+            )
+            ?.classList
+            .add(
+                'visible'
+            );
     }
 
 
@@ -1610,8 +1698,81 @@
                 return;
             }
 
-            comprador =
-                compradorFacturaConsultado;
+
+            const nombre =
+                document
+                    .getElementById(
+                        'modalCompradorResultadoNombre'
+                    )
+                    ?.value
+                    ?.trim()
+                || '';
+
+
+            const telefono =
+                document
+                    .getElementById(
+                        'modalCompradorResultadoTelefono'
+                    )
+                    ?.value
+                    ?.trim()
+                || '';
+
+
+            const correo =
+                document
+                    .getElementById(
+                        'modalCompradorResultadoCorreo'
+                    )
+                    ?.value
+                    ?.trim()
+                || '';
+
+
+            const direccion =
+                document
+                    .getElementById(
+                        'modalCompradorResultadoDireccion'
+                    )
+                    ?.value
+                    ?.trim()
+                || '';
+
+
+            if (!nombre) {
+
+                mostrarEstadoComprador(
+                    'Ingrese el nombre o razón social para facturación.',
+                    'error'
+                );
+
+                document
+                    .getElementById(
+                        'modalCompradorResultadoNombre'
+                    )
+                    ?.focus();
+
+                return;
+            }
+
+
+            comprador = {
+
+                ...compradorFacturaConsultado,
+
+                razon_social:
+                    nombre,
+
+                telefono:
+                    telefono,
+
+                correo:
+                    correo,
+
+                direccion:
+                    direccion
+
+            };
         }
 
 
@@ -1910,6 +2071,54 @@
                 'modalCompradorResultado'
             )
             ?.classList.remove('visible');
+
+
+        const nombre =
+            document.getElementById(
+                'modalCompradorResultadoNombre'
+            );
+
+        const identificacion =
+            document.getElementById(
+                'modalCompradorResultadoIdentificacion'
+            );
+
+        const telefono =
+            document.getElementById(
+                'modalCompradorResultadoTelefono'
+            );
+
+        const correo =
+            document.getElementById(
+                'modalCompradorResultadoCorreo'
+            );
+
+        const direccion =
+            document.getElementById(
+                'modalCompradorResultadoDireccion'
+            );
+
+
+        if (nombre) {
+            nombre.value = '';
+        }
+
+        if (identificacion) {
+            identificacion.textContent = '';
+        }
+
+        if (telefono) {
+            telefono.value = '';
+        }
+
+        if (correo) {
+            correo.value = '';
+        }
+
+        if (direccion) {
+            direccion.value = '';
+        }
+
 
         document.getElementById(
             'btnUsarComprador'
