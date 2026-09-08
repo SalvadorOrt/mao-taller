@@ -583,6 +583,488 @@ def _preparar_impuestos(
 
 
 # =========================================================
+# AJUSTE DE REDONDEO DE IVA POR DETALLE
+# =========================================================
+
+def _iva_linea_con_descuento(
+    linea,
+    descuento,
+    porcentaje_iva,
+):
+    """
+    Calcula el IVA redondeado de una línea para un descuento
+    determinado, sin modificar la línea.
+
+    Se usa únicamente para buscar una redistribución de centavos
+    del descuento global que conserve:
+
+        SUMA descuentos detalle = descuento OT
+        SUMA bases detalle      = base OT
+        SUMA IVA detalle        = IVA OT
+
+    No altera precios ni totales de la Orden de Trabajo.
+    """
+
+    bruto = _q2(
+        linea["subtotal_bruto"]
+    )
+
+    descuento = _q2(
+        descuento
+    )
+
+    base = _q2(
+        bruto - descuento
+    )
+
+    if base < CERO:
+        raise ValidationError(
+            "El ajuste de redondeo produjo "
+            "una base imponible negativa."
+        )
+
+    porcentaje_iva = _q2(
+        porcentaje_iva
+    )
+
+    if porcentaje_iva == CERO:
+        return CERO
+
+    return _q2(
+        base
+        * porcentaje_iva
+        / Decimal("100")
+    )
+
+
+def _suma_iva_lineas(
+    lineas,
+):
+    """
+    Devuelve la suma del IVA ya calculado en los detalles.
+    """
+
+    return _q2(
+        sum(
+            (
+                _q2(
+                    linea.get(
+                        "valor_iva",
+                        CERO,
+                    )
+                )
+                for linea in lineas
+            ),
+            CERO,
+        )
+    )
+
+
+def _ajustar_redondeo_iva(
+    lineas,
+    porcentaje_iva,
+    iva_objetivo,
+):
+    """
+    Corrige diferencias de centavos originadas exclusivamente por
+    el redondeo del IVA línea por línea.
+
+    Ejemplo típico:
+
+        IVA calculado sobre la base global: 48.13
+        suma del IVA redondeado por detalle: 48.14
+
+    La solución NO cambia:
+    - subtotal bruto;
+    - descuento total;
+    - base imponible total;
+    - IVA total de la OT;
+    - total final de la OT.
+
+    Únicamente redistribuye centavos del descuento global entre
+    líneas. Cada movimiento aumenta el descuento de una línea y
+    disminuye exactamente el mismo valor en otra.
+
+    Así la suma del descuento permanece invariable.
+
+    IMPORTANTE:
+    Si el IVA de la OT no coincide con el IVA calculado sobre la
+    base global, no se intenta "forzar" el resultado. En ese caso
+    existe una inconsistencia real de la OT y se bloquea la factura.
+    """
+
+    porcentaje_iva = _q2(
+        porcentaje_iva
+    )
+
+    iva_objetivo = _q2(
+        iva_objetivo
+    )
+
+    # Primero calculamos impuestos con la distribución
+    # proporcional original.
+    lineas = _preparar_impuestos(
+        lineas,
+        porcentaje_iva,
+    )
+
+    if porcentaje_iva == CERO:
+
+        if iva_objetivo != CERO:
+            raise ValidationError(
+                "La OT tiene tarifa IVA 0% "
+                "pero registra un valor de IVA mayor a cero."
+            )
+
+        return lineas
+
+    # =====================================================
+    # VALIDAR IVA GLOBAL DE LA OT
+    # =====================================================
+
+    base_total = _q2(
+        sum(
+            (
+                _q2(
+                    linea["subtotal_bruto"]
+                )
+                - _q2(
+                    linea.get(
+                        "descuento",
+                        CERO,
+                    )
+                )
+                for linea in lineas
+            ),
+            CERO,
+        )
+    )
+
+    iva_global = _q2(
+        base_total
+        * porcentaje_iva
+        / Decimal("100")
+    )
+
+    if iva_global != iva_objetivo:
+        raise ValidationError(
+            "El IVA de la OT no coincide con "
+            "el IVA calculado sobre su base imponible global. "
+            f"Calculado: ${iva_global} | "
+            f"OT: ${iva_objetivo}. "
+            "La factura NO fue creada."
+        )
+
+    iva_actual = _suma_iva_lineas(
+        lineas
+    )
+
+    if iva_actual == iva_objetivo:
+        return lineas
+
+    # =====================================================
+    # AJUSTE POR TRANSFERENCIA DE CENTAVOS
+    # =====================================================
+    #
+    # Movemos centavos de descuento entre pares de líneas.
+    #
+    # Por ejemplo:
+    #
+    #   línea A descuento 0.50 -> 0.51
+    #   línea B descuento 1.25 -> 1.24
+    #
+    # El descuento total sigue siendo exactamente el mismo.
+    #
+    # Probamos transferencias pequeñas porque el problema que
+    # buscamos resolver es únicamente el efecto del redondeo
+    # tributario por detalle.
+    # =====================================================
+
+    MAX_ITERACIONES = 100
+    MAX_CENTAVOS_POR_MOVIMIENTO = 100
+
+    for _ in range(
+        MAX_ITERACIONES
+    ):
+
+        iva_actual = _suma_iva_lineas(
+            lineas
+        )
+
+        if iva_actual == iva_objetivo:
+            return lineas
+
+        diferencia_actual = abs(
+            iva_objetivo
+            - iva_actual
+        )
+
+        mejor_movimiento = None
+
+        for indice_recibe in range(
+            len(lineas)
+        ):
+
+            linea_recibe = lineas[
+                indice_recibe
+            ]
+
+            bruto_recibe = _q2(
+                linea_recibe[
+                    "subtotal_bruto"
+                ]
+            )
+
+            descuento_recibe = _q2(
+                linea_recibe.get(
+                    "descuento",
+                    CERO,
+                )
+            )
+
+            capacidad_recibe = _q2(
+                bruto_recibe
+                - descuento_recibe
+            )
+
+            if capacidad_recibe <= CERO:
+                continue
+
+            for indice_entrega in range(
+                len(lineas)
+            ):
+
+                if (
+                    indice_recibe
+                    == indice_entrega
+                ):
+                    continue
+
+                linea_entrega = lineas[
+                    indice_entrega
+                ]
+
+                descuento_entrega = _q2(
+                    linea_entrega.get(
+                        "descuento",
+                        CERO,
+                    )
+                )
+
+                if descuento_entrega <= CERO:
+                    continue
+
+                maximo_transferible = min(
+                    capacidad_recibe,
+                    descuento_entrega,
+                )
+
+                maximo_centavos = int(
+                    (
+                        maximo_transferible
+                        * Decimal("100")
+                    ).to_integral_value(
+                        rounding=ROUND_HALF_UP
+                    )
+                )
+
+                maximo_centavos = min(
+                    maximo_centavos,
+                    MAX_CENTAVOS_POR_MOVIMIENTO,
+                )
+
+                if maximo_centavos <= 0:
+                    continue
+
+                iva_recibe_actual = (
+                    _iva_linea_con_descuento(
+                        linea_recibe,
+                        descuento_recibe,
+                        porcentaje_iva,
+                    )
+                )
+
+                iva_entrega_actual = (
+                    _iva_linea_con_descuento(
+                        linea_entrega,
+                        descuento_entrega,
+                        porcentaje_iva,
+                    )
+                )
+
+                for centavos in range(
+                    1,
+                    maximo_centavos + 1,
+                ):
+
+                    movimiento = (
+                        Decimal(centavos)
+                        / Decimal("100")
+                    )
+
+                    nuevo_descuento_recibe = _q2(
+                        descuento_recibe
+                        + movimiento
+                    )
+
+                    nuevo_descuento_entrega = _q2(
+                        descuento_entrega
+                        - movimiento
+                    )
+
+                    iva_recibe_nuevo = (
+                        _iva_linea_con_descuento(
+                            linea_recibe,
+                            nuevo_descuento_recibe,
+                            porcentaje_iva,
+                        )
+                    )
+
+                    iva_entrega_nuevo = (
+                        _iva_linea_con_descuento(
+                            linea_entrega,
+                            nuevo_descuento_entrega,
+                            porcentaje_iva,
+                        )
+                    )
+
+                    nuevo_iva_total = _q2(
+                        iva_actual
+                        - iva_recibe_actual
+                        - iva_entrega_actual
+                        + iva_recibe_nuevo
+                        + iva_entrega_nuevo
+                    )
+
+                    nueva_diferencia = abs(
+                        iva_objetivo
+                        - nuevo_iva_total
+                    )
+
+                    # Solo aceptamos movimientos que mejoren
+                    # estrictamente la diferencia actual.
+                    if (
+                        nueva_diferencia
+                        >= diferencia_actual
+                    ):
+                        continue
+
+                    candidato = {
+                        "diferencia":
+                            nueva_diferencia,
+                        "centavos":
+                            centavos,
+                        "indice_recibe":
+                            indice_recibe,
+                        "indice_entrega":
+                            indice_entrega,
+                        "nuevo_descuento_recibe":
+                            nuevo_descuento_recibe,
+                        "nuevo_descuento_entrega":
+                            nuevo_descuento_entrega,
+                    }
+
+                    if mejor_movimiento is None:
+                        mejor_movimiento = candidato
+
+                    else:
+                        if (
+                            candidato["diferencia"]
+                            < mejor_movimiento[
+                                "diferencia"
+                            ]
+                        ):
+                            mejor_movimiento = candidato
+
+                        elif (
+                            candidato["diferencia"]
+                            == mejor_movimiento[
+                                "diferencia"
+                            ]
+                            and candidato["centavos"]
+                            < mejor_movimiento[
+                                "centavos"
+                            ]
+                        ):
+                            mejor_movimiento = candidato
+
+                    # No existe resultado mejor que
+                    # diferencia cero.
+                    if nueva_diferencia == CERO:
+                        break
+
+                if (
+                    mejor_movimiento is not None
+                    and mejor_movimiento[
+                        "diferencia"
+                    ] == CERO
+                ):
+                    break
+
+            if (
+                mejor_movimiento is not None
+                and mejor_movimiento[
+                    "diferencia"
+                ] == CERO
+            ):
+                break
+
+        if mejor_movimiento is None:
+            break
+
+        linea_recibe = lineas[
+            mejor_movimiento[
+                "indice_recibe"
+            ]
+        ]
+
+        linea_entrega = lineas[
+            mejor_movimiento[
+                "indice_entrega"
+            ]
+        ]
+
+        linea_recibe["descuento"] = (
+            mejor_movimiento[
+                "nuevo_descuento_recibe"
+            ]
+        )
+
+        linea_entrega["descuento"] = (
+            mejor_movimiento[
+                "nuevo_descuento_entrega"
+            ]
+        )
+
+        # Recalculamos todas las bases e impuestos después
+        # del movimiento.
+        lineas = _preparar_impuestos(
+            lineas,
+            porcentaje_iva,
+        )
+
+    # =====================================================
+    # VERIFICACIÓN FINAL DEL AJUSTE
+    # =====================================================
+
+    iva_final = _suma_iva_lineas(
+        lineas
+    )
+
+    if iva_final != iva_objetivo:
+        raise ValidationError(
+            "No fue posible conciliar automáticamente "
+            "el redondeo del IVA por detalle sin alterar "
+            "los totales de la OT. "
+            f"Detalles: ${iva_final} | "
+            f"OT: ${iva_objetivo}. "
+            "La factura NO fue creada."
+        )
+
+    return lineas
+
+
+# =========================================================
 # CREAR FACTURA DESDE OT
 # =========================================================
 
@@ -828,6 +1310,24 @@ def crear_factura_desde_orden(
         _preparar_impuestos(
             lineas,
             porcentaje_iva,
+        )
+    )
+
+    # =====================================================
+    # AJUSTAR CENTAVOS DE REDONDEO DEL IVA
+    # =====================================================
+    #
+    # Si la suma del IVA redondeado por cada detalle difiere
+    # por centavos del IVA global correcto de la OT, se
+    # redistribuyen centavos del descuento entre líneas sin
+    # alterar descuento total, base total, IVA OT ni total OT.
+    # =====================================================
+
+    lineas = (
+        _ajustar_redondeo_iva(
+            lineas,
+            porcentaje_iva,
+            iva_ot,
         )
     )
 
