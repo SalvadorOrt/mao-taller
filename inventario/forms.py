@@ -47,12 +47,7 @@ class UsuarioForm(forms.ModelForm):
             "cedula",
             "sucursal",
             "groups",
-            "is_active",
         ]
-
-        labels = {
-            "is_active": "Usuario activo",
-        }
 
         widgets = {
             "username": forms.TextInput(
@@ -83,11 +78,6 @@ class UsuarioForm(forms.ModelForm):
             "sucursal": forms.Select(
                 attrs={
                     "class": "form-control-apple",
-                }
-            ),
-            "is_active": forms.CheckboxInput(
-                attrs={
-                    "class": "form-check-input",
                 }
             ),
         }
@@ -130,6 +120,7 @@ class UsuarioForm(forms.ModelForm):
             self.save_m2m()
 
         return user
+
 # =========================================================
 # PRODUCTO
 # =========================================================

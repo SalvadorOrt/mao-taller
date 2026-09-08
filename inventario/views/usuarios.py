@@ -180,7 +180,7 @@ def gestionar_usuario(
 
 
 # =========================================================
-# HABILITAR / INHABILITAR USUARIO
+# HABILITAR / DESHABILITAR USUARIO
 # =========================================================
 
 @permiso_requerido(
@@ -197,28 +197,30 @@ def cambiar_estado_usuario(
     )
 
     # =====================================================
-    # NO PERMITIR INHABILITARSE A SÍ MISMO
+    # NO PERMITIR DESHABILITAR LA PROPIA CUENTA
     # =====================================================
 
     if usuario.pk == request.user.pk:
         messages.error(
             request,
             (
-                "No puedes inhabilitar "
-                "tu propio usuario."
+                "No puedes cambiar el estado "
+                "de tu propia cuenta."
             ),
         )
 
         return redirect(
-            "lista_usuarios"
+            "editar_usuario",
+            pk=usuario.pk,
         )
 
     # =====================================================
     # PROTEGER SUPERUSUARIOS
     # =====================================================
     #
-    # Un usuario normal con change_usuario no debería
-    # poder desactivar una cuenta superusuario.
+    # Un usuario con change_usuario, pero que no sea
+    # superusuario, no puede cambiar el estado de una
+    # cuenta superusuario.
     # =====================================================
 
     if (
@@ -235,7 +237,8 @@ def cambiar_estado_usuario(
         )
 
         return redirect(
-            "lista_usuarios"
+            "editar_usuario",
+            pk=usuario.pk,
         )
 
     # =====================================================
@@ -259,13 +262,14 @@ def cambiar_estado_usuario(
             messages.error(
                 request,
                 (
-                    "No puedes inhabilitar el "
-                    "último superusuario activo."
+                    "No puedes deshabilitar "
+                    "el último superusuario activo."
                 ),
             )
 
             return redirect(
-                "lista_usuarios"
+                "editar_usuario",
+                pk=usuario.pk,
             )
 
     # =====================================================
@@ -290,7 +294,7 @@ def cambiar_estado_usuario(
         messages.success(
             request,
             (
-                f"El usuario {usuario.username} "
+                f'El usuario "{usuario.username}" '
                 "fue habilitado correctamente."
             ),
         )
@@ -299,11 +303,13 @@ def cambiar_estado_usuario(
         messages.success(
             request,
             (
-                f"El usuario {usuario.username} "
-                "fue inhabilitado correctamente."
+                f'El usuario "{usuario.username}" '
+                "fue deshabilitado correctamente."
             ),
         )
 
+    # Volver a la pantalla del mismo usuario.
     return redirect(
-        "lista_usuarios"
+        "editar_usuario",
+        pk=usuario.pk,
     )

@@ -28,7 +28,11 @@ urlpatterns = [
         views.gestionar_usuario,
         name="crear_usuario",
     ),
-
+    path(
+        "usuarios/<int:pk>/cambiar-estado/",
+        views.cambiar_estado_usuario,
+        name="cambiar_estado_usuario",
+    ),
     path(
         "usuarios/editar/<int:pk>/",
         views.gestionar_usuario,
