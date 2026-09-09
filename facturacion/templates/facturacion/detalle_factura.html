@@ -305,6 +305,186 @@
         flex: 1 1 auto;
     }
 }
+
+
+/* =========================================================
+   RESUMEN ECONÓMICO — MISMO COMPONENTE QUE DETALLE DE OT
+========================================================= */
+.factura-resumen-economico .totals-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: start;
+}
+
+.factura-resumen-economico .total-box {
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    padding: 11px 13px;
+    align-self: start;
+}
+
+.factura-resumen-economico .total-box.final {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 12px 14px;
+}
+
+.factura-resumen-economico .total-label {
+    margin-bottom: 4px;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.factura-resumen-economico .total-value {
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.factura-resumen-economico .total-box-composicion {
+    display: flex;
+    flex-direction: column;
+}
+
+.factura-resumen-economico .total-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+    color: #6e6e73;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.factura-resumen-economico .total-meta strong {
+    color: #1d1d1f;
+    font-weight: 700;
+}
+
+.factura-resumen-economico .total-separador {
+    color: #b0b0b5;
+}
+
+.factura-resumen-economico .total-barra {
+    width: 100%;
+    height: 5px;
+    margin-top: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8e8ed;
+}
+
+.factura-resumen-economico .total-barra-valor {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: #0a74da;
+    transition: width 0.2s ease;
+}
+
+.factura-resumen-economico .total-box-moi .total-barra-valor {
+    background: #34c759;
+}
+
+.factura-resumen-economico .total-box-moe .total-barra-valor {
+    background: #ff9500;
+}
+
+.factura-resumen-economico .descuento-segmentado {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    padding: 3px;
+    margin-top: 5px;
+    border-radius: 9px;
+    background: #ececf1;
+}
+
+.factura-resumen-economico .descuento-opcion {
+    border: 0;
+    border-radius: 7px;
+    padding: 7px 8px;
+    background: transparent;
+    color: #666;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: default;
+}
+
+.factura-resumen-economico .descuento-opcion.activo {
+    background: #ffffff;
+    color: #1d1d1f;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+}
+
+.factura-resumen-economico .descuento-opcion:disabled {
+    opacity: 1;
+}
+
+.factura-resumen-economico .descuento-lectura {
+    width: 100%;
+    height: 38px;
+    margin-top: 5px;
+    padding: 7px 10px;
+    border: 1px solid #dcdce1;
+    border-radius: 8px;
+    background: #fff;
+    color: #1d1d1f;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+}
+
+.factura-resumen-economico .descuento-resumen {
+    margin-top: 5px;
+    padding: 6px 8px;
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.035);
+    color: #666;
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.factura-resumen-economico .descuento-resumen strong {
+    color: #333;
+}
+
+.factura-resumen-economico .descuento-total-valor {
+    margin-top: 5px;
+}
+
+.factura-resumen-economico .iva-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    cursor: default;
+    opacity: 0.7;
+}
+
+.factura-resumen-economico .iva-checkbox-label input {
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .factura-resumen-economico .totals-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .factura-resumen-economico .totals-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .factura-resumen-economico .total-box.final {
+        grid-column: auto;
+    }
+}
 </style>
 
 <div class="container ot-wrapper">
@@ -845,91 +1025,236 @@
 
     <!-- =====================================================
          RESUMEN ECONÓMICO
+         MISMO ASPECTO QUE EL RESUMEN DE LA ORDEN
     ====================================================== -->
-    <div class="ot-card">
-        <div class="section-title">Resumen económico</div>
+    <div
+        class="ot-card factura-resumen-economico"
+        id="resumenEconomicoFactura"
+        data-repuestos="{{ subtotal_repuestos|default:'0.00'|unlocalize }}"
+        data-moi="{{ subtotal_moi|default:'0.00'|unlocalize }}"
+        data-moe="{{ subtotal_moe|default:'0.00'|unlocalize }}"
+        data-descuento="{{ factura.total_descuento|default:'0.00'|unlocalize }}"
+        data-subtotal-bruto="{{ subtotal_bruto|default:'0.00'|unlocalize }}"
+    >
+        <div class="section-title">
+            Resumen económico
+        </div>
 
         <div class="totals-grid">
 
-            <div class="total-box">
-                <div class="total-label">Subtotal repuestos</div>
+            <!-- REPUESTOS -->
+            <div class="total-box total-box-composicion total-box-repuestos">
+                <div class="total-label">
+                    Subtotal repuestos
+                </div>
+
                 <div class="total-value">
-                    ${{ subtotal_repuestos|floatformat:2 }}
+                    ${{ subtotal_repuestos|default:"0.00"|floatformat:2 }}
                 </div>
-                <div class="factura-total-caption">
-                    {{ repuestos|length }} producto{{ repuestos|length|pluralize }}
+
+                <div class="total-meta">
+                    <strong id="porcentajeRepFactura">0.00%</strong>
+                    <span>del subtotal</span>
+                    <span class="total-separador">•</span>
+                    <span>
+                        {{ repuestos|length }} producto{{ repuestos|length|pluralize }}
+                    </span>
                 </div>
-                <div class="factura-total-progress">
-                    <span style="width:{% if subtotal_repuestos %}100{% else %}0{% endif %}%;"></span>
+
+                <div class="total-barra" aria-hidden="true">
+                    <div id="barraRepFactura" class="total-barra-valor"></div>
                 </div>
             </div>
 
-            <div class="total-box">
-                <div class="total-label">Subtotal M.O. interna</div>
+            <!-- MANO DE OBRA INTERNA -->
+            <div class="total-box total-box-composicion total-box-moi">
+                <div class="total-label">
+                    Subtotal M.O. interna
+                </div>
+
                 <div class="total-value">
-                    ${{ subtotal_moi|floatformat:2 }}
+                    ${{ subtotal_moi|default:"0.00"|floatformat:2 }}
                 </div>
-                <div class="factura-total-caption">
-                    {{ mano_obra_interna|length }} servicio{{ mano_obra_interna|length|pluralize }}
+
+                <div class="total-meta">
+                    <strong id="porcentajeMOIFactura">0.00%</strong>
+                    <span>del subtotal</span>
+                    <span class="total-separador">•</span>
+                    <span>
+                        {{ mano_obra_interna|length }} servicio{{ mano_obra_interna|length|pluralize }}
+                    </span>
                 </div>
-                <div class="factura-total-progress">
-                    <span style="width:{% if subtotal_moi %}100{% else %}0{% endif %}%;"></span>
+
+                <div class="total-barra" aria-hidden="true">
+                    <div id="barraMOIFactura" class="total-barra-valor"></div>
                 </div>
             </div>
 
-            <div class="total-box">
-                <div class="total-label">Subtotal M.O. externa</div>
+            <!-- MANO DE OBRA EXTERNA -->
+            <div class="total-box total-box-composicion total-box-moe">
+                <div class="total-label">
+                    Subtotal M.O. externa
+                </div>
+
                 <div class="total-value">
-                    ${{ subtotal_moe|floatformat:2 }}
+                    ${{ subtotal_moe|default:"0.00"|floatformat:2 }}
                 </div>
-                <div class="factura-total-caption">
-                    {{ mano_obra_externa|length }} servicio{{ mano_obra_externa|length|pluralize }}
+
+                <div class="total-meta">
+                    <strong id="porcentajeMOEFactura">0.00%</strong>
+                    <span>del subtotal</span>
+                    <span class="total-separador">•</span>
+                    <span>
+                        {{ mano_obra_externa|length }} servicio{{ mano_obra_externa|length|pluralize }}
+                    </span>
                 </div>
-                <div class="factura-total-progress">
-                    <span style="width:{% if subtotal_moe %}100{% else %}0{% endif %}%;"></span>
+
+                <div class="total-barra" aria-hidden="true">
+                    <div id="barraMOEFactura" class="total-barra-valor"></div>
                 </div>
             </div>
 
+            <!-- SUBTOTAL SIN IVA -->
             <div class="total-box">
-                <div class="total-label">Subtotal sin IVA</div>
-                <div class="total-value">
-                    ${{ factura.total_sin_impuestos|floatformat:2 }}
+                <div class="total-label">
+                    Subtotal sin IVA
                 </div>
-                <div class="factura-total-caption">
+
+                <div class="total-value">
+                    ${{ factura.total_sin_impuestos|default:"0.00"|floatformat:2 }}
+                </div>
+
+                <div class="total-meta">
                     Total después del descuento y antes del IVA
                 </div>
             </div>
 
-            <div class="total-box">
-                <div class="total-label">Descuento</div>
-                <div class="total-value">
-                    -${{ factura.total_descuento|floatformat:2 }}
-                </div>
-                <div class="factura-total-caption">
-                    Subtotal bruto: ${{ subtotal_bruto|floatformat:2 }}
-                </div>
-            </div>
-
+            <!-- DESCUENTO -->
             <div class="total-box">
                 <div class="total-label">
-                    IVA {{ factura.porcentaje_iva|floatformat:2 }}%
+                    Descuento
                 </div>
-                <div class="total-value">
-                    ${{ factura.valor_iva|floatformat:2 }}
+
+                <div class="descuento-segmentado" aria-label="Tipo de descuento">
+                    <button
+                        type="button"
+                        class="descuento-opcion {% if factura.tipo_descuento == 'PORCENTAJE' %}activo{% endif %}"
+                        disabled
+                    >
+                        % Porcentaje
+                    </button>
+
+                    <button
+                        type="button"
+                        class="descuento-opcion {% if factura.tipo_descuento == 'VALOR_FIJO' or not factura.tipo_descuento %}activo{% endif %}"
+                        disabled
+                    >
+                        $ Valor fijo
+                    </button>
                 </div>
-                <div class="factura-total-caption">
-                    Impuesto aplicado al comprobante
+
+                <div class="descuento-lectura">
+                    {% if factura.tipo_descuento == 'PORCENTAJE' and factura.descuento_ingresado %}
+                        {{ factura.descuento_ingresado|floatformat:2 }}
+                    {% else %}
+                        {{ factura.total_descuento|default:"0.00"|floatformat:2 }}
+                    {% endif %}
+                </div>
+
+                <div class="descuento-resumen">
+                    <strong>Representa:</strong>
+                    <span id="descuentoPorcentajeFactura">0.00%</span>
+                    <span aria-hidden="true">•</span>
+                    <span>${{ factura.total_descuento|default:"0.00"|floatformat:2 }}</span>
+                </div>
+
+                <div class="total-value descuento-total-valor">
+                    -${{ factura.total_descuento|default:"0.00"|floatformat:2 }}
                 </div>
             </div>
 
-            <div class="total-box final factura-total-final">
-                <div class="total-label">Total a pagar</div>
+            <!-- IVA -->
+            <div class="total-box">
+                <div class="total-label">
+                    IVA {{ factura.porcentaje_iva|default:"0"|floatformat:2 }}%
+                </div>
+
                 <div class="total-value">
-                    ${{ factura.importe_total|floatformat:2 }}
+                    ${{ factura.valor_iva|default:"0.00"|floatformat:2 }}
+                </div>
+
+                <label class="iva-checkbox-label">
+                    <input type="checkbox" checked disabled>
+                    IVA aplicado al total
+                </label>
+            </div>
+
+            <!-- TOTAL FINAL -->
+            <div class="total-box final">
+                <div class="total-label">
+                    Total a pagar
+                </div>
+
+                <div class="total-value">
+                    ${{ factura.importe_total|default:"0.00"|floatformat:2 }}
                 </div>
             </div>
+
         </div>
     </div>
+
+    <script>
+    (function () {
+        function numeroSeguro(valor) {
+            const numero = Number.parseFloat(valor || "0");
+            return Number.isFinite(numero) ? numero : 0;
+        }
+
+        function porcentaje(valor, total) {
+            if (total <= 0) return 0;
+            return Math.max(0, Math.min(100, (valor / total) * 100));
+        }
+
+        function aplicarPorcentaje(textoId, barraId, valor, total) {
+            const p = porcentaje(valor, total);
+            const texto = document.getElementById(textoId);
+            const barra = document.getElementById(barraId);
+
+            if (texto) texto.textContent = p.toFixed(2) + "%";
+            if (barra) barra.style.width = p.toFixed(2) + "%";
+        }
+
+        function inicializarResumenEconomicoFactura() {
+            const resumen = document.getElementById("resumenEconomicoFactura");
+            if (!resumen) return;
+
+            const rep = numeroSeguro(resumen.dataset.repuestos);
+            const moi = numeroSeguro(resumen.dataset.moi);
+            const moe = numeroSeguro(resumen.dataset.moe);
+            const descuento = numeroSeguro(resumen.dataset.descuento);
+            const subtotalBruto = numeroSeguro(resumen.dataset.subtotalBruto);
+
+            /* Igual que en la OT: composición entre REP + MOI + MOE. */
+            const baseComposicion = rep + moi + moe;
+
+            aplicarPorcentaje("porcentajeRepFactura", "barraRepFactura", rep, baseComposicion);
+            aplicarPorcentaje("porcentajeMOIFactura", "barraMOIFactura", moi, baseComposicion);
+            aplicarPorcentaje("porcentajeMOEFactura", "barraMOEFactura", moe, baseComposicion);
+
+            const porcentajeDescuento = porcentaje(descuento, subtotalBruto);
+            const textoDescuento = document.getElementById("descuentoPorcentajeFactura");
+            if (textoDescuento) {
+                textoDescuento.textContent = porcentajeDescuento.toFixed(2) + "%";
+            }
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", inicializarResumenEconomicoFactura);
+        } else {
+            inicializarResumenEconomicoFactura();
+        }
+    })();
+    </script>
 
 
     <!-- =====================================================
