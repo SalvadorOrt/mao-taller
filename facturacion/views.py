@@ -647,6 +647,7 @@ def dashboard_facturacion(request):
     )
 
 
+
 # =========================================================
 # BUSCAR OT PARA NUEVA FACTURA
 # =========================================================
@@ -656,12 +657,17 @@ def buscar_ordenes_facturacion(request):
     """
     Endpoint JSON para el modal "+ Nueva factura".
 
+    Sin búsqueda:
+        muestra las órdenes más recientes listas para facturar.
+
+    Con búsqueda:
+        filtra por OT, placa, identificación,
+        cliente o vehículo.
+
     Solo devuelve órdenes:
     - CERRADAS
-    - no migradas
+    - habilitadas para facturación en MAO
     - sin factura asociada
-
-    Busca por OT, placa, identificación, cliente o vehículo.
     """
 
     q = (
@@ -669,14 +675,9 @@ def buscar_ordenes_facturacion(request):
         .strip()
     )
 
-    if len(q) < 2:
-        return JsonResponse(
-            {
-                "ok": True,
-                "resultados": [],
-                "mensaje": "Escribe al menos 2 caracteres para buscar.",
-            }
-        )
+    # =====================================================
+    # BASE: SOLO OT REALMENTE FACTURABLES
+    # =====================================================
 
     ordenes = (
         OrdenTrabajo.objects
@@ -689,22 +690,72 @@ def buscar_ordenes_facturacion(request):
             "cliente",
             "sucursal",
         )
-        .filter(
-            Q(numero_orden__icontains=q)
-            | Q(placa__icontains=q)
-            | Q(cliente__identificacion__icontains=q)
-            | Q(cliente__nombre_completo__icontains=q)
-            | Q(vehiculo__icontains=q)
+    )
+
+    # =====================================================
+    # TOTAL DISPONIBLE
+    # =====================================================
+
+    total_disponibles = (
+        ordenes.count()
+    )
+
+    # =====================================================
+    # FILTRO DE BÚSQUEDA
+    # =====================================================
+
+    if q:
+
+        # Si el usuario ya empezó a escribir,
+        # esperamos mínimo 2 caracteres para filtrar.
+        if len(q) < 2:
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "resultados": [],
+                    "total": 0,
+                    "total_disponibles":
+                        total_disponibles,
+                    "mensaje":
+                        "Escribe al menos 2 caracteres para buscar.",
+                }
+            )
+
+        ordenes = (
+            ordenes
+            .filter(
+                Q(numero_orden__icontains=q)
+                | Q(placa__icontains=q)
+                | Q(
+                    cliente__identificacion__icontains=q
+                )
+                | Q(
+                    cliente__nombre_completo__icontains=q
+                )
+                | Q(vehiculo__icontains=q)
+            )
         )
+
+    # =====================================================
+    # ORDENAMIENTO Y LÍMITE
+    # =====================================================
+
+    ordenes = (
+        ordenes
         .order_by(
             "-fecha_ingreso",
             "-pk",
         )[:20]
     )
 
+    # =====================================================
+    # RESULTADOS
+    # =====================================================
+
     resultados = []
 
     for orden in ordenes:
+
         cliente = getattr(
             orden,
             "cliente",
@@ -713,90 +764,135 @@ def buscar_ordenes_facturacion(request):
 
         resultados.append(
             {
-                "id": orden.pk,
-                "numero_orden": str(
-                    getattr(
-                        orden,
-                        "numero_orden",
-                        "",
-                    )
-                    or ""
-                ),
-                "fecha": (
-                    orden.fecha_ingreso.strftime("%d/%m/%Y")
-                    if getattr(orden, "fecha_ingreso", None)
-                    else ""
-                ),
-                "placa": str(
-                    getattr(
-                        orden,
-                        "placa",
-                        "",
-                    )
-                    or ""
-                ),
-                "cliente": str(
-                    getattr(
-                        orden,
-                        "nombre_cliente_final",
-                        "",
-                    )
-                    or getattr(
-                        cliente,
-                        "nombre_completo",
-                        "",
-                    )
-                    or "-"
-                ),
-                "identificacion": str(
-                    getattr(
-                        cliente,
-                        "identificacion",
-                        "",
-                    )
-                    or ""
-                ),
-                "vehiculo": str(
-                    getattr(
-                        orden,
-                        "vehiculo",
-                        "",
-                    )
-                    or "-"
-                ),
-                "sucursal": str(
-                    getattr(
+                "id":
+                    orden.pk,
+
+                "numero_orden":
+                    str(
                         getattr(
                             orden,
-                            "sucursal",
-                            None,
-                        ),
-                        "nombre",
-                        "",
-                    )
-                    or "-"
-                ),
-                "total": format(
-                    _decimal(
-                        getattr(
-                            orden,
-                            "total_final",
-                            0,
+                            "numero_orden",
+                            "",
                         )
+                        or ""
                     ),
-                    ".2f",
-                ),
-                "url": (
-                    f"/facturacion/orden/{orden.pk}/"
-                ),
+
+                "fecha":
+                    (
+                        orden.fecha_ingreso.strftime(
+                            "%d/%m/%Y"
+                        )
+                        if getattr(
+                            orden,
+                            "fecha_ingreso",
+                            None,
+                        )
+                        else ""
+                    ),
+
+                "placa":
+                    str(
+                        getattr(
+                            orden,
+                            "placa",
+                            "",
+                        )
+                        or ""
+                    ),
+
+                "cliente":
+                    str(
+                        getattr(
+                            orden,
+                            "nombre_cliente_final",
+                            "",
+                        )
+                        or getattr(
+                            cliente,
+                            "nombre_completo",
+                            "",
+                        )
+                        or "-"
+                    ),
+
+                "identificacion":
+                    str(
+                        getattr(
+                            cliente,
+                            "identificacion",
+                            "",
+                        )
+                        or ""
+                    ),
+
+                "vehiculo":
+                    str(
+                        getattr(
+                            orden,
+                            "vehiculo",
+                            "",
+                        )
+                        or "-"
+                    ),
+
+                "sucursal":
+                    str(
+                        getattr(
+                            getattr(
+                                orden,
+                                "sucursal",
+                                None,
+                            ),
+                            "nombre",
+                            "",
+                        )
+                        or "-"
+                    ),
+
+                "total":
+                    format(
+                        _decimal(
+                            getattr(
+                                orden,
+                                "total_final",
+                                0,
+                            )
+                        ),
+                        ".2f",
+                    ),
+
+                "url":
+                    (
+                        f"/facturacion/orden/"
+                        f"{orden.pk}/"
+                    ),
             }
         )
 
+    # =====================================================
+    # RESPUESTA
+    # =====================================================
+
     return JsonResponse(
         {
-            "ok": True,
-            "resultados": resultados,
-            "total": len(resultados),
+            "ok":
+                True,
+
+            "resultados":
+                resultados,
+
+            "total":
+                len(resultados),
+
+            "total_disponibles":
+                total_disponibles,
+
+            "modo":
+                (
+                    "busqueda"
+                    if q
+                    else "pendientes"
+                ),
         }
     )
 

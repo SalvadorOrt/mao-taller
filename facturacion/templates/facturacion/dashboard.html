@@ -10,11 +10,22 @@
 
 <link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
 
+
 <style>
+
+/* =========================================================
+   CONTENEDOR
+========================================================= */
+
 .fact-wrapper{
     padding-top:8px;
     padding-bottom:22px;
 }
+
+
+/* =========================================================
+   BARRA SUPERIOR
+========================================================= */
 
 .fact-topbar{
     display:flex;
@@ -25,12 +36,14 @@
     margin-bottom:15px;
 }
 
+
 .fact-search-form{
     flex:1;
     min-width:280px;
     max-width:650px;
     position:relative;
 }
+
 
 .fact-search-icon{
     position:absolute;
@@ -41,6 +54,7 @@
     font-size:14px;
     pointer-events:none;
 }
+
 
 .fact-search-input{
     width:100%;
@@ -55,10 +69,12 @@
     outline:none;
 }
 
+
 .fact-search-input:focus{
     border-color:#0071e3;
     box-shadow:0 0 0 3px rgba(0,113,227,.10);
 }
+
 
 .fact-search-clear{
     position:absolute;
@@ -77,10 +93,12 @@
     border-radius:50%;
 }
 
+
 .fact-search-clear:hover{
     background:#f2f2f7;
     color:#111;
 }
+
 
 .fact-new-btn{
     min-height:40px;
@@ -99,9 +117,15 @@
     white-space:nowrap;
 }
 
+
 .fact-new-btn:hover{
     background:#0062c4;
 }
+
+
+/* =========================================================
+   KPI
+========================================================= */
 
 .fact-kpis{
     display:grid;
@@ -109,6 +133,7 @@
     gap:12px;
     margin-bottom:15px;
 }
+
 
 .fact-kpi{
     background:#fff;
@@ -122,6 +147,7 @@
     gap:12px;
 }
 
+
 .fact-kpi-label{
     font-size:9px;
     font-weight:800;
@@ -131,6 +157,7 @@
     margin-bottom:5px;
 }
 
+
 .fact-kpi-value{
     font-size:23px;
     font-weight:800;
@@ -138,12 +165,14 @@
     line-height:1;
 }
 
+
 .fact-kpi-sub{
     margin-top:6px;
     font-size:9px;
     color:var(--muted,#6e6e73);
     font-weight:500;
 }
+
 
 .fact-kpi-icon{
     width:36px;
@@ -158,12 +187,18 @@
     flex-shrink:0;
 }
 
+
+/* =========================================================
+   TARJETA DE FACTURAS
+========================================================= */
+
 .fact-card{
     background:#fff;
     border:1px solid var(--border,#d2d2d7);
     border-radius:12px;
     overflow:hidden;
 }
+
 
 .fact-card-header{
     padding:13px 15px;
@@ -175,17 +210,20 @@
     flex-wrap:wrap;
 }
 
+
 .fact-card-title{
     font-size:13px;
     font-weight:800;
     color:var(--text,#1d1d1f);
 }
 
+
 .fact-card-subtitle{
     margin-top:3px;
     font-size:10px;
     color:var(--muted,#6e6e73);
 }
+
 
 .fact-count-badge{
     display:inline-flex;
@@ -202,10 +240,16 @@
     font-weight:800;
 }
 
+
+/* =========================================================
+   TABLA
+========================================================= */
+
 .fact-table-wrap{
     overflow:auto;
     max-height:650px;
 }
+
 
 .fact-table{
     width:100%;
@@ -213,6 +257,7 @@
     border-collapse:separate;
     border-spacing:0;
 }
+
 
 .fact-table thead th{
     position:sticky;
@@ -231,6 +276,7 @@
     white-space:nowrap;
 }
 
+
 .fact-table tbody td{
     padding:10px 11px;
     border-bottom:1px solid var(--border-soft,#e5e5ea);
@@ -238,9 +284,11 @@
     color:var(--text,#1d1d1f);
 }
 
+
 .fact-table tbody tr:hover{
     background:#fbfbfd;
 }
+
 
 .fact-main{
     font-size:11px;
@@ -249,6 +297,7 @@
     line-height:1.3;
 }
 
+
 .fact-meta{
     margin-top:2px;
     font-size:9px;
@@ -256,6 +305,7 @@
     color:var(--muted,#6e6e73);
     line-height:1.3;
 }
+
 
 .fact-placa{
     display:inline-flex;
@@ -270,11 +320,17 @@
     letter-spacing:.04em;
 }
 
+
 .fact-total{
     font-size:12px;
     font-weight:800;
     white-space:nowrap;
 }
+
+
+/* =========================================================
+   ESTADOS
+========================================================= */
 
 .fact-badge{
     display:inline-flex;
@@ -292,11 +348,13 @@
     white-space:nowrap;
 }
 
+
 .fact-badge.borrador{
     background:#f5f5f7;
     color:#6e6e73;
     border-color:#e5e5ea;
 }
+
 
 .fact-badge.generado,
 .fact-badge.firmado{
@@ -305,11 +363,13 @@
     border-color:#cfe5ff;
 }
 
+
 .fact-badge.recibido{
     background:#fff8e5;
     color:#9a6700;
     border-color:#ffe0a3;
 }
+
 
 .fact-badge.autorizado{
     background:#ecfdf3;
@@ -317,11 +377,13 @@
     border-color:#abefc6;
 }
 
+
 .fact-badge.rechazado{
     background:#fef3f2;
     color:#b42318;
     border-color:#fecdca;
 }
+
 
 .fact-action{
     min-width:58px;
@@ -340,11 +402,17 @@
     text-decoration:none;
 }
 
+
 .fact-action:hover{
     background:#edf6ff;
     color:#0062c4;
     text-decoration:none;
 }
+
+
+/* =========================================================
+   VACÍO
+========================================================= */
 
 .fact-empty{
     text-align:center;
@@ -352,11 +420,13 @@
     background:#fafafa;
 }
 
+
 .fact-empty-icon{
     font-size:1.8rem;
     opacity:.3;
     margin-bottom:8px;
 }
+
 
 .fact-empty-title{
     margin:0 0 4px;
@@ -364,11 +434,13 @@
     font-weight:750;
 }
 
+
 .fact-empty-text{
     margin:0;
     font-size:10px;
     color:#6e6e73;
 }
+
 
 /* =========================================================
    MODAL NUEVA FACTURA
@@ -388,6 +460,7 @@
     padding:20px;
 }
 
+
 .nf-modal{
     width:100%;
     max-width:820px;
@@ -400,6 +473,7 @@
     box-shadow:0 24px 60px rgba(0,0,0,.28);
 }
 
+
 .nf-header{
     padding:15px 20px;
     border-bottom:1px solid #e5e5ea;
@@ -410,12 +484,14 @@
     gap:12px;
 }
 
+
 .nf-title{
     margin:0;
     color:#111;
     font-size:1.05rem;
     font-weight:800;
 }
+
 
 .nf-close{
     border:none;
@@ -426,14 +502,17 @@
     cursor:pointer;
 }
 
+
 .nf-body{
     padding:20px;
     overflow-y:auto;
 }
 
+
 .nf-search-wrap{
     position:relative;
 }
+
 
 .nf-search-icon{
     position:absolute;
@@ -442,6 +521,7 @@
     transform:translateY(-50%);
     color:#6e6e73;
 }
+
 
 .nf-search{
     width:100%;
@@ -453,10 +533,12 @@
     font-size:12px;
 }
 
+
 .nf-search:focus{
     border-color:#0071e3;
     box-shadow:0 0 0 3px rgba(0,113,227,.10);
 }
+
 
 .nf-help{
     margin-top:7px;
@@ -465,12 +547,55 @@
     line-height:1.4;
 }
 
+
 .nf-results{
     margin-top:15px;
     display:flex;
     flex-direction:column;
     gap:8px;
 }
+
+
+.nf-results-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:2px;
+}
+
+
+.nf-results-title{
+    font-size:10px;
+    font-weight:800;
+    color:#1d1d1f;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+
+.nf-results-count{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:25px;
+    height:22px;
+    padding:0 7px;
+    border-radius:999px;
+    background:#f5f5f7;
+    border:1px solid #e5e5ea;
+    color:#6e6e73;
+    font-size:9px;
+    font-weight:800;
+}
+
+
+.nf-results-note{
+    font-size:9px;
+    color:#8e8e93;
+    margin-bottom:3px;
+}
+
 
 .nf-placeholder{
     border:1px dashed #d2d2d7;
@@ -481,6 +606,7 @@
     font-size:11px;
     background:#fbfbfd;
 }
+
 
 .nf-result{
     border:1px solid #e5e5ea;
@@ -493,10 +619,12 @@
     align-items:center;
 }
 
+
 .nf-result:hover{
     border-color:#c7c7cc;
     background:#fbfbfd;
 }
+
 
 .nf-result-top{
     display:flex;
@@ -505,11 +633,13 @@
     flex-wrap:wrap;
 }
 
+
 .nf-ot{
     font-size:12px;
     font-weight:850;
     color:#111;
 }
+
 
 .nf-plate{
     padding:3px 7px;
@@ -521,6 +651,7 @@
     letter-spacing:.04em;
 }
 
+
 .nf-customer{
     margin-top:5px;
     font-size:11px;
@@ -528,11 +659,13 @@
     color:#1d1d1f;
 }
 
+
 .nf-vehicle{
     margin-top:3px;
     font-size:10px;
     color:#6e6e73;
 }
+
 
 .nf-extra{
     margin-top:4px;
@@ -540,11 +673,13 @@
     color:#8e8e93;
 }
 
+
 .nf-total{
     margin-top:5px;
     font-size:11px;
     font-weight:800;
 }
+
 
 .nf-select{
     min-height:33px;
@@ -563,11 +698,13 @@
     white-space:nowrap;
 }
 
+
 .nf-select:hover{
     background:#0062c4;
     color:#fff;
     text-decoration:none;
 }
+
 
 .nf-loading{
     padding:25px;
@@ -576,13 +713,21 @@
     color:#6e6e73;
 }
 
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
 @media(max-width:900px){
+
     .fact-kpis{
         grid-template-columns:repeat(2,minmax(0,1fr));
     }
 }
 
+
 @media(max-width:600px){
+
     .fact-kpis{
         grid-template-columns:1fr;
     }
@@ -608,10 +753,20 @@
         width:100%;
     }
 }
+
 </style>
 
 
+<!-- =========================================================
+     CONTENIDO
+========================================================= -->
+
 <div class="container fact-wrapper">
+
+
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
 
     <div class="fact-topbar">
 
@@ -629,87 +784,167 @@
                    autocomplete="off">
 
             {% if q %}
+
                 <a href="{% url 'facturacion:dashboard' %}"
                    class="fact-search-clear"
                    title="Limpiar búsqueda">
+
                     <i class="bi bi-x-lg"></i>
+
                 </a>
+
             {% endif %}
 
         </form>
 
+
         <button type="button"
                 class="fact-new-btn"
                 onclick="abrirModalNuevaFactura()">
+
             <i class="bi bi-plus-lg"></i>
+
             Nueva factura
+
         </button>
 
     </div>
 
 
+    <!-- =====================================================
+         KPI
+    ====================================================== -->
+
     <div class="fact-kpis">
 
         <div class="fact-kpi">
+
             <div>
-                <div class="fact-kpi-label">Facturas</div>
-                <div class="fact-kpi-value">{{ total_facturas|default:0 }}</div>
-                <div class="fact-kpi-sub">Según la búsqueda actual</div>
+
+                <div class="fact-kpi-label">
+                    Facturas
+                </div>
+
+                <div class="fact-kpi-value">
+                    {{ total_facturas|default:0 }}
+                </div>
+
+                <div class="fact-kpi-sub">
+                    Según la búsqueda actual
+                </div>
+
             </div>
+
             <div class="fact-kpi-icon">
                 <i class="bi bi-receipt"></i>
             </div>
+
         </div>
 
+
         <div class="fact-kpi">
+
             <div>
-                <div class="fact-kpi-label">Borradores</div>
-                <div class="fact-kpi-value">{{ total_borradores|default:0 }}</div>
-                <div class="fact-kpi-sub">Todavía no autorizadas</div>
+
+                <div class="fact-kpi-label">
+                    Borradores
+                </div>
+
+                <div class="fact-kpi-value">
+                    {{ total_borradores|default:0 }}
+                </div>
+
+                <div class="fact-kpi-sub">
+                    Todavía no autorizadas
+                </div>
+
             </div>
+
             <div class="fact-kpi-icon">
                 <i class="bi bi-file-earmark"></i>
             </div>
+
         </div>
 
+
         <div class="fact-kpi">
+
             <div>
-                <div class="fact-kpi-label">Autorizadas</div>
-                <div class="fact-kpi-value">{{ total_autorizadas|default:0 }}</div>
-                <div class="fact-kpi-sub">Autorizadas por el SRI</div>
+
+                <div class="fact-kpi-label">
+                    Autorizadas
+                </div>
+
+                <div class="fact-kpi-value">
+                    {{ total_autorizadas|default:0 }}
+                </div>
+
+                <div class="fact-kpi-sub">
+                    Autorizadas por el SRI
+                </div>
+
             </div>
+
             <div class="fact-kpi-icon">
                 <i class="bi bi-check-circle"></i>
             </div>
+
         </div>
 
+
         <div class="fact-kpi">
+
             <div>
-                <div class="fact-kpi-label">Rechazadas</div>
-                <div class="fact-kpi-value">{{ total_rechazadas|default:0 }}</div>
-                <div class="fact-kpi-sub">Requieren revisión</div>
+
+                <div class="fact-kpi-label">
+                    Rechazadas
+                </div>
+
+                <div class="fact-kpi-value">
+                    {{ total_rechazadas|default:0 }}
+                </div>
+
+                <div class="fact-kpi-sub">
+                    Requieren revisión
+                </div>
+
             </div>
+
             <div class="fact-kpi-icon">
                 <i class="bi bi-exclamation-circle"></i>
             </div>
+
         </div>
 
     </div>
 
 
+    <!-- =====================================================
+         LISTADO FACTURAS
+    ====================================================== -->
+
     <div class="fact-card">
 
         <div class="fact-card-header">
+
             <div>
-                <div class="fact-card-title">Facturas</div>
-                <div class="fact-card-subtitle">
-                    Consulta documentos por factura, OT, placa, cliente, identificación o vehículo.
+
+                <div class="fact-card-title">
+                    Facturas
                 </div>
+
+                <div class="fact-card-subtitle">
+                    Consulta documentos por factura, OT, placa,
+                    cliente, identificación o vehículo.
+                </div>
+
             </div>
+
 
             <span class="fact-count-badge">
                 {{ total_facturas|default:0 }}
             </span>
+
         </div>
 
 
@@ -718,18 +953,49 @@
             <table class="fact-table">
 
                 <thead>
+
                     <tr>
-                        <th>Factura</th>
-                        <th>Fecha</th>
-                        <th>Cliente / identificación</th>
-                        <th>OT</th>
-                        <th>Placa</th>
-                        <th>Vehículo</th>
-                        <th style="text-align:right;">Total</th>
-                        <th style="text-align:center;">Estado</th>
-                        <th style="text-align:center;">Acción</th>
+
+                        <th>
+                            Factura
+                        </th>
+
+                        <th>
+                            Fecha
+                        </th>
+
+                        <th>
+                            Cliente / identificación
+                        </th>
+
+                        <th>
+                            OT
+                        </th>
+
+                        <th>
+                            Placa
+                        </th>
+
+                        <th>
+                            Vehículo
+                        </th>
+
+                        <th style="text-align:right;">
+                            Total
+                        </th>
+
+                        <th style="text-align:center;">
+                            Estado
+                        </th>
+
+                        <th style="text-align:center;">
+                            Acción
+                        </th>
+
                     </tr>
+
                 </thead>
+
 
                 <tbody>
 
@@ -738,106 +1004,186 @@
                         <tr>
 
                             <td>
+
                                 <div class="fact-main">
+
                                     {% if factura.numero_factura %}
+
                                         {{ factura.numero_factura }}
+
                                     {% else %}
+
                                         Sin número
+
                                     {% endif %}
+
                                 </div>
 
+
                                 <div class="fact-meta">
+
                                     {{ factura.empresa.nombre_comercial|default:factura.empresa.razon_social|default:"-" }}
+
                                 </div>
+
                             </td>
 
+
                             <td>
+
                                 <div class="fact-main">
+
                                     {{ factura.created_at|date:"d/m/Y" }}
+
                                 </div>
+
                                 <div class="fact-meta">
+
                                     {{ factura.created_at|date:"H:i" }}
+
                                 </div>
+
                             </td>
 
+
                             <td>
+
                                 <div class="fact-main">
+
                                     {{ factura.razon_social_comprador|default:"-"|truncatechars:36 }}
+
                                 </div>
+
 
                                 <div class="fact-meta">
+
                                     {{ factura.identificacion_comprador|default:"-" }}
+
                                 </div>
+
                             </td>
 
+
                             <td>
+
                                 <div class="fact-main">
+
                                     {{ factura.numero_orden_origen|default:"-" }}
+
                                 </div>
+
                             </td>
 
+
                             <td>
+
                                 <span class="fact-placa">
+
                                     {{ factura.placa_snapshot|default:"S/P" }}
+
                                 </span>
+
                             </td>
 
+
                             <td>
+
                                 <div class="fact-main">
+
                                     {{ factura.vehiculo_snapshot|default:"-"|truncatechars:32 }}
+
                                 </div>
+
                             </td>
+
 
                             <td style="text-align:right;">
+
                                 <div class="fact-total">
+
                                     ${{ factura.importe_total|default:0|floatformat:2 }}
+
                                 </div>
+
                             </td>
 
+
                             <td style="text-align:center;">
+
                                 <span class="fact-badge {{ factura.estado|lower }}">
+
                                     {{ factura.get_estado_display }}
+
                                 </span>
+
                             </td>
 
+
                             <td style="text-align:center;">
+
                                 <a href="{% url 'facturacion:detalle_factura' factura.pk %}"
                                    class="fact-action"
                                    title="Ver factura">
+
                                     <i class="bi bi-eye"></i>
+
                                     Ver
+
                                 </a>
+
                             </td>
 
                         </tr>
 
+
                     {% empty %}
 
                         <tr>
+
                             <td colspan="9"
                                 class="fact-empty">
 
+
                                 <div class="fact-empty-icon">
+
                                     <i class="bi bi-receipt"></i>
+
                                 </div>
 
+
                                 <h5 class="fact-empty-title">
+
                                     {% if q %}
+
                                         No se encontraron facturas
+
                                     {% else %}
+
                                         Todavía no hay facturas
+
                                     {% endif %}
+
                                 </h5>
 
+
                                 <p class="fact-empty-text">
+
                                     {% if q %}
-                                        Prueba con otro número de factura, OT, placa, cliente o identificación.
+
+                                        Prueba con otro número de factura,
+                                        OT, placa, cliente o identificación.
+
                                     {% else %}
-                                        Usa “Nueva factura” para buscar una orden cerrada pendiente de facturar.
+
+                                        Usa “Nueva factura” para seleccionar
+                                        una orden lista para facturar.
+
                                     {% endif %}
+
                                 </p>
 
                             </td>
+
                         </tr>
 
                     {% endfor %}
@@ -862,26 +1208,45 @@
 
     <div class="nf-modal">
 
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
         <div class="nf-header">
 
             <h3 class="nf-title">
                 Nueva factura
             </h3>
 
+
             <button type="button"
                     class="nf-close"
                     onclick="cerrarModalNuevaFactura()"
                     aria-label="Cerrar">
+
                 &times;
+
             </button>
 
         </div>
 
+
+        <!-- =================================================
+             BODY
+        ================================================== -->
+
         <div class="nf-body">
+
+
+            <!-- =============================================
+                 BUSCADOR
+            ============================================== -->
 
             <div class="nf-search-wrap">
 
                 <i class="bi bi-search nf-search-icon"></i>
+
 
                 <input type="search"
                        id="buscarOrdenFactura"
@@ -891,15 +1256,33 @@
 
             </div>
 
+
             <div class="nf-help">
-                Solo se mostrarán órdenes cerradas, no migradas y que todavía no tengan una factura asociada.
+
+                Se muestran únicamente órdenes cerradas,
+                habilitadas para facturación en MAO
+                y que todavía no tienen una factura asociada.
+
             </div>
+
+
+            <!-- =============================================
+                 RESULTADOS
+            ============================================== -->
 
             <div id="resultadosOrdenFactura"
                  class="nf-results">
 
-                <div class="nf-placeholder">
-                    Escribe al menos 2 caracteres para buscar una orden.
+                <div class="nf-loading">
+
+                    <span class="
+                        spinner-border
+                        spinner-border-sm
+                        me-2
+                    "></span>
+
+                    Cargando órdenes listas para facturar...
+
                 </div>
 
             </div>
@@ -911,213 +1294,701 @@
 </div>
 
 
+<!-- =========================================================
+     SWEETALERT
+========================================================= -->
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
 <script>
+
+/* =========================================================
+   CONFIGURACIÓN
+========================================================= */
+
 const URL_BUSCAR_ORDENES_FACTURA =
     "{% url 'facturacion:buscar_ordenes_facturacion' %}";
 
-let timerBusquedaOrdenFactura = null;
-let controladorBusquedaOrdenFactura = null;
 
+let timerBusquedaOrdenFactura =
+    null;
+
+
+let controladorBusquedaOrdenFactura =
+    null;
+
+
+/* =========================================================
+   ABRIR MODAL
+========================================================= */
 
 function abrirModalNuevaFactura() {
+
     const modal =
-        document.getElementById('modalNuevaFactura');
+        document.getElementById(
+            'modalNuevaFactura'
+        );
+
 
     const input =
-        document.getElementById('buscarOrdenFactura');
+        document.getElementById(
+            'buscarOrdenFactura'
+        );
 
-    if (!modal) return;
 
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    if (!modal) {
+        return;
+    }
 
-    setTimeout(() => {
-        input?.focus();
-    }, 50);
+
+    modal.style.display =
+        'flex';
+
+
+    document.body.style.overflow =
+        'hidden';
+
+
+    /*
+     * Cada vez que se abre:
+     * - limpiamos el buscador
+     * - mostramos todas las OT pendientes
+     */
+
+    if (input) {
+        input.value = '';
+    }
+
+
+    buscarOrdenesParaFactura();
+
+
+    setTimeout(
+        () => {
+
+            input?.focus();
+
+        },
+        50
+    );
 }
 
 
+/* =========================================================
+   CERRAR MODAL
+========================================================= */
+
 function cerrarModalNuevaFactura() {
+
     const modal =
-        document.getElementById('modalNuevaFactura');
+        document.getElementById(
+            'modalNuevaFactura'
+        );
 
-    if (!modal) return;
 
-    modal.style.display = 'none';
-    document.body.style.overflow = '';
+    if (!modal) {
+        return;
+    }
 
-    if (controladorBusquedaOrdenFactura) {
-        controladorBusquedaOrdenFactura.abort();
-        controladorBusquedaOrdenFactura = null;
+
+    modal.style.display =
+        'none';
+
+
+    document.body.style.overflow =
+        '';
+
+
+    clearTimeout(
+        timerBusquedaOrdenFactura
+    );
+
+
+    if (
+        controladorBusquedaOrdenFactura
+    ) {
+
+        controladorBusquedaOrdenFactura
+            .abort();
+
+
+        controladorBusquedaOrdenFactura =
+            null;
     }
 }
 
 
+/* =========================================================
+   ESCAPAR HTML
+========================================================= */
+
 function escaparHtml(valor) {
-    const div = document.createElement('div');
-    div.textContent = valor ?? '';
+
+    const div =
+        document.createElement(
+            'div'
+        );
+
+
+    div.textContent =
+        valor ?? '';
+
+
     return div.innerHTML;
 }
 
 
-function renderResultadosOrdenFactura(data) {
+/* =========================================================
+   RENDERIZAR RESULTADOS
+========================================================= */
+
+function renderResultadosOrdenFactura(
+    data
+) {
+
     const contenedor =
-        document.getElementById('resultadosOrdenFactura');
+        document.getElementById(
+            'resultadosOrdenFactura'
+        );
 
-    if (!contenedor) return;
 
-    const resultados = data?.resultados || [];
-
-    if (!resultados.length) {
-        contenedor.innerHTML = `
-            <div class="nf-placeholder">
-                ${escaparHtml(
-                    data?.mensaje ||
-                    'No se encontraron órdenes pendientes de facturar.'
-                )}
-            </div>
-        `;
+    if (!contenedor) {
         return;
     }
 
-    contenedor.innerHTML = resultados.map(item => `
-        <div class="nf-result">
 
-            <div>
+    const resultados =
+        data?.resultados || [];
 
-                <div class="nf-result-top">
-                    <span class="nf-ot">
-                        ${escaparHtml(item.numero_orden)}
-                    </span>
 
-                    <span class="nf-plate">
-                        ${escaparHtml(item.placa || 'S/P')}
-                    </span>
+    const totalDisponibles =
+        Number(
+            data?.total_disponibles || 0
+        );
+
+
+    const totalResultados =
+        Number(
+            data?.total || 0
+        );
+
+
+    const mostrados =
+        Number(
+            data?.mostrados
+            ?? resultados.length
+        );
+
+
+    const modo =
+        data?.modo || 'pendientes';
+
+
+    /* =====================================================
+       SIN RESULTADOS
+    ====================================================== */
+
+    if (!resultados.length) {
+
+        let mensaje =
+            data?.mensaje;
+
+
+        if (!mensaje) {
+
+            if (
+                modo === 'busqueda'
+            ) {
+
+                mensaje =
+                    (
+                        'No se encontraron órdenes '
+                        + 'listas para facturar con '
+                        + 'esa búsqueda.'
+                    );
+
+            } else {
+
+                mensaje =
+                    (
+                        'No hay órdenes pendientes '
+                        + 'de facturación.'
+                    );
+            }
+        }
+
+
+        const contador =
+            (
+                modo === 'busqueda'
+                    ? totalResultados
+                    : totalDisponibles
+            );
+
+
+        contenedor.innerHTML = `
+
+            <div class="nf-results-head">
+
+                <div class="nf-results-title">
+                    Órdenes listas para facturar
                 </div>
 
-                <div class="nf-customer">
-                    ${escaparHtml(item.cliente)}
-                </div>
 
-                <div class="nf-vehicle">
-                    ${escaparHtml(item.vehiculo)}
-                </div>
+                <span class="nf-results-count">
 
-                <div class="nf-extra">
-                    ${escaparHtml(item.identificacion || 'Sin identificación')}
-                    ·
-                    ${escaparHtml(item.sucursal)}
-                    ·
-                    ${escaparHtml(item.fecha)}
-                </div>
+                    ${escaparHtml(
+                        contador
+                    )}
 
-                <div class="nf-total">
-                    $${escaparHtml(item.total)}
-                </div>
+                </span>
 
             </div>
 
-            <a href="${escaparHtml(item.url)}"
-               class="nf-select">
-                <i class="bi bi-receipt"></i>
-                Facturar
-            </a>
+
+            <div class="nf-placeholder">
+
+                ${escaparHtml(
+                    mensaje
+                )}
+
+            </div>
+
+        `;
+
+
+        return;
+    }
+
+
+    /* =====================================================
+       ENCABEZADO
+    ====================================================== */
+
+    const contadorVisible =
+        (
+            modo === 'busqueda'
+                ? totalResultados
+                : totalDisponibles
+        );
+
+
+    let nota =
+        '';
+
+
+    if (
+        modo === 'pendientes'
+        && totalDisponibles > mostrados
+    ) {
+
+        nota = `
+
+            <div class="nf-results-note">
+
+                Mostrando las
+                ${escaparHtml(mostrados)}
+                órdenes más recientes de
+                ${escaparHtml(totalDisponibles)}
+                pendientes.
+
+            </div>
+
+        `;
+    }
+
+
+    if (
+        modo === 'busqueda'
+        && totalResultados > mostrados
+    ) {
+
+        nota = `
+
+            <div class="nf-results-note">
+
+                Se muestran las primeras
+                ${escaparHtml(mostrados)}
+                coincidencias de
+                ${escaparHtml(totalResultados)}.
+
+            </div>
+
+        `;
+
+    } else if (
+        modo === 'busqueda'
+    ) {
+
+        nota = `
+
+            <div class="nf-results-note">
+
+                ${escaparHtml(totalResultados)}
+                coincidencia${totalResultados === 1 ? '' : 's'}.
+
+            </div>
+
+        `;
+    }
+
+
+    /* =====================================================
+       TARJETAS
+    ====================================================== */
+
+    const tarjetas =
+        resultados
+        .map(
+            item => `
+
+                <div class="nf-result">
+
+                    <div>
+
+
+                        <div class="nf-result-top">
+
+
+                            <span class="nf-ot">
+
+                                ${escaparHtml(
+                                    item.numero_orden
+                                )}
+
+                            </span>
+
+
+                            <span class="nf-plate">
+
+                                ${escaparHtml(
+                                    item.placa || 'S/P'
+                                )}
+
+                            </span>
+
+
+                        </div>
+
+
+                        <div class="nf-customer">
+
+                            ${escaparHtml(
+                                item.cliente
+                            )}
+
+                        </div>
+
+
+                        <div class="nf-vehicle">
+
+                            ${escaparHtml(
+                                item.vehiculo
+                            )}
+
+                        </div>
+
+
+                        <div class="nf-extra">
+
+                            ${escaparHtml(
+                                item.identificacion
+                                || 'Sin identificación'
+                            )}
+
+                            ·
+
+                            ${escaparHtml(
+                                item.sucursal
+                            )}
+
+                            ·
+
+                            ${escaparHtml(
+                                item.fecha
+                            )}
+
+                        </div>
+
+
+                        <div class="nf-total">
+
+                            $${escaparHtml(
+                                item.total
+                            )}
+
+                        </div>
+
+
+                    </div>
+
+
+                    <a href="${escaparHtml(
+                            item.url
+                        )}"
+                       class="nf-select">
+
+                        <i class="bi bi-receipt"></i>
+
+                        Facturar
+
+                    </a>
+
+
+                </div>
+
+            `
+        )
+        .join('');
+
+
+    contenedor.innerHTML = `
+
+        <div class="nf-results-head">
+
+            <div class="nf-results-title">
+
+                Órdenes listas para facturar
+
+            </div>
+
+
+            <span class="nf-results-count">
+
+                ${escaparHtml(
+                    contadorVisible
+                )}
+
+            </span>
 
         </div>
-    `).join('');
+
+
+        ${nota}
+
+
+        ${tarjetas}
+
+    `;
 }
 
 
+/* =========================================================
+   CONSULTAR BACKEND
+========================================================= */
+
 async function buscarOrdenesParaFactura() {
+
     const input =
-        document.getElementById('buscarOrdenFactura');
+        document.getElementById(
+            'buscarOrdenFactura'
+        );
+
 
     const contenedor =
-        document.getElementById('resultadosOrdenFactura');
+        document.getElementById(
+            'resultadosOrdenFactura'
+        );
 
-    if (!input || !contenedor) return;
 
-    const q = input.value.trim();
+    if (
+        !input
+        || !contenedor
+    ) {
 
-    if (q.length < 2) {
-        if (controladorBusquedaOrdenFactura) {
-            controladorBusquedaOrdenFactura.abort();
-            controladorBusquedaOrdenFactura = null;
-        }
-
-        contenedor.innerHTML = `
-            <div class="nf-placeholder">
-                Escribe al menos 2 caracteres para buscar una orden.
-            </div>
-        `;
         return;
     }
 
-    if (controladorBusquedaOrdenFactura) {
-        controladorBusquedaOrdenFactura.abort();
+
+    const q =
+        input.value.trim();
+
+
+    /*
+     * q vacío:
+     * mostramos todas las OT pendientes.
+     *
+     * q con 2+ caracteres:
+     * filtramos.
+     *
+     * q con exactamente 1 carácter:
+     * esperamos.
+     */
+
+    if (
+        q.length === 1
+    ) {
+
+        if (
+            controladorBusquedaOrdenFactura
+        ) {
+
+            controladorBusquedaOrdenFactura
+                .abort();
+
+
+            controladorBusquedaOrdenFactura =
+                null;
+        }
+
+
+        contenedor.innerHTML = `
+
+            <div class="nf-placeholder">
+
+                Escribe al menos 2 caracteres
+                para filtrar las órdenes.
+
+            </div>
+
+        `;
+
+
+        return;
     }
+
+
+    /* =====================================================
+       CANCELAR REQUEST ANTERIOR
+    ====================================================== */
+
+    if (
+        controladorBusquedaOrdenFactura
+    ) {
+
+        controladorBusquedaOrdenFactura
+            .abort();
+    }
+
 
     controladorBusquedaOrdenFactura =
         new AbortController();
 
+
+    /* =====================================================
+       CARGANDO
+    ====================================================== */
+
     contenedor.innerHTML = `
+
         <div class="nf-loading">
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            Buscando órdenes...
+
+            <span class="
+                spinner-border
+                spinner-border-sm
+                me-2
+            "></span>
+
+
+            ${
+                q
+                    ? 'Buscando órdenes...'
+                    : 'Cargando órdenes listas para facturar...'
+            }
+
         </div>
+
     `;
 
-    try {
-        const response = await fetch(
-            `${URL_BUSCAR_ORDENES_FACTURA}?q=${encodeURIComponent(q)}`,
-            {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                signal: controladorBusquedaOrdenFactura.signal
-            }
-        );
 
-        if (!response.ok) {
+    /* =====================================================
+       FETCH
+    ====================================================== */
+
+    try {
+
+        const response =
+            await fetch(
+                (
+                    `${URL_BUSCAR_ORDENES_FACTURA}`
+                    + `?q=${encodeURIComponent(q)}`
+                ),
+                {
+                    method:
+                        'GET',
+
+                    headers: {
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    signal:
+                        controladorBusquedaOrdenFactura
+                            .signal
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
             throw new Error(
                 `HTTP ${response.status}`
             );
         }
 
-        const data = await response.json();
 
-        renderResultadosOrdenFactura(data);
+        const data =
+            await response.json();
+
+
+        renderResultadosOrdenFactura(
+            data
+        );
+
 
     } catch (error) {
-        if (error.name === 'AbortError') {
+
+
+        if (
+            error.name === 'AbortError'
+        ) {
+
             return;
         }
+
 
         console.error(
             'Error buscando órdenes:',
             error
         );
 
+
         contenedor.innerHTML = `
+
             <div class="nf-placeholder">
-                No se pudo realizar la búsqueda. Inténtalo nuevamente.
+
+                No se pudieron cargar las
+                órdenes listas para facturar.
+
+                Inténtalo nuevamente.
+
             </div>
+
         `;
     }
 }
 
 
+/* =========================================================
+   BUSCADOR EN TIEMPO REAL
+========================================================= */
+
 document
-    .getElementById('buscarOrdenFactura')
+    .getElementById(
+        'buscarOrdenFactura'
+    )
     ?.addEventListener(
         'input',
         function() {
+
             clearTimeout(
                 timerBusquedaOrdenFactura
             );
+
 
             timerBusquedaOrdenFactura =
                 setTimeout(
@@ -1128,40 +1999,65 @@ document
     );
 
 
+/* =========================================================
+   CERRAR AL HACER CLICK FUERA
+========================================================= */
+
 document.addEventListener(
     'click',
     function(event) {
+
         const modal =
-            document.getElementById('modalNuevaFactura');
+            document.getElementById(
+                'modalNuevaFactura'
+            );
+
 
         if (
-            modal &&
-            modal.style.display === 'flex' &&
-            event.target === modal
+            modal
+            && modal.style.display === 'flex'
+            && event.target === modal
         ) {
+
             cerrarModalNuevaFactura();
         }
     }
 );
 
 
+/* =========================================================
+   CERRAR CON ESC
+========================================================= */
+
 document.addEventListener(
     'keydown',
     function(event) {
-        if (event.key === 'Escape') {
+
+        if (
+            event.key === 'Escape'
+        ) {
+
             const modal =
-                document.getElementById('modalNuevaFactura');
+                document.getElementById(
+                    'modalNuevaFactura'
+                );
+
 
             if (
-                modal &&
-                modal.style.display === 'flex'
+                modal
+                && modal.style.display === 'flex'
             ) {
+
                 cerrarModalNuevaFactura();
             }
         }
     }
 );
 
+
+/* =========================================================
+   MENSAJES DJANGO
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -1171,32 +2067,78 @@ document.addEventListener(
 
             {% for message in messages %}
 
+
                 {% if message.tags == "success" %}
 
                     Swal.fire({
-                        title: "Proceso completado",
-                        text: "{{ message|escapejs }}",
-                        icon: "success",
-                        confirmButtonColor: "#34c759"
+
+                        title:
+                            "Proceso completado",
+
+                        text:
+                            "{{ message|escapejs }}",
+
+                        icon:
+                            "success",
+
+                        confirmButtonColor:
+                            "#34c759"
                     });
+
 
                 {% elif message.tags == "error" %}
 
                     Swal.fire({
-                        title: "No se pudo procesar",
-                        text: "{{ message|escapejs }}",
-                        icon: "error",
-                        confirmButtonColor: "#ff3b30"
+
+                        title:
+                            "No se pudo procesar",
+
+                        text:
+                            "{{ message|escapejs }}",
+
+                        icon:
+                            "error",
+
+                        confirmButtonColor:
+                            "#ff3b30"
                     });
+
 
                 {% elif message.tags == "warning" %}
 
                     Swal.fire({
-                        title: "Advertencia",
-                        text: "{{ message|escapejs }}",
-                        icon: "warning",
-                        confirmButtonColor: "#ff9500"
+
+                        title:
+                            "Advertencia",
+
+                        text:
+                            "{{ message|escapejs }}",
+
+                        icon:
+                            "warning",
+
+                        confirmButtonColor:
+                            "#ff9500"
                     });
+
+
+                {% elif message.tags == "info" %}
+
+                    Swal.fire({
+
+                        title:
+                            "Información",
+
+                        text:
+                            "{{ message|escapejs }}",
+
+                        icon:
+                            "info",
+
+                        confirmButtonColor:
+                            "#0071e3"
+                    });
+
 
                 {% endif %}
 
@@ -1206,6 +2148,8 @@ document.addEventListener(
 
     }
 );
+
 </script>
+
 
 {% endblock %}
