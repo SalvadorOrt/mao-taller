@@ -520,6 +520,79 @@
 
 
     <!-- =====================================================
+         ESTADO SRI
+    ====================================================== -->
+    <div class="ot-card">
+        <div class="section-title">Estado SRI</div>
+
+        {% if factura.mensaje_sri and factura.estado == "RECHAZADO" %}
+            <div class="factura-alert error">
+                <strong>Mensaje del SRI:</strong>
+                {{ factura.mensaje_sri }}
+            </div>
+        {% endif %}
+
+        <div class="info-grid factura-sri-grid">
+            <div class="info-box">
+                <div class="info-label">Estado</div>
+                <div class="info-value">
+                    {{ factura.get_estado_display }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Ambiente</div>
+                <div class="info-value">
+                    {{ factura.get_ambiente_display }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Número de factura</div>
+                <div class="info-value">
+                    {{ factura.numero_factura }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Tipo de emisión</div>
+                <div class="info-value">
+                    {{ factura.get_tipo_emision_display }}
+                </div>
+            </div>
+
+            <div class="info-box factura-wide">
+                <div class="info-label">Clave de acceso</div>
+                <div class="info-value factura-clave">
+                    {{ factura.clave_acceso|default:"Todavía no generada" }}
+                </div>
+            </div>
+
+            <div class="info-box factura-wide">
+                <div class="info-label">Número de autorización</div>
+                <div class="info-value factura-clave">
+                    {{ factura.numero_autorizacion|default:"Todavía no autorizado" }}
+                </div>
+
+                {% if factura.fecha_autorizacion %}
+                    <div class="factura-small">
+                        Autorizada:
+                        {{ factura.fecha_autorizacion|date:"d/m/Y H:i:s" }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if factura.mensaje_sri and factura.estado != "RECHAZADO" %}
+            <div class="factura-alert info" style="margin-top:8px;">
+                <strong>Mensaje SRI:</strong>
+                {{ factura.mensaje_sri }}
+            </div>
+        {% endif %}
+    </div>
+
+
+    <!-- =====================================================
          INFORMACIÓN GENERAL + ACCIONES
     ====================================================== -->
     <div class="ot-card">
@@ -1255,79 +1328,6 @@
         }
     })();
     </script>
-
-
-    <!-- =====================================================
-         ESTADO SRI
-    ====================================================== -->
-    <div class="ot-card">
-        <div class="section-title">Estado SRI</div>
-
-        {% if factura.mensaje_sri and factura.estado == "RECHAZADO" %}
-            <div class="factura-alert error">
-                <strong>Mensaje del SRI:</strong>
-                {{ factura.mensaje_sri }}
-            </div>
-        {% endif %}
-
-        <div class="info-grid factura-sri-grid">
-            <div class="info-box">
-                <div class="info-label">Estado</div>
-                <div class="info-value">
-                    {{ factura.get_estado_display }}
-                </div>
-            </div>
-
-            <div class="info-box">
-                <div class="info-label">Ambiente</div>
-                <div class="info-value">
-                    {{ factura.get_ambiente_display }}
-                </div>
-            </div>
-
-            <div class="info-box">
-                <div class="info-label">Número de factura</div>
-                <div class="info-value">
-                    {{ factura.numero_factura }}
-                </div>
-            </div>
-
-            <div class="info-box">
-                <div class="info-label">Tipo de emisión</div>
-                <div class="info-value">
-                    {{ factura.get_tipo_emision_display }}
-                </div>
-            </div>
-
-            <div class="info-box factura-wide">
-                <div class="info-label">Clave de acceso</div>
-                <div class="info-value factura-clave">
-                    {{ factura.clave_acceso|default:"Todavía no generada" }}
-                </div>
-            </div>
-
-            <div class="info-box factura-wide">
-                <div class="info-label">Número de autorización</div>
-                <div class="info-value factura-clave">
-                    {{ factura.numero_autorizacion|default:"Todavía no autorizado" }}
-                </div>
-
-                {% if factura.fecha_autorizacion %}
-                    <div class="factura-small">
-                        Autorizada:
-                        {{ factura.fecha_autorizacion|date:"d/m/Y H:i:s" }}
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        {% if factura.mensaje_sri and factura.estado != "RECHAZADO" %}
-            <div class="factura-alert info" style="margin-top:8px;">
-                <strong>Mensaje SRI:</strong>
-                {{ factura.mensaje_sri }}
-            </div>
-        {% endif %}
-    </div>
 
 
     <!-- =====================================================
