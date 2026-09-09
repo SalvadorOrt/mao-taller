@@ -682,7 +682,7 @@ def buscar_ordenes_facturacion(request):
         OrdenTrabajo.objects
         .filter(
             estado="CERRADA",
-            es_migrada=False,
+            facturable_en_mao=True,
             factura_electronica__isnull=True,
         )
         .select_related(
@@ -831,6 +831,66 @@ def crear_factura_desde_ot(
         OrdenTrabajo,
         pk=orden_id,
     )
+
+    # =====================================================
+    # SEGURIDAD DE FACTURACIÓN
+    # =====================================================
+
+    # Si ya existe una factura MAO para esta OT,
+    # nunca crear otra.
+    factura_existente = (
+        FacturaVenta.objects
+        .filter(
+            orden=orden,
+        )
+        .first()
+    )
+
+    if factura_existente:
+        messages.info(
+            request,
+            (
+                f"La orden {orden.numero_orden} ya tiene "
+                "una factura registrada en MAO."
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_existente.pk,
+        )
+
+
+    # Solo una OT cerrada puede facturarse.
+    if orden.estado != "CERRADA":
+        messages.error(
+            request,
+            (
+                f"La orden {orden.numero_orden} todavía no está "
+                "cerrada y no puede ser facturada."
+            ),
+        )
+
+        return redirect(
+            "facturacion:dashboard_facturacion",
+        )
+
+
+    # Bloqueo del período anterior.
+    if not orden.facturable_en_mao:
+        messages.error(
+            request,
+            (
+                f"La orden {orden.numero_orden} pertenece al "
+                "período de facturación anterior y no puede "
+                "ser facturada nuevamente en MAO."
+            ),
+        )
+
+        return redirect(
+            "facturacion:dashboard_facturacion",
+        )
+
 
     try:
 
@@ -2257,7 +2317,7 @@ def detalle_orden_facturacion(
         ),
         pk=orden_id,
         estado="CERRADA",
-        es_migrada=False,
+        facturable_en_mao=True,
     )
 
     # =====================================================
