@@ -1769,7 +1769,14 @@ class OrdenTrabajo(models.Model):
         blank=True,
         db_index=True,
     )
-
+    facturable_en_mao = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text=(
+            "Indica si esta orden pertenece al período "
+            "habilitado para facturación electrónica en MAO."
+        ),
+    )
     # ==========================================================
     # PERSONAL
     # ==========================================================
