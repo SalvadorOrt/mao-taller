@@ -3,11 +3,11 @@
 {% load l10n %}
 
 {% block title %}
-    Facturación Abono | MAO
+    Facturación OT | MAO
 {% endblock %}
 
 {% block page_title %}
-    Abono {{ abono.pk }} · {{ orden.numero_orden }}
+    Orden {{ orden.numero_orden }}
 {% endblock %}
 
 {% block page_subtitle %}
@@ -26,7 +26,10 @@
 <div class="container ot-wrapper">
 
     <!-- =====================================================
-         CABECERA GENERAL
+         CABECERA GENERAL DE FACTURACIÓN
+
+         Aquí NO van acciones.
+         Las acciones viven en info_general.html
     ====================================================== -->
 
     <div
@@ -77,20 +80,6 @@
                 <span
                     class="ot-badge"
                     style="
-                        background: #eef6ff;
-                        color: #0062c4;
-                        border-color: #cfe5ff;
-                    "
-                >
-                    <i class="bi bi-cash-coin"></i>
-
-                    ANTICIPO / ABONO
-                </span>
-
-
-                <span
-                    class="ot-badge"
-                    style="
                         background: #f5f5f7;
                         color: var(--muted);
                         border-color: var(--border);
@@ -112,11 +101,11 @@
 
                 <i class="bi bi-calendar-event"></i>
 
-                Abono registrado el
-                {{ abono.fecha|date:"d/m/Y" }}
+                Ingresada el
+                {{ orden.fecha_ingreso|date:"d/m/Y" }}
 
                 a las
-                {{ abono.fecha|time:"H:i" }}
+                {{ orden.fecha_ingreso|time:"H:i" }}
 
                 {% if orden.sucursal %}
                     · {{ orden.sucursal.nombre }}
@@ -133,15 +122,12 @@
     <!-- =====================================================
          FORMULARIO PRINCIPAL
 
-         Se conserva el mismo id "formGuardarFactura"
-         que usa el flujo normal de facturación para que
-         comprador.html y modal_emitir_factura.html funcionen
-         exactamente con los mismos controles y dropdowns.
+         Los includes NO deben crear otro <form>.
     ====================================================== -->
 
     <form
         method="post"
-        action="{% url 'facturacion:crear_factura_desde_abono' abono.pk %}"
+        action="{% url 'facturacion:crear_factura_desde_ot' orden.pk %}"
         id="formGuardarFactura"
         novalidate
     >
@@ -149,634 +135,81 @@
         {% csrf_token %}
 
 
+        <!-- =================================================
+             ORDEN DE ORIGEN
+        ================================================== -->
+
         <input
             type="hidden"
-            name="abono_id"
-            value="{{ abono.pk }}"
+            name="orden_id"
+            value="{{ orden.pk }}"
         >
 
 
         <!-- =================================================
-             INFORMACIÓN DEL ABONO
+             INFORMACIÓN GENERAL + ACCIONES
         ================================================== -->
 
-        <div
-            class="ot-card"
-            style="
-                margin-bottom: 15px;
-                padding: 15px;
-            "
-        >
-
-            <div
-                style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 12px;
-                    flex-wrap: wrap;
-                    margin-bottom: 12px;
-                "
-            >
-
-                <div>
-
-                    <div
-                        style="
-                            font-size: 13px;
-                            font-weight: 700;
-                            color: var(--text);
-                        "
-                    >
-                        Información del abono
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 3px;
-                            font-size: 10px;
-                            color: var(--muted);
-                        "
-                    >
-                        Este comprobante corresponderá únicamente al anticipo registrado.
-                    </div>
-
-                </div>
-
-
-                <div
-                    style="
-                        text-align: right;
-                    "
-                >
-
-                    <div
-                        style="
-                            font-size: 9px;
-                            font-weight: 700;
-                            color: var(--muted);
-                            text-transform: uppercase;
-                        "
-                    >
-                        Monto recibido
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 2px;
-                            font-size: 21px;
-                            font-weight: 800;
-                            color: #0071e3;
-                        "
-                    >
-                        ${{ monto_abono|floatformat:2 }}
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div
-                style="
-                    display: grid;
-                    grid-template-columns:
-                        repeat(4, minmax(0, 1fr));
-                    gap: 10px;
-                "
-            >
-
-                <div
-                    style="
-                        border: 1px solid var(--border);
-                        border-radius: 10px;
-                        padding: 10px 11px;
-                        background: #fff;
-                    "
-                >
-
-                    <div
-                        style="
-                            font-size: 9px;
-                            color: var(--muted);
-                            font-weight: 700;
-                            text-transform: uppercase;
-                        "
-                    >
-                        Abono
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: var(--text);
-                        "
-                    >
-                        #{{ abono.pk }}
-                    </div>
-
-                </div>
-
-
-                <div
-                    style="
-                        border: 1px solid var(--border);
-                        border-radius: 10px;
-                        padding: 10px 11px;
-                        background: #fff;
-                    "
-                >
-
-                    <div
-                        style="
-                            font-size: 9px;
-                            color: var(--muted);
-                            font-weight: 700;
-                            text-transform: uppercase;
-                        "
-                    >
-                        Estado
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: var(--text);
-                        "
-                    >
-                        {{ abono.get_estado_display|default:abono.estado }}
-                    </div>
-
-                </div>
-
-
-                <div
-                    style="
-                        border: 1px solid var(--border);
-                        border-radius: 10px;
-                        padding: 10px 11px;
-                        background: #fff;
-                    "
-                >
-
-                    <div
-                        style="
-                            font-size: 9px;
-                            color: var(--muted);
-                            font-weight: 700;
-                            text-transform: uppercase;
-                        "
-                    >
-                        Vehículo
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: var(--text);
-                        "
-                    >
-                        {{ orden.vehiculo|default:"-" }}
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 2px;
-                            font-size: 9px;
-                            color: var(--muted);
-                        "
-                    >
-                        Placa: {{ orden.placa|default:"S/P" }}
-                    </div>
-
-                </div>
-
-
-                <div
-                    style="
-                        border: 1px solid var(--border);
-                        border-radius: 10px;
-                        padding: 10px 11px;
-                        background: #fff;
-                    "
-                >
-
-                    <div
-                        style="
-                            font-size: 9px;
-                            color: var(--muted);
-                            font-weight: 700;
-                            text-transform: uppercase;
-                        "
-                    >
-                        IVA OT
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: var(--text);
-                        "
-                    >
-                        {{ porcentaje_iva|floatformat:2 }}%
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {% if abono.observacion %}
-
-                <div
-                    style="
-                        margin-top: 10px;
-                        padding: 9px 11px;
-                        border-radius: 9px;
-                        background: #f5f5f7;
-                        border: 1px solid var(--border);
-                        font-size: 10px;
-                        color: var(--muted);
-                    "
-                >
-                    <strong style="color: var(--text);">
-                        Observación:
-                    </strong>
-
-                    {{ abono.observacion }}
-                </div>
-
-            {% endif %}
-
-        </div>
-
-
+        {% include "includes/detalle_factura/info_general.html" %}
 
         <!-- =================================================
              DATOS DE FACTURACIÓN
-
-             Se reutiliza EXACTAMENTE el mismo include del
-             flujo normal. Aquí están los mismos campos,
-             modal y combo box de comprador.
         ================================================== -->
 
         {% include "includes/detalle_factura/comprador.html" %}
 
 
-
         <!-- =================================================
-             DETALLE FACTURABLE
+             REPUESTOS
         ================================================== -->
 
-        <div
-            class="ot-card"
-            style="
-                margin-bottom: 15px;
-                overflow: hidden;
-            "
-        >
-
-            <div
-                style="
-                    padding: 12px 15px;
-                    border-bottom: 1px solid var(--border);
-                    background: #fbfbfd;
-                "
-            >
-
-                <div
-                    style="
-                        font-size: 12px;
-                        font-weight: 700;
-                        color: var(--text);
-                    "
-                >
-                    Detalle a facturar
-                </div>
-
-                <div
-                    style="
-                        margin-top: 2px;
-                        font-size: 9px;
-                        color: var(--muted);
-                    "
-                >
-                    El valor proviene directamente del abono y no es editable.
-                </div>
-
-            </div>
-
-
-            <div
-                style="
-                    display: grid;
-                    grid-template-columns:
-                        100px minmax(0, 1fr) 90px 130px;
-                    gap: 10px;
-                    align-items: center;
-                    padding: 9px 15px;
-                    background: #f5f5f7;
-                    border-bottom: 1px solid var(--border);
-                    font-size: 9px;
-                    font-weight: 700;
-                    color: var(--muted);
-                    text-transform: uppercase;
-                "
-            >
-
-                <div>Código</div>
-                <div>Descripción</div>
-                <div style="text-align:center;">Cantidad</div>
-                <div style="text-align:right;">Total</div>
-
-            </div>
-
-
-            <div
-                style="
-                    display: grid;
-                    grid-template-columns:
-                        100px minmax(0, 1fr) 90px 130px;
-                    gap: 10px;
-                    align-items: center;
-                    padding: 13px 15px;
-                    background: #fff;
-                "
-            >
-
-                <div
-                    style="
-                        font-size: 10px;
-                        font-weight: 700;
-                        color: var(--muted);
-                    "
-                >
-                    ANT-{{ abono.pk }}
-                </div>
-
-
-                <div>
-
-                    <div
-                        style="
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: var(--text);
-                        "
-                    >
-                        ANTICIPO / ABONO {{ orden.numero_orden }}
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 3px;
-                            font-size: 9px;
-                            color: var(--muted);
-                        "
-                    >
-                        {% if abono.observacion %}
-                            {{ abono.observacion }}
-                        {% else %}
-                            Abono registrado en la orden de trabajo.
-                        {% endif %}
-                    </div>
-
-                </div>
-
-
-                <div
-                    style="
-                        text-align: center;
-                        font-size: 11px;
-                        font-weight: 700;
-                        color: var(--text);
-                    "
-                >
-                    1
-                </div>
-
-
-                <div
-                    style="
-                        text-align: right;
-                        font-size: 13px;
-                        font-weight: 800;
-                        color: var(--text);
-                    "
-                >
-                    ${{ monto_abono|floatformat:2 }}
-                </div>
-
-            </div>
-
-        </div>
-
+        {% include "includes/detalle_factura/tabla_repuestos.html" %}
 
 
         <!-- =================================================
-             RESUMEN ECONÓMICO DEL ABONO
+             MANO DE OBRA INTERNA
         ================================================== -->
 
-        <div
-            class="ot-card"
-            style="
-                margin-bottom: 15px;
-                padding: 15px;
-            "
-        >
-
-            <div
-                style="
-                    display: grid;
-                    grid-template-columns:
-                        repeat(3, minmax(0, 1fr));
-                    gap: 10px;
-                "
-            >
-
-                <div
-                    style="
-                        padding: 11px 12px;
-                        border-radius: 10px;
-                        border: 1px solid var(--border);
-                        background: #f5f5f7;
-                    "
-                >
-
-                    <div
-                        style="
-                            font-size: 9px;
-                            font-weight: 700;
-                            color: var(--muted);
-                            text-transform: uppercase;
-                        "
-                    >
-                        Origen
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 13px;
-                            font-weight: 800;
-                            color: var(--text);
-                        "
-                    >
-                        {{ orden.numero_orden }}
-                    </div>
-
-                </div>
+        {% include "includes/detalle_factura/tabla_moi.html" %}
 
 
-                <div
-                    style="
-                        padding: 11px 12px;
-                        border-radius: 10px;
-                        border: 1px solid var(--border);
-                        background: #f5f5f7;
-                    "
-                >
+        <!-- =================================================
+             MANO DE OBRA EXTERNA
+        ================================================== -->
 
-                    <div
-                        style="
-                            font-size: 9px;
-                            font-weight: 700;
-                            color: var(--muted);
-                            text-transform: uppercase;
-                        "
-                    >
-                        Tipo
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 13px;
-                            font-weight: 800;
-                            color: var(--text);
-                        "
-                    >
-                        Anticipo
-                    </div>
-
-                </div>
+        {% include "includes/detalle_factura/tabla_moe.html" %}
 
 
-                <div
-                    style="
-                        padding: 11px 12px;
-                        border-radius: 10px;
-                        border: 1px solid #0071e3;
-                        background: #0071e3;
-                    "
-                >
+        <!-- =================================================
+             RESUMEN ECONÓMICO
+        ================================================== -->
 
-                    <div
-                        style="
-                            font-size: 9px;
-                            font-weight: 700;
-                            color: rgba(255,255,255,.75);
-                            text-transform: uppercase;
-                        "
-                    >
-                        Total a facturar
-                    </div>
-
-                    <div
-                        style="
-                            margin-top: 4px;
-                            font-size: 20px;
-                            font-weight: 800;
-                            color: #fff;
-                        "
-                    >
-                        ${{ total_final|floatformat:2 }}
-                    </div>
-
-                </div>
-
-            </div>
+        {% include "includes/detalle_factura/resumen.html" %}
 
 
-            <div
-                style="
-                    margin-top: 10px;
-                    padding: 9px 11px;
-                    border-radius: 9px;
-                    background: #fff8e5;
-                    border: 1px solid #ffe0a3;
-                    color: #7a5200;
-                    font-size: 10px;
-                "
-            >
-                Al guardar se creará una factura en estado
-                <strong>BORRADOR</strong>.
-                No se enviará nada al SRI en este paso.
-            </div>
+        <!-- =================================================
+             RECOMENDACIONES
+        ================================================== -->
 
+        {% include "includes/detalle_factura/recomendaciones.html" %}
 
-            <div
-                style="
-                    display: flex;
-                    justify-content: flex-end;
-                    align-items: center;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                    margin-top: 12px;
-                "
-            >
-
-                <a
-                    href="{% url 'facturacion:dashboard' %}"
-                    class="btn-login"
-                    style="
-                        width: auto;
-                        text-decoration: none;
-                    "
-                >
-                    <i class="bi bi-arrow-left"></i>
-                    Volver
-                </a>
-
-
-                <button
-                    type="button"
-                    class="btn-login"
-                    style="
-                        width: auto;
-                        background: #0071e3;
-                        color: #fff;
-                        border-color: #0071e3;
-                    "
-                    onclick="confirmarGuardadoFactura()"
-                >
-                    <i class="bi bi-save"></i>
-                    Guardar factura
-                </button>
-
-            </div>
-
-        </div>
 
 
     </form>
 
 
-
     <!-- =====================================================
-         MISMO MODAL DE DATOS + FORMA DE PAGO
+         MODAL DE DATOS DE FACTURACIÓN + FORMA DE PAGO
 
-         Este include contiene el mismo dropdown personalizado
-         de forma de pago y entidad financiera que usas en la
-         factura normal.
+         En esta pantalla todavía NO se emite al SRI.
+         El mismo modal se reutiliza únicamente para capturar:
+         - comprador
+         - forma de pago
+         - entidad financiera
+         - referencia
+         - observación
+
+         Al confirmar se crea FacturaVenta en BORRADOR.
     ====================================================== -->
 
     {% include "includes/detalle_factura/modal_emitir_factura.html" %}
@@ -827,8 +260,7 @@
             aviso.innerHTML = `
                 Al confirmar, se guardarán los datos de facturación y
                 la forma de pago seleccionada, y se creará la factura
-                del <strong>anticipo</strong> en estado
-                <strong>BORRADOR</strong>.
+                en estado <strong>BORRADOR</strong>.
                 <br><br>
                 <strong>Esta acción no envía nada al SRI.</strong>
             `;
@@ -850,8 +282,11 @@
 
 
         /*
-         * El mismo modal de factura normal usa campos hidden.
-         * Los asociamos al formulario del abono.
+         * Los hidden del modal original apuntan a
+         * formEmitirFactura porque también se usa en el detalle
+         * de una factura ya creada.
+         *
+         * En esta pantalla deben viajar con formGuardarFactura.
          */
         [
             "formaPagoFactura",
@@ -880,6 +315,10 @@
        ABRIR MODAL COMPRADOR
     ========================================================= */
 
+    /*
+     * comprador.html ya declara su propia función.
+     * Esta versión se conserva como respaldo por compatibilidad.
+     */
     if (
         typeof window.abrirModalComprador !== "function"
     ) {
@@ -918,7 +357,7 @@
 
 
     /* =========================================================
-       VALIDAR COMPRADOR
+       VALIDAR COMPRADOR ANTES DE ABRIR MODAL DE PAGO
     ========================================================= */
 
     function validarCompradorFactura() {
@@ -1019,9 +458,14 @@
 
 
     /* =========================================================
-       GUARDAR FACTURA DESDE EL MISMO MODAL
+       GUARDAR FACTURA DESDE EL MODAL
     ========================================================= */
 
+    /*
+     * info_general.html llama confirmarGuardadoFactura().
+     * Ahora esa función NO envía el formulario directamente:
+     * abre directamente el modal de datos + pago.
+     */
     function confirmarGuardadoFactura() {
 
         const formulario =
@@ -1055,14 +499,6 @@
         }
 
 
-        if (
-            typeof reiniciarModalEmisionFactura ===
-            "function"
-        ) {
-            reiniciarModalEmisionFactura();
-        }
-
-
         configurarModalComoGuardadoBorrador();
 
 
@@ -1090,6 +526,25 @@
 
             return;
         }
+
+
+        /*
+         * Abrimos el modal DIRECTAMENTE en esta pantalla.
+         * No utilizamos abrirModalEmisionFactura() porque esa
+         * función pertenece también al flujo de una factura ya
+         * creada y puede detenerse por validaciones propias de
+         * la etapa de emisión.
+         */
+
+        if (
+            typeof reiniciarModalEmisionFactura ===
+            "function"
+        ) {
+            reiniciarModalEmisionFactura();
+        }
+
+
+        configurarModalComoGuardadoBorrador();
 
 
         /* ---------------------------------------------
@@ -1216,33 +671,7 @@
     }
 
 
-
-    /* =========================================================
-       RESPONSIVE SOLO PARA BLOQUES PROPIOS DEL ABONO
-    ========================================================= */
-
-    function ajustarGridAbono() {
-
-        const ancho =
-            window.innerWidth;
-
-        const grids =
-            document.querySelectorAll(
-                "[data-abono-grid]"
-            );
-
-        grids.forEach(function (grid) {
-
-            if (ancho <= 650) {
-                grid.style.gridTemplateColumns =
-                    "1fr";
-            }
-            else if (ancho <= 900) {
-                grid.style.gridTemplateColumns =
-                    "repeat(2, minmax(0, 1fr))";
-            }
-        });
-    }
+   
 
 
     /* =========================================================
@@ -1316,91 +745,6 @@
         }
     );
 
-</script>
-
-<style>
-    @media (max-width: 900px) {
-        .abono-info-grid {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr)) !important;
-        }
-
-        .abono-detalle-grid {
-            grid-template-columns:
-                90px minmax(0, 1fr) 80px 110px !important;
-        }
-
-        .abono-resumen-grid {
-            grid-template-columns:
-                1fr 1fr !important;
-        }
-    }
-
-    @media (max-width: 650px) {
-        .abono-info-grid,
-        .abono-detalle-grid,
-        .abono-resumen-grid {
-            grid-template-columns:
-                1fr !important;
-        }
-
-        .abono-detalle-encabezado {
-            display: none !important;
-        }
-
-        .abono-detalle-grid > div {
-            text-align: left !important;
-        }
-    }
-</style>
-
-<script>
-    document.addEventListener(
-        "DOMContentLoaded",
-        function () {
-
-            const infoGrid =
-                document.querySelector(
-                    'div[style*="repeat(4, minmax(0, 1fr))"]'
-                );
-
-            if (infoGrid) {
-                infoGrid.classList.add(
-                    "abono-info-grid"
-                );
-            }
-
-            const detalleGrids =
-                document.querySelectorAll(
-                    'div[style*="100px minmax(0, 1fr) 90px 130px"]'
-                );
-
-            detalleGrids.forEach(
-                function (grid, indice) {
-                    grid.classList.add(
-                        "abono-detalle-grid"
-                    );
-
-                    if (indice === 0) {
-                        grid.classList.add(
-                            "abono-detalle-encabezado"
-                        );
-                    }
-                }
-            );
-
-            const resumenGrid =
-                document.querySelector(
-                    'div[style*="repeat(3, minmax(0, 1fr))"]'
-                );
-
-            if (resumenGrid) {
-                resumenGrid.classList.add(
-                    "abono-resumen-grid"
-                );
-            }
-        }
-    );
 </script>
 
 {% endblock %}
