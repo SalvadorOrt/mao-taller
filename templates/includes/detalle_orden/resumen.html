@@ -271,7 +271,6 @@
         grid-template-columns:
             145px
             minmax(220px, 1fr)
-            110px
             125px
             150px;
         gap: 10px;
@@ -302,7 +301,6 @@
 
     .abono-fecha,
     .abono-detalle,
-    .abono-estado-celda,
     .abono-monto-celda,
     .abono-acciones {
         min-width: 0;
@@ -319,44 +317,6 @@
         font-size: 12px;
         line-height: 1.35;
         overflow-wrap: anywhere;
-    }
-
-    .abono-detalle-secundario {
-        margin-top: 2px;
-        color: #7a7a80;
-        font-size: 10px;
-        line-height: 1.3;
-    }
-
-    .abono-estado {
-        display: inline-flex;
-        align-items: center;
-        width: fit-content;
-        padding: 3px 7px;
-        border-radius: 999px;
-        font-size: 10px;
-        font-weight: 700;
-        line-height: 1.3;
-    }
-
-    .abono-estado.registrado {
-        background: #e8f2ff;
-        color: #0066cc;
-    }
-
-    .abono-estado.facturado {
-        background: #e5fbe4;
-        color: #1f8939;
-    }
-
-    .abono-estado.anulado {
-        background: #ffebe9;
-        color: #d70015;
-    }
-
-    .abono-estado.nuevo {
-        background: #fff5cc;
-        color: #9a6700;
     }
 
     .abono-monto-celda {
@@ -575,17 +535,8 @@
             grid-template-columns:
                 130px
                 minmax(180px, 1fr)
-                100px
-                110px;
-        }
-
-        .abonos-fila > :nth-child(5) {
-            grid-column: 1 / -1;
-            justify-content: flex-end;
-        }
-
-        .abonos-fila.encabezado > :nth-child(5) {
-            display: none;
+                110px
+                150px;
         }
     }
 
@@ -1019,7 +970,6 @@
                 <div class="abonos-fila encabezado">
                     <div>Fecha</div>
                     <div>Detalle</div>
-                    <div>Estado</div>
                     <div>Monto</div>
                     <div>Acción</div>
                 </div>
@@ -1088,22 +1038,6 @@
                                     </div>
                                 {% endif %}
 
-                            </div>
-
-                            <div class="abono-estado-celda">
-                                {% if abono.estado == "REGISTRADO" %}
-                                    <span class="abono-estado registrado">
-                                        Registrado
-                                    </span>
-                                {% elif abono.estado == "FACTURADO" %}
-                                    <span class="abono-estado facturado">
-                                        Facturado
-                                    </span>
-                                {% else %}
-                                    <span class="abono-estado anulado">
-                                        Anulado
-                                    </span>
-                                {% endif %}
                             </div>
 
                             <div class="abono-monto-celda">
@@ -1182,12 +1116,6 @@
                                 placeholder="Observación opcional"
                                 form="formRegistrarAbono"
                             >
-                        </div>
-
-                        <div class="abono-estado-celda">
-                            <span class="abono-estado nuevo">
-                                Nuevo
-                            </span>
                         </div>
 
                         <div class="abono-monto-celda">
