@@ -39,6 +39,27 @@ urlpatterns = [
     ),
 
     # ======================================================
+    # CREAR FACTURA DESDE ABONO / ANTICIPO
+    # ======================================================
+    path(
+        "buscar-abonos/",
+        views.buscar_abonos_facturacion,
+        name="buscar_abonos_facturacion",
+    ),
+
+    path(
+        "abono/<int:abono_id>/",
+        views.detalle_abono_facturacion,
+        name="detalle_abono_facturacion",
+    ),
+
+    path(
+        "abono/<int:abono_id>/facturar/",
+        views.crear_factura_desde_abono,
+        name="crear_factura_desde_abono",
+    ),
+
+    # ======================================================
     # VISTA PREVIA DE FACTURA DESDE OT
     # NO crea FacturaVenta ni reserva datos fiscales.
     # ======================================================

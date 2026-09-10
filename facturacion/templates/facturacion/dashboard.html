@@ -556,6 +556,37 @@
 }
 
 
+.nf-results + .nf-results{
+    margin-top:20px;
+    padding-top:16px;
+    border-top:1px solid #e5e5ea;
+}
+
+.nf-kind-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:20px;
+    padding:3px 7px;
+    border-radius:999px;
+    background:#eef6ff;
+    color:#0062c4;
+    border:1px solid #cfe5ff;
+    font-size:8px;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    white-space:nowrap;
+}
+
+.nf-abono-observacion{
+    margin-top:4px;
+    font-size:9px;
+    color:#6e6e73;
+    line-height:1.35;
+}
+
+
 .nf-results-head{
     display:flex;
     align-items:center;
@@ -1259,15 +1290,15 @@
 
             <div class="nf-help">
 
-                Se muestran únicamente órdenes cerradas,
-                habilitadas para facturación en MAO
-                y que todavía no tienen una factura asociada.
+                Se muestran las órdenes cerradas listas para facturar
+                y los abonos registrados que todavía no tienen
+                una factura asociada.
 
             </div>
 
 
             <!-- =============================================
-                 RESULTADOS
+                 ÓRDENES LISTAS PARA FACTURAR
             ============================================== -->
 
             <div id="resultadosOrdenFactura"
@@ -1282,6 +1313,28 @@
                     "></span>
 
                     Cargando órdenes listas para facturar...
+
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 ABONOS PENDIENTES DE FACTURAR
+            ============================================== -->
+
+            <div id="resultadosAbonoFactura"
+                 class="nf-results">
+
+                <div class="nf-loading">
+
+                    <span class="
+                        spinner-border
+                        spinner-border-sm
+                        me-2
+                    "></span>
+
+                    Cargando abonos pendientes de facturar...
 
                 </div>
 
@@ -1311,11 +1364,19 @@ const URL_BUSCAR_ORDENES_FACTURA =
     "{% url 'facturacion:buscar_ordenes_facturacion' %}";
 
 
+const URL_BUSCAR_ABONOS_FACTURA =
+    "{% url 'facturacion:buscar_abonos_facturacion' %}";
+
+
 let timerBusquedaOrdenFactura =
     null;
 
 
 let controladorBusquedaOrdenFactura =
+    null;
+
+
+let controladorBusquedaAbonoFactura =
     null;
 
 
@@ -1362,6 +1423,7 @@ function abrirModalNuevaFactura() {
 
 
     buscarOrdenesParaFactura();
+    buscarAbonosParaFactura();
 
 
     setTimeout(
@@ -1414,6 +1476,19 @@ function cerrarModalNuevaFactura() {
 
 
         controladorBusquedaOrdenFactura =
+            null;
+    }
+
+
+    if (
+        controladorBusquedaAbonoFactura
+    ) {
+
+        controladorBusquedaAbonoFactura
+            .abort();
+
+
+        controladorBusquedaAbonoFactura =
             null;
     }
 }
@@ -1973,6 +2048,394 @@ async function buscarOrdenesParaFactura() {
 }
 
 
+
+/* =========================================================
+   RENDERIZAR ABONOS PENDIENTES
+========================================================= */
+
+function renderResultadosAbonoFactura(
+    data
+) {
+
+    const contenedor =
+        document.getElementById(
+            'resultadosAbonoFactura'
+        );
+
+
+    if (!contenedor) {
+        return;
+    }
+
+
+    const resultados =
+        data?.resultados || [];
+
+
+    const totalDisponibles =
+        Number(
+            data?.total_disponibles || 0
+        );
+
+
+    const totalResultados =
+        Number(
+            data?.total || 0
+        );
+
+
+    const modo =
+        data?.modo || 'pendientes';
+
+
+    const contador =
+        (
+            modo === 'busqueda'
+                ? totalResultados
+                : totalDisponibles
+        );
+
+
+    if (!resultados.length) {
+
+        let mensaje =
+            data?.mensaje;
+
+
+        if (!mensaje) {
+
+            mensaje =
+                (
+                    modo === 'busqueda'
+                        ? 'No se encontraron abonos pendientes con esa búsqueda.'
+                        : 'No hay abonos pendientes de facturación.'
+                );
+        }
+
+
+        contenedor.innerHTML = `
+
+            <div class="nf-results-head">
+
+                <div class="nf-results-title">
+                    Abonos pendientes de facturar
+                </div>
+
+
+                <span class="nf-results-count">
+                    ${escaparHtml(contador)}
+                </span>
+
+            </div>
+
+
+            <div class="nf-placeholder">
+                ${escaparHtml(mensaje)}
+            </div>
+
+        `;
+
+
+        return;
+    }
+
+
+    const tarjetas =
+        resultados
+        .map(
+            item => `
+
+                <div class="nf-result">
+
+                    <div>
+
+                        <div class="nf-result-top">
+
+                            <span class="nf-kind-badge">
+                                Abono
+                            </span>
+
+                            <span class="nf-ot">
+                                ${escaparHtml(
+                                    item.numero_orden
+                                )}
+                            </span>
+
+                            <span class="nf-plate">
+                                ${escaparHtml(
+                                    item.placa || 'S/P'
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="nf-customer">
+                            ${escaparHtml(
+                                item.cliente
+                            )}
+                        </div>
+
+
+                        <div class="nf-vehicle">
+                            ${escaparHtml(
+                                item.vehiculo
+                            )}
+                        </div>
+
+
+                        <div class="nf-extra">
+
+                            ${escaparHtml(
+                                item.identificacion
+                                || 'Sin identificación'
+                            )}
+
+                            ·
+
+                            ${escaparHtml(
+                                item.sucursal
+                            )}
+
+                            ·
+
+                            ${escaparHtml(
+                                item.fecha
+                            )}
+
+                        </div>
+
+
+                        ${
+                            item.observacion
+                                ? `
+                                    <div class="nf-abono-observacion">
+                                        ${escaparHtml(
+                                            item.observacion
+                                        )}
+                                    </div>
+                                `
+                                : ''
+                        }
+
+
+                        <div class="nf-total">
+                            Abono: $${escaparHtml(
+                                item.total
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <a href="${escaparHtml(
+                            item.url
+                        )}"
+                       class="nf-select">
+
+                        <i class="bi bi-receipt"></i>
+
+                        Facturar abono
+
+                    </a>
+
+                </div>
+
+            `
+        )
+        .join('');
+
+
+    contenedor.innerHTML = `
+
+        <div class="nf-results-head">
+
+            <div class="nf-results-title">
+                Abonos pendientes de facturar
+            </div>
+
+
+            <span class="nf-results-count">
+                ${escaparHtml(contador)}
+            </span>
+
+        </div>
+
+
+        ${tarjetas}
+
+    `;
+}
+
+
+/* =========================================================
+   CONSULTAR ABONOS EN BACKEND
+========================================================= */
+
+async function buscarAbonosParaFactura() {
+
+    const input =
+        document.getElementById(
+            'buscarOrdenFactura'
+        );
+
+
+    const contenedor =
+        document.getElementById(
+            'resultadosAbonoFactura'
+        );
+
+
+    if (
+        !input
+        || !contenedor
+    ) {
+        return;
+    }
+
+
+    const q =
+        input.value.trim();
+
+
+    if (
+        q.length === 1
+    ) {
+
+        if (
+            controladorBusquedaAbonoFactura
+        ) {
+
+            controladorBusquedaAbonoFactura
+                .abort();
+
+
+            controladorBusquedaAbonoFactura =
+                null;
+        }
+
+
+        contenedor.innerHTML = `
+
+            <div class="nf-placeholder">
+
+                Escribe al menos 2 caracteres
+                para filtrar los abonos.
+
+            </div>
+
+        `;
+
+
+        return;
+    }
+
+
+    if (
+        controladorBusquedaAbonoFactura
+    ) {
+
+        controladorBusquedaAbonoFactura
+            .abort();
+    }
+
+
+    controladorBusquedaAbonoFactura =
+        new AbortController();
+
+
+    contenedor.innerHTML = `
+
+        <div class="nf-loading">
+
+            <span class="
+                spinner-border
+                spinner-border-sm
+                me-2
+            "></span>
+
+            ${
+                q
+                    ? 'Buscando abonos...'
+                    : 'Cargando abonos pendientes de facturar...'
+            }
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                (
+                    `${URL_BUSCAR_ABONOS_FACTURA}`
+                    + `?q=${encodeURIComponent(q)}`
+                ),
+                {
+                    method:
+                        'GET',
+
+                    headers: {
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    signal:
+                        controladorBusquedaAbonoFactura
+                            .signal
+                }
+            );
+
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+
+        const data =
+            await response.json();
+
+
+        renderResultadosAbonoFactura(
+            data
+        );
+
+
+    } catch (error) {
+
+        if (
+            error.name === 'AbortError'
+        ) {
+            return;
+        }
+
+
+        console.error(
+            'Error buscando abonos:',
+            error
+        );
+
+
+        contenedor.innerHTML = `
+
+            <div class="nf-placeholder">
+
+                No se pudieron cargar los
+                abonos pendientes de facturar.
+
+                Inténtalo nuevamente.
+
+            </div>
+
+        `;
+    }
+}
+
+
 /* =========================================================
    BUSCADOR EN TIEMPO REAL
 ========================================================= */
@@ -1992,7 +2455,10 @@ document
 
             timerBusquedaOrdenFactura =
                 setTimeout(
-                    buscarOrdenesParaFactura,
+                    function() {
+                        buscarOrdenesParaFactura();
+                        buscarAbonosParaFactura();
+                    },
                     300
                 );
         }

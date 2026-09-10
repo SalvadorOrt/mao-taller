@@ -672,6 +672,7 @@ def ride_factura(
         - REP: Repuestos e insumos
         - MOI: Mano de obra interna
         - MOE: Mano de obra externa
+        - ANTICIPO: Facturación de abonos / anticipos
         - MANUAL: Venta directa sin Orden de Trabajo
 
     No se reconstruye la factura desde la Orden de Trabajo.
@@ -687,6 +688,8 @@ def ride_factura(
             "empresa",
             "sucursal",
             "firma_electronica",
+            "abono_origen",
+            "abono_origen__orden",
         )
         .prefetch_related(
             "detalles",
@@ -748,6 +751,16 @@ def ride_factura(
     ]
 
     # ======================================================
+    # ANTICIPOS / ABONOS
+    # ======================================================
+
+    anticipos = [
+        detalle
+        for detalle in detalles
+        if detalle.tipo_origen == "ANTICIPO"
+    ]
+
+    # ======================================================
     # VENTA MANUAL / DIRECTA
     # ======================================================
 
@@ -780,6 +793,13 @@ def ride_factura(
     )
 
     servicios_moe.sort(
+        key=lambda item: (
+            item.orden_origen,
+            item.pk,
+        )
+    )
+
+    anticipos.sort(
         key=lambda item: (
             item.orden_origen,
             item.pk,
@@ -839,6 +859,20 @@ def ride_factura(
                 item.precio_total_sin_impuesto
             )
             for item in servicios_moe
+        ),
+        Decimal("0.00"),
+    )
+
+    # ======================================================
+    # SUBTOTAL ANTICIPOS / ABONOS
+    # ======================================================
+
+    subtotal_anticipos = sum(
+        (
+            decimal_seguro(
+                item.precio_total_sin_impuesto
+            )
+            for item in anticipos
         ),
         Decimal("0.00"),
     )
@@ -1041,6 +1075,9 @@ def ride_factura(
             "servicios_moe":
                 servicios_moe,
 
+            "anticipos":
+                anticipos,
+
             "detalles_manuales":
                 detalles_manuales,
 
@@ -1060,6 +1097,9 @@ def ride_factura(
 
             "subtotal_moe":
                 subtotal_moe,
+
+            "subtotal_anticipos":
+                subtotal_anticipos,
 
             "subtotal_manual":
                 subtotal_manual,

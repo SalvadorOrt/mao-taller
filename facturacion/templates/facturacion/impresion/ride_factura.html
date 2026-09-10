@@ -200,6 +200,23 @@ body{
     font-weight:900;
 }
 
+}
+
+.fiscal-tag{
+    display:inline-flex;
+    align-items:center;
+    margin-left:5px;
+    padding:3px 6px;
+    border:1px solid #c9d8f2;
+    border-radius:4px;
+    background:var(--primary-soft);
+    color:var(--primary);
+    font-size:6.5px;
+    font-weight:900;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+}
+
 .fiscal-body{
     padding:5px 8px 7px;
 }
@@ -701,6 +718,12 @@ body{
             <div class="doc-number">
                 N.º {{ numero_factura }}
             </div>
+
+            {% if factura.abono_origen_id %}
+            <span class="fiscal-tag">
+                Anticipo / Abono
+            </span>
+            {% endif %}
         </div>
 
         <div class="fiscal-body">
@@ -1067,6 +1090,54 @@ body{
             {% endif %}
 
 
+            {% if anticipos %}
+                <tr class="group-row">
+                    <td colspan="5">Anticipo / Abono</td>
+                </tr>
+
+                {% for item in anticipos %}
+                <tr>
+                    <td>
+                        {{ item.codigo_principal|default:"ANT" }}
+                    </td>
+
+                    <td class="text-center">
+                        {{ item.cantidad|floatformat:2 }}
+                    </td>
+
+                    <td>
+                        <span class="description-main">
+                            {{ item.descripcion|default:"ANTICIPO / ABONO" }}
+                        </span>
+
+                        {% if factura.abono_origen_id %}
+                        <span class="description-extra">
+                            Abono #{{ factura.abono_origen_id }}
+                            {% if factura.numero_orden_origen %}
+                                · OT {{ factura.numero_orden_origen }}
+                            {% endif %}
+                        </span>
+                        {% endif %}
+
+                        {% if item.observaciones %}
+                        <span class="description-extra">
+                            {{ item.observaciones }}
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-right">
+                        ${{ item.precio_unitario|floatformat:2 }}
+                    </td>
+
+                    <td class="text-right fw-800">
+                        ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+
+
             {% if detalles_manuales %}
                 <tr class="group-row">
                     <td colspan="5">Venta directa</td>
@@ -1106,7 +1177,7 @@ body{
             {% endif %}
 
 
-            {% if not repuestos and not servicios_moi and not servicios_moe and not detalles_manuales %}
+            {% if not repuestos and not servicios_moi and not servicios_moe and not anticipos and not detalles_manuales %}
                 <tr class="empty-row">
                     <td colspan="5">
                         No existen detalles registrados en esta factura.
@@ -1134,6 +1205,15 @@ body{
 
         <table class="additional-table">
             <tbody>
+
+            {% if factura.abono_origen_id %}
+            <tr>
+                <td class="ak">Origen</td>
+                <td class="av">
+                    Anticipo / Abono #{{ factura.abono_origen_id }}
+                </td>
+            </tr>
+            {% endif %}
 
             {% if factura.numero_orden_origen %}
             <tr>
@@ -1177,7 +1257,7 @@ body{
             </tr>
             {% endif %}
 
-            {% if not factura.numero_orden_origen and not factura.placa_snapshot and not factura.telefono_comprador and not factura.correo_comprador and not factura.comentario and not factura.observaciones %}
+            {% if not factura.abono_origen_id and not factura.numero_orden_origen and not factura.placa_snapshot and not factura.telefono_comprador and not factura.correo_comprador and not factura.comentario and not factura.observaciones %}
             <tr>
                 <td colspan="2" class="text-center muted">
                     Sin información adicional.

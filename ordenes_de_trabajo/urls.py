@@ -54,6 +54,15 @@ urlpatterns = [
         name="detalle_orden",
     ),
 
+    # ==========================================================
+    # ABONOS DE ORDEN DE TRABAJO
+    # ==========================================================
+    path(
+        "orden/<int:pk>/abonos/agregar/",
+        ordenes.registrar_abono,
+        name="registrar_abono",
+    ),
+
     path(
         "orden/<int:pk>/cerrar/",
         ordenes.cerrar_orden,
@@ -77,8 +86,16 @@ urlpatterns = [
         ordenes.editar_recepcion_orden,
         name="editar_recepcion_orden",
     ),
-
-
+    path(
+        "orden/<int:pk>/abonos/<int:abono_id>/eliminar/",
+        ordenes.eliminar_abono,
+        name="eliminar_abono",
+    ),
+    path(
+        "orden/<int:pk>/abonos/<int:abono_id>/editar-observacion/",
+        ordenes.editar_observacion_abono,
+        name="editar_observacion_abono",
+    ),
     # ==========================================================
     # COTIZACIONES
     # ==========================================================

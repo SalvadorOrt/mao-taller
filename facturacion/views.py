@@ -11,9 +11,13 @@ from django.shortcuts import (
     redirect,
     render,
 )
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from ordenes_de_trabajo.models import OrdenTrabajo
+from ordenes_de_trabajo.models import (
+    AbonoOrdenTrabajo,
+    OrdenTrabajo,
+)
 
 from facturacion.models import (
     EntidadFinanciera,
@@ -23,6 +27,10 @@ from facturacion.models import (
 
 from facturacion.services.factura_desde_orden import (
     crear_factura_desde_orden,
+)
+
+from facturacion.services.factura_desde_abono import (
+    crear_factura_desde_abono as crear_factura_desde_abono_servicio,
 )
 
 from facturacion.services.emision_factura import (
@@ -419,6 +427,39 @@ def _crear_pago_total(
     return pago
 
 
+
+# =========================================================
+# SINCRONIZAR ABONO FACTURADO
+# =========================================================
+
+def _sincronizar_abono_facturado(
+    factura,
+):
+    """
+    Un abono pasa de REGISTRADO a FACTURADO únicamente cuando
+    su factura asociada ya quedó AUTORIZADA por el SRI.
+
+    No modifica abonos ANULADOS ni otros estados.
+    """
+
+    if (
+        factura.estado != "AUTORIZADO"
+        or not factura.abono_origen_id
+    ):
+        return
+
+    (
+        AbonoOrdenTrabajo.objects
+        .filter(
+            pk=factura.abono_origen_id,
+            estado="REGISTRADO",
+        )
+        .update(
+            estado="FACTURADO",
+        )
+    )
+
+
 def _mensaje_resultado_emision(
     request,
     factura,
@@ -429,6 +470,10 @@ def _mensaje_resultado_emision(
     factura.refresh_from_db()
 
     if factura.estado == "AUTORIZADO":
+        _sincronizar_abono_facturado(
+            factura,
+        )
+
         messages.success(
             request,
             "Factura autorizada correctamente por el SRI.",
@@ -564,6 +609,7 @@ def dashboard_facturacion(request):
         FacturaVenta.objects
         .select_related(
             "orden",
+            "abono_origen",
             "empresa",
             "sucursal",
         )
@@ -897,6 +943,650 @@ def buscar_ordenes_facturacion(request):
     )
 
 
+
+# =========================================================
+# BUSCAR ABONOS PARA NUEVA FACTURA
+# =========================================================
+
+@login_required
+def buscar_abonos_facturacion(request):
+    """
+    Endpoint JSON para buscar abonos pendientes de facturación.
+
+    Solo devuelve abonos:
+    - REGISTRADOS;
+    - pertenecientes a OT habilitadas para facturación en MAO;
+    - sin FacturaVenta asociada.
+
+    La OT puede continuar ABIERTA. El abono es un movimiento
+    independiente del cierre de la OT.
+    """
+
+    q = (
+        request.GET.get(
+            "q",
+            "",
+        )
+        .strip()
+    )
+
+    # =====================================================
+    # BASE: SOLO ABONOS PENDIENTES
+    # =====================================================
+
+    abonos = (
+        AbonoOrdenTrabajo.objects
+        .filter(
+            estado="REGISTRADO",
+            orden__facturable_en_mao=True,
+            factura__isnull=True,
+        )
+        .select_related(
+            "orden",
+            "orden__cliente",
+            "orden__sucursal",
+            "usuario",
+        )
+    )
+
+    total_disponibles = (
+        abonos.count()
+    )
+
+    # =====================================================
+    # FILTRO DE BÚSQUEDA
+    # =====================================================
+
+    if q:
+
+        if len(q) < 2:
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "resultados": [],
+                    "total": 0,
+                    "total_disponibles":
+                        total_disponibles,
+                    "mensaje":
+                        (
+                            "Escribe al menos 2 caracteres "
+                            "para buscar."
+                        ),
+                }
+            )
+
+        abonos = (
+            abonos
+            .filter(
+                Q(
+                    orden__numero_orden__icontains=q
+                )
+                | Q(
+                    orden__placa__icontains=q
+                )
+                | Q(
+                    orden__cliente__identificacion__icontains=q
+                )
+                | Q(
+                    orden__cliente__nombre_completo__icontains=q
+                )
+                | Q(
+                    orden__vehiculo__icontains=q
+                )
+                | Q(
+                    observacion__icontains=q
+                )
+            )
+        )
+
+    # =====================================================
+    # ORDENAMIENTO Y LÍMITE
+    # =====================================================
+
+    abonos = (
+        abonos
+        .order_by(
+            "-fecha",
+            "-pk",
+        )[:20]
+    )
+
+    # =====================================================
+    # RESULTADOS
+    # =====================================================
+
+    resultados = []
+
+    for abono in abonos:
+
+        orden = abono.orden
+
+        cliente = getattr(
+            orden,
+            "cliente",
+            None,
+        )
+
+        resultados.append(
+            {
+                "id":
+                    abono.pk,
+
+                "tipo":
+                    "ABONO",
+
+                "numero_orden":
+                    str(
+                        getattr(
+                            orden,
+                            "numero_orden",
+                            "",
+                        )
+                        or ""
+                    ),
+
+                "fecha":
+                    (
+                        abono.fecha.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                        if abono.fecha
+                        else ""
+                    ),
+
+                "placa":
+                    str(
+                        getattr(
+                            orden,
+                            "placa",
+                            "",
+                        )
+                        or ""
+                    ),
+
+                "cliente":
+                    str(
+                        getattr(
+                            orden,
+                            "nombre_cliente_final",
+                            "",
+                        )
+                        or getattr(
+                            cliente,
+                            "nombre_completo",
+                            "",
+                        )
+                        or "-"
+                    ),
+
+                "identificacion":
+                    str(
+                        getattr(
+                            cliente,
+                            "identificacion",
+                            "",
+                        )
+                        or ""
+                    ),
+
+                "vehiculo":
+                    str(
+                        getattr(
+                            orden,
+                            "vehiculo",
+                            "",
+                        )
+                        or "-"
+                    ),
+
+                "sucursal":
+                    str(
+                        getattr(
+                            getattr(
+                                orden,
+                                "sucursal",
+                                None,
+                            ),
+                            "nombre",
+                            "",
+                        )
+                        or "-"
+                    ),
+
+                "observacion":
+                    (
+                        abono.observacion
+                        or ""
+                    ),
+
+                "total":
+                    format(
+                        _decimal(
+                            abono.monto
+                        ),
+                        ".2f",
+                    ),
+
+                "url":
+                    reverse(
+                        "facturacion:detalle_abono_facturacion",
+                        kwargs={
+                            "abono_id":
+                                abono.pk,
+                        },
+                    ),
+            }
+        )
+
+    return JsonResponse(
+        {
+            "ok":
+                True,
+
+            "resultados":
+                resultados,
+
+            "total":
+                len(resultados),
+
+            "total_disponibles":
+                total_disponibles,
+
+            "modo":
+                (
+                    "busqueda"
+                    if q
+                    else "pendientes"
+                ),
+        }
+    )
+
+
+# =========================================================
+# DETALLE DE ABONO PARA FACTURACIÓN
+# =========================================================
+
+@login_required
+def detalle_abono_facturacion(
+    request,
+    abono_id,
+):
+    """
+    Pantalla de preparación de un abono antes de crear
+    su FacturaVenta BORRADOR.
+
+    IMPORTANTE:
+    - NO crea factura al abrir la pantalla;
+    - NO reserva secuencial;
+    - NO genera clave de acceso;
+    - NO genera XML;
+    - NO firma;
+    - NO envía nada al SRI.
+    """
+
+    abono = get_object_or_404(
+        AbonoOrdenTrabajo.objects
+        .select_related(
+            "orden",
+            "orden__cliente",
+            "orden__sucursal",
+            "orden__sucursal__empresa",
+            "usuario",
+        ),
+        pk=abono_id,
+    )
+
+    orden = abono.orden
+
+    # =====================================================
+    # SI YA EXISTE FACTURA PARA EL ABONO
+    # =====================================================
+
+    factura_existente = (
+        FacturaVenta.objects
+        .filter(
+            abono_origen=abono,
+        )
+        .first()
+    )
+
+    if factura_existente:
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_existente.pk,
+        )
+
+    # =====================================================
+    # VALIDAR QUE SIGA DISPONIBLE
+    # =====================================================
+
+    if abono.estado != "REGISTRADO":
+        messages.error(
+            request,
+            (
+                "El abono ya no se encuentra REGISTRADO "
+                "y no puede iniciar una nueva factura."
+            ),
+        )
+
+        return redirect(
+            "facturacion:dashboard",
+        )
+
+    if not orden.facturable_en_mao:
+        messages.error(
+            request,
+            (
+                "La OT asociada al abono pertenece al "
+                "período de facturación anterior."
+            ),
+        )
+
+        return redirect(
+            "facturacion:dashboard",
+        )
+
+    # =====================================================
+    # CLIENTE DE LA OT COMO DATOS INICIALES
+    # =====================================================
+
+    cliente = getattr(
+        orden,
+        "cliente",
+        None,
+    )
+
+    tipo_documento = (
+        getattr(
+            cliente,
+            "tipo_documento",
+            "",
+        )
+        or ""
+    ).strip().upper()
+
+    mapa_sri = {
+        "R": "04",
+        "C": "05",
+        "P": "06",
+    }
+
+    tipo_identificacion_inicial = (
+        mapa_sri.get(
+            tipo_documento,
+            "05",
+        )
+    )
+
+    if tipo_documento == "R":
+        razon_social_inicial = (
+            (
+                getattr(
+                    cliente,
+                    "razon_social",
+                    "",
+                )
+                or ""
+            ).strip()
+            or (
+                getattr(
+                    cliente,
+                    "nombre_completo",
+                    "",
+                )
+                or ""
+            ).strip()
+        )
+    else:
+        razon_social_inicial = (
+            getattr(
+                cliente,
+                "nombre_completo",
+                "",
+            )
+            or ""
+        ).strip()
+
+    context = {
+        "abono":
+            abono,
+
+        "orden":
+            orden,
+
+        "cliente":
+            cliente,
+
+        "monto_abono":
+            _decimal(
+                abono.monto
+            ),
+
+        "total_final":
+            _decimal(
+                abono.monto
+            ),
+
+        "porcentaje_iva":
+            _decimal(
+                getattr(
+                    orden,
+                    "porcentaje_iva",
+                    0,
+                )
+            ),
+
+        # -----------------------------------------
+        # DATOS INICIALES DEL COMPRADOR
+        # -----------------------------------------
+
+        "tipo_identificacion_inicial":
+            tipo_identificacion_inicial,
+
+        "identificacion_inicial":
+            (
+                getattr(
+                    cliente,
+                    "identificacion",
+                    "",
+                )
+                or ""
+            ),
+
+        "razon_social_inicial":
+            razon_social_inicial,
+
+        "direccion_inicial":
+            (
+                getattr(
+                    cliente,
+                    "direccion",
+                    "",
+                )
+                or ""
+            ),
+
+        "telefono_inicial":
+            (
+                getattr(
+                    cliente,
+                    "telefono",
+                    "",
+                )
+                or ""
+            ),
+
+        "correo_inicial":
+            (
+                getattr(
+                    cliente,
+                    "email",
+                    "",
+                )
+                or ""
+            ),
+
+        # -----------------------------------------
+        # FACTURACIÓN
+        # -----------------------------------------
+
+        "tipos_identificacion":
+            FacturaVenta.TIPOS_IDENTIFICACION,
+
+        "formas_pago":
+            FacturaVenta.FORMAS_PAGO,
+
+        "entidades_financieras":
+            _entidades_financieras_activas(),
+    }
+
+    return render(
+        request,
+        "facturacion/detalle_abono_facturacion.html",
+        context,
+    )
+
+
+# =========================================================
+# CREAR FACTURA DESDE ABONO
+# =========================================================
+
+@login_required
+@require_POST
+def crear_factura_desde_abono(
+    request,
+    abono_id,
+):
+    """
+    Crea una FacturaVenta BORRADOR desde un abono.
+
+    El abono NO cambia a FACTURADO al crear el BORRADOR.
+    Ese cambio se realiza únicamente cuando la factura
+    queda AUTORIZADA por el SRI.
+    """
+
+    abono = get_object_or_404(
+        AbonoOrdenTrabajo.objects
+        .select_related(
+            "orden",
+        ),
+        pk=abono_id,
+    )
+
+    # =====================================================
+    # SI YA EXISTE FACTURA
+    # =====================================================
+
+    factura_existente = (
+        FacturaVenta.objects
+        .filter(
+            abono_origen=abono,
+        )
+        .first()
+    )
+
+    if factura_existente:
+        messages.info(
+            request,
+            (
+                "Este abono ya tiene una factura "
+                "registrada en MAO."
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_factura",
+            factura_id=factura_existente.pk,
+        )
+
+    # =====================================================
+    # VALIDAR ESTADO
+    # =====================================================
+
+    if abono.estado != "REGISTRADO":
+        messages.error(
+            request,
+            (
+                "Solo se puede facturar un abono "
+                "que se encuentre REGISTRADO."
+            ),
+        )
+
+        return redirect(
+            "facturacion:dashboard",
+        )
+
+    try:
+
+        datos_facturacion = (
+            _datos_facturacion_desde_post(
+                request
+            )
+        )
+
+        datos_pago = (
+            _datos_pago_desde_post(
+                request
+            )
+        )
+
+        with transaction.atomic():
+
+            factura = (
+                crear_factura_desde_abono_servicio(
+                    abono=abono,
+                    datos_comprador=
+                        datos_facturacion,
+                )
+            )
+
+            _crear_pago_total(
+                factura,
+                datos_pago,
+            )
+
+    except ValidationError as exc:
+
+        messages.error(
+            request,
+            str(exc),
+        )
+
+        return redirect(
+            "facturacion:detalle_abono_facturacion",
+            abono_id=abono.pk,
+        )
+
+    except Exception as exc:
+
+        messages.error(
+            request,
+            (
+                "No se pudo guardar la factura del abono. "
+                f"Detalle: {exc}"
+            ),
+        )
+
+        return redirect(
+            "facturacion:detalle_abono_facturacion",
+            abono_id=abono.pk,
+        )
+
+    messages.success(
+        request,
+        (
+            f"Factura borrador #{factura.pk} creada "
+            f"desde el abono de ${_decimal(abono.monto):.2f}. "
+            "Todavía no se ha reservado secuencial ni "
+            "generado clave de acceso."
+        ),
+    )
+
+    return redirect(
+        "facturacion:detalle_factura",
+        factura_id=factura.pk,
+    )
+
 # =========================================================
 # CREAR FACTURA DESDE OT
 # =========================================================
@@ -1099,6 +1789,8 @@ def detalle_factura(
         FacturaVenta.objects
         .select_related(
             "orden",
+            "abono_origen",
+            "abono_origen__orden",
             "empresa",
             "sucursal",
             "firma_electronica",
@@ -1142,6 +1834,12 @@ def detalle_factura(
         if detalle.tipo_origen == "MANUAL"
     ]
 
+    anticipos = [
+        detalle
+        for detalle in detalles
+        if detalle.tipo_origen == "ANTICIPO"
+    ]
+
     # =====================================================
     # SUBTOTALES VISUALES
     # =====================================================
@@ -1170,11 +1868,18 @@ def detalle_factura(
         )
     )
 
+    subtotal_anticipos = (
+        _subtotal_bruto(
+            anticipos
+        )
+    )
+
     subtotal_bruto = (
         subtotal_repuestos
         + subtotal_moi
         + subtotal_moe
         + subtotal_manual
+        + subtotal_anticipos
     )
 
     # =====================================================
@@ -1280,6 +1985,9 @@ def detalle_factura(
         "manual_detalles":
             manual_detalles,
 
+        "anticipos":
+            anticipos,
+
         # Compatibilidad temporal con templates antiguos.
         "otros_detalles":
             manual_detalles,
@@ -1299,6 +2007,9 @@ def detalle_factura(
 
         "subtotal_manual":
             subtotal_manual,
+
+        "subtotal_anticipos":
+            subtotal_anticipos,
 
         # Compatibilidad temporal con templates antiguos.
         "subtotal_otros":

@@ -966,6 +966,44 @@ def crear_factura_desde_orden(
         )
 
     # =====================================================
+    # EVITAR DOBLE FACTURACIÓN CON ABONOS
+    # =====================================================
+    #
+    # Una factura final de OT actualmente clona el 100% de
+    # repuestos, servicios, descuento, IVA y total de la OT.
+    #
+    # Si uno de sus abonos ya tiene una FacturaVenta asociada,
+    # emitir también la factura completa de la OT podría duplicar
+    # importes ya documentados fiscalmente.
+    #
+    # Hasta implementar una conciliación fiscal explícita de
+    # anticipos, la operación se bloquea de forma segura.
+    #
+    # Se bloquea con cualquier estado de factura del abono
+    # (BORRADOR, GENERADO, FIRMADO, RECIBIDO, AUTORIZADO o
+    # RECHAZADO), porque mientras la relación exista ese
+    # comprobante puede seguir formando parte de un flujo fiscal.
+    # =====================================================
+
+    factura_abono_existente = (
+        FacturaVenta.objects
+        .filter(
+            abono_origen__orden=orden
+        )
+        .order_by("pk")
+        .first()
+    )
+
+    if factura_abono_existente is not None:
+        raise ValidationError(
+            "Esta Orden de Trabajo tiene al menos un abono "
+            "asociado a una factura. La factura final de la OT "
+            "se bloqueó para evitar duplicar valores ya "
+            "documentados. Primero debe resolverse la "
+            "conciliación fiscal de los anticipos."
+        )
+
+    # =====================================================
     # EMPRESA
     # =====================================================
 

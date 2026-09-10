@@ -4742,3 +4742,74 @@ class OrdenRecomendacion(models.Model):
 
     def __str__(self):
         return f"{self.orden.numero_orden} | {self.titulo}"
+
+
+class AbonoOrdenTrabajo(models.Model):
+    ESTADOS = [
+        ("REGISTRADO", "Registrado"),
+        ("FACTURADO", "Facturado"),
+        ("ANULADO", "Anulado"),
+    ]
+
+    orden = models.ForeignKey(
+        OrdenTrabajo,
+        on_delete=models.PROTECT,
+        related_name="abonos",
+    )
+
+    monto = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    fecha = models.DateTimeField(
+        default=timezone.now,
+    )
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="abonos_orden_registrados",
+    )
+
+    estado = models.CharField(
+        max_length=15,
+        choices=ESTADOS,
+        default="REGISTRADO",
+        db_index=True,
+    )
+
+    observacion = models.CharField(
+        max_length=500,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["fecha", "id"]
+        verbose_name = "Abono de orden de trabajo"
+        verbose_name_plural = "Abonos de órdenes de trabajo"
+        indexes = [
+            models.Index(fields=["orden", "estado"]),
+            models.Index(fields=["fecha"]),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.monto is None or self.monto <= Decimal("0.00"):
+            raise ValidationError({
+                "monto": "El monto del abono debe ser mayor a 0."
+            })
+
+    def save(self, *args, **kwargs):
+        if self.observacion:
+            self.observacion = self.observacion.strip()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"Abono OT {self.orden.numero_orden} - "
+            f"${self.monto}"
+        )

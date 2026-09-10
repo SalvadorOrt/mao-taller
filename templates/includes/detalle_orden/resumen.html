@@ -201,6 +201,335 @@
         opacity: 0.7;
     }
 
+
+    /* =========================================
+       ABONOS
+    ========================================= */
+
+    .abonos-box {
+        grid-column: 1 / -1;
+        padding: 14px;
+    }
+
+    .abonos-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+    .abonos-titulo {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1d1d1f;
+    }
+
+    .abonos-subtitulo {
+        margin-top: 2px;
+        color: #6e6e73;
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .btn-agregar-abono {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 34px;
+        padding: 7px 12px;
+        border: 1px solid #0071e3;
+        border-radius: 8px;
+        background: #0071e3;
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-agregar-abono:hover {
+        filter: brightness(0.96);
+    }
+
+    .btn-agregar-abono:disabled {
+        cursor: default;
+        opacity: 0.55;
+    }
+
+    .abonos-tabla {
+        margin-top: 8px;
+        overflow: hidden;
+        border: 1px solid #e5e5ea;
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+    .abonos-fila {
+        display: grid;
+        grid-template-columns:
+            145px
+            minmax(220px, 1fr)
+            110px
+            125px
+            150px;
+        gap: 10px;
+        align-items: center;
+        min-height: 48px;
+        padding: 8px 10px;
+        border-top: 1px solid #eeeeef;
+    }
+
+    .abonos-fila:first-child {
+        border-top: 0;
+    }
+
+    .abonos-fila.encabezado {
+        min-height: 36px;
+        background: #f5f5f7;
+        color: #6e6e73;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .abonos-fila.anulado {
+        opacity: 0.58;
+        background: #fafafa;
+    }
+
+    .abono-fecha,
+    .abono-detalle,
+    .abono-estado-celda,
+    .abono-monto-celda,
+    .abono-acciones {
+        min-width: 0;
+    }
+
+    .abono-fecha {
+        color: #1d1d1f;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .abono-detalle {
+        color: #1d1d1f;
+        font-size: 12px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .abono-detalle-secundario {
+        margin-top: 2px;
+        color: #7a7a80;
+        font-size: 10px;
+        line-height: 1.3;
+    }
+
+    .abono-estado {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 3px 7px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .abono-estado.registrado {
+        background: #e8f2ff;
+        color: #0066cc;
+    }
+
+    .abono-estado.facturado {
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .abono-estado.anulado {
+        background: #ffebe9;
+        color: #d70015;
+    }
+
+    .abono-estado.nuevo {
+        background: #fff5cc;
+        color: #9a6700;
+    }
+
+    .abono-monto-celda {
+        color: #1d1d1f;
+        font-size: 14px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .abonos-fila.anulado .abono-monto-celda {
+        text-decoration: line-through;
+    }
+
+    .abonos-vacio {
+        padding: 13px;
+        color: #6e6e73;
+        font-size: 12px;
+        text-align: center;
+        background: #ffffff;
+    }
+
+    .abono-nuevo-fila[hidden] {
+        display: none !important;
+    }
+
+    .abono-nuevo-fila {
+        background: #fbfdff;
+        box-shadow: inset 3px 0 0 #0071e3;
+    }
+
+    .abono-input {
+        width: 100%;
+        min-width: 0;
+        height: 36px;
+        padding: 6px 9px;
+        border: 1px solid #d2d2d7;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #1d1d1f;
+        font: inherit;
+        font-size: 12px;
+        outline: none;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .abono-input:focus {
+        border-color: #0071e3;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+    }
+
+    .abono-input-monto {
+        text-align: right;
+        font-weight: 700;
+    }
+
+    .abono-acciones {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .btn-abono-guardar,
+    .btn-abono-cancelar,
+    .btn-abono-editar,
+    .btn-abono-eliminar {
+        min-height: 32px;
+        padding: 6px 9px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-abono-guardar {
+        border: 1px solid #0071e3;
+        background: #0071e3;
+        color: #ffffff;
+    }
+
+    .btn-abono-cancelar {
+        border: 1px solid #d2d2d7;
+        background: #ffffff;
+        color: #1d1d1f;
+    }
+
+    .btn-abono-editar {
+        border: 1px solid #d2d2d7;
+        background: #ffffff;
+        color: #1d1d1f;
+    }
+
+    .btn-abono-editar:hover {
+        border-color: #0071e3;
+        background: #f7fbff;
+        color: #0071e3;
+    }
+
+    .abono-editor {
+        display: none;
+    }
+
+    .abono-editor.visible {
+        display: block;
+    }
+
+    .abono-editor-acciones {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+    }
+
+    .btn-abono-eliminar {
+        border: 1px solid #ffd6d6;
+        background: #fff5f5;
+        color: #d70015;
+    }
+
+    .btn-abono-eliminar:hover {
+        background: #ffebe9;
+        border-color: #ffb8b8;
+    }
+
+    .btn-abono-guardar:disabled {
+        cursor: wait;
+        opacity: 0.65;
+    }
+
+    .abonos-resumen {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .abonos-resumen-item {
+        padding: 9px 10px;
+        border-radius: 9px;
+        background: #f5f5f7;
+    }
+
+    .abonos-resumen-label {
+        color: #6e6e73;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .abonos-resumen-valor {
+        margin-top: 3px;
+        color: #1d1d1f;
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .abonos-resumen-item.saldo-favor {
+    background: #eef6ff;
+    border: 1px solid #cfe5ff;
+    }
+
+    .abonos-resumen-item.saldo-favor .abonos-resumen-label {
+        color: #0062c4;
+    }
+
+    .abonos-resumen-item.saldo-favor .abonos-resumen-valor {
+        color: #005bb5;
+    }
+
     /* =========================================
        RESPONSIVE
     ========================================= */
@@ -221,6 +550,64 @@
             grid-column: auto;
         }
     }
+
+    @media (max-width: 600px) {
+        .abonos-resumen {
+            grid-template-columns: 1fr;
+        }
+
+        .abono-item {
+            grid-template-columns: 1fr;
+        }
+
+        .abono-monto {
+            justify-self: start;
+        }
+
+        .btn-agregar-abono {
+            width: 100%;
+        }
+    }
+
+
+    @media (max-width: 900px) {
+        .abonos-fila {
+            grid-template-columns:
+                130px
+                minmax(180px, 1fr)
+                100px
+                110px;
+        }
+
+        .abonos-fila > :nth-child(5) {
+            grid-column: 1 / -1;
+            justify-content: flex-end;
+        }
+
+        .abonos-fila.encabezado > :nth-child(5) {
+            display: none;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .abonos-fila,
+        .abonos-fila.encabezado {
+            grid-template-columns: 1fr;
+        }
+
+        .abonos-fila.encabezado {
+            display: none;
+        }
+
+        .abono-acciones {
+            justify-content: flex-start;
+        }
+
+        .abono-input-monto {
+            text-align: left;
+        }
+    }
+
 </style>
 
 <div class="ot-card">
@@ -583,7 +970,7 @@
 
         <div class="total-box final">
             <div class="total-label">
-                Total a pagar
+                Total de la OT
             </div>
 
             <div class="total-value">
@@ -593,8 +980,666 @@
             </div>
         </div>
 
+        <!-- =====================================
+             ABONOS
+        ====================================== -->
+
+        <div
+            class="total-box abonos-box"
+            id="bloqueAbonos"
+            data-total-abonado="{{ total_abonado|default:'0.00'|unlocalize }}"
+        >
+            <div class="abonos-header">
+                <div>
+                    <div class="abonos-titulo">
+                        Abonos
+                    </div>
+
+                    <div class="abonos-subtitulo">
+                        Los abonos no modifican el valor de la OT;
+                        únicamente reducen el saldo pendiente.
+                    </div>
+                </div>
+
+                {% if puede_registrar_abono %}
+                    <button
+                        type="button"
+                        class="btn-agregar-abono"
+                        id="btnAgregarAbono"
+                        onclick="mostrarFilaNuevoAbono()"
+                    >
+                        <i class="bi bi-plus-lg"></i>
+                        Agregar abono
+                    </button>
+                {% endif %}
+            </div>
+
+            <div class="abonos-tabla">
+
+                <div class="abonos-fila encabezado">
+                    <div>Fecha</div>
+                    <div>Detalle</div>
+                    <div>Estado</div>
+                    <div>Monto</div>
+                    <div>Acción</div>
+                </div>
+
+                {% if abonos %}
+                    {% for abono in abonos %}
+                        <div
+                            class="abonos-fila {% if abono.estado == 'ANULADO' %}anulado{% endif %}"
+                        >
+                            <div class="abono-fecha">
+                                {{ abono.fecha|date:"d/m/Y H:i" }}
+                            </div>
+
+                            <div class="abono-detalle">
+
+                                <div id="abonoTexto-{{ abono.pk }}">
+                                    {% if abono.observacion %}
+                                        {{ abono.observacion }}
+                                    {% else %}
+                                        Sin observación
+                                    {% endif %}
+
+                                    <div class="abono-detalle-secundario">
+                                        Registrado por
+                                        {{ abono.usuario.get_full_name|default:abono.usuario.username }}
+                                    </div>
+                                </div>
+
+                                {% if abono.estado == "REGISTRADO" and not abono.factura and perms.ordenes_de_trabajo.change_abonoordentrabajo %}
+                                    <div
+                                        id="abonoEditor-{{ abono.pk }}"
+                                        class="abono-editor"
+                                    >
+                                        <input
+                                            type="text"
+                                            id="abonoObservacion-{{ abono.pk }}"
+                                            class="abono-input"
+                                            maxlength="500"
+                                            value="{{ abono.observacion|default:'' }}"
+                                            data-original="{{ abono.observacion|default:'' }}"
+                                            placeholder="Observación opcional"
+                                            autocomplete="off"
+                                        >
+
+                                        <div class="abono-editor-acciones">
+                                            <button
+                                                type="button"
+                                                class="btn-abono-guardar"
+                                                id="btnGuardarObservacionAbono-{{ abono.pk }}"
+                                                onclick="guardarObservacionAbono(
+                                                    {{ abono.pk }},
+                                                    '{% url 'editar_observacion_abono' orden.pk abono.pk %}'
+                                                )"
+                                            >
+                                                <i class="bi bi-check-lg"></i>
+                                                Guardar
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="btn-abono-cancelar"
+                                                onclick="cancelarEditarObservacionAbono(
+                                                    {{ abono.pk }}
+                                                )"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+                            <div class="abono-estado-celda">
+                                {% if abono.estado == "REGISTRADO" %}
+                                    <span class="abono-estado registrado">
+                                        Registrado
+                                    </span>
+                                {% elif abono.estado == "FACTURADO" %}
+                                    <span class="abono-estado facturado">
+                                        Facturado
+                                    </span>
+                                {% else %}
+                                    <span class="abono-estado anulado">
+                                        Anulado
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="abono-monto-celda">
+                                ${{ abono.monto|floatformat:2 }}
+                            </div>
+
+                            <div class="abono-acciones">
+
+                                {% if abono.estado == "REGISTRADO" and not abono.factura %}
+
+                                    {% if perms.ordenes_de_trabajo.change_abonoordentrabajo %}
+                                        <button
+                                            type="button"
+                                            class="btn-abono-editar"
+                                            id="btnEditarAbono-{{ abono.pk }}"
+                                            onclick="editarObservacionAbono(
+                                                {{ abono.pk }}
+                                            )"
+                                        >
+                                            <i class="bi bi-pencil"></i>
+                                            Editar
+                                        </button>
+                                    {% endif %}
+
+                                    {% if perms.ordenes_de_trabajo.delete_abonoordentrabajo %}
+                                        <button
+                                            type="button"
+                                            class="btn-abono-eliminar"
+                                            onclick="confirmarEliminarAbono(
+                                                '{% url 'eliminar_abono' orden.pk abono.pk %}',
+                                                '{{ abono.monto|floatformat:2|escapejs }}'
+                                            )"
+                                        >
+                                            <i class="bi bi-trash3"></i>
+                                            Eliminar
+                                        </button>
+                                    {% endif %}
+
+                                    {% if not perms.ordenes_de_trabajo.change_abonoordentrabajo and not perms.ordenes_de_trabajo.delete_abonoordentrabajo %}
+                                        —
+                                    {% endif %}
+
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div
+                        class="abonos-vacio"
+                        id="abonosVacio"
+                    >
+                        No se han registrado abonos en esta orden.
+                    </div>
+                {% endif %}
+
+                {% if puede_registrar_abono %}
+                    <div
+                        class="abonos-fila abono-nuevo-fila"
+                        id="filaNuevoAbono"
+                        hidden
+                    >
+                        <div class="abono-fecha">
+                            Nuevo
+                        </div>
+
+                        <div class="abono-detalle">
+                            <input
+                                type="text"
+                                name="observacion_abono"
+                                id="observacion_abono"
+                                class="abono-input"
+                                maxlength="500"
+                                placeholder="Observación opcional"
+                                form="formRegistrarAbono"
+                            >
+                        </div>
+
+                        <div class="abono-estado-celda">
+                            <span class="abono-estado nuevo">
+                                Nuevo
+                            </span>
+                        </div>
+
+                        <div class="abono-monto-celda">
+                            <input
+                                type="number"
+                                name="monto_abono"
+                                id="monto_abono"
+                                class="abono-input abono-input-monto"
+                                min="0.01"
+                                step="0.01"
+                                inputmode="decimal"
+                                placeholder="0.00"
+                                required
+                                form="formRegistrarAbono"
+                            >
+                        </div>
+
+                        <div class="abono-acciones">
+                            <button
+                                type="submit"
+                                class="btn-abono-guardar"
+                                id="btnGuardarAbono"
+                                form="formRegistrarAbono"
+                            >
+                                Guardar
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-abono-cancelar"
+                                onclick="cancelarNuevoAbono()"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <div class="abonos-resumen">
+                <div class="abonos-resumen-item">
+                    <div class="abonos-resumen-label">
+                        Total abonado
+                    </div>
+
+                    <div class="abonos-resumen-valor">
+                        $<span id="totalAbonado">
+                            {{ total_abonado|default:"0.00"|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+
+                {% if saldo_a_favor > 0 %}
+                    <div class="abonos-resumen-item saldo-favor">
+                        <div class="abonos-resumen-label">
+                            Saldo a favor / anticipo
+                        </div>
+
+                        <div class="abonos-resumen-valor">
+                            $<span id="saldoAbonos">
+                                {{ saldo_a_favor|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="abonos-resumen-item">
+                        <div class="abonos-resumen-label">
+                            Saldo pendiente
+                        </div>
+
+                        <div class="abonos-resumen-valor">
+                            $<span id="saldoAbonos">
+                                {{ saldo_pendiente|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
+
+<script>
+    function editarObservacionAbono(id) {
+        const texto = document.getElementById(
+            "abonoTexto-" + id
+        );
+
+        const editor = document.getElementById(
+            "abonoEditor-" + id
+        );
+
+        const input = document.getElementById(
+            "abonoObservacion-" + id
+        );
+
+        const botonEditar = document.getElementById(
+            "btnEditarAbono-" + id
+        );
+
+        if (!texto || !editor || !input) {
+            return;
+        }
+
+        texto.style.display = "none";
+        editor.classList.add("visible");
+
+        if (botonEditar) {
+            botonEditar.disabled = true;
+        }
+
+        window.setTimeout(
+            function () {
+                input.focus();
+                input.select();
+            },
+            50
+        );
+    }
+
+
+    function cancelarEditarObservacionAbono(id) {
+        const texto = document.getElementById(
+            "abonoTexto-" + id
+        );
+
+        const editor = document.getElementById(
+            "abonoEditor-" + id
+        );
+
+        const input = document.getElementById(
+            "abonoObservacion-" + id
+        );
+
+        const botonEditar = document.getElementById(
+            "btnEditarAbono-" + id
+        );
+
+        if (input) {
+            input.value = input.dataset.original || "";
+        }
+
+        if (texto) {
+            texto.style.display = "";
+        }
+
+        if (editor) {
+            editor.classList.remove("visible");
+        }
+
+        if (botonEditar) {
+            botonEditar.disabled = false;
+        }
+    }
+
+
+    function guardarObservacionAbono(id, url) {
+        const input = document.getElementById(
+            "abonoObservacion-" + id
+        );
+
+        const botonGuardar = document.getElementById(
+            "btnGuardarObservacionAbono-" + id
+        );
+
+        if (!input) {
+            return;
+        }
+
+        const observacion = input.value.trim();
+
+        if (observacion.length > 500) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    title: "Observación demasiado larga",
+                    text: "La observación no puede superar los 500 caracteres.",
+                    icon: "warning",
+                    confirmButtonColor: "#0071e3"
+                });
+            } else {
+                window.alert(
+                    "La observación no puede superar los 500 caracteres."
+                );
+            }
+
+            return;
+        }
+
+        const token = document.querySelector(
+            'input[name="csrfmiddlewaretoken"]'
+        );
+
+        if (!token) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    title: "Error",
+                    text: "No se encontró el token de seguridad.",
+                    icon: "error",
+                    confirmButtonColor: "#ff3b30"
+                });
+            }
+
+            return;
+        }
+
+        if (botonGuardar) {
+            botonGuardar.disabled = true;
+            botonGuardar.innerHTML =
+                '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        }
+
+        const formulario = document.createElement(
+            "form"
+        );
+
+        formulario.method = "post";
+        formulario.action = url;
+        formulario.style.display = "none";
+
+        const csrf = document.createElement(
+            "input"
+        );
+
+        csrf.type = "hidden";
+        csrf.name = "csrfmiddlewaretoken";
+        csrf.value = token.value;
+
+        const campoObservacion = document.createElement(
+            "input"
+        );
+
+        campoObservacion.type = "hidden";
+        campoObservacion.name = "observacion_abono";
+        campoObservacion.value = observacion;
+
+        formulario.appendChild(csrf);
+        formulario.appendChild(campoObservacion);
+
+        document.body.appendChild(formulario);
+        formulario.submit();
+    }
+
+
+    function confirmarEliminarAbono(url, monto) {
+        const ejecutarEliminacion = function () {
+            const token = document.querySelector(
+                'input[name="csrfmiddlewaretoken"]'
+            );
+
+            if (!token) {
+                if (typeof Swal !== "undefined") {
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se encontró el token de seguridad.",
+                        icon: "error",
+                        confirmButtonColor: "#ff3b30"
+                    });
+                }
+
+                return;
+            }
+
+            const formulario = document.createElement(
+                "form"
+            );
+
+            formulario.method = "post";
+            formulario.action = url;
+            formulario.style.display = "none";
+
+            const csrf = document.createElement(
+                "input"
+            );
+
+            csrf.type = "hidden";
+            csrf.name = "csrfmiddlewaretoken";
+            csrf.value = token.value;
+
+            formulario.appendChild(
+                csrf
+            );
+
+            document.body.appendChild(
+                formulario
+            );
+
+            formulario.submit();
+        };
+
+        if (typeof Swal !== "undefined") {
+            Swal.fire({
+                title: "¿Eliminar abono?",
+                text:
+                    "Se eliminará el abono de $" +
+                    monto +
+                    ". Esta acción solo está permitida " +
+                    "mientras no esté asociado a una factura.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#ff3b30",
+                cancelButtonColor: "#6e6e73",
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar"
+            }).then(
+                function (result) {
+                    if (result.isConfirmed) {
+                        ejecutarEliminacion();
+                    }
+                }
+            );
+
+            return;
+        }
+
+        if (
+            window.confirm(
+                "¿Eliminar el abono de $" +
+                monto +
+                "?"
+            )
+        ) {
+            ejecutarEliminacion();
+        }
+    }
+
+
+    function mostrarFilaNuevoAbono() {
+        const fila = document.getElementById(
+            "filaNuevoAbono"
+        );
+
+        const botonAgregar = document.getElementById(
+            "btnAgregarAbono"
+        );
+
+        const monto = document.getElementById(
+            "monto_abono"
+        );
+
+        const observacion = document.getElementById(
+            "observacion_abono"
+        );
+
+        const vacio = document.getElementById(
+            "abonosVacio"
+        );
+
+        if (!fila) {
+            return;
+        }
+
+        fila.hidden = false;
+
+        if (botonAgregar) {
+            botonAgregar.disabled = true;
+        }
+
+        if (vacio) {
+            vacio.style.display = "none";
+        }
+
+        if (monto) {
+            monto.value = "";
+        }
+
+        if (observacion) {
+            observacion.value = "";
+        }
+
+        window.setTimeout(
+            function () {
+                monto?.focus();
+            },
+            50
+        );
+    }
+
+
+    function cancelarNuevoAbono() {
+        const fila = document.getElementById(
+            "filaNuevoAbono"
+        );
+
+        const botonAgregar = document.getElementById(
+            "btnAgregarAbono"
+        );
+
+        const monto = document.getElementById(
+            "monto_abono"
+        );
+
+        const observacion = document.getElementById(
+            "observacion_abono"
+        );
+
+        const vacio = document.getElementById(
+            "abonosVacio"
+        );
+
+        if (fila) {
+            fila.hidden = true;
+        }
+
+        if (botonAgregar) {
+            botonAgregar.disabled = false;
+        }
+
+        if (monto) {
+            monto.value = "";
+        }
+
+        if (observacion) {
+            observacion.value = "";
+        }
+
+        if (vacio) {
+            vacio.style.display = "";
+        }
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const formularioAbono = document.getElementById(
+                "formRegistrarAbono"
+            );
+
+            const botonGuardarAbono = document.getElementById(
+                "btnGuardarAbono"
+            );
+
+            if (formularioAbono) {
+                formularioAbono.addEventListener(
+                    "submit",
+                    function () {
+                        if (botonGuardarAbono) {
+                            botonGuardarAbono.disabled = true;
+                            botonGuardarAbono.textContent =
+                                "Guardando...";
+                        }
+                    }
+                );
+            }
+        }
+    );
+</script>
 
 <script>
     document.addEventListener(

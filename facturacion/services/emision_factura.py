@@ -34,8 +34,10 @@ import time
 from typing import Any
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from facturacion.models import FacturaVenta
+from ordenes_de_trabajo.models import AbonoOrdenTrabajo
 
 from facturacion.sri.cliente_sri import (
     ResultadoAutorizacion,
@@ -194,6 +196,7 @@ def _recargar_factura(
             "sucursal",
             "firma_electronica",
             "orden",
+            "abono_origen",
         )
         .prefetch_related(
             "detalles",
@@ -204,6 +207,65 @@ def _recargar_factura(
         )
     )
 
+
+
+def _sincronizar_abono_autorizado(
+    factura: FacturaVenta,
+) -> FacturaVenta:
+    """
+    Si la factura corresponde a un abono y ya fue AUTORIZADA
+    por el SRI, marca ese abono como FACTURADO.
+
+    Es idempotente:
+    - REGISTRADO -> FACTURADO
+    - FACTURADO  -> sin cambios
+    - cualquier otro estado -> sin cambios
+
+    IMPORTANTE:
+    Nunca cambia el abono mientras la factura esté en
+    BORRADOR / GENERADO / FIRMADO / RECIBIDO / RECHAZADO.
+    """
+
+    _validar_instancia_factura(
+        factura
+    )
+
+    if (
+        factura.estado
+        != ESTADO_AUTORIZADO
+    ):
+        return factura
+
+    if not getattr(
+        factura,
+        "abono_origen_id",
+        None,
+    ):
+        return factura
+
+    with transaction.atomic():
+
+        abono = (
+            AbonoOrdenTrabajo.objects
+            .select_for_update()
+            .get(
+                pk=factura.abono_origen_id
+            )
+        )
+
+        if abono.estado == "REGISTRADO":
+            abono.estado = "FACTURADO"
+            abono.save(
+                update_fields=[
+                    "estado",
+                ]
+            )
+
+    # Recargamos la factura para conservar una instancia
+    # coherente con sus relaciones luego de la sincronización.
+    return _recargar_factura(
+        factura
+    )
 
 def _mensaje_estado(
     factura: FacturaVenta,
@@ -415,6 +477,12 @@ def consultar_comprobante_sri(
         factura
     )
 
+    # Si el SRI acaba de autorizar una factura originada
+    # en un abono, ese abono pasa REGISTRADO -> FACTURADO.
+    factura = _sincronizar_abono_autorizado(
+        factura
+    )
+
     return (
         factura,
         resultado,
@@ -549,6 +617,11 @@ def procesar_factura_completa(
         factura.estado
         == ESTADO_AUTORIZADO
     ):
+        factura = _sincronizar_abono_autorizado(
+            factura
+        )
+
+        resultado.factura = factura
         resultado.estado_final = (
             factura.estado
         )
@@ -702,6 +775,12 @@ def procesar_factura_completa(
     resultado.factura = (
         _recargar_factura(
             factura
+        )
+    )
+
+    resultado.factura = (
+        _sincronizar_abono_autorizado(
+            resultado.factura
         )
     )
 

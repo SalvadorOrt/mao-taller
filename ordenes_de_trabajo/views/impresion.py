@@ -294,6 +294,8 @@ def imprimir_resumen_orden(request, pk):
             "insumos_historicos",
             "servicios_historicos",
             "recomendaciones_items",
+            "abonos",
+            "abonos__usuario",
         ),
         pk=pk,
     )
@@ -468,6 +470,58 @@ def imprimir_resumen_orden(request, pk):
     )
 
     # ======================================================
+    # ABONOS / PAGOS RECIBIDOS
+    # ======================================================
+    #
+    # IMPORTANTE:
+    # - Los abonos NO modifican el total económico de la OT.
+    # - Solo se usan aquí para mostrar cuánto se ha recibido
+    #   y cuál es el saldo pendiente / saldo a favor.
+    # - Los abonos ANULADOS no forman parte del total abonado.
+    # ======================================================
+
+    abonos = list(
+        orden.abonos.all()
+    )
+
+    abonos_vigentes = [
+        abono
+        for abono in abonos
+        if abono.estado != "ANULADO"
+    ]
+
+    total_abonado = sum(
+        (
+            Decimal(
+                str(abono.monto or "0.00")
+            )
+            for abono in abonos_vigentes
+        ),
+        Decimal("0.00"),
+    ).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_HALF_UP,
+    )
+
+    diferencia_abonos = (
+        total_final
+        - total_abonado
+    ).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_HALF_UP,
+    )
+
+    saldo_pendiente = max(
+        diferencia_abonos,
+        Decimal("0.00"),
+    )
+
+    saldo_a_favor = max(
+        -diferencia_abonos,
+        Decimal("0.00"),
+    )
+
+    # ======================================================
     # NOMBRE DEL DOCUMENTO
     # ======================================================
     #
@@ -531,6 +585,22 @@ def imprimir_resumen_orden(request, pk):
 
             "total_final":
                 total_final,
+
+            # ===============================================
+            # ABONOS / SALDOS
+            # ===============================================
+
+            "abonos_vigentes":
+                abonos_vigentes,
+
+            "total_abonado":
+                total_abonado,
+
+            "saldo_pendiente":
+                saldo_pendiente,
+
+            "saldo_a_favor":
+                saldo_a_favor,
 
             # Nombre para impresión / PDF
             "nombre_archivo":

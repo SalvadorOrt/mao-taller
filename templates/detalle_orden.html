@@ -273,6 +273,24 @@
     </form>
 
     <!-- =====================================================
+         FORMULARIO INDEPENDIENTE PARA REGISTRAR ABONOS
+
+         Los campos visuales están en resumen.html y se asocian
+         a este formulario mediante form="formRegistrarAbono".
+         Así evitamos formularios anidados.
+    ====================================================== -->
+    {% if puede_registrar_abono %}
+        <form
+            id="formRegistrarAbono"
+            method="post"
+            action="{% url 'registrar_abono' orden.pk %}"
+            style="display: none;"
+        >
+            {% csrf_token %}
+        </form>
+    {% endif %}
+
+    <!-- =====================================================
          FORMULARIOS INDEPENDIENTES DE ACCIONES
 
          Se colocan después del formulario principal para evitar

@@ -366,6 +366,45 @@
         }
 
         /*
+         * ABONOS / PAGOS RECIBIDOS
+         */
+        .abonos-resumen {
+            width: 43%;
+            margin: 6px 0 0 auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #fff;
+        }
+
+        .abonos-resumen td {
+            padding: 7px 9px;
+            border-bottom: 1px solid var(--line);
+            font-size: 9.5px;
+        }
+
+        .abonos-resumen tr:last-child td {
+            border-bottom: none;
+            background: var(--primary-soft);
+        }
+
+        .abonos-resumen .abono-label {
+            font-weight: 900;
+            color: var(--dark);
+            text-transform: uppercase;
+        }
+
+        .abonos-resumen .abono-value {
+            text-align: right;
+            font-weight: 900;
+        }
+
+        .abonos-resumen .saldo-favor {
+            color: #147a4b;
+        }
+
+        /*
          * CONFIGURACIÓN DE IMPRESIÓN
          */
         @media print {
@@ -454,7 +493,8 @@
              * Mantener completa la tabla de totales.
              */
             .totals-wrap,
-            .totals-table {
+            .totals-table,
+            .abonos-resumen {
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
@@ -980,13 +1020,113 @@
     </div>
 
     <!-- ===================================================== -->
+    <!-- ABONOS / PAGOS RECIBIDOS -->
+    <!-- ===================================================== -->
+
+    {% if abonos_vigentes %}
+        <div class="section">
+            <div class="section-title">
+                4. Abonos / Pagos Recibidos
+            </div>
+
+            <table class="detail-table">
+                <colgroup>
+                    <col style="width: 18%;">
+                    <col style="width: 47%;">
+                    <col style="width: 17%;">
+                    <col style="width: 18%;">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Detalle</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-right">Monto</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for abono in abonos_vigentes %}
+                        <tr>
+                            <td>
+                                {{ abono.fecha|date:"d/m/Y H:i" }}
+                            </td>
+
+                            <td>
+                                {% if abono.observacion %}
+                                    {{ abono.observacion }}
+                                {% else %}
+                                    Abono registrado en la orden
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                {{ abono.get_estado_display|default:abono.estado }}
+                            </td>
+
+                            <td class="text-right">
+                                <strong>
+                                    ${{ abono.monto|floatformat:2 }}
+                                </strong>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <table class="abonos-resumen">
+                <tbody>
+                    <tr>
+                        <td class="abono-label">
+                            Total abonado
+                        </td>
+                        <td class="abono-value">
+                            ${{ total_abonado|floatformat:2 }}
+                        </td>
+                    </tr>
+
+                    {% if saldo_pendiente > 0 %}
+                        <tr>
+                            <td class="abono-label">
+                                Saldo pendiente
+                            </td>
+                            <td class="abono-value">
+                                ${{ saldo_pendiente|floatformat:2 }}
+                            </td>
+                        </tr>
+                    {% elif saldo_a_favor > 0 %}
+                        <tr>
+                            <td class="abono-label">
+                                Saldo a favor / anticipo
+                            </td>
+                            <td class="abono-value saldo-favor">
+                                ${{ saldo_a_favor|floatformat:2 }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td class="abono-label">
+                                Saldo pendiente
+                            </td>
+                            <td class="abono-value">
+                                $0.00
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <!-- ===================================================== -->
     <!-- RECOMENDACIONES -->
     <!-- ===================================================== -->
 
     {% if recomendaciones %}
         <div class="section">
             <div class="section-title">
-                4. Recomendaciones Técnicas
+                {% if abonos_vigentes %}5{% else %}4{% endif %}. Recomendaciones Técnicas
             </div>
 
             <table class="detail-table">

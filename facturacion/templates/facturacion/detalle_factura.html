@@ -619,6 +619,13 @@
 
                 <div class="factura-meta-line">
                     Detalle del comprobante electrónico
+
+                    {% if anticipos %}
+                        · Anticipo / Abono
+                        {% if factura.abono_origen %}
+                            #{{ factura.abono_origen.pk }}
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
 
@@ -846,10 +853,22 @@
         <div class="factura-context-row">
             <div class="factura-context-box">
                 <div class="factura-context-label">
-                    Orden de origen
+                    {% if anticipos %}
+                        Origen del anticipo
+                    {% else %}
+                        Orden de origen
+                    {% endif %}
                 </div>
+
                 <div class="factura-context-value">
-                    {{ factura.numero_orden_origen|default:"SIN ORDEN DE ORIGEN" }}
+                    {% if anticipos and factura.abono_origen %}
+                        Abono #{{ factura.abono_origen.pk }}
+                        {% if factura.numero_orden_origen %}
+                            · OT {{ factura.numero_orden_origen }}
+                        {% endif %}
+                    {% else %}
+                        {{ factura.numero_orden_origen|default:"SIN ORDEN DE ORIGEN" }}
+                    {% endif %}
                 </div>
             </div>
 
@@ -864,6 +883,93 @@
         </div>
     </div>
 
+
+    <!-- =====================================================
+         DETALLES DE FACTURA
+
+         Una factura de abono contiene una línea ANTICIPO.
+         Las facturas normales conservan REP / MOI / MOE /
+         detalles manuales exactamente como antes.
+    ====================================================== -->
+
+    {% if anticipos %}
+
+        <div class="ot-card">
+            <div class="section-title">
+                Anticipo / Abono
+            </div>
+
+            <div class="ot-table-wrap">
+                <table class="ot-table factura-readonly-table">
+                    <thead>
+                        <tr>
+                            <th style="width:18%;">Código / referencia</th>
+                            <th>Descripción</th>
+                            <th style="width:10%;text-align:right;">P.U.</th>
+                            <th style="width:10%;text-align:right;">Cantidad</th>
+                            <th style="width:10%;text-align:right;">Descuento</th>
+                            <th style="width:12%;text-align:right;">Valor</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in anticipos %}
+                            <tr>
+                                <td>
+                                    {{ item.codigo_principal|default:"-" }}
+
+                                    {% if item.codigo_auxiliar %}
+                                        <div class="factura-small">
+                                            Ref. {{ item.codigo_auxiliar }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ item.descripcion }}
+                                    </strong>
+
+                                    {% if factura.abono_origen %}
+                                        <div class="factura-small">
+                                            Abono #{{ factura.abono_origen.pk }}
+                                            {% if factura.numero_orden_origen %}
+                                                · OT {{ factura.numero_orden_origen }}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td style="text-align:right;">
+                                    ${{ item.precio_unitario|floatformat:2 }}
+                                </td>
+
+                                <td style="text-align:right;">
+                                    {{ item.cantidad|floatformat:2 }}
+                                </td>
+
+                                <td style="text-align:right;">
+                                    ${{ item.descuento|floatformat:2 }}
+                                </td>
+
+                                <td style="text-align:right;font-weight:700;">
+                                    ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="factura-table-footer">
+                <div class="subtotal-pill">
+                    Sub total anticipo:
+                    ${{ subtotal_anticipos|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+
+    {% else %}
 
     <!-- =====================================================
          REPUESTOS
@@ -1096,6 +1202,10 @@
     {% endif %}
 
 
+
+    {% endif %}
+
+
     <!-- =====================================================
          RESUMEN ECONÓMICO
          MISMO ASPECTO QUE EL RESUMEN DE LA ORDEN
@@ -1106,6 +1216,7 @@
         data-repuestos="{{ subtotal_repuestos|default:'0.00'|unlocalize }}"
         data-moi="{{ subtotal_moi|default:'0.00'|unlocalize }}"
         data-moe="{{ subtotal_moe|default:'0.00'|unlocalize }}"
+        data-anticipo="{{ subtotal_anticipos|default:'0.00'|unlocalize }}"
         data-descuento="{{ factura.total_descuento|default:'0.00'|unlocalize }}"
         data-subtotal-bruto="{{ subtotal_bruto|default:'0.00'|unlocalize }}"
     >
@@ -1114,6 +1225,38 @@
         </div>
 
         <div class="totals-grid">
+
+            {% if anticipos %}
+
+                <!-- ANTICIPO / ABONO -->
+                <div class="total-box total-box-composicion total-box-anticipo">
+                    <div class="total-label">
+                        Subtotal anticipo
+                    </div>
+
+                    <div class="total-value">
+                        ${{ subtotal_anticipos|default:"0.00"|floatformat:2 }}
+                    </div>
+
+                    <div class="total-meta">
+                        <strong id="porcentajeAnticipoFactura">100.00%</strong>
+                        <span>del subtotal facturado</span>
+                        <span class="total-separador">•</span>
+                        <span>
+                            {{ anticipos|length }} anticipo{{ anticipos|length|pluralize }}
+                        </span>
+                    </div>
+
+                    <div class="total-barra" aria-hidden="true">
+                        <div
+                            id="barraAnticipoFactura"
+                            class="total-barra-valor"
+                            style="width:100%;"
+                        ></div>
+                    </div>
+                </div>
+
+            {% else %}
 
             <!-- REPUESTOS -->
             <div class="total-box total-box-composicion total-box-repuestos">
@@ -1186,6 +1329,9 @@
                     <div id="barraMOEFactura" class="total-barra-valor"></div>
                 </div>
             </div>
+
+
+            {% endif %}
 
             <!-- SUBTOTAL SIN IVA -->
             <div class="total-box">
@@ -1304,15 +1450,47 @@
             const rep = numeroSeguro(resumen.dataset.repuestos);
             const moi = numeroSeguro(resumen.dataset.moi);
             const moe = numeroSeguro(resumen.dataset.moe);
+            const anticipo = numeroSeguro(resumen.dataset.anticipo);
             const descuento = numeroSeguro(resumen.dataset.descuento);
             const subtotalBruto = numeroSeguro(resumen.dataset.subtotalBruto);
 
-            /* Igual que en la OT: composición entre REP + MOI + MOE. */
-            const baseComposicion = rep + moi + moe;
+            /*
+             * Factura normal:
+             * REP + MOI + MOE.
+             *
+             * Factura de abono:
+             * una línea ANTICIPO.
+             */
+            const baseComposicion =
+                rep + moi + moe + anticipo;
 
-            aplicarPorcentaje("porcentajeRepFactura", "barraRepFactura", rep, baseComposicion);
-            aplicarPorcentaje("porcentajeMOIFactura", "barraMOIFactura", moi, baseComposicion);
-            aplicarPorcentaje("porcentajeMOEFactura", "barraMOEFactura", moe, baseComposicion);
+            aplicarPorcentaje(
+                "porcentajeRepFactura",
+                "barraRepFactura",
+                rep,
+                baseComposicion
+            );
+
+            aplicarPorcentaje(
+                "porcentajeMOIFactura",
+                "barraMOIFactura",
+                moi,
+                baseComposicion
+            );
+
+            aplicarPorcentaje(
+                "porcentajeMOEFactura",
+                "barraMOEFactura",
+                moe,
+                baseComposicion
+            );
+
+            aplicarPorcentaje(
+                "porcentajeAnticipoFactura",
+                "barraAnticipoFactura",
+                anticipo,
+                baseComposicion
+            );
 
             const porcentajeDescuento = porcentaje(descuento, subtotalBruto);
             const textoDescuento = document.getElementById("descuentoPorcentajeFactura");

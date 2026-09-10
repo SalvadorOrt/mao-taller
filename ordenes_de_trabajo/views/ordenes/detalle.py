@@ -724,8 +724,6 @@ def guardar_detalle_ot(request, pk):
         "detalle_orden",
         pk=pk,
     )
-
-
 @login_required
 def detalle_orden(request, pk):
     sucursal_activa = (
@@ -750,6 +748,12 @@ def detalle_orden(request, pk):
             "servicios_detalles__procedimientos_detalle",
             "recomendaciones_items",
             "tecnicos",
+
+            # ======================================
+            # ABONOS
+            # ======================================
+            "abonos",
+            "abonos__usuario",
         ),
         pk=pk,
     )
@@ -788,6 +792,18 @@ def detalle_orden(request, pk):
     puede_editar = (
         es_su_sucursal
         and orden.estado == "ABIERTA"
+    )
+
+    # =========================================================
+    # PERMISO PARA REGISTRAR ABONOS
+    # =========================================================
+
+    puede_registrar_abono = (
+        es_su_sucursal
+        and orden.estado == "ABIERTA"
+        and request.user.has_perm(
+            "ordenes_de_trabajo.add_abonoordentrabajo"
+        )
     )
 
     if request.method == "POST":
@@ -843,8 +859,16 @@ def detalle_orden(request, pk):
         else ""
     )
 
-    # Recalcula antes de mostrar
-    # la pantalla.
+    # =========================================================
+    # RECALCULAR ECONOMÍA DE LA OT
+    # =========================================================
+    #
+    # IMPORTANTE:
+    # Los abonos NO forman parte de calcular_total().
+    # calcular_total() sigue trabajando únicamente con
+    # repuestos, mano de obra, descuento e IVA.
+    # =========================================================
+
     orden.calcular_total()
 
     subtotal = Decimal(
@@ -882,6 +906,84 @@ def detalle_orden(request, pk):
         or 0
     )
 
+    # =========================================================
+    # ABONOS DE LA ORDEN
+    # =========================================================
+    #
+    # Un abono:
+    #
+    # - NO modifica total_final.
+    # - NO modifica descuento.
+    # - NO modifica IVA.
+    # - NO modifica subtotal.
+    #
+    # Solamente sirve para conocer cuánto dinero ha entregado
+    # el cliente y cuánto queda pendiente.
+    #
+    # Los abonos ANULADOS se conservan para historial,
+    # pero NO se suman al total abonado.
+    # =========================================================
+
+    abonos = list(
+        orden.abonos.all()
+    )
+
+    abonos_vigentes = [
+        abono
+        for abono in abonos
+        if abono.estado != "ANULADO"
+    ]
+
+    total_abonado = sum(
+        (
+            Decimal(
+                abono.monto
+                or 0
+            )
+            for abono in abonos_vigentes
+        ),
+        Decimal("0.00"),
+    )
+
+    total_abonado = total_abonado.quantize(
+        Decimal("0.01")
+    )
+
+    # =========================================================
+    # SALDO
+    # =========================================================
+
+    diferencia_abonos = (
+        total_final
+        - total_abonado
+    ).quantize(
+        Decimal("0.01")
+    )
+
+    # Saldo normal pendiente de cobrar.
+    saldo_pendiente = max(
+        diferencia_abonos,
+        Decimal("0.00"),
+    )
+
+    # Puede existir un abono antes de haber cargado todos
+    # los trabajos de la OT.
+    #
+    # Ejemplo:
+    # OT actual: $0
+    # Abono:     $100
+    #
+    # En ese caso no mostramos saldo negativo.
+    # Mostramos $100 como saldo a favor / anticipo.
+    saldo_a_favor = max(
+        -diferencia_abonos,
+        Decimal("0.00"),
+    )
+
+    # =========================================================
+    # RENDER
+    # =========================================================
+
     return render(
         request,
         "detalle_orden.html",
@@ -889,50 +991,94 @@ def detalle_orden(request, pk):
             "orden": orden,
             "croquis": croquis,
             "croquis_url": croquis_url,
+
             "categorias_inventario": (
                 categorias
             ),
+
             "tecnicos_disponibles": (
                 tecnicos_disponibles
             ),
+
             "sucursal_activa": (
                 sucursal_activa
             ),
+
             "puede_editar": (
                 puede_editar
             ),
+
             "puede_reabrir": (
                 puede_reabrir
             ),
+
+            "puede_registrar_abono": (
+                puede_registrar_abono
+            ),
+
             "url_anterior": (
                 url_anterior
             ),
 
-            # Valores económicos calculados
+            # ======================================
+            # VALORES ECONÓMICOS DE LA OT
+            # ======================================
+
             "subtotal": subtotal,
             "descuento": descuento,
+
             "porcentaje_descuento": (
                 porcentaje_descuento
             ),
+
             "descuento_ingresado": (
                 descuento_ingresado
             ),
+
             "porcentaje_iva": (
                 porcentaje_iva
             ),
-            "iva": iva,
-            "total_final": total_final,
 
-            # Configuración seleccionada
+            "iva": iva,
+
+            "total_final": (
+                total_final
+            ),
+
+            # ======================================
+            # ABONOS
+            # ======================================
+
+            "abonos": abonos,
+
+            "total_abonado": (
+                total_abonado
+            ),
+
+            "saldo_pendiente": (
+                saldo_pendiente
+            ),
+
+            "saldo_a_favor": (
+                saldo_a_favor
+            ),
+
+            # ======================================
+            # CONFIGURACIÓN SELECCIONADA
+            # ======================================
+
             "tipo_descuento": (
                 orden.tipo_descuento
             ),
+
             "sumar_iva_al_total": (
                 orden.sumar_iva_al_total
             ),
 
-            # Valores preparados para
-            # HTML y JavaScript
+            # ======================================
+            # VALORES PARA HTML / JS
+            # ======================================
+
             "porcentaje_iva_html": str(
                 porcentaje_iva
             ).replace(

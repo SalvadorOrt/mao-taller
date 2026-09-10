@@ -5,3 +5,4 @@ from .recepcion import *
 from .listado import *
 from .cotizaciones import *
 from .historial import *
+from .abonos import *

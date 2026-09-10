@@ -142,7 +142,13 @@ class FacturaVenta(models.Model):
         blank=True,
         null=True,
     )
-
+    abono_origen = models.OneToOneField(
+        "ordenes_de_trabajo.AbonoOrdenTrabajo",
+        on_delete=models.PROTECT,
+        related_name="factura",
+        null=True,
+        blank=True,
+    )
     # -----------------------------------------------------
     # DATOS DEL COMPROBANTE
     # -----------------------------------------------------
@@ -370,10 +376,20 @@ class FacturaVenta(models.Model):
     @property
     def es_factura_manual(self):
         """
-        Una factura es manual cuando no proviene de una Orden de Trabajo.
-        Sirve para ventas directas de repuestos, aceites, filtros, etc.
+        Una factura es manual cuando no proviene de una Orden de Trabajo
+        completa ni de un abono de una Orden de Trabajo.
         """
-        return self.orden_id is None
+        return (
+            self.orden_id is None
+            and self.abono_origen_id is None
+        )
+
+    @property
+    def es_factura_abono(self):
+        """
+        Indica si la factura se originó a partir de un abono de una OT.
+        """
+        return self.abono_origen_id is not None
 
     @property
     def esta_en_borrador(self):
@@ -389,6 +405,12 @@ class FacturaVenta(models.Model):
 
     def clean(self):
         super().clean()
+
+        if self.orden_id and self.abono_origen_id:
+            raise ValidationError(
+                "Una factura no puede provenir de una OT completa "
+                "y de un abono al mismo tiempo."
+            )
 
         if not self.sucursal_id:
             raise ValidationError({"sucursal": "La sucursal es obligatoria."})
@@ -912,6 +934,7 @@ class DetalleFacturaVenta(models.Model):
         ("REP", "Repuesto"),
         ("MOI", "Mano de Obra Interna"),
         ("MOE", "Mano de Obra Externa"),
+        ("ANTICIPO", "Anticipo de OT"),
         ("MANUAL", "Venta manual"),
     ]
 
@@ -1044,9 +1067,13 @@ class DetalleFacturaVenta(models.Model):
         """
 
         if self.factura_id:
-            # Factura proveniente de una Orden de Trabajo:
+            # Factura proveniente de una Orden de Trabajo completa
+            # o de un abono de una OT:
             # respetar exactamente el IVA congelado en la factura.
-            if self.factura.orden_id:
+            if (
+                self.factura.orden_id
+                or self.factura.abono_origen_id
+            ):
                 return (
                     self.factura.porcentaje_iva
                     if self.factura.porcentaje_iva is not None

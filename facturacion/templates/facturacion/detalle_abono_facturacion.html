@@ -126,6 +126,48 @@
 
         </div>
 
+        <div
+            style="
+                display:flex;
+                align-items:center;
+                justify-content:flex-end;
+                gap:8px;
+                flex-wrap:wrap;
+                margin-left:auto;
+            "
+        >
+            <a
+                href="{% url 'facturacion:dashboard' %}"
+                class="btn-login"
+                style="
+                    width:auto;
+                    text-decoration:none;
+                    background:#f5f5f7;
+                    color:var(--text);
+                    border-color:var(--border);
+                "
+            >
+                <i class="bi bi-arrow-left"></i>
+                Volver
+            </a>
+
+            <button
+                type="button"
+                class="btn-login"
+                id="btnGuardarFacturaAbonoSuperior"
+                style="
+                    width:auto;
+                    background:#0071e3;
+                    color:#fff;
+                    border-color:#0071e3;
+                "
+                onclick="confirmarGuardadoFactura()"
+            >
+                <i class="bi bi-save"></i>
+                Guardar factura borrador
+            </button>
+        </div>
+
     </div>
 
 
@@ -723,47 +765,6 @@
             </div>
 
 
-            <div
-                style="
-                    display: flex;
-                    justify-content: flex-end;
-                    align-items: center;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                    margin-top: 12px;
-                "
-            >
-
-                <a
-                    href="{% url 'facturacion:dashboard' %}"
-                    class="btn-login"
-                    style="
-                        width: auto;
-                        text-decoration: none;
-                    "
-                >
-                    <i class="bi bi-arrow-left"></i>
-                    Volver
-                </a>
-
-
-                <button
-                    type="button"
-                    class="btn-login"
-                    style="
-                        width: auto;
-                        background: #0071e3;
-                        color: #fff;
-                        border-color: #0071e3;
-                    "
-                    onclick="confirmarGuardadoFactura()"
-                >
-                    <i class="bi bi-save"></i>
-                    Guardar factura
-                </button>
-
-            </div>
-
         </div>
 
 
@@ -774,9 +775,9 @@
     <!-- =====================================================
          MISMO MODAL DE DATOS + FORMA DE PAGO
 
-         Este include contiene el mismo dropdown personalizado
-         de forma de pago y entidad financiera que usas en la
-         factura normal.
+         Se reutiliza EXACTAMENTE el modal de la factura normal.
+         Por eso forma de pago y entidad financiera conservan
+         el mismo combo box/dropdown personalizado.
     ====================================================== -->
 
     {% include "includes/detalle_factura/modal_emitir_factura.html" %}
@@ -1254,6 +1255,25 @@
         function () {
 
             configurarModalComoGuardadoBorrador();
+
+            const formularioAbono =
+                document.getElementById("formGuardarFactura");
+
+            formularioAbono?.addEventListener(
+                "submit",
+                function () {
+                    const botonSuperior =
+                        document.getElementById(
+                            "btnGuardarFacturaAbonoSuperior"
+                        );
+
+                    if (botonSuperior) {
+                        botonSuperior.disabled = true;
+                        botonSuperior.innerHTML =
+                            '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+                    }
+                }
+            );
 
 
             {% if messages %}
