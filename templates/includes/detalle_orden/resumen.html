@@ -1042,10 +1042,7 @@
                                         Sin observación
                                     {% endif %}
 
-                                    <div class="abono-detalle-secundario">
-                                        Registrado por
-                                        {{ abono.usuario.get_full_name|default:abono.usuario.username }}
-                                    </div>
+                                    
                                 </div>
 
                                 {% if abono.estado == "REGISTRADO" and not abono.factura and perms.ordenes_de_trabajo.change_abonoordentrabajo %}
