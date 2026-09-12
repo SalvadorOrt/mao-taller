@@ -163,7 +163,11 @@
         height: 100%;
         cursor: crosshair;
         touch-action: none;
+        overscroll-behavior: contain;
         background: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
     }
 
     /* =========================================================
@@ -247,48 +251,171 @@
     }
 
     /* =========================================================
-       RESPONSIVE
+       RESPONSIVE / TÁCTIL
        ========================================================= */
 
-    @media (max-width: 768px) {
-        .croquis-carousel,
-        .croquis-slides {
-            min-height: 350px;
-            height: 350px;
+    /*
+     * Tablet:
+     * aprovechamos más ancho y reducimos el margen gris lateral.
+     */
+    @media (max-width: 1024px) {
+        .croquis-wrapper {
+            max-width: none;
         }
 
         .croquis-slide {
-            padding: 20px 55px;
+            padding: 10px 54px;
         }
 
-        .croquis-arrow {
-            width: 38px;
-            height: 38px;
-        }
-
-        .croquis-arrow-prev {
-            left: 8px;
-        }
-
-        .croquis-arrow-next {
-            right: 8px;
-        }
-
-        .croquis-nav-btn {
-            padding: 6px 12px;
-            font-size: 0.76rem;
+        .croquis-stage {
+            max-width: 760px;
         }
     }
 
-    @media (max-width: 500px) {
-        .croquis-carousel,
+    /*
+     * Celular y tablet vertical:
+     * el croquis ocupa prácticamente todo el ancho disponible.
+     * Las flechas se ocultan para no quitar área de dibujo.
+     */
+    @media (max-width: 768px) {
+        #step_5 {
+            overflow-x: clip;
+        }
+
+        .croquis-wrapper {
+            width: auto;
+            max-width: none;
+            margin-left: calc(50% - 50vw);
+            margin-right: calc(50% - 50vw);
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .croquis-nav {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            gap: 8px;
+            margin: 10px 0 8px;
+            padding: 0 2px 6px;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .croquis-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .croquis-nav-btn {
+            flex: 0 0 auto;
+            min-height: 44px;
+            padding: 9px 15px;
+            font-size: 0.8rem;
+            touch-action: manipulation;
+        }
+
+        .croquis-vista-info {
+            margin-bottom: 6px;
+        }
+
+        .croquis-carousel {
+            width: 100%;
+            min-height: 0;
+            height: auto;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: none;
+        }
+
         .croquis-slides {
-            min-height: 300px;
-            height: 300px;
+            width: 100%;
+            min-height: 0;
+            height: auto;
+            aspect-ratio: 5 / 4;
         }
 
         .croquis-slide {
-            padding: 15px 45px;
+            padding: 0;
+        }
+
+        .croquis-stage {
+            width: 100%;
+            max-width: none;
+            height: 100%;
+            aspect-ratio: 5 / 4;
+            border-radius: 8px;
+            box-shadow: none;
+        }
+
+        .croquis-arrow {
+            display: none;
+        }
+
+        .croquis-base,
+        .croquis-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .croquis-canvas {
+            cursor: crosshair;
+            touch-action: none;
+            overscroll-behavior: contain;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .croquis-dots {
+            margin-top: 8px;
+        }
+
+        .croquis-actions {
+            margin-top: 12px;
+            gap: 8px;
+            padding: 0 2px;
+        }
+
+        .croquis-actions .btn-mao {
+            min-height: 44px;
+        }
+    }
+
+    /*
+     * Celulares angostos:
+     * reducimos todavía más elementos secundarios para dejar
+     * la mayor superficie posible al dibujo.
+     */
+    @media (max-width: 480px) {
+        .croquis-wrapper {
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
+        .croquis-vista-nombre {
+            font-size: 0.86rem;
+        }
+
+        .croquis-vista-contador {
+            font-size: 0.7rem;
+        }
+
+        .croquis-stage {
+            border-radius: 6px;
+        }
+
+        .croquis-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+        }
+
+        .croquis-actions .btn-mao {
+            width: 100%;
+            padding-left: 8px;
+            padding-right: 8px;
+            font-size: 0.76rem;
         }
     }
 </style>
@@ -593,6 +720,19 @@
 
             dibujando = true;
 
+            /*
+             * Dedo: un poco más grueso para que sea fácil marcar.
+             * Lápiz: más preciso.
+             * Mouse: grosor estándar.
+             */
+            if (evento.pointerType === "touch") {
+                ctx.lineWidth = 9;
+            } else if (evento.pointerType === "pen") {
+                ctx.lineWidth = 6;
+            } else {
+                ctx.lineWidth = 5;
+            }
+
             try {
                 canvas.setPointerCapture(evento.pointerId);
             } catch (error) {
@@ -612,9 +752,21 @@
 
             evento.preventDefault();
 
-            const posicion = obtenerPosicion(evento);
+            /*
+             * Algunos teléfonos/tablets y lápices entregan varios puntos
+             * intermedios. Usarlos produce un trazo más continuo.
+             */
+            const eventos = (
+                typeof evento.getCoalescedEvents === "function"
+                    ? evento.getCoalescedEvents()
+                    : [evento]
+            );
 
-            ctx.lineTo(posicion.x, posicion.y);
+            eventos.forEach(function (punto) {
+                const posicion = obtenerPosicion(punto);
+                ctx.lineTo(posicion.x, posicion.y);
+            });
+
             ctx.stroke();
         });
 
@@ -727,6 +879,22 @@
 
         if (contador) {
             contador.textContent = `${croquisVistaActual + 1} de ${CROQUIS_VISTAS.length}`;
+        }
+
+        /*
+         * En móvil mantenemos visible el botón de la vista activa
+         * dentro de la barra horizontal.
+         */
+        const botonActivo = document.querySelector(
+            `.croquis-nav-btn[data-vista-index="${croquisVistaActual}"]`
+        );
+
+        if (botonActivo && window.innerWidth <= 768) {
+            botonActivo.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "center"
+            });
         }
     }
 
