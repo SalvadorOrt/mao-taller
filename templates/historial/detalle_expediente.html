@@ -1201,34 +1201,10 @@
         font-weight: 600;
     }
 
-    .consulta-table .col-tech {
-        width: 16%;
-        text-align: left;
-    }
 
-    .consulta-tecnico {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        color: #3a3a3c;
-        font-size: 8.5px;
-        font-weight: 650;
-        line-height: 1.25;
-    }
 
-    .consulta-tecnico i {
-        color: #8e8e93;
-        font-size: 9px;
-    }
 
-    .consulta-tecnico.no-registrado {
-        color: #8e8e93;
-        font-weight: 550;
-    }
 
-    .consulta-table tbody tr:not(.consulta-empty-row):hover .consulta-tecnico {
-        color: #0066cc;
-    }
 
     .consulta-table tbody tr:not(.consulta-empty-row):hover .col-money:last-child {
         font-weight: 800;
@@ -1236,7 +1212,6 @@
     }
 
 
-    /* Ajuste de proporciones al añadir Técnico en MOI / MOE */
     .consulta-table .col-ref {
         width: 17%;
     }
@@ -1245,9 +1220,6 @@
         width: 34%;
     }
 
-    .consulta-table .col-tech {
-        width: 16%;
-    }
 
     .consulta-table .col-money,
     .consulta-table .col-qty {
@@ -1651,7 +1623,6 @@
                                     <tr>
                                         <th class="col-ref">Cód. / referencia</th>
                                         <th class="col-desc">Descripción</th>
-                                        <th class="col-tech">Técnico</th>
                                         <th class="col-money">P.U.</th>
                                         <th class="col-qty">Cantidad</th>
                                         <th class="col-money">Valor</th>
@@ -1739,7 +1710,6 @@
                                     <tr>
                                         <th class="col-ref">Cód. / referencia</th>
                                         <th class="col-desc">Descripción</th>
-                                        <th class="col-tech">Técnico</th>
                                         <th class="col-money">P.U.</th>
                                         <th class="col-qty">Cantidad</th>
                                         <th class="col-money">Valor</th>
@@ -1777,19 +1747,6 @@
                                                 {% endif %}
                                             </td>
 
-                                            <td class="col-tech">
-                                                {% if item.tecnico %}
-                                                    <span class="consulta-tecnico">
-                                                        <i class="bi bi-person"></i>
-                                                        {{ item.tecnico }}
-                                                    </span>
-                                                {% else %}
-                                                    <span class="consulta-tecnico no-registrado">
-                                                        —
-                                                    </span>
-                                                {% endif %}
-                                            </td>
-
                                             <td class="col-money">
                                                 {% if item.precio_unitario is not None %}
                                                     ${{ item.precio_unitario|floatformat:"2" }}
@@ -1816,7 +1773,7 @@
                                         </tr>
                                     {% empty %}
                                         <tr class="consulta-empty-row">
-                                            <td colspan="6">
+                                            <td colspan="5">
                                                 Sin mano de obra interna registrada.
                                             </td>
                                         </tr>
@@ -1893,19 +1850,6 @@
                                                 {% endif %}
                                             </td>
 
-                                            <td class="col-tech">
-                                                {% if item.tecnico %}
-                                                    <span class="consulta-tecnico">
-                                                        <i class="bi bi-person"></i>
-                                                        {{ item.tecnico }}
-                                                    </span>
-                                                {% else %}
-                                                    <span class="consulta-tecnico no-registrado">
-                                                        —
-                                                    </span>
-                                                {% endif %}
-                                            </td>
-
                                             <td class="col-money">
                                                 {% if item.precio_unitario is not None %}
                                                     ${{ item.precio_unitario|floatformat:"2" }}
@@ -1932,7 +1876,7 @@
                                         </tr>
                                     {% empty %}
                                         <tr class="consulta-empty-row">
-                                            <td colspan="6">
+                                            <td colspan="5">
                                                 Sin mano de obra externa registrada.
                                             </td>
                                         </tr>
