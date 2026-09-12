@@ -1245,6 +1245,51 @@
         }
     }
 
+
+    /* =========================================================
+       HOVER ESPECIAL - MANO DE OBRA Y SUBMANOS / PROCEDIMIENTOS
+       ========================================================= */
+
+    /* La fila padre de MOI/MOE mantiene el resaltado azul */
+    .mano-obra-section .consulta-table tbody tr:not(.consulta-empty-row):hover {
+        background: rgba(0, 113, 227, 0.065);
+        box-shadow: inset 3px 0 0 var(--accent, #0071e3);
+    }
+
+    /* Las hijas se diferencian visualmente del servicio padre */
+    .mano-obra-section .consulta-procedure {
+        transition:
+            background-color 0.14s ease,
+            border-color 0.14s ease,
+            color 0.14s ease,
+            box-shadow 0.14s ease,
+            transform 0.14s ease;
+    }
+
+    /* Al pasar por la fila padre, todas sus submanos se pintan verde suave */
+    .mano-obra-section
+    .consulta-table
+    tbody
+    tr:not(.consulta-empty-row):hover
+    .consulta-procedure {
+        background: rgba(52, 199, 89, 0.10);
+        border-color: rgba(52, 199, 89, 0.28);
+        color: #1f6f3f;
+        box-shadow: inset 2px 0 0 rgba(52, 199, 89, 0.65);
+    }
+
+    /* Si el mouse está exactamente sobre una hija, se resalta un poco más */
+    .mano-obra-section
+    .consulta-table
+    tbody
+    tr:not(.consulta-empty-row):hover
+    .consulta-procedure:hover {
+        background: rgba(52, 199, 89, 0.17);
+        border-color: rgba(52, 199, 89, 0.42);
+        color: #155c32;
+        transform: translateX(2px);
+    }
+
 </style>
 
 <div class="container historial-wrapper">
@@ -1691,7 +1736,7 @@
                     <!-- =================================================
                          MANO DE OBRA INTERNA
                     ================================================== -->
-                    <section class="consulta-section">
+                    <section class="consulta-section mano-obra-section">
 
                         <div class="consulta-section-head">
                             <h4 class="consulta-section-title">
@@ -1794,7 +1839,7 @@
                     <!-- =================================================
                          MANO DE OBRA EXTERNA
                     ================================================== -->
-                    <section class="consulta-section">
+                    <section class="consulta-section mano-obra-section">
 
                         <div class="consulta-section-head">
                             <h4 class="consulta-section-title">
