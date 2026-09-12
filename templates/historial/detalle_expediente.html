@@ -903,6 +903,261 @@
             flex-basis: 100px;
         }
     }
+
+    /* =========================================================
+       MODO COMPACTO - HISTORIAL SOLO CONSULTA
+       ========================================================= */
+
+    /* Cabecera de la visita más compacta */
+    .orden-summary-header {
+        gap: 10px;
+        padding-bottom: 10px;
+    }
+
+    .orden-position {
+        margin-bottom: 3px;
+        font-size: 8px;
+    }
+
+    .orden-number {
+        font-size: 18px;
+    }
+
+    .orden-date {
+        margin-top: 3px;
+        font-size: 10px;
+    }
+
+    .orden-status {
+        min-height: 21px;
+        padding: 3px 8px;
+        font-size: 8px;
+    }
+
+    /* Métricas superiores */
+    .orden-metrics {
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .orden-metric {
+        padding: 8px 9px;
+        border-radius: 9px;
+    }
+
+    .orden-metric-label {
+        margin-bottom: 3px;
+        font-size: 8px;
+    }
+
+    .orden-metric-value {
+        font-size: 12px;
+    }
+
+    /* Reporte del cliente / trabajos solicitados */
+    .consulta-intro-grid {
+        gap: 8px;
+        margin-top: 9px;
+    }
+
+    .consulta-info-box {
+        padding: 9px 10px;
+        border-radius: 9px;
+    }
+
+    .consulta-info-title {
+        margin-bottom: 6px;
+        font-size: 10px;
+    }
+
+    .consulta-info-list {
+        padding-left: 16px;
+    }
+
+    .consulta-info-list li {
+        margin-bottom: 4px;
+        font-size: 9px;
+        line-height: 1.3;
+    }
+
+    .consulta-note {
+        font-size: 9px;
+        line-height: 1.35;
+    }
+
+    /* Secciones de tablas */
+    .consulta-section {
+        margin-top: 8px;
+        border-radius: 9px;
+    }
+
+    .consulta-section-head {
+        gap: 8px;
+        padding: 7px 9px;
+    }
+
+    .consulta-section-title {
+        font-size: 11px;
+    }
+
+    .consulta-section-meta {
+        font-size: 8px;
+    }
+
+    /* Tabla compacta */
+    .consulta-table {
+        min-width: 620px;
+    }
+
+    .consulta-table th {
+        padding: 5px 7px;
+        font-size: 7.5px;
+        letter-spacing: 0.035em;
+    }
+
+    .consulta-table td {
+        padding: 5px 7px;
+        font-size: 9px;
+        line-height: 1.25;
+    }
+
+    /* Hover: resalta claramente la fila consultada */
+    .consulta-table tbody tr:not(.consulta-empty-row) {
+        transition:
+            background-color 0.14s ease,
+            box-shadow 0.14s ease;
+    }
+
+    .consulta-table tbody tr:not(.consulta-empty-row):hover {
+        background: rgba(0, 113, 227, 0.065);
+        box-shadow: inset 3px 0 0 var(--accent, #0071e3);
+    }
+
+    .consulta-table tbody tr:not(.consulta-empty-row):hover td {
+        color: #111113;
+    }
+
+    .consulta-reference {
+        min-height: 21px;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 8px;
+    }
+
+    .consulta-description {
+        font-weight: 650;
+    }
+
+    /* Procedimientos dentro de una mano de obra */
+    .consulta-procedures {
+        margin-top: 4px;
+        gap: 3px;
+    }
+
+    .consulta-procedure {
+        padding: 3px 6px;
+        border-radius: 5px;
+        font-size: 8px;
+        line-height: 1.2;
+    }
+
+    .consulta-cortesia {
+        margin-top: 4px;
+        padding: 2px 5px;
+        font-size: 7px;
+    }
+
+    .consulta-empty-row td {
+        padding: 10px 8px;
+        font-size: 9px;
+    }
+
+    /* Subtotales más pequeños */
+    .consulta-subtotal {
+        padding: 6px 9px 7px;
+    }
+
+    .consulta-subtotal-box {
+        min-width: 180px;
+        padding: 6px 9px;
+        border-radius: 7px;
+        font-size: 9px;
+    }
+
+    /* Resumen económico compacto */
+    .consulta-economic-grid {
+        gap: 6px;
+        padding: 8px 9px 9px;
+    }
+
+    .consulta-economic-card {
+        padding: 8px 9px;
+        border-radius: 8px;
+    }
+
+    .consulta-economic-label {
+        margin-bottom: 3px;
+        font-size: 7.5px;
+    }
+
+    .consulta-economic-value {
+        font-size: 14px;
+    }
+
+    .consulta-economic-note {
+        margin-top: 3px;
+        font-size: 7.5px;
+    }
+
+    .consulta-total-bar {
+        margin: 0 9px 9px;
+        padding: 8px 10px;
+        border-radius: 8px;
+    }
+
+    .consulta-total-label {
+        font-size: 7.5px;
+    }
+
+    .consulta-total-value {
+        margin-top: 2px;
+        font-size: 15px;
+    }
+
+    .consulta-abonos-grid {
+        gap: 6px;
+        padding: 8px 9px 9px;
+    }
+
+    /* Observaciones: el HTML actual usa padding inline 14px.
+       Esto compacta el contenido sin cambiar la lógica Django. */
+    .consulta-section .consulta-note {
+        margin: 0;
+    }
+
+    /* Acciones inferiores discretas */
+    .orden-actions {
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+
+    .orden-action-link {
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        font-size: 10px;
+    }
+
+    /* Hover también para recomendaciones/abonos, ya que usan la misma tabla */
+    @media (hover: hover) {
+        .consulta-table tbody tr:not(.consulta-empty-row):hover .consulta-reference {
+            border-color: rgba(0, 113, 227, 0.28);
+            background: rgba(0, 113, 227, 0.06);
+        }
+    }
+
+
 </style>
 
 <div class="container historial-wrapper">
