@@ -172,3 +172,160 @@
         background: rgba(0, 113, 227, 0.045);
     }
 }
+/* =========================================================
+   HOVER VISIBLE - FILAS DE LA ORDEN OPERATIVA
+   ========================================================= */
+
+@media (hover: hover) {
+
+    /* =====================================================
+       REPUESTOS
+       ===================================================== */
+
+    #cuerpoTablaRepuestos
+    > tr.fila-repuesto:not(.fila-eliminada):hover
+    > td {
+        background-color: rgba(0, 113, 227, 0.08) !important;
+    }
+
+    #cuerpoTablaRepuestos
+    > tr.fila-repuesto:not(.fila-eliminada):hover
+    > td:first-child {
+        box-shadow:
+            inset 3px 0 0
+            var(--accent, #0071e3);
+    }
+
+    /* También pintamos los campos para que no tapen el hover */
+    #cuerpoTablaRepuestos
+    > tr.fila-repuesto:not(.fila-eliminada):hover
+    .form-control-apple,
+
+    #cuerpoTablaRepuestos
+    > tr.fila-repuesto:not(.fila-eliminada):hover
+    .stock-chip {
+        background-color:
+            rgba(0, 113, 227, 0.055) !important;
+
+        border-color:
+            rgba(0, 113, 227, 0.30) !important;
+    }
+
+
+    /* =====================================================
+       MOI - PADRE
+       ===================================================== */
+
+    #cuerpoTablaMOI
+    > tr.fila-padre-moi:hover
+    > td {
+        background-color:
+            rgba(0, 113, 227, 0.08) !important;
+    }
+
+    #cuerpoTablaMOI
+    > tr.fila-padre-moi:hover
+    .form-control-apple {
+        background-color:
+            rgba(0, 113, 227, 0.055) !important;
+
+        border-color:
+            rgba(0, 113, 227, 0.30) !important;
+    }
+
+    #cuerpoTablaMOI
+    > tr.fila-padre-moi:hover
+    > td:first-child {
+        box-shadow:
+            inset 3px 0 0
+            var(--accent, #0071e3);
+    }
+
+
+    /* =====================================================
+       MOI - CUANDO ESTÁS SOBRE UNA HIJA
+       EL PADRE SIGUE CELESTE
+       ===================================================== */
+
+    #cuerpoTablaMOI
+    > tr.fila-padre-moi:has(+ tr.fila-hijas-moi:hover)
+    > td {
+        background-color:
+            rgba(0, 113, 227, 0.08) !important;
+    }
+
+    #cuerpoTablaMOI
+    > tr.fila-padre-moi:has(+ tr.fila-hijas-moi:hover)
+    .form-control-apple {
+        background-color:
+            rgba(0, 113, 227, 0.055) !important;
+
+        border-color:
+            rgba(0, 113, 227, 0.30) !important;
+    }
+
+    #cuerpoTablaMOI
+    > tr.fila-padre-moi:has(+ tr.fila-hijas-moi:hover)
+    > td:first-child {
+        box-shadow:
+            inset 3px 0 0
+            var(--accent, #0071e3);
+    }
+
+
+    /* =====================================================
+       MOI - HIJA EXACTA
+       ===================================================== */
+
+    #cuerpoTablaMOI
+    .procedimiento-item-moi:hover {
+        background-color:
+            rgba(52, 199, 89, 0.10) !important;
+
+        box-shadow:
+            inset 0 0 0 1px
+            rgba(52, 199, 89, 0.35);
+
+        border-radius: 7px;
+    }
+
+    #cuerpoTablaMOI
+    .procedimiento-item-moi:hover
+    .form-control-apple {
+        background-color:
+            rgba(52, 199, 89, 0.08) !important;
+
+        border-color:
+            rgba(52, 199, 89, 0.55) !important;
+    }
+
+
+    /* =====================================================
+       MOE
+       ===================================================== */
+
+    #cuerpoTablaMOE
+    > tr.fila-padre-moe:hover
+    > td {
+        background-color:
+            rgba(0, 113, 227, 0.08) !important;
+    }
+
+    #cuerpoTablaMOE
+    > tr.fila-padre-moe:hover
+    .form-control-apple {
+        background-color:
+            rgba(0, 113, 227, 0.055) !important;
+
+        border-color:
+            rgba(0, 113, 227, 0.30) !important;
+    }
+
+    #cuerpoTablaMOE
+    > tr.fila-padre-moe:hover
+    > td:first-child {
+        box-shadow:
+            inset 3px 0 0
+            var(--accent, #0071e3);
+    }
+}
