@@ -95,6 +95,7 @@ def detalle_expediente(request, pk):
         )
         .prefetch_related(
             "tecnicos",
+            "servicios_detalles__servicio",
             "servicios_detalles__tecnico_responsable",
             "servicios_detalles__procedimientos_detalle",
             "servicios_historicos",
@@ -224,6 +225,11 @@ def detalle_expediente(request, pk):
                     item.descripcion_servicio
                     or "SIN DESCRIPCIÓN"
                 ),
+                "tecnico": (
+                    item.tecnico_responsable.nombre
+                    if item.tecnico_responsable
+                    else None
+                ),
                 "precio_unitario": item.precio_unitario,
                 "cantidad": item.cantidad,
                 "subtotal": item.subtotal,
@@ -248,6 +254,7 @@ def detalle_expediente(request, pk):
                     item.descripcion_original
                     or "SIN DESCRIPCIÓN"
                 ),
+                "tecnico": None,
                 "precio_unitario": item.precio_unitario,
                 "cantidad": item.cantidad,
                 "subtotal": item.subtotal,
@@ -270,6 +277,11 @@ def detalle_expediente(request, pk):
         orden.repuestos_consulta = repuestos
         orden.moi_consulta = moi
         orden.moe_consulta = moe
+
+        # Técnicos asignados a la OT completa.
+        orden.tecnicos_consulta = list(
+            orden.tecnicos.all()
+        )
 
         orden.subtotal_repuestos_consulta = sum(
             (
