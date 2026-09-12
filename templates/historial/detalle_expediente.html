@@ -1247,47 +1247,47 @@
 
 
     /* =========================================================
-       HOVER ESPECIAL - MANO DE OBRA Y SUBMANOS / PROCEDIMIENTOS
+       HOVER INDIVIDUAL - SUBMANOS / PROCEDIMIENTOS
        ========================================================= */
 
-    /* La fila padre de MOI/MOE mantiene el resaltado azul */
-    .mano-obra-section .consulta-table tbody tr:not(.consulta-empty-row):hover {
-        background: rgba(0, 113, 227, 0.065);
-        box-shadow: inset 3px 0 0 var(--accent, #0071e3);
+    /* En MOI / MOE no se pinta toda la fila al pasar el mouse */
+    .mano-obra-section
+    .consulta-table
+    tbody
+    tr:not(.consulta-empty-row):hover {
+        background: transparent;
+        box-shadow: none;
     }
 
-    /* Las hijas se diferencian visualmente del servicio padre */
+    .mano-obra-section
+    .consulta-table
+    tbody
+    tr:not(.consulta-empty-row):hover td {
+        color: var(--text, #1d1d1f);
+    }
+
+    /* Tampoco se cambia el valor final de toda la fila */
+    .mano-obra-section
+    .consulta-table
+    tbody
+    tr:not(.consulta-empty-row):hover
+    .col-money:last-child {
+        color: var(--text, #1d1d1f);
+        font-weight: 560;
+    }
+
+    /* Cada submano/procedimiento se resalta de forma independiente */
     .mano-obra-section .consulta-procedure {
         transition:
-            background-color 0.14s ease,
-            border-color 0.14s ease,
-            color 0.14s ease,
-            box-shadow 0.14s ease,
-            transform 0.14s ease;
+            background-color 0.12s ease,
+            border-color 0.12s ease,
+            color 0.12s ease;
     }
 
-    /* Al pasar por la fila padre, todas sus submanos se pintan verde suave */
-    .mano-obra-section
-    .consulta-table
-    tbody
-    tr:not(.consulta-empty-row):hover
-    .consulta-procedure {
-        background: rgba(52, 199, 89, 0.10);
-        border-color: rgba(52, 199, 89, 0.28);
-        color: #1f6f3f;
-        box-shadow: inset 2px 0 0 rgba(52, 199, 89, 0.65);
-    }
-
-    /* Si el mouse está exactamente sobre una hija, se resalta un poco más */
-    .mano-obra-section
-    .consulta-table
-    tbody
-    tr:not(.consulta-empty-row):hover
-    .consulta-procedure:hover {
-        background: rgba(52, 199, 89, 0.17);
-        border-color: rgba(52, 199, 89, 0.42);
-        color: #155c32;
-        transform: translateX(2px);
+    .mano-obra-section .consulta-procedure:hover {
+        background: rgba(0, 113, 227, 0.08);
+        border-color: rgba(0, 113, 227, 0.30);
+        color: #0066cc;
     }
 
 </style>
