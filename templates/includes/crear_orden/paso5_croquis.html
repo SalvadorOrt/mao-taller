@@ -188,31 +188,49 @@
     }
 
     /* =========================================================
-       FLECHAS
-       Se mantienen también en celular y tablet.
-       Van superpuestas para no quitar espacio al dibujo.
+       NAVEGACIÓN INFERIOR DEL CROQUIS
+       Flechas fuera del dibujo para no tapar ninguna parte del auto.
        ========================================================= */
 
+    .croquis-bottom-nav {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 46px 1fr 46px;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
+
     .croquis-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 20;
+        position: static;
+        top: auto;
+        left: auto;
+        right: auto;
+
         width: 44px;
         height: 44px;
+
+        transform: none;
+
         border: 1px solid rgba(0, 0, 0, 0.08);
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.90);
+
+        background: #ffffff;
         color: #1d1d1f;
+
         display: flex;
         align-items: center;
         justify-content: center;
+
         cursor: pointer;
+
         font-size: 1.35rem;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
+
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+
         touch-action: manipulation;
+
         transition:
             transform .15s ease,
             background-color .15s ease,
@@ -220,21 +238,21 @@
     }
 
     .croquis-arrow:hover {
-        background: #ffffff;
-        transform: translateY(-50%) scale(1.05);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20);
+        background: #f5f5f7;
+        transform: scale(1.05);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
     }
 
     .croquis-arrow:active {
-        transform: translateY(-50%) scale(0.96);
+        transform: scale(0.95);
     }
 
     .croquis-arrow-prev {
-        left: 10px;
+        justify-self: start;
     }
 
     .croquis-arrow-next {
-        right: 10px;
+        justify-self: end;
     }
 
     /* =========================================================
@@ -246,7 +264,8 @@
         justify-content: center;
         align-items: center;
         gap: 7px;
-        margin-top: 12px;
+        margin: 0;
+        min-width: 0;
     }
 
     .croquis-dot {
@@ -334,18 +353,15 @@
             max-width: none;
         }
 
+        .croquis-bottom-nav {
+            grid-template-columns: 44px 1fr 44px;
+            gap: 8px;
+        }
+
         .croquis-arrow {
             width: 42px;
             height: 42px;
             font-size: 1.25rem;
-        }
-
-        .croquis-arrow-prev {
-            left: 7px;
-        }
-
-        .croquis-arrow-next {
-            right: 7px;
         }
     }
 
@@ -440,25 +456,24 @@
             object-position: center center;
         }
 
+        .croquis-bottom-nav {
+            grid-template-columns: 42px 1fr 42px;
+            gap: 8px;
+            margin-top: 9px;
+            padding: 0 2px;
+        }
+
         .croquis-arrow {
             display: flex;
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             font-size: 1.15rem;
-            background: rgba(255, 255, 255, 0.82);
-            box-shadow: 0 2px 9px rgba(0, 0, 0, 0.16);
-        }
-
-        .croquis-arrow-prev {
-            left: 5px;
-        }
-
-        .croquis-arrow-next {
-            right: 5px;
+            background: #ffffff;
+            box-shadow: 0 2px 9px rgba(0, 0, 0, 0.12);
         }
 
         .croquis-dots {
-            margin-top: 9px;
+            margin: 0;
         }
 
         .croquis-actions {
@@ -482,18 +497,15 @@
             padding: 2px;
         }
 
+        .croquis-bottom-nav {
+            grid-template-columns: 38px 1fr 38px;
+            gap: 6px;
+        }
+
         .croquis-arrow {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             font-size: 1rem;
-        }
-
-        .croquis-arrow-prev {
-            left: 3px;
-        }
-
-        .croquis-arrow-next {
-            right: 3px;
         }
     }
 </style>
@@ -557,15 +569,6 @@
              ===================================================== -->
 
         <div class="croquis-carousel">
-
-            <button
-                type="button"
-                class="croquis-arrow croquis-arrow-prev"
-                onclick="croquisAnterior()"
-                aria-label="Vista anterior"
-            >
-                <i class="bi bi-chevron-left"></i>
-            </button>
 
             <div class="croquis-slides">
 
@@ -671,6 +674,32 @@
 
             </div>
 
+        </div>
+
+        <!-- =====================================================
+             NAVEGACIÓN INFERIOR
+             Las flechas están fuera del dibujo para no tapar el vehículo.
+             ===================================================== -->
+
+        <div class="croquis-bottom-nav">
+
+            <button
+                type="button"
+                class="croquis-arrow croquis-arrow-prev"
+                onclick="croquisAnterior()"
+                aria-label="Vista anterior"
+            >
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <div class="croquis-dots">
+                <span class="croquis-dot active" data-dot="0"></span>
+                <span class="croquis-dot" data-dot="1"></span>
+                <span class="croquis-dot" data-dot="2"></span>
+                <span class="croquis-dot" data-dot="3"></span>
+                <span class="croquis-dot" data-dot="4"></span>
+            </div>
+
             <button
                 type="button"
                 class="croquis-arrow croquis-arrow-next"
@@ -680,18 +709,6 @@
                 <i class="bi bi-chevron-right"></i>
             </button>
 
-        </div>
-
-        <!-- =====================================================
-             INDICADORES
-             ===================================================== -->
-
-        <div class="croquis-dots">
-            <span class="croquis-dot active" data-dot="0"></span>
-            <span class="croquis-dot" data-dot="1"></span>
-            <span class="croquis-dot" data-dot="2"></span>
-            <span class="croquis-dot" data-dot="3"></span>
-            <span class="croquis-dot" data-dot="4"></span>
         </div>
 
         <!-- =====================================================
