@@ -284,7 +284,46 @@
 
     @media (max-width: 900px) {
         .croquis-wrapper {
+            width: 100%;
             max-width: none;
+            min-width: 0;
+        }
+
+        .croquis-nav {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+
+            gap: 8px;
+
+            overflow-x: auto;
+            overflow-y: hidden;
+
+            padding: 4px 12px 10px;
+            margin: 12px 0;
+
+            scroll-snap-type: x proximity;
+            scroll-padding-inline: 12px;
+            scroll-behavior: smooth;
+
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+
+            box-sizing: border-box;
+            overscroll-behavior-x: contain;
+        }
+
+        .croquis-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .croquis-nav-btn {
+            flex: 0 0 auto;
+            min-width: max-content;
+            scroll-snap-align: center;
         }
 
         .croquis-slide {
@@ -322,16 +361,30 @@
         }
 
         .croquis-nav {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+
             justify-content: flex-start;
             flex-wrap: nowrap;
+
             gap: 7px;
+
             margin: 10px 0 12px;
+            padding: 4px 12px 9px;
+
             overflow-x: auto;
             overflow-y: hidden;
-            padding: 2px 2px 6px;
+
             scroll-snap-type: x proximity;
+            scroll-padding-inline: 12px;
+            scroll-behavior: smooth;
+
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+
+            box-sizing: border-box;
+            overscroll-behavior-x: contain;
         }
 
         .croquis-nav::-webkit-scrollbar {
@@ -340,10 +393,17 @@
 
         .croquis-nav-btn {
             flex: 0 0 auto;
-            min-height: 42px;
-            padding: 8px 13px;
+            min-width: max-content;
+            min-height: 44px;
+
+            padding: 8px 14px;
+
             font-size: 0.78rem;
-            scroll-snap-align: start;
+
+            white-space: nowrap;
+
+            scroll-snap-align: center;
+            touch-action: manipulation;
         }
 
         .croquis-vista-info {
@@ -855,6 +915,40 @@
         irVistaCroquis(nuevoIndice);
     }
 
+    function desplazarNavAlBotonActivo() {
+        const nav = document.querySelector(".croquis-nav");
+        const botonActivo = document.querySelector(".croquis-nav-btn.active");
+
+        if (!nav || !botonActivo) {
+            return;
+        }
+
+        /*
+         * En tablet/celular la barra superior es horizontal.
+         * Al cambiar de vista con las flechas o con los propios botones,
+         * desplazamos automáticamente la barra para mantener visible
+         * la opción activa.
+         */
+        const navRect = nav.getBoundingClientRect();
+        const botonRect = botonActivo.getBoundingClientRect();
+
+        const botonFueraIzquierda = botonRect.left < navRect.left + 8;
+        const botonFueraDerecha = botonRect.right > navRect.right - 8;
+
+        if (
+            botonFueraIzquierda ||
+            botonFueraDerecha ||
+            window.innerWidth <= 900
+        ) {
+            botonActivo.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "center"
+            });
+        }
+    }
+
+
     function actualizarNavegacionCroquis() {
         document.querySelectorAll(".croquis-nav-btn").forEach(function (boton) {
             const indice = Number(boton.dataset.vistaIndex);
@@ -884,6 +978,10 @@
         if (contador) {
             contador.textContent = `${croquisVistaActual + 1} de ${CROQUIS_VISTAS.length}`;
         }
+
+        requestAnimationFrame(function () {
+            desplazarNavAlBotonActivo();
+        });
     }
 
     /* =========================================================
@@ -1013,6 +1111,12 @@
         });
 
         actualizarNavegacionCroquis();
+
+        const navCroquis = document.querySelector(".croquis-nav");
+
+        if (navCroquis) {
+            navCroquis.scrollLeft = 0;
+        }
 
         // Protección adicional: si el formulario se envía por otra vía
         // distinta al botón Guardar OT, también se prepara el croquis.
