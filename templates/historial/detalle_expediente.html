@@ -536,6 +536,287 @@
         background: #edf6ff;
     }
 
+
+    /* =========================================================
+       DETALLE OPERATIVO - SOLO CONSULTA
+    ========================================================= */
+    .consulta-intro-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .consulta-info-box {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .consulta-info-title {
+        margin: 0 0 10px;
+        color: var(--text, #1d1d1f);
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .consulta-info-list {
+        margin: 0;
+        padding-left: 19px;
+        color: var(--text, #1d1d1f);
+    }
+
+    .consulta-info-list li {
+        margin-bottom: 7px;
+        font-size: 11px;
+        font-weight: 550;
+        line-height: 1.4;
+    }
+
+    .consulta-info-list li:last-child {
+        margin-bottom: 0;
+    }
+
+    .consulta-section {
+        margin-top: 14px;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 12px;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .consulta-section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border-soft, #efeff2);
+        background: #fbfbfd;
+    }
+
+    .consulta-section-title {
+        margin: 0;
+        color: var(--text, #1d1d1f);
+        font-size: 13px;
+        font-weight: 780;
+    }
+
+    .consulta-section-meta {
+        color: var(--muted, #6e6e73);
+        font-size: 10px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    .consulta-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .consulta-table {
+        width: 100%;
+        min-width: 720px;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .consulta-table th {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--border-soft, #efeff2);
+        background: #f7f7f9;
+        color: var(--muted, #6e6e73);
+        font-size: 9px;
+        font-weight: 800;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .consulta-table td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border-soft, #efeff2);
+        color: var(--text, #1d1d1f);
+        font-size: 11px;
+        font-weight: 560;
+        line-height: 1.35;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+    }
+
+    .consulta-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .consulta-table .col-ref {
+        width: 20%;
+    }
+
+    .consulta-table .col-desc {
+        width: 42%;
+    }
+
+    .consulta-table .col-money,
+    .consulta-table .col-qty {
+        width: 12.66%;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .consulta-reference {
+        display: inline-flex;
+        align-items: center;
+        min-height: 27px;
+        padding: 4px 8px;
+        border: 1px solid #dedee3;
+        border-radius: 7px;
+        background: #f7f7f9;
+        color: #424245;
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+    .consulta-description {
+        font-weight: 680;
+    }
+
+    .consulta-procedures {
+        margin-top: 7px;
+        display: grid;
+        gap: 5px;
+    }
+
+    .consulta-procedure {
+        padding: 5px 8px;
+        border: 1px solid #e7e7eb;
+        border-radius: 7px;
+        background: #fbfbfd;
+        color: #4f4f53;
+        font-size: 10px;
+        font-weight: 520;
+    }
+
+    .consulta-cortesia {
+        display: inline-flex;
+        margin-top: 6px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: #e5fbe4;
+        color: #1f8939;
+        font-size: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .consulta-empty-row td {
+        padding: 18px 12px;
+        color: var(--muted, #6e6e73);
+        text-align: center;
+        font-size: 11px;
+        font-weight: 550;
+    }
+
+    .consulta-subtotal {
+        display: flex;
+        justify-content: flex-end;
+        padding: 10px 14px 12px;
+        border-top: 1px solid var(--border-soft, #efeff2);
+        background: #ffffff;
+    }
+
+    .consulta-subtotal-box {
+        min-width: 220px;
+        padding: 9px 12px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 9px;
+        background: #ffffff;
+        color: var(--text, #1d1d1f);
+        font-size: 11px;
+        font-weight: 750;
+        text-align: right;
+    }
+
+    .consulta-economic-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px 14px 14px;
+    }
+
+    .consulta-economic-card {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+    .consulta-economic-label {
+        margin-bottom: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 9px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .consulta-economic-value {
+        color: var(--text, #1d1d1f);
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .consulta-economic-note {
+        margin-top: 5px;
+        color: var(--muted, #6e6e73);
+        font-size: 9px;
+        font-weight: 550;
+        line-height: 1.35;
+    }
+
+    .consulta-total-bar {
+        margin: 0 14px 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--accent, #0071e3);
+        color: #ffffff;
+    }
+
+    .consulta-total-label {
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        opacity: 0.9;
+    }
+
+    .consulta-total-value {
+        margin-top: 3px;
+        font-size: 18px;
+        font-weight: 850;
+        line-height: 1.15;
+    }
+
+    .consulta-abonos-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px 14px 14px;
+    }
+
+    .consulta-note {
+        margin: 0;
+        color: var(--muted, #6e6e73);
+        font-size: 11px;
+        line-height: 1.5;
+        white-space: pre-line;
+    }
+
+
     /* =========================================================
        ESTADO VACÍO
     ========================================================= */
@@ -600,6 +881,21 @@
 
         .orden-action-link {
             width: 100%;
+        }
+
+        .consulta-intro-grid,
+        .consulta-economic-grid,
+        .consulta-abonos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .consulta-subtotal-box {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .consulta-subtotal {
+            justify-content: stretch;
         }
 
         .timeline-item {
@@ -896,180 +1192,604 @@
 
                     </div>
 
-                    <!-- INFORMACIÓN RESUMIDA -->
-                    <div class="orden-summary-grid">
+                    <!-- =================================================
+                         DETALLE OPERATIVO - SOLO CONSULTA
+                    ================================================== -->
+
+                    <div class="consulta-intro-grid">
+
+                        <!-- REPORTE / SÍNTOMAS -->
+                        <div class="consulta-info-box">
+                            <h4 class="consulta-info-title">
+                                Reporte del cliente
+                            </h4>
+
+                            {% if orden.sintomas_items.all %}
+                                <ol class="consulta-info-list">
+                                    {% for sintoma in orden.sintomas_items.all %}
+                                        <li>{{ sintoma.descripcion }}</li>
+                                    {% endfor %}
+                                </ol>
+                            {% elif orden.sintomas_cliente %}
+                                <p class="consulta-note">
+                                    {{ orden.sintomas_cliente }}
+                                </p>
+                            {% else %}
+                                <p class="consulta-note">
+                                    Sin síntomas o reporte registrado.
+                                </p>
+                            {% endif %}
+                        </div>
 
                         <!-- TRABAJOS SOLICITADOS -->
-                        <div class="orden-summary-box">
-
-                            <h4 class="orden-summary-box-title">
+                        <div class="consulta-info-box">
+                            <h4 class="consulta-info-title">
                                 Trabajos solicitados
                             </h4>
 
                             {% if orden.trabajos_solicitados_items.all %}
-                                <ul class="orden-summary-list">
-                                    {% for trabajo in orden.trabajos_solicitados_items.all|slice:":5" %}
-                                        <li>
-                                            {{ trabajo }}
-                                        </li>
-                                    {% empty %}
-                                        <li>
-                                            Sin trabajos solicitados registrados.
-                                        </li>
+                                <ol class="consulta-info-list">
+                                    {% for trabajo in orden.trabajos_solicitados_items.all %}
+                                        <li>{{ trabajo }}</li>
                                     {% endfor %}
-                                </ul>
+                                </ol>
                             {% else %}
-                                <p class="orden-empty-text">
+                                <p class="consulta-note">
                                     Sin trabajos solicitados registrados.
                                 </p>
                             {% endif %}
-
-                        </div>
-
-                        <!-- SÍNTOMAS -->
-                        <div class="orden-summary-box">
-
-                            <h4 class="orden-summary-box-title">
-                                Síntomas reportados
-                            </h4>
-
-                            {% if orden.sintomas_items.all %}
-                                <ul class="orden-summary-list">
-                                    {% for sintoma in orden.sintomas_items.all|slice:":5" %}
-                                        <li>
-                                            {{ sintoma.descripcion }}
-                                        </li>
-                                    {% empty %}
-                                        <li>
-                                            Sin síntomas registrados.
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% elif orden.sintomas_cliente %}
-                                <p class="orden-empty-text orden-observation">
-                                    {{ orden.sintomas_cliente|truncatechars:420 }}
-                                </p>
-                            {% else %}
-                                <p class="orden-empty-text">
-                                    Sin síntomas registrados.
-                                </p>
-                            {% endif %}
-
-                        </div>
-
-                        <!-- SERVICIOS -->
-                        <div class="orden-summary-box">
-
-                            <h4 class="orden-summary-box-title">
-                                Servicios realizados
-                            </h4>
-
-                            {% if orden.servicios_detalles.all or orden.servicios_historicos.all %}
-                                <ul class="orden-summary-list">
-
-                                    {% for servicio in orden.servicios_detalles.all|slice:":5" %}
-
-                                        <li class="servicio-padre">
-
-                                            <span class="servicio-padre-texto">
-                                                {{ servicio.descripcion_servicio }}
-                                            </span>
-
-                                            {% with procedimientos=servicio.procedimientos_detalle.all %}
-
-                                                {% if procedimientos %}
-
-                                                    <ul class="servicios-hijos">
-
-                                                        {% for procedimiento in procedimientos %}
-
-                                                            <li class="servicio-hijo">
-                                                                {{ procedimiento.descripcion }}
-                                                            </li>
-
-                                                        {% endfor %}
-
-                                                    </ul>
-
-                                                {% endif %}
-
-                                            {% endwith %}
-
-                                        </li>
-
-{% endfor %}
-
-                                    {% if not orden.servicios_detalles.all %}
-                                        {% for servicio in orden.servicios_historicos.all|slice:":5" %}
-                                            <li>
-                                                {{ servicio.descripcion_original }}
-                                            </li>
-                                        {% endfor %}
-                                    {% endif %}
-
-                                </ul>
-                            {% else %}
-                                <p class="orden-empty-text">
-                                    Sin servicios registrados.
-                                </p>
-                            {% endif %}
-
-                        </div>
-
-                        <!-- REPUESTOS -->
-                        <div class="orden-summary-box">
-
-                            <h4 class="orden-summary-box-title">
-                                Repuestos e insumos
-                            </h4>
-
-                            {% if orden.insumos_detalles.all or orden.insumos_historicos.all %}
-                                <ul class="orden-summary-list">
-
-                                    {% for insumo in orden.insumos_detalles.all|slice:":5" %}
-                                        <li>
-                                            {{ insumo.descripcion_factura }}
-                                            {% if insumo.cantidad %}
-                                                · {{ insumo.cantidad|floatformat:"2" }}
-                                            {% endif %}
-                                        </li>
-                                    {% endfor %}
-
-                                    {% if not orden.insumos_detalles.all %}
-                                        {% for insumo in orden.insumos_historicos.all|slice:":5" %}
-                                            <li>
-                                                {{ insumo.descripcion_original }}
-                                                {% if insumo.cantidad %}
-                                                    · {{ insumo.cantidad|floatformat:"2" }}
-                                                {% endif %}
-                                            </li>
-                                        {% endfor %}
-                                    {% endif %}
-
-                                </ul>
-                            {% else %}
-                                <p class="orden-empty-text">
-                                    Sin repuestos registrados.
-                                </p>
-                            {% endif %}
-
                         </div>
 
                     </div>
 
-                    {% if orden.observaciones_tecnicas %}
-                        <div class="orden-summary-box"
-                             style="margin-top: 12px;">
+                    <!-- =================================================
+                         REPUESTOS
+                    ================================================== -->
+                    <section class="consulta-section">
 
-                            <h4 class="orden-summary-box-title">
-                                Observaciones técnicas
+                        <div class="consulta-section-head">
+                            <h4 class="consulta-section-title">
+                                Repuestos
                             </h4>
 
-                            <p class="orden-empty-text orden-observation">
-                                {{ orden.observaciones_tecnicas|truncatechars:650 }}
-                            </p>
+                            <div class="consulta-section-meta">
+                                {{ orden.repuestos_consulta|length }}
+                                producto{{ orden.repuestos_consulta|length|pluralize:"s" }}
+                            </div>
+                        </div>
+
+                        <div class="consulta-table-wrap">
+                            <table class="consulta-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-ref">Cód. / referencia</th>
+                                        <th class="col-desc">Descripción</th>
+                                        <th class="col-money">P.U.</th>
+                                        <th class="col-qty">Cantidad</th>
+                                        <th class="col-money">Valor</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for item in orden.repuestos_consulta %}
+                                        <tr>
+                                            <td>
+                                                <span class="consulta-reference">
+                                                    {{ item.referencia }}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div class="consulta-description">
+                                                    {{ item.descripcion }}
+                                                </div>
+                                            </td>
+
+                                            <td class="col-money">
+                                                {% if item.precio_unitario is not None %}
+                                                    ${{ item.precio_unitario|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-qty">
+                                                {% if item.cantidad is not None %}
+                                                    {{ item.cantidad|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-money">
+                                                {% if item.subtotal is not None %}
+                                                    ${{ item.subtotal|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr class="consulta-empty-row">
+                                            <td colspan="5">
+                                                Sin repuestos registrados.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="consulta-subtotal">
+                            <div class="consulta-subtotal-box">
+                                Subtotal repuestos:
+                                ${{ orden.subtotal_repuestos_consulta|floatformat:"2" }}
+                            </div>
+                        </div>
+
+                    </section>
+
+                    <!-- =================================================
+                         MANO DE OBRA INTERNA
+                    ================================================== -->
+                    <section class="consulta-section">
+
+                        <div class="consulta-section-head">
+                            <h4 class="consulta-section-title">
+                                Mano de Obra Interna
+                            </h4>
+
+                            <div class="consulta-section-meta">
+                                {{ orden.moi_consulta|length }}
+                                servicio{{ orden.moi_consulta|length|pluralize:"s" }}
+                            </div>
+                        </div>
+
+                        <div class="consulta-table-wrap">
+                            <table class="consulta-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-ref">Cód. / referencia</th>
+                                        <th class="col-desc">Descripción</th>
+                                        <th class="col-money">P.U.</th>
+                                        <th class="col-qty">Cantidad</th>
+                                        <th class="col-money">Valor</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for item in orden.moi_consulta %}
+                                        <tr>
+                                            <td>
+                                                <span class="consulta-reference">
+                                                    {{ item.referencia }}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div class="consulta-description">
+                                                    {{ item.descripcion }}
+                                                </div>
+
+                                                {% if item.procedimientos %}
+                                                    <div class="consulta-procedures">
+                                                        {% for procedimiento in item.procedimientos %}
+                                                            <div class="consulta-procedure">
+                                                                {{ procedimiento }}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+
+                                                {% if item.es_cortesia %}
+                                                    <span class="consulta-cortesia">
+                                                        Cortesía
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-money">
+                                                {% if item.precio_unitario is not None %}
+                                                    ${{ item.precio_unitario|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-qty">
+                                                {% if item.cantidad is not None %}
+                                                    {{ item.cantidad|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-money">
+                                                {% if item.subtotal is not None %}
+                                                    ${{ item.subtotal|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr class="consulta-empty-row">
+                                            <td colspan="5">
+                                                Sin mano de obra interna registrada.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="consulta-subtotal">
+                            <div class="consulta-subtotal-box">
+                                Subtotal M.O.I.:
+                                ${{ orden.subtotal_moi_consulta|floatformat:"2" }}
+                            </div>
+                        </div>
+
+                    </section>
+
+                    <!-- =================================================
+                         MANO DE OBRA EXTERNA
+                    ================================================== -->
+                    <section class="consulta-section">
+
+                        <div class="consulta-section-head">
+                            <h4 class="consulta-section-title">
+                                Mano de Obra Externa
+                            </h4>
+
+                            <div class="consulta-section-meta">
+                                {{ orden.moe_consulta|length }}
+                                servicio{{ orden.moe_consulta|length|pluralize:"s" }}
+                            </div>
+                        </div>
+
+                        <div class="consulta-table-wrap">
+                            <table class="consulta-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-ref">Cód. / referencia</th>
+                                        <th class="col-desc">Descripción</th>
+                                        <th class="col-money">P.U.</th>
+                                        <th class="col-qty">Cantidad</th>
+                                        <th class="col-money">Valor</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for item in orden.moe_consulta %}
+                                        <tr>
+                                            <td>
+                                                <span class="consulta-reference">
+                                                    {{ item.referencia }}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div class="consulta-description">
+                                                    {{ item.descripcion }}
+                                                </div>
+
+                                                {% if item.procedimientos %}
+                                                    <div class="consulta-procedures">
+                                                        {% for procedimiento in item.procedimientos %}
+                                                            <div class="consulta-procedure">
+                                                                {{ procedimiento }}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+
+                                                {% if item.es_cortesia %}
+                                                    <span class="consulta-cortesia">
+                                                        Cortesía
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-money">
+                                                {% if item.precio_unitario is not None %}
+                                                    ${{ item.precio_unitario|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-qty">
+                                                {% if item.cantidad is not None %}
+                                                    {{ item.cantidad|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="col-money">
+                                                {% if item.subtotal is not None %}
+                                                    ${{ item.subtotal|floatformat:"2" }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr class="consulta-empty-row">
+                                            <td colspan="5">
+                                                Sin mano de obra externa registrada.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="consulta-subtotal">
+                            <div class="consulta-subtotal-box">
+                                Subtotal M.O.E.:
+                                ${{ orden.subtotal_moe_consulta|floatformat:"2" }}
+                            </div>
+                        </div>
+
+                    </section>
+
+                    <!-- =================================================
+                         RESUMEN ECONÓMICO
+                    ================================================== -->
+                    <section class="consulta-section">
+
+                        <div class="consulta-section-head">
+                            <h4 class="consulta-section-title">
+                                Resumen económico
+                            </h4>
+                        </div>
+
+                        <div class="consulta-economic-grid">
+
+                            <div class="consulta-economic-card">
+                                <div class="consulta-economic-label">
+                                    Subtotal repuestos
+                                </div>
+
+                                <div class="consulta-economic-value">
+                                    ${{ orden.subtotal_repuestos_consulta|floatformat:"2" }}
+                                </div>
+
+                                <div class="consulta-economic-note">
+                                    {{ orden.repuestos_consulta|length }}
+                                    producto{{ orden.repuestos_consulta|length|pluralize:"s" }}
+                                </div>
+                            </div>
+
+                            <div class="consulta-economic-card">
+                                <div class="consulta-economic-label">
+                                    Subtotal M.O. interna
+                                </div>
+
+                                <div class="consulta-economic-value">
+                                    ${{ orden.subtotal_moi_consulta|floatformat:"2" }}
+                                </div>
+
+                                <div class="consulta-economic-note">
+                                    {{ orden.moi_consulta|length }}
+                                    servicio{{ orden.moi_consulta|length|pluralize:"s" }}
+                                </div>
+                            </div>
+
+                            <div class="consulta-economic-card">
+                                <div class="consulta-economic-label">
+                                    Subtotal M.O. externa
+                                </div>
+
+                                <div class="consulta-economic-value">
+                                    ${{ orden.subtotal_moe_consulta|floatformat:"2" }}
+                                </div>
+
+                                <div class="consulta-economic-note">
+                                    {{ orden.moe_consulta|length }}
+                                    servicio{{ orden.moe_consulta|length|pluralize:"s" }}
+                                </div>
+                            </div>
+
+                            <div class="consulta-economic-card">
+                                <div class="consulta-economic-label">
+                                    Subtotal sin IVA
+                                </div>
+
+                                <div class="consulta-economic-value">
+                                    ${{ orden.subtotal_sin_iva|default:"0.00"|floatformat:"2" }}
+                                </div>
+
+                                <div class="consulta-economic-note">
+                                    Antes del descuento e IVA
+                                </div>
+                            </div>
+
+                            <div class="consulta-economic-card">
+                                <div class="consulta-economic-label">
+                                    Descuento
+                                </div>
+
+                                <div class="consulta-economic-value">
+                                    -${{ orden.valor_descuento|default:"0.00"|floatformat:"2" }}
+                                </div>
+
+                                <div class="consulta-economic-note">
+                                    {% if orden.tipo_descuento == "PORCENTAJE" %}
+                                        {{ orden.descuento_porcentaje|default:"0.00"|floatformat:"2" }}%
+                                    {% else %}
+                                        Valor fijo
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="consulta-economic-card">
+                                <div class="consulta-economic-label">
+                                    IVA
+                                    {% if orden.porcentaje_iva is not None %}
+                                        {{ orden.porcentaje_iva|floatformat:"2" }}%
+                                    {% endif %}
+                                </div>
+
+                                <div class="consulta-economic-value">
+                                    ${{ orden.valor_iva|default:"0.00"|floatformat:"2" }}
+                                </div>
+
+                                <div class="consulta-economic-note">
+                                    {% if orden.sumar_iva_al_total %}
+                                        IVA incluido en el total
+                                    {% else %}
+                                        IVA informativo
+                                    {% endif %}
+                                </div>
+                            </div>
 
                         </div>
+
+                        <div class="consulta-total-bar">
+                            <div class="consulta-total-label">
+                                Total de la OT
+                            </div>
+
+                            <div class="consulta-total-value">
+                                ${{ orden.total_final|default:"0.00"|floatformat:"2" }}
+                            </div>
+                        </div>
+
+                    </section>
+
+                    <!-- =================================================
+                         ABONOS - SOLO CONSULTA
+                    ================================================== -->
+                    {% if orden.abonos_consulta %}
+                        <section class="consulta-section">
+
+                            <div class="consulta-section-head">
+                                <h4 class="consulta-section-title">
+                                    Abonos
+                                </h4>
+
+                                <div class="consulta-section-meta">
+                                    Solo consulta
+                                </div>
+                            </div>
+
+                            <div class="consulta-table-wrap">
+                                <table class="consulta-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Detalle</th>
+                                            <th>Estado</th>
+                                            <th class="col-money">Monto</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for abono in orden.abonos_consulta %}
+                                            <tr>
+                                                <td>
+                                                    {{ abono.fecha|date:"d/m/Y H:i" }}
+                                                </td>
+
+                                                <td>
+                                                    {{ abono.observacion|default:"Sin observación" }}
+                                                </td>
+
+                                                <td>
+                                                    {{ abono.get_estado_display }}
+                                                </td>
+
+                                                <td class="col-money">
+                                                    ${{ abono.monto|floatformat:"2" }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="consulta-abonos-grid">
+                                <div class="consulta-economic-card">
+                                    <div class="consulta-economic-label">
+                                        Total abonado
+                                    </div>
+
+                                    <div class="consulta-economic-value">
+                                        ${{ orden.total_abonado_consulta|floatformat:"2" }}
+                                    </div>
+                                </div>
+
+                                <div class="consulta-economic-card">
+                                    <div class="consulta-economic-label">
+                                        Saldo pendiente
+                                    </div>
+
+                                    <div class="consulta-economic-value">
+                                        ${{ orden.saldo_pendiente_consulta|floatformat:"2" }}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
+                    {% endif %}
+
+                    <!-- =================================================
+                         OBSERVACIONES Y RECOMENDACIONES
+                    ================================================== -->
+                    {% if orden.observaciones_tecnicas %}
+                        <section class="consulta-section">
+                            <div class="consulta-section-head">
+                                <h4 class="consulta-section-title">
+                                    Observaciones técnicas
+                                </h4>
+                            </div>
+
+                            <div style="padding: 14px;">
+                                <p class="consulta-note">
+                                    {{ orden.observaciones_tecnicas }}
+                                </p>
+                            </div>
+                        </section>
+                    {% endif %}
+
+                    {% if orden.recomendaciones_items.all %}
+                        <section class="consulta-section">
+                            <div class="consulta-section-head">
+                                <h4 class="consulta-section-title">
+                                    Recomendaciones técnicas
+                                </h4>
+                            </div>
+
+                            <div class="consulta-table-wrap">
+                                <table class="consulta-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 25%;">Título</th>
+                                            <th>Recomendación</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for recomendacion in orden.recomendaciones_items.all %}
+                                            <tr>
+                                                <td>
+                                                    <div class="consulta-description">
+                                                        {{ recomendacion.titulo }}
+                                                    </div>
+                                                </td>
+
+                                                <td>
+                                                    {{ recomendacion.texto }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
                     {% endif %}
 
                     <div class="orden-actions">

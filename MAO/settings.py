@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "cotizaciones",
     "avaluos",
     "accesos",
+    'contabilidad',
 ]
 
 
