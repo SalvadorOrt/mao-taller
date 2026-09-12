@@ -94,7 +94,7 @@ def detalle_expediente(request, pk):
             "usuario_receptor",
         )
         .prefetch_related(
-            "servicios_detalles__servicio",
+            "tecnicos",
             "servicios_detalles__tecnico_responsable",
             "servicios_detalles__procedimientos_detalle",
             "servicios_historicos",

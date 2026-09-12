@@ -1158,6 +1158,121 @@
     }
 
 
+
+    /* =========================================================
+       TÉCNICOS - SOLO CONSULTA
+       ========================================================= */
+    .orden-tecnicos {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 6px;
+    }
+
+    .orden-tecnicos-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--muted, #6e6e73);
+        font-size: 8px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+    .tecnico-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 20px;
+        padding: 2px 7px;
+        border: 1px solid rgba(0, 113, 227, 0.16);
+        border-radius: 999px;
+        background: rgba(0, 113, 227, 0.055);
+        color: #0066cc;
+        font-size: 8px;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .tecnico-vacio {
+        color: #8e8e93;
+        font-size: 8px;
+        font-weight: 600;
+    }
+
+    .consulta-table .col-tech {
+        width: 16%;
+        text-align: left;
+    }
+
+    .consulta-tecnico {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #3a3a3c;
+        font-size: 8.5px;
+        font-weight: 650;
+        line-height: 1.25;
+    }
+
+    .consulta-tecnico i {
+        color: #8e8e93;
+        font-size: 9px;
+    }
+
+    .consulta-tecnico.no-registrado {
+        color: #8e8e93;
+        font-weight: 550;
+    }
+
+    .consulta-table tbody tr:not(.consulta-empty-row):hover .consulta-tecnico {
+        color: #0066cc;
+    }
+
+    .consulta-table tbody tr:not(.consulta-empty-row):hover .col-money:last-child {
+        font-weight: 800;
+        color: #0066cc;
+    }
+
+
+    /* Ajuste de proporciones al añadir Técnico en MOI / MOE */
+    .consulta-table .col-ref {
+        width: 17%;
+    }
+
+    .consulta-table .col-desc {
+        width: 34%;
+    }
+
+    .consulta-table .col-tech {
+        width: 16%;
+    }
+
+    .consulta-table .col-money,
+    .consulta-table .col-qty {
+        width: 11%;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .consulta-economic-value,
+    .orden-metric-value,
+    .consulta-subtotal-box,
+    .consulta-total-value {
+        font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 640px) {
+        .orden-tecnicos {
+            margin-top: 5px;
+        }
+
+        .tecnico-chip {
+            min-height: 19px;
+            padding: 2px 6px;
+        }
+    }
+
 </style>
 
 <div class="container historial-wrapper">
@@ -1364,6 +1479,23 @@
                                     · {{ orden.sucursal.nombre }}
                                 {% endif %}
                             </div>
+
+                            <div class="orden-tecnicos">
+                                <span class="orden-tecnicos-label">
+                                    <i class="bi bi-person-gear"></i>
+                                    Técnicos
+                                </span>
+
+                                {% for tecnico in orden.tecnicos_consulta %}
+                                    <span class="tecnico-chip">
+                                        {{ tecnico.nombre }}
+                                    </span>
+                                {% empty %}
+                                    <span class="tecnico-vacio">
+                                        No registrado
+                                    </span>
+                                {% endfor %}
+                            </div>
                         </div>
 
                         <div>
@@ -1519,6 +1651,7 @@
                                     <tr>
                                         <th class="col-ref">Cód. / referencia</th>
                                         <th class="col-desc">Descripción</th>
+                                        <th class="col-tech">Técnico</th>
                                         <th class="col-money">P.U.</th>
                                         <th class="col-qty">Cantidad</th>
                                         <th class="col-money">Valor</th>
@@ -1606,6 +1739,7 @@
                                     <tr>
                                         <th class="col-ref">Cód. / referencia</th>
                                         <th class="col-desc">Descripción</th>
+                                        <th class="col-tech">Técnico</th>
                                         <th class="col-money">P.U.</th>
                                         <th class="col-qty">Cantidad</th>
                                         <th class="col-money">Valor</th>
@@ -1643,6 +1777,19 @@
                                                 {% endif %}
                                             </td>
 
+                                            <td class="col-tech">
+                                                {% if item.tecnico %}
+                                                    <span class="consulta-tecnico">
+                                                        <i class="bi bi-person"></i>
+                                                        {{ item.tecnico }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="consulta-tecnico no-registrado">
+                                                        —
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+
                                             <td class="col-money">
                                                 {% if item.precio_unitario is not None %}
                                                     ${{ item.precio_unitario|floatformat:"2" }}
@@ -1669,7 +1816,7 @@
                                         </tr>
                                     {% empty %}
                                         <tr class="consulta-empty-row">
-                                            <td colspan="5">
+                                            <td colspan="6">
                                                 Sin mano de obra interna registrada.
                                             </td>
                                         </tr>
@@ -1746,6 +1893,19 @@
                                                 {% endif %}
                                             </td>
 
+                                            <td class="col-tech">
+                                                {% if item.tecnico %}
+                                                    <span class="consulta-tecnico">
+                                                        <i class="bi bi-person"></i>
+                                                        {{ item.tecnico }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="consulta-tecnico no-registrado">
+                                                        —
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+
                                             <td class="col-money">
                                                 {% if item.precio_unitario is not None %}
                                                     ${{ item.precio_unitario|floatformat:"2" }}
@@ -1772,7 +1932,7 @@
                                         </tr>
                                     {% empty %}
                                         <tr class="consulta-empty-row">
-                                            <td colspan="5">
+                                            <td colspan="6">
                                                 Sin mano de obra externa registrada.
                                             </td>
                                         </tr>
