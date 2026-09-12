@@ -6,11 +6,60 @@
     ========================================================= */
 
     .canvas-modal-bg {
-        background-image: url('{% static "base_autos.svg" %}');
-        background-position: center;
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
-        background-color: #ffffff;
+        position: relative;
+        width: 100%;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    /* =========================================================
+       CROQUIS COMPATIBLE
+       V1 = base_autos.svg + PNG transparente de trazos
+       V2 = PNG final completo con las 5 vistas
+    ========================================================= */
+
+    .croquis-modal-v1 {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1000 / 220;
+        background: #ffffff;
+    }
+
+    .croquis-modal-v1-base,
+    .croquis-modal-v1-trazos {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        display: block;
+    }
+
+    .croquis-modal-v1-base {
+        z-index: 1;
+    }
+
+    .croquis-modal-v1-trazos {
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .croquis-modal-v2 {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        background: #ffffff;
+    }
+
+    .croquis-modal-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.85rem;
+        background: #ffffff;
     }
 
     .modal-item-row {
@@ -1233,6 +1282,10 @@
 
             <!-- =================================================
                  CROQUIS
+
+                 COMPATIBILIDAD:
+                 - V1: órdenes antiguas -> base_autos.svg + trazos
+                 - V2: órdenes nuevas   -> PNG final con 5 vistas
             ================================================== -->
 
             <div style="margin-bottom:25px;">
@@ -1242,14 +1295,53 @@
                     Croquis del vehículo
                 </label>
 
-                <div class="canvas-modal-bg"
-                     style="position:relative; width:100%; border:1px solid var(--border-soft); border-radius:12px; overflow:hidden; aspect-ratio:1000/220;">
+                <div class="canvas-modal-bg">
 
-                    {% if croquis_url %}
+                    {% if orden.croquis_danio and orden.croquis_danio.imagen_generada %}
 
-                        <img src="{{ croquis_url }}"
-                             alt="Croquis guardado"
-                             style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:fill; z-index:5; pointer-events:none;">
+                        {% if orden.croquis_danio.version_croquis == 1 %}
+
+                            <!-- =========================================
+                                 CROQUIS V1 - SISTEMA ANTIGUO
+                                 La silueta del vehículo estaba fuera del
+                                 PNG y los rayones se guardaban encima.
+                            ========================================== -->
+                            <div class="croquis-modal-v1">
+
+                                <img
+                                    src="{% static 'base_autos.svg' %}"
+                                    class="croquis-modal-v1-base"
+                                    alt="Base del croquis del vehículo"
+                                >
+
+                                <img
+                                    src="{{ orden.croquis_danio.imagen_generada.url }}"
+                                    class="croquis-modal-v1-trazos"
+                                    alt="Daños registrados en el croquis"
+                                >
+
+                            </div>
+
+                        {% else %}
+
+                            <!-- =========================================
+                                 CROQUIS V2 - SISTEMA NUEVO
+                                 El PNG ya contiene las 5 vistas SVG y
+                                 todos los rayones registrados.
+                            ========================================== -->
+                            <img
+                                src="{{ orden.croquis_danio.imagen_generada.url }}"
+                                class="croquis-modal-v2"
+                                alt="Croquis completo del vehículo"
+                            >
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <div class="croquis-modal-empty">
+                            No existe croquis registrado.
+                        </div>
 
                     {% endif %}
 

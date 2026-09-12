@@ -3535,6 +3535,15 @@ class OrdenCroquisDanio(models.Model):
         blank=True,
     )
 
+    # =========================================================
+    # VERSIÓN DEL CROQUIS
+    # 1 = sistema antiguo
+    # 2 = sistema nuevo con 5 vistas SVG
+    # =========================================================
+    version_croquis = models.PositiveSmallIntegerField(
+        default=1,
+    )
+
     observacion = models.CharField(
         max_length=255,
         null=True,

@@ -1,40 +1,872 @@
 {% load static %}
+
 <style>
-    /* Ponemos el CSS aquí arriba para que VS Code no se confunda con el código de Django */
-    .canvas-croquis-bg {
-        background-image: url('{% static "base_autos.svg" %}');
-        background-position: center;
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-color: transparent;
-        cursor: crosshair;
-        touch-action: none;
+    /* =========================================================
+       PASO 5 - CROQUIS DE DAÑOS
+       ========================================================= */
+
+    .croquis-wrapper {
         width: 100%;
         max-width: 1000px;
-        height: 220px;
-        display: block;
         margin: 0 auto;
+    }
+
+    /* =========================================================
+       NAVEGACIÓN SUPERIOR
+       ========================================================= */
+
+    .croquis-nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0;
+    }
+
+    .croquis-nav-btn {
+        border: 1px solid #d2d2d7;
+        background: #ffffff;
+        color: #1d1d1f;
+        border-radius: 999px;
+        padding: 7px 16px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+            background-color .2s ease,
+            color .2s ease,
+            border-color .2s ease,
+            transform .15s ease,
+            box-shadow .2s ease;
+    }
+
+    .croquis-nav-btn:hover {
+        border-color: #0071e3;
+        color: #0071e3;
+        transform: translateY(-1px);
+    }
+
+    .croquis-nav-btn.active {
+        background: #0071e3;
+        border-color: #0071e3;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 113, 227, 0.22);
+    }
+
+    /* =========================================================
+       INFORMACIÓN DE VISTA
+       ========================================================= */
+
+    .croquis-vista-info {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .croquis-vista-nombre {
+        font-weight: 600;
+        color: #1d1d1f;
+        font-size: 0.92rem;
+    }
+
+    .croquis-vista-contador {
+        font-size: 0.75rem;
+        color: #86868b;
+        background: #f5f5f7;
+        padding: 3px 9px;
+        border-radius: 999px;
+    }
+
+    /* =========================================================
+       CARRUSEL
+       ========================================================= */
+
+    .croquis-carousel {
+        position: relative;
+        width: 100%;
+        background: #4a4a4a;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.30);
+        min-height: 420px;
+    }
+
+    .croquis-slides {
+        position: relative;
+        width: 100%;
+        height: 420px;
+        overflow: hidden;
+    }
+
+    .croquis-slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 70px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(70px);
+        transition:
+            transform .28s ease,
+            opacity .28s ease,
+            visibility .28s ease;
+        pointer-events: none;
+    }
+
+    .croquis-slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+        z-index: 2;
+        pointer-events: auto;
+    }
+
+    .croquis-slide.slide-left {
+        transform: translateX(-70px);
+    }
+
+    /* =========================================================
+       ÁREA DE DIBUJO
+       ========================================================= */
+
+    .croquis-stage {
+        position: relative;
+        width: 100%;
+        max-width: 650px;
+        aspect-ratio: 5 / 4;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.20);
+        user-select: none;
+    }
+
+    .croquis-base {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .croquis-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+        touch-action: none;
+        background: transparent;
+    }
+
+    /* =========================================================
+       FLECHAS
+       ========================================================= */
+
+    .croquis-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.92);
+        color: #1d1d1f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.5rem;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+        transition:
+            transform .15s ease,
+            background-color .15s ease;
+    }
+
+    .croquis-arrow:hover {
+        background: #ffffff;
+        transform: translateY(-50%) scale(1.06);
+    }
+
+    .croquis-arrow-prev {
+        left: 14px;
+    }
+
+    .croquis-arrow-next {
+        right: 14px;
+    }
+
+    /* =========================================================
+       INDICADORES
+       ========================================================= */
+
+    .croquis-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 7px;
+        margin-top: 12px;
+    }
+
+    .croquis-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #d2d2d7;
+        transition:
+            width .2s ease,
+            background-color .2s ease;
+    }
+
+    .croquis-dot.active {
+        width: 20px;
+        border-radius: 999px;
+        background: #0071e3;
+    }
+
+    /* =========================================================
+       ACCIONES
+       ========================================================= */
+
+    .croquis-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (max-width: 768px) {
+        .croquis-carousel,
+        .croquis-slides {
+            min-height: 350px;
+            height: 350px;
+        }
+
+        .croquis-slide {
+            padding: 20px 55px;
+        }
+
+        .croquis-arrow {
+            width: 38px;
+            height: 38px;
+        }
+
+        .croquis-arrow-prev {
+            left: 8px;
+        }
+
+        .croquis-arrow-next {
+            right: 8px;
+        }
+
+        .croquis-nav-btn {
+            padding: 6px 12px;
+            font-size: 0.76rem;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .croquis-carousel,
+        .croquis-slides {
+            min-height: 300px;
+            height: 300px;
+        }
+
+        .croquis-slide {
+            padding: 15px 45px;
+        }
     }
 </style>
 
 <div class="step-container" id="step_5">
+
     <div class="section-header">
-        <i class="bi bi-car-front text-primary"></i> 5. Croquis de Daños
+        <i class="bi bi-car-front text-primary"></i>
+        5. Croquis de Daños
     </div>
-    
+
     <p class="text-muted small text-center mb-2">
-        <i class="bi bi-hand-index-thumb"></i> Dibuje sobre la silueta para marcar rayas, golpes o daños de carrocería.
+        <i class="bi bi-hand-index-thumb"></i>
+        Seleccione una vista y dibuje sobre la silueta para marcar rayas, golpes o daños.
     </p>
 
-    <div style="position: relative; background: #4a4a4a; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.3);">
-        <canvas id="canvasCroquis" class="canvas-croquis-bg"></canvas>
+    <div class="croquis-wrapper">
+
+        <!-- =====================================================
+             BOTONES SUPERIORES
+             ===================================================== -->
+
+        <div class="croquis-nav">
+            <button type="button" class="croquis-nav-btn active" data-vista-index="0" onclick="irVistaCroquis(0)">
+                Izquierda
+            </button>
+
+            <button type="button" class="croquis-nav-btn" data-vista-index="1" onclick="irVistaCroquis(1)">
+                Frente
+            </button>
+
+            <button type="button" class="croquis-nav-btn" data-vista-index="2" onclick="irVistaCroquis(2)">
+                Derecha
+            </button>
+
+            <button type="button" class="croquis-nav-btn" data-vista-index="3" onclick="irVistaCroquis(3)">
+                Trasera
+            </button>
+
+            <button type="button" class="croquis-nav-btn" data-vista-index="4" onclick="irVistaCroquis(4)">
+                Superior
+            </button>
+        </div>
+
+        <!-- =====================================================
+             NOMBRE / CONTADOR
+             ===================================================== -->
+
+        <div class="croquis-vista-info">
+            <span class="croquis-vista-nombre" id="croquisVistaNombre">
+                Lado izquierdo
+            </span>
+
+            <span class="croquis-vista-contador" id="croquisVistaContador">
+                1 de 5
+            </span>
+        </div>
+
+        <!-- =====================================================
+             CARRUSEL
+             ===================================================== -->
+
+        <div class="croquis-carousel">
+
+            <button
+                type="button"
+                class="croquis-arrow croquis-arrow-prev"
+                onclick="croquisAnterior()"
+                aria-label="Vista anterior"
+            >
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <div class="croquis-slides">
+
+                <!-- IZQUIERDA -->
+                <div class="croquis-slide active" data-index="0">
+                    <div class="croquis-stage">
+                        <img
+                            id="img_croquis_izquierda"
+                            class="croquis-base"
+                            src="{% static 'croquis/automovil/izquierda.svg' %}"
+                            alt="Vista izquierda"
+                            draggable="false"
+                        >
+
+                        <canvas
+                            id="canvas_croquis_izquierda"
+                            class="croquis-canvas"
+                            width="800"
+                            height="640"
+                        ></canvas>
+                    </div>
+                </div>
+
+                <!-- FRENTE -->
+                <div class="croquis-slide" data-index="1">
+                    <div class="croquis-stage">
+                        <img
+                            id="img_croquis_frente"
+                            class="croquis-base"
+                            src="{% static 'croquis/automovil/frente.svg' %}"
+                            alt="Vista frontal"
+                            draggable="false"
+                        >
+
+                        <canvas
+                            id="canvas_croquis_frente"
+                            class="croquis-canvas"
+                            width="800"
+                            height="640"
+                        ></canvas>
+                    </div>
+                </div>
+
+                <!-- DERECHA -->
+                <div class="croquis-slide" data-index="2">
+                    <div class="croquis-stage">
+                        <img
+                            id="img_croquis_derecha"
+                            class="croquis-base"
+                            src="{% static 'croquis/automovil/derecha.svg' %}"
+                            alt="Vista derecha"
+                            draggable="false"
+                        >
+
+                        <canvas
+                            id="canvas_croquis_derecha"
+                            class="croquis-canvas"
+                            width="800"
+                            height="640"
+                        ></canvas>
+                    </div>
+                </div>
+
+                <!-- TRASERA -->
+                <div class="croquis-slide" data-index="3">
+                    <div class="croquis-stage">
+                        <img
+                            id="img_croquis_trasera"
+                            class="croquis-base"
+                            src="{% static 'croquis/automovil/trasera.svg' %}"
+                            alt="Vista trasera"
+                            draggable="false"
+                        >
+
+                        <canvas
+                            id="canvas_croquis_trasera"
+                            class="croquis-canvas"
+                            width="800"
+                            height="640"
+                        ></canvas>
+                    </div>
+                </div>
+
+                <!-- SUPERIOR -->
+                <div class="croquis-slide" data-index="4">
+                    <div class="croquis-stage">
+                        <img
+                            id="img_croquis_superior"
+                            class="croquis-base"
+                            src="{% static 'croquis/automovil/superior.svg' %}"
+                            alt="Vista superior"
+                            draggable="false"
+                        >
+
+                        <canvas
+                            id="canvas_croquis_superior"
+                            class="croquis-canvas"
+                            width="800"
+                            height="640"
+                        ></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                class="croquis-arrow croquis-arrow-next"
+                onclick="croquisSiguiente()"
+                aria-label="Vista siguiente"
+            >
+                <i class="bi bi-chevron-right"></i>
+            </button>
+
+        </div>
+
+        <!-- =====================================================
+             INDICADORES
+             ===================================================== -->
+
+        <div class="croquis-dots">
+            <span class="croquis-dot active" data-dot="0"></span>
+            <span class="croquis-dot" data-dot="1"></span>
+            <span class="croquis-dot" data-dot="2"></span>
+            <span class="croquis-dot" data-dot="3"></span>
+            <span class="croquis-dot" data-dot="4"></span>
+        </div>
+
+        <!-- =====================================================
+             ACCIONES
+             ===================================================== -->
+
+        <div class="croquis-actions">
+            <button
+                type="button"
+                class="btn-mao btn-mao-danger-soft btn-pill"
+                onclick="limpiarVistaCroquis()"
+            >
+                <i class="bi bi-eraser"></i>
+                Limpiar esta vista
+            </button>
+
+            <button
+                type="button"
+                class="btn-mao btn-mao-danger-soft btn-pill"
+                onclick="limpiarTodoCroquis()"
+            >
+                <i class="bi bi-trash3"></i>
+                Limpiar todo
+            </button>
+        </div>
+
     </div>
 
-    <div class="text-center mt-3">
-        <button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="limpiarCanvas()">
-            <i class="bi bi-eraser"></i> Limpiar Dibujo
-        </button>
-    </div>
-    
-    <input type="hidden" name="imagen_croquis_base64" id="id_croquis_base64">
+    <!-- =========================================================
+         INPUT QUE RECIBE DJANGO
+         ========================================================= -->
+
+    <input
+        type="hidden"
+        name="imagen_croquis_base64"
+        id="id_croquis_base64"
+    >
+
+    <!-- =========================================================
+         CANVAS FINAL OCULTO
+         NO usar el antiguo id canvasCroquis.
+         ========================================================= -->
+
+    <canvas
+        id="canvasCroquisFinal"
+        width="1000"
+        height="160"
+        style="display:none;"
+    ></canvas>
+
 </div>
+
+<script>
+    /* =========================================================
+       CONFIGURACIÓN
+       ========================================================= */
+
+    const CROQUIS_VISTAS = [
+        { codigo: "izquierda", nombre: "Lado izquierdo" },
+        { codigo: "frente", nombre: "Frente" },
+        { codigo: "derecha", nombre: "Lado derecho" },
+        { codigo: "trasera", nombre: "Parte trasera" },
+        { codigo: "superior", nombre: "Vista superior" }
+    ];
+
+    const CROQUIS_SALIDA_ANCHO = 200;
+    const CROQUIS_SALIDA_ALTO = 160;
+
+    let croquisVistaActual = 0;
+
+    /* =========================================================
+       DIBUJO DE CADA VISTA
+       ========================================================= */
+
+    function inicializarCanvasCroquis(codigo) {
+        const canvas = document.getElementById(`canvas_croquis_${codigo}`);
+
+        if (!canvas || canvas.dataset.inicializado === "1") {
+            return;
+        }
+
+        canvas.dataset.inicializado = "1";
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.strokeStyle = "#ff3b30";
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        let dibujando = false;
+
+        function obtenerPosicion(evento) {
+            const rect = canvas.getBoundingClientRect();
+
+            return {
+                x: (evento.clientX - rect.left) * (canvas.width / rect.width),
+                y: (evento.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        canvas.addEventListener("pointerdown", function (evento) {
+            evento.preventDefault();
+
+            dibujando = true;
+
+            try {
+                canvas.setPointerCapture(evento.pointerId);
+            } catch (error) {
+                // No afecta al dibujo si el navegador no permite capturarlo.
+            }
+
+            const posicion = obtenerPosicion(evento);
+
+            ctx.beginPath();
+            ctx.moveTo(posicion.x, posicion.y);
+        });
+
+        canvas.addEventListener("pointermove", function (evento) {
+            if (!dibujando) {
+                return;
+            }
+
+            evento.preventDefault();
+
+            const posicion = obtenerPosicion(evento);
+
+            ctx.lineTo(posicion.x, posicion.y);
+            ctx.stroke();
+        });
+
+        function finalizarTrazo(evento) {
+            if (!dibujando) {
+                return;
+            }
+
+            dibujando = false;
+            ctx.closePath();
+
+            if (evento && canvas.hasPointerCapture && canvas.hasPointerCapture(evento.pointerId)) {
+                try {
+                    canvas.releasePointerCapture(evento.pointerId);
+                } catch (error) {
+                    // Sin acción.
+                }
+            }
+        }
+
+        canvas.addEventListener("pointerup", finalizarTrazo);
+        canvas.addEventListener("pointercancel", finalizarTrazo);
+    }
+
+    /* =========================================================
+       NAVEGACIÓN
+       ========================================================= */
+
+    function irVistaCroquis(nuevoIndice) {
+        if (
+            nuevoIndice < 0 ||
+            nuevoIndice >= CROQUIS_VISTAS.length ||
+            nuevoIndice === croquisVistaActual
+        ) {
+            return;
+        }
+
+        const indiceAnterior = croquisVistaActual;
+        croquisVistaActual = nuevoIndice;
+
+        document.querySelectorAll(".croquis-slide").forEach(function (slide) {
+            slide.classList.remove("active", "slide-left");
+        });
+
+        const slideNuevo = document.querySelector(
+            `.croquis-slide[data-index="${nuevoIndice}"]`
+        );
+
+        if (slideNuevo) {
+            if (nuevoIndice < indiceAnterior) {
+                slideNuevo.classList.add("slide-left");
+
+                requestAnimationFrame(function () {
+                    slideNuevo.classList.add("active");
+                    slideNuevo.classList.remove("slide-left");
+                });
+            } else {
+                slideNuevo.classList.add("active");
+            }
+        }
+
+        actualizarNavegacionCroquis();
+    }
+
+    function croquisAnterior() {
+        let nuevoIndice = croquisVistaActual - 1;
+
+        if (nuevoIndice < 0) {
+            nuevoIndice = CROQUIS_VISTAS.length - 1;
+        }
+
+        irVistaCroquis(nuevoIndice);
+    }
+
+    function croquisSiguiente() {
+        let nuevoIndice = croquisVistaActual + 1;
+
+        if (nuevoIndice >= CROQUIS_VISTAS.length) {
+            nuevoIndice = 0;
+        }
+
+        irVistaCroquis(nuevoIndice);
+    }
+
+    function actualizarNavegacionCroquis() {
+        document.querySelectorAll(".croquis-nav-btn").forEach(function (boton) {
+            const indice = Number(boton.dataset.vistaIndex);
+
+            boton.classList.toggle(
+                "active",
+                indice === croquisVistaActual
+            );
+        });
+
+        document.querySelectorAll(".croquis-dot").forEach(function (dot) {
+            const indice = Number(dot.dataset.dot);
+
+            dot.classList.toggle(
+                "active",
+                indice === croquisVistaActual
+            );
+        });
+
+        const nombre = document.getElementById("croquisVistaNombre");
+        const contador = document.getElementById("croquisVistaContador");
+
+        if (nombre) {
+            nombre.textContent = CROQUIS_VISTAS[croquisVistaActual].nombre;
+        }
+
+        if (contador) {
+            contador.textContent = `${croquisVistaActual + 1} de ${CROQUIS_VISTAS.length}`;
+        }
+    }
+
+    /* =========================================================
+       LIMPIAR
+       ========================================================= */
+
+    function limpiarVistaCroquis() {
+        const vista = CROQUIS_VISTAS[croquisVistaActual];
+        const canvas = document.getElementById(`canvas_croquis_${vista.codigo}`);
+
+        if (!canvas) {
+            return;
+        }
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const hidden = document.getElementById("id_croquis_base64");
+        if (hidden) {
+            hidden.value = "";
+        }
+    }
+
+    function limpiarTodoCroquis() {
+        CROQUIS_VISTAS.forEach(function (vista) {
+            const canvas = document.getElementById(`canvas_croquis_${vista.codigo}`);
+
+            if (!canvas) {
+                return;
+            }
+
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        const finalCanvas = document.getElementById("canvasCroquisFinal");
+
+        if (finalCanvas) {
+            finalCanvas.getContext("2d").clearRect(
+                0,
+                0,
+                finalCanvas.width,
+                finalCanvas.height
+            );
+        }
+
+        const hidden = document.getElementById("id_croquis_base64");
+
+        if (hidden) {
+            hidden.value = "";
+        }
+    }
+
+    /* =========================================================
+       GENERAR IMAGEN FINAL
+       ========================================================= */
+
+    function generarCroquisFinal() {
+        const finalCanvas = document.getElementById("canvasCroquisFinal");
+        const hidden = document.getElementById("id_croquis_base64");
+
+        if (!finalCanvas || !hidden) {
+            throw new Error("No se encontró el canvas final del croquis.");
+        }
+
+        finalCanvas.width = CROQUIS_SALIDA_ANCHO * CROQUIS_VISTAS.length;
+        finalCanvas.height = CROQUIS_SALIDA_ALTO;
+
+        const ctxFinal = finalCanvas.getContext("2d");
+
+        ctxFinal.clearRect(
+            0,
+            0,
+            finalCanvas.width,
+            finalCanvas.height
+        );
+
+        ctxFinal.fillStyle = "#ffffff";
+        ctxFinal.fillRect(
+            0,
+            0,
+            finalCanvas.width,
+            finalCanvas.height
+        );
+
+        CROQUIS_VISTAS.forEach(function (vista, indice) {
+            const x = indice * CROQUIS_SALIDA_ANCHO;
+
+            const imagen = document.getElementById(`img_croquis_${vista.codigo}`);
+            const dibujo = document.getElementById(`canvas_croquis_${vista.codigo}`);
+
+            if (!imagen || !imagen.complete || imagen.naturalWidth <= 0) {
+                throw new Error(`No se pudo cargar la vista ${vista.nombre}.`);
+            }
+
+            ctxFinal.drawImage(
+                imagen,
+                x,
+                0,
+                CROQUIS_SALIDA_ANCHO,
+                CROQUIS_SALIDA_ALTO
+            );
+
+            if (dibujo) {
+                ctxFinal.drawImage(
+                    dibujo,
+                    x,
+                    0,
+                    CROQUIS_SALIDA_ANCHO,
+                    CROQUIS_SALIDA_ALTO
+                );
+            }
+        });
+
+        hidden.value = finalCanvas.toDataURL("image/png");
+
+        return hidden.value;
+    }
+
+    /* =========================================================
+       INICIALIZACIÓN
+       ========================================================= */
+
+    document.addEventListener("DOMContentLoaded", function () {
+        CROQUIS_VISTAS.forEach(function (vista) {
+            inicializarCanvasCroquis(vista.codigo);
+        });
+
+        actualizarNavegacionCroquis();
+
+        // Protección adicional: si el formulario se envía por otra vía
+        // distinta al botón Guardar OT, también se prepara el croquis.
+        const paso5 = document.getElementById("step_5");
+        const formulario = paso5 ? paso5.closest("form") : null;
+
+        if (formulario) {
+            formulario.addEventListener("submit", function () {
+                generarCroquisFinal();
+            });
+        }
+    });
+</script>

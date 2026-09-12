@@ -355,7 +355,6 @@
         else if (pasoActual === totalPasos) { document.getElementById('btn_siguiente').style.display = 'none'; document.getElementById('btn_guardar').style.display = 'inline-flex'; generarResumen(); setTimeout(redimensionarCanvasFirma, 150); } 
         else { document.getElementById('btn_siguiente').style.display = 'inline-flex'; document.getElementById('btn_guardar').style.display = 'none'; }
 
-        if (pasoActual === 5) setTimeout(redimensionarCanvas, 150);
     }
 
     function limpiarDatosClienteFormulario({
@@ -772,28 +771,6 @@ function buscarCedula() {
 
 
     // ==========================================
-    // CANVAS CROQUIS
-    // ==========================================
-    const canvas = document.getElementById('canvasCroquis'); const ctx = canvas.getContext('2d'); let dibujando = false;
-    function redimensionarCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-            const tempCanvas = document.createElement('canvas'); const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = canvas.width; tempCanvas.height = canvas.height; tempCtx.drawImage(canvas, 0, 0);
-            canvas.width = rect.width; canvas.height = rect.height;
-            ctx.strokeStyle = '#ff3b30'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            ctx.drawImage(tempCanvas, 0, 0);
-        }
-    }
-    window.addEventListener('resize', () => { if (pasoActual === 5) redimensionarCanvas(); if (pasoActual === 7) redimensionarCanvasFirma(); });
-    function obtenerPosicion(evt) { const rect = canvas.getBoundingClientRect(); let clientX = evt.clientX || (evt.touches && evt.touches[0].clientX); let clientY = evt.clientY || (evt.touches && evt.touches[0].clientY); return { x: clientX - rect.left, y: clientY - rect.top }; }
-    function iniciarDibujo(e) { e.preventDefault(); dibujando = true; const pos = obtenerPosicion(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
-    function dibujar(e) { if (!dibujando) return; e.preventDefault(); const pos = obtenerPosicion(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
-    canvas.addEventListener('mousedown', iniciarDibujo); canvas.addEventListener('mousemove', dibujar); window.addEventListener('mouseup', () => dibujando = false);
-    canvas.addEventListener('touchstart', iniciarDibujo, {passive: false}); canvas.addEventListener('touchmove', dibujar, {passive: false}); window.addEventListener('touchend', () => dibujando = false);
-    function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-    // ==========================================
     // CANVAS FIRMA
     // ==========================================
     const canvasFirma = document.getElementById('canvasFirma'); const ctxFirma = canvasFirma.getContext('2d'); let dibujandoFirma = false;
@@ -813,6 +790,13 @@ function buscarCedula() {
     canvasFirma.addEventListener('mousedown', iniciarFirma); canvasFirma.addEventListener('mousemove', firmar); window.addEventListener('mouseup', () => dibujandoFirma = false);
     canvasFirma.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarFirma(e); }, {passive: false}); canvasFirma.addEventListener('touchmove', (e) => { e.preventDefault(); firmar(e); }, {passive: false}); window.addEventListener('touchend', () => dibujandoFirma = false);
     function limpiarFirma() { ctxFirma.clearRect(0, 0, canvasFirma.width, canvasFirma.height); }
+
+    // Redimensionar únicamente la firma cuando corresponda.
+    window.addEventListener('resize', () => {
+        if (pasoActual === 7) {
+            redimensionarCanvasFirma();
+        }
+    });
 
     // ==========================================
     // RESUMEN Y GUARDADO
@@ -853,40 +837,81 @@ function buscarCedula() {
     }
 
     function prepararGuardado(e) {
-        // 1. Detenemos el comportamiento nativo del botón que causa el congelamiento
-        e.preventDefault(); 
-        
-        if (!validarSucursalActiva()) { 
-            return false; 
+        // Evitar el envío automático mientras preparamos los datos.
+        e.preventDefault();
+
+        if (!validarSucursalActiva()) {
+            return false;
         }
 
         try {
-            // 2. Extraer imágenes a Base64
-            document.getElementById('id_croquis_base64').value = canvas.toDataURL('image/png');
-            document.getElementById('id_firma_base64').value = canvasFirma.toDataURL('image/png');
-            
-            // 3. Extraer Tablas a JSON
+            // ==========================================
+            // 1. GENERAR CROQUIS NUEVO
+            // ==========================================
+            // La función vive en paso5_croquis.html y combina
+            // las cinco vistas con sus respectivos trazos.
+            if (typeof generarCroquisFinal !== 'function') {
+                throw new Error('No se encontró la función generarCroquisFinal().');
+            }
+
+            generarCroquisFinal();
+
+            const inputCroquis = document.getElementById('id_croquis_base64');
+
+            if (!inputCroquis || !inputCroquis.value) {
+                throw new Error('No fue posible generar la imagen final del croquis.');
+            }
+
+            // ==========================================
+            // 2. FIRMA
+            // ==========================================
+            const inputFirma = document.getElementById('id_firma_base64');
+
+            if (inputFirma && canvasFirma) {
+                inputFirma.value = canvasFirma.toDataURL('image/png');
+            }
+
+            // ==========================================
+            // 3. TABLAS JSON
+            // ==========================================
             document.getElementById('id_sintomas_json').value = JSON.stringify(sintomas);
             document.getElementById('id_trabajos_json').value = JSON.stringify(trabajos);
             document.getElementById('id_objetos_json').value = JSON.stringify(objetos);
 
-            // 4. Deshabilitar botón visualmente
+            // ==========================================
+            // 4. ESTADO VISUAL DEL BOTÓN
+            // ==========================================
             const btnGuardar = document.getElementById('btn_guardar');
-            btnGuardar.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Procesando...';
-            btnGuardar.disabled = true;
 
-            // 5. ENVIAR EL FORMULARIO A LA FUERZA (Bypass de validación oculta)
+            if (btnGuardar) {
+                btnGuardar.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Procesando...';
+                btnGuardar.disabled = true;
+            }
+
+            // ==========================================
+            // 5. ENVIAR FORMULARIO
+            // ==========================================
             document.getElementById('formNuevaOrden').submit();
-            
+
+            return false;
+
         } catch (error) {
-            console.error("Error al procesar los datos: ", error);
+            console.error('Error al procesar la OT:', error);
+
             mostrarAlerta({
                 icon: 'error',
                 title: 'Error interno',
-                text: 'Hubo un problema al procesar los dibujos. Intente nuevamente.'
+                text: error.message || 'Hubo un problema al procesar los dibujos. Intente nuevamente.'
             });
-            document.getElementById('btn_guardar').innerHTML = '<i class="bi bi-save2"></i> Guardar OT';
-            document.getElementById('btn_guardar').disabled = false;
+
+            const btnGuardar = document.getElementById('btn_guardar');
+
+            if (btnGuardar) {
+                btnGuardar.innerHTML = '<i class="bi bi-save2"></i> Guardar OT';
+                btnGuardar.disabled = false;
+            }
+
+            return false;
         }
     }
 

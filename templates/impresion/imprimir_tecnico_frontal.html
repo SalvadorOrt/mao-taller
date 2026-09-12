@@ -1,341 +1,1188 @@
 {% load static %}
 
+<style>
+    /* =========================================================
+       CROQUIS - IMPRESIÓN
+
+       V1 = sistema antiguo:
+            base_autos.svg + PNG transparente de daños
+
+       V2 = sistema nuevo:
+            PNG final con las 5 vistas + daños
+       ========================================================= */
+
+    .sketch-box {
+        width: 100%;
+        min-height: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #ffffff;
+        border-radius: 8px;
+    }
+
+    /* =========================================================
+       CROQUIS V1 - HISTÓRICO
+       ========================================================= */
+
+    .croquis-v1-wrap {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1000 / 220;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .croquis-v1-base,
+    .croquis-v1-danios {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        display: block;
+    }
+
+    .croquis-v1-base {
+        z-index: 1;
+    }
+
+    .croquis-v1-danios {
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    /* =========================================================
+       CROQUIS V2 - NUEVO
+       ========================================================= */
+
+    .img-croquis-final {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 170px;
+        object-fit: contain;
+        margin: 0 auto;
+    }
+
+    .croquis-sin-registro {
+        width: 100%;
+        padding: 30px 15px;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 600;
+        color: #777;
+        border: 1px dashed #bbb;
+        border-radius: 6px;
+        background: #fafafa;
+    }
+
+    @media print {
+        .sketch-box,
+        .croquis-v1-wrap {
+            break-inside: avoid;
+        }
+
+        .img-croquis-final {
+            width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+        }
+    }
+</style>
+
 
 <div class="page">
 
+    <!-- =========================================================
+         CABECERA
+         ========================================================= -->
+
     <table class="top-table">
+
         <tr>
+
             <td class="top-left">
+
                 <div class="logo">
+
                     {% if empresa and empresa.logo %}
-                        <img src="{{ empresa.logo.url }}" alt="Logo Empresa">
+
+                        <img
+                            src="{{ empresa.logo.url }}"
+                            alt="Logo Empresa"
+                        >
+
                     {% else %}
-                        <img src="{% static 'logo.png' %}" alt="Logo MAO">
+
+                        <img
+                            src="{% static 'logo.png' %}"
+                            alt="Logo MAO"
+                        >
+
                     {% endif %}
+
                 </div>
+
 
                 <div class="company">
-                    RUC: {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}<br>
+
+                    RUC:
+                    {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
+
+                    <br>
+
                     {{ empresa.direccion|default:"Quito, Ecuador" }}
+
                 </div>
+
             </td>
+
 
             <td class="top-right">
-                <div class="titulo-ot">Orden de Trabajo</div>
-                <div class="numero-ot">N° {{ orden.numero_orden|default:"000000" }}</div>
+
+                <div class="titulo-ot">
+                    Orden de Trabajo
+                </div>
+
+
+                <div class="numero-ot">
+
+                    N°
+                    {{ orden.numero_orden|default:"000000" }}
+
+                </div>
+
 
                 <table class="meta-table">
+
                     <tr>
+
                         <td>
-                            <span>Sucursal</span>
+
+                            <span>
+                                Sucursal
+                            </span>
+
                             {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+
                         </td>
+
+
                         <td>
-                            <span>Fecha impresión</span>
+
+                            <span>
+                                Fecha impresión
+                            </span>
+
                             {% now "d/m/Y H:i" %}
+
                         </td>
+
+
                         <td>
-                            <span>Estado</span>
+
+                            <span>
+                                Estado
+                            </span>
+
                             {{ orden.get_estado_display|default:"ABIERTA" }}
+
                         </td>
+
                     </tr>
+
                 </table>
+
             </td>
+
         </tr>
+
     </table>
 
-    <div class="section">
-        <div class="section-title">Cliente y vehículo</div>
 
-        <div class="panel">
-            <div class="grid-2">
-                <div>
-                    <div class="field">
-                        <div class="label">Cliente / Razón social</div>
-                        <div class="value">
-                            {{ orden.cliente.nombre_completo|upper|default:orden.cliente_respaldo|upper|default:"CLIENTE MOSTRADOR" }}
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="field">
-                            <div class="label">RUC / C.I.</div>
-                            <div class="value">{{ orden.cliente.identificacion|default:"-" }}</div>
-                        </div>
-
-                        <div class="field">
-                            <div class="label">Teléfono</div>
-                            <div class="value">{{ orden.cliente.telefono|default:"-" }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="grid-3">
-                        <div class="field">
-                            <div class="label">Placa</div>
-                            <div class="value">{{ orden.placa|upper|default:"S/P" }}</div>
-                        </div>
-
-                        <div class="field">
-                            <div class="label">Kilometraje</div>
-                            <div class="value">{{ orden.kilometraje|default:"0" }} KM</div>
-                        </div>
-
-                        <div class="field">
-                            <div class="label">Clave / PIN</div>
-                            <div class="value">
-                                {{ orden.clave_encendido|default:"-" }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="field">
-                            <div class="label">Marca / Modelo</div>
-                            <div class="value">{{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}</div>
-                        </div>
-
-                        <div class="field">
-                            <div class="label">Color / Año</div>
-                            <div class="value">
-                                {{ orden.color|upper|default:"-" }} / {{ orden.anio_vehiculo|default:"-" }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Estado del vehículo al ingreso</div>
-
-        <div class="panel">
-            <div class="vehicle-row">
-
-                <div class="sketch-box">
-                    <img src="{% static 'base_autos.svg' %}?v=4" class="img-auto-base" alt="Croquis vehículo">
-
-                    {% if croquis and croquis.imagen_generada %}
-                        <img src="{{ croquis.imagen_generada.url }}" class="img-croquis-danios" alt="Daños registrados">
-                    {% endif %}
-                </div>
-
-                <div class="fuel-box">
-                    <div class="field">
-                        <div class="label">Combustible</div>
-                        <div class="value">{{ orden.get_nivel_combustible_display|default:"1/2" }}</div>
-                    </div>
-
-                    <div class="field">
-                        <div class="label">Ingreso</div>
-                        <div class="value">
-                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="vehicle-checks">
-                    <div class="grid-3">
-                        <div class="check-card">
-                            <div class="check-title">Exterior</div>
-                            <ul class="check-list">
-                                <li><span class="check-box {% if chk.tapacubos %}checked{% endif %}"></span> Tapacubos</li>
-                                <li><span class="check-box {% if chk.plumas %}checked{% endif %}"></span> Plumas</li>
-                                <li><span class="check-box {% if chk.antena %}checked{% endif %}"></span> Antena</li>
-                                <li><span class="check-box {% if chk.faros_lunas %}checked{% endif %}"></span> Faros</li>
-                            </ul>
-                        </div>
-
-                        <div class="check-card">
-                            <div class="check-title">Interior</div>
-                            <ul class="check-list">
-                                <li><span class="check-box {% if chk.radio %}checked{% endif %}"></span> Radio / LCD</li>
-                                <li><span class="check-box {% if chk.encendedor_cig %}checked{% endif %}"></span> Encendedor</li>
-                                <li><span class="check-box {% if chk.matricula %}checked{% endif %}"></span> Matrícula</li>
-                                <li><span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}"></span> Tuerca Seg.</li>
-                            </ul>
-                        </div>
-
-                        <div class="check-card">
-                            <div class="check-title">Baúl</div>
-                            <ul class="check-list">
-                                <li><span class="check-box {% if chk.gata %}checked{% endif %}"></span> Gata</li>
-                                <li><span class="check-box {% if chk.herramientas %}checked{% endif %}"></span> Herr.</li>
-                                <li><span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}"></span> Llanta E.</li>
-                                <li><span class="check-box {% if chk.triangulos %}checked{% endif %}"></span> Triángulos</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="field" style="margin-top: 7px; margin-bottom: 0;">
-                    <div class="label">Objetos adicionales</div>
-                    <div class="value">
-                        {% for obj in orden.ordenobjetoadicional_set.all %}
-                            {{ obj.cantidad }}x {{ obj.descripcion|upper }}{% if obj.observacion %} ({{ obj.observacion }}){% endif %}{% if not forloop.last %}, {% endif %}
-                        {% empty %}
-                            NINGUNO REPORTADO
-                        {% endfor %}
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Reporte del cliente / motivo de ingreso</div>
-
-        <div class="report">
-            {% if orden.sintomas_cliente %}
-                {{ orden.sintomas_cliente|upper }}
-            {% else %}
-                {% for s in orden.sintomas_items.all %}
-                    • {{ s.descripcion|upper }}<br>
-                {% empty %}
-                    REVISIÓN TÉCNICA GENERAL / NO ESPECIFICADO
-                {% endfor %}
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Trabajos a realizar</div>
-
-        <table class="trabajos-table">
-            <thead>
-                <tr>
-                    <th style="width: 40px;" class="center">#</th>
-                    <th>Descripción de las Operaciones</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for t in orden.trabajos_solicitados_items.all %}
-                    <tr>
-                        <td class="center">{{ forloop.counter }}</td>
-                        <td>{{ t.descripcion_manual|upper }}</td>
-                    </tr>
-                {% endfor %}
-
-                {% for s in orden.servicios_detalles.all %}
-                    <tr>
-                        <td class="center">-</td>
-                        <td>{{ s.servicio.descripcion|upper }}</td>
-                    </tr>
-                {% endfor %}
-
-                {% for i in "1"|make_list %}
-                    <tr>
-                        <td style="height: 18px;"></td>
-                        <td></td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
 
     <!-- =========================================================
-         AUTORIZACIÓN Y RECIBÍ CONFORME — PRIMERA HOJA
-    ========================================================== -->
+         CLIENTE Y VEHÍCULO
+         ========================================================= -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Cliente y vehículo
+        </div>
+
+
+        <div class="panel">
+
+            <div class="grid-2">
+
+
+                <!-- CLIENTE -->
+
+                <div>
+
+                    <div class="field">
+
+                        <div class="label">
+                            Cliente / Razón social
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.cliente.nombre_completo|upper|default:orden.cliente_respaldo|upper|default:"CLIENTE MOSTRADOR" }}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="grid-2">
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                RUC / C.I.
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.cliente.identificacion|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Teléfono
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.cliente.telefono|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- VEHÍCULO -->
+
+                <div>
+
+
+                    <div class="grid-3">
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Placa
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.placa|upper|default:"S/P" }}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Kilometraje
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.kilometraje|default:"0" }} KM
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Clave / PIN
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.clave_encendido|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="grid-2">
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Marca / Modelo
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Color / Año
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.color|upper|default:"-" }}
+                                /
+                                {{ orden.anio_vehiculo|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         ESTADO DEL VEHÍCULO
+         ========================================================= -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Estado del vehículo al ingreso
+        </div>
+
+
+        <div class="panel">
+
+            <div class="vehicle-row">
+
+
+                <!-- =================================================
+                     CROQUIS COMPATIBLE V1 / V2
+
+                     V1 = base_autos.svg + imagen antigua de daños
+                     V2 = PNG final con las 5 vistas + daños
+                     ================================================= -->
+
+                <div class="sketch-box">
+
+                    {% if croquis and croquis.imagen_generada %}
+
+                        {% if croquis.version_croquis == 2 %}
+
+                            <!-- =====================================
+                                 V2 - CROQUIS NUEVO
+                                 ===================================== -->
+
+                            <img
+                                src="{{ croquis.imagen_generada.url }}"
+                                class="img-croquis-final"
+                                alt="Croquis de daños del vehículo"
+                            >
+
+                        {% else %}
+
+                            <!-- =====================================
+                                 V1 - CROQUIS HISTÓRICO
+                                 ===================================== -->
+
+                            <div class="croquis-v1-wrap">
+
+                                <img
+                                    src="{% static 'base_autos.svg' %}"
+                                    class="croquis-v1-base"
+                                    alt="Base del croquis del vehículo"
+                                >
+
+                                <img
+                                    src="{{ croquis.imagen_generada.url }}"
+                                    class="croquis-v1-danios"
+                                    alt="Daños registrados en el vehículo"
+                                >
+
+                            </div>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <div class="croquis-sin-registro">
+                            SIN CROQUIS REGISTRADO
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+
+                <!-- =================================================
+                     COMBUSTIBLE / INGRESO
+                     ================================================= -->
+
+                <div class="fuel-box">
+
+
+                    <div class="field">
+
+                        <div class="label">
+                            Combustible
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.get_nivel_combustible_display|default:"1/2" }}
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="field">
+
+                        <div class="label">
+                            Ingreso
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                     CHECKLIST
+                     ================================================= -->
+
+                <div class="vehicle-checks">
+
+                    <div class="grid-3">
+
+
+                        <!-- EXTERIOR -->
+
+                        <div class="check-card">
+
+                            <div class="check-title">
+                                Exterior
+                            </div>
+
+                            <ul class="check-list">
+
+                                <li>
+
+                                    <span class="check-box {% if chk.tapacubos %}checked{% endif %}">
+                                    </span>
+
+                                    Tapacubos
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.plumas %}checked{% endif %}">
+                                    </span>
+
+                                    Plumas
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.antena %}checked{% endif %}">
+                                    </span>
+
+                                    Antena
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.faros_lunas %}checked{% endif %}">
+                                    </span>
+
+                                    Faros
+
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+
+
+                        <!-- INTERIOR -->
+
+                        <div class="check-card">
+
+                            <div class="check-title">
+                                Interior
+                            </div>
+
+                            <ul class="check-list">
+
+                                <li>
+
+                                    <span class="check-box {% if chk.radio %}checked{% endif %}">
+                                    </span>
+
+                                    Radio / LCD
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.encendedor_cig %}checked{% endif %}">
+                                    </span>
+
+                                    Encendedor
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.matricula %}checked{% endif %}">
+                                    </span>
+
+                                    Matrícula
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}">
+                                    </span>
+
+                                    Tuerca Seg.
+
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+
+
+                        <!-- BAÚL -->
+
+                        <div class="check-card">
+
+                            <div class="check-title">
+                                Baúl
+                            </div>
+
+                            <ul class="check-list">
+
+                                <li>
+
+                                    <span class="check-box {% if chk.gata %}checked{% endif %}">
+                                    </span>
+
+                                    Gata
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.herramientas %}checked{% endif %}">
+                                    </span>
+
+                                    Herr.
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}">
+                                    </span>
+
+                                    Llanta E.
+
+                                </li>
+
+
+                                <li>
+
+                                    <span class="check-box {% if chk.triangulos %}checked{% endif %}">
+                                    </span>
+
+                                    Triángulos
+
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     OBJETOS ADICIONALES
+                     ================================================= -->
+
+                <div
+                    class="field"
+                    style="
+                        margin-top:7px;
+                        margin-bottom:0;
+                    "
+                >
+
+                    <div class="label">
+                        Objetos adicionales
+                    </div>
+
+
+                    <div class="value">
+
+
+                        {% for obj in orden.ordenobjetoadicional_set.all %}
+
+
+                            {{ obj.cantidad }}x
+                            {{ obj.descripcion|upper }}
+
+
+                            {% if obj.observacion %}
+
+                                ({{ obj.observacion }})
+
+                            {% endif %}
+
+
+                            {% if not forloop.last %}
+
+                                ,
+
+                            {% endif %}
+
+
+                        {% empty %}
+
+
+                            NINGUNO REPORTADO
+
+
+                        {% endfor %}
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         REPORTE DEL CLIENTE
+         ========================================================= -->
+
+    <div class="section">
+
+
+        <div class="section-title">
+            Reporte del cliente / motivo de ingreso
+        </div>
+
+
+        <div class="report">
+
+
+            {% if orden.sintomas_cliente %}
+
+
+                {{ orden.sintomas_cliente|upper }}
+
+
+            {% else %}
+
+
+                {% for s in orden.sintomas_items.all %}
+
+
+                    • {{ s.descripcion|upper }}
+
+                    <br>
+
+
+                {% empty %}
+
+
+                    REVISIÓN TÉCNICA GENERAL / NO ESPECIFICADO
+
+
+                {% endfor %}
+
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         TRABAJOS A REALIZAR
+         ========================================================= -->
+
+    <div class="section">
+
+
+        <div class="section-title">
+            Trabajos a realizar
+        </div>
+
+
+        <table class="trabajos-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th
+                        style="width:40px;"
+                        class="center"
+                    >
+                        #
+                    </th>
+
+                    <th>
+                        Descripción de las Operaciones
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+
+            <tbody>
+
+
+                {% for t in orden.trabajos_solicitados_items.all %}
+
+
+                    <tr>
+
+                        <td class="center">
+                            {{ forloop.counter }}
+                        </td>
+
+                        <td>
+                            {{ t.descripcion_manual|upper }}
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+
+                {% for s in orden.servicios_detalles.all %}
+
+
+                    <tr>
+
+                        <td class="center">
+                            -
+                        </td>
+
+                        <td>
+                            {{ s.servicio.descripcion|upper }}
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+
+                {% for i in "1"|make_list %}
+
+
+                    <tr>
+
+                        <td style="height:18px;">
+                        </td>
+
+                        <td>
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         AUTORIZACIÓN Y RECIBÍ CONFORME
+         ========================================================= -->
+
     <div class="legal-grid">
 
+
+        <!-- =====================================================
+             AUTORIZACIÓN
+             ===================================================== -->
+
         <div class="legal-card">
-            <div class="legal-title">Autorización del cliente (ingreso)</div>
+
+
+            <div class="legal-title">
+
+                Autorización del cliente (ingreso)
+
+            </div>
+
 
             <div class="legal-body">
+
+
                 <div class="legal-text">
-                    Autorizo a <strong>MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)</strong>
-                    a realizar la revisión, diagnóstico, comprobación y los trabajos descritos
-                    en esta orden de trabajo. También autorizo el desmontaje de componentes,
-                    las pruebas de funcionamiento y la movilización del vehículo dentro o fuera
-                    de las instalaciones cuando sea necesaria para el diagnóstico o la verificación
-                    de la reparación. Declaro que los datos, objetos, accesorios, nivel de combustible,
-                    kilometraje y estado exterior registrados corresponden a las condiciones del
+
+                    Autorizo a
+                    <strong>
+                        MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)
+                    </strong>
+                    a realizar la revisión, diagnóstico,
+                    comprobación y los trabajos descritos
+                    en esta orden de trabajo.
+
+                    También autorizo el desmontaje de componentes,
+                    las pruebas de funcionamiento y la movilización
+                    del vehículo dentro o fuera de las instalaciones
+                    cuando sea necesaria para el diagnóstico o la
+                    verificación de la reparación.
+
+                    Declaro que los datos, objetos, accesorios,
+                    nivel de combustible, kilometraje y estado exterior
+                    registrados corresponden a las condiciones del
                     vehículo al momento de su ingreso.
+
                 </div>
+
+
 
                 <div class="parking-warning">
-                    Vehículo no retirado en la fecha indicada: se cobrará $4,00 de parqueadero diario.
+
+                    Vehículo no retirado en la fecha indicada:
+                    se cobrará $4,00 de parqueadero diario.
+
                 </div>
 
+
+
                 <div class="legal-signatures">
+
+
+                    <!-- CLIENTE -->
+
                     <div>
-                        <div class="legal-signature digital-signature-wrap">
+
+
+                        <div
+                            class="
+                                legal-signature
+                                digital-signature-wrap
+                            "
+                        >
+
+
                             {% if orden.firma_cliente %}
+
+
                                 <img
                                     src="{{ orden.firma_cliente.url }}"
                                     class="img-firma"
                                     alt="Firma del cliente"
                                 >
+
+
                             {% endif %}
-                            <div class="legal-signature-label">Entregado por / cliente</div>
+
+
+                            <div class="legal-signature-label">
+
+                                Entregado por / cliente
+
+                            </div>
+
+
                         </div>
 
+
+
                         <div class="legal-name">
+
                             Nombre:
+
                             <span class="legal-name-line">
+
                                 {{ orden.cliente.nombre_completo|default:orden.cliente_respaldo|default:"" }}
+
                             </span>
+
                         </div>
+
+
                     </div>
+
+
+
+                    <!-- MAO -->
 
                     <div>
+
+
                         <div class="legal-signature">
-                            <div class="legal-signature-label">Recibido por / MAO</div>
+
+                            <div class="legal-signature-label">
+
+                                Recibido por / MAO
+
+                            </div>
+
                         </div>
 
+
+
                         <div class="legal-name">
-                            Nombre: <span class="legal-name-line"></span>
+
+                            Nombre:
+
+                            <span class="legal-name-line">
+                            </span>
+
                         </div>
+
+
                     </div>
+
+
                 </div>
+
             </div>
+
         </div>
+
+
+
+        <!-- =====================================================
+             RECIBÍ CONFORME
+             ===================================================== -->
 
         <div class="legal-card">
-            <div class="legal-title">Recibí conforme (entrega)</div>
+
+
+            <div class="legal-title">
+
+                Recibí conforme (entrega)
+
+            </div>
+
 
             <div class="legal-body">
+
+
                 <div class="legal-text">
-                    Declaro haber revisado las condiciones de entrega del vehículo, las reparaciones,
-                    servicios y trabajos efectuados. Recibo el vehículo a satisfacción y sin reclamos
-                    pendientes visibles al momento de la entrega. Se recomienda realizar cualquier
-                    observación relacionada con la reparación dentro de los <strong>15 días</strong>
-                    posteriores a la entrega. Declaro también haber recibido los repuestos reemplazados,
-                    cuando hayan sido solicitados y se encuentren disponibles.
+
+                    Declaro haber revisado las condiciones de entrega
+                    del vehículo, las reparaciones, servicios y trabajos
+                    efectuados.
+
+                    Recibo el vehículo a satisfacción y sin reclamos
+                    pendientes visibles al momento de la entrega.
+
+                    Se recomienda realizar cualquier observación
+                    relacionada con la reparación dentro de los
+                    <strong>15 días</strong>
+                    posteriores a la entrega.
+
+                    Declaro también haber recibido los repuestos
+                    reemplazados, cuando hayan sido solicitados
+                    y se encuentren disponibles.
+
                 </div>
+
+
 
                 <div class="legal-signatures">
-                    <div>
-                        <div class="legal-signature">
-                            <div class="legal-signature-label">Entregado por / MAO</div>
-                        </div>
 
-                        <div class="legal-name">
-                            Nombre: <span class="legal-name-line"></span>
-                        </div>
-                    </div>
+
+                    <!-- MAO -->
 
                     <div>
+
+
                         <div class="legal-signature">
-                            <div class="legal-signature-label">Recibido por / cliente</div>
+
+                            <div class="legal-signature-label">
+
+                                Entregado por / MAO
+
+                            </div>
+
                         </div>
 
+
+
                         <div class="legal-name">
-                            Nombre: <span class="legal-name-line"></span>
+
+                            Nombre:
+
+                            <span class="legal-name-line">
+                            </span>
+
                         </div>
+
+
                     </div>
+
+
+
+                    <!-- CLIENTE -->
+
+                    <div>
+
+
+                        <div class="legal-signature">
+
+                            <div class="legal-signature-label">
+
+                                Recibido por / cliente
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="legal-name">
+
+                            Nombre:
+
+                            <span class="legal-name-line">
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+
                 </div>
+
+
 
                 <div class="delivery-meta">
-                    <div><strong>Fecha:</strong></div>
-                    <div><strong>Hora:</strong></div>
+
+                    <div>
+
+                        <strong>
+                            Fecha:
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Hora:
+                        </strong>
+
+                    </div>
+
                 </div>
+
+
             </div>
+
         </div>
+
 
     </div>
 
