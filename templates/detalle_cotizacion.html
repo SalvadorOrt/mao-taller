@@ -1,193 +1,602 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
+{% load l10n %}
 
-{% block title %}Detalle Proforma | MAO{% endblock %}
-{% block page_title %}Proforma {{ cotizacion.numero_cotizacion }}{% endblock %}
-{% block page_subtitle %}Presupuesto tentativo para el cliente{% endblock %}
+{% block title %}
+    Detalle Proforma | MAO
+{% endblock %}
+
+{% block page_title %}
+    Proforma {{ cotizacion.numero_cotizacion }}
+{% endblock %}
+
+{% block page_subtitle %}
+    Presupuesto tentativo para el cliente
+{% endblock %}
+
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}?v=25"
+>
 
 
+<div
+    class="container ot-wrapper"
+    data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
+>
 
-<!-- Asumimos que la cotización siempre se puede editar si está PENDIENTE -->
-<div class="container ot-wrapper" data-puede-editar="{% if cotizacion.estado == 'PENDIENTE' %}true{% else %}false{% endif %}">
+    <!-- =====================================================
+         ESTADO Y ACCIONES SUPERIORES
+    ====================================================== -->
 
-    <!-- CABECERA DE ESTADOS -->
-    <div class="ot-card ot-header" style="margin-bottom: 15px; align-items: center; padding: 15px;">
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span style="font-size: 14px; font-weight: 700; color: var(--text);">Estado Proforma:</span>
+    <div
+        class="ot-card ot-header"
+        style="
+            margin-bottom: 15px;
+            align-items: center;
+            padding: 15px;
+        "
+    >
 
-            {% if cotizacion.estado == 'PENDIENTE' %}
-                <span class="ot-badge" style="background: #e5f1fb; color: #0071e3; border-color: #b7d6f5;">
+        <div
+            style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            "
+        >
+
+            <span
+                style="
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: var(--text);
+                "
+            >
+                Estado Proforma:
+            </span>
+
+
+            {% if cotizacion.estado == "PENDIENTE" %}
+
+                <span
+                    class="ot-badge"
+                    style="
+                        background: #e5f1fb;
+                        color: #0071e3;
+                        border-color: #b7d6f5;
+                    "
+                >
                     EN REVISIÓN / PENDIENTE
                 </span>
-            {% elif cotizacion.estado == 'APROBADA' %}
-                <span class="ot-badge" style="background: #e5fbe4; color: #1f8939; border-color: #b7efc5;">
+
+
+            {% elif cotizacion.estado == "APROBADA" %}
+
+                <span
+                    class="ot-badge"
+                    style="
+                        background: #e5fbe4;
+                        color: #1f8939;
+                        border-color: #b7efc5;
+                    "
+                >
                     APROBADA Y TRASLADADA
                 </span>
+
+
             {% else %}
-                <span class="ot-badge" style="background: #ffebe9; color: var(--danger); border-color: #ffd6d6;">
+
+                <span
+                    class="ot-badge"
+                    style="
+                        background: #ffebe9;
+                        color: var(--danger);
+                        border-color: #ffd6d6;
+                    "
+                >
                     RECHAZADA / CADUCADA
                 </span>
+
             {% endif %}
+
         </div>
 
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <!-- Botón de Aprobar (Solo si tiene OT vinculada y está pendiente) -->
-            {% if cotizacion.orden and cotizacion.estado == 'PENDIENTE' %}
-                <button type="button"
-                        onclick="confirmarAprobacion('formAprobar')"
-                        class="btn-login"
-                        style="background: #34c759; border-color: #34c759; color: #fff;">
-                    <i class="bi bi-check-circle" style="margin-right: 5px;"></i> Aprobar y Trasladar
+
+        <div
+            style="
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            "
+        >
+
+            {% if cotizacion.estado == "PENDIENTE" %}
+
+                <button
+                    type="button"
+                    onclick="confirmarAprobacion('formAprobar')"
+                    class="btn-login"
+                    style="
+                        background: #34c759;
+                        border-color: #34c759;
+                        color: #ffffff;
+                    "
+                >
+                    <i
+                        class="bi bi-check-circle"
+                        style="margin-right: 5px;"
+                    ></i>
+
+                    Aprobar y Trasladar
                 </button>
+
             {% endif %}
+
         </div>
+
     </div>
 
-    
-    <form id="formAprobar" method="POST" action="{% url 'aprobar_cotizacion' cotizacion.pk %}" style="display: none;">{% csrf_token %}</form>
 
-    
-    <form method="post" id="formDetalleOT" novalidate>
+    <!-- =====================================================
+         FORMULARIO PRINCIPAL
+    ====================================================== -->
+
+    <form
+        method="post"
+        id="formDetalleOT"
+        novalidate
+    >
+
         {% csrf_token %}
 
-        <!-- INCLUDES ADAPTADOS A LA COTIZACIÓN -->
-        {% include 'includes/cotizaciones/info_general.html' %}
-        {% include 'includes/cotizaciones/tabla_repuestos.html' %}
-        {% include 'includes/cotizaciones/tabla_moi.html' %}
-        {% include 'includes/cotizaciones/tabla_moe.html' %}
-        {% include 'includes/cotizaciones/resumen.html' %}
-        
 
-        <!-- STICKY ACTIONS (Botones flotantes) -->
+        <!--
+        Cuando agreguemos version a Cotizacion
+        pondremos aquí:
+
+        <input
+            type="hidden"
+            name="cotizacion_version"
+            value="{{ cotizacion.version }}"
+        >
+        -->
+
+
+        <input
+            type="hidden"
+            id="porcentajeIva"
+            value="{{ cotizacion.porcentaje_iva|default_if_none:'0.00'|unlocalize }}"
+        >
+
+
+        <!-- Información general -->
+
+        {% include "includes/cotizaciones/info_general.html" %}
+
+
+        <!-- Repuestos -->
+
+        {% include "includes/cotizaciones/tabla_repuestos.html" %}
+
+
+        <!-- Mano de obra interna -->
+
+        {% include "includes/cotizaciones/tabla_moi.html" %}
+
+
+        <!-- Mano de obra externa -->
+
+        {% include "includes/cotizaciones/tabla_moe.html" %}
+
+
+        <!-- Resumen económico -->
+
+        {% include "includes/cotizaciones/resumen.html" %}
+
+
+        <!-- =================================================
+             ACCIONES INFERIORES
+        ================================================== -->
+
         <div class="sticky-actions">
+
+
             {% if cotizacion.orden %}
-                <a href="{% url 'detalle_orden' cotizacion.orden.id %}"
-                   class="btn-login"
-                   style="background: #e5e5ea; border-color: #e5e5ea; color: var(--text);">
-                    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>
+
+                <a
+                    href="{% url 'detalle_orden' cotizacion.orden.id %}"
+                    class="btn-login"
+                    style="
+                        background: #e5e5ea;
+                        border-color: #e5e5ea;
+                        color: var(--text);
+                    "
+                >
+                    <i
+                        class="fas fa-arrow-left"
+                        style="margin-right: 6px;"
+                    ></i>
+
                     Volver a la OT
                 </a>
+
+
             {% else %}
-                <a href="{% url 'dashboard' %}"
-                   class="btn-login"
-                   style="background: #e5e5ea; border-color: #e5e5ea; color: var(--text);">
-                    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>
+
+                <a
+                    href="{% url 'dashboard' %}"
+                    class="btn-login"
+                    style="
+                        background: #e5e5ea;
+                        border-color: #e5e5ea;
+                        color: var(--text);
+                    "
+                >
+                    <i
+                        class="fas fa-arrow-left"
+                        style="margin-right: 6px;"
+                    ></i>
+
                     Volver
                 </a>
+
             {% endif %}
 
-            {% if cotizacion.estado == 'PENDIENTE' %}
-                <button type="button" class="btn-login primary" onclick="guardarOTDirecto()">
-                    <i class="bi bi-save" style="margin-right: 5px;"></i> Guardar Proforma
+
+            {% if puede_editar %}
+
+                <button
+                    type="button"
+                    id="btnGuardarDetalleCotizacion"
+                    class="btn-login primary"
+                    onclick="guardarCotizacionDirecto()"
+                >
+                    <i
+                        class="bi bi-save"
+                        style="margin-right: 5px;"
+                    ></i>
+
+                    Guardar Proforma
                 </button>
+
             {% endif %}
+
         </div>
+
     </form>
+
+
+    <!-- =====================================================
+         FORMULARIO APROBACIÓN
+         FUERA DEL FORMULARIO PRINCIPAL
+    ====================================================== -->
+
+    <form
+        id="formAprobar"
+        method="post"
+        action="{% url 'aprobar_cotizacion' cotizacion.pk %}"
+        style="display: none;"
+    >
+        {% csrf_token %}
+    </form>
+
 </div>
 
-<div id="productoFloatingDropdown" class="producto-floating-dropdown"></div>
+
+<!-- =====================================================
+     DROPDOWN FLOTANTE DE PRODUCTOS
+====================================================== -->
+
+<div
+    id="productoFloatingDropdown"
+    class="producto-floating-dropdown"
+></div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
 <script>
-   
-    function guardarOTDirecto() {
-        Swal.fire({
-            title: 'Guardando...',
-            html: 'Actualizando los precios de la proforma...',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-        
-        let formSeguro = document.createElement('form');
-        formSeguro.method = 'POST';
-        formSeguro.action = window.location.href;
-        formSeguro.style.display = 'none';
-        
-        let csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        let inputCsrf = document.createElement('input');
-        inputCsrf.type = 'hidden';
-        inputCsrf.name = 'csrfmiddlewaretoken';
-        inputCsrf.value = csrf;
-        formSeguro.appendChild(inputCsrf);
 
-        let selectores = 'input[name*="rep_"], input[name*="moi_"], input[name*="moe_"]';
-        let todosLosInputs = document.querySelectorAll(selectores);
-        
-        todosLosInputs.forEach(input => {
-            let clon = document.createElement('input');
-            clon.type = 'hidden';
-            clon.name = input.name;
-            clon.value = input.value;
-            formSeguro.appendChild(clon);
-        });
+    // =====================================================
+    // GUARDAR COTIZACIÓN
+    // =====================================================
 
-        let observaciones = document.querySelector('textarea[name="observaciones"]');
-        if (observaciones) {
-            let clonObs = document.createElement('input');
-            clonObs.type = 'hidden';
-            clonObs.name = 'observaciones';
-            clonObs.value = observaciones.value;
-            formSeguro.appendChild(clonObs);
+    function guardarCotizacionDirecto() {
+
+        const formulario =
+            document.getElementById(
+                "formDetalleOT"
+            );
+
+        const botonGuardar =
+            document.getElementById(
+                "btnGuardarDetalleCotizacion"
+            );
+
+
+        if (!formulario) {
+
+            Swal.fire({
+                title: "Error",
+                text: "No se encontró el formulario de la cotización.",
+                icon: "error",
+                confirmButtonColor: "#ff3b30"
+            });
+
+            return;
         }
 
-        document.body.appendChild(formSeguro);
-        formSeguro.submit();
-    }
 
-   
-    function confirmarAprobacion(formId) {
+        // =================================================
+        // VALIDAR DESCUENTO
+        // =================================================
+
+        if (
+            typeof mostrarEstadoDescuento === "function" &&
+            !mostrarEstadoDescuento()
+        ) {
+
+            const mensajeError =
+                document.getElementById(
+                    "descuentoError"
+                );
+
+            Swal.fire({
+                title: "Descuento inválido",
+                text:
+                    mensajeError?.textContent ||
+                    "Revise el descuento ingresado.",
+                icon: "warning",
+                confirmButtonColor: "#ff9500"
+            });
+
+            document.getElementById(
+                "descuento_ingresado"
+            )?.focus();
+
+            return;
+        }
+
+
+        // =================================================
+        // VERIFICAR QUE REP PERTENEZCA AL FORM PRINCIPAL
+        // =================================================
+
+        const campoRepuesto =
+            document.querySelector(
+                '[name="rep_descripcion[]"]'
+            );
+
+        const campoManoObra =
+            document.querySelector(
+                '[name="moi_descripcion[]"]'
+            );
+
+
+        if (
+            campoRepuesto &&
+            campoRepuesto.form !== formulario
+        ) {
+
+            Swal.fire({
+                title: "Error de formulario",
+                text:
+                    "Los campos de repuestos no pertenecen " +
+                    "al formulario principal.",
+                icon: "error",
+                confirmButtonColor: "#ff3b30"
+            });
+
+            return;
+        }
+
+
+        if (
+            campoManoObra &&
+            campoManoObra.form !== formulario
+        ) {
+
+            Swal.fire({
+                title: "Error de formulario",
+                text:
+                    "Los campos de mano de obra no pertenecen " +
+                    "al formulario principal.",
+                icon: "error",
+                confirmButtonColor: "#ff3b30"
+            });
+
+            return;
+        }
+
+
+        // =================================================
+        // EVITAR DOBLE CLIC
+        // =================================================
+
+        if (botonGuardar) {
+            botonGuardar.disabled = true;
+        }
+
+
+        // =================================================
+        // GUARDAR
+        // =================================================
+
         Swal.fire({
-            title: '¿Aprobar Proforma?',
-            text: 'Los repuestos y servicios se cargarán automáticamente a la Orden de Trabajo oficial y se afectará el inventario.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#34c759', 
-            cancelButtonColor: '#6e6e73',
-            confirmButtonText: 'Sí, aprobar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById(formId).submit();
+            title: "Guardando...",
+            html:
+                "Sincronizando repuestos, servicios " +
+                "y valores de la proforma...",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+
+            didOpen: function () {
+
+                Swal.showLoading();
+
+                if (
+                    typeof formulario.requestSubmit ===
+                    "function"
+                ) {
+                    formulario.requestSubmit();
+                } else {
+                    formulario.submit();
+                }
             }
         });
     }
 
-    
-    document.addEventListener("DOMContentLoaded", function() {
-        {% if messages %}
-            {% for message in messages %}
-                {% if message.tags == 'success' %}
-                    Swal.fire({
-                        title: '¡Éxito!',
-                        text: '{{ message }}',
-                        icon: 'success',
-                        confirmButtonColor: '#34c759',
-                        confirmButtonText: 'Entendido',
-                        timer: 2500 
-                    });
-                {% elif message.tags == 'error' %}
-                    Swal.fire({
-                        title: 'Error',
-                        text: '{{ message }}',
-                        icon: 'error',
-                        confirmButtonColor: '#ff3b30'
-                    });
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    });
-</script>
-{% endblock %}
 
-{% block extra_js %}
-<!-- IMPORTANTE: Usamos tus mismos scripts JS para reciclar toda la lógica -->
-<script src="{% static 'js/detalle_orden/base.js' %}"></script>
-<!-- Solo quitamos recepcion.js porque las proformas no tienen croquis ni fotos -->
-<script src="{% static 'js/detalle_orden/repuestos.js' %}"></script>
-<script src="{% static 'js/detalle_orden/mano_obra.js' %}?v=4"></script>
-<script src="{% static 'js/detalle_orden/detalle_orden.js' %}"></script>
+    // =====================================================
+    // APROBAR COTIZACIÓN
+    // =====================================================
+
+    function confirmarAprobacion(
+        formId
+    ) {
+
+        let mensaje = "";
+
+        {% if cotizacion.orden %}
+
+            mensaje =
+                "Los repuestos y servicios se trasladarán " +
+                "a la Orden de Trabajo vinculada.";
+
+        {% else %}
+
+            mensaje =
+                "Se creará una nueva Orden de Trabajo " +
+                "con los repuestos y servicios de esta proforma.";
+
+        {% endif %}
+
+
+        Swal.fire({
+            title: "¿Aprobar Proforma?",
+            text: mensaje,
+            icon: "question",
+
+            showCancelButton: true,
+
+            confirmButtonColor:
+                "#34c759",
+
+            cancelButtonColor:
+                "#6e6e73",
+
+            confirmButtonText:
+                "Sí, aprobar",
+
+            cancelButtonText:
+                "Cancelar"
+
+        }).then(function (result) {
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            const formulario =
+                document.getElementById(
+                    formId
+                );
+
+            if (formulario) {
+                formulario.submit();
+            }
+        });
+    }
+
+
+    // =====================================================
+    // MENSAJES
+    // =====================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    {% if message.tags == "success" %}
+
+                        Swal.fire({
+                            title: "¡Guardado Exitoso!",
+                            text: "{{ message|escapejs }}",
+                            icon: "success",
+                            confirmButtonColor: "#34c759",
+                            confirmButtonText: "Entendido",
+                            timer: 2500
+                        });
+
+
+                    {% elif message.tags == "error" %}
+
+                        Swal.fire({
+                            title: "Error",
+                            text: "{{ message|escapejs }}",
+                            icon: "error",
+                            confirmButtonColor: "#ff3b30"
+                        });
+
+
+                    {% elif message.tags == "warning" %}
+
+                        Swal.fire({
+                            title: "Advertencia",
+                            text: "{{ message|escapejs }}",
+                            icon: "warning",
+                            confirmButtonColor: "#ff9500"
+                        });
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% endif %}
+
+
+            if (
+                typeof recalcularTotales ===
+                "function"
+            ) {
+                recalcularTotales();
+            }
+
+        }
+    );
+
+</script>
+
+
+<!-- =====================================================
+     JAVASCRIPT COMPARTIDO CON ORDEN DE TRABAJO
+====================================================== -->
+
+<script
+    src="{% static 'js/detalle_orden/base.js' %}?v=21"
+></script>
+
+<script
+    src="{% static 'js/detalle_orden/repuestos.js' %}?v=8"
+></script>
+
+<script
+    src="{% static 'js/detalle_orden/ordenar_repuestos.js' %}?v=1"
+></script>
+
+<script
+    src="{% static 'js/detalle_orden/mano_obra.js' %}?v=10"
+></script>
+
+
 {% endblock %}

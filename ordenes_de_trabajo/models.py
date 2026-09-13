@@ -3590,7 +3590,24 @@ class OrdenServicioDetalle(models.Model):
         ("TRICAPA", "Tricapa / Candys"),
         ("ESPECIAL", "Color especial"),
     ]
+    # ==========================================================
+    # ORIGEN DESDE COTIZACIÓN
+    # ==========================================================
 
+    cotizacion_origen = models.ForeignKey(
+        "Cotizacion",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="servicios_ot_generados",
+    )
+
+    cotizacion_linea_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        editable=False,
+    )
     TIPOS_SERVICIO = [
         ("MEC", "Mano de Obra Interna"),
         ("EXT", "Mano de Obra Externa"),
@@ -3730,7 +3747,24 @@ class OrdenInsumoDetalle(models.Model):
         related_name="insumos_detalles",
         on_delete=models.CASCADE,
     )
+    # ==========================================================
+    # ORIGEN DESDE COTIZACIÓN
+    # ==========================================================
 
+    cotizacion_origen = models.ForeignKey(
+        "Cotizacion",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="insumos_ot_generados",
+    )
+
+    cotizacion_linea_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        editable=False,
+    )
     producto = models.ForeignKey(
         "inventario.CodigoProducto",
         on_delete=models.PROTECT,
@@ -3920,7 +3954,24 @@ class OrdenServicioProcedimientoDetalle(models.Model):
         on_delete=models.CASCADE,
         related_name="procedimientos_detalle",
     )
+    # ==========================================================
+    # ORIGEN DESDE COTIZACIÓN
+    # ==========================================================
 
+    cotizacion_origen = models.ForeignKey(
+        "Cotizacion",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="procedimientos_ot_generados",
+    )
+
+    cotizacion_linea_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        editable=False,
+    )
     descripcion = models.CharField(
         max_length=300
     )
@@ -4160,16 +4211,59 @@ class OrdenInsumoHistorico(models.Model):
     def __str__(self):
         return self.descripcion_original
 # ==========================================
-# 10. COTIZACIONES / PROFORMAS (MÓDULO HÍBRIDO)
+# 10. COTIZACIONES / PROFORMAS
 # ==========================================
+
+
 class Cotizacion(models.Model):
+
     ESTADOS_COTIZACION = [
         ("PENDIENTE", "Pendiente / Entregada"),
-        ("APROBADA", "Aprobada (Trasladada a OT)"),
+        ("APROBADA", "Aprobada / Sincronizada con OT"),
         ("RECHAZADA", "Rechazada / Caducada"),
     ]
 
-    numero_cotizacion = models.CharField(max_length=50, unique=True)
+    TIPOS_DESCUENTO = [
+        ("PORCENTAJE", "Porcentaje (%)"),
+        ("VALOR_FIJO", "Valor fijo ($)"),
+    ]
+
+    # ==========================================================
+    # IDENTIFICACIÓN
+    # ==========================================================
+
+    # IMPORTANTE:
+    # Ya NO es unique=True porque el mismo número puede tener
+    # varias revisiones:
+    #
+    # COT-2609-001 Rev.1
+    # COT-2609-001 Rev.2
+    # COT-2609-001 Rev.3
+    numero_cotizacion = models.CharField(
+        max_length=50,
+        db_index=True,
+    )
+
+    revision = models.PositiveIntegerField(
+        default=1,
+    )
+
+    cotizacion_anterior = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="revisiones_siguientes",
+    )
+
+    es_vigente = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
+
+    # ==========================================================
+    # SUCURSAL
+    # ==========================================================
 
     sucursal = models.ForeignKey(
         Sucursal,
@@ -4177,13 +4271,37 @@ class Cotizacion(models.Model):
         related_name="cotizaciones",
     )
 
-    orden = models.OneToOneField(
+    # ==========================================================
+    # RELACIÓN CON OT
+    # ==========================================================
+
+    # Cotización creada DESDE una OT.
+    #
+    # ForeignKey y NO OneToOne porque:
+    # Rev.1, Rev.2, Rev.3 pueden apuntar a la misma OT.
+    orden = models.ForeignKey(
         "OrdenTrabajo",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="cotizacion_vinculada",
+        related_name="cotizaciones_vinculadas",
     )
+
+    # OT creada inicialmente desde una cotización independiente.
+    #
+    # También ForeignKey para que todas las revisiones puedan
+    # apuntar a la misma OT generada.
+    orden_generada = models.ForeignKey(
+        "OrdenTrabajo",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cotizaciones_generadas",
+    )
+
+    # ==========================================================
+    # CLIENTE
+    # ==========================================================
 
     cliente = models.ForeignKey(
         Cliente,
@@ -4193,26 +4311,76 @@ class Cotizacion(models.Model):
         related_name="cotizaciones",
     )
 
-    cliente_respaldo = models.CharField(max_length=200, null=True, blank=True)
+    cliente_respaldo = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
 
-    placa = models.CharField(max_length=15, db_index=True)
+    # ==========================================================
+    # VEHÍCULO
+    # ==========================================================
 
-    vehiculo = models.CharField(max_length=150, null=True, blank=True)
+    placa = models.CharField(
+        max_length=15,
+        db_index=True,
+    )
 
-    anio_vehiculo = models.PositiveSmallIntegerField(null=True, blank=True)
+    vehiculo = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+    )
 
+    anio_vehiculo = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================================
+    # ESTADO
+    # ==========================================================
 
     estado = models.CharField(
         max_length=15,
         choices=ESTADOS_COTIZACION,
         default="PENDIENTE",
+        db_index=True,
     )
 
-    fecha_creacion = models.DateTimeField(default=timezone.now)
+    fecha_creacion = models.DateTimeField(
+        default=timezone.now,
+    )
 
-    validez_dias = models.PositiveIntegerField(default=15)
+    actualizado_en = models.DateTimeField(
+        auto_now=True,
+    )
 
-    observaciones = models.TextField(null=True, blank=True)
+    fecha_aprobacion = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    validez_dias = models.PositiveIntegerField(
+        default=15,
+    )
+
+    observaciones = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================================
+    # CONTROL DE CONCURRENCIA
+    # ==========================================================
+
+    version = models.PositiveIntegerField(
+        default=1,
+    )
+
+    # ==========================================================
+    # ECONÓMICO
+    # ==========================================================
 
     total_general = models.DecimalField(
         max_digits=12,
@@ -4235,22 +4403,53 @@ class Cotizacion(models.Model):
         blank=True,
     )
 
+    sumar_iva_al_total = models.BooleanField(
+        default=True,
+        verbose_name="Sumar IVA al total",
+        help_text=(
+            "El IVA siempre se calcula y se muestra. "
+            "Este campo define si se suma al total final."
+        ),
+    )
+
     subtotal_sin_iva = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
+    tipo_descuento = models.CharField(
+        max_length=15,
+        choices=TIPOS_DESCUENTO,
+        default="PORCENTAJE",
+    )
+
+    descuento_ingresado = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=(
+            "Valor escrito por el usuario, "
+            "como porcentaje o valor fijo."
+        ),
+    )
+
     descuento_porcentaje = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
+        editable=False,
+        help_text=(
+            "Porcentaje real o equivalente "
+            "calculado por el sistema."
+        ),
     )
 
     valor_descuento = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
+        editable=False,
     )
 
     valor_iva = models.DecimalField(
@@ -4265,164 +4464,745 @@ class Cotizacion(models.Model):
         default=Decimal("0.00"),
     )
 
-    orden_generada = models.OneToOneField(
-        "OrdenTrabajo",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="cotizacion_origen",
-    )
+    # ==========================================================
+    # META
+    # ==========================================================
 
     class Meta:
-        ordering = ["-fecha_creacion"]
+
+        ordering = [
+            "-fecha_creacion",
+            "-revision",
+        ]
+
         verbose_name = "Cotización"
         verbose_name_plural = "Cotizaciones"
 
+        indexes = [
+            models.Index(
+                fields=[
+                    "numero_cotizacion",
+                    "revision",
+                ],
+            ),
+            models.Index(
+                fields=[
+                    "sucursal",
+                    "estado",
+                ],
+            ),
+            models.Index(
+                fields=[
+                    "placa",
+                    "fecha_creacion",
+                ],
+            ),
+            models.Index(
+                fields=[
+                    "numero_cotizacion",
+                    "es_vigente",
+                ],
+            ),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "numero_cotizacion",
+                    "revision",
+                ],
+                name="uq_cotizacion_numero_revision",
+            ),
+        ]
+
+    # ==========================================================
+    # PROPIEDADES
+    # ==========================================================
+
     @property
     def nombre_cliente_final(self):
+
         if self.cliente:
             return self.cliente.nombre_completo
 
-        return self.cliente_respaldo if self.cliente_respaldo else "SIN NOMBRE"
+        return (
+            self.cliente_respaldo
+            if self.cliente_respaldo
+            else "SIN NOMBRE"
+        )
+
+    @property
+    def etiqueta_revision(self):
+
+        return (
+            f"{self.numero_cotizacion} "
+            f"· Rev. {self.revision}"
+        )
+
+    @property
+    def orden_destino(self):
+
+        return (
+            self.orden_generada
+            or self.orden
+        )
+
+    # ==========================================================
+    # ESTADO / EDICIÓN
+    # ==========================================================
+
+    def puede_editarse(self):
+
+        return (
+            self.estado == "PENDIENTE"
+            and self.es_vigente
+        )
+
+    def esta_bloqueada(self):
+
+        return not self.puede_editarse()
+
+    def puede_crear_revision(self):
+
+        return (
+            self.estado == "APROBADA"
+            and self.es_vigente
+        )
+
+    # ==========================================================
+    # IVA
+    # ==========================================================
 
     def obtener_configuracion_iva_activa(self):
-        return ConfiguracionTributaria.objects.filter(
-            activa=True
-        ).order_by("-fecha_inicio", "-id").first()
+
+        return (
+            ConfiguracionTributaria.objects
+            .filter(
+                activa=True
+            )
+            .order_by(
+                "-fecha_inicio",
+                "-id",
+            )
+            .first()
+        )
+
+    # ==========================================================
+    # NORMALIZACIÓN
+    # ==========================================================
 
     def _normalizar_campos_texto(self):
+
         if self.numero_cotizacion:
-            self.numero_cotizacion = self.numero_cotizacion.strip().upper()
+
+            self.numero_cotizacion = (
+                self.numero_cotizacion
+                .strip()
+                .upper()
+            )
 
         if self.placa:
-            self.placa = self.placa.strip().upper().replace("-", "").replace(" ", "")
+
+            self.placa = (
+                self.placa
+                .strip()
+                .upper()
+                .replace("-", "")
+                .replace(" ", "")
+            )
 
         if self.vehiculo:
-            self.vehiculo = self.vehiculo.strip().upper()
+
+            self.vehiculo = (
+                self.vehiculo
+                .strip()
+                .upper()
+            )
 
         if self.cliente_respaldo:
-            self.cliente_respaldo = self.cliente_respaldo.strip().upper()
+
+            self.cliente_respaldo = (
+                self.cliente_respaldo
+                .strip()
+                .upper()
+            )
 
         if self.observaciones:
-            self.observaciones = self.observaciones.strip()
+
+            self.observaciones = (
+                self.observaciones
+                .strip()
+            )
+
+    # ==========================================================
+    # CÁLCULO ECONÓMICO
+    # ==========================================================
 
     def calcular_total(self):
+
         servicios = (
-            self.servicios_cotizados.aggregate(total=Sum("subtotal"))["total"]
+            self.servicios_cotizados
+            .aggregate(
+                total=Sum("subtotal")
+            )["total"]
             or Decimal("0.00")
         )
 
         insumos = (
-            self.insumos_cotizados.aggregate(total=Sum("subtotal"))["total"]
+            self.insumos_cotizados
+            .aggregate(
+                total=Sum("subtotal")
+            )["total"]
             or Decimal("0.00")
         )
 
-        subtotal_sin_iva = (servicios + insumos).quantize(
+        subtotal_sin_iva = (
+            servicios
+            + insumos
+        ).quantize(
             Decimal("0.01"),
             rounding=ROUND_HALF_UP,
         )
 
+        # ======================================================
+        # IVA
+        # ======================================================
+
         if self.porcentaje_iva is None:
-            config = self.obtener_configuracion_iva_activa()
+
+            config = (
+                self.obtener_configuracion_iva_activa()
+            )
 
             if config:
-                self.configuracion_iva = config
-                self.porcentaje_iva = config.porcentaje_iva
+
+                self.configuracion_iva = (
+                    config
+                )
+
+                self.porcentaje_iva = (
+                    config.porcentaje_iva
+                )
+
             else:
-                self.porcentaje_iva = Decimal("0.00")
 
-        descuento_porcentaje = self.descuento_porcentaje or Decimal("0.00")
+                self.porcentaje_iva = (
+                    Decimal("0.00")
+                )
 
-        valor_descuento = (
+        porcentaje_iva = Decimal(
+            str(
+                self.porcentaje_iva
+                or Decimal("0.00")
+            )
+        )
+
+        # ======================================================
+        # DESCUENTO
+        # ======================================================
+
+        tipo_descuento = (
+            self.tipo_descuento
+            or "PORCENTAJE"
+        )
+
+        descuento_ingresado = Decimal(
+            str(
+                self.descuento_ingresado
+                or Decimal("0.00")
+            )
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+
+        if descuento_ingresado < Decimal("0.00"):
+
+            raise ValidationError({
+                "descuento_ingresado":
+                    "El descuento no puede ser negativo."
+            })
+
+        if tipo_descuento == "PORCENTAJE":
+
+            if descuento_ingresado > Decimal("100.00"):
+
+                raise ValidationError({
+                    "descuento_ingresado": (
+                        "El descuento porcentual "
+                        "no puede ser mayor al 100%."
+                    )
+                })
+
+            descuento_porcentaje = (
+                descuento_ingresado
+            )
+
+            valor_descuento = (
+                subtotal_sin_iva
+                * descuento_porcentaje
+                / Decimal("100")
+            ).quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
+
+        elif tipo_descuento == "VALOR_FIJO":
+
+            if (
+                descuento_ingresado
+                > subtotal_sin_iva
+            ):
+
+                raise ValidationError({
+                    "descuento_ingresado": (
+                        "El descuento fijo no puede "
+                        "superar el subtotal "
+                        "de la cotización."
+                    )
+                })
+
+            valor_descuento = (
+                descuento_ingresado
+            )
+
+            if (
+                subtotal_sin_iva
+                > Decimal("0.00")
+            ):
+
+                descuento_porcentaje = (
+                    valor_descuento
+                    * Decimal("100")
+                    / subtotal_sin_iva
+                ).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                )
+
+            else:
+
+                descuento_porcentaje = (
+                    Decimal("0.00")
+                )
+
+        else:
+
+            raise ValidationError({
+                "tipo_descuento":
+                    "El tipo de descuento no es válido."
+            })
+
+        # ======================================================
+        # BASE IMPONIBLE
+        # ======================================================
+
+        base_imponible = (
             subtotal_sin_iva
-            * Decimal(str(descuento_porcentaje))
-            / Decimal("100")
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            - valor_descuento
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
 
-        base_imponible = subtotal_sin_iva - valor_descuento
+        if (
+            base_imponible
+            < Decimal("0.00")
+        ):
 
-        if base_imponible < Decimal("0.00"):
-            base_imponible = Decimal("0.00")
+            base_imponible = (
+                Decimal("0.00")
+            )
+
+        # ======================================================
+        # VALOR IVA
+        # ======================================================
 
         valor_iva = (
             base_imponible
-            * Decimal(str(self.porcentaje_iva))
+            * porcentaje_iva
             / Decimal("100")
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-        total_final = (base_imponible + valor_iva).quantize(
+        ).quantize(
             Decimal("0.01"),
             rounding=ROUND_HALF_UP,
         )
 
-        self.total_general = subtotal_sin_iva
-        self.subtotal_sin_iva = subtotal_sin_iva
-        self.descuento_porcentaje = descuento_porcentaje
-        self.valor_descuento = valor_descuento
-        self.valor_iva = valor_iva
-        self.total_final = total_final
+        # ======================================================
+        # TOTAL FINAL
+        # ======================================================
 
-        if self.pk:
-            Cotizacion.objects.filter(pk=self.pk).update(
-                total_general=subtotal_sin_iva,
-                configuracion_iva=self.configuracion_iva,
-                porcentaje_iva=self.porcentaje_iva,
-                subtotal_sin_iva=subtotal_sin_iva,
-                descuento_porcentaje=descuento_porcentaje,
-                valor_descuento=valor_descuento,
-                valor_iva=valor_iva,
-                total_final=total_final,
+        if self.sumar_iva_al_total:
+
+            total_final = (
+                base_imponible
+                + valor_iva
+            ).quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
             )
 
+        else:
+
+            total_final = (
+                base_imponible
+            ).quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
+
+        # ======================================================
+        # ASIGNACIÓN
+        # ======================================================
+
+        self.total_general = (
+            subtotal_sin_iva
+        )
+
+        self.subtotal_sin_iva = (
+            subtotal_sin_iva
+        )
+
+        self.tipo_descuento = (
+            tipo_descuento
+        )
+
+        self.descuento_ingresado = (
+            descuento_ingresado
+        )
+
+        self.descuento_porcentaje = (
+            descuento_porcentaje
+        )
+
+        self.valor_descuento = (
+            valor_descuento
+        )
+
+        self.valor_iva = (
+            valor_iva
+        )
+
+        self.total_final = (
+            total_final
+        )
+
+        # ======================================================
+        # ACTUALIZACIÓN DIRECTA
+        # ======================================================
+
+        if self.pk:
+
+            Cotizacion.objects.filter(
+                pk=self.pk
+            ).update(
+                total_general=
+                    subtotal_sin_iva,
+
+                configuracion_iva=
+                    self.configuracion_iva,
+
+                porcentaje_iva=
+                    porcentaje_iva,
+
+                sumar_iva_al_total=
+                    self.sumar_iva_al_total,
+
+                subtotal_sin_iva=
+                    subtotal_sin_iva,
+
+                tipo_descuento=
+                    tipo_descuento,
+
+                descuento_ingresado=
+                    descuento_ingresado,
+
+                descuento_porcentaje=
+                    descuento_porcentaje,
+
+                valor_descuento=
+                    valor_descuento,
+
+                valor_iva=
+                    valor_iva,
+
+                total_final=
+                    total_final,
+            )
+
+        return total_final
+
+    # ==========================================================
+    # VALIDACIÓN
+    # ==========================================================
+
     def clean(self):
+
         self._normalizar_campos_texto()
 
-        if not self.numero_cotizacion or not self.numero_cotizacion.strip():
-            raise ValidationError("El número de cotización es obligatorio.")
+        errores = {}
+
+        # ======================================================
+        # DATOS GENERALES
+        # ======================================================
+
+        if (
+            not self.numero_cotizacion
+            or not self.numero_cotizacion.strip()
+        ):
+
+            errores["numero_cotizacion"] = (
+                "El número de cotización "
+                "es obligatorio."
+            )
 
         if not self.sucursal_id:
-            raise ValidationError({"sucursal": "La sucursal es obligatoria."})
 
-        if not self.placa or not self.placa.strip():
-            raise ValidationError("La placa es obligatoria.")
+            errores["sucursal"] = (
+                "La sucursal es obligatoria."
+            )
 
-        if self.anio_vehiculo and self.anio_vehiculo < 1900:
-            raise ValidationError("El año del vehículo no es válido.")
+        if (
+            not self.placa
+            or not self.placa.strip()
+        ):
 
-        if self.descuento_porcentaje < Decimal("0.00"):
-            raise ValidationError({
-                "descuento_porcentaje": "El descuento no puede ser negativo."
-            })
+            errores["placa"] = (
+                "La placa es obligatoria."
+            )
 
-        if self.descuento_porcentaje > Decimal("100.00"):
-            raise ValidationError({
-                "descuento_porcentaje": "El descuento no puede ser mayor al 100%."
-            })
+        if (
+            self.anio_vehiculo is not None
+            and self.anio_vehiculo < 1900
+        ):
 
-    def save(self, *args, **kwargs):
-        if self.orden:
-            self.placa = self.orden.placa
-            self.vehiculo = self.orden.vehiculo
-            self.cliente = self.orden.cliente
-            self.cliente_respaldo = self.orden.cliente_respaldo
-            self.anio_vehiculo = self.orden.anio_vehiculo
+            errores["anio_vehiculo"] = (
+                "El año del vehículo "
+                "no es válido."
+            )
+
+        # ======================================================
+        # REVISIÓN
+        # ======================================================
+
+        if (
+            self.revision is None
+            or self.revision < 1
+        ):
+
+            errores["revision"] = (
+                "La revisión debe ser "
+                "mayor o igual a 1."
+            )
+
+        if self.revision == 1:
+
+            if self.cotizacion_anterior_id:
+
+                errores[
+                    "cotizacion_anterior"
+                ] = (
+                    "La revisión 1 no puede "
+                    "tener una revisión anterior."
+                )
+
+        elif self.revision > 1:
+
+            if not self.cotizacion_anterior_id:
+
+                errores[
+                    "cotizacion_anterior"
+                ] = (
+                    "Toda revisión mayor a 1 "
+                    "debe indicar la cotización "
+                    "anterior."
+                )
+
+            elif self.cotizacion_anterior:
+
+                if (
+                    self.cotizacion_anterior
+                    .numero_cotizacion
+                    != self.numero_cotizacion
+                ):
+
+                    errores[
+                        "cotizacion_anterior"
+                    ] = (
+                        "La revisión anterior debe "
+                        "pertenecer al mismo número "
+                        "de cotización."
+                    )
+
+                elif (
+                    self.revision
+                    != (
+                        self.cotizacion_anterior
+                        .revision
+                        + 1
+                    )
+                ):
+
+                    errores[
+                        "revision"
+                    ] = (
+                        "La revisión debe ser "
+                        "exactamente la siguiente "
+                        "a la revisión anterior."
+                    )
+
+        # ======================================================
+        # DESCUENTO
+        # ======================================================
+
+        descuento_ingresado = (
+            self.descuento_ingresado
+            or Decimal("0.00")
+        )
+
+        if (
+            descuento_ingresado
+            < Decimal("0.00")
+        ):
+
+            errores[
+                "descuento_ingresado"
+            ] = (
+                "El descuento no puede "
+                "ser negativo."
+            )
+
+        if (
+            self.tipo_descuento
+            == "PORCENTAJE"
+            and descuento_ingresado
+            > Decimal("100.00")
+        ):
+
+            errores[
+                "descuento_ingresado"
+            ] = (
+                "El descuento porcentual "
+                "no puede superar el 100%."
+            )
+
+        if (
+            self.tipo_descuento
+            not in {
+                "PORCENTAJE",
+                "VALOR_FIJO",
+            }
+        ):
+
+            errores[
+                "tipo_descuento"
+            ] = (
+                "El tipo de descuento "
+                "no es válido."
+            )
+
+        if errores:
+
+            raise ValidationError(
+                errores
+            )
+
+    # ==========================================================
+    # SAVE
+    # ==========================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        # IMPORTANTE:
+        #
+        # Aquí NO copiamos automáticamente los datos
+        # actuales de self.orden.
+        #
+        # Una cotización/revisión debe conservar
+        # la fotografía de cliente, vehículo y placa
+        # que tenía al momento de ser generada.
 
         self._normalizar_campos_texto()
 
         self.full_clean()
 
-        super().save(*args, **kwargs)
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    # ==========================================================
+    # DELETE
+    # ==========================================================
+
+    def delete(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        if self.estado == "APROBADA":
+
+            raise ValidationError(
+                "Una cotización aprobada "
+                "no puede eliminarse porque "
+                "forma parte del historial."
+            )
+
+        return super().delete(
+            *args,
+            **kwargs,
+        )
+
+    # ==========================================================
+    # STRING
+    # ==========================================================
 
     def __str__(self):
-        return f"COT {self.numero_cotizacion} - {self.placa} ({self.nombre_cliente_final})"
+
+        return (
+            f"{self.numero_cotizacion} "
+            f"REV.{self.revision} - "
+            f"{self.placa} "
+            f"({self.nombre_cliente_final})"
+        )
+
+
+# ==========================================================
+# SERVICIOS COTIZADOS
+# ==========================================================
+
+
 class CotizacionServicioDetalle(models.Model):
-    VARIANTES_PRECIO = OrdenServicioDetalle.VARIANTES_PRECIO
+
+    VARIANTES_PRECIO = (
+        OrdenServicioDetalle
+        .VARIANTES_PRECIO
+    )
 
     cotizacion = models.ForeignKey(
         Cotizacion,
         related_name="servicios_cotizados",
         on_delete=models.CASCADE,
     )
+
+    # ======================================================
+    # IDENTIDAD LÓGICA ENTRE REVISIONES
+    # ======================================================
+
+    linea_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        editable=False,
+    )
+
+    # ======================================================
+    # SERVICIO
+    # ======================================================
 
     servicio = models.ForeignKey(
         "servicios.ServicioCatalogo",
@@ -4433,11 +5213,17 @@ class CotizacionServicioDetalle(models.Model):
 
     tipo_servicio = models.CharField(
         max_length=10,
-        choices=OrdenServicioDetalle.TIPOS_SERVICIO,
+        choices=
+            OrdenServicioDetalle
+            .TIPOS_SERVICIO,
         default="MEC",
     )
 
-    descripcion_servicio = models.CharField(max_length=255)
+    descripcion_servicio = (
+        models.CharField(
+            max_length=255,
+        )
+    )
 
     cantidad = models.DecimalField(
         max_digits=10,
@@ -4445,9 +5231,11 @@ class CotizacionServicioDetalle(models.Model):
         default=Decimal("1.00"),
     )
 
-    precio_unitario = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
+    precio_unitario = (
+        models.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+        )
     )
 
     subtotal = models.DecimalField(
@@ -4456,72 +5244,247 @@ class CotizacionServicioDetalle(models.Model):
         editable=False,
     )
 
-    orden_item = models.PositiveIntegerField(default=1)
+    orden_item = (
+        models.PositiveIntegerField(
+            default=1,
+        )
+    )
 
+    variante_precio_aplicada = (
+        models.CharField(
+            max_length=20,
+            choices=VARIANTES_PRECIO,
+            default="NORMAL",
+        )
+    )
 
+    creado_en = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
 
-    variante_precio_aplicada = models.CharField(
-        max_length=20,
-        choices=VARIANTES_PRECIO,
-        default="NORMAL",
+    actualizado_en = (
+        models.DateTimeField(
+            auto_now=True
+        )
     )
 
     class Meta:
-        ordering = ["orden_item", "id"]
-        verbose_name = "Servicio cotizado"
-        verbose_name_plural = "Servicios cotizados"
 
-    def clean(self):
-        if self.cantidad is None or self.cantidad <= 0:
-            raise ValidationError("La cantidad del servicio debe ser mayor que 0.")
+        ordering = [
+            "orden_item",
+            "id",
+        ]
 
-        if self.precio_unitario is None or self.precio_unitario < 0:
-            raise ValidationError("El precio unitario del servicio no puede ser negativo.")
+        verbose_name = (
+            "Servicio cotizado"
+        )
 
-        if not self.descripcion_servicio and not self.servicio:
+        verbose_name_plural = (
+            "Servicios cotizados"
+        )
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "cotizacion",
+                    "linea_uuid",
+                ],
+                name=
+                    "uq_cot_servicio_linea",
+            ),
+        ]
+
+    # ======================================================
+    # VALIDACIÓN DE ESTADO
+    # ======================================================
+
+    def validar_cotizacion_editable(
+        self
+    ):
+
+        if (
+            self.cotizacion
+            and not self.cotizacion
+            .puede_editarse()
+        ):
+
             raise ValidationError(
-                "Debe proporcionar una descripción o seleccionar un servicio del catálogo."
+                "No se pueden modificar "
+                "servicios de una cotización "
+                "aprobada, rechazada o "
+                "que ya no sea la revisión vigente."
             )
 
-    def save(self, *args, **kwargs):
-        
+    # ======================================================
+    # CLEAN
+    # ======================================================
 
-        if not self.variante_precio_aplicada:
-            self.variante_precio_aplicada = "NORMAL"
+    def clean(self):
 
-        if self.servicio and not self.descripcion_servicio:
-            self.descripcion_servicio = self.servicio.descripcion
+        self.validar_cotizacion_editable()
+
+        if (
+            self.cantidad is None
+            or self.cantidad <= 0
+        ):
+
+            raise ValidationError(
+                "La cantidad del servicio "
+                "debe ser mayor que 0."
+            )
+
+        if (
+            self.precio_unitario is None
+            or self.precio_unitario < 0
+        ):
+
+            raise ValidationError(
+                "El precio unitario del "
+                "servicio no puede ser negativo."
+            )
+
+        if (
+            not self.descripcion_servicio
+            and not self.servicio
+        ):
+
+            raise ValidationError(
+                "Debe proporcionar una "
+                "descripción o seleccionar "
+                "un servicio del catálogo."
+            )
+
+    # ======================================================
+    # SAVE
+    # ======================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        if not self.linea_uuid:
+
+            self.linea_uuid = (
+                uuid.uuid4()
+            )
+
+        self.validar_cotizacion_editable()
+
+        if (
+            not self
+            .variante_precio_aplicada
+        ):
+
+            self.variante_precio_aplicada = (
+                "NORMAL"
+            )
+
+        if (
+            self.servicio
+            and not self.descripcion_servicio
+        ):
+
+            self.descripcion_servicio = (
+                self.servicio.descripcion
+            )
 
         if self.descripcion_servicio:
-            self.descripcion_servicio = self.descripcion_servicio.strip().upper()
+
+            self.descripcion_servicio = (
+                self.descripcion_servicio
+                .strip()
+                .upper()
+            )
 
         self.subtotal = (
-            Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            Decimal(
+                str(self.cantidad)
+            )
+            *
+            Decimal(
+                str(self.precio_unitario)
+            )
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
 
         self.full_clean()
 
         with transaction.atomic():
-            super().save(*args, **kwargs)
+
+            super().save(
+                *args,
+                **kwargs,
+            )
+
             self.cotizacion.calcular_total()
 
-    def delete(self, *args, **kwargs):
-        cotizacion = self.cotizacion
+    # ======================================================
+    # DELETE
+    # ======================================================
+
+    def delete(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        self.validar_cotizacion_editable()
+
+        cotizacion = (
+            self.cotizacion
+        )
 
         with transaction.atomic():
-            super().delete(*args, **kwargs)
+
+            super().delete(
+                *args,
+                **kwargs,
+            )
+
             cotizacion.calcular_total()
 
     def __str__(self):
-        return f"[{self.tipo_servicio}] {self.descripcion_servicio} - COT {self.cotizacion.numero_cotizacion}"
+
+        return (
+            f"[{self.tipo_servicio}] "
+            f"{self.descripcion_servicio} - "
+            f"{self.cotizacion.numero_cotizacion} "
+            f"REV.{self.cotizacion.revision}"
+        )
+
+
+# ==========================================================
+# REPUESTOS COTIZADOS
+# ==========================================================
 
 
 class CotizacionInsumoDetalle(models.Model):
+
     cotizacion = models.ForeignKey(
         Cotizacion,
         related_name="insumos_cotizados",
         on_delete=models.CASCADE,
     )
+
+    # ======================================================
+    # IDENTIDAD LÓGICA ENTRE REVISIONES
+    # ======================================================
+
+    linea_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        editable=False,
+    )
+
+    # ======================================================
+    # PRODUCTO
+    # ======================================================
 
     producto = models.ForeignKey(
         "inventario.CodigoProducto",
@@ -4530,10 +5493,14 @@ class CotizacionInsumoDetalle(models.Model):
         blank=True,
     )
 
-    descripcion_factura = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Descripción para el Cliente",
+    descripcion_factura = (
+        models.CharField(
+            max_length=255,
+            blank=True,
+            verbose_name=(
+                "Descripción para el Cliente"
+            ),
+        )
     )
 
     cantidad = models.DecimalField(
@@ -4542,9 +5509,11 @@ class CotizacionInsumoDetalle(models.Model):
         default=Decimal("1.00"),
     )
 
-    precio_unitario = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
+    precio_unitario = (
+        models.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+        )
     )
 
     subtotal = models.DecimalField(
@@ -4553,102 +5522,409 @@ class CotizacionInsumoDetalle(models.Model):
         editable=False,
     )
 
-    orden_item = models.PositiveIntegerField(default=1)
-
-    categoria_referencia = models.ForeignKey(
-        "inventario.Categoria",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+    orden_item = (
+        models.PositiveIntegerField(
+            default=1,
+        )
     )
 
-    codigo_empaque_referencia = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
+    marcado = models.BooleanField(
+        default=False,
+        verbose_name="Marcado visual",
     )
 
-    codigo_barras_referencia = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
+    categoria_referencia = (
+        models.ForeignKey(
+            "inventario.Categoria",
+            on_delete=models.SET_NULL,
+            null=True,
+            blank=True,
+        )
+    )
+
+    codigo_empaque_referencia = (
+        models.CharField(
+            max_length=100,
+            null=True,
+            blank=True,
+        )
+    )
+
+    codigo_barras_referencia = (
+        models.CharField(
+            max_length=100,
+            null=True,
+            blank=True,
+        )
+    )
+
+    creado_en = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
+
+    actualizado_en = (
+        models.DateTimeField(
+            auto_now=True
+        )
     )
 
     class Meta:
-        ordering = ["orden_item", "id"]
-        verbose_name = "Repuesto cotizado"
-        verbose_name_plural = "Repuestos cotizados"
 
-    def clean(self):
-        if self.cantidad is None or self.cantidad <= 0:
-            raise ValidationError("La cantidad del repuesto debe ser mayor que 0.")
+        ordering = [
+            "orden_item",
+            "id",
+        ]
 
-        if self.precio_unitario is None or self.precio_unitario < 0:
-            raise ValidationError("El precio unitario del repuesto no puede ser negativo.")
+        verbose_name = (
+            "Repuesto cotizado"
+        )
 
-        if not self.producto and not (self.descripcion_factura or "").strip():
+        verbose_name_plural = (
+            "Repuestos cotizados"
+        )
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "cotizacion",
+                    "linea_uuid",
+                ],
+                name=
+                    "uq_cot_insumo_linea",
+            ),
+        ]
+
+    # ======================================================
+    # VALIDACIÓN
+    # ======================================================
+
+    def validar_cotizacion_editable(
+        self
+    ):
+
+        if (
+            self.cotizacion
+            and not self.cotizacion
+            .puede_editarse()
+        ):
+
             raise ValidationError(
-                "Debe seleccionar un repuesto del inventario o escribir una descripción manual."
+                "No se pueden modificar "
+                "repuestos de una cotización "
+                "aprobada, rechazada o "
+                "que ya no sea la revisión vigente."
             )
 
-    def save(self, *args, **kwargs):
-        if not self.descripcion_factura and self.producto:
-            self.descripcion_factura = str(self.producto)
+    def clean(self):
+
+        self.validar_cotizacion_editable()
+
+        if (
+            self.cantidad is None
+            or self.cantidad <= 0
+        ):
+
+            raise ValidationError(
+                "La cantidad del repuesto "
+                "debe ser mayor que 0."
+            )
+
+        if (
+            self.precio_unitario is None
+            or self.precio_unitario < 0
+        ):
+
+            raise ValidationError(
+                "El precio unitario del "
+                "repuesto no puede ser negativo."
+            )
+
+        if (
+            not self.producto
+            and not (
+                self.descripcion_factura
+                or ""
+            ).strip()
+        ):
+
+            raise ValidationError(
+                "Debe seleccionar un "
+                "repuesto del inventario "
+                "o escribir una descripción manual."
+            )
+
+    # ======================================================
+    # SAVE
+    # ======================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        if not self.linea_uuid:
+
+            self.linea_uuid = (
+                uuid.uuid4()
+            )
+
+        self.validar_cotizacion_editable()
+
+        if (
+            not self.descripcion_factura
+            and self.producto
+        ):
+
+            self.descripcion_factura = (
+                str(self.producto)
+            )
 
         if self.descripcion_factura:
-            self.descripcion_factura = self.descripcion_factura.strip().upper()
+
+            self.descripcion_factura = (
+                self.descripcion_factura
+                .strip()
+                .upper()
+            )
 
         self.subtotal = (
-            Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            Decimal(
+                str(self.cantidad)
+            )
+            *
+            Decimal(
+                str(self.precio_unitario)
+            )
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
 
         self.full_clean()
 
+        # IMPORTANTE:
+        #
+        # UNA COTIZACIÓN NO DESCUENTA STOCK.
+
         with transaction.atomic():
-            super().save(*args, **kwargs)
+
+            super().save(
+                *args,
+                **kwargs,
+            )
+
             self.cotizacion.calcular_total()
 
-    def delete(self, *args, **kwargs):
-        cotizacion = self.cotizacion
+    # ======================================================
+    # DELETE
+    # ======================================================
+
+    def delete(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        self.validar_cotizacion_editable()
+
+        cotizacion = (
+            self.cotizacion
+        )
+
+        # Tampoco se repone stock,
+        # porque nunca se descontó.
 
         with transaction.atomic():
-            super().delete(*args, **kwargs)
+
+            super().delete(
+                *args,
+                **kwargs,
+            )
+
             cotizacion.calcular_total()
 
     def __str__(self):
-        return f"{self.descripcion_factura} (x{self.cantidad}) - COT {self.cotizacion.numero_cotizacion}"
+
+        return (
+            f"{self.descripcion_factura} "
+            f"(x{self.cantidad}) - "
+            f"{self.cotizacion.numero_cotizacion} "
+            f"REV.{self.cotizacion.revision}"
+        )
 
 
-class CotizacionProcedimientoDetalle(models.Model):
-    servicio_cotizado = models.ForeignKey(
-        CotizacionServicioDetalle,
-        related_name="procedimientos_detalle",
-        on_delete=models.CASCADE,
+# ==========================================================
+# PROCEDIMIENTOS COTIZADOS
+# ==========================================================
+
+
+class CotizacionProcedimientoDetalle(
+    models.Model
+):
+
+    servicio_cotizado = (
+        models.ForeignKey(
+            CotizacionServicioDetalle,
+            related_name=
+                "procedimientos_detalle",
+            on_delete=models.CASCADE,
+        )
     )
 
-    descripcion = models.CharField(max_length=255)
+    # ======================================================
+    # IDENTIDAD LÓGICA ENTRE REVISIONES
+    # ======================================================
 
-    orden_item = models.PositiveIntegerField(default=1)
+    linea_uuid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        editable=False,
+    )
+
+    descripcion = models.CharField(
+        max_length=255,
+    )
+
+    orden_item = (
+        models.PositiveIntegerField(
+            default=1,
+        )
+    )
+
+    creado_en = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
+
+    actualizado_en = (
+        models.DateTimeField(
+            auto_now=True
+        )
+    )
 
     class Meta:
-        ordering = ["orden_item", "id"]
-        verbose_name = "Procedimiento cotizado"
-        verbose_name_plural = "Procedimientos cotizados"
+
+        ordering = [
+            "orden_item",
+            "id",
+        ]
+
+        verbose_name = (
+            "Procedimiento cotizado"
+        )
+
+        verbose_name_plural = (
+            "Procedimientos cotizados"
+        )
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "servicio_cotizado",
+                    "linea_uuid",
+                ],
+                name=
+                    "uq_cot_proc_linea",
+            ),
+        ]
+
+    # ======================================================
+    # VALIDACIÓN
+    # ======================================================
+
+    def validar_cotizacion_editable(
+        self
+    ):
+
+        if (
+            self.servicio_cotizado
+            and not
+            self.servicio_cotizado
+            .cotizacion
+            .puede_editarse()
+        ):
+
+            raise ValidationError(
+                "No se pueden modificar "
+                "procedimientos de una "
+                "cotización aprobada, "
+                "rechazada o que ya no "
+                "sea la revisión vigente."
+            )
 
     def clean(self):
-        if not self.descripcion or not self.descripcion.strip():
-            raise ValidationError("La descripción del procedimiento es obligatoria.")
 
-    def save(self, *args, **kwargs):
+        self.validar_cotizacion_editable()
+
+        if (
+            not self.descripcion
+            or not self.descripcion.strip()
+        ):
+
+            raise ValidationError(
+                "La descripción del "
+                "procedimiento es obligatoria."
+            )
+
+    # ======================================================
+    # SAVE
+    # ======================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        if not self.linea_uuid:
+
+            self.linea_uuid = (
+                uuid.uuid4()
+            )
+
+        self.validar_cotizacion_editable()
+
         if self.descripcion:
-            self.descripcion = self.descripcion.strip().upper()
+
+            self.descripcion = (
+                self.descripcion
+                .strip()
+                .upper()
+            )
 
         self.full_clean()
 
-        super().save(*args, **kwargs)
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    # ======================================================
+    # DELETE
+    # ======================================================
+
+    def delete(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        self.validar_cotizacion_editable()
+
+        super().delete(
+            *args,
+            **kwargs,
+        )
 
     def __str__(self):
-        return f"{self.servicio_cotizado.descripcion_servicio} - {self.descripcion}"
+
+        return (
+            f"{self.servicio_cotizado.descripcion_servicio}"
+            f" - {self.descripcion}"
+        )
 class PlantillaRecomendacion(models.Model):
     titulo = models.CharField(max_length=150, db_index=True)
     texto = models.TextField()
