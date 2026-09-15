@@ -674,3 +674,22 @@ textarea.form-control-apple {
         flex-direction: column;
     }
 }
+/* =========================================================
+   CELDAS NUMÉRICAS EN CERO O NEGATIVO
+   ========================================================= */
+
+.ot-table td.celda-error-numero {
+    background-color: rgba(255, 59, 48, 0.12) !important;
+}
+
+.ot-table td.celda-error-numero .form-control-apple {
+    background-color: #fff4f3 !important;
+    border-color: rgba(255, 59, 48, 0.75) !important;
+    color: #b42318 !important;
+}
+
+/* El rojo tiene prioridad sobre el hover celeste */
+.ot-table tbody tr:hover
+> td.celda-error-numero {
+    background-color: rgba(255, 59, 48, 0.16) !important;
+}

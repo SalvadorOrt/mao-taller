@@ -8,6 +8,9 @@
 
 {% block page_title %}
     Proforma {{ cotizacion.numero_cotizacion }}
+    {% if cotizacion.revision %}
+        · Rev. {{ cotizacion.revision }}
+    {% endif %}
 {% endblock %}
 
 {% block page_subtitle %}
@@ -19,7 +22,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/detalle_orden.css' %}?v=25"
+    href="{% static 'css/detalle_orden.css' %}?v=26"
 >
 
 
@@ -74,7 +77,6 @@
                     EN REVISIÓN / PENDIENTE
                 </span>
 
-
             {% elif cotizacion.estado == "APROBADA" %}
 
                 <span
@@ -87,7 +89,6 @@
                 >
                     APROBADA Y TRASLADADA
                 </span>
-
 
             {% else %}
 
@@ -104,6 +105,46 @@
 
             {% endif %}
 
+
+            {% if cotizacion.revision %}
+
+                <span
+                    class="ot-badge"
+                    style="
+                        background: #f5f5f7;
+                        color: #6e6e73;
+                        border-color: #d2d2d7;
+                    "
+                >
+                    REV. {{ cotizacion.revision }}
+                </span>
+
+                {% if cotizacion.es_vigente %}
+                    <span
+                        class="ot-badge"
+                        style="
+                            background: #eef8ff;
+                            color: #0071e3;
+                            border-color: #b7d6f5;
+                        "
+                    >
+                        VIGENTE
+                    </span>
+                {% else %}
+                    <span
+                        class="ot-badge"
+                        style="
+                            background: #f5f5f7;
+                            color: #86868b;
+                            border-color: #d2d2d7;
+                        "
+                    >
+                        HISTÓRICA
+                    </span>
+                {% endif %}
+
+            {% endif %}
+
         </div>
 
 
@@ -115,7 +156,51 @@
             "
         >
 
-            {% if cotizacion.estado == "PENDIENTE" %}
+            {% if revision_anterior %}
+
+                <a
+                    href="{% url 'detalle_cotizacion' revision_anterior.pk %}"
+                    class="btn-login"
+                    style="
+                        background: #f5f5f7;
+                        border-color: #d2d2d7;
+                        color: #1d1d1f;
+                    "
+                >
+                    <i
+                        class="bi bi-arrow-left"
+                        style="margin-right: 5px;"
+                    ></i>
+
+                    Rev. {{ revision_anterior.revision }}
+                </a>
+
+            {% endif %}
+
+
+            {% if revision_siguiente %}
+
+                <a
+                    href="{% url 'detalle_cotizacion' revision_siguiente.pk %}"
+                    class="btn-login"
+                    style="
+                        background: #f5f5f7;
+                        border-color: #d2d2d7;
+                        color: #1d1d1f;
+                    "
+                >
+                    Rev. {{ revision_siguiente.revision }}
+
+                    <i
+                        class="bi bi-arrow-right"
+                        style="margin-left: 5px;"
+                    ></i>
+                </a>
+
+            {% endif %}
+
+
+            {% if puede_editar %}
 
                 <button
                     type="button"
@@ -132,7 +217,29 @@
                         style="margin-right: 5px;"
                     ></i>
 
-                    Aprobar y Trasladar
+                    {% if cotizacion.revision > 1 %}
+                        Aprobar y Sincronizar
+                    {% else %}
+                        Aprobar y Trasladar
+                    {% endif %}
+                </button>
+
+            {% endif %}
+
+
+            {% if puede_crear_revision %}
+
+                <button
+                    type="button"
+                    onclick="confirmarNuevaRevision()"
+                    class="btn-login primary"
+                >
+                    <i
+                        class="bi bi-files"
+                        style="margin-right: 5px;"
+                    ></i>
+
+                    Crear nueva revisión
                 </button>
 
             {% endif %}
@@ -155,16 +262,15 @@
         {% csrf_token %}
 
 
-        <!--
-        Cuando agreguemos version a Cotizacion
-        pondremos aquí:
+        <!-- =================================================
+             CONTROL DE CONCURRENCIA
+        ================================================== -->
 
         <input
             type="hidden"
             name="cotizacion_version"
             value="{{ cotizacion.version }}"
         >
-        -->
 
 
         <input
@@ -174,27 +280,27 @@
         >
 
 
-        <!-- Información general -->
+        <!-- INFORMACIÓN GENERAL -->
 
         {% include "includes/cotizaciones/info_general.html" %}
 
 
-        <!-- Repuestos -->
+        <!-- REPUESTOS -->
 
         {% include "includes/cotizaciones/tabla_repuestos.html" %}
 
 
-        <!-- Mano de obra interna -->
+        <!-- MANO DE OBRA INTERNA -->
 
         {% include "includes/cotizaciones/tabla_moi.html" %}
 
 
-        <!-- Mano de obra externa -->
+        <!-- MANO DE OBRA EXTERNA -->
 
         {% include "includes/cotizaciones/tabla_moe.html" %}
 
 
-        <!-- Resumen económico -->
+        <!-- RESUMEN ECONÓMICO -->
 
         {% include "includes/cotizaciones/resumen.html" %}
 
@@ -204,7 +310,6 @@
         ================================================== -->
 
         <div class="sticky-actions">
-
 
             {% if cotizacion.orden %}
 
@@ -225,6 +330,24 @@
                     Volver a la OT
                 </a>
 
+            {% elif cotizacion.orden_generada %}
+
+                <a
+                    href="{% url 'detalle_orden' cotizacion.orden_generada.id %}"
+                    class="btn-login"
+                    style="
+                        background: #e5e5ea;
+                        border-color: #e5e5ea;
+                        color: var(--text);
+                    "
+                >
+                    <i
+                        class="fas fa-arrow-left"
+                        style="margin-right: 6px;"
+                    ></i>
+
+                    Ver OT
+                </a>
 
             {% else %}
 
@@ -273,7 +396,6 @@
 
     <!-- =====================================================
          FORMULARIO APROBACIÓN
-         FUERA DEL FORMULARIO PRINCIPAL
     ====================================================== -->
 
     <form
@@ -285,11 +407,21 @@
         {% csrf_token %}
     </form>
 
+
+    <form
+        id="formNuevaRevision"
+        method="post"
+        action="{% url 'crear_revision_cotizacion' cotizacion.pk %}"
+        style="display: none;"
+    >
+        {% csrf_token %}
+    </form>
+
 </div>
 
 
 <!-- =====================================================
-     DROPDOWN FLOTANTE DE PRODUCTOS
+     ÚNICO DROPDOWN FLOTANTE DE PRODUCTOS
 ====================================================== -->
 
 <div
@@ -307,7 +439,14 @@
     // GUARDAR COTIZACIÓN
     // =====================================================
 
+    let guardandoCotizacion = false;
+
+
     function guardarCotizacionDirecto() {
+
+        if (guardandoCotizacion) {
+            return;
+        }
 
         const formulario =
             document.getElementById(
@@ -324,7 +463,9 @@
 
             Swal.fire({
                 title: "Error",
-                text: "No se encontró el formulario de la cotización.",
+                text:
+                    "No se encontró el formulario " +
+                    "de la cotización.",
                 icon: "error",
                 confirmButtonColor: "#ff3b30"
             });
@@ -333,9 +474,9 @@
         }
 
 
-        // =================================================
+        // =============================================
         // VALIDAR DESCUENTO
-        // =================================================
+        // =============================================
 
         if (
             typeof mostrarEstadoDescuento === "function" &&
@@ -364,30 +505,37 @@
         }
 
 
-        // =================================================
-        // VERIFICAR QUE REP PERTENEZCA AL FORM PRINCIPAL
-        // =================================================
+        // =============================================
+        // ASEGURAR QUE LOS CAMPOS ESTÁN EN EL FORM
+        // =============================================
 
         const campoRepuesto =
-            document.querySelector(
+            formulario.querySelector(
                 '[name="rep_descripcion[]"]'
             );
 
-        const campoManoObra =
-            document.querySelector(
+        const campoMOI =
+            formulario.querySelector(
                 '[name="moi_descripcion[]"]'
+            );
+
+        const campoMOE =
+            formulario.querySelector(
+                '[name="moe_descripcion[]"]'
             );
 
 
         if (
-            campoRepuesto &&
-            campoRepuesto.form !== formulario
+            document.querySelector(
+                '[name="rep_descripcion[]"]'
+            ) &&
+            !campoRepuesto
         ) {
 
             Swal.fire({
                 title: "Error de formulario",
                 text:
-                    "Los campos de repuestos no pertenecen " +
+                    "Los repuestos no pertenecen " +
                     "al formulario principal.",
                 icon: "error",
                 confirmButtonColor: "#ff3b30"
@@ -398,14 +546,16 @@
 
 
         if (
-            campoManoObra &&
-            campoManoObra.form !== formulario
+            document.querySelector(
+                '[name="moi_descripcion[]"]'
+            ) &&
+            !campoMOI
         ) {
 
             Swal.fire({
                 title: "Error de formulario",
                 text:
-                    "Los campos de mano de obra no pertenecen " +
+                    "La mano de obra interna no pertenece " +
                     "al formulario principal.",
                 icon: "error",
                 confirmButtonColor: "#ff3b30"
@@ -415,18 +565,36 @@
         }
 
 
-        // =================================================
-        // EVITAR DOBLE CLIC
-        // =================================================
+        if (
+            document.querySelector(
+                '[name="moe_descripcion[]"]'
+            ) &&
+            !campoMOE
+        ) {
+
+            Swal.fire({
+                title: "Error de formulario",
+                text:
+                    "La mano de obra externa no pertenece " +
+                    "al formulario principal.",
+                icon: "error",
+                confirmButtonColor: "#ff3b30"
+            });
+
+            return;
+        }
+
+
+        // =============================================
+        // BLOQUEAR DOBLE GUARDADO
+        // =============================================
+
+        guardandoCotizacion = true;
 
         if (botonGuardar) {
             botonGuardar.disabled = true;
         }
 
-
-        // =================================================
-        // GUARDAR
-        // =================================================
 
         Swal.fire({
             title: "Guardando...",
@@ -444,8 +612,11 @@
                     typeof formulario.requestSubmit ===
                     "function"
                 ) {
+
                     formulario.requestSubmit();
+
                 } else {
+
                     formulario.submit();
                 }
             }
@@ -454,26 +625,40 @@
 
 
     // =====================================================
-    // APROBAR COTIZACIÓN
+    // APROBAR
     // =====================================================
 
-    function confirmarAprobacion(
-        formId
-    ) {
+    function confirmarAprobacion(formId) {
 
         let mensaje = "";
 
-        {% if cotizacion.orden %}
+
+        {% if cotizacion.revision > 1 %}
+
+            mensaje =
+                "Los cambios de esta revisión se " +
+                "sincronizarán con la Orden de Trabajo. " +
+                "Solo se modificarán las líneas que " +
+                "provienen de esta cotización.";
+
+        {% elif cotizacion.orden %}
 
             mensaje =
                 "Los repuestos y servicios se trasladarán " +
                 "a la Orden de Trabajo vinculada.";
 
+        {% elif cotizacion.orden_generada %}
+
+            mensaje =
+                "Los repuestos y servicios se " +
+                "sincronizarán con la Orden de Trabajo.";
+
         {% else %}
 
             mensaje =
                 "Se creará una nueva Orden de Trabajo " +
-                "con los repuestos y servicios de esta proforma.";
+                "con los repuestos y servicios " +
+                "de esta proforma.";
 
         {% endif %}
 
@@ -485,14 +670,51 @@
 
             showCancelButton: true,
 
-            confirmButtonColor:
-                "#34c759",
+            confirmButtonColor: "#34c759",
+            cancelButtonColor: "#6e6e73",
 
-            cancelButtonColor:
-                "#6e6e73",
+            confirmButtonText: "Sí, aprobar",
+            cancelButtonText: "Cancelar"
+
+        }).then(function (result) {
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            const formulario =
+                document.getElementById(
+                    formId
+                );
+
+            if (formulario) {
+                formulario.submit();
+            }
+        });
+    }
+
+
+    // =====================================================
+    // CREAR NUEVA REVISIÓN
+    // =====================================================
+
+    function confirmarNuevaRevision() {
+
+        Swal.fire({
+            title: "¿Crear nueva revisión?",
+            text:
+                "La revisión aprobada se conservará " +
+                "sin cambios y se creará una copia " +
+                "editable como nueva revisión.",
+            icon: "question",
+
+            showCancelButton: true,
+
+            confirmButtonColor: "#0071e3",
+            cancelButtonColor: "#6e6e73",
 
             confirmButtonText:
-                "Sí, aprobar",
+                "Sí, crear revisión",
 
             cancelButtonText:
                 "Cancelar"
@@ -505,7 +727,7 @@
 
             const formulario =
                 document.getElementById(
-                    formId
+                    "formNuevaRevision"
                 );
 
             if (formulario) {
@@ -531,31 +753,42 @@
 
                         Swal.fire({
                             title: "¡Guardado Exitoso!",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "success",
                             confirmButtonColor: "#34c759",
                             confirmButtonText: "Entendido",
                             timer: 2500
                         });
 
-
                     {% elif message.tags == "error" %}
 
                         Swal.fire({
                             title: "Error",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "error",
                             confirmButtonColor: "#ff3b30"
                         });
-
 
                     {% elif message.tags == "warning" %}
 
                         Swal.fire({
                             title: "Advertencia",
-                            text: "{{ message|escapejs }}",
+                            text:
+                                "{{ message|escapejs }}",
                             icon: "warning",
                             confirmButtonColor: "#ff9500"
+                        });
+
+                    {% elif message.tags == "info" %}
+
+                        Swal.fire({
+                            title: "Información",
+                            text:
+                                "{{ message|escapejs }}",
+                            icon: "info",
+                            confirmButtonColor: "#0071e3"
                         });
 
                     {% endif %}
@@ -579,23 +812,23 @@
 
 
 <!-- =====================================================
-     JAVASCRIPT COMPARTIDO CON ORDEN DE TRABAJO
+     JS COMPARTIDO CON OT
 ====================================================== -->
 
 <script
-    src="{% static 'js/detalle_orden/base.js' %}?v=21"
+    src="{% static 'js/detalle_orden/base.js' %}?v=22"
 ></script>
 
 <script
-    src="{% static 'js/detalle_orden/repuestos.js' %}?v=8"
+    src="{% static 'js/detalle_orden/repuestos.js' %}?v=9"
 ></script>
 
 <script
-    src="{% static 'js/detalle_orden/ordenar_repuestos.js' %}?v=1"
+    src="{% static 'js/detalle_orden/ordenar_repuestos.js' %}?v=2"
 ></script>
 
 <script
-    src="{% static 'js/detalle_orden/mano_obra.js' %}?v=10"
+    src="{% static 'js/detalle_orden/mano_obra.js' %}?v=11"
 ></script>
 
 

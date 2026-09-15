@@ -4315,6 +4315,53 @@ class Cotizacion(models.Model):
         max_length=200,
         null=True,
         blank=True,
+        help_text=(
+            "Nombre del cliente congelado al momento de crear "
+            "la cotización/revisión."
+        ),
+    )
+
+    identificacion_cliente_respaldo = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text=(
+            "Identificación del cliente congelada al momento "
+            "de crear la cotización/revisión."
+        ),
+    )
+
+    telefono_respaldo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono principal de respaldo",
+    )
+
+    telefono_secundario_respaldo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono alternativo de respaldo",
+    )
+
+    telefono_trabajo_respaldo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono de trabajo de respaldo",
+    )
+
+    email_respaldo = models.EmailField(
+        null=True,
+        blank=True,
+        verbose_name="Correo de respaldo",
+    )
+
+    direccion_respaldo = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Dirección de respaldo",
     )
 
     # ==========================================================
@@ -4335,6 +4382,12 @@ class Cotizacion(models.Model):
     anio_vehiculo = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
+    )
+
+    kilometraje = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Kilometraje al cotizar",
     )
 
     # ==========================================================
@@ -4532,6 +4585,84 @@ class Cotizacion(models.Model):
         )
 
     @property
+    def identificacion_cliente_final(self):
+
+        return (
+            self.identificacion_cliente_respaldo
+            or (
+                self.cliente.identificacion
+                if self.cliente
+                else None
+            )
+            or ""
+        )
+
+    @property
+    def telefono_cliente_final(self):
+
+        return (
+            self.telefono_respaldo
+            or (
+                self.cliente.telefono
+                if self.cliente
+                else None
+            )
+            or ""
+        )
+
+    @property
+    def telefono_secundario_cliente_final(self):
+
+        return (
+            self.telefono_secundario_respaldo
+            or (
+                self.cliente.telefono_secundario
+                if self.cliente
+                else None
+            )
+            or ""
+        )
+
+    @property
+    def telefono_trabajo_cliente_final(self):
+
+        return (
+            self.telefono_trabajo_respaldo
+            or (
+                self.cliente.telefono_trabajo
+                if self.cliente
+                else None
+            )
+            or ""
+        )
+
+    @property
+    def email_cliente_final(self):
+
+        return (
+            self.email_respaldo
+            or (
+                self.cliente.email
+                if self.cliente
+                else None
+            )
+            or ""
+        )
+
+    @property
+    def direccion_cliente_final(self):
+
+        return (
+            self.direccion_respaldo
+            or (
+                self.cliente.direccion
+                if self.cliente
+                else None
+            )
+            or ""
+        )
+
+    @property
     def etiqueta_revision(self):
 
         return (
@@ -4623,6 +4754,49 @@ class Cotizacion(models.Model):
 
             self.cliente_respaldo = (
                 self.cliente_respaldo
+                .strip()
+                .upper()
+            )
+
+        if self.identificacion_cliente_respaldo:
+
+            self.identificacion_cliente_respaldo = (
+                self.identificacion_cliente_respaldo
+                .strip()
+                .upper()
+            )
+
+        for campo_telefono in (
+            "telefono_respaldo",
+            "telefono_secundario_respaldo",
+            "telefono_trabajo_respaldo",
+        ):
+
+            valor = getattr(
+                self,
+                campo_telefono,
+                None,
+            )
+
+            if valor:
+                setattr(
+                    self,
+                    campo_telefono,
+                    str(valor).strip(),
+                )
+
+        if self.email_respaldo:
+
+            self.email_respaldo = (
+                self.email_respaldo
+                .strip()
+                .lower()
+            )
+
+        if self.direccion_respaldo:
+
+            self.direccion_respaldo = (
+                self.direccion_respaldo
                 .strip()
                 .upper()
             )

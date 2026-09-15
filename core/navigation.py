@@ -45,20 +45,6 @@ def get_menu_lateral(user):
 
 
     # -----------------------------------------------------
-    # NUEVA COTIZACIÓN
-    # -----------------------------------------------------
-
-    if user.has_perm(
-        "ordenes_de_trabajo.add_cotizacion"
-    ):
-        items_operacion.append({
-            "label": "Nueva Cotización",
-            "url_name": "crear_cotizacion",
-            "icon": "bi-file-earmark-plus",
-        })
-
-
-    # -----------------------------------------------------
     # ÓRDENES DE TRABAJO
     # -----------------------------------------------------
 
@@ -69,6 +55,20 @@ def get_menu_lateral(user):
             "label": "Órdenes de Trabajo",
             "url_name": "lista_ordenes",
             "icon": "bi-list-ul",
+        })
+
+
+    # -----------------------------------------------------
+    # COTIZACIONES / PROFORMAS
+    # -----------------------------------------------------
+
+    if user.has_perm(
+        "ordenes_de_trabajo.view_cotizacion"
+    ):
+        items_operacion.append({
+            "label": "Proformas",
+            "url_name": "lista_cotizaciones",
+            "icon": "bi-file-earmark-text",
         })
 
 

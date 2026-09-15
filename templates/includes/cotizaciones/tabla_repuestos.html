@@ -2,399 +2,1546 @@
     #cuerpoTablaRepuestos {
         border-collapse: collapse;
     }
+
     .ot-table tbody tr:empty {
         display: none !important;
     }
+
+    .fila-eliminada {
+        display: none !important;
+    }
+
+    #tablaRepuestos .row-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .repuesto-drag-handle {
+        width: 30px;
+        height: 28px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0;
+
+        border: 1px solid #d2d2d7;
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        color: #6e6e73;
+
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1;
+
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+    }
+
+    .repuesto-drag-handle:hover {
+        background: #eaf3ff;
+        border-color: #80bfff;
+        color: #0071e3;
+    }
+
+    #cuerpoTablaRepuestos > tr.repuesto-marcado > td {
+        background: rgba(52, 199, 89, 0.25);
+    }
+
+    .repuesto-marcar-btn {
+        width: 30px;
+        height: 28px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid #d2d2d7;
+        border-radius: 7px;
+
+        background: #f5f5f7;
+        color: #86868b;
+
+        font-size: 15px;
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+    .repuesto-marcar-btn:hover {
+        background: rgba(52, 199, 89, 0.10);
+        border-color: #34c759;
+        color: #248a3d;
+    }
+
+    .repuesto-marcar-btn.activo {
+        background: #34c759;
+        border-color: #34c759;
+        color: #ffffff;
+    }
 </style>
 
-<div class="ot-card">
-    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
-        <span>Repuestos Tentativos</span>
 
-        {% if cotizacion.estado == 'PENDIENTE' %}
-            <button type="button" class="btn-login" onclick="abrirModalIngresoRapido()">
+<div class="ot-card">
+
+    <div
+        class="section-title"
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 10px;
+        "
+    >
+
+        <span>
+            Repuestos Tentativos
+        </span>
+
+        {% if puede_editar %}
+
+            <button
+                type="button"
+                class="btn-login"
+                onclick="abrirModalIngresoRapido()"
+            >
                 + Ingreso Rápido
             </button>
+
         {% endif %}
+
     </div>
 
+
     <div class="ot-table-wrap">
-        <table class="ot-table" id="tablaRepuestos">
+
+        <table
+            class="ot-table"
+            id="tablaRepuestos"
+        >
+
             <thead>
                 <tr>
-                    <th style="width:30%;">Producto inventario</th>
-                    <th style="width:22%;">Descripción</th>
-                    <th style="width:8%;">Stock</th>
-                    <th style="width:10%;">P.U. ($)</th>
-                    <th style="width:8%;">Cantidad</th>
-                    <th style="width:10%;">Subtotal</th>
-                    <th style="width:12%;">Acción</th>
+                    <th style="width: 30%;">
+                        Producto inventario
+                    </th>
+
+                    <th style="width: 22%;">
+                        Descripción
+                    </th>
+
+                    <th style="width: 8%;">
+                        Stock
+                    </th>
+
+                    <th style="width: 10%;">
+                        P.U. ($)
+                    </th>
+
+                    <th style="width: 8%;">
+                        Cantidad
+                    </th>
+
+                    <th style="width: 10%;">
+                        Subtotal
+                    </th>
+
+                    <th style="width: 12%;">
+                        Acción
+                    </th>
                 </tr>
             </thead>
 
+
             <tbody id="cuerpoTablaRepuestos">
+
                 {% for item in cotizacion.insumos_cotizados.all %}
-                <tr>
-                    <td class="producto-cell">
-                        <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="{{ item.producto.id|default_if_none:'' }}">
-                        
-                        <input type="hidden" name="rep_categoria_id[]" value="{{ item.categoria_referencia.id|default_if_none:'' }}">
-                        <input type="hidden" name="rep_codigo_barras[]" value="{{ item.codigo_barras_referencia|default_if_none:'' }}">
-                        <input type="hidden" name="rep_codigo_empaque[]" value="{{ item.codigo_empaque_referencia|default_if_none:'' }}">
 
-                        <div class="producto-busqueda-wrap">
-                            {% if item.producto %}
-                                <input type="text"
-                                       class="form-control-apple producto-busqueda-input"
-                                       placeholder="Código / barras / nombre"
-                                       autocomplete="off"
-                                       value="{{ item.producto.codigo }} - {{ item.producto.nombre_comercial|default:item.producto.producto.nombre_base }}"
-                                       oninput="buscarProductoEnFila(this)"
-                                       onkeydown="manejarTeclaBusquedaProducto(event, this)"
-                                       onfocus="buscarProductoEnFila(this)">
-                            {% else %}
-                               
-                                <div class="producto-busqueda-wrap" style="text-align:center; background-color:#f5f5f7; padding:8px; border-radius:6px; font-weight:bold; color:#86868b; font-size:11px;">
-                                    {% if item.codigo_barras_referencia %}
-                                        {{ item.codigo_barras_referencia }}
-                                    {% elif item.codigo_empaque_referencia %}
-                                        {{ item.codigo_empaque_referencia }}
-                                    {% else %}
-                                        [ TEXTO LIBRE / MANUAL ]
-                                    {% endif %}
-                                </div>
+                    <tr
+                        class="
+                            fila-repuesto
+                            {% if item.marcado %}
+                                repuesto-marcado
                             {% endif %}
-                        </div>
-                    </td>
+                        "
+                    >
 
-                    <td>
-                        <input type="text"
-                               name="rep_descripcion[]"
-                               class="form-control-apple descripcion-manual"
-                               value="{{ item.descripcion_factura }}"
-                               placeholder="Descripción del repuesto">
-                    </td>
+                        <td class="producto-cell">
 
-                    <td>
-                        <div class="stock-chip stock-view">
-                            {% if item.producto %}{{ item.producto.stock.cantidad|default:0 }}{% else %}-{% endif %}
-                        </div>
-                    </td>
+                            <!-- ===============================
+                                 IDENTIDAD PERSISTENTE
+                            ================================ -->
 
-                    <td>
-                        <input type="number"
-                               step="0.01"
-                               name="rep_pu[]"
-                               class="form-control-apple pu"
-                               value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f'|default:'0.00' }}{% else %}0.00{% endif %}"
-                               placeholder="0.00"
-                               oninput="calcularFila(this)">
-                    </td>
+                            <input
+                                type="hidden"
+                                name="rep_detalle_id[]"
+                                value="{{ item.id }}"
+                            >
 
-                    <td>
-                        <input type="number"
-                               step="1"
-                               name="rep_cantidad[]"
-                               class="form-control-apple cantidad"
-                               value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f'|default:'1.00' }}{% else %}1.00{% endif %}"
-                               oninput="calcularFila(this)">
-                    </td>
+                            <input
+                                type="hidden"
+                                name="rep_delete[]"
+                                value="0"
+                            >
 
-                    <td>
-                        <input type="number"
-                               step="0.01"
-                               name="rep_valor[]"
-                               class="form-control-apple valor"
-                               value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f'|default:'0.00' }}{% else %}0.00{% endif %}"
-                               placeholder="0.00"
-                               readonly>
-                    </td>
+                            <input
+                                type="hidden"
+                                name="rep_marcado[]"
+                                class="rep-marcado-input"
+                                value="{% if item.marcado %}1{% else %}0{% endif %}"
+                            >
 
-                    <td>
-                        <div class="row-controls">
-                            <button type="button" class="btn-login danger small" onclick="eliminarFila(this)" title="Quitar">✕</button>
-                        </div>
-                    </td>
-                </tr>
+                            <input
+                                type="hidden"
+                                name="rep_actualizado_en[]"
+                                value="{{ item.actualizado_en|date:'c' }}"
+                            >
+
+
+                            <!-- ===============================
+                                 PRODUCTO
+                            ================================ -->
+
+                            <input
+                                type="hidden"
+                                name="rep_producto_id[]"
+                                class="producto-id-hidden"
+                                value="{{ item.producto.id|default_if_none:'' }}"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="rep_categoria_id[]"
+                                value="{{ item.categoria_referencia.id|default_if_none:'' }}"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="rep_codigo_barras[]"
+                                value="{{ item.codigo_barras_referencia|default_if_none:'' }}"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="rep_codigo_empaque[]"
+                                value="{{ item.codigo_empaque_referencia|default_if_none:'' }}"
+                            >
+
+
+                            {% if item.producto %}
+
+                                <div class="producto-busqueda-wrap">
+
+                                    <input
+                                        type="text"
+                                        class="
+                                            form-control-apple
+                                            producto-busqueda-input
+                                        "
+                                        placeholder="
+                                            Código / barras / nombre
+                                        "
+                                        autocomplete="off"
+
+                                        value="{{ item.producto.codigo }} - {{ item.producto.nombre_comercial|default:item.producto.producto.nombre_base }}"
+
+                                        oninput="
+                                            buscarProductoEnFila(this)
+                                        "
+
+                                        onkeydown="
+                                            manejarTeclaBusquedaProducto(
+                                                event,
+                                                this
+                                            )
+                                        "
+
+                                        onfocus="
+                                            buscarProductoEnFila(this)
+                                        "
+
+                                        {% if not puede_editar %}
+                                            readonly
+                                        {% endif %}
+                                    >
+
+                                </div>
+
+                            {% else %}
+
+                                <div
+                                    class="
+                                        producto-busqueda-wrap
+                                        producto-manual
+                                    "
+                                    style="
+                                        text-align: center;
+                                        background-color: #f5f5f7;
+                                        padding: 8px;
+                                        border-radius: 6px;
+                                        font-weight: bold;
+                                        color: #86868b;
+                                        font-size: 11px;
+                                    "
+                                >
+
+                                    {% if item.codigo_barras_referencia %}
+
+                                        {{ item.codigo_barras_referencia }}
+
+                                    {% elif item.codigo_empaque_referencia %}
+
+                                        {{ item.codigo_empaque_referencia }}
+
+                                    {% else %}
+
+                                        [ TEXTO LIBRE / MANUAL ]
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            <input
+                                type="text"
+                                name="rep_descripcion[]"
+                                class="
+                                    form-control-apple
+                                    descripcion-manual
+                                "
+                                value="{{ item.descripcion_factura }}"
+                                placeholder="
+                                    Descripción del repuesto
+                                "
+                                {% if not puede_editar %}
+                                    readonly
+                                {% endif %}
+                            >
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="stock-chip stock-view">
+
+                                {% if item.producto %}
+
+                                    {{ item.producto.stock.cantidad|default:0 }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="rep_pu[]"
+                                class="form-control-apple pu"
+                                value="{{ item.precio_unitario|stringformat:'.2f' }}"
+                                oninput="calcularFila(this)"
+                                {% if not puede_editar %}
+                                    readonly
+                                {% endif %}
+                            >
+
+                        </td>
+
+
+                        <td>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                name="rep_cantidad[]"
+                                class="
+                                    form-control-apple
+                                    cantidad
+                                "
+                                value="{{ item.cantidad|stringformat:'.2f' }}"
+                                oninput="calcularFila(this)"
+                                {% if not puede_editar %}
+                                    readonly
+                                {% endif %}
+                            >
+
+                        </td>
+
+
+                        <td>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="rep_valor[]"
+                                class="
+                                    form-control-apple
+                                    valor
+                                "
+                                value="{{ item.subtotal|stringformat:'.2f' }}"
+                                readonly
+                            >
+
+                        </td>
+
+
+                        <td>
+
+                            {% if puede_editar %}
+
+                                <div class="row-controls">
+
+                                    <button
+                                        type="button"
+                                        class="
+                                            repuesto-marcar-btn
+                                            {% if item.marcado %}
+                                                activo
+                                            {% endif %}
+                                        "
+                                        onclick="marcarRepuesto(this)"
+                                        title="Marcar repuesto"
+                                    >
+                                        ✓
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="
+                                            repuesto-drag-handle
+                                        "
+                                        draggable="true"
+                                        title="
+                                            Mantén presionado y arrastra
+                                        "
+                                    >
+                                        ⠿
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="
+                                            btn-login
+                                            danger
+                                            small
+                                        "
+                                        onclick="
+                                            eliminarFilaRepuesto(this)
+                                        "
+                                        title="Quitar"
+                                    >
+                                        ✕
+                                    </button>
+
+                                </div>
+
+                            {% else %}
+
+                                <span
+                                    style="
+                                        font-size: 11px;
+                                        color: #86868b;
+                                    "
+                                >
+                                    —
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
                 {% endfor %}
+
             </tbody>
+
         </table>
+
     </div>
+
 
     <div class="table-footer-actions">
-        {% if cotizacion.estado == 'PENDIENTE' %}
-            <button type="button" class="btn-login" onclick="agregarFilaRepuesto(true)">
+
+        {% if puede_editar %}
+
+            <button
+                type="button"
+                class="btn-login"
+                onclick="agregarFilaRepuesto(true)"
+            >
                 + Agregar repuesto
             </button>
+
         {% else %}
+
             <div></div>
+
         {% endif %}
 
+
         <div class="subtotal-box">
+
             <div class="subtotal-pill">
-                Sub total repuestos: $<span id="subtotalRepuestos">0.00</span>
+
+                Sub total repuestos:
+                $<span id="subtotalRepuestos">0.00</span>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- ======================================================= -->
-<!-- MODAL INGRESO RÁPIDO -->
-<!-- ======================================================= -->
-<div id="modalIngresoRapido"
-     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:flex-start; padding-top:10vh; backdrop-filter:blur(3px);">
 
-    <div style="background:#ffffff; padding:25px; border-radius:14px; width:420px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-        <h3 style="margin-top:0; margin-bottom:20px; font-size:18px; color:#1d1d1f; font-weight:600;">
+{% if puede_editar %}
+
+<!-- =======================================================
+     MODAL INGRESO RÁPIDO
+======================================================= -->
+
+<div
+    id="modalIngresoRapido"
+    style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 10vh;
+        backdrop-filter: blur(3px);
+    "
+>
+
+    <div
+        style="
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 14px;
+            width: min(420px, 92vw);
+            box-shadow:
+                0 10px 25px
+                rgba(0,0,0,0.2);
+        "
+    >
+
+        <h3
+            style="
+                margin-top: 0;
+                margin-bottom: 20px;
+                font-size: 18px;
+                color: #1d1d1f;
+                font-weight: 600;
+            "
+        >
             + Ingreso Rápido de Repuesto
         </h3>
 
-        <div style="background:#f5f5f7; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid #e5e5ea;">
-            <label style="font-size:10px; font-weight:700; color:#86868b; display:block; margin-bottom:15px; letter-spacing:0.5px;">
+
+        <div
+            style="
+                background: #f5f5f7;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                border: 1px solid #e5e5ea;
+            "
+        >
+
+            <label
+                style="
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: #86868b;
+                    display: block;
+                    margin-bottom: 15px;
+                    letter-spacing: 0.5px;
+                "
+            >
                 DATOS REFERENCIALES / CONSULTA
             </label>
 
-            <div style="display:flex; align-items:center; margin-bottom:12px; gap:10px;">
-                <label style="font-size:12px; color:#1d1d1f; width:85px; font-weight:500;">
+
+            <div
+                style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 12px;
+                    gap: 10px;
+                "
+            >
+
+                <label
+                    style="
+                        font-size: 12px;
+                        color: #1d1d1f;
+                        width: 85px;
+                        font-weight: 500;
+                    "
+                >
                     Categoría:
                 </label>
 
-                <div style="position:relative; flex:1;">
-                    <input type="text"
-                           id="ir_categoria_visual"
-                           class="form-control-apple"
-                           style="width:100%;"
-                           autocomplete="off"
-                           onkeyup="filtrarCategoriasModal()"
-                           onclick="mostrarCategoriasModal()">
 
-                    <input type="hidden" id="ir_categoria_id" value="">
+                <div
+                    style="
+                        position: relative;
+                        flex: 1;
+                    "
+                >
 
-                    <div id="dropdownCategoriasModal"
-                         style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #d2d2d7; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:140px; overflow-y:auto; z-index:1001; margin-top:4px;">
+                    <input
+                        type="text"
+                        id="ir_categoria_visual"
+                        class="form-control-apple"
+                        style="width: 100%;"
+                        autocomplete="off"
+                        onkeyup="filtrarCategoriasModal()"
+                        onclick="mostrarCategoriasModal()"
+                    >
+
+                    <input
+                        type="hidden"
+                        id="ir_categoria_id"
+                        value=""
+                    >
+
+
+                    <div
+                        id="dropdownCategoriasModal"
+                        style="
+                            display: none;
+                            position: absolute;
+                            top: 100%;
+                            left: 0;
+                            right: 0;
+                            background: #fff;
+                            border: 1px solid #d2d2d7;
+                            border-radius: 8px;
+                            box-shadow:
+                                0 4px 12px
+                                rgba(0,0,0,0.15);
+                            max-height: 140px;
+                            overflow-y: auto;
+                            z-index: 1001;
+                            margin-top: 4px;
+                        "
+                    >
+
                         {% for cat in categorias_inventario %}
-                            <div class="categoria-item"
-                                 data-id="{{ cat.id }}"
-                                 data-nombre="{{ cat.nombre }}"
-                                 style="padding:10px 12px; font-size:12px; color:#1d1d1f; cursor:pointer; border-bottom:1px solid #f5f5f7;"
-                                 onclick="seleccionarCategoriaModal(this)">
+
+                            <div
+                                class="categoria-item"
+                                data-id="{{ cat.id }}"
+                                data-nombre="{{ cat.nombre }}"
+                                style="
+                                    padding: 10px 12px;
+                                    font-size: 12px;
+                                    color: #1d1d1f;
+                                    cursor: pointer;
+                                    border-bottom:
+                                        1px solid #f5f5f7;
+                                "
+                                onclick="
+                                    seleccionarCategoriaModal(
+                                        this
+                                    )
+                                "
+                            >
                                 {{ cat.nombre }}
                             </div>
+
                         {% endfor %}
 
-                        <div id="categoriaNoResult" style="display:none; padding:10px 12px; font-size:12px; color:#86868b; text-align:center;">
+
+                        <div
+                            id="categoriaNoResult"
+                            style="
+                                display: none;
+                                padding: 10px 12px;
+                                font-size: 12px;
+                                color: #86868b;
+                                text-align: center;
+                            "
+                        >
                             Sin coincidencias
                         </div>
+
                     </div>
+
                 </div>
+
             </div>
 
-            <div style="display:flex; align-items:center; margin-bottom:12px; gap:10px;">
-                <label style="font-size:12px; color:#1d1d1f; width:85px; font-weight:500;">
+
+            <div
+                style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 12px;
+                    gap: 10px;
+                "
+            >
+
+                <label
+                    style="
+                        font-size: 12px;
+                        color: #1d1d1f;
+                        width: 85px;
+                        font-weight: 500;
+                    "
+                >
                     Empaque:
                 </label>
 
-                <input type="text" id="ir_empaque" class="form-control-apple" style="flex:1;">
+                <input
+                    type="text"
+                    id="ir_empaque"
+                    class="form-control-apple"
+                    style="flex: 1;"
+                >
+
             </div>
 
-            <div style="display:flex; align-items:center; margin-bottom:5px; gap:10px;">
-                <label style="font-size:12px; color:#1d1d1f; width:85px; font-weight:500;">
+
+            <div
+                style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 5px;
+                    gap: 10px;
+                "
+            >
+
+                <label
+                    style="
+                        font-size: 12px;
+                        color: #1d1d1f;
+                        width: 85px;
+                        font-weight: 500;
+                    "
+                >
                     Cód. Barras:
                 </label>
 
-                <input type="text" id="ir_barras" class="form-control-apple" style="flex:1;">
+                <input
+                    type="text"
+                    id="ir_barras"
+                    class="form-control-apple"
+                    style="flex: 1;"
+                >
+
             </div>
+
         </div>
 
-        <label style="font-size:10px; font-weight:700; color:#86868b; display:block; margin-bottom:12px; letter-spacing:0.5px;">
-            DATOS PARA LA ORDEN (OBLIGATORIO)
+
+        <label
+            style="
+                font-size: 10px;
+                font-weight: 700;
+                color: #86868b;
+                display: block;
+                margin-bottom: 12px;
+                letter-spacing: 0.5px;
+            "
+        >
+            DATOS PARA LA PROFORMA
         </label>
 
-        <div style="margin-bottom:15px;">
-            <label style="font-size:12px; color:#1d1d1f; display:block; margin-bottom:4px; font-weight:500;">
+
+        <div style="margin-bottom: 15px;">
+
+            <label
+                style="
+                    font-size: 12px;
+                    color: #1d1d1f;
+                    display: block;
+                    margin-bottom: 4px;
+                    font-weight: 500;
+                "
+            >
                 Descripción:
             </label>
 
-            <input type="text" id="ir_descripcion" class="form-control-apple" style="width:100%;">
+            <input
+                type="text"
+                id="ir_descripcion"
+                class="form-control-apple"
+                style="width: 100%;"
+            >
+
         </div>
 
-        <div style="display:flex; gap:15px; margin-bottom:25px;">
-            <div style="flex:1;">
-                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
+
+        <div
+            style="
+                display: flex;
+                gap: 15px;
+                margin-bottom: 25px;
+            "
+        >
+
+            <div style="flex: 1;">
+
+                <label
+                    style="
+                        font-size: 12px;
+                        color: #1d1d1f;
+                        margin-bottom: 4px;
+                        display: block;
+                        font-weight: 500;
+                    "
+                >
                     Precio Unit. ($)
                 </label>
 
-                <input type="number" id="ir_precio" class="form-control-apple" style="width:100%;" step="0.01" value="0.00">
+                <input
+                    type="number"
+                    id="ir_precio"
+                    class="form-control-apple"
+                    style="width: 100%;"
+                    step="0.01"
+                    min="0"
+                    value="0.00"
+                >
+
             </div>
 
-            <div style="flex:1;">
-                <label style="font-size:12px; color:#1d1d1f; margin-bottom:4px; display:block; font-weight:500;">
+
+            <div style="flex: 1;">
+
+                <label
+                    style="
+                        font-size: 12px;
+                        color: #1d1d1f;
+                        margin-bottom: 4px;
+                        display: block;
+                        font-weight: 500;
+                    "
+                >
                     Cantidad
                 </label>
 
-                <input type="number" id="ir_cantidad" class="form-control-apple" style="width:100%;" step="1" value="1">
+                <input
+                    type="number"
+                    id="ir_cantidad"
+                    class="form-control-apple"
+                    style="width: 100%;"
+                    step="0.01"
+                    min="0.01"
+                    value="1.00"
+                >
+
             </div>
+
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button type="button"
-                    class="btn-login"
-                    style="background:#e5e5ea; border-color:#e5e5ea; color:#1d1d1f;"
-                    onclick="cerrarModalIngresoRapido()">
+
+        <div
+            style="
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            "
+        >
+
+            <button
+                type="button"
+                class="btn-login"
+                style="
+                    background: #e5e5ea;
+                    border-color: #e5e5ea;
+                    color: #1d1d1f;
+                "
+                onclick="cerrarModalIngresoRapido()"
+            >
                 Cancelar
             </button>
 
-            <button type="button"
-                    class="btn-login primary"
-                    onclick="confirmarIngresoRapido()">
+
+            <button
+                type="button"
+                class="btn-login primary"
+                onclick="confirmarIngresoRapido()"
+            >
                 Agregar a la Proforma
             </button>
+
         </div>
+
     </div>
+
 </div>
 
-<div id="productoFloatingDropdown"
-     style="display:none; position:fixed; background:#fff; border:1px solid #d2d2d7; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:240px; overflow-y:auto; z-index:99999;">
-</div>
 
 <script>
-function numeroSeguro(valor) {
-    if (!valor) return 0;
-    valor = valor.toString().replace(',', '.');
-    const n = parseFloat(valor);
-    return isNaN(n) ? 0 : n;
-}
 
-function mostrarCategoriasModal() {
-    document.getElementById('dropdownCategoriasModal').style.display = 'block';
-    filtrarCategoriasModal();
-}
+    function mostrarCategoriasModal() {
 
-function filtrarCategoriasModal() {
-    const filtro = document.getElementById('ir_categoria_visual').value.toLowerCase();
-    const dropdown = document.getElementById('dropdownCategoriasModal');
-    const items = dropdown.getElementsByClassName('categoria-item');
-    const noResult = document.getElementById('categoriaNoResult');
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
 
-    let visibles = 0;
-    dropdown.style.display = 'block';
+        if (!dropdown) {
+            return;
+        }
 
-    for (let i = 0; i < items.length; i++) {
-        const texto = items[i].getAttribute('data-nombre').toLowerCase();
+        dropdown.style.display = 'block';
 
-        if (texto.includes(filtro)) {
-            items[i].style.display = 'block';
-            visibles++;
-        } else {
-            items[i].style.display = 'none';
+        filtrarCategoriasModal();
+    }
+
+
+    function filtrarCategoriasModal() {
+
+        const input =
+            document.getElementById(
+                'ir_categoria_visual'
+            );
+
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
+
+        const noResult =
+            document.getElementById(
+                'categoriaNoResult'
+            );
+
+        if (
+            !input ||
+            !dropdown
+        ) {
+            return;
+        }
+
+        const filtro =
+            String(input.value || '')
+            .trim()
+            .toLowerCase();
+
+        const items =
+            dropdown.querySelectorAll(
+                '.categoria-item'
+            );
+
+        let visibles = 0;
+
+        dropdown.style.display = 'block';
+
+        items.forEach(function (item) {
+
+            const texto =
+                String(
+                    item.dataset.nombre || ''
+                ).toLowerCase();
+
+            const visible =
+                texto.includes(filtro);
+
+            item.style.display =
+                visible
+                    ? 'block'
+                    : 'none';
+
+            if (visible) {
+                visibles += 1;
+            }
+
+        });
+
+
+        if (noResult) {
+
+            noResult.style.display =
+                visibles === 0
+                    ? 'block'
+                    : 'none';
         }
     }
 
-    noResult.style.display = visibles === 0 ? 'block' : 'none';
-}
 
-function seleccionarCategoriaModal(elemento) {
-    document.getElementById('ir_categoria_visual').value = elemento.getAttribute('data-nombre');
-    document.getElementById('ir_categoria_id').value = elemento.getAttribute('data-id');
-    document.getElementById('dropdownCategoriasModal').style.display = 'none';
-}
+    function seleccionarCategoriaModal(
+        elemento
+    ) {
 
-function abrirModalIngresoRapido() {
-    document.getElementById('modalIngresoRapido').style.display = 'flex';
-    document.getElementById('ir_descripcion').focus();
-}
+        const visual =
+            document.getElementById(
+                'ir_categoria_visual'
+            );
 
-function cerrarModalIngresoRapido() {
-    document.getElementById('modalIngresoRapido').style.display = 'none';
-    document.getElementById('dropdownCategoriasModal').style.display = 'none';
+        const idInput =
+            document.getElementById(
+                'ir_categoria_id'
+            );
 
-    document.getElementById('ir_categoria_visual').value = '';
-    document.getElementById('ir_categoria_id').value = '';
-    document.getElementById('ir_barras').value = '';
-    document.getElementById('ir_empaque').value = '';
-    document.getElementById('ir_descripcion').value = '';
-    document.getElementById('ir_precio').value = '0.00';
-    document.getElementById('ir_cantidad').value = '1';
-}
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
 
-function confirmarIngresoRapido() {
-    const categoriaId = document.getElementById('ir_categoria_id').value;
-    const barras = document.getElementById('ir_barras').value.trim();
-    const empaque = document.getElementById('ir_empaque').value.trim();
-    const descripcion = document.getElementById('ir_descripcion').value.trim();
-    const precio = numeroSeguro(document.getElementById('ir_precio').value) || 0;
-    const cantidad = numeroSeguro(document.getElementById('ir_cantidad').value) || 1;
 
-    if (!descripcion) {
-        alert('La descripción es obligatoria.');
-        return;
+        if (visual) {
+
+            visual.value =
+                elemento?.dataset.nombre || '';
+        }
+
+
+        if (idInput) {
+
+            idInput.value =
+                elemento?.dataset.id || '';
+        }
+
+
+        if (dropdown) {
+
+            dropdown.style.display =
+                'none';
+        }
     }
 
-    const valorTotal = (precio * cantidad).toFixed(2);
-    const codigoVisual = barras || empaque || '[ TEXTO LIBRE / MANUAL ]';
 
-    const nuevaFila = `
-        <tr>
-            <td class="producto-cell">
-                <input type="hidden" name="rep_producto_id[]" class="producto-id-hidden" value="">
-                <input type="hidden" name="rep_categoria_id[]" value="${categoriaId}">
-                <input type="hidden" name="rep_codigo_barras[]" value="${barras}">
-                <input type="hidden" name="rep_codigo_empaque[]" value="${empaque}">
+    function abrirModalIngresoRapido() {
 
-                <div class="producto-busqueda-wrap" style="text-align:center; background-color:#f5f5f7; padding:8px; border-radius:6px; font-weight:bold; color:#86868b; font-size:11px;">
-                    ${codigoVisual}
-                </div>
-            </td>
+        const modal =
+            document.getElementById(
+                'modalIngresoRapido'
+            );
 
-            <td>
-                <input type="text" name="rep_descripcion[]" class="form-control-apple descripcion-manual" value="${descripcion}">
-            </td>
+        if (!modal) {
+            return;
+        }
 
-            <td>
-                <div class="stock-chip stock-view">-</div>
-            </td>
+        modal.style.display =
+            'flex';
 
-            <td>
-                <input type="number" step="0.01" name="rep_pu[]" class="form-control-apple pu" value="${precio.toFixed(2)}" oninput="calcularFila(this)">
-            </td>
 
-            <td>
-                <input type="number" step="1" name="rep_cantidad[]" class="form-control-apple cantidad" value="${cantidad}" oninput="calcularFila(this)">
-            </td>
+        setTimeout(function () {
 
-            <td>
-                <input type="number" step="0.01" name="rep_valor[]" class="form-control-apple valor" value="${valorTotal}" readonly>
-            </td>
+            document.getElementById(
+                'ir_descripcion'
+            )?.focus();
 
-            <td>
-                <div class="row-controls">
-                    <button type="button" class="btn-login danger small" onclick="eliminarFila(this)" title="Quitar">✕</button>
-                </div>
-            </td>
-        </tr>
-    `.replace(/>\s+</g, '><');
-
-    const tbody = document.getElementById('cuerpoTablaRepuestos');
-
-    const filaVacia = Array.from(tbody.querySelectorAll('tr:not(.form-readonly)')).find(fila => {
-        const descInput = fila.querySelector('.descripcion-manual');
-        const prodInput = fila.querySelector('.producto-id-hidden');
-
-        return descInput &&
-               descInput.value.trim() === '' &&
-               (!prodInput || prodInput.value.trim() === '');
-    });
-
-    if (filaVacia) {
-        filaVacia.insertAdjacentHTML('beforebegin', nuevaFila);
-    } else {
-        tbody.insertAdjacentHTML('beforeend', nuevaFila);
+        }, 100);
     }
 
-    cerrarModalIngresoRapido();
 
-    if (typeof recalcularTotales === 'function') {
-        recalcularTotales();
+    function cerrarModalIngresoRapido() {
+
+        const modal =
+            document.getElementById(
+                'modalIngresoRapido'
+            );
+
+        const dropdown =
+            document.getElementById(
+                'dropdownCategoriasModal'
+            );
+
+
+        if (modal) {
+            modal.style.display = 'none';
+        }
+
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+
+
+        const valores = {
+            ir_categoria_visual: '',
+            ir_categoria_id: '',
+            ir_barras: '',
+            ir_empaque: '',
+            ir_descripcion: '',
+            ir_precio: '0.00',
+            ir_cantidad: '1.00'
+        };
+
+
+        Object.entries(
+            valores
+        ).forEach(function (
+            [id, valor]
+        ) {
+
+            const input =
+                document.getElementById(id);
+
+            if (input) {
+                input.value = valor;
+            }
+
+        });
     }
-}
+
+
+    function confirmarIngresoRapido() {
+
+        const categoriaId =
+            document.getElementById(
+                'ir_categoria_id'
+            )?.value || '';
+
+        const barras =
+            String(
+                document.getElementById(
+                    'ir_barras'
+                )?.value || ''
+            ).trim();
+
+        const empaque =
+            String(
+                document.getElementById(
+                    'ir_empaque'
+                )?.value || ''
+            ).trim();
+
+        const descripcion =
+            String(
+                document.getElementById(
+                    'ir_descripcion'
+                )?.value || ''
+            ).trim();
+
+
+        const precio =
+            typeof numeroSeguro ===
+            'function'
+                ? numeroSeguro(
+                    document.getElementById(
+                        'ir_precio'
+                    )?.value
+                )
+                : Number(
+                    document.getElementById(
+                        'ir_precio'
+                    )?.value
+                ) || 0;
+
+
+        const cantidad =
+            typeof numeroSeguro ===
+            'function'
+                ? numeroSeguro(
+                    document.getElementById(
+                        'ir_cantidad'
+                    )?.value
+                )
+                : Number(
+                    document.getElementById(
+                        'ir_cantidad'
+                    )?.value
+                ) || 0;
+
+
+        if (!descripcion) {
+
+            alert(
+                'La descripción es obligatoria.'
+            );
+
+            return;
+        }
+
+
+        if (precio < 0) {
+
+            alert(
+                'El precio no puede ser negativo.'
+            );
+
+            return;
+        }
+
+
+        if (cantidad <= 0) {
+
+            alert(
+                'La cantidad debe ser mayor que cero.'
+            );
+
+            return;
+        }
+
+
+        const escapar =
+            typeof escaparHtml ===
+            'function'
+                ? escaparHtml
+                : function (valor) {
+                    return String(
+                        valor ?? ''
+                    );
+                };
+
+
+        const codigoVisual =
+            barras ||
+            empaque ||
+            '[ TEXTO LIBRE / MANUAL ]';
+
+
+        const valorTotal =
+            (
+                precio *
+                cantidad
+            ).toFixed(2);
+
+
+        const nuevaFila = `
+
+            <tr class="fila-repuesto">
+
+                <td class="producto-cell">
+
+                    <input
+                        type="hidden"
+                        name="rep_detalle_id[]"
+                        value=""
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_delete[]"
+                        value="0"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_marcado[]"
+                        class="rep-marcado-input"
+                        value="0"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_actualizado_en[]"
+                        value=""
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_producto_id[]"
+                        class="producto-id-hidden"
+                        value=""
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_categoria_id[]"
+                        value="${escapar(categoriaId)}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_codigo_barras[]"
+                        value="${escapar(barras)}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="rep_codigo_empaque[]"
+                        value="${escapar(empaque)}"
+                    >
+
+
+                    <div
+                        class="
+                            producto-busqueda-wrap
+                            producto-manual
+                        "
+                        style="
+                            text-align: center;
+                            background-color: #f5f5f7;
+                            padding: 8px;
+                            border-radius: 6px;
+                            font-weight: bold;
+                            color: #86868b;
+                            font-size: 11px;
+                        "
+                    >
+                        ${escapar(codigoVisual)}
+                    </div>
+
+                </td>
+
+
+                <td>
+
+                    <input
+                        type="text"
+                        name="rep_descripcion[]"
+                        class="
+                            form-control-apple
+                            descripcion-manual
+                        "
+                        value="${escapar(descripcion)}"
+                    >
+
+                </td>
+
+
+                <td>
+
+                    <div
+                        class="stock-chip stock-view"
+                    >
+                        -
+                    </div>
+
+                </td>
+
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="rep_pu[]"
+                        class="form-control-apple pu"
+                        value="${precio.toFixed(2)}"
+                        oninput="calcularFila(this)"
+                    >
+
+                </td>
+
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        name="rep_cantidad[]"
+                        class="
+                            form-control-apple
+                            cantidad
+                        "
+                        value="${cantidad.toFixed(2)}"
+                        oninput="calcularFila(this)"
+                    >
+
+                </td>
+
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="rep_valor[]"
+                        class="
+                            form-control-apple
+                            valor
+                        "
+                        value="${valorTotal}"
+                        readonly
+                    >
+
+                </td>
+
+
+                <td>
+
+                    <div class="row-controls">
+
+                        <button
+                            type="button"
+                            class="repuesto-marcar-btn"
+                            onclick="marcarRepuesto(this)"
+                            title="Marcar repuesto"
+                        >
+                            ✓
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="repuesto-drag-handle"
+                            draggable="true"
+                            title="Mover repuesto"
+                        >
+                            ⠿
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="
+                                btn-login
+                                danger
+                                small
+                            "
+                            onclick="
+                                eliminarFilaRepuesto(this)
+                            "
+                            title="Quitar"
+                        >
+                            ✕
+                        </button>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+        `;
+
+
+        const tbody =
+            document.getElementById(
+                'cuerpoTablaRepuestos'
+            );
+
+        if (!tbody) {
+            return;
+        }
+
+
+        tbody.insertAdjacentHTML(
+            'beforeend',
+            nuevaFila
+        );
+
+
+        cerrarModalIngresoRapido();
+
+
+        if (
+            typeof recalcularTotales ===
+            'function'
+        ) {
+            recalcularTotales();
+        }
+    }
+
+
+    function marcarRepuesto(
+        boton
+    ) {
+
+        const fila =
+            boton?.closest(
+                '.fila-repuesto'
+            );
+
+        if (!fila) {
+            return;
+        }
+
+
+        const input =
+            fila.querySelector(
+                '.rep-marcado-input'
+            );
+
+        if (!input) {
+            return;
+        }
+
+
+        const marcar =
+            input.value !== '1';
+
+
+        input.value =
+            marcar
+                ? '1'
+                : '0';
+
+
+        fila.classList.toggle(
+            'repuesto-marcado',
+            marcar
+        );
+
+
+        boton.classList.toggle(
+            'activo',
+            marcar
+        );
+    }
+
+
+    document.addEventListener(
+        'click',
+        function (event) {
+
+            const dropdown =
+                document.getElementById(
+                    'dropdownCategoriasModal'
+                );
+
+            const input =
+                document.getElementById(
+                    'ir_categoria_visual'
+                );
+
+
+            if (
+                !dropdown ||
+                !input
+            ) {
+                return;
+            }
+
+
+            if (
+                !dropdown.contains(
+                    event.target
+                ) &&
+                !input.contains(
+                    event.target
+                )
+            ) {
+
+                dropdown.style.display =
+                    'none';
+            }
+
+        }
+    );
+
 </script>
+
+{% endif %}

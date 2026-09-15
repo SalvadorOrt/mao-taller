@@ -167,3 +167,114 @@ function asegurarFilaVaciaSiTablaEstaVacia(
         }
     }
 }
+
+// =========================================================
+// MARCAR EN ROJO VALORES EN CERO O NEGATIVOS
+// REPUESTOS / MOI / MOE
+// =========================================================
+
+function actualizarErroresNumericos() {
+
+    const selectores = [
+        '[name="rep_pu[]"]',
+        '[name="rep_cantidad[]"]',
+        '[name="rep_valor[]"]',
+
+        '[name="moi_pu[]"]',
+        '[name="moi_cantidad[]"]',
+        '[name="moi_valor[]"]',
+
+        '[name="moe_pu[]"]',
+        '[name="moe_cantidad[]"]',
+        '[name="moe_valor[]"]'
+    ];
+
+    const campos = document.querySelectorAll(
+        selectores.join(",")
+    );
+
+    campos.forEach(function (campo) {
+
+        const celda = campo.closest("td");
+
+        if (!celda) {
+            return;
+        }
+
+        const valor = parseFloat(
+            String(campo.value || "0")
+                .replace(",", ".")
+        );
+
+        if (
+            Number.isNaN(valor) ||
+            valor <= 0
+        ) {
+            celda.classList.add(
+                "celda-error-numero"
+            );
+        } else {
+            celda.classList.remove(
+                "celda-error-numero"
+            );
+        }
+    });
+}
+
+
+// =========================================================
+// VALIDAR AL ABRIR LA ORDEN
+// =========================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        actualizarErroresNumericos();
+    }
+);
+
+
+// =========================================================
+// VALIDAR MIENTRAS SE EDITA
+// =========================================================
+
+document.addEventListener(
+    "input",
+    function (event) {
+
+        const campo = event.target;
+
+        if (
+            campo.matches(
+                `
+                [name="rep_pu[]"],
+                [name="rep_cantidad[]"],
+                [name="rep_valor[]"],
+                [name="moi_pu[]"],
+                [name="moi_cantidad[]"],
+                [name="moi_valor[]"],
+                [name="moe_pu[]"],
+                [name="moe_cantidad[]"],
+                [name="moe_valor[]"]
+                `
+            )
+        ) {
+            /*
+             * Esperamos a que calcularFila()
+             * actualice también el campo Valor.
+             */
+            setTimeout(
+                actualizarErroresNumericos,
+                0
+            );
+        }
+    }
+);
+
+
+// =========================================================
+// TAMBIÉN SIRVE PARA FILAS AGREGADAS DINÁMICAMENTE
+// =========================================================
+
+window.actualizarErroresNumericos =
+    actualizarErroresNumericos;

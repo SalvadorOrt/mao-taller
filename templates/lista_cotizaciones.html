@@ -1,0 +1,2799 @@
+{% extends "base.html" %}
+{% load static %}
+{% load l10n %}
+
+{% block title %}
+    Cotizaciones / Proformas | MAO
+{% endblock %}
+
+{% block page_title %}
+    Cotizaciones / Proformas
+{% endblock %}
+
+{% block page_subtitle %}
+    Gestión, búsqueda y seguimiento de presupuestos
+{% endblock %}
+
+
+{% block content %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/detalle_orden.css' %}"
+>
+
+
+<style>
+
+    /* =========================================================
+       CONTENEDOR
+    ========================================================== */
+
+    .lista-cot-wrapper {
+        padding-top: 8px;
+        padding-bottom: 18px;
+    }
+
+
+    /* =========================================================
+       CABECERA DEL MÓDULO
+    ========================================================== */
+
+    .lista-cot-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .lista-cot-header-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .lista-cot-header-subtitle {
+        margin-top: 3px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+    }
+
+
+    /* =========================================================
+       FILTROS
+    ========================================================== */
+
+    .lista-cot-filter-form {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        margin: 0;
+    }
+
+    .lista-cot-field {
+        min-width: 140px;
+    }
+
+    .lista-cot-field.search {
+        flex: 1;
+        min-width: 260px;
+    }
+
+    .lista-cot-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .lista-cot-input {
+        height: 36px;
+        min-height: 36px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 500;
+        padding: 0 10px;
+        width: 100%;
+        outline: none;
+        box-shadow: none;
+        transition: all 0.15s ease;
+    }
+
+    .lista-cot-input::placeholder {
+        color: #a1a1a6;
+        font-weight: 400;
+    }
+
+    .lista-cot-input:focus {
+        border-color: var(--accent);
+        box-shadow:
+            0 0 0 3px
+            rgba(0, 113, 227, 0.08);
+    }
+
+
+    /* =========================================================
+       RESUMEN
+    ========================================================== */
+
+    .lista-cot-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        background: #fbfbfd;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+    }
+
+    .lista-cot-summary-main {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .lista-cot-summary-sub {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+
+    /* =========================================================
+       TABLA
+    ========================================================== */
+
+    .lista-cot-table-wrap {
+        overflow: auto;
+        max-height: 650px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .lista-cot-table {
+        width: 100%;
+        min-width: 1280px;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+    }
+
+    .lista-cot-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+
+        background:
+            rgba(247, 248, 250, 0.96);
+
+        backdrop-filter: blur(8px);
+
+        border-bottom:
+            1px solid var(--border);
+
+        color: var(--muted);
+
+        font-size: 10px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+
+        padding: 12px;
+
+        text-align: left;
+    }
+
+    .lista-cot-table tbody td {
+        padding: 11px 12px;
+        border-bottom:
+            1px solid var(--border-soft);
+
+        vertical-align: middle;
+        color: var(--text);
+    }
+
+    .lista-cot-table tbody tr {
+        cursor: default;
+        transition:
+            background 0.15s ease;
+    }
+
+    .lista-cot-table tbody tr:hover {
+        background: #fbfbfd;
+    }
+
+    .lista-cot-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    /* =========================================================
+       NÚMERO DE PROFORMA
+    ========================================================== */
+
+    .lista-cot-numero {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.2;
+    }
+
+    .lista-cot-revision {
+        display: inline-flex;
+        align-items: center;
+
+        margin-top: 4px;
+
+        min-height: 20px;
+
+        padding: 2px 7px;
+
+        border-radius: 999px;
+
+        background: #f5f5f7;
+        border:
+            1px solid var(--border);
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .lista-cot-meta {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        line-height: 1.25;
+        margin-top: 2px;
+    }
+
+
+    /* =========================================================
+       PLACA
+    ========================================================== */
+
+    .lista-cot-placa {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 24px;
+
+        padding: 3px 9px;
+
+        border-radius: 8px;
+
+        border:
+            1px solid var(--border-soft);
+
+        background: #fbfbfd;
+
+        font-size: 12px;
+        font-weight: 700;
+
+        letter-spacing: 0.04em;
+
+        color: var(--text);
+    }
+
+
+    /* =========================================================
+       CLIENTE / VEHÍCULO
+    ========================================================== */
+
+    .lista-cot-cliente {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.25;
+    }
+
+    .lista-cot-vehiculo {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        line-height: 1.25;
+        margin-top: 3px;
+    }
+
+
+    /* =========================================================
+       ORIGEN
+    ========================================================== */
+
+    .lista-cot-origen {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 23px;
+
+        padding: 4px 9px;
+
+        border-radius: 8px;
+
+        font-size: 10px;
+        font-weight: 700;
+
+        border:
+            1px solid var(--border);
+
+        background: #f5f5f7;
+
+        color: var(--muted);
+    }
+
+    .lista-cot-origen.ot {
+        background: #f5faff;
+        border-color:
+            rgba(0, 113, 227, 0.20);
+
+        color: var(--accent);
+    }
+
+    .lista-cot-origen.independiente {
+        background: #fbfbfd;
+        color: #6e6e73;
+    }
+
+
+    /* =========================================================
+       BADGES DE ESTADO
+    ========================================================== */
+
+    .lista-cot-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-width: 90px;
+        min-height: 23px;
+
+        padding: 4px 10px;
+
+        border-radius: 999px;
+
+        font-weight: 700;
+        font-size: 10px;
+
+        letter-spacing: 0.03em;
+
+        border:
+            1px solid transparent;
+
+        text-transform: uppercase;
+    }
+
+    .lista-cot-badge.pendiente {
+        background: #e5f1fb;
+        color: #0071e3;
+        border-color: #b7d6f5;
+    }
+
+    .lista-cot-badge.aprobada {
+        background: #e5fbe4;
+        color: #1f8939;
+        border-color: #b7efc5;
+    }
+
+    .lista-cot-badge.rechazada {
+        background: #ffebe9;
+        color: var(--danger);
+        border-color: #ffd6d6;
+    }
+
+    .lista-cot-badge.historica {
+        background: #f5f5f7;
+        color: var(--muted);
+        border-color: var(--border);
+    }
+
+
+    /* =========================================================
+       TOTAL
+    ========================================================== */
+
+    .lista-cot-total {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .lista-cot-total-meta {
+        margin-top: 2px;
+
+        font-size: 10px;
+        font-weight: 500;
+
+        color: var(--muted);
+
+        text-align: right;
+    }
+
+
+    /* =========================================================
+       OT RELACIONADA
+    ========================================================== */
+
+    .lista-cot-ot-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+
+        text-decoration: none;
+
+        font-size: 11px;
+        font-weight: 700;
+
+        color: var(--accent);
+    }
+
+    .lista-cot-ot-link:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .lista-cot-sin-ot {
+        font-size: 11px;
+        font-weight: 600;
+        color: #a1a1a6;
+    }
+
+
+    /* =========================================================
+       ACCIONES
+    ========================================================== */
+
+    .lista-cot-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+
+        position: relative;
+    }
+
+    .lista-cot-action-btn {
+        height: 32px;
+        min-width: 32px;
+
+        border-radius: 9px;
+
+        border:
+            1px solid var(--border);
+
+        background: #fff;
+
+        color: var(--text);
+
+        font-size: 12px;
+        font-weight: 700;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 6px;
+
+        padding: 0 10px;
+
+        text-decoration: none;
+
+        cursor: pointer;
+
+        transition:
+            all 0.15s ease;
+    }
+
+    .lista-cot-action-btn:hover {
+        background: #f5f5f7;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .lista-cot-action-btn.open {
+        color: var(--accent);
+
+        border-color:
+            rgba(0, 113, 227, 0.25);
+
+        background: #f5faff;
+    }
+
+    .lista-cot-action-btn.open:hover {
+        background: #edf6ff;
+    }
+
+
+    /* =========================================================
+       DROPDOWN ACCIONES
+    ========================================================== */
+
+    .lista-cot-dropdown {
+        display: none;
+
+        position: absolute;
+
+        right: 0;
+        top: 38px;
+
+        background: #fff;
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 10px;
+
+        box-shadow:
+            0 10px 30px
+            rgba(0, 0, 0, 0.12);
+
+        z-index: 1000;
+
+        min-width: 195px;
+
+        text-align: left;
+
+        overflow: hidden;
+
+        padding: 5px;
+    }
+
+    .lista-cot-menu-link {
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        padding: 10px 12px;
+
+        color: var(--text);
+
+        text-decoration: none;
+
+        font-size: 12px;
+        font-weight: 600;
+
+        border-radius: 7px;
+
+        transition:
+            background 0.15s ease;
+
+        width: 100%;
+
+        border: 0;
+
+        background: transparent;
+
+        cursor: pointer;
+
+        text-align: left;
+    }
+
+    .lista-cot-menu-link:hover {
+        background: #f5f5f7;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .lista-cot-menu-link.primary {
+        color: var(--accent);
+    }
+
+    .lista-cot-menu-link.success {
+        color: #248a3d;
+    }
+
+    .lista-cot-menu-separator {
+        height: 1px;
+
+        background:
+            var(--border-soft);
+
+        margin: 5px 0;
+    }
+
+
+    /* =========================================================
+       SIN RESULTADOS
+    ========================================================== */
+
+    .lista-cot-empty {
+        text-align: center;
+
+        padding: 60px 20px;
+
+        background: #fafafa;
+    }
+
+    .lista-cot-empty-icon {
+        font-size: 2.4rem;
+
+        opacity: 0.3;
+
+        margin-bottom: 10px;
+
+        color: var(--muted);
+    }
+
+    .lista-cot-empty-title {
+        margin:
+            0 0 5px 0;
+
+        font-weight: 700;
+
+        color: var(--text);
+
+        font-size: 15px;
+    }
+
+    .lista-cot-empty-text {
+        margin: 0;
+
+        color: var(--muted);
+
+        font-size: 13px;
+    }
+
+
+    /* =========================================================
+       MODAL NUEVA PROFORMA
+    ========================================================== */
+
+    .proforma-modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        background: rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(4px);
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .proforma-modal-backdrop.abierto {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .proforma-modal {
+        width: min(920px, 100%);
+        margin: 28px auto;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+    }
+
+    .proforma-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .proforma-modal-title {
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .proforma-modal-subtitle {
+        margin-top: 3px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .proforma-modal-close {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+    }
+
+    .proforma-modal-body {
+        padding: 20px;
+    }
+
+    .proforma-modal-section {
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 14px;
+        background: #fbfbfd;
+    }
+
+    .proforma-modal-section-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 13px;
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--text);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .proforma-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .proforma-col-12 { grid-column: span 12; }
+    .proforma-col-8 { grid-column: span 8; }
+    .proforma-col-6 { grid-column: span 6; }
+    .proforma-col-4 { grid-column: span 4; }
+
+    .proforma-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .proforma-field input,
+    .proforma-field textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 500;
+        outline: none;
+        transition: all 0.15s ease;
+    }
+
+    .proforma-field input {
+        height: 38px;
+        padding: 0 11px;
+    }
+
+    .proforma-field textarea {
+        min-height: 72px;
+        padding: 10px 11px;
+        resize: vertical;
+    }
+
+    .proforma-field input:focus,
+    .proforma-field textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+    }
+
+    .proforma-search-row {
+        display: flex;
+        gap: 8px;
+    }
+
+    .proforma-search-row input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .proforma-search-btn {
+        height: 38px;
+        border: 0;
+        border-radius: 9px;
+        padding: 0 14px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .proforma-search-btn.secundario {
+        background: #f5f5f7;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+
+    .proforma-search-status {
+        min-height: 18px;
+        margin-top: 6px;
+        font-size: 10px;
+        color: var(--muted);
+    }
+
+    .proforma-search-status.ok { color: #248a3d; }
+    .proforma-search-status.error { color: var(--danger); }
+    .proforma-search-status.loading { color: var(--accent); }
+
+    .proforma-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-soft);
+        background: #fbfbfd;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @media (
+        max-width: 768px
+    ) {
+
+        .proforma-modal-backdrop {
+            padding: 8px;
+        }
+
+        .proforma-modal {
+            margin: 8px auto;
+            border-radius: 14px;
+        }
+
+        .proforma-col-8,
+        .proforma-col-6,
+        .proforma-col-4 {
+            grid-column: span 12;
+        }
+
+        .proforma-search-row {
+            flex-direction: column;
+        }
+
+        .proforma-search-btn {
+            width: 100%;
+        }
+
+        .proforma-modal-footer {
+            flex-direction: column-reverse;
+        }
+
+        .proforma-modal-footer .btn-login {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .lista-cot-field,
+        .lista-cot-field.search {
+            min-width: 100%;
+            width: 100%;
+        }
+
+        .lista-cot-filter-form {
+            gap: 10px;
+        }
+
+        .lista-cot-header {
+            align-items: stretch;
+        }
+
+        .lista-cot-header .btn-login {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .lista-cot-summary {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+</style>
+
+
+<div class="container lista-cot-wrapper">
+
+
+    <!-- =====================================================
+         CABECERA
+    ====================================================== -->
+
+    <div
+        class="ot-card"
+        style="
+            margin-bottom: 15px;
+            padding: 15px;
+        "
+    >
+
+        <div class="lista-cot-header">
+
+            <div>
+
+                <div class="lista-cot-header-title">
+                    Gestión de Cotizaciones
+                </div>
+
+                <div class="lista-cot-header-subtitle">
+                    Cree proformas independientes o consulte las vinculadas a órdenes de trabajo.
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="btn-login primary"
+                onclick="abrirModalNuevaProforma()"
+            >
+                <i
+                    class="bi bi-plus-circle"
+                    style="margin-right: 6px;"
+                ></i>
+                Nueva Proforma
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTROS
+    ====================================================== -->
+
+    <div
+        class="ot-card"
+        style="
+            margin-bottom: 15px;
+            padding: 15px;
+        "
+    >
+
+        <div class="section-title">
+            Filtros de búsqueda
+        </div>
+
+
+        <form
+            method="GET"
+            action="{% url 'lista_cotizaciones' %}"
+            class="lista-cot-filter-form"
+        >
+
+            <!-- BUSCAR -->
+
+            <div class="lista-cot-field search">
+
+                <label class="lista-cot-label">
+                    Buscar
+                </label>
+
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q|default:'' }}"
+                    class="lista-cot-input"
+                    placeholder="Proforma, placa, cliente o vehículo"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <!-- SUCURSAL -->
+
+            <div
+                class="lista-cot-field"
+                style="min-width: 210px;"
+            >
+
+                <label class="lista-cot-label">
+                    Sucursal
+                </label>
+
+                <select
+                    name="sucursal_filtro"
+                    class="lista-cot-input"
+                    onchange="this.form.submit()"
+                >
+
+                    <option
+                        value="todas"
+                        {% if sucursal_filtro == "todas" %}
+                            selected
+                        {% endif %}
+                    >
+                        Todas
+                    </option>
+
+
+                    {% for suc in sucursales %}
+
+                        <option
+                            value="{{ suc.id }}"
+                            {% if sucursal_filtro == suc.id|slugify %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ suc.nombre }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ESTADO -->
+
+            <div
+                class="lista-cot-field"
+                style="min-width: 160px;"
+            >
+
+                <label class="lista-cot-label">
+                    Estado
+                </label>
+
+                <select
+                    name="estado"
+                    class="lista-cot-input"
+                    onchange="this.form.submit()"
+                >
+
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option
+                        value="PENDIENTE"
+                        {% if estado == "PENDIENTE" %}
+                            selected
+                        {% endif %}
+                    >
+                        Pendientes
+                    </option>
+
+                    <option
+                        value="APROBADA"
+                        {% if estado == "APROBADA" %}
+                            selected
+                        {% endif %}
+                    >
+                        Aprobadas
+                    </option>
+
+                    <option
+                        value="RECHAZADA"
+                        {% if estado == "RECHAZADA" %}
+                            selected
+                        {% endif %}
+                    >
+                        Rechazadas
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- ORIGEN -->
+
+            <div
+                class="lista-cot-field"
+                style="min-width: 190px;"
+            >
+
+                <label class="lista-cot-label">
+                    Origen
+                </label>
+
+                <select
+                    name="origen"
+                    class="lista-cot-input"
+                    onchange="this.form.submit()"
+                >
+
+                    <option value="">
+                        Todas
+                    </option>
+
+                    <option
+                        value="OT"
+                        {% if origen == "OT" %}
+                            selected
+                        {% endif %}
+                    >
+                        Desde una OT
+                    </option>
+
+                    <option
+                        value="INDEPENDIENTE"
+                        {% if origen == "INDEPENDIENTE" %}
+                            selected
+                        {% endif %}
+                    >
+                        Independientes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- VIGENCIA -->
+
+            <div
+                class="lista-cot-field"
+                style="min-width: 170px;"
+            >
+
+                <label class="lista-cot-label">
+                    Revisiones
+                </label>
+
+                <select
+                    name="vigencia"
+                    class="lista-cot-input"
+                    onchange="this.form.submit()"
+                >
+
+                    <option
+                        value="vigentes"
+                        {% if vigencia == "vigentes" %}
+                            selected
+                        {% endif %}
+                    >
+                        Solo vigentes
+                    </option>
+
+                    <option
+                        value="todas"
+                        {% if vigencia == "todas" %}
+                            selected
+                        {% endif %}
+                    >
+                        Todas las revisiones
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- DESDE -->
+
+            <div
+                class="lista-cot-field"
+                style="min-width: 135px;"
+            >
+
+                <label class="lista-cot-label">
+                    Desde
+                </label>
+
+                <input
+                    type="date"
+                    name="fecha_inicio"
+                    value="{{ fecha_inicio|default:'' }}"
+                    class="lista-cot-input"
+                >
+
+            </div>
+
+
+            <!-- HASTA -->
+
+            <div
+                class="lista-cot-field"
+                style="min-width: 135px;"
+            >
+
+                <label class="lista-cot-label">
+                    Hasta
+                </label>
+
+                <input
+                    type="date"
+                    name="fecha_fin"
+                    value="{{ fecha_fin|default:'' }}"
+                    class="lista-cot-input"
+                >
+
+            </div>
+
+
+            <!-- BOTONES -->
+
+            <div
+                style="
+                    display: flex;
+                    gap: 8px;
+                "
+            >
+
+                <button
+                    type="submit"
+                    class="btn-login primary"
+                >
+
+                    <i
+                        class="bi bi-search"
+                        style="margin-right: 6px;"
+                    ></i>
+
+                    Buscar
+
+                </button>
+
+
+                <a
+                    href="{% url 'lista_cotizaciones' %}"
+                    class="btn-login"
+                >
+                    Limpiar
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         LISTADO
+    ====================================================== -->
+
+    <div
+        class="ot-card"
+        style="padding: 15px;"
+    >
+
+        <div
+            class="section-title"
+            style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            "
+        >
+
+            <span>
+                Listado de Cotizaciones
+            </span>
+
+
+
+        </div>
+
+
+        <!-- =================================================
+             RESUMEN
+        ================================================== -->
+
+        {% if filtros_activos %}
+
+            <div class="lista-cot-summary">
+
+                <div>
+
+                    <div class="lista-cot-summary-main">
+
+                        {{ total_filtrado }}
+                        coincidencia{{ total_filtrado|pluralize }}
+                        encontrada{{ total_filtrado|pluralize }}
+
+                    </div>
+
+
+                    <div class="lista-cot-summary-sub">
+
+                        {% if total_filtrado > limite_resultados %}
+
+                            Mostrando los primeros
+                            {{ limite_resultados }}
+                            resultados
+
+                        {% elif total_filtrado > 0 %}
+
+                            Mostrando
+                            {{ desde }}
+                            -
+                            {{ hasta }}
+
+                        {% else %}
+
+                            No hay resultados para mostrar
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="lista-cot-summary-sub">
+                    Filtros aplicados
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             TABLA
+        ================================================== -->
+
+        <div class="lista-cot-table-wrap">
+
+            <table
+                class="lista-cot-table"
+                id="tablaCotizaciones"
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th style="width: 15%;">
+                            Proforma
+                        </th>
+
+                        <th style="width: 9%;">
+                            Fecha
+                        </th>
+
+                        <th style="width: 9%;">
+                            Placa
+                        </th>
+
+                        <th style="width: 25%;">
+                            Cliente / Vehículo
+                        </th>
+
+                        <th style="width: 9%;">
+                            Origen
+                        </th>
+
+                        <th
+                            style="
+                                width: 11%;
+                                text-align: center;
+                            "
+                        >
+                            Estado
+                        </th>
+
+                        <th
+                            style="
+                                width: 8%;
+                                text-align: center;
+                            "
+                        >
+                            OT
+                        </th>
+
+                        <th
+                            style="
+                                width: 8%;
+                                text-align: right;
+                            "
+                        >
+                            Total
+                        </th>
+
+                        <th
+                            style="
+                                width: 12%;
+                                text-align: center;
+                            "
+                        >
+                            Acciones
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for cotizacion in cotizaciones %}
+
+                        <tr>
+
+                            <!-- =============================
+                                 PROFORMA
+                            ============================== -->
+
+                            <td>
+
+                                <div class="lista-cot-numero">
+                                    {{ cotizacion.numero_cotizacion }}
+                                </div>
+
+
+                                <div class="lista-cot-revision">
+                                    Rev. {{ cotizacion.revision }}
+                                </div>
+
+
+                                {% if not cotizacion.es_vigente %}
+
+                                    <div class="lista-cot-meta">
+                                        Revisión histórica
+                                    </div>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =============================
+                                 FECHA
+                            ============================== -->
+
+                            <td>
+
+                                <div class="lista-cot-meta">
+                                    {{ cotizacion.fecha_creacion|date:"d/m/Y" }}
+                                </div>
+
+                                <div class="lista-cot-meta">
+                                    {{ cotizacion.fecha_creacion|date:"H:i" }}
+                                </div>
+
+                            </td>
+
+
+                            <!-- =============================
+                                 PLACA
+                            ============================== -->
+
+                            <td>
+
+                                <span class="lista-cot-placa">
+
+                                    {{ cotizacion.placa|default:"S/P" }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- =============================
+                                 CLIENTE / VEHÍCULO
+                            ============================== -->
+
+                            <td>
+
+                                <div class="lista-cot-cliente">
+
+                                    {{ cotizacion.nombre_cliente_final|truncatechars:38|upper }}
+
+                                </div>
+
+
+                                <div class="lista-cot-vehiculo">
+
+                                    {{ cotizacion.vehiculo|truncatechars:42|default:"-" }}
+
+                                </div>
+
+                            </td>
+
+
+                            <!-- =============================
+                                 ORIGEN
+                            ============================== -->
+
+                            <td>
+
+                                {% if cotizacion.orden %}
+
+                                    <span class="lista-cot-origen ot">
+
+                                        <i
+                                            class="bi bi-wrench-adjustable"
+                                            style="margin-right: 5px;"
+                                        ></i>
+
+                                        Desde OT
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span
+                                        class="
+                                            lista-cot-origen
+                                            independiente
+                                        "
+                                    >
+
+                                        <i
+                                            class="bi bi-file-earmark-text"
+                                            style="margin-right: 5px;"
+                                        ></i>
+
+                                        Independiente
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =============================
+                                 ESTADO
+                            ============================== -->
+
+                            <td style="text-align: center;">
+
+                                {% if not cotizacion.es_vigente %}
+
+                                    <span
+                                        class="
+                                            lista-cot-badge
+                                            historica
+                                        "
+                                    >
+                                        Histórica
+                                    </span>
+
+                                {% elif cotizacion.estado == "PENDIENTE" %}
+
+                                    <span
+                                        class="
+                                            lista-cot-badge
+                                            pendiente
+                                        "
+                                    >
+                                        Pendiente
+                                    </span>
+
+                                {% elif cotizacion.estado == "APROBADA" %}
+
+                                    <span
+                                        class="
+                                            lista-cot-badge
+                                            aprobada
+                                        "
+                                    >
+                                        Aprobada
+                                    </span>
+
+                                {% else %}
+
+                                    <span
+                                        class="
+                                            lista-cot-badge
+                                            rechazada
+                                        "
+                                    >
+                                        Rechazada
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =============================
+                                 ORDEN DE TRABAJO
+                            ============================== -->
+
+                            <td style="text-align: center;">
+
+                                {% if cotizacion.orden %}
+
+                                    <a
+                                        href="{% url 'detalle_orden' cotizacion.orden.id %}"
+                                        class="lista-cot-ot-link"
+                                        title="Ver Orden de Trabajo"
+                                    >
+
+                                        <i class="bi bi-box-arrow-up-right"></i>
+
+                                        {{ cotizacion.orden.numero_orden }}
+
+                                    </a>
+
+                                {% elif cotizacion.orden_generada %}
+
+                                    <a
+                                        href="{% url 'detalle_orden' cotizacion.orden_generada.id %}"
+                                        class="lista-cot-ot-link"
+                                        title="Ver Orden de Trabajo"
+                                    >
+
+                                        <i class="bi bi-box-arrow-up-right"></i>
+
+                                        {{ cotizacion.orden_generada.numero_orden }}
+
+                                    </a>
+
+                                {% else %}
+
+                                    <span class="lista-cot-sin-ot">
+                                        Sin OT
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =============================
+                                 TOTAL
+                            ============================== -->
+
+                            <td>
+
+                                <div class="lista-cot-total">
+
+                                    $
+                                    {{ cotizacion.total_final|floatformat:2 }}
+
+                                </div>
+
+
+                                <div class="lista-cot-total-meta">
+
+                                    {% if cotizacion.sumar_iva_al_total %}
+
+                                        IVA incluido
+
+                                    {% else %}
+
+                                        IVA no sumado
+
+                                    {% endif %}
+
+                                </div>
+
+                            </td>
+
+
+                            <!-- =============================
+                                 ACCIONES
+                            ============================== -->
+
+                            <td>
+
+                                <div class="lista-cot-actions">
+
+                                    <!-- VER -->
+
+                                    <a
+                                        href="{% url 'detalle_cotizacion' cotizacion.id %}"
+                                        class="
+                                            lista-cot-action-btn
+                                            open
+                                        "
+                                        title="Ver proforma"
+                                    >
+
+                                        <i class="bi bi-eye"></i>
+
+                                        Ver
+
+                                    </a>
+
+
+                                    <!-- MÁS -->
+
+                                    <button
+                                        type="button"
+                                        class="lista-cot-action-btn"
+                                        onclick="
+                                            toggleCotizacionMenu(
+                                                {{ cotizacion.id }},
+                                                event
+                                            )
+                                        "
+                                        title="Más acciones"
+                                    >
+
+                                        <i class="bi bi-three-dots"></i>
+
+                                    </button>
+
+
+                                    <!-- DROPDOWN -->
+
+                                    <div
+                                        id="menu-cotizacion-{{ cotizacion.id }}"
+                                        class="lista-cot-dropdown"
+                                    >
+
+                                        <!-- VER PROFORMA -->
+
+                                        <a
+                                            href="{% url 'detalle_cotizacion' cotizacion.id %}"
+                                            class="
+                                                lista-cot-menu-link
+                                                primary
+                                            "
+                                        >
+
+                                            <i class="bi bi-eye"></i>
+
+                                            Ver Proforma
+
+                                        </a>
+
+
+                                        <!-- IMPRIMIR -->
+
+                                        <a
+                                            href="{% url 'imprimir_cotizacion' cotizacion.id %}"
+                                            target="_blank"
+                                            class="lista-cot-menu-link"
+                                        >
+
+                                            <i class="bi bi-printer"></i>
+
+                                            Imprimir Proforma
+
+                                        </a>
+
+
+                                        <!-- OT -->
+
+                                        {% if cotizacion.orden %}
+
+                                            <div
+                                                class="
+                                                    lista-cot-menu-separator
+                                                "
+                                            ></div>
+
+
+                                            <a
+                                                href="{% url 'detalle_orden' cotizacion.orden.id %}"
+                                                class="lista-cot-menu-link"
+                                            >
+
+                                                <i
+                                                    class="
+                                                        bi
+                                                        bi-wrench-adjustable
+                                                    "
+                                                ></i>
+
+                                                Ver
+                                                {{ cotizacion.orden.numero_orden }}
+
+                                            </a>
+
+                                        {% elif cotizacion.orden_generada %}
+
+                                            <div
+                                                class="
+                                                    lista-cot-menu-separator
+                                                "
+                                            ></div>
+
+
+                                            <a
+                                                href="{% url 'detalle_orden' cotizacion.orden_generada.id %}"
+                                                class="lista-cot-menu-link"
+                                            >
+
+                                                <i
+                                                    class="
+                                                        bi
+                                                        bi-wrench-adjustable
+                                                    "
+                                                ></i>
+
+                                                Ver
+                                                {{ cotizacion.orden_generada.numero_orden }}
+
+                                            </a>
+
+                                        {% endif %}
+
+
+                                        <!-- NUEVA REVISIÓN -->
+
+                                        {% if cotizacion.estado == "APROBADA" and cotizacion.es_vigente %}
+
+                                            <div
+                                                class="
+                                                    lista-cot-menu-separator
+                                                "
+                                            ></div>
+
+
+                                            <button
+                                                type="button"
+                                                class="
+                                                    lista-cot-menu-link
+                                                    success
+                                                "
+                                                onclick="
+                                                    abrirConfirmacionRevision(
+                                                        {{ cotizacion.id }},
+                                                        '{{ cotizacion.numero_cotizacion|escapejs }}',
+                                                        {{ cotizacion.revision }}
+                                                    )
+                                                "
+                                            >
+
+                                                <i class="bi bi-files"></i>
+
+                                                Crear nueva revisión
+
+                                            </button>
+
+
+                                            <form
+                                                id="form-revision-{{ cotizacion.id }}"
+                                                method="post"
+                                                action="{% url 'crear_revision_cotizacion' cotizacion.id %}"
+                                                style="display: none;"
+                                            >
+                                                {% csrf_token %}
+                                            </form>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="9"
+                                class="lista-cot-empty"
+                            >
+
+                                <div class="lista-cot-empty-icon">
+
+                                    <i
+                                        class="
+                                            bi
+                                            bi-file-earmark-text
+                                        "
+                                    ></i>
+
+                                </div>
+
+
+                                <h5 class="lista-cot-empty-title">
+
+                                    No se encontraron cotizaciones
+
+                                </h5>
+
+
+                                <p class="lista-cot-empty-text">
+
+                                    Intenta cambiar los filtros de búsqueda
+                                    o crea una nueva proforma.
+
+                                </p>
+
+
+                                <div
+                                    style="
+                                        margin-top: 15px;
+                                    "
+                                >
+
+                                    <button
+                type="button"
+                class="btn-login primary"
+                onclick="abrirModalNuevaProforma()"
+            >
+                <i
+                    class="bi bi-plus-circle"
+                    style="margin-right: 6px;"
+                ></i>
+                Nueva Proforma
+            </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL NUEVA PROFORMA
+========================================================== -->
+<div
+    id="modalNuevaProforma"
+    class="proforma-modal-backdrop"
+    aria-hidden="true"
+>
+    <div
+        class="proforma-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tituloModalNuevaProforma"
+        onclick="event.stopPropagation()"
+    >
+        <form
+            id="formNuevaProforma"
+            method="post"
+            action="{% url 'crear_cotizacion' %}"
+            onsubmit="return validarNuevaProforma()"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="origen_modal" value="1">
+
+            <div class="proforma-modal-header">
+                <div>
+                    <div
+                        id="tituloModalNuevaProforma"
+                        class="proforma-modal-title"
+                    >
+                        Nueva Proforma
+                    </div>
+                    <div class="proforma-modal-subtitle">
+                        Identifique el vehículo y confirme los datos de contacto del cliente.
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="proforma-modal-close"
+                    onclick="cerrarModalNuevaProforma()"
+                    aria-label="Cerrar"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="proforma-modal-body">
+
+                <div class="proforma-modal-section">
+                    <div class="proforma-modal-section-title">
+                        <i class="bi bi-search" style="color:#0071e3;"></i>
+                        Identificación
+                    </div>
+
+                    <div class="proforma-grid">
+                        <div class="proforma-field proforma-col-6">
+                            <label for="cot_placa">Placa del vehículo</label>
+                            <div class="proforma-search-row">
+                                <input
+                                    type="text"
+                                    id="cot_placa"
+                                    name="placa"
+                                    maxlength="10"
+                                    required
+                                    autocomplete="off"
+                                    placeholder="Ej: PBC-7984"
+                                    style="text-transform:uppercase; letter-spacing:1px; font-weight:700;"
+                                    oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')"
+                                    onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPlacaProforma();}"
+                                >
+                                <button
+                                    type="button"
+                                    id="btnBuscarPlacaProforma"
+                                    class="proforma-search-btn"
+                                    onclick="buscarPlacaProforma()"
+                                >
+                                    <i class="bi bi-search"></i>
+                                    Buscar
+                                </button>
+                            </div>
+                            <div id="estadoPlacaProforma" class="proforma-search-status"></div>
+                        </div>
+
+                        <div class="proforma-field proforma-col-6">
+                            <label for="cot_identificacion">Cédula / RUC del cliente</label>
+                            <div class="proforma-search-row">
+                                <input
+                                    type="text"
+                                    id="cot_identificacion"
+                                    name="identificacion"
+                                    maxlength="13"
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                    placeholder="10 o 13 dígitos"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    onkeydown="if(event.key==='Enter'){event.preventDefault();buscarCedulaProforma();}"
+                                >
+                                <button
+                                    type="button"
+                                    id="btnBuscarCedulaProforma"
+                                    class="proforma-search-btn secundario"
+                                    onclick="buscarCedulaProforma()"
+                                >
+                                    <i class="bi bi-person-bounding-box"></i>
+                                    Buscar
+                                </button>
+                            </div>
+                            <div id="estadoCedulaProforma" class="proforma-search-status"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="proforma-modal-section">
+                    <div class="proforma-modal-section-title">
+                        <i class="bi bi-car-front" style="color:#0071e3;"></i>
+                        Vehículo
+                    </div>
+
+                    <div class="proforma-grid">
+                        <div class="proforma-field proforma-col-8">
+                            <label for="cot_vehiculo">Marca / Modelo</label>
+                            <input
+                                type="text"
+                                id="cot_vehiculo"
+                                name="vehiculo"
+                                maxlength="150"
+                                placeholder="Ej: TOYOTA RAV4 LIMITED AC 2.5 5P 4X4 TA"
+                                style="text-transform:uppercase;"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-4">
+                            <label for="cot_anio">Año</label>
+                            <input
+                                type="number"
+                                id="cot_anio"
+                                name="anio_vehiculo"
+                                min="1900"
+                                max="2100"
+                                placeholder="2020"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-4">
+                            <label for="cot_kilometraje">Kilometraje (km)</label>
+                            <input
+                                type="number"
+                                id="cot_kilometraje"
+                                name="kilometraje"
+                                min="0"
+                                step="1"
+                                placeholder="Ej: 125000"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div class="proforma-modal-section">
+                    <div class="proforma-modal-section-title">
+                        <i class="bi bi-person-vcard" style="color:#0071e3;"></i>
+                        Cliente y contacto
+                    </div>
+
+                    <div class="proforma-grid">
+                        <div class="proforma-field proforma-col-12">
+                            <label for="cot_nombre_cliente">Nombre completo / Razón social</label>
+                            <input
+                                type="text"
+                                id="cot_nombre_cliente"
+                                name="nombre_cliente"
+                                maxlength="200"
+                                placeholder="Nombre completo del cliente"
+                                style="text-transform:uppercase;"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-4">
+                            <label for="cot_telefono">Teléfono principal</label>
+                            <input
+                                type="text"
+                                id="cot_telefono"
+                                name="telefono"
+                                maxlength="50"
+                                placeholder="0991234567"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-4">
+                            <label for="cot_telefono_secundario">Teléfono alternativo</label>
+                            <input
+                                type="text"
+                                id="cot_telefono_secundario"
+                                name="telefono_secundario"
+                                maxlength="50"
+                                placeholder="0999999999"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-4">
+                            <label for="cot_telefono_trabajo">Teléfono trabajo / fijo</label>
+                            <input
+                                type="text"
+                                id="cot_telefono_trabajo"
+                                name="telefono_trabajo"
+                                maxlength="50"
+                                placeholder="022345678"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-6">
+                            <label for="cot_email">Correo electrónico</label>
+                            <input
+                                type="email"
+                                id="cot_email"
+                                name="email"
+                                maxlength="254"
+                                placeholder="cliente@correo.com"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-6">
+                            <label for="cot_direccion">Dirección</label>
+                            <input
+                                type="text"
+                                id="cot_direccion"
+                                name="direccion"
+                                placeholder="Dirección del cliente"
+                                style="text-transform:uppercase;"
+                            >
+                        </div>
+
+                        <div class="proforma-field proforma-col-12">
+                            <label for="cot_observaciones">Observaciones de la proforma</label>
+                            <textarea
+                                id="cot_observaciones"
+                                name="observaciones"
+                                placeholder="Observaciones generales del presupuesto..."
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="proforma-modal-footer">
+                <button
+                    type="button"
+                    class="btn-login"
+                    onclick="cerrarModalNuevaProforma()"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="submit"
+                    id="btnCrearProforma"
+                    class="btn-login primary"
+                >
+                    <i class="bi bi-arrow-right-circle" style="margin-right:5px;"></i>
+                    Crear Proforma
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script>
+
+    // =========================================================
+    // MODAL NUEVA PROFORMA
+    // =========================================================
+
+    function abrirModalNuevaProforma() {
+        const modal = document.getElementById("modalNuevaProforma");
+        const form = document.getElementById("formNuevaProforma");
+
+        if (!modal || !form) return;
+
+        form.reset();
+        limpiarEstadoProforma("estadoPlacaProforma");
+        limpiarEstadoProforma("estadoCedulaProforma");
+
+        modal.classList.add("abierto");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+
+        setTimeout(function () {
+            document.getElementById("cot_placa")?.focus();
+        }, 80);
+    }
+
+    function cerrarModalNuevaProforma() {
+        const modal = document.getElementById("modalNuevaProforma");
+        if (!modal) return;
+
+        modal.classList.remove("abierto");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+    }
+
+    document.getElementById("modalNuevaProforma")?.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === this) {
+                cerrarModalNuevaProforma();
+            }
+        }
+    );
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            cerrarModalNuevaProforma();
+        }
+    });
+
+    function limpiarEstadoProforma(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = "";
+        el.className = "proforma-search-status";
+    }
+
+    function mostrarEstadoProforma(id, texto, tipo) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = texto || "";
+        el.className = "proforma-search-status" + (tipo ? " " + tipo : "");
+    }
+
+    function asignarValorProforma(id, valor) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = valor ?? "";
+    }
+
+    function cargarClienteEnModal(cliente) {
+        if (!cliente) return;
+
+        asignarValorProforma(
+            "cot_identificacion",
+            cliente.identificacion || ""
+        );
+        asignarValorProforma(
+            "cot_nombre_cliente",
+            cliente.nombre_completo || cliente.nombre || ""
+        );
+        asignarValorProforma(
+            "cot_telefono",
+            cliente.telefono || ""
+        );
+        asignarValorProforma(
+            "cot_telefono_secundario",
+            cliente.telefono_secundario || ""
+        );
+        asignarValorProforma(
+            "cot_telefono_trabajo",
+            cliente.telefono_trabajo || ""
+        );
+        asignarValorProforma(
+            "cot_email",
+            cliente.email || ""
+        );
+        asignarValorProforma(
+            "cot_direccion",
+            cliente.direccion || ""
+        );
+    }
+
+    function cargarClienteDesdeRespuestaPlaca(data) {
+        const tieneCliente = Boolean(
+            data.identificacion ||
+            data.nombre_completo ||
+            data.telefono ||
+            data.telefono_secundario ||
+            data.telefono_trabajo ||
+            data.email ||
+            data.direccion
+        );
+
+        if (!tieneCliente) return false;
+
+        cargarClienteEnModal({
+            identificacion: data.identificacion || "",
+            nombre_completo: data.nombre_completo || "",
+            telefono: data.telefono || "",
+            telefono_secundario: data.telefono_secundario || "",
+            telefono_trabajo: data.telefono_trabajo || "",
+            email: data.email || "",
+            direccion: data.direccion || ""
+        });
+
+        return true;
+    }
+
+    async function buscarPlacaProforma() {
+        const placaInput = document.getElementById("cot_placa");
+        const boton = document.getElementById("btnBuscarPlacaProforma");
+        const placa = (placaInput?.value || "")
+            .trim()
+            .toUpperCase()
+            .replace(/[-\s]/g, "");
+
+        if (!placa) {
+            mostrarEstadoProforma(
+                "estadoPlacaProforma",
+                "Ingrese una placa para consultar.",
+                "error"
+            );
+            placaInput?.focus();
+            return;
+        }
+
+        mostrarEstadoProforma(
+            "estadoPlacaProforma",
+            "Consultando vehículo...",
+            "loading"
+        );
+
+        if (boton) boton.disabled = true;
+
+        try {
+            const response = await fetch(
+                "{% url 'api_regcheck' %}?placa=" + encodeURIComponent(placa),
+                {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.exito) {
+                throw new Error(
+                    data.error || "No se pudo consultar la placa."
+                );
+            }
+
+            asignarValorProforma(
+                "cot_placa",
+                data.placa || placa
+            );
+            asignarValorProforma(
+                "cot_vehiculo",
+                data.vehiculo || data.descripcion || ""
+            );
+            asignarValorProforma(
+                "cot_anio",
+                data.anio || ""
+            );
+            asignarValorProforma(
+                "cot_kilometraje",
+                data.kilometraje || ""
+            );
+
+            const clienteRecuperado = cargarClienteDesdeRespuestaPlaca(data);
+
+            mostrarEstadoProforma(
+                "estadoPlacaProforma",
+                clienteRecuperado
+                    ? "Vehículo y cliente recuperados de MAO."
+                    : "Vehículo encontrado. Confirme o ingrese el cliente.",
+                "ok"
+            );
+
+        } catch (error) {
+            mostrarEstadoProforma(
+                "estadoPlacaProforma",
+                error.message || "No se pudo consultar la placa.",
+                "error"
+            );
+        } finally {
+            if (boton) boton.disabled = false;
+        }
+    }
+
+    async function buscarCedulaProforma() {
+        const input = document.getElementById("cot_identificacion");
+        const boton = document.getElementById("btnBuscarCedulaProforma");
+        const identificacion = (input?.value || "")
+            .trim()
+            .replace(/\D/g, "");
+
+        if (![10, 13].includes(identificacion.length)) {
+            mostrarEstadoProforma(
+                "estadoCedulaProforma",
+                "La identificación debe tener 10 o 13 dígitos.",
+                "error"
+            );
+            input?.focus();
+            return;
+        }
+
+        mostrarEstadoProforma(
+            "estadoCedulaProforma",
+            "Consultando cliente...",
+            "loading"
+        );
+
+        if (boton) boton.disabled = true;
+
+        try {
+            const response = await fetch(
+                "{% url 'api_cedula' %}?cedula=" + encodeURIComponent(identificacion),
+                {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.exito || !data.cliente) {
+                throw new Error(
+                    data.error || "No se pudo consultar el cliente."
+                );
+            }
+
+            cargarClienteEnModal(data.cliente);
+
+            mostrarEstadoProforma(
+                "estadoCedulaProforma",
+                "Cliente recuperado correctamente.",
+                "ok"
+            );
+
+        } catch (error) {
+            mostrarEstadoProforma(
+                "estadoCedulaProforma",
+                error.message || "No se pudo consultar el cliente.",
+                "error"
+            );
+        } finally {
+            if (boton) boton.disabled = false;
+        }
+    }
+
+    function validarNuevaProforma() {
+        const placa = document.getElementById("cot_placa");
+        const km = document.getElementById("cot_kilometraje");
+        const boton = document.getElementById("btnCrearProforma");
+
+        if (!placa || !placa.value.trim()) {
+            Swal.fire({
+                title: "Placa obligatoria",
+                text: "Ingrese la placa del vehículo.",
+                icon: "warning",
+                confirmButtonColor: "#0071e3"
+            });
+            placa?.focus();
+            return false;
+        }
+
+        if (km && km.value && Number(km.value) < 0) {
+            Swal.fire({
+                title: "Kilometraje inválido",
+                text: "El kilometraje no puede ser negativo.",
+                icon: "warning",
+                confirmButtonColor: "#0071e3"
+            });
+            km.focus();
+            return false;
+        }
+
+        if (boton) {
+            boton.disabled = true;
+            boton.innerHTML = '<i class="bi bi-hourglass-split" style="margin-right:5px;"></i> Creando...';
+        }
+
+        return true;
+    }
+
+    // =========================================================
+    // DROPDOWN DE ACCIONES
+    // =========================================================
+
+    function toggleCotizacionMenu(
+        cotizacionId,
+        event
+    ) {
+
+        event.stopPropagation();
+
+
+        const menus =
+            document.querySelectorAll(
+                ".lista-cot-dropdown"
+            );
+
+
+        menus.forEach(function (menu) {
+
+            if (
+                menu.id !==
+                "menu-cotizacion-" +
+                cotizacionId
+            ) {
+
+                menu.style.display =
+                    "none";
+            }
+
+        });
+
+
+        const menuActual =
+            document.getElementById(
+                "menu-cotizacion-" +
+                cotizacionId
+            );
+
+
+        if (!menuActual) {
+            return;
+        }
+
+
+        if (
+            menuActual.style.display ===
+            "block"
+        ) {
+
+            menuActual.style.display =
+                "none";
+
+        } else {
+
+            menuActual.style.display =
+                "block";
+        }
+    }
+
+
+    // =========================================================
+    // CERRAR MENÚ
+    // =========================================================
+
+    document.addEventListener(
+        "click",
+        function () {
+
+            document
+            .querySelectorAll(
+                ".lista-cot-dropdown"
+            )
+            .forEach(function (menu) {
+
+                menu.style.display =
+                    "none";
+
+            });
+
+        }
+    );
+
+
+    // =========================================================
+    // EVITAR QUE CLICK INTERNO CIERRE ANTES DE TIEMPO
+    // =========================================================
+
+    document
+    .querySelectorAll(
+        ".lista-cot-dropdown"
+    )
+    .forEach(function (menu) {
+
+        menu.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+            }
+        );
+
+    });
+
+
+    // =========================================================
+    // CREAR REVISIÓN
+    // =========================================================
+
+    function abrirConfirmacionRevision(
+        cotizacionId,
+        numero,
+        revision
+    ) {
+
+        Swal.fire({
+
+            title:
+                "¿Crear nueva revisión?",
+
+            html:
+                "<strong>" +
+                numero +
+                "</strong><br>" +
+                "Se conservará la Rev. " +
+                revision +
+                " como historial y se creará " +
+                "una nueva revisión editable.",
+
+            icon:
+                "question",
+
+            showCancelButton:
+                true,
+
+            confirmButtonColor:
+                "#0071e3",
+
+            cancelButtonColor:
+                "#6e6e73",
+
+            confirmButtonText:
+                "Sí, crear revisión",
+
+            cancelButtonText:
+                "Cancelar"
+
+        }).then(
+            function (result) {
+
+                if (
+                    !result.isConfirmed
+                ) {
+                    return;
+                }
+
+
+                const formulario =
+                    document.getElementById(
+                        "form-revision-" +
+                        cotizacionId
+                    );
+
+
+                if (formulario) {
+                    formulario.submit();
+                }
+
+            }
+        );
+    }
+
+
+    // =========================================================
+    // MENSAJES DJANGO
+    // =========================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    {% if message.tags == "success" %}
+
+                        Swal.fire({
+
+                            title:
+                                "Correcto",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "success",
+
+                            confirmButtonColor:
+                                "#34c759"
+
+                        });
+
+                    {% elif message.tags == "warning" %}
+
+                        Swal.fire({
+
+                            title:
+                                "Advertencia",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "warning",
+
+                            confirmButtonColor:
+                                "#ff9500"
+
+                        });
+
+                    {% elif message.tags == "error" %}
+
+                        Swal.fire({
+
+                            title:
+                                "Error",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "error",
+
+                            confirmButtonColor:
+                                "#ff3b30"
+
+                        });
+
+                    {% else %}
+
+                        Swal.fire({
+
+                            title:
+                                "Información",
+
+                            text:
+                                "{{ message|escapejs }}",
+
+                            icon:
+                                "info",
+
+                            confirmButtonColor:
+                                "#0071e3"
+
+                        });
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% endif %}
+
+        }
+    );
+
+</script>
+
+
+{% endblock %}
