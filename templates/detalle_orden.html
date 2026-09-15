@@ -17,7 +17,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/detalle_orden.css' %}?v=26"
+    href="{% static 'css/detalle_orden.css' %}?v=27"
 >
 
 <div
@@ -556,7 +556,247 @@
 ></script>
 
 <script
-    <script src="{% static 'js/detalle_orden.js' %}?v=3"></script>
+    src="{% static 'js/detalle_orden.js' %}?v=4"
 ></script>
+
+<script>
+    /* =========================================================
+       RESALTAR EN ROJO P.U. / CANTIDAD / VALOR
+       CUANDO EL VALOR SEA 0 O NEGATIVO
+       ========================================================= */
+
+    (function () {
+
+        function convertirNumero(valor) {
+            if (
+                valor === null ||
+                valor === undefined ||
+                String(valor).trim() === ""
+            ) {
+                return null;
+            }
+
+            let texto = String(valor).trim();
+
+            /*
+             * Soporta:
+             * 0.00
+             * 0,00
+             * 1.234,56
+             * 1234.56
+             */
+            if (
+                texto.includes(",") &&
+                texto.includes(".")
+            ) {
+                texto = texto
+                    .replace(/\./g, "")
+                    .replace(",", ".");
+            } else {
+                texto = texto.replace(",", ".");
+            }
+
+            const numero = Number(texto);
+
+            return Number.isFinite(numero)
+                ? numero
+                : null;
+        }
+
+
+        function validarCampoNumerico(campo) {
+            if (!campo) {
+                return;
+            }
+
+            const celda = campo.closest("td");
+
+            if (!celda) {
+                return;
+            }
+
+            const fila = campo.closest("tr");
+
+            /*
+             * No marcamos filas que ya fueron eliminadas
+             * visualmente y esperan ser guardadas.
+             */
+            if (
+                fila &&
+                (
+                    fila.classList.contains("fila-eliminada") ||
+                    fila.classList.contains("fila-eliminada-moi") ||
+                    fila.classList.contains("fila-eliminada-moe")
+                )
+            ) {
+                celda.classList.remove(
+                    "celda-error-numero"
+                );
+
+                return;
+            }
+
+            const numero = convertirNumero(
+                campo.value
+            );
+
+            /*
+             * Regla:
+             * 0        -> rojo
+             * negativo -> rojo
+             * positivo -> normal
+             * vacío    -> normal
+             */
+            if (
+                numero !== null &&
+                numero <= 0
+            ) {
+                celda.classList.add(
+                    "celda-error-numero"
+                );
+            } else {
+                celda.classList.remove(
+                    "celda-error-numero"
+                );
+            }
+        }
+
+
+        function actualizarErroresNumericos() {
+            const campos =
+                document.querySelectorAll(
+                    `
+                    #tablaRepuestos input.pu,
+                    #tablaRepuestos input.cantidad,
+                    #tablaRepuestos input.valor,
+
+                    #tablaMOI input.pu,
+                    #tablaMOI input.cantidad,
+                    #tablaMOI input.valor,
+
+                    #tablaMOE input.pu,
+                    #tablaMOE input.cantidad,
+                    #tablaMOE input.valor
+                    `
+                );
+
+            campos.forEach(
+                validarCampoNumerico
+            );
+        }
+
+
+        /*
+         * Revalidar mientras se edita.
+         * setTimeout permite que calcularFila() actualice
+         * primero el subtotal/valor de la fila.
+         */
+        document.addEventListener(
+            "input",
+            function (event) {
+                const campo = event.target;
+
+                if (
+                    campo.matches(
+                        ".ot-table input.pu, " +
+                        ".ot-table input.cantidad, " +
+                        ".ot-table input.valor"
+                    )
+                ) {
+                    validarCampoNumerico(
+                        campo
+                    );
+
+                    setTimeout(
+                        actualizarErroresNumericos,
+                        0
+                    );
+                }
+            }
+        );
+
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    event.target.matches(
+                        ".ot-table input.pu, " +
+                        ".ot-table input.cantidad, " +
+                        ".ot-table input.valor"
+                    )
+                ) {
+                    actualizarErroresNumericos();
+                }
+            }
+        );
+
+
+        function iniciarValidacionNumerica() {
+            actualizarErroresNumericos();
+
+            const formulario =
+                document.getElementById(
+                    "formDetalleOT"
+                );
+
+            if (!formulario) {
+                return;
+            }
+
+            /*
+             * Detecta filas nuevas agregadas por JavaScript.
+             */
+            const observer =
+                new MutationObserver(
+                    function (mutaciones) {
+                        const huboCambioEstructural =
+                            mutaciones.some(
+                                function (mutacion) {
+                                    return (
+                                        mutacion.type ===
+                                        "childList"
+                                    );
+                                }
+                            );
+
+                        if (huboCambioEstructural) {
+                            actualizarErroresNumericos();
+                        }
+                    }
+                );
+
+            observer.observe(
+                formulario,
+                {
+                    childList: true,
+                    subtree: true
+                }
+            );
+        }
+
+
+        if (
+            document.readyState ===
+            "loading"
+        ) {
+            document.addEventListener(
+                "DOMContentLoaded",
+                iniciarValidacionNumerica
+            );
+        } else {
+            iniciarValidacionNumerica();
+        }
+
+
+        /*
+         * Disponible para repuestos.js / mano_obra.js
+         * si en el futuro quieres llamarlo manualmente.
+         */
+        window.actualizarErroresNumericos =
+            actualizarErroresNumericos;
+
+    })();
+</script>
 
 {% endblock %}
