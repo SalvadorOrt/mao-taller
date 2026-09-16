@@ -4017,6 +4017,41 @@
             renderTecnicosSeleccionados();
             inicializarCroquisModalV2();
 
+            const formEdicionRapida =
+                document.getElementById(
+                    'formEdicionRapida'
+                );
+
+            if (formEdicionRapida) {
+
+                formEdicionRapida.addEventListener(
+                    'submit',
+                    function (event) {
+
+                        if (
+                            !prepararCroquisModalParaEnvio()
+                        ) {
+                            event.preventDefault();
+
+                            if (
+                                typeof Swal !== 'undefined'
+                            ) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'No se pudo preparar el croquis',
+                                    text: 'El croquis fue modificado, pero no se pudo generar la imagen final.'
+                                });
+                            }
+                            else {
+                                alert(
+                                    'No se pudo preparar la imagen final del croquis.'
+                                );
+                            }
+                        }
+                    }
+                );
+            }
+
 
             document.addEventListener(
                 'click',
@@ -5121,8 +5156,23 @@
             evento.currentTarget.dataset.canvasIndex
         );
 
+        const estabaDibujando =
+            !!croquisModalPunteroActivo[idx];
+
         croquisModalPunteroActivo[idx] = false;
         croquisModalDibujando = false;
+
+        /*
+         * Dejamos preparada la imagen desde que termina
+         * el trazo. Así el hidden ya contiene el PNG antes
+         * de presionar Guardar.
+         */
+        if (
+            estabaDibujando &&
+            croquisModalFueModificado
+        ) {
+            prepararCroquisModalParaEnvio();
+        }
     }
 
 
@@ -5180,6 +5230,7 @@
         }
 
         marcarCroquisModalComoModificado();
+        prepararCroquisModalParaEnvio();
     }
 
 
@@ -5195,6 +5246,70 @@
         if (hiddenFlag) {
             hiddenFlag.value = '1';
         }
+    }
+
+
+    function prepararCroquisModalParaEnvio() {
+
+        const croquisHidden =
+            document.getElementById(
+                'modal_imagen_croquis_base64'
+            );
+
+        const croquisFlag =
+            document.getElementById(
+                'modal_croquis_modificado'
+            );
+
+        if (!croquisFlag) {
+            return true;
+        }
+
+        /*
+         * Si no es V2 o no hubo cambios reales,
+         * el backend no debe tocar el croquis.
+         */
+        if (
+            !CROQUIS_MODAL_ES_V2 ||
+            !croquisModalFueModificado
+        ) {
+            croquisFlag.value = '0';
+
+            if (croquisHidden) {
+                croquisHidden.value = '';
+            }
+
+            return true;
+        }
+
+        if (!croquisHidden) {
+            return false;
+        }
+
+        const imagenFinal =
+            generarCroquisFinalModal();
+
+        /*
+         * Protección:
+         * nunca mandamos croquis_modificado=1
+         * si no existe una imagen PNG válida.
+         */
+        if (
+            !imagenFinal ||
+            !imagenFinal.startsWith(
+                'data:image/png;base64,'
+            ) ||
+            imagenFinal.length < 100
+        ) {
+            croquisFlag.value = '0';
+            croquisHidden.value = '';
+            return false;
+        }
+
+        croquisHidden.value = imagenFinal;
+        croquisFlag.value = '1';
+
+        return true;
     }
 
 
@@ -5509,33 +5624,31 @@
         }
 
 
-        if (CROQUIS_MODAL_ES_V2) {
+        const croquisPreparado =
+            prepararCroquisModalParaEnvio();
 
-            const croquisHidden =
-                document.getElementById(
-                    'modal_imagen_croquis_base64'
-                );
+        if (!croquisPreparado) {
 
-            const croquisFlag =
-                document.getElementById(
-                    'modal_croquis_modificado'
-                );
+            btn.disabled = false;
+            btn.innerHTML =
+                'Guardar y Actualizar';
 
             if (
-                croquisModalFueModificado &&
-                croquisHidden &&
-                croquisFlag
+                typeof Swal !== 'undefined'
             ) {
-
-                croquisHidden.value =
-                    generarCroquisFinalModal();
-
-                croquisFlag.value = '1';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo preparar el croquis',
+                    text: 'El croquis fue modificado, pero no se pudo generar la imagen final. Vuelva a intentar guardar.'
+                });
             }
-            else if (croquisFlag) {
-
-                croquisFlag.value = '0';
+            else {
+                alert(
+                    'No se pudo preparar la imagen final del croquis. Vuelva a intentar guardar.'
+                );
             }
+
+            return;
         }
 
         const form =
