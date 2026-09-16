@@ -62,6 +62,366 @@
         background: #ffffff;
     }
 
+    /* =========================================================
+       EDITOR CROQUIS V2 EN MODAL
+    ========================================================= */
+
+    .croquis-editor-shell {
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .croquis-editor-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    .croquis-editor-help {
+        font-size: 0.78rem;
+        color: var(--muted);
+        line-height: 1.45;
+    }
+
+    .croquis-editor-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 6px 11px;
+        font-size: 0.73rem;
+        font-weight: 700;
+        border: 1px solid #d2d2d7;
+        background: #f5f5f7;
+        color: #111;
+    }
+
+    .croquis-editor-badge.editando {
+        background: rgba(0, 113, 227, 0.08);
+        color: #0071e3;
+        border-color: rgba(0, 113, 227, 0.18);
+    }
+
+    .croquis-switch-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+        margin-left: auto;
+    }
+
+    .croquis-switch-text {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #111;
+        white-space: nowrap;
+    }
+
+    .switch-mao {
+        position: relative;
+        display: inline-block;
+        width: 52px;
+        height: 30px;
+        flex: 0 0 auto;
+    }
+
+    .switch-mao input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .switch-mao-slider {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: #d2d2d7;
+        transition: .2s ease;
+        border-radius: 999px;
+    }
+
+    .switch-mao-slider::before {
+        content: "";
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: .2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .switch-mao input:checked + .switch-mao-slider {
+        background: #0071e3;
+    }
+
+    .switch-mao input:checked + .switch-mao-slider::before {
+        transform: translateX(22px);
+    }
+
+    .croquis-v2-nav {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 4px 2px 10px;
+        margin-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        scroll-behavior: smooth;
+    }
+
+    .croquis-v2-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .croquis-v2-nav-btn {
+        flex: 0 0 auto;
+        min-height: 40px;
+        min-width: max-content;
+        padding: 9px 14px;
+        border: 1px solid #d2d2d7;
+        background: #fff;
+        color: #111;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .15s ease;
+        white-space: nowrap;
+    }
+
+    .croquis-v2-nav-btn.active {
+        border-color: #0071e3;
+        background: rgba(0, 113, 227, 0.10);
+        color: #0071e3;
+    }
+
+    .croquis-v2-stage-wrap {
+        width: 100%;
+    }
+
+    .croquis-v2-stage {
+        position: relative;
+        width: 100%;
+        max-width: 760px;
+        aspect-ratio: 5 / 4;
+        margin: 0 auto;
+        border: 1px solid var(--border-soft);
+        border-radius: 14px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .croquis-v2-view {
+        position: absolute;
+        inset: 0;
+        display: none;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    .croquis-v2-view.active {
+        display: block;
+    }
+
+    .croquis-v2-base,
+    .croquis-v2-existing,
+    .croquis-v2-draw {
+        position: absolute;
+        inset: 8px;
+        width: calc(100% - 16px);
+        height: calc(100% - 16px);
+        border-radius: 10px;
+    }
+
+    .croquis-v2-base {
+        object-fit: contain;
+        object-position: center center;
+        background: #fff;
+        display: block;
+        z-index: 1;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .croquis-v2-existing,
+    .croquis-v2-draw {
+        z-index: 2;
+        background: transparent;
+    }
+
+    .croquis-v2-draw {
+        z-index: 3;
+        touch-action: none;
+        cursor: default;
+    }
+
+    .croquis-v2-draw.editable {
+        cursor: crosshair;
+    }
+
+    .croquis-v2-bottom-nav {
+        width: 100%;
+        max-width: 760px;
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        align-items: center;
+        gap: 10px;
+        margin: 10px auto 0;
+    }
+
+    .croquis-v2-arrow {
+        width: 42px;
+        height: 42px;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 50%;
+        background: #fff;
+        color: #1d1d1f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.18rem;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+        transition: transform .15s ease, background-color .15s ease;
+    }
+
+    .croquis-v2-arrow:hover {
+        background: #f5f5f7;
+        transform: scale(1.04);
+    }
+
+    .croquis-v2-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .croquis-v2-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #d2d2d7;
+        display: inline-block;
+    }
+
+    .croquis-v2-dot.active {
+        background: #0071e3;
+    }
+
+    .croquis-v2-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .croquis-v2-mode-text {
+        font-size: 0.76rem;
+        color: var(--muted);
+    }
+
+    .croquis-v2-actions-right {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .croquis-v2-btn {
+        min-height: 38px;
+        border-radius: 9px;
+        padding: 0 14px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid #d2d2d7;
+        background: #fff;
+        color: #111;
+    }
+
+    .croquis-v2-btn.primary-soft {
+        border-color: rgba(0, 113, 227, 0.18);
+        background: rgba(0, 113, 227, 0.08);
+        color: #0071e3;
+    }
+
+    .croquis-v2-readonly {
+        margin-top: 10px;
+        padding: 11px 12px;
+        border: 1px solid #e5e5ea;
+        background: #fbfbfd;
+        color: var(--muted);
+        font-size: 0.77rem;
+        border-radius: 10px;
+        line-height: 1.45;
+    }
+
+    @media (max-width: 768px) {
+        .croquis-editor-shell {
+            padding: 12px;
+        }
+
+        .croquis-editor-topbar {
+            align-items: flex-start;
+        }
+
+        .croquis-switch-wrap {
+            width: 100%;
+            justify-content: space-between;
+            margin-left: 0;
+        }
+
+        .croquis-v2-stage {
+            max-width: none;
+        }
+
+        .croquis-v2-bottom-nav {
+            max-width: none;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .croquis-v2-base,
+        .croquis-v2-existing,
+        .croquis-v2-draw {
+            inset: 4px;
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+        }
+
+        .croquis-v2-bottom-nav {
+            grid-template-columns: 40px 1fr 40px;
+            gap: 8px;
+        }
+
+        .croquis-v2-arrow {
+            width: 38px;
+            height: 38px;
+            font-size: 1rem;
+        }
+
+        .croquis-v2-nav-btn {
+            min-height: 38px;
+            font-size: 0.75rem;
+            padding: 8px 13px;
+        }
+    }
+
     .modal-item-row {
         display: flex;
         justify-content: space-between;
@@ -660,6 +1020,16 @@
                    name="placa"
                    id="modal_placa_submit"
                    value="{{ orden.placa|default_if_none:'' }}">
+
+            <input type="hidden"
+                   name="imagen_croquis_base64"
+                   id="modal_imagen_croquis_base64"
+                   value="">
+
+            <input type="hidden"
+                   name="croquis_modificado"
+                   id="modal_croquis_modificado"
+                   value="0">
 
 
             <!-- =================================================
@@ -1284,8 +1654,8 @@
                  CROQUIS
 
                  COMPATIBILIDAD:
-                 - V1: órdenes antiguas -> base_autos.svg + trazos
-                 - V2: órdenes nuevas   -> PNG final con 5 vistas
+                 - V1: órdenes antiguas -> solo consulta
+                 - V2: órdenes nuevas   -> consulta + edición opcional
             ================================================== -->
 
             <div style="margin-bottom:25px;">
@@ -1295,57 +1665,166 @@
                     Croquis del vehículo
                 </label>
 
-                <div class="canvas-modal-bg">
+                {% if orden.croquis_danio and orden.croquis_danio.imagen_generada and orden.croquis_danio.version_croquis == 1 %}
 
-                    {% if orden.croquis_danio and orden.croquis_danio.imagen_generada %}
+                    <div class="canvas-modal-bg">
 
-                        {% if orden.croquis_danio.version_croquis == 1 %}
+                        <div class="croquis-modal-v1">
 
-                            <!-- =========================================
-                                 CROQUIS V1 - SISTEMA ANTIGUO
-                                 La silueta del vehículo estaba fuera del
-                                 PNG y los rayones se guardaban encima.
-                            ========================================== -->
-                            <div class="croquis-modal-v1">
+                            <img
+                                src="{% static 'base_autos.svg' %}"
+                                class="croquis-modal-v1-base"
+                                alt="Base del croquis del vehículo"
+                            >
 
-                                <img
-                                    src="{% static 'base_autos.svg' %}"
-                                    class="croquis-modal-v1-base"
-                                    alt="Base del croquis del vehículo"
-                                >
+                            <img
+                                src="{{ orden.croquis_danio.imagen_generada.url }}"
+                                class="croquis-modal-v1-trazos"
+                                alt="Daños registrados en el croquis"
+                            >
 
-                                <img
-                                    src="{{ orden.croquis_danio.imagen_generada.url }}"
-                                    class="croquis-modal-v1-trazos"
-                                    alt="Daños registrados en el croquis"
-                                >
+                        </div>
+
+                    </div>
+
+                    <div class="croquis-v2-readonly">
+                        Este croquis pertenece al formato histórico (V1).
+                        Se mantiene en modo consulta para proteger la
+                        información original.
+                    </div>
+
+                {% elif orden.croquis_danio and orden.croquis_danio.version_croquis == 2 %}
+
+                    <div class="croquis-editor-shell">
+
+                        <div class="croquis-editor-topbar">
+
+                            <div>
+                                <div id="croquisEditorBadge"
+                                     class="croquis-editor-badge">
+                                    <i class="bi bi-lock"></i>
+                                    <span>Modo consulta</span>
+                                </div>
+
+                                <div class="croquis-editor-help">
+                                    Puede revisar el croquis por vistas. Active
+                                    <strong>Editar croquis</strong> solo cuando
+                                    realmente desee rayar o corregir marcas.
+                                </div>
+                            </div>
+
+                            {% if puede_editar %}
+                            <div class="croquis-switch-wrap">
+                                <span class="croquis-switch-text">
+                                    Editar croquis
+                                </span>
+
+                                <label class="switch-mao">
+                                    <input
+                                        type="checkbox"
+                                        id="switchEditarCroquisModal"
+                                        onchange="cambiarModoEdicionCroquisModal()"
+                                    >
+                                    <span class="switch-mao-slider"></span>
+                                </label>
+                            </div>
+                            {% endif %}
+
+                        </div>
+
+                        <div class="croquis-v2-nav" id="croquisV2Nav">
+                            <button type="button" class="croquis-v2-nav-btn active" data-vista-index="0" onclick="irVistaCroquisModal(0)">Izquierda</button>
+                            <button type="button" class="croquis-v2-nav-btn" data-vista-index="1" onclick="irVistaCroquisModal(1)">Frente</button>
+                            <button type="button" class="croquis-v2-nav-btn" data-vista-index="2" onclick="irVistaCroquisModal(2)">Derecha</button>
+                            <button type="button" class="croquis-v2-nav-btn" data-vista-index="3" onclick="irVistaCroquisModal(3)">Trasera</button>
+                            <button type="button" class="croquis-v2-nav-btn" data-vista-index="4" onclick="irVistaCroquisModal(4)">Superior</button>
+                        </div>
+
+                        <div class="croquis-v2-stage-wrap">
+                            <div class="croquis-v2-stage">
+
+                                <div class="croquis-v2-view active" data-vista="0">
+                                    <img class="croquis-v2-base" data-base-index="0" src="{% static 'croquis/automovil/izquierda.svg' %}" alt="Vista izquierda">
+                                    <canvas class="croquis-v2-existing" data-existing-index="0"></canvas>
+                                    <canvas class="croquis-v2-draw" data-canvas-index="0"></canvas>
+                                </div>
+
+                                <div class="croquis-v2-view" data-vista="1">
+                                    <img class="croquis-v2-base" data-base-index="1" src="{% static 'croquis/automovil/frente.svg' %}" alt="Vista frontal">
+                                    <canvas class="croquis-v2-existing" data-existing-index="1"></canvas>
+                                    <canvas class="croquis-v2-draw" data-canvas-index="1"></canvas>
+                                </div>
+
+                                <div class="croquis-v2-view" data-vista="2">
+                                    <img class="croquis-v2-base" data-base-index="2" src="{% static 'croquis/automovil/derecha.svg' %}" alt="Vista derecha">
+                                    <canvas class="croquis-v2-existing" data-existing-index="2"></canvas>
+                                    <canvas class="croquis-v2-draw" data-canvas-index="2"></canvas>
+                                </div>
+
+                                <div class="croquis-v2-view" data-vista="3">
+                                    <img class="croquis-v2-base" data-base-index="3" src="{% static 'croquis/automovil/trasera.svg' %}" alt="Vista trasera">
+                                    <canvas class="croquis-v2-existing" data-existing-index="3"></canvas>
+                                    <canvas class="croquis-v2-draw" data-canvas-index="3"></canvas>
+                                </div>
+
+                                <div class="croquis-v2-view" data-vista="4">
+                                    <img class="croquis-v2-base" data-base-index="4" src="{% static 'croquis/automovil/superior.svg' %}" alt="Vista superior">
+                                    <canvas class="croquis-v2-existing" data-existing-index="4"></canvas>
+                                    <canvas class="croquis-v2-draw" data-canvas-index="4"></canvas>
+                                </div>
 
                             </div>
 
-                        {% else %}
+                            <div class="croquis-v2-bottom-nav">
+                                <button type="button"
+                                        class="croquis-v2-arrow"
+                                        onclick="croquisModalAnterior()"
+                                        aria-label="Vista anterior">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
 
-                            <!-- =========================================
-                                 CROQUIS V2 - SISTEMA NUEVO
-                                 El PNG ya contiene las 5 vistas SVG y
-                                 todos los rayones registrados.
-                            ========================================== -->
-                            <img
-                                src="{{ orden.croquis_danio.imagen_generada.url }}"
-                                class="croquis-modal-v2"
-                                alt="Croquis completo del vehículo"
-                            >
+                                <div class="croquis-v2-dots">
+                                    <span class="croquis-v2-dot active" data-dot-index="0"></span>
+                                    <span class="croquis-v2-dot" data-dot-index="1"></span>
+                                    <span class="croquis-v2-dot" data-dot-index="2"></span>
+                                    <span class="croquis-v2-dot" data-dot-index="3"></span>
+                                    <span class="croquis-v2-dot" data-dot-index="4"></span>
+                                </div>
 
-                        {% endif %}
-
-                    {% else %}
-
-                        <div class="croquis-modal-empty">
-                            No existe croquis registrado.
+                                <button type="button"
+                                        class="croquis-v2-arrow"
+                                        onclick="croquisModalSiguiente()"
+                                        aria-label="Vista siguiente">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
 
-                    {% endif %}
+                        <div class="croquis-v2-actions">
+                            <div id="croquisModoTexto" class="croquis-v2-mode-text">
+                                🔒 Croquis protegido. Active “Editar croquis” para realizar cambios.
+                            </div>
 
-                </div>
+                            {% if puede_editar %}
+                            <div class="croquis-v2-actions-right">
+                                <button type="button"
+                                        class="croquis-v2-btn"
+                                        onclick="limpiarVistaCroquisModal()">
+                                    Limpiar esta vista
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="croquis-modal-empty">
+                        No existe croquis registrado.
+                    </div>
+
+                {% endif %}
 
             </div>
 
@@ -1631,6 +2110,20 @@
 
     const PLACA_INICIAL =
         "{{ orden.placa|default_if_none:''|escapejs }}";
+
+    const CROQUIS_MODAL_ES_V2 =
+        {% if orden.croquis_danio and orden.croquis_danio.version_croquis == 2 %}true{% else %}false{% endif %};
+
+    const CROQUIS_MODAL_IMAGEN_EXISTENTE =
+        "{% if orden.croquis_danio and orden.croquis_danio.imagen_generada and orden.croquis_danio.version_croquis == 2 %}{{ orden.croquis_danio.imagen_generada.url|escapejs }}{% endif %}";
+
+    const CROQUIS_MODAL_VISTAS = [
+        { key: 'izquierda', label: 'Izquierda' },
+        { key: 'frente',    label: 'Frente' },
+        { key: 'derecha',   label: 'Derecha' },
+        { key: 'trasera',   label: 'Trasera' },
+        { key: 'superior',  label: 'Superior' },
+    ];
 
 
     /*
@@ -3484,6 +3977,7 @@
         function () {
 
             renderTecnicosSeleccionados();
+            inicializarCroquisModalV2();
 
 
             document.addEventListener(
@@ -4101,6 +4595,566 @@
 
 
     /* =========================================================
+       CROQUIS V2 EN MODAL
+    ========================================================= */
+
+    let croquisModalVistaActual = 0;
+    let croquisModalEditando = false;
+    let croquisModalFueModificado = false;
+    let croquisModalInicializado = false;
+    let croquisModalDibujando = false;
+
+    const croquisModalCapasExistentes = {};
+    const croquisModalCapasDibujo = {};
+    const croquisModalCtxExistente = {};
+    const croquisModalCtxDibujo = {};
+    const croquisModalPunteroActivo = {};
+
+
+    function inicializarCroquisModalV2() {
+
+        if (
+            croquisModalInicializado ||
+            !CROQUIS_MODAL_ES_V2
+        ) {
+            return;
+        }
+
+        document
+            .querySelectorAll('.croquis-v2-existing')
+            .forEach(function (canvas) {
+                const idx = Number(
+                    canvas.dataset.existingIndex
+                );
+
+                canvas.width = 800;
+                canvas.height = 640;
+
+                croquisModalCapasExistentes[idx] = canvas;
+                croquisModalCtxExistente[idx] =
+                    canvas.getContext('2d');
+            });
+
+        document
+            .querySelectorAll('.croquis-v2-draw')
+            .forEach(function (canvas) {
+                const idx = Number(
+                    canvas.dataset.canvasIndex
+                );
+
+                canvas.width = 800;
+                canvas.height = 640;
+
+                croquisModalCapasDibujo[idx] = canvas;
+                croquisModalCtxDibujo[idx] =
+                    canvas.getContext('2d');
+
+                const ctx =
+                    croquisModalCtxDibujo[idx];
+
+                ctx.strokeStyle = '#ff3b30';
+                ctx.lineWidth = 7;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                canvas.addEventListener(
+                    'pointerdown',
+                    iniciarTrazoCroquisModal
+                );
+                canvas.addEventListener(
+                    'pointermove',
+                    moverTrazoCroquisModal
+                );
+                canvas.addEventListener(
+                    'pointerup',
+                    finalizarTrazoCroquisModal
+                );
+                canvas.addEventListener(
+                    'pointerleave',
+                    finalizarTrazoCroquisModal
+                );
+                canvas.addEventListener(
+                    'pointercancel',
+                    finalizarTrazoCroquisModal
+                );
+            });
+
+        if (CROQUIS_MODAL_IMAGEN_EXISTENTE) {
+            cargarCroquisExistenteEnModal();
+        }
+
+        actualizarNavegacionCroquisModal();
+        aplicarModoEdicionCroquisModal(false);
+
+        croquisModalInicializado = true;
+    }
+
+
+    function cargarCroquisExistenteEnModal() {
+
+        const img = new Image();
+
+        img.onload = function () {
+
+            const anchoSegmento =
+                img.width / 5;
+
+            const alto = img.height;
+
+            CROQUIS_MODAL_VISTAS.forEach(
+                function (_, index) {
+
+                    const canvas =
+                        croquisModalCapasExistentes[index];
+
+                    const ctx =
+                        croquisModalCtxExistente[index];
+
+                    if (!canvas || !ctx) {
+                        return;
+                    }
+
+                    ctx.clearRect(
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+
+                    ctx.drawImage(
+                        img,
+                        anchoSegmento * index,
+                        0,
+                        anchoSegmento,
+                        alto,
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+                }
+            );
+        };
+
+        img.src = CROQUIS_MODAL_IMAGEN_EXISTENTE;
+    }
+
+
+    function actualizarNavegacionCroquisModal() {
+
+        document
+            .querySelectorAll('.croquis-v2-view')
+            .forEach(function (view) {
+
+                const idx = Number(
+                    view.dataset.vista
+                );
+
+                view.classList.toggle(
+                    'active',
+                    idx === croquisModalVistaActual
+                );
+            });
+
+        document
+            .querySelectorAll('.croquis-v2-nav-btn')
+            .forEach(function (btn) {
+
+                const idx = Number(
+                    btn.dataset.vistaIndex
+                );
+
+                const activo =
+                    idx === croquisModalVistaActual;
+
+                btn.classList.toggle(
+                    'active',
+                    activo
+                );
+
+                if (activo) {
+                    btn.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'center'
+                    });
+                }
+            });
+
+        document
+            .querySelectorAll('.croquis-v2-dot')
+            .forEach(function (dot) {
+
+                const idx = Number(
+                    dot.dataset.dotIndex
+                );
+
+                dot.classList.toggle(
+                    'active',
+                    idx === croquisModalVistaActual
+                );
+            });
+    }
+
+
+    function irVistaCroquisModal(indice) {
+        croquisModalVistaActual = indice;
+        actualizarNavegacionCroquisModal();
+    }
+
+
+    function croquisModalAnterior() {
+        croquisModalVistaActual =
+            (
+                croquisModalVistaActual - 1 +
+                CROQUIS_MODAL_VISTAS.length
+            ) %
+            CROQUIS_MODAL_VISTAS.length;
+
+        actualizarNavegacionCroquisModal();
+    }
+
+
+    function croquisModalSiguiente() {
+        croquisModalVistaActual =
+            (
+                croquisModalVistaActual + 1
+            ) %
+            CROQUIS_MODAL_VISTAS.length;
+
+        actualizarNavegacionCroquisModal();
+    }
+
+
+    function aplicarModoEdicionCroquisModal(activo) {
+
+        croquisModalEditando = !!activo;
+
+        document
+            .querySelectorAll('.croquis-v2-draw')
+            .forEach(function (canvas) {
+
+                if (croquisModalEditando) {
+                    canvas.style.pointerEvents = 'auto';
+                    canvas.classList.add('editable');
+                }
+                else {
+                    canvas.style.pointerEvents = 'none';
+                    canvas.classList.remove('editable');
+                }
+            });
+
+        const badge =
+            document.getElementById(
+                'croquisEditorBadge'
+            );
+
+        const textoModo =
+            document.getElementById(
+                'croquisModoTexto'
+            );
+
+        if (badge) {
+
+            if (croquisModalEditando) {
+                badge.classList.add('editando');
+                badge.innerHTML =
+                    '<i class="bi bi-pencil-square"></i><span>Modo dibujo activado</span>';
+            }
+            else {
+                badge.classList.remove('editando');
+                badge.innerHTML =
+                    '<i class="bi bi-lock"></i><span>Modo consulta</span>';
+            }
+        }
+
+        if (textoModo) {
+
+            textoModo.textContent =
+                croquisModalEditando
+                    ? '✏️ Modo dibujo activado. Dibuje con el dedo, lápiz o mouse.'
+                    : '🔒 Croquis protegido. Active “Editar croquis” para realizar cambios.';
+        }
+    }
+
+
+    function cambiarModoEdicionCroquisModal() {
+
+        if (!PUEDE_EDITAR_RECEPCION || !CROQUIS_MODAL_ES_V2) {
+            return;
+        }
+
+        const sw =
+            document.getElementById(
+                'switchEditarCroquisModal'
+            );
+
+        aplicarModoEdicionCroquisModal(
+            sw && sw.checked
+        );
+    }
+
+
+    function obtenerPosicionCroquisModal(evento) {
+
+        const canvas =
+            evento.currentTarget;
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        return {
+            canvas: canvas,
+            x:
+                (evento.clientX - rect.left) *
+                (canvas.width / rect.width),
+            y:
+                (evento.clientY - rect.top) *
+                (canvas.height / rect.height)
+        };
+    }
+
+
+    function iniciarTrazoCroquisModal(evento) {
+
+        if (
+            !PUEDE_EDITAR_RECEPCION ||
+            !croquisModalEditando
+        ) {
+            return;
+        }
+
+        const idx = Number(
+            evento.currentTarget.dataset.canvasIndex
+        );
+
+        const ctx = croquisModalCtxDibujo[idx];
+
+        if (!ctx) {
+            return;
+        }
+
+        evento.preventDefault();
+
+        const pos =
+            obtenerPosicionCroquisModal(evento);
+
+        if (evento.pointerType === 'touch') {
+            ctx.lineWidth = 9;
+        }
+        else if (evento.pointerType === 'pen') {
+            ctx.lineWidth = 6;
+        }
+        else {
+            ctx.lineWidth = 5;
+        }
+
+        croquisModalDibujando = true;
+        croquisModalPunteroActivo[idx] = true;
+
+        try {
+            evento.currentTarget.setPointerCapture(
+                evento.pointerId
+            );
+        } catch (e) {}
+
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+
+        marcarCroquisModalComoModificado();
+    }
+
+
+    function moverTrazoCroquisModal(evento) {
+
+        if (
+            !croquisModalEditando ||
+            !croquisModalDibujando
+        ) {
+            return;
+        }
+
+        const idx = Number(
+            evento.currentTarget.dataset.canvasIndex
+        );
+
+        if (!croquisModalPunteroActivo[idx]) {
+            return;
+        }
+
+        const ctx = croquisModalCtxDibujo[idx];
+
+        if (!ctx) {
+            return;
+        }
+
+        evento.preventDefault();
+
+        const pos =
+            obtenerPosicionCroquisModal(evento);
+
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    }
+
+
+    function finalizarTrazoCroquisModal(evento) {
+
+        const idx = Number(
+            evento.currentTarget.dataset.canvasIndex
+        );
+
+        croquisModalPunteroActivo[idx] = false;
+        croquisModalDibujando = false;
+    }
+
+
+    function limpiarVistaCroquisModal() {
+
+        if (
+            !PUEDE_EDITAR_RECEPCION ||
+            !croquisModalEditando
+        ) {
+            return;
+        }
+
+        const canvas =
+            croquisModalCapasDibujo[
+                croquisModalVistaActual
+            ];
+
+        const ctx =
+            croquisModalCtxDibujo[
+                croquisModalVistaActual
+            ];
+
+        if (!canvas || !ctx) {
+            return;
+        }
+
+        ctx.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        marcarCroquisModalComoModificado();
+    }
+
+
+    function marcarCroquisModalComoModificado() {
+
+        croquisModalFueModificado = true;
+
+        const hiddenFlag =
+            document.getElementById(
+                'modal_croquis_modificado'
+            );
+
+        if (hiddenFlag) {
+            hiddenFlag.value = '1';
+        }
+    }
+
+
+    function generarCroquisFinalModal() {
+
+        if (!CROQUIS_MODAL_ES_V2) {
+            return '';
+        }
+
+        const finalCanvas =
+            document.createElement('canvas');
+
+        finalCanvas.width = 4000;
+        finalCanvas.height = 640;
+
+        const finalCtx =
+            finalCanvas.getContext('2d');
+
+        const vistas =
+            document.querySelectorAll(
+                '.croquis-v2-base'
+            );
+
+        vistas.forEach(function (imgBase, index) {
+
+            const xDestino =
+                index * 800;
+
+            const canvasExistente =
+                croquisModalCapasExistentes[index];
+
+            const canvasDibujo =
+                croquisModalCapasDibujo[index];
+
+            const tieneExistente =
+                canvasExistente &&
+                !canvasVacioCroquisModal(
+                    canvasExistente
+                );
+
+            if (tieneExistente) {
+                finalCtx.drawImage(
+                    canvasExistente,
+                    xDestino,
+                    0,
+                    800,
+                    640
+                );
+            }
+            else if (
+                imgBase &&
+                imgBase.complete
+            ) {
+                finalCtx.drawImage(
+                    imgBase,
+                    xDestino,
+                    0,
+                    800,
+                    640
+                );
+            }
+
+            if (canvasDibujo) {
+                finalCtx.drawImage(
+                    canvasDibujo,
+                    xDestino,
+                    0,
+                    800,
+                    640
+                );
+            }
+        });
+
+        return finalCanvas.toDataURL(
+            'image/png'
+        );
+    }
+
+
+    function canvasVacioCroquisModal(canvas) {
+
+        const ctx = canvas.getContext('2d');
+        const pixels = ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        ).data;
+
+        for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] !== 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /* =========================================================
        GUARDAR RECEPCIÓN
     ========================================================= */
 
@@ -4286,6 +5340,35 @@
                 );
         }
 
+
+        if (CROQUIS_MODAL_ES_V2) {
+
+            const croquisHidden =
+                document.getElementById(
+                    'modal_imagen_croquis_base64'
+                );
+
+            const croquisFlag =
+                document.getElementById(
+                    'modal_croquis_modificado'
+                );
+
+            if (
+                croquisModalFueModificado &&
+                croquisHidden &&
+                croquisFlag
+            ) {
+
+                croquisHidden.value =
+                    generarCroquisFinalModal();
+
+                croquisFlag.value = '1';
+            }
+            else if (croquisFlag) {
+
+                croquisFlag.value = '0';
+            }
+        }
 
         const form =
             document.getElementById(

@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 
 from ...models import (
     Cliente,
@@ -192,6 +193,19 @@ def editar_recepcion_orden(request, pk):
             "",
         )
         .strip()
+    )
+
+    # El modal mantiene este valor en "0" mientras el croquis
+    # está únicamente en modo consulta.
+    # Pasa a "1" cuando el usuario realmente modifica el croquis.
+    croquis_modificado = (
+        request.POST
+        .get(
+            "croquis_modificado",
+            "0",
+        )
+        .strip()
+        == "1"
     )
 
     # =====================================================
@@ -739,7 +753,24 @@ def editar_recepcion_orden(request, pk):
             # =================================================
             # 13. CROQUIS
             # =================================================
-            if croquis_base64:
+            #
+            # El croquis solo se modifica cuando el modal envía
+            # croquis_modificado = "1".
+            #
+            # Esto evita reemplazar la imagen simplemente por
+            # abrir el modal o guardar otros datos de recepción.
+            #
+            # Los croquis históricos V1 permanecen protegidos.
+            # La edición gráfica del modal trabaja con V2.
+            # =================================================
+            if croquis_modificado:
+
+                if not croquis_base64:
+
+                    raise ValueError(
+                        "El croquis fue marcado como modificado, "
+                        "pero no se recibió la imagen actualizada."
+                    )
 
                 archivo_croquis = (
                     procesar_imagen_base64(
@@ -747,29 +778,103 @@ def editar_recepcion_orden(request, pk):
                     )
                 )
 
-                if archivo_croquis:
+                if not archivo_croquis:
 
-                    croquis_obj, _ = (
-                        OrdenCroquisDanio.objects
-                        .get_or_create(
-                            orden=orden
+                    raise ValueError(
+                        "No fue posible procesar la imagen "
+                        "actualizada del croquis."
+                    )
+
+                croquis_obj = (
+                    OrdenCroquisDanio.objects
+                    .select_for_update()
+                    .filter(
+                        orden=orden
+                    )
+                    .first()
+                )
+
+                # ---------------------------------------------
+                # CROQUIS HISTÓRICO V1
+                # ---------------------------------------------
+                if (
+                    croquis_obj
+                    and croquis_obj.version_croquis == 1
+                ):
+
+                    raise ValueError(
+                        "Este croquis pertenece al formato histórico. "
+                        "Se mantiene en modo consulta para proteger "
+                        "la información original."
+                    )
+
+                # ---------------------------------------------
+                # SI NO EXISTE, CREAMOS DIRECTAMENTE COMO V2
+                # ---------------------------------------------
+                if not croquis_obj:
+
+                    croquis_obj = (
+                        OrdenCroquisDanio.objects.create(
+                            orden=orden,
+                            trazos=[],
+                            version_croquis=2,
+                            observacion=(
+                                "Croquis generado desde "
+                                "edición de recepción"
+                            ),
                         )
                     )
 
-                    if croquis_obj.imagen_generada:
+                else:
 
-                        croquis_obj.imagen_generada.delete(
-                            save=False
-                        )
+                    croquis_obj.version_croquis = 2
+                    croquis_obj.observacion = (
+                        "Croquis actualizado desde "
+                        "edición de recepción"
+                    )
 
-                    croquis_obj.imagen_generada.save(
-                        (
-                            f"croquis_upd_"
-                            f"{orden.numero_orden}_"
-                            f"{uuid.uuid4().hex[:8]}.png"
-                        ),
-                        archivo_croquis,
-                        save=True,
+                archivo_anterior_nombre = ""
+                storage_croquis = None
+
+                if croquis_obj.imagen_generada:
+
+                    archivo_anterior_nombre = (
+                        croquis_obj.imagen_generada.name
+                    )
+
+                    storage_croquis = (
+                        croquis_obj.imagen_generada.storage
+                    )
+
+                nuevo_nombre = (
+                    f"croquis_upd_"
+                    f"{orden.numero_orden}_"
+                    f"{uuid.uuid4().hex[:8]}.png"
+                )
+
+                croquis_obj.imagen_generada.save(
+                    nuevo_nombre,
+                    archivo_croquis,
+                    save=False,
+                )
+
+                croquis_obj.save()
+
+                nuevo_archivo_nombre = (
+                    croquis_obj.imagen_generada.name
+                )
+
+                if (
+                    storage_croquis
+                    and archivo_anterior_nombre
+                    and archivo_anterior_nombre
+                    != nuevo_archivo_nombre
+                ):
+
+                    transaction.on_commit(
+                        lambda storage=storage_croquis,
+                               nombre=archivo_anterior_nombre:
+                            storage.delete(nombre)
                     )
 
             # =================================================
