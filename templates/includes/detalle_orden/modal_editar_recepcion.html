@@ -210,13 +210,18 @@
 
     .croquis-v2-stage-wrap {
         width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .croquis-v2-stage {
         position: relative;
 
-        width: 90%;
-        max-width: 650px;
+        /* Más compacto en PC sin deformar el 5:4. */
+        width: 78%;
+        max-width: 520px;
 
         aspect-ratio: 5 / 4;
 
@@ -228,13 +233,21 @@
         background: #fff;
 
         overflow: hidden;
+        box-sizing: border-box;
     }
 
     .croquis-v2-view {
         position: absolute;
         inset: 0;
+
         display: none;
-        padding: 8px;
+
+        /*
+         * Sin padding interno:
+         * las capas SVG/canvas deben conservar exactamente 5:4.
+         */
+        padding: 0;
+
         box-sizing: border-box;
     }
 
@@ -246,10 +259,17 @@
     .croquis-v2-existing,
     .croquis-v2-draw {
         position: absolute;
-        inset: 8px;
-        width: calc(100% - 16px);
-        height: calc(100% - 16px);
-        border-radius: 10px;
+        inset: 0;
+
+        /*
+         * Las tres capas usan exactamente el mismo rectángulo 5:4.
+         * No restamos píxeles a ancho/alto porque eso cambia
+         * ligeramente la proporción y deforma el croquis.
+         */
+        width: 100%;
+        height: 100%;
+
+        border-radius: 12px;
     }
 
     .croquis-v2-base {
@@ -279,8 +299,8 @@
     }
 
     .croquis-v2-bottom-nav {
-        width: 90%;
-        max-width: 650px;
+        width: 78%;
+        max-width: 520px;
 
         display: grid;
         grid-template-columns: 44px 1fr 44px;
@@ -396,26 +416,33 @@
         }
 
         .croquis-v2-stage {
-            width: 94%;
-            max-width: 650px;
+            width: 86%;
+            max-width: 500px;
         }
 
         .croquis-v2-bottom-nav {
-            width: 94%;
-            max-width: 650px;
+            width: 86%;
+            max-width: 500px;
         }
     }
 
     @media (max-width: 520px) {
+        .croquis-v2-stage {
+            width: 92%;
+            max-width: 420px;
+        }
+
         .croquis-v2-base,
         .croquis-v2-existing,
         .croquis-v2-draw {
-            inset: 4px;
-            width: calc(100% - 8px);
-            height: calc(100% - 8px);
+            inset: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .croquis-v2-bottom-nav {
+            width: 92%;
+            max-width: 420px;
             grid-template-columns: 40px 1fr 40px;
             gap: 8px;
         }
@@ -4708,9 +4735,10 @@
         img.onload = function () {
 
             const anchoSegmento =
-                img.width / 5;
+                img.width / CROQUIS_MODAL_VISTAS.length;
 
-            const alto = img.height;
+            const altoSegmento =
+                img.height;
 
             CROQUIS_MODAL_VISTAS.forEach(
                 function (_, index) {
@@ -4725,6 +4753,91 @@
                         return;
                     }
 
+                    /*
+                     * El PNG V2 guardado contiene:
+                     * - fondo blanco
+                     * - silueta negra
+                     * - rayones rojos
+                     *
+                     * Para el modal NO volvemos a mostrar la silueta
+                     * rasterizada del PNG, porque al ampliarla pierde
+                     * nitidez. Conservamos únicamente los píxeles rojos
+                     * de los daños y debajo mostramos el SVG original.
+                     */
+                    const temp =
+                        document.createElement('canvas');
+
+                    temp.width = 800;
+                    temp.height = 640;
+
+                    const tempCtx =
+                        temp.getContext('2d');
+
+                    tempCtx.clearRect(
+                        0,
+                        0,
+                        temp.width,
+                        temp.height
+                    );
+
+                    /*
+                     * El segmento original siempre corresponde a una
+                     * vista 5:4. Se lleva a 800x640, que también es 5:4.
+                     * De esta manera no existe estiramiento.
+                     */
+                    tempCtx.drawImage(
+                        img,
+                        anchoSegmento * index,
+                        0,
+                        anchoSegmento,
+                        altoSegmento,
+                        0,
+                        0,
+                        temp.width,
+                        temp.height
+                    );
+
+                    const imagen =
+                        tempCtx.getImageData(
+                            0,
+                            0,
+                            temp.width,
+                            temp.height
+                        );
+
+                    const data = imagen.data;
+
+                    for (
+                        let i = 0;
+                        i < data.length;
+                        i += 4
+                    ) {
+
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        const a = data[i + 3];
+
+                        /*
+                         * Detectamos rojo y sus bordes antialias.
+                         * Todo lo demás queda transparente.
+                         */
+                        const esRojo =
+                            a > 0 &&
+                            r > 135 &&
+                            (r - g) > 45 &&
+                            (r - b) > 45 &&
+                            r > g * 1.25 &&
+                            r > b * 1.25;
+
+                        if (!esRojo) {
+                            data[i] = 0;
+                            data[i + 1] = 0;
+                            data[i + 2] = 0;
+                            data[i + 3] = 0;
+                        }
+                    }
+
                     ctx.clearRect(
                         0,
                         0,
@@ -4732,16 +4845,10 @@
                         canvas.height
                     );
 
-                    ctx.drawImage(
-                        img,
-                        anchoSegmento * index,
+                    ctx.putImageData(
+                        imagen,
                         0,
-                        anchoSegmento,
-                        alto,
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
+                        0
                     );
                 }
             );
@@ -4749,7 +4856,6 @@
 
         img.src = CROQUIS_MODAL_IMAGEN_EXISTENTE;
     }
-
 
     function actualizarNavegacionCroquisModal() {
 
@@ -5029,26 +5135,49 @@
             return;
         }
 
-        const canvas =
+        const canvasExistente =
+            croquisModalCapasExistentes[
+                croquisModalVistaActual
+            ];
+
+        const ctxExistente =
+            croquisModalCtxExistente[
+                croquisModalVistaActual
+            ];
+
+        const canvasDibujo =
             croquisModalCapasDibujo[
                 croquisModalVistaActual
             ];
 
-        const ctx =
+        const ctxDibujo =
             croquisModalCtxDibujo[
                 croquisModalVistaActual
             ];
 
-        if (!canvas || !ctx) {
-            return;
+        if (
+            canvasExistente &&
+            ctxExistente
+        ) {
+            ctxExistente.clearRect(
+                0,
+                0,
+                canvasExistente.width,
+                canvasExistente.height
+            );
         }
 
-        ctx.clearRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
+        if (
+            canvasDibujo &&
+            ctxDibujo
+        ) {
+            ctxDibujo.clearRect(
+                0,
+                0,
+                canvasDibujo.width,
+                canvasDibujo.height
+            );
+        }
 
         marcarCroquisModalComoModificado();
     }
@@ -5075,75 +5204,103 @@
             return '';
         }
 
+        /*
+         * Conservamos el mismo formato que usa la creación de OT:
+         * 5 vistas de 200x160 = PNG final 1000x160.
+         */
+        const ANCHO_VISTA = 200;
+        const ALTO_VISTA = 160;
+
         const finalCanvas =
             document.createElement('canvas');
 
-        finalCanvas.width = 4000;
-        finalCanvas.height = 640;
+        finalCanvas.width =
+            ANCHO_VISTA *
+            CROQUIS_MODAL_VISTAS.length;
+
+        finalCanvas.height =
+            ALTO_VISTA;
 
         const finalCtx =
             finalCanvas.getContext('2d');
+
+        finalCtx.fillStyle = '#ffffff';
+
+        finalCtx.fillRect(
+            0,
+            0,
+            finalCanvas.width,
+            finalCanvas.height
+        );
 
         const vistas =
             document.querySelectorAll(
                 '.croquis-v2-base'
             );
 
-        vistas.forEach(function (imgBase, index) {
+        vistas.forEach(
+            function (imgBase, index) {
 
-            const xDestino =
-                index * 800;
+                const xDestino =
+                    index * ANCHO_VISTA;
 
-            const canvasExistente =
-                croquisModalCapasExistentes[index];
+                const canvasExistente =
+                    croquisModalCapasExistentes[index];
 
-            const canvasDibujo =
-                croquisModalCapasDibujo[index];
+                const canvasDibujo =
+                    croquisModalCapasDibujo[index];
 
-            const tieneExistente =
-                canvasExistente &&
-                !canvasVacioCroquisModal(
-                    canvasExistente
-                );
+                /*
+                 * 1. SVG original
+                 * Mantiene el vehículo limpio y sin deformación.
+                 */
+                if (
+                    imgBase &&
+                    imgBase.complete &&
+                    imgBase.naturalWidth > 0
+                ) {
+                    finalCtx.drawImage(
+                        imgBase,
+                        xDestino,
+                        0,
+                        ANCHO_VISTA,
+                        ALTO_VISTA
+                    );
+                }
 
-            if (tieneExistente) {
-                finalCtx.drawImage(
-                    canvasExistente,
-                    xDestino,
-                    0,
-                    800,
-                    640
-                );
+                /*
+                 * 2. Daños que ya estaban guardados.
+                 * Esta capa contiene únicamente los píxeles rojos.
+                 */
+                if (canvasExistente) {
+                    finalCtx.drawImage(
+                        canvasExistente,
+                        xDestino,
+                        0,
+                        ANCHO_VISTA,
+                        ALTO_VISTA
+                    );
+                }
+
+                /*
+                 * 3. Nuevos trazos hechos en el modal.
+                 */
+                if (canvasDibujo) {
+                    finalCtx.drawImage(
+                        canvasDibujo,
+                        xDestino,
+                        0,
+                        ANCHO_VISTA,
+                        ALTO_VISTA
+                    );
+                }
             }
-            else if (
-                imgBase &&
-                imgBase.complete
-            ) {
-                finalCtx.drawImage(
-                    imgBase,
-                    xDestino,
-                    0,
-                    800,
-                    640
-                );
-            }
-
-            if (canvasDibujo) {
-                finalCtx.drawImage(
-                    canvasDibujo,
-                    xDestino,
-                    0,
-                    800,
-                    640
-                );
-            }
-        });
+        );
 
         return finalCanvas.toDataURL(
             'image/png'
         );
     }
-
 
     function canvasVacioCroquisModal(canvas) {
 
