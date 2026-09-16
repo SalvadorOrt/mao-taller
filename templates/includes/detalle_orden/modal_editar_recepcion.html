@@ -214,13 +214,19 @@
 
     .croquis-v2-stage {
         position: relative;
-        width: 100%;
-        max-width: 760px;
+
+        width: 90%;
+        max-width: 650px;
+
         aspect-ratio: 5 / 4;
+
         margin: 0 auto;
+
         border: 1px solid var(--border-soft);
         border-radius: 14px;
+
         background: #fff;
+
         overflow: hidden;
     }
 
@@ -273,12 +279,15 @@
     }
 
     .croquis-v2-bottom-nav {
-        width: 100%;
-        max-width: 760px;
+        width: 90%;
+        max-width: 650px;
+
         display: grid;
         grid-template-columns: 44px 1fr 44px;
+
         align-items: center;
         gap: 10px;
+
         margin: 10px auto 0;
     }
 
@@ -387,11 +396,13 @@
         }
 
         .croquis-v2-stage {
-            max-width: none;
+            width: 94%;
+            max-width: 650px;
         }
 
         .croquis-v2-bottom-nav {
-            max-width: none;
+            width: 94%;
+            max-width: 650px;
         }
     }
 
@@ -4872,8 +4883,8 @@
 
             textoModo.textContent =
                 croquisModalEditando
-                    ? '✏️ Modo dibujo activado. Dibuje con el dedo, lápiz o mouse.'
-                    : '🔒 Croquis protegido. Active “Editar croquis” para realizar cambios.';
+                    ? ' Modo dibujo activado. Dibuje con el dedo, lápiz o mouse.'
+                    : ' Croquis protegido. Active “Editar croquis” para realizar cambios.';
         }
     }
 
