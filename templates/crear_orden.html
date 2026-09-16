@@ -131,6 +131,102 @@
     .color-selected-preview { min-height: 44px; border: 1px solid #e5e5e7; border-radius: 12px; background: #fbfbfd; display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: #1d1d1f; font-weight: 500; }
     .color-selected-dot { width: 18px; height: 18px; border-radius: 50%; background: transparent; border: 1px solid #d2d2d7; display: inline-block; flex-shrink: 0; }
 
+    /* =========================================================
+       BORRADOR LOCAL / ESTADO DE CONEXIÓN
+       ========================================================= */
+
+    .borrador-estado-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 2px;
+    }
+
+    .borrador-estado {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+
+        min-height: 32px;
+        padding: 5px 11px;
+
+        border: 1px solid #e5e5e7;
+        border-radius: 999px;
+
+        background: #ffffff;
+        color: #6e6e73;
+
+        font-size: 0.75rem;
+        font-weight: 700;
+
+        box-shadow: 0 2px 7px rgba(0,0,0,0.04);
+
+        transition:
+            background-color .2s ease,
+            color .2s ease,
+            border-color .2s ease;
+    }
+
+    .borrador-estado .borrador-punto {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #8e8e93;
+        flex: 0 0 auto;
+    }
+
+    .borrador-estado.guardando {
+        background: #fffaf0;
+        color: #8a5a00;
+        border-color: #ffe1a6;
+    }
+
+    .borrador-estado.guardando .borrador-punto {
+        background: #ff9f0a;
+    }
+
+    .borrador-estado.guardado {
+        background: #f3fff6;
+        color: #187a34;
+        border-color: #c8f0d2;
+    }
+
+    .borrador-estado.guardado .borrador-punto {
+        background: #34c759;
+    }
+
+    .borrador-estado.offline {
+        background: #fff5f5;
+        color: #a52727;
+        border-color: #ffd4d4;
+    }
+
+    .borrador-estado.offline .borrador-punto {
+        background: #ff3b30;
+    }
+
+    .borrador-estado.restaurado {
+        background: #f2f8ff;
+        color: #005db7;
+        border-color: #cfe5ff;
+    }
+
+    .borrador-estado.restaurado .borrador-punto {
+        background: #0071e3;
+    }
+
+    .borrador-estado.error {
+        background: #fff5f5;
+        color: #a52727;
+        border-color: #ffd4d4;
+    }
+
+    .borrador-estado.error .borrador-punto {
+        background: #ff3b30;
+    }
+
     @media (max-width: 768px) {
         .info-sucursal { flex-direction: column; align-items: flex-start; }
         .input-group-mao { flex-direction: column; }
@@ -138,6 +234,11 @@
         .trabajos-grid { grid-template-columns: 1fr; }
         .tabla-2, .tabla-3 { grid-template-columns: 1fr; }
         .tabla-mini-header { display: none; }
+
+        .borrador-estado {
+            width: 100%;
+            max-width: 420px;
+        }
     }
 </style>
 
@@ -177,7 +278,20 @@
 
     <div class="mb-4 text-center">
         <h2 style="font-weight: 700; color: var(--apple-text);">Nueva Orden de Trabajo</h2>
-        <p class="text-muted" id="step_title">Paso 1: Identificación</p>
+        <p class="text-muted mb-1" id="step_title">Paso 1: Identificación</p>
+
+        <div class="borrador-estado-wrap">
+            <div
+                id="borradorEstadoRecepcion"
+                class="borrador-estado"
+                aria-live="polite"
+            >
+                <span class="borrador-punto"></span>
+                <span id="borradorEstadoTexto">
+                    Preparando guardado local...
+                </span>
+            </div>
+        </div>
     </div>
 
     <div class="progress-indicator d-none d-md-flex">
@@ -242,6 +356,1657 @@
     const sintomas = [];
     const trabajos = [];
     const objetos = [];
+
+    // =========================================================
+    // BORRADOR LOCAL / MODO DE CONTINGENCIA
+    // =========================================================
+
+    const BORRADOR_VERSION = 1;
+
+    const BORRADOR_DB_NOMBRE =
+        'mao_borradores_ot_db';
+
+    const BORRADOR_DB_VERSION = 1;
+
+    const BORRADOR_DB_STORE =
+        'assets';
+
+    const BORRADOR_DEBOUNCE_MS = 650;
+
+    let timerBorradorRecepcion = null;
+    let timerBorradorPesado = null;
+    let restaurandoBorradorRecepcion = false;
+    let borradorRecepcionInicializado = false;
+
+
+    function obtenerClaveBorradorRecepcion() {
+
+        const sucursal =
+            document.getElementById(
+                'id_sucursal_id'
+            );
+
+        const sucursalId =
+            sucursal && sucursal.value
+                ? sucursal.value
+                : 'sin_sucursal';
+
+        return (
+            `mao_ot_borrador_v${BORRADOR_VERSION}` +
+            `_sucursal_${sucursalId}`
+        );
+    }
+
+
+    function obtenerClaveAssetBorrador(tipo) {
+
+        return (
+            obtenerClaveBorradorRecepcion() +
+            `::${tipo}`
+        );
+    }
+
+
+    function actualizarEstadoBorrador(
+        estado,
+        texto
+    ) {
+
+        const box =
+            document.getElementById(
+                'borradorEstadoRecepcion'
+            );
+
+        const label =
+            document.getElementById(
+                'borradorEstadoTexto'
+            );
+
+        if (!box || !label) {
+            return;
+        }
+
+        box.classList.remove(
+            'guardando',
+            'guardado',
+            'offline',
+            'restaurado',
+            'error'
+        );
+
+        if (estado) {
+            box.classList.add(estado);
+        }
+
+        label.textContent = texto;
+    }
+
+
+    function abrirDbBorradores() {
+
+        return new Promise(
+            function (resolve, reject) {
+
+                if (!('indexedDB' in window)) {
+                    reject(
+                        new Error(
+                            'IndexedDB no está disponible.'
+                        )
+                    );
+                    return;
+                }
+
+                const request =
+                    indexedDB.open(
+                        BORRADOR_DB_NOMBRE,
+                        BORRADOR_DB_VERSION
+                    );
+
+                request.onupgradeneeded =
+                    function () {
+
+                        const db =
+                            request.result;
+
+                        if (
+                            !db.objectStoreNames.contains(
+                                BORRADOR_DB_STORE
+                            )
+                        ) {
+                            db.createObjectStore(
+                                BORRADOR_DB_STORE
+                            );
+                        }
+                    };
+
+                request.onsuccess =
+                    function () {
+                        resolve(
+                            request.result
+                        );
+                    };
+
+                request.onerror =
+                    function () {
+                        reject(
+                            request.error
+                        );
+                    };
+            }
+        );
+    }
+
+
+    async function idbGuardarBorrador(
+        clave,
+        valor
+    ) {
+
+        const db =
+            await abrirDbBorradores();
+
+        return new Promise(
+            function (resolve, reject) {
+
+                const tx =
+                    db.transaction(
+                        BORRADOR_DB_STORE,
+                        'readwrite'
+                    );
+
+                tx.objectStore(
+                    BORRADOR_DB_STORE
+                ).put(
+                    valor,
+                    clave
+                );
+
+                tx.oncomplete =
+                    function () {
+                        db.close();
+                        resolve();
+                    };
+
+                tx.onerror =
+                    function () {
+                        db.close();
+                        reject(
+                            tx.error
+                        );
+                    };
+            }
+        );
+    }
+
+
+    async function idbLeerBorrador(
+        clave
+    ) {
+
+        const db =
+            await abrirDbBorradores();
+
+        return new Promise(
+            function (resolve, reject) {
+
+                const tx =
+                    db.transaction(
+                        BORRADOR_DB_STORE,
+                        'readonly'
+                    );
+
+                const request =
+                    tx.objectStore(
+                        BORRADOR_DB_STORE
+                    ).get(
+                        clave
+                    );
+
+                request.onsuccess =
+                    function () {
+                        resolve(
+                            request.result
+                        );
+                    };
+
+                request.onerror =
+                    function () {
+                        reject(
+                            request.error
+                        );
+                    };
+
+                tx.oncomplete =
+                    function () {
+                        db.close();
+                    };
+            }
+        );
+    }
+
+
+    async function idbEliminarBorrador(
+        clave
+    ) {
+
+        try {
+
+            const db =
+                await abrirDbBorradores();
+
+            await new Promise(
+                function (resolve, reject) {
+
+                    const tx =
+                        db.transaction(
+                            BORRADOR_DB_STORE,
+                            'readwrite'
+                        );
+
+                    tx.objectStore(
+                        BORRADOR_DB_STORE
+                    ).delete(
+                        clave
+                    );
+
+                    tx.oncomplete =
+                        function () {
+                            resolve();
+                        };
+
+                    tx.onerror =
+                        function () {
+                            reject(
+                                tx.error
+                            );
+                        };
+                }
+            );
+
+            db.close();
+
+        }
+        catch (error) {
+
+            console.warn(
+                'No se pudo eliminar asset de borrador:',
+                error
+            );
+        }
+    }
+
+
+    function serializarFormularioBorrador() {
+
+        const form =
+            document.getElementById(
+                'formNuevaOrden'
+            );
+
+        const resultado = {};
+
+        if (!form) {
+            return resultado;
+        }
+
+        const omitidos = new Set([
+            'csrfmiddlewaretoken',
+            'sintomas_json',
+            'trabajos_json',
+            'objetos_json',
+            'imagen_croquis_base64',
+            'firma_base64',
+            'fotos_recepcion'
+        ]);
+
+        form
+            .querySelectorAll(
+                'input, select, textarea'
+            )
+            .forEach(
+                function (campo, indice) {
+
+                    if (
+                        campo.type === 'file' ||
+                        campo.type === 'submit' ||
+                        campo.type === 'button'
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        campo.name &&
+                        omitidos.has(
+                            campo.name
+                        )
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        campo.id ===
+                        'id_sucursal_id'
+                    ) {
+                        return;
+                    }
+
+                    const clave =
+                        campo.id ||
+                        (
+                            campo.name
+                                ? `name:${campo.name}:${indice}`
+                                : ''
+                        );
+
+                    if (!clave) {
+                        return;
+                    }
+
+                    if (
+                        campo.type === 'checkbox' ||
+                        campo.type === 'radio'
+                    ) {
+
+                        resultado[clave] = {
+                            tipo: campo.type,
+                            checked:
+                                !!campo.checked,
+                            value:
+                                campo.value
+                        };
+
+                        return;
+                    }
+
+                    resultado[clave] = {
+                        tipo:
+                            campo.tagName
+                                .toLowerCase(),
+                        value:
+                            campo.value ?? ''
+                    };
+                }
+            );
+
+        return resultado;
+    }
+
+
+    function construirBorradorLigero() {
+
+        return {
+            version:
+                BORRADOR_VERSION,
+
+            actualizadoEn:
+                new Date().toISOString(),
+
+            pasoActual:
+                pasoActual,
+
+            sucursalId:
+                document.getElementById(
+                    'id_sucursal_id'
+                )?.value || '',
+
+            formulario:
+                serializarFormularioBorrador(),
+
+            sintomas:
+                sintomas.map(
+                    item => ({...item})
+                ),
+
+            trabajos:
+                trabajos.map(
+                    item => ({...item})
+                ),
+
+            objetos:
+                objetos.map(
+                    item => ({...item})
+                )
+        };
+    }
+
+
+    function guardarBorradorLigeroAhora() {
+
+        if (
+            restaurandoBorradorRecepcion
+        ) {
+            return;
+        }
+
+        try {
+
+            const clave =
+                obtenerClaveBorradorRecepcion();
+
+            const borrador =
+                construirBorradorLigero();
+
+            localStorage.setItem(
+                clave,
+                JSON.stringify(
+                    borrador
+                )
+            );
+
+            if (navigator.onLine) {
+
+                actualizarEstadoBorrador(
+                    'guardado',
+                    'Guardado localmente'
+                );
+
+            }
+            else {
+
+                actualizarEstadoBorrador(
+                    'offline',
+                    'Sin conexión · cambios guardados en este dispositivo'
+                );
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                'Error guardando borrador:',
+                error
+            );
+
+            actualizarEstadoBorrador(
+                'error',
+                'No se pudo guardar el borrador local'
+            );
+        }
+    }
+
+
+    async function guardarAssetsBorradorAhora() {
+
+        if (
+            restaurandoBorradorRecepcion
+        ) {
+            return;
+        }
+
+        try {
+
+            // -------------------------
+            // CROQUIS
+            // -------------------------
+
+            const croquis = {};
+
+            document
+                .querySelectorAll(
+                    '.croquis-canvas'
+                )
+                .forEach(
+                    function (canvas) {
+
+                        if (!canvas.id) {
+                            return;
+                        }
+
+                        croquis[canvas.id] =
+                            canvas.toDataURL(
+                                'image/png'
+                            );
+                    }
+                );
+
+            await idbGuardarBorrador(
+                obtenerClaveAssetBorrador(
+                    'croquis'
+                ),
+                croquis
+            );
+
+
+            // -------------------------
+            // FIRMA
+            // -------------------------
+
+            const firmaCanvas =
+                document.getElementById(
+                    'canvasFirma'
+                );
+
+            if (firmaCanvas) {
+
+                await idbGuardarBorrador(
+                    obtenerClaveAssetBorrador(
+                        'firma'
+                    ),
+                    firmaCanvas.toDataURL(
+                        'image/png'
+                    )
+                );
+            }
+
+
+            // -------------------------
+            // FOTOS
+            // -------------------------
+
+            if (
+                typeof fotosSeleccionadas !==
+                'undefined'
+            ) {
+
+                const fotosGuardar =
+                    Array.from(
+                        fotosSeleccionadas
+                    ).map(
+                        function (file) {
+
+                            return {
+                                name:
+                                    file.name,
+
+                                type:
+                                    file.type,
+
+                                lastModified:
+                                    file.lastModified,
+
+                                blob:
+                                    file
+                            };
+                        }
+                    );
+
+                await idbGuardarBorrador(
+                    obtenerClaveAssetBorrador(
+                        'fotos'
+                    ),
+                    fotosGuardar
+                );
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                'Error guardando imágenes del borrador:',
+                error
+            );
+
+            actualizarEstadoBorrador(
+                'error',
+                'Texto guardado · no se pudieron guardar todas las imágenes'
+            );
+        }
+    }
+
+
+    function programarGuardadoBorradorRecepcion(
+        guardarPesado = false
+    ) {
+
+        if (
+            restaurandoBorradorRecepcion
+        ) {
+            return;
+        }
+
+        actualizarEstadoBorrador(
+            'guardando',
+            navigator.onLine
+                ? 'Guardando borrador...'
+                : 'Sin conexión · guardando en este dispositivo...'
+        );
+
+        clearTimeout(
+            timerBorradorRecepcion
+        );
+
+        timerBorradorRecepcion =
+            setTimeout(
+                guardarBorradorLigeroAhora,
+                BORRADOR_DEBOUNCE_MS
+            );
+
+        if (guardarPesado) {
+
+            clearTimeout(
+                timerBorradorPesado
+            );
+
+            timerBorradorPesado =
+                setTimeout(
+                    guardarAssetsBorradorAhora,
+                    350
+                );
+        }
+    }
+
+
+    function obtenerBorradorGuardado() {
+
+        try {
+
+            const raw =
+                localStorage.getItem(
+                    obtenerClaveBorradorRecepcion()
+                );
+
+            if (!raw) {
+                return null;
+            }
+
+            return JSON.parse(
+                raw
+            );
+
+        }
+        catch (error) {
+
+            console.warn(
+                'No se pudo leer el borrador:',
+                error
+            );
+
+            return null;
+        }
+    }
+
+
+    function restaurarCampoBorrador(
+        clave,
+        dato
+    ) {
+
+        let campo = null;
+
+        if (
+            !clave.startsWith(
+                'name:'
+            )
+        ) {
+            campo =
+                document.getElementById(
+                    clave
+                );
+        }
+
+        if (!campo || !dato) {
+            return;
+        }
+
+        if (
+            dato.tipo === 'checkbox' ||
+            dato.tipo === 'radio'
+        ) {
+
+            campo.checked =
+                !!dato.checked;
+
+            return;
+        }
+
+        campo.value =
+            dato.value ?? '';
+    }
+
+
+    function mostrarPasoBorrador(
+        nuevoPaso
+    ) {
+
+        const pasoSeguro =
+            Math.min(
+                totalPasos,
+                Math.max(
+                    1,
+                    Number(
+                        nuevoPaso || 1
+                    )
+                )
+            );
+
+        pasoActual =
+            pasoSeguro;
+
+        document
+            .querySelectorAll(
+                '.step-container'
+            )
+            .forEach(
+                function (step) {
+                    step.classList.remove(
+                        'active'
+                    );
+                }
+            );
+
+        document
+            .querySelectorAll(
+                '.step-dot'
+            )
+            .forEach(
+                function (dot, index) {
+
+                    dot.classList.remove(
+                        'active',
+                        'completed'
+                    );
+
+                    const numero =
+                        index + 1;
+
+                    if (
+                        numero <
+                        pasoSeguro
+                    ) {
+                        dot.classList.add(
+                            'completed'
+                        );
+                    }
+                }
+            );
+
+        const stepActivo =
+            document.getElementById(
+                `step_${pasoSeguro}`
+            );
+
+        const dotActivo =
+            document.getElementById(
+                `dot_${pasoSeguro}`
+            );
+
+        if (stepActivo) {
+            stepActivo.classList.add(
+                'active'
+            );
+        }
+
+        if (dotActivo) {
+            dotActivo.classList.add(
+                'active'
+            );
+        }
+
+        const titulo =
+            document.getElementById(
+                'step_title'
+            );
+
+        if (titulo) {
+            titulo.innerText =
+                titulos[pasoSeguro];
+        }
+
+        const btnAnterior =
+            document.getElementById(
+                'btn_anterior'
+            );
+
+        const btnSiguiente =
+            document.getElementById(
+                'btn_siguiente'
+            );
+
+        const btnGuardar =
+            document.getElementById(
+                'btn_guardar'
+            );
+
+        if (btnAnterior) {
+            btnAnterior.style.display =
+                pasoSeguro === 1
+                    ? 'none'
+                    : 'inline-flex';
+        }
+
+        if (
+            pasoSeguro ===
+            totalPasos
+        ) {
+
+            if (btnSiguiente) {
+                btnSiguiente.style.display =
+                    'none';
+            }
+
+            if (btnGuardar) {
+                btnGuardar.style.display =
+                    'inline-flex';
+            }
+
+        }
+        else {
+
+            if (btnSiguiente) {
+                btnSiguiente.style.display =
+                    'inline-flex';
+            }
+
+            if (btnGuardar) {
+                btnGuardar.style.display =
+                    'none';
+            }
+        }
+    }
+
+
+    function cargarDataUrlEnCanvas(
+        canvas,
+        dataUrl
+    ) {
+
+        return new Promise(
+            function (resolve) {
+
+                if (
+                    !canvas ||
+                    !dataUrl
+                ) {
+                    resolve();
+                    return;
+                }
+
+                const img =
+                    new Image();
+
+                img.onload =
+                    function () {
+
+                        const ctx =
+                            canvas.getContext(
+                                '2d'
+                            );
+
+                        ctx.clearRect(
+                            0,
+                            0,
+                            canvas.width,
+                            canvas.height
+                        );
+
+                        ctx.drawImage(
+                            img,
+                            0,
+                            0,
+                            canvas.width,
+                            canvas.height
+                        );
+
+                        resolve();
+                    };
+
+                img.onerror =
+                    function () {
+                        resolve();
+                    };
+
+                img.src =
+                    dataUrl;
+            }
+        );
+    }
+
+
+    async function restaurarAssetsBorrador() {
+
+        // -------------------------
+        // CROQUIS
+        // -------------------------
+
+        const croquis =
+            await idbLeerBorrador(
+                obtenerClaveAssetBorrador(
+                    'croquis'
+                )
+            ).catch(
+                () => null
+            );
+
+        if (croquis) {
+
+            for (
+                const [
+                    canvasId,
+                    dataUrl
+                ]
+                of Object.entries(
+                    croquis
+                )
+            ) {
+
+                const canvas =
+                    document.getElementById(
+                        canvasId
+                    );
+
+                await cargarDataUrlEnCanvas(
+                    canvas,
+                    dataUrl
+                );
+            }
+        }
+
+
+        // -------------------------
+        // FIRMA
+        // -------------------------
+
+        const firma =
+            await idbLeerBorrador(
+                obtenerClaveAssetBorrador(
+                    'firma'
+                )
+            ).catch(
+                () => null
+            );
+
+        if (firma) {
+
+            const canvas =
+                document.getElementById(
+                    'canvasFirma'
+                );
+
+            await cargarDataUrlEnCanvas(
+                canvas,
+                firma
+            );
+        }
+
+
+        // -------------------------
+        // FOTOS
+        // -------------------------
+
+        const fotos =
+            await idbLeerBorrador(
+                obtenerClaveAssetBorrador(
+                    'fotos'
+                )
+            ).catch(
+                () => null
+            );
+
+        if (
+            Array.isArray(
+                fotos
+            ) &&
+            fotos.length &&
+            typeof fotosSeleccionadas !==
+                'undefined'
+        ) {
+
+            const archivos =
+                fotos
+                    .map(
+                        function (item) {
+
+                            if (
+                                !item ||
+                                !item.blob
+                            ) {
+                                return null;
+                            }
+
+                            return new File(
+                                [item.blob],
+                                item.name ||
+                                    'foto.jpg',
+                                {
+                                    type:
+                                        item.type ||
+                                        item.blob.type ||
+                                        'image/jpeg',
+
+                                    lastModified:
+                                        item.lastModified ||
+                                        Date.now()
+                                }
+                            );
+                        }
+                    )
+                    .filter(Boolean);
+
+            fotosSeleccionadas.splice(
+                0,
+                fotosSeleccionadas.length,
+                ...archivos
+            );
+
+            const inputFotos =
+                document.getElementById(
+                    'id_fotos'
+                );
+
+            if (inputFotos) {
+
+                const dt =
+                    new DataTransfer();
+
+                fotosSeleccionadas
+                    .forEach(
+                        file => {
+                            dt.items.add(
+                                file
+                            );
+                        }
+                    );
+
+                inputFotos.files =
+                    dt.files;
+            }
+
+            if (
+                typeof actualizarPreviewFotos ===
+                'function'
+            ) {
+                actualizarPreviewFotos();
+            }
+        }
+    }
+
+
+    async function restaurarBorradorRecepcion(
+        borrador
+    ) {
+
+        if (!borrador) {
+            return;
+        }
+
+        restaurandoBorradorRecepcion =
+            true;
+
+        try {
+
+            Object
+                .entries(
+                    borrador.formulario ||
+                    {}
+                )
+                .forEach(
+                    ([clave, dato]) => {
+                        restaurarCampoBorrador(
+                            clave,
+                            dato
+                        );
+                    }
+                );
+
+
+            // Ajustar modo de documento después
+            // de restaurar los valores.
+            const tipoDocumento =
+                document.getElementById(
+                    'id_tipo_documento'
+                );
+
+            if (tipoDocumento) {
+                tipoDocumento.dispatchEvent(
+                    new Event(
+                        'change',
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+            }
+
+
+            sintomas.splice(
+                0,
+                sintomas.length,
+                ...(
+                    Array.isArray(
+                        borrador.sintomas
+                    )
+                        ? borrador.sintomas
+                        : []
+                )
+            );
+
+            trabajos.splice(
+                0,
+                trabajos.length,
+                ...(
+                    Array.isArray(
+                        borrador.trabajos
+                    )
+                        ? borrador.trabajos
+                        : []
+                )
+            );
+
+            objetos.splice(
+                0,
+                objetos.length,
+                ...(
+                    Array.isArray(
+                        borrador.objetos
+                    )
+                        ? borrador.objetos
+                        : []
+                )
+            );
+
+            renderSintomas();
+            renderTrabajos();
+            renderObjetos();
+
+            // Sincronizar visual del selector de color.
+            const colorActual =
+                document.getElementById(
+                    'id_color'
+                )?.value || '';
+
+            if (colorActual) {
+
+                document
+                    .querySelectorAll(
+                        '.color-swatch'
+                    )
+                    .forEach(
+                        function (swatch) {
+
+                            const activo =
+                                (
+                                    swatch.dataset.nombre ||
+                                    ''
+                                ).toLowerCase() ===
+                                colorActual.toLowerCase();
+
+                            swatch.classList.toggle(
+                                'active',
+                                activo
+                            );
+                        }
+                    );
+
+                const activo =
+                    document.querySelector(
+                        '.color-swatch.active'
+                    );
+
+                if (activo) {
+
+                    const dot =
+                        document.getElementById(
+                            'colorSelectedDot'
+                        );
+
+                    const texto =
+                        document.getElementById(
+                            'colorSelectedText'
+                        );
+
+                    if (dot) {
+                        dot.style.backgroundColor =
+                            activo.dataset.hex ||
+                            '';
+                    }
+
+                    if (texto) {
+                        texto.textContent =
+                            colorActual;
+                    }
+                }
+            }
+
+            /*
+             * Primero mostramos el paso guardado.
+             * Esto es importante para la firma: si el Paso 7 está
+             * oculto, su canvas no tiene el tamaño visual correcto.
+             */
+            mostrarPasoBorrador(
+                borrador.pasoActual ||
+                1
+            );
+
+            if (
+                pasoActual ===
+                totalPasos
+            ) {
+                redimensionarCanvasFirma();
+            }
+
+            await restaurarAssetsBorrador();
+
+            if (
+                pasoActual ===
+                totalPasos
+            ) {
+                generarResumen();
+            }
+
+            actualizarEstadoBorrador(
+                'restaurado',
+                'Borrador recuperado'
+            );
+
+        }
+        finally {
+
+            restaurandoBorradorRecepcion =
+                false;
+        }
+    }
+
+
+    async function eliminarBorradorRecepcion() {
+
+        const clave =
+            obtenerClaveBorradorRecepcion();
+
+        localStorage.removeItem(
+            clave
+        );
+
+        await Promise.all([
+            idbEliminarBorrador(
+                obtenerClaveAssetBorrador(
+                    'croquis'
+                )
+            ),
+            idbEliminarBorrador(
+                obtenerClaveAssetBorrador(
+                    'firma'
+                )
+            ),
+            idbEliminarBorrador(
+                obtenerClaveAssetBorrador(
+                    'fotos'
+                )
+            )
+        ]);
+
+        actualizarEstadoBorrador(
+            navigator.onLine
+                ? ''
+                : 'offline',
+            navigator.onLine
+                ? 'Sin borrador pendiente'
+                : 'Sin conexión · sin borrador pendiente'
+        );
+    }
+
+
+    async function preguntarRecuperacionBorrador() {
+
+        const borrador =
+            obtenerBorradorGuardado();
+
+        if (
+            !borrador ||
+            !borrador.actualizadoEn
+        ) {
+
+            actualizarEstadoBorrador(
+                navigator.onLine
+                    ? ''
+                    : 'offline',
+                navigator.onLine
+                    ? 'Guardado automático activo'
+                    : 'Sin conexión · guardado local activo'
+            );
+
+            return;
+        }
+
+        let fechaTexto = '';
+
+        try {
+
+            fechaTexto =
+                new Intl.DateTimeFormat(
+                    'es-EC',
+                    {
+                        dateStyle:
+                            'short',
+                        timeStyle:
+                            'short'
+                    }
+                ).format(
+                    new Date(
+                        borrador.actualizadoEn
+                    )
+                );
+
+        }
+        catch (error) {
+
+            fechaTexto =
+                borrador.actualizadoEn;
+        }
+
+        const placa =
+            borrador.formulario
+                ?.id_placa
+                ?.value ||
+            'Sin placa';
+
+        const resultado =
+            await Swal.fire({
+                icon: 'info',
+                title: 'Se encontró una recepción sin finalizar',
+                html: `
+                    <div style="text-align:left; line-height:1.55;">
+                        <strong>Placa:</strong> ${String(placa).replace(/</g, '&lt;')}<br>
+                        <strong>Último guardado:</strong> ${fechaTexto}<br><br>
+                        El borrador contiene los datos guardados en este dispositivo.
+                    </div>
+                `,
+                confirmButtonText:
+                    'Recuperar recepción',
+                denyButtonText:
+                    'Descartar borrador',
+                showDenyButton:
+                    true,
+                allowOutsideClick:
+                    false,
+                allowEscapeKey:
+                    false,
+                buttonsStyling:
+                    false,
+                customClass: {
+                    popup:
+                        'swal-mao-popup',
+                    title:
+                        'swal-mao-title',
+                    htmlContainer:
+                        'swal-mao-html',
+                    confirmButton:
+                        'btn-mao btn-mao-primary btn-pill swal-mao-confirm',
+                    denyButton:
+                        'btn-mao btn-mao-danger-soft btn-pill'
+                }
+            });
+
+        if (resultado.isConfirmed) {
+
+            await restaurarBorradorRecepcion(
+                borrador
+            );
+
+        }
+        else if (resultado.isDenied) {
+
+            await eliminarBorradorRecepcion();
+        }
+    }
+
+
+    function registrarEventosBorradorRecepcion() {
+
+        const form =
+            document.getElementById(
+                'formNuevaOrden'
+            );
+
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener(
+            'input',
+            function (event) {
+
+                if (
+                    event.target &&
+                    event.target.type ===
+                        'file'
+                ) {
+                    return;
+                }
+
+                programarGuardadoBorradorRecepcion(
+                    false
+                );
+            },
+            true
+        );
+
+        form.addEventListener(
+            'change',
+            function (event) {
+
+                const pesado =
+                    !!(
+                        event.target &&
+                        event.target.id ===
+                            'id_fotos'
+                    );
+
+                programarGuardadoBorradorRecepcion(
+                    pesado
+                );
+            },
+            true
+        );
+
+
+        /*
+         * Botones agregan/eliminan síntomas,
+         * trabajos, objetos, fotos, firma
+         * o croquis mediante JavaScript.
+         */
+        form.addEventListener(
+            'click',
+            function (event) {
+
+                const boton =
+                    event.target.closest(
+                        'button'
+                    );
+
+                if (!boton) {
+                    return;
+                }
+
+                const pesado =
+                    !!(
+                        boton.closest(
+                            '.croquis-actions'
+                        ) ||
+                        boton.closest(
+                            '#preview_fotos'
+                        ) ||
+                        (
+                            boton.getAttribute(
+                                'onclick'
+                            ) || ''
+                        ).includes(
+                            'limpiarFirma'
+                        )
+                    );
+
+                setTimeout(
+                    function () {
+                        programarGuardadoBorradorRecepcion(
+                            pesado
+                        );
+                    },
+                    0
+                );
+            },
+            true
+        );
+
+
+        /*
+         * Croquis: guardar al terminar cada trazo.
+         */
+        document
+            .querySelectorAll(
+                '.croquis-canvas'
+            )
+            .forEach(
+                function (canvas) {
+
+                    canvas.addEventListener(
+                        'pointerup',
+                        function () {
+                            programarGuardadoBorradorRecepcion(
+                                true
+                            );
+                        }
+                    );
+
+                    canvas.addEventListener(
+                        'pointercancel',
+                        function () {
+                            programarGuardadoBorradorRecepcion(
+                                true
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        /*
+         * Firma: guardar cuando termina el trazo.
+         */
+        const firma =
+            document.getElementById(
+                'canvasFirma'
+            );
+
+        if (firma) {
+
+            [
+                'mouseup',
+                'touchend'
+            ].forEach(
+                function (evento) {
+
+                    firma.addEventListener(
+                        evento,
+                        function () {
+                            programarGuardadoBorradorRecepcion(
+                                true
+                            );
+                        },
+                        {
+                            passive: true
+                        }
+                    );
+                }
+            );
+        }
+
+
+        /*
+         * Si se actualizan las miniaturas de fotos
+         * por eliminación, persistimos los archivos.
+         */
+        const previewFotos =
+            document.getElementById(
+                'preview_fotos'
+            );
+
+        if (
+            previewFotos &&
+            'MutationObserver' in window
+        ) {
+
+            const observer =
+                new MutationObserver(
+                    function () {
+
+                        if (
+                            !restaurandoBorradorRecepcion
+                        ) {
+                            programarGuardadoBorradorRecepcion(
+                                true
+                            );
+                        }
+                    }
+                );
+
+            observer.observe(
+                previewFotos,
+                {
+                    childList: true
+                }
+            );
+        }
+
+
+        window.addEventListener(
+            'offline',
+            function () {
+
+                guardarBorradorLigeroAhora();
+
+                actualizarEstadoBorrador(
+                    'offline',
+                    'Sin conexión · cambios guardados en este dispositivo'
+                );
+            }
+        );
+
+        window.addEventListener(
+            'online',
+            function () {
+
+                actualizarEstadoBorrador(
+                    'guardado',
+                    'Conexión recuperada · borrador disponible'
+                );
+
+                programarGuardadoBorradorRecepcion(
+                    false
+                );
+            }
+        );
+
+
+        document.addEventListener(
+            'visibilitychange',
+            function () {
+
+                if (
+                    document.visibilityState ===
+                    'hidden'
+                ) {
+
+                    guardarBorradorLigeroAhora();
+
+                    guardarAssetsBorradorAhora();
+                }
+            }
+        );
+
+
+        window.addEventListener(
+            'pagehide',
+            function () {
+                guardarBorradorLigeroAhora();
+            }
+        );
+    }
+
+
+    async function inicializarSistemaBorradorRecepcion() {
+
+        if (
+            borradorRecepcionInicializado
+        ) {
+            return;
+        }
+
+        borradorRecepcionInicializado =
+            true;
+
+        registrarEventosBorradorRecepcion();
+
+        await preguntarRecuperacionBorrador();
+    }
 
     // ==========================================
     // UTILIDADES DE ALERTA
@@ -620,6 +2385,9 @@ function buscarPlaca() {
                 if (document.getElementById('id_color') && data.color) {
                     document.getElementById('id_color').value = data.color;
                 }
+
+                programarGuardadoBorradorRecepcion(false);
+
                 //if (document.getElementById('id_kilometraje') && data.kilometraje) {
                 //    document.getElementById('id_kilometraje').value = data.kilometraje;
                 //}
@@ -756,6 +2524,8 @@ function buscarCedula() {
                 inputDireccion.value = cliente.direccion || '';
             }
 
+            programarGuardadoBorradorRecepcion(false);
+
             console.log("Cliente completo:", cliente);
         })
         .catch(error => {
@@ -789,7 +2559,18 @@ function buscarCedula() {
     function firmar(e) { if (!dibujandoFirma) return; const pos = obtenerPosicionFirma(e); ctxFirma.lineTo(pos.x, pos.y); ctxFirma.stroke(); }
     canvasFirma.addEventListener('mousedown', iniciarFirma); canvasFirma.addEventListener('mousemove', firmar); window.addEventListener('mouseup', () => dibujandoFirma = false);
     canvasFirma.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarFirma(e); }, {passive: false}); canvasFirma.addEventListener('touchmove', (e) => { e.preventDefault(); firmar(e); }, {passive: false}); window.addEventListener('touchend', () => dibujandoFirma = false);
-    function limpiarFirma() { ctxFirma.clearRect(0, 0, canvasFirma.width, canvasFirma.height); }
+    function limpiarFirma() {
+        ctxFirma.clearRect(
+            0,
+            0,
+            canvasFirma.width,
+            canvasFirma.height
+        );
+
+        programarGuardadoBorradorRecepcion(
+            true
+        );
+    }
 
     // Redimensionar únicamente la firma cuando corresponda.
     window.addEventListener('resize', () => {
@@ -844,6 +2625,29 @@ function buscarCedula() {
             return false;
         }
 
+        /*
+         * Si no hay Internet NO intentamos crear la OT.
+         * El borrador queda protegido localmente.
+         */
+        if (!navigator.onLine) {
+
+            guardarBorradorLigeroAhora();
+            guardarAssetsBorradorAhora();
+
+            mostrarAlerta({
+                icon: 'info',
+                title: 'Sin conexión',
+                text: 'La recepción quedó guardada en este dispositivo. Cuando vuelva Internet, revise los datos y pulse Guardar OT nuevamente.'
+            });
+
+            actualizarEstadoBorrador(
+                'offline',
+                'Sin conexión · recepción protegida localmente'
+            );
+
+            return false;
+        }
+
         try {
             // ==========================================
             // 1. GENERAR CROQUIS NUEVO
@@ -889,7 +2693,16 @@ function buscarCedula() {
             }
 
             // ==========================================
-            // 5. ENVIAR FORMULARIO
+            // 5. CONSERVAR BORRADOR HASTA CONFIRMACIÓN
+            // ==========================================
+            //
+            // No se elimina aquí. Si la red falla durante
+            // el POST, el usuario podrá recuperar todo.
+            guardarBorradorLigeroAhora();
+            guardarAssetsBorradorAhora();
+
+            // ==========================================
+            // 6. ENVIAR FORMULARIO
             // ==========================================
             document.getElementById('formNuevaOrden').submit();
 
@@ -972,6 +2785,12 @@ if (tipoDocumento && identificacion) {
         }
     });
 }
+
+        /*
+         * Debe ejecutarse al final, cuando Paso 5, Paso 6
+         * y la firma ya registraron sus componentes.
+         */
+        inicializarSistemaBorradorRecepcion();
     });
 
     
