@@ -4,6 +4,10 @@
         overflow: visible !important;
     }
 
+    /* =========================================================
+       FILAS HIJAS / PROCEDIMIENTOS
+       ========================================================= */
+
     .fila-hijas-moi td {
         background: #fafafa;
         border-top: 0 !important;
@@ -15,6 +19,7 @@
         display: grid;
         gap: 6px;
         margin-bottom: 8px;
+        width: 100%;
     }
 
     .procedimiento-item-moi {
@@ -22,12 +27,23 @@
         grid-template-columns: 1fr 34px;
         gap: 8px;
         align-items: center;
+        width: 100%;
     }
 
     .procedimiento-item-moi input {
+        width: 100%;
         height: 30px;
         font-size: 12px;
         background: #ffffff;
+    }
+
+    /*
+       En las OT históricas no existe botón de eliminar.
+       Por eso el procedimiento puede usar el 100% del ancho
+       de la columna Descripción.
+    */
+    .procedimiento-item-moi.historico {
+        grid-template-columns: 1fr;
     }
 
     .fila-hijas-moi .btn-login.small {
@@ -35,6 +51,10 @@
         padding: 0 12px;
         font-size: 11px;
     }
+
+    /* =========================================================
+       HISTÓRICO
+       ========================================================= */
 
     .badge-historico-moi {
         display: inline-block;
@@ -48,6 +68,10 @@
         white-space: nowrap;
     }
 
+    /* =========================================================
+       ELIMINADOS
+       ========================================================= */
+
     .fila-eliminada,
     .fila-eliminada-moi,
     .procedimiento-eliminado-moi {
@@ -57,6 +81,10 @@
 
 
 <div class="ot-card moi-card">
+
+    <!-- =====================================================
+         TÍTULO
+         ===================================================== -->
     <div
         class="section-title"
         style="
@@ -80,13 +108,19 @@
     </div>
 
 
+    <!-- =====================================================
+         TABLA
+         ===================================================== -->
     <div class="ot-table-wrap moi-table-wrap">
+
         <table
             class="ot-table"
             id="tablaMOI"
         >
+
             <thead>
                 <tr>
+
                     <th style="width: 18%;">
                         Cód. / Referencia
                     </th>
@@ -110,16 +144,31 @@
                     <th style="width: 12%;">
                         Acción
                     </th>
+
                 </tr>
             </thead>
 
 
             <tbody id="cuerpoTablaMOI">
+
+                <!-- =================================================
+                     OT HISTÓRICA / MIGRADA
+                     ================================================= -->
                 {% if orden.es_migrada %}
 
                     {% for item in orden.servicios_historicos.all %}
+
                         {% if item.tipo == "MO" %}
-                            <tr class="form-readonly">
+
+                            <!-- =====================================
+                                 FILA PADRE HISTÓRICA
+                                 ===================================== -->
+                            <tr
+                                class="form-readonly fila-padre-moi"
+                                data-uid-moi="hist-{{ item.id }}"
+                            >
+
+                                <!-- CÓDIGO -->
                                 <td>
                                     <input
                                         type="text"
@@ -134,6 +183,8 @@
                                     >
                                 </td>
 
+
+                                <!-- DESCRIPCIÓN -->
                                 <td>
                                     <input
                                         type="text"
@@ -143,78 +194,150 @@
                                     >
                                 </td>
 
+
+                                <!-- P.U. -->
                                 <td>
                                     <input
                                         type="text"
                                         class="form-control-apple pu"
-                                        value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                        value="{% if item.precio_unitario is not None %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
                                         readonly
                                     >
                                 </td>
 
+
+                                <!-- CANTIDAD -->
                                 <td>
                                     <input
                                         type="text"
                                         class="form-control-apple cantidad"
-                                        value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                        value="{% if item.cantidad is not None %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
                                         readonly
                                     >
                                 </td>
 
+
+                                <!-- VALOR -->
                                 <td>
                                     <input
                                         type="text"
                                         class="form-control-apple valor"
-                                        value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                        value="{% if item.subtotal is not None %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
                                         readonly
                                     >
                                 </td>
 
+
+                                <!-- ACCIÓN -->
                                 <td style="text-align: center;">
                                     <span class="badge-historico-moi">
                                         HISTÓRICO
                                     </span>
                                 </td>
+
                             </tr>
 
 
+                            <!-- =====================================
+                                 PROCEDIMIENTOS / HIJAS HISTÓRICAS
+
+                                 IMPORTANTE:
+                                 Ya NO usamos colspan="5".
+
+                                 La hija queda exactamente dentro de
+                                 la columna Descripción, igual que en
+                                 una OT creada directamente en MAO.
+                                 ===================================== -->
                             {% if item.procedimientos %}
-                                <tr class="fila-hijas-moi form-readonly">
+
+                                <tr
+                                    class="fila-hijas-moi form-readonly"
+                                    data-parent-uid-moi="hist-{{ item.id }}"
+                                >
+
+                                    <!-- CÓDIGO -->
                                     <td></td>
 
-                                    <td colspan="5">
-                                        <div class="procedimientos-moi">
+
+                                    <!-- DESCRIPCIÓN -->
+                                    <td>
+
+                                        <div
+                                            class="procedimientos-moi"
+                                            data-parent-index="hist-{{ item.id }}"
+                                        >
+
                                             {% for proc in item.procedimientos %}
+
                                                 <div
-                                                    class="procedimiento-item-moi"
-                                                    style="grid-template-columns: 1fr;"
+                                                    class="
+                                                        procedimiento-item-moi
+                                                        historico
+                                                    "
                                                 >
                                                     <input
                                                         type="text"
                                                         class="form-control-apple"
                                                         value="{{ proc }}"
                                                         readonly
+                                                        placeholder="Procedimiento incluido"
                                                     >
                                                 </div>
+
                                             {% endfor %}
+
                                         </div>
+
                                     </td>
+
+
+                                    <!-- P.U. -->
+                                    <td></td>
+
+
+                                    <!-- CANTIDAD -->
+                                    <td></td>
+
+
+                                    <!-- VALOR -->
+                                    <td></td>
+
+
+                                    <!-- ACCIÓN -->
+                                    <td></td>
+
                                 </tr>
+
                             {% endif %}
+
                         {% endif %}
+
                     {% endfor %}
 
+
+                <!-- =================================================
+                     OT NORMAL / CREADA EN MAO
+                     ================================================= -->
                 {% else %}
 
                     {% for item in orden.servicios_detalles.all %}
+
                         {% if item.tipo_servicio == "MEC" %}
+
                             {% with uid_moi=item.id %}
 
+
+                                <!-- =================================
+                                     FILA PADRE NORMAL
+                                     ================================= -->
                                 <tr
                                     class="fila-padre-moi"
                                     data-uid-moi="{{ uid_moi }}"
                                 >
+
+                                    <!-- CÓDIGO / SERVICIO -->
                                     <td class="servicio-cell">
+
                                         <input
                                             type="hidden"
                                             name="moi_detalle_id[]"
@@ -251,6 +374,7 @@
                                             class="servicio-busqueda-wrap"
                                             style="position: relative;"
                                         >
+
                                             <input
                                                 type="text"
                                                 class="
@@ -305,11 +429,15 @@
                                                 "
                                             >
                                             </div>
+
                                         </div>
+
                                     </td>
 
 
+                                    <!-- DESCRIPCIÓN -->
                                     <td>
+
                                         <input
                                             type="text"
                                             name="moi_descripcion[]"
@@ -331,10 +459,13 @@
                                                 readonly
                                             {% endif %}
                                         >
+
                                     </td>
 
 
+                                    <!-- P.U. -->
                                     <td>
+
                                         <input
                                             type="number"
                                             step="0.01"
@@ -342,17 +473,20 @@
                                             inputmode="decimal"
                                             name="moi_pu[]"
                                             class="form-control-apple pu"
-                                            value="{% if item.precio_unitario %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                            value="{% if item.precio_unitario is not None %}{{ item.precio_unitario|stringformat:'.2f' }}{% else %}0.00{% endif %}"
                                             {% if not puede_editar %}
                                                 readonly
                                             {% else %}
                                                 oninput="calcularFila(this)"
                                             {% endif %}
                                         >
+
                                     </td>
 
 
+                                    <!-- CANTIDAD -->
                                     <td>
+
                                         <input
                                             type="number"
                                             step="0.01"
@@ -360,32 +494,40 @@
                                             inputmode="decimal"
                                             name="moi_cantidad[]"
                                             class="form-control-apple cantidad"
-                                            value="{% if item.cantidad %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
+                                            value="{% if item.cantidad is not None %}{{ item.cantidad|stringformat:'.2f' }}{% else %}1.00{% endif %}"
                                             {% if not puede_editar %}
                                                 readonly
                                             {% else %}
                                                 oninput="calcularFila(this)"
                                             {% endif %}
                                         >
+
                                     </td>
 
 
+                                    <!-- VALOR -->
                                     <td>
+
                                         <input
                                             type="number"
                                             step="0.01"
                                             inputmode="decimal"
                                             name="moi_valor[]"
                                             class="form-control-apple valor"
-                                            value="{% if item.subtotal %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+                                            value="{% if item.subtotal is not None %}{{ item.subtotal|stringformat:'.2f' }}{% else %}0.00{% endif %}"
                                             readonly
                                         >
+
                                     </td>
 
 
+                                    <!-- ACCIÓN -->
                                     <td>
+
                                         <div class="row-controls">
+
                                             {% if puede_editar %}
+
                                                 <button
                                                     type="button"
                                                     class="
@@ -400,26 +542,42 @@
                                                 >
                                                     ✕
                                                 </button>
+
                                             {% endif %}
+
                                         </div>
+
                                     </td>
+
                                 </tr>
 
 
+                                <!-- =================================
+                                     PROCEDIMIENTOS / HIJAS NORMALES
+                                     ================================= -->
                                 <tr
                                     class="fila-hijas-moi"
                                     data-parent-uid-moi="{{ uid_moi }}"
                                 >
+
+                                    <!-- CÓDIGO -->
                                     <td></td>
 
+
+                                    <!-- DESCRIPCIÓN -->
                                     <td>
+
                                         <div
                                             class="procedimientos-moi"
                                             data-parent-index="{{ uid_moi }}"
                                         >
+
                                             {% if item.procedimientos_detalle.exists %}
+
                                                 {% for proc in item.procedimientos_detalle.all %}
+
                                                     <div class="procedimiento-item-moi">
+
                                                         <input
                                                             type="hidden"
                                                             name="moi_procedimiento_id_{{ uid_moi }}[]"
@@ -452,6 +610,7 @@
 
 
                                                         {% if puede_editar %}
+
                                                             <button
                                                                 type="button"
                                                                 class="
@@ -468,14 +627,20 @@
                                                             >
                                                                 ✕
                                                             </button>
+
                                                         {% endif %}
+
                                                     </div>
+
                                                 {% endfor %}
+
                                             {% endif %}
+
                                         </div>
 
 
                                         {% if puede_editar %}
+
                                             <button
                                                 type="button"
                                                 class="btn-login small"
@@ -487,27 +652,52 @@
                                             >
                                                 + Agregar procedimiento
                                             </button>
+
                                         {% endif %}
+
                                     </td>
 
+
+                                    <!-- P.U. -->
                                     <td></td>
+
+
+                                    <!-- CANTIDAD -->
                                     <td></td>
+
+
+                                    <!-- VALOR -->
                                     <td></td>
+
+
+                                    <!-- ACCIÓN -->
                                     <td></td>
+
                                 </tr>
 
+
                             {% endwith %}
+
                         {% endif %}
+
                     {% endfor %}
 
                 {% endif %}
+
             </tbody>
+
         </table>
+
     </div>
 
 
+    <!-- =====================================================
+         FOOTER / SUBTOTAL
+         ===================================================== -->
     <div class="table-footer-actions">
+
         {% if puede_editar and not orden.es_migrada %}
+
             <button
                 type="button"
                 class="btn-login"
@@ -515,22 +705,34 @@
             >
                 + Agregar mano de obra interna
             </button>
+
         {% else %}
+
             <div></div>
+
         {% endif %}
 
 
         <div class="subtotal-box">
+
             <div class="subtotal-pill">
                 Sub total M.O.I:
                 $<span id="subtotalMOI">0.00</span>
             </div>
+
         </div>
+
     </div>
+
 </div>
 
 
+<!-- =========================================================
+     MODAL INGRESO RÁPIDO
+     Solo para órdenes normales editables
+     ========================================================= -->
 {% if puede_editar and not orden.es_migrada %}
+
     <div
         id="modalIngresoRapidoMOI"
         style="
@@ -548,6 +750,7 @@
             backdrop-filter: blur(3px);
         "
     >
+
         <div
             style="
                 background: #ffffff;
@@ -560,6 +763,7 @@
                     rgba(0, 0, 0, 0.2);
             "
         >
+
             <h3
                 style="
                     margin-top: 0;
@@ -573,7 +777,11 @@
             </h3>
 
 
+            <!-- =============================================
+                 DESCRIPCIÓN
+                 ============================================= -->
             <div style="margin-bottom: 15px;">
+
                 <label
                     style="
                         font-size: 12px;
@@ -593,9 +801,13 @@
                     style="width: 100%;"
                     autocomplete="off"
                 >
+
             </div>
 
 
+            <!-- =============================================
+                 PRECIO / CANTIDAD
+                 ============================================= -->
             <div
                 style="
                     display: flex;
@@ -603,7 +815,9 @@
                     margin-bottom: 20px;
                 "
             >
+
                 <div style="flex: 1;">
+
                     <label
                         style="
                             font-size: 12px;
@@ -625,10 +839,12 @@
                         min="0"
                         value="0.00"
                     >
+
                 </div>
 
 
                 <div style="flex: 1;">
+
                     <label
                         style="
                             font-size: 12px;
@@ -650,10 +866,15 @@
                         min="0.01"
                         value="1.00"
                     >
+
                 </div>
+
             </div>
 
 
+            <!-- =============================================
+                 BOTONES
+                 ============================================= -->
             <div
                 style="
                     display: flex;
@@ -661,6 +882,7 @@
                     gap: 10px;
                 "
             >
+
                 <button
                     type="button"
                     class="btn-login"
@@ -682,7 +904,11 @@
                 >
                     Agregar a la Orden
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
 {% endif %}

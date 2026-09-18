@@ -1,53 +1,93 @@
 from django import forms
-from .models import OrdenTrabajo
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
-# forms.py
-from django import forms
-from .models import Cliente
+from .models import Cliente, OrdenTrabajo
 
-# ==========================================
-# 1. FORMULARIO DE CABECERA (RECEPCIÓN DEL VEHÍCULO)
-# ==========================================
+
 class OrdenTrabajoForm(forms.ModelForm):
     class Meta:
         model = OrdenTrabajo
-        # Solo los campos que el asesor de servicio llena al recibir el auto
+
         fields = [
-            'placa',
-            'vehiculo',
-            'color',
-            'anio_vehiculo',
-            'kilometraje',
-            'nivel_combustible',
-            'sintomas_cliente',
-            'observaciones_recepcion',
-            'observaciones_tecnicas'
+            "placa",
+            "vehiculo",
+            "color",
+            "anio_vehiculo",
+            "kilometraje",
+            "nivel_combustible",
+            "sintomas_cliente",
+            "observaciones_recepcion",
+            "observaciones_tecnicas",
         ]
-        
-        # Inyectamos tus clases CSS estilo Apple
+
         widgets = {
-            'placa': forms.TextInput(attrs={'class': 'form-control-apple', 'placeholder': 'Ej. ABC-1234'}),
-            'vehiculo': forms.TextInput(attrs={'class': 'form-control-apple', 'placeholder': 'Ej. VOLKSWAGEN GOLF'}),
-            'color': forms.TextInput(attrs={'class': 'form-control-apple'}),
-            'anio_vehiculo': forms.NumberInput(attrs={'class': 'form-control-apple', 'min': '1900'}),
-            'kilometraje': forms.NumberInput(attrs={'class': 'form-control-apple', 'min': '0'}),
-            'nivel_combustible': forms.Select(attrs={'class': 'form-select-apple'}),
-            'sintomas_cliente': forms.Textarea(attrs={'class': 'form-control-apple', 'rows': 2}),
-            'observaciones_recepcion': forms.Textarea(attrs={'class': 'form-control-apple', 'rows': 2}),
-            'observaciones_tecnicas': forms.Textarea(attrs={'class': 'form-control-apple', 'rows': 2}),
+            "placa": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                    "placeholder": "Ej. ABC-1234",
+                }
+            ),
+            "vehiculo": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                    "placeholder": "Ej. VOLKSWAGEN GOLF",
+                }
+            ),
+            "color": forms.TextInput(
+                attrs={
+                    "class": "form-control-apple",
+                }
+            ),
+            "anio_vehiculo": forms.NumberInput(
+                attrs={
+                    "class": "form-control-apple",
+                    "min": "1900",
+                }
+            ),
+            "kilometraje": forms.NumberInput(
+                attrs={
+                    "class": "form-control-apple",
+                    "min": "0",
+                }
+            ),
+            "nivel_combustible": forms.Select(
+                attrs={
+                    "class": "form-select-apple",
+                }
+            ),
+            "sintomas_cliente": forms.Textarea(
+                attrs={
+                    "class": "form-control-apple",
+                    "rows": 2,
+                }
+            ),
+            "observaciones_recepcion": forms.Textarea(
+                attrs={
+                    "class": "form-control-apple",
+                    "rows": 2,
+                }
+            ),
+            "observaciones_tecnicas": forms.Textarea(
+                attrs={
+                    "class": "form-control-apple",
+                    "rows": 2,
+                }
+            ),
         }
-from django import forms
-from .models import Cliente
+
 
 class ClienteForm(forms.ModelForm):
+
     consultar_full = forms.BooleanField(
         label="Cargar datos completos (Full)",
         required=False,
-        initial=True
+        initial=True,
     )
 
     class Meta:
         model = Cliente
+
         fields = [
             "tipo_documento",
             "identificacion",
@@ -113,12 +153,22 @@ class ClienteForm(forms.ModelForm):
 
         for nombre, field in self.fields.items():
             field.widget.attrs.update({
-                "class": "form-control-apple"
+                "class": "form-control-apple",
             })
 
         if "identificacion" in self.fields:
-            self.fields["identificacion"].widget.attrs.update({
-                "placeholder": "Ej. 1712345678"
+            self.fields[
+                "identificacion"
+            ].widget.attrs.update({
+                "placeholder": "Ej. 1712345678",
+            })
+
+        if "email" in self.fields:
+            self.fields[
+                "email"
+            ].widget.attrs.update({
+                "placeholder": "Ej. cliente@gmail.com",
+                "autocomplete": "email",
             })
 
         campos_textarea = [
@@ -132,7 +182,33 @@ class ClienteForm(forms.ModelForm):
 
         for campo in campos_textarea:
             if campo in self.fields:
-                self.fields[campo].widget = forms.Textarea(attrs={
-                    "class": "form-control-apple",
-                    "rows": 2
-                })
+                self.fields[campo].widget = (
+                    forms.Textarea(
+                        attrs={
+                            "class": "form-control-apple",
+                            "rows": 2,
+                        }
+                    )
+                )
+
+    def clean_email(self):
+
+        email = (
+            self.cleaned_data.get("email")
+            or ""
+        ).strip().lower()
+
+        # El correo es opcional.
+        if not email:
+            return None
+
+        try:
+            validate_email(email)
+
+        except ValidationError:
+            raise forms.ValidationError(
+                "Ingrese un correo electrónico válido. "
+                "Ejemplo: cliente@gmail.com"
+            )
+
+        return email
