@@ -1812,6 +1812,47 @@ class OrdenTrabajo(models.Model):
         max_length=200,
         null=True,
         blank=True,
+        verbose_name="Nombre del cliente (respaldo histórico)",
+    )
+
+    identificacion_cliente_respaldo = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name="Identificación del cliente (respaldo histórico)",
+    )
+
+    telefono_respaldo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono principal (respaldo histórico)",
+    )
+
+    telefono_secundario_respaldo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono secundario (respaldo histórico)",
+    )
+
+    telefono_trabajo_respaldo = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Teléfono de trabajo (respaldo histórico)",
+    )
+
+    email_respaldo = models.EmailField(
+        null=True,
+        blank=True,
+        verbose_name="Correo electrónico (respaldo histórico)",
+    )
+
+    direccion_respaldo = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Dirección (respaldo histórico)",
     )
 
     # ==========================================================
@@ -2085,14 +2126,76 @@ class OrdenTrabajo(models.Model):
 
     @property
     def nombre_cliente_final(self):
+        # Primero usa el dato histórico congelado en la OT.
+        # Solo si la orden antigua no tiene respaldo, usa el
+        # dato actual del cliente como compatibilidad.
+        if self.cliente_respaldo:
+            return self.cliente_respaldo
+
         if self.cliente:
             return self.cliente.nombre_completo
 
-        return (
-            self.cliente_respaldo
-            if self.cliente_respaldo
-            else "SIN NOMBRE"
-        )
+        return "SIN NOMBRE"
+
+    @property
+    def identificacion_cliente_final(self):
+        if self.identificacion_cliente_respaldo:
+            return self.identificacion_cliente_respaldo
+
+        if self.cliente:
+            return self.cliente.identificacion or ""
+
+        return ""
+
+    @property
+    def telefono_cliente_final(self):
+        if self.telefono_respaldo:
+            return self.telefono_respaldo
+
+        if self.cliente:
+            return self.cliente.telefono or ""
+
+        return ""
+
+    @property
+    def telefono_secundario_cliente_final(self):
+        if self.telefono_secundario_respaldo:
+            return self.telefono_secundario_respaldo
+
+        if self.cliente:
+            return self.cliente.telefono_secundario or ""
+
+        return ""
+
+    @property
+    def telefono_trabajo_cliente_final(self):
+        if self.telefono_trabajo_respaldo:
+            return self.telefono_trabajo_respaldo
+
+        if self.cliente:
+            return self.cliente.telefono_trabajo or ""
+
+        return ""
+
+    @property
+    def email_cliente_final(self):
+        if self.email_respaldo:
+            return self.email_respaldo
+
+        if self.cliente:
+            return self.cliente.email or ""
+
+        return ""
+
+    @property
+    def direccion_cliente_final(self):
+        if self.direccion_respaldo:
+            return self.direccion_respaldo
+
+        if self.cliente:
+            return self.cliente.direccion or ""
+
+        return ""
 
     # ==========================================================
     # ORIGEN
@@ -2603,6 +2706,50 @@ class OrdenTrabajo(models.Model):
         if self.cliente_respaldo:
             self.cliente_respaldo = (
                 self.cliente_respaldo
+                .strip()
+            )
+
+        if self.identificacion_cliente_respaldo:
+            self.identificacion_cliente_respaldo = (
+                str(
+                    self.identificacion_cliente_respaldo
+                )
+                .strip()
+                .upper()
+            )
+
+        if self.telefono_respaldo:
+            self.telefono_respaldo = (
+                str(self.telefono_respaldo)
+                .strip()
+            )
+
+        if self.telefono_secundario_respaldo:
+            self.telefono_secundario_respaldo = (
+                str(
+                    self.telefono_secundario_respaldo
+                )
+                .strip()
+            )
+
+        if self.telefono_trabajo_respaldo:
+            self.telefono_trabajo_respaldo = (
+                str(
+                    self.telefono_trabajo_respaldo
+                )
+                .strip()
+            )
+
+        if self.email_respaldo:
+            self.email_respaldo = (
+                self.email_respaldo
+                .strip()
+                .lower()
+            )
+
+        if self.direccion_respaldo:
+            self.direccion_respaldo = (
+                self.direccion_respaldo
                 .strip()
             )
 

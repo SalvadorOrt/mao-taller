@@ -646,7 +646,7 @@
                 "
             >
                 C.I./RUC:
-                {{ orden.cliente.identificacion|default:"NO REGISTRADO" }}
+                {{ orden.identificacion_cliente_final|default:"NO REGISTRADO" }}
             </div>
 
             <div
@@ -659,10 +659,10 @@
 
                 Celular:
 
-                {% if orden.cliente and orden.cliente.telefono %}
+                {% if orden.telefono_cliente_final %}
 
                     <a
-                        href="https://wa.me/593{{ orden.cliente.telefono|slice:'1:' }}"
+                        href="https://wa.me/593{{ orden.telefono_cliente_final|slice:'1:' }}"
                         target="_blank"
                         rel="noopener noreferrer"
                         style="
@@ -673,7 +673,7 @@
 
                         <i class="bi bi-whatsapp"></i>
 
-                        {{ orden.cliente.telefono }}
+                        {{ orden.telefono_cliente_final }}
 
                     </a>
 
@@ -695,9 +695,9 @@
 
                 Correo:
 
-                {% if orden.cliente and orden.cliente.email %}
+                {% if orden.email_cliente_final %}
 
-                    {{ orden.cliente.email|lower }}
+                    {{ orden.email_cliente_final|lower }}
 
                 {% else %}
 

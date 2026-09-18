@@ -245,6 +245,21 @@ def editar_recepcion_orden(request, pk):
             )
 
             # =================================================
+            # CLIENTE ORIGINAL DE LA OT
+            # =================================================
+            #
+            # Este valor se conserva antes de procesar cualquier
+            # cambio de vínculo. Nos permite distinguir entre:
+            #
+            # - editar la recepción manteniendo el mismo cliente
+            # - cambiar realmente el cliente de esta OT
+            #
+            # Los snapshots históricos SOLO se reemplazan cuando
+            # cambia realmente el cliente vinculado.
+            # =================================================
+            cliente_original_id = orden.cliente_id
+
+            # =================================================
             # VALIDAR QUE SIGA ABIERTA
             # =================================================
             if orden.estado != "ABIERTA":
@@ -613,16 +628,84 @@ def editar_recepcion_orden(request, pk):
             # 4. SINCRONIZAR CLIENTE
             #    OT + EXPEDIENTE
             # =================================================
+            #
+            # REGLA DE HISTÓRICO:
+            #
+            # - Si seguimos con el mismo cliente, NO tocamos los
+            #   campos *_respaldo de la OT.
+            #
+            # - Si realmente se cambia el cliente vinculado a la
+            #   OT, entonces sí reemplazamos el snapshot completo
+            #   con los datos actuales del nuevo cliente.
+            #
+            # Así, editar teléfono/correo/dirección en la ficha
+            # general del cliente no altera órdenes anteriores.
+            # =================================================
+            cliente_destino_id = (
+                cliente_destino.pk
+                if cliente_destino
+                else None
+            )
+
+            cliente_cambiado = (
+                cliente_destino_id
+                != cliente_original_id
+            )
+
             if cliente_destino:
 
                 orden.cliente = (
                     cliente_destino
                 )
 
-                orden.cliente_respaldo = (
-                    cliente_destino.nombre_completo
-                )
+                # =============================================
+                # SNAPSHOT SOLO SI CAMBIÓ EL CLIENTE
+                # =============================================
+                if cliente_cambiado:
 
+                    orden.cliente_respaldo = (
+                        cliente_destino.nombre_completo
+                        or None
+                    )
+
+                    orden.identificacion_cliente_respaldo = (
+                        cliente_destino.identificacion
+                        or None
+                    )
+
+                    orden.telefono_respaldo = (
+                        cliente_destino.telefono
+                        or None
+                    )
+
+                    orden.telefono_secundario_respaldo = (
+                        cliente_destino.telefono_secundario
+                        or None
+                    )
+
+                    orden.telefono_trabajo_respaldo = (
+                        cliente_destino.telefono_trabajo
+                        or None
+                    )
+
+                    orden.email_respaldo = (
+                        cliente_destino.email
+                        or None
+                    )
+
+                    orden.direccion_respaldo = (
+                        cliente_destino.direccion
+                        or None
+                    )
+
+                # =============================================
+                # EXPEDIENTE = VÍNCULO ACTUAL DEL VEHÍCULO
+                # =============================================
+                #
+                # El expediente sí representa la relación actual
+                # del vehículo con el cliente, por eso se mantiene
+                # sincronizado con el cliente seleccionado.
+                # =============================================
                 if orden.expediente:
 
                     orden.expediente.cliente = (
@@ -918,7 +1001,8 @@ def editar_recepcion_orden(request, pk):
             request,
             (
                 "¡Recepción, cliente, vehículo y técnicos "
-                "actualizados con éxito!"
+                "actualizados con éxito! "
+                "El histórico del cliente de la OT se conserva."
             )
         )
 

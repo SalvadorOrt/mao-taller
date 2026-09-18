@@ -1049,6 +1049,12 @@
                    id="modal_cliente_id"
                    value="{{ orden.cliente_id|default_if_none:'' }}">
 
+            <!--
+                IMPORTANTE:
+                Esta identificación corresponde al cliente actualmente
+                vinculado a la OT y se usa para validar un cambio de cliente.
+                No es un campo de presentación histórica.
+            -->
             <input type="hidden"
                    name="cliente_identificacion"
                    id="modal_cliente_identificacion_submit"
@@ -1095,20 +1101,14 @@
 
                         <div class="vinculado-principal"
                              id="clienteResumenNombre">
-
-                            {% if orden.cliente %}
-                                {{ orden.cliente.nombre_completo }}
-                            {% else %}
-                                {{ orden.cliente_respaldo|default:"SIN CLIENTE" }}
-                            {% endif %}
-
+                            {{ orden.nombre_cliente_final|default:"SIN CLIENTE" }}
                         </div>
 
                         <div class="vinculado-secundario"
                              id="clienteResumenIdentificacion">
 
-                            {% if orden.cliente and orden.cliente.identificacion %}
-                                {{ orden.cliente.identificacion }}
+                            {% if orden.identificacion_cliente_final %}
+                                {{ orden.identificacion_cliente_final }}
                             {% else %}
                                 Sin identificación registrada
                             {% endif %}
@@ -1118,28 +1118,27 @@
                         <div class="vinculado-secundario"
                              id="clienteResumenContacto">
 
-                            {% if orden.cliente %}
-
-                                {% if orden.cliente.telefono %}
-                                    {{ orden.cliente.telefono }}
-                                {% endif %}
-
-                                {% if orden.cliente.telefono and orden.cliente.email %}
-                                    ·
-                                {% endif %}
-
-                                {% if orden.cliente.email %}
-                                    {{ orden.cliente.email }}
-                                {% endif %}
-
-                                {% if not orden.cliente.telefono and not orden.cliente.email %}
-                                    Sin teléfono ni correo registrado
-                                {% endif %}
-
-                            {% else %}
-                                Sin datos de contacto
+                            {% if orden.telefono_cliente_final %}
+                                {{ orden.telefono_cliente_final }}
                             {% endif %}
 
+                            {% if orden.telefono_cliente_final and orden.email_cliente_final %}
+                                ·
+                            {% endif %}
+
+                            {% if orden.email_cliente_final %}
+                                {{ orden.email_cliente_final }}
+                            {% endif %}
+
+                            {% if not orden.telefono_cliente_final and not orden.email_cliente_final %}
+                                Sin teléfono ni correo registrado
+                            {% endif %}
+
+                        </div>
+
+                        <div class="vinculado-secundario"
+                             style="margin-top:5px; color:#86868b;">
+                            Datos históricos guardados en esta orden.
                         </div>
 
                     </div>
@@ -1197,7 +1196,8 @@
 
 
                     <div style="font-size:0.74rem; color:var(--muted); margin-bottom:12px;">
-                        Estos cambios actualizan la ficha general del cliente.
+                        Estos cambios actualizan la ficha general actual del cliente.
+                        No modifican los datos históricos guardados en esta orden.
                         La cédula y el nombre no se modifican desde aquí.
                     </div>
 
@@ -2143,6 +2143,11 @@
     const CLIENTE_INICIAL_ID =
         "{{ orden.cliente_id|default_if_none:''|escapejs }}";
 
+    /*
+     * Esta identificación pertenece al cliente actualmente vinculado.
+     * Se usa únicamente para validar cambios de vínculo en el modal.
+     * El histórico visible de la OT usa los campos *_cliente_final.
+     */
     const CLIENTE_INICIAL_IDENTIFICACION =
         "{% if orden.cliente %}{{ orden.cliente.identificacion|default_if_none:''|escapejs }}{% endif %}";
 
@@ -2435,18 +2440,13 @@
             );
 
 
-            actualizarResumenCliente(
-                data.cliente
-            );
-
-
             ocultarComparacionApiCliente();
 
 
             mostrarEstadoEdicionCliente(
                 data.actualizado
-                    ? 'Datos del cliente actualizados correctamente.'
-                    : 'No había cambios por guardar.',
+                    ? 'Ficha actual del cliente actualizada. El histórico de esta OT se conserva sin cambios.'
+                    : 'No había cambios por guardar. El histórico de esta OT se conserva.',
                 'ok'
             );
 
@@ -2602,11 +2602,6 @@
             );
 
 
-            actualizarResumenCliente(
-                data.cliente
-            );
-
-
             diferenciasClienteApi =
                 Array.isArray(data.cambios_sugeridos)
                     ? data.cambios_sugeridos
@@ -2619,7 +2614,7 @@
             if (diferenciasClienteApi.length > 0) {
 
                 mostrarEstadoEdicionCliente(
-                    'La API encontró datos diferentes. Nada fue reemplazado automáticamente.',
+                    'La API encontró datos diferentes. Nada fue reemplazado automáticamente y el histórico de esta OT no cambia.',
                     'ok'
                 );
 
@@ -2627,7 +2622,7 @@
             else {
 
                 mostrarEstadoEdicionCliente(
-                    'Consulta completada. No hay datos diferentes pendientes de revisar.',
+                    'Consulta completada. No hay datos diferentes pendientes de revisar. El histórico de esta OT no cambia.',
                     'ok'
                 );
             }
@@ -2903,60 +2898,6 @@
                     }
                 }
             );
-    }
-
-
-    function actualizarResumenCliente(cliente) {
-
-        const nombre =
-            document.getElementById(
-                'clienteResumenNombre'
-            );
-
-        const identificacion =
-            document.getElementById(
-                'clienteResumenIdentificacion'
-            );
-
-        const contacto =
-            document.getElementById(
-                'clienteResumenContacto'
-            );
-
-
-        if (nombre) {
-
-            nombre.textContent =
-                cliente.nombre_completo ||
-                'SIN CLIENTE';
-        }
-
-
-        if (identificacion) {
-
-            identificacion.textContent =
-                cliente.identificacion ||
-                'Sin identificación registrada';
-        }
-
-
-        if (contacto) {
-
-            const partes = [];
-
-            if (cliente.telefono) {
-                partes.push(cliente.telefono);
-            }
-
-            if (cliente.email) {
-                partes.push(cliente.email);
-            }
-
-            contacto.textContent =
-                partes.length
-                    ? partes.join(' · ')
-                    : 'Sin teléfono ni correo registrado';
-        }
     }
 
 

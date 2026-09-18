@@ -565,9 +565,83 @@ def crear_orden(request):
                     cliente=
                         cliente_obj,
 
-                    cliente_respaldo=
-                        nombre_cliente
-                        or None,
+                    # =========================================
+                    # SNAPSHOT DEL CLIENTE
+                    # =========================================
+                    #
+                    # Estos campos conservan exactamente los
+                    # datos vigentes del cliente al momento de
+                    # crear esta OT. Si el Cliente se actualiza
+                    # posteriormente, esta orden mantiene su
+                    # histórico.
+                    #
+                    # Se toman desde cliente_obj porque, si el
+                    # cliente ya existía y algún campo no vino
+                    # en el formulario, se conserva el valor
+                    # actual que ya tenía registrado.
+                    # =========================================
+                    cliente_respaldo=(
+                        cliente_obj.nombre_completo
+                        if cliente_obj
+                        else (
+                            nombre_cliente
+                            or None
+                        )
+                    ),
+
+                    identificacion_cliente_respaldo=(
+                        cliente_obj.identificacion
+                        if cliente_obj
+                        else (
+                            identificacion
+                            or None
+                        )
+                    ),
+
+                    telefono_respaldo=(
+                        cliente_obj.telefono
+                        if cliente_obj
+                        else (
+                            telefono
+                            or None
+                        )
+                    ),
+
+                    telefono_secundario_respaldo=(
+                        cliente_obj.telefono_secundario
+                        if cliente_obj
+                        else (
+                            telefono_secundario
+                            or None
+                        )
+                    ),
+
+                    telefono_trabajo_respaldo=(
+                        cliente_obj.telefono_trabajo
+                        if cliente_obj
+                        else (
+                            telefono_trabajo
+                            or None
+                        )
+                    ),
+
+                    email_respaldo=(
+                        cliente_obj.email
+                        if cliente_obj
+                        else (
+                            email
+                            or None
+                        )
+                    ),
+
+                    direccion_respaldo=(
+                        cliente_obj.direccion
+                        if cliente_obj
+                        else (
+                            direccion
+                            or None
+                        )
+                    ),
 
                     placa=
                         placa,
