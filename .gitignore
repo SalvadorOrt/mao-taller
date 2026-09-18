@@ -1,23 +1,56 @@
-# Ignorar archivos subidos por usuarios (Media)
+# ==========================================
+# MEDIA / ARCHIVOS SUBIDOS POR USUARIOS
+# ==========================================
 media/
 media/ordenes/
 media/firmas/
 media/recepcion/
 
-# Ignorar base de datos local
+
+# ==========================================
+# BASE DE DATOS LOCAL
+# ==========================================
 db.sqlite3
 
-# Ignorar variables de entorno
+
+# ==========================================
+# VARIABLES DE ENTORNO
+# ==========================================
 .env
 
-# IGNORAR ARCHIVOS DE DATOS PESADOS
+
+# ==========================================
+# ARCHIVOS DE DATOS / MIGRACIONES
+# ==========================================
+
+# Ignorar JSON en general
 *.json
+
+# Este JSON sí debe poder versionarse
 !repuestos_exportados.json
-# Entorno virtual
+
+# Ignorar JSON históricos de Getsoft
+/migraciones/getsoft/*.json
+
+# EXCEPCIÓN:
+# Este archivo sí se subirá a GitHub
+!/migraciones/getsoft/ordenes_getsoft_limpias.json
+
+
+# ==========================================
+# ENTORNO VIRTUAL
+# ==========================================
 venv/
 
-# Cache de Python
+
+# ==========================================
+# CACHE PYTHON
+# ==========================================
 __pycache__/
 *.pyc
 
+
+# ==========================================
+# STATICFILES DE PRODUCCIÓN
+# ==========================================
 staticfiles/
