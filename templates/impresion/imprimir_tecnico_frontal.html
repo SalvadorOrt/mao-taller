@@ -150,17 +150,6 @@
         overflow-wrap: anywhere;
     }
 
-    .foto-recepcion-print-empty {
-        border: 1px dashed #c7c7cc;
-        border-radius: 8px;
-        padding: 14px;
-        text-align: center;
-        color: #777;
-        font-size: 9px;
-        font-weight: 600;
-        background: #fafafa;
-    }
-
     @media print {
         .sketch-box,
         .croquis-v1-wrap,
@@ -835,46 +824,42 @@
 
             <!-- =================================================
                  OBSERVACIONES DEL ESTADO AL INGRESO
+                 Solo se imprimen cuando existen.
                  ================================================= -->
 
-            <div class="observaciones-grid">
+            {% if orden.observaciones_recepcion %}
 
-                <div class="observacion-card">
+                <div class="observaciones-grid">
 
-                    <div class="observacion-title">
-                        Observaciones de cómo llega el vehículo
-                    </div>
+                    <div class="observacion-card">
 
-                    <div class="observacion-texto">
+                        <div class="observacion-title">
+                            Observaciones de cómo llega el vehículo
+                        </div>
 
-                        {% if orden.observaciones_recepcion %}
-
+                        <div class="observacion-texto">
                             {{ orden.observaciones_recepcion|linebreaksbr }}
-
-                        {% else %}
-
-                            SIN OBSERVACIONES DEL ESTADO DEL VEHÍCULO AL INGRESO
-
-                        {% endif %}
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
+            {% endif %}
 
 
             <!-- =================================================
                  FOTOS DEL ESTADO AL INGRESO
+                 Solo se imprimen cuando existen.
                  ================================================= -->
 
-            <div style="margin-top:10px;">
+            {% if orden.fotos_recepcion.all %}
 
-                <div class="label" style="margin-bottom:6px;">
-                    Fotos del estado del vehículo al ingreso
-                </div>
+                <div style="margin-top:10px;">
 
-                {% if orden.fotos_recepcion.all %}
+                    <div class="label" style="margin-bottom:6px;">
+                        Fotos del estado del vehículo al ingreso
+                    </div>
 
                     <div class="fotos-recepcion-grid-print">
 
@@ -918,15 +903,9 @@
 
                     </div>
 
-                {% else %}
+                </div>
 
-                    <div class="foto-recepcion-print-empty">
-                        SIN FOTOS DEL ESTADO DEL VEHÍCULO AL INGRESO
-                    </div>
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
 
         </div>
