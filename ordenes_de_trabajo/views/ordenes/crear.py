@@ -3,6 +3,8 @@ import uuid
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -27,6 +29,40 @@ from ..utils import (
     parse_int,
     procesar_imagen_base64,
 )
+
+
+# =========================================================
+# EMAIL OPCIONAL
+# =========================================================
+def limpiar_email_opcional(valor):
+    """
+    Normaliza un correo opcional.
+
+    - Vacío -> None
+    - Válido -> correo normalizado en minúsculas
+    - Inválido -> None
+
+    El correo no debe impedir la creación de una OT.
+    El modelo Cliente mantiene EmailField, por lo que solo
+    llegan a guardarse valores compatibles con Django.
+    """
+
+    email = (
+        str(valor or "")
+        .strip()
+        .lower()
+    )
+
+    if not email:
+        return None
+
+    try:
+        validate_email(email)
+
+    except ValidationError:
+        return None
+
+    return email
 
 
 # =========================================================
@@ -178,14 +214,11 @@ def crear_orden(request):
             .strip()
         )
 
-        email = (
-            request.POST
-            .get(
+        email = limpiar_email_opcional(
+            request.POST.get(
                 "email",
                 "",
             )
-            .strip()
-            .lower()
         )
 
         direccion = (
