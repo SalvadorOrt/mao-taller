@@ -36,6 +36,24 @@ class UsuarioForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple(),
     )
 
+    # =====================================================
+    # PERMISOS ESPECIALES
+    # =====================================================
+
+    puede_cambiar_sucursal = forms.BooleanField(
+        required=False,
+        label="Puede cambiar de sucursal operativa",
+        help_text=(
+            "Permite cambiar la sucursal activa y operar "
+            "con la información de otra sucursal."
+        ),
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "form-check-input",
+            }
+        ),
+    )
+
     class Meta:
         model = Usuario
 
@@ -92,11 +110,37 @@ class UsuarioForm(forms.ModelForm):
             **kwargs,
         )
 
+        # =================================================
+        # ROLES
+        # =================================================
+
         self.fields["groups"].queryset = (
             Rol.objects
             .all()
             .order_by("name")
         )
+
+        # =================================================
+        # PERMISO INDIVIDUAL:
+        # CAMBIAR SUCURSAL OPERATIVA
+        # =================================================
+
+        if (
+            self.instance
+            and self.instance.pk
+        ):
+            self.fields[
+                "puede_cambiar_sucursal"
+            ].initial = (
+                self.instance
+                .user_permissions
+                .filter(
+                    content_type__app_label="inventario",
+                    content_type__model="usuario",
+                    codename="cambiar_sucursal_operativa",
+                )
+                .exists()
+            )
 
     def save(
         self,
@@ -105,6 +149,10 @@ class UsuarioForm(forms.ModelForm):
         user = super().save(
             commit=False
         )
+
+        # =================================================
+        # CONTRASEÑA
+        # =================================================
 
         password = self.cleaned_data.get(
             "password"
@@ -115,12 +163,51 @@ class UsuarioForm(forms.ModelForm):
                 password
             )
 
-        if commit:
-            user.save()
-            self.save_m2m()
+        if not commit:
+            return user
+
+        # =================================================
+        # GUARDAR USUARIO
+        # =================================================
+
+        user.save()
+
+        # Guarda los roles seleccionados.
+        self.save_m2m()
+
+        # =================================================
+        # PERMISO ESPECIAL:
+        # CAMBIAR SUCURSAL OPERATIVA
+        # =================================================
+
+        from django.contrib.auth.models import Permission
+
+        permiso_cambiar_sucursal = (
+            Permission.objects.get(
+                content_type__app_label="inventario",
+                content_type__model="usuario",
+                codename="cambiar_sucursal_operativa",
+            )
+        )
+
+        puede_cambiar_sucursal = (
+            self.cleaned_data.get(
+                "puede_cambiar_sucursal",
+                False,
+            )
+        )
+
+        if puede_cambiar_sucursal:
+            user.user_permissions.add(
+                permiso_cambiar_sucursal
+            )
+
+        else:
+            user.user_permissions.remove(
+                permiso_cambiar_sucursal
+            )
 
         return user
-
 # =========================================================
 # PRODUCTO
 # =========================================================

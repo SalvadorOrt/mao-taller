@@ -28,15 +28,31 @@ urlpatterns = [
         views.gestionar_usuario,
         name="crear_usuario",
     ),
+
+    path(
+        "usuarios/editar/<int:pk>/",
+        views.gestionar_usuario,
+        name="editar_usuario",
+    ),
+
+    # -----------------------------------------------------
+    # HABILITAR / DESHABILITAR USUARIO
+    # -----------------------------------------------------
+
     path(
         "usuarios/<int:pk>/cambiar-estado/",
         views.cambiar_estado_usuario,
         name="cambiar_estado_usuario",
     ),
+
+    # -----------------------------------------------------
+    # CERRAR SESIONES DE UN USUARIO
+    # -----------------------------------------------------
+
     path(
-        "usuarios/editar/<int:pk>/",
-        views.gestionar_usuario,
-        name="editar_usuario",
+        "usuarios/<int:pk>/cerrar-sesiones/",
+        views.cerrar_sesiones_usuario,
+        name="cerrar_sesiones_usuario",
     ),
 
     # =====================================================

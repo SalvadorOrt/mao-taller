@@ -40,6 +40,38 @@
             font-size: 20px;
         }
 
+        .personal-header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-close-all-sessions {
+            border: 1px solid rgba(215, 0, 21, 0.22);
+            background: rgba(255, 59, 48, 0.08);
+            color: #d70015;
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .btn-close-all-sessions:hover {
+            background: rgba(255, 59, 48, 0.14);
+            border-color: rgba(215, 0, 21, 0.40);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(215, 0, 21, 0.10);
+        }
+
         .personal-table-wrap {
             padding: 0 26px 26px 26px;
             overflow-x: auto;
@@ -164,6 +196,138 @@
             color: #0071e3;
         }
 
+        .panic-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+        .panic-modal.open {
+            display: flex;
+        }
+
+        .panic-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.42);
+            backdrop-filter: blur(5px);
+        }
+
+        .panic-dialog {
+            position: relative;
+            z-index: 1;
+            width: min(100%, 470px);
+            background: #ffffff;
+            border: 1px solid #e5e5ea;
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .panic-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            border-radius: 14px;
+            background: rgba(255, 59, 48, 0.10);
+            color: #d70015;
+            font-size: 24px;
+        }
+
+        .panic-dialog h3 {
+            margin: 0 0 8px;
+            color: #1d1d1f;
+            font-size: 20px;
+        }
+
+        .panic-dialog p {
+            margin: 0 0 17px;
+            color: #6e6e73;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .panic-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            padding: 12px 13px;
+            margin-bottom: 18px;
+            border-radius: 12px;
+            background: #fff7ed;
+            color: #9a6700;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .panic-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #6e6e73;
+            font-size: 12px;
+        }
+
+        .panic-label strong {
+            color: #1d1d1f;
+        }
+
+        .panic-input {
+            width: 100%;
+            height: 44px;
+            box-sizing: border-box;
+            border: 1.5px solid #d2d2d7;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #1d1d1f;
+            padding: 0 13px;
+            font-size: 14px;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .panic-input:focus {
+            border-color: #d70015;
+            box-shadow: 0 0 0 4px rgba(215, 0, 21, 0.10);
+        }
+
+        .panic-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .panic-btn {
+            border: none;
+            border-radius: 11px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .panic-btn-cancel {
+            background: #e5e5ea;
+            color: #1d1d1f;
+        }
+
+        .panic-btn-confirm {
+            background: #d70015;
+            color: #ffffff;
+        }
+
+        .panic-btn-confirm:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+        }
+
         .empty-users {
             text-align: center;
             color: #86868b;
@@ -184,9 +348,25 @@
                 align-items: stretch;
             }
 
-            .personal-header .btn-login {
+            .personal-header-actions {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .personal-header .btn-login,
+            .personal-header .btn-close-all-sessions {
                 width: 100%;
                 justify-content: center;
+                box-sizing: border-box;
+            }
+
+            .panic-actions {
+                flex-direction: column-reverse;
+            }
+
+            .panic-btn {
+                width: 100%;
             }
 
             .personal-table th,
@@ -204,25 +384,40 @@
                 <span>Usuarios Activos</span>
             </div>
 
-            {% if perms.inventario.add_usuario %}
-                <a
-                    href="{% url 'crear_usuario' %}"
-                    class="btn-login primary"
-                    style="
-                        text-decoration: none;
-                        padding: 9px 16px;
-                        border-radius: 10px;
-                        font-size: 13px;
-                    "
-                >
-                    <i
-                        class="bi bi-person-plus-fill"
-                        style="margin-right: 5px;"
-                    ></i>
+            <div class="personal-header-actions">
 
-                    Nuevo Usuario
-                </a>
-{% endif %}
+                {% if perms.accesos.cerrar_todas_sesiones %}
+                    <button
+                        type="button"
+                        class="btn-close-all-sessions"
+                        id="abrirCierreGlobal"
+                    >
+                        <i class="bi bi-power"></i>
+                        Cerrar todas las sesiones
+                    </button>
+                {% endif %}
+
+                {% if perms.inventario.add_usuario %}
+                    <a
+                        href="{% url 'crear_usuario' %}"
+                        class="btn-login primary"
+                        style="
+                            text-decoration: none;
+                            padding: 9px 16px;
+                            border-radius: 10px;
+                            font-size: 13px;
+                        "
+                    >
+                        <i
+                            class="bi bi-person-plus-fill"
+                            style="margin-right: 5px;"
+                        ></i>
+
+                        Nuevo Usuario
+                    </a>
+                {% endif %}
+
+            </div>
         </div>
 
         <div class="personal-table-wrap">
@@ -335,4 +530,157 @@
 
     </div>
 </div>
+
+    {% if perms.accesos.cerrar_todas_sesiones %}
+        <div
+            class="panic-modal"
+            id="panicModal"
+            aria-hidden="true"
+        >
+            <div
+                class="panic-backdrop"
+                data-cerrar-modal
+            ></div>
+
+            <div
+                class="panic-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="panicTitle"
+            >
+                <div class="panic-icon">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </div>
+
+                <h3 id="panicTitle">
+                    Cerrar todas las sesiones
+                </h3>
+
+                <p>
+                    Se desconectarán todos los usuarios del sistema,
+                    incluida tu sesión actual. Todos deberán iniciar
+                    sesión nuevamente.
+                </p>
+
+                <div class="panic-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                    <span>
+                        Esta acción no elimina usuarios, roles,
+                        órdenes ni información. Solo invalida
+                        las sesiones abiertas.
+                    </span>
+                </div>
+
+                <form
+                    method="POST"
+                    action="{% url 'accesos:cerrar_todas_sesiones' %}"
+                >
+                    {% csrf_token %}
+
+                    <label
+                        for="confirmacionCierreGlobal"
+                        class="panic-label"
+                    >
+                        Para continuar escribe
+                        <strong>CERRAR SESIONES</strong>
+                    </label>
+
+                    <input
+                        type="text"
+                        name="confirmacion"
+                        id="confirmacionCierreGlobal"
+                        class="panic-input"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+
+                    <div class="panic-actions">
+                        <button
+                            type="button"
+                            class="panic-btn panic-btn-cancel"
+                            data-cerrar-modal
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="panic-btn panic-btn-confirm"
+                            id="confirmarCierreGlobal"
+                            disabled
+                        >
+                            <i class="bi bi-power"></i>
+                            Cerrar todas
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const modal = document.getElementById("panicModal");
+                const abrir = document.getElementById("abrirCierreGlobal");
+                const input = document.getElementById("confirmacionCierreGlobal");
+                const confirmar = document.getElementById("confirmarCierreGlobal");
+                const cerrar = document.querySelectorAll("[data-cerrar-modal]");
+
+                if (!modal || !abrir || !input || !confirmar) {
+                    return;
+                }
+
+                function abrirModal() {
+                    modal.classList.add("open");
+                    modal.setAttribute("aria-hidden", "false");
+
+                    input.value = "";
+                    confirmar.disabled = true;
+
+                    setTimeout(function () {
+                        input.focus();
+                    }, 50);
+                }
+
+                function cerrarModal() {
+                    modal.classList.remove("open");
+                    modal.setAttribute("aria-hidden", "true");
+
+                    input.value = "";
+                    confirmar.disabled = true;
+                }
+
+                function validarConfirmacion() {
+                    confirmar.disabled = (
+                        input.value.trim().toUpperCase()
+                        !== "CERRAR SESIONES"
+                    );
+                }
+
+                abrir.addEventListener("click", abrirModal);
+                input.addEventListener("input", validarConfirmacion);
+
+                cerrar.forEach(function (elemento) {
+                    elemento.addEventListener(
+                        "click",
+                        cerrarModal
+                    );
+                });
+
+                document.addEventListener(
+                    "keydown",
+                    function (event) {
+                        if (
+                            event.key === "Escape"
+                            && modal.classList.contains("open")
+                        ) {
+                            cerrarModal();
+                        }
+                    }
+                );
+            });
+        </script>
+    {% endif %}
+
 {% endblock %}

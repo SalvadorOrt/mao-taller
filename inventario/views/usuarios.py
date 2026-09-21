@@ -8,6 +8,9 @@ from django.shortcuts import (
 from django.views.decorators.http import require_POST
 
 from accesos.permissions import permiso_requerido
+from accesos.session_utils import (
+    cerrar_sesiones_de_usuario,
+)
 
 from inventario.forms import UsuarioForm
 from inventario.models import Usuario
@@ -197,7 +200,7 @@ def cambiar_estado_usuario(
     )
 
     # =====================================================
-    # NO PERMITIR DESHABILITAR LA PROPIA CUENTA
+    # NO DESHABILITAR LA PROPIA CUENTA
     # =====================================================
 
     if usuario.pk == request.user.pk:
@@ -216,11 +219,6 @@ def cambiar_estado_usuario(
 
     # =====================================================
     # PROTEGER SUPERUSUARIOS
-    # =====================================================
-    #
-    # Un usuario con change_usuario, pero que no sea
-    # superusuario, no puede cambiar el estado de una
-    # cuenta superusuario.
     # =====================================================
 
     if (
@@ -273,24 +271,18 @@ def cambiar_estado_usuario(
             )
 
     # =====================================================
-    # CAMBIAR ESTADO
+    # HABILITAR
     # =====================================================
 
-    usuario.is_active = (
-        not usuario.is_active
-    )
+    if not usuario.is_active:
+        usuario.is_active = True
 
-    usuario.save(
-        update_fields=[
-            "is_active",
-        ]
-    )
+        usuario.save(
+            update_fields=[
+                "is_active",
+            ]
+        )
 
-    # =====================================================
-    # MENSAJE
-    # =====================================================
-
-    if usuario.is_active:
         messages.success(
             request,
             (
@@ -299,16 +291,129 @@ def cambiar_estado_usuario(
             ),
         )
 
-    else:
-        messages.success(
+        return redirect(
+            "editar_usuario",
+            pk=usuario.pk,
+        )
+
+    # =====================================================
+    # DESHABILITAR
+    # =====================================================
+
+    usuario.is_active = False
+
+    usuario.save(
+        update_fields=[
+            "is_active",
+        ]
+    )
+
+    # Al deshabilitarlo también se cierran
+    # inmediatamente todas sus sesiones.
+    sesiones_cerradas = (
+        cerrar_sesiones_de_usuario(
+            usuario
+        )
+    )
+
+    messages.success(
+        request,
+        (
+            f'El usuario "{usuario.username}" '
+            "fue deshabilitado correctamente. "
+            f"Se cerraron {sesiones_cerradas} "
+            "sesiones activas."
+        ),
+    )
+
+    return redirect(
+        "editar_usuario",
+        pk=usuario.pk,
+    )
+
+
+# =========================================================
+# CERRAR SESIONES DE UN USUARIO
+# =========================================================
+
+@permiso_requerido(
+    "inventario.change_usuario"
+)
+@require_POST
+def cerrar_sesiones_usuario(
+    request,
+    pk,
+):
+    usuario = get_object_or_404(
+        Usuario,
+        pk=pk,
+    )
+
+    # =====================================================
+    # PROTEGER SUPERUSUARIOS
+    # =====================================================
+
+    if (
+        usuario.is_superuser
+        and not request.user.is_superuser
+    ):
+        messages.error(
             request,
             (
-                f'El usuario "{usuario.username}" '
-                "fue deshabilitado correctamente."
+                "Solo un superusuario puede "
+                "cerrar las sesiones de otro "
+                "superusuario."
             ),
         )
 
-    # Volver a la pantalla del mismo usuario.
+        return redirect(
+            "editar_usuario",
+            pk=usuario.pk,
+        )
+
+    # =====================================================
+    # CERRAR SESIONES
+    # =====================================================
+
+    sesiones_cerradas = (
+        cerrar_sesiones_de_usuario(
+            usuario
+        )
+    )
+
+    # =====================================================
+    # SI CERRÓ SUS PROPIAS SESIONES
+    # =====================================================
+
+    if usuario.pk == request.user.pk:
+        return redirect(
+            "login"
+        )
+
+    # =====================================================
+    # MENSAJE
+    # =====================================================
+
+    if sesiones_cerradas:
+        messages.success(
+            request,
+            (
+                f"Se cerraron "
+                f"{sesiones_cerradas} "
+                f"sesiones del usuario "
+                f'"{usuario.username}".'
+            ),
+        )
+
+    else:
+        messages.info(
+            request,
+            (
+                f'El usuario "{usuario.username}" '
+                "no tenía sesiones activas."
+            ),
+        )
+
     return redirect(
         "editar_usuario",
         pk=usuario.pk,

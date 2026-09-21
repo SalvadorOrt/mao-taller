@@ -138,6 +138,59 @@
                 </div>
             </div>
 
+            <div class="permisos-especiales">
+                <div class="permisos-especiales-header">
+                    <div class="permisos-especiales-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+
+                    <div>
+                        <div class="permisos-especiales-title">
+                            PERMISOS ESPECIALES
+                        </div>
+
+                        <div class="permisos-especiales-subtitle">
+                            Excepciones asignadas directamente a este usuario.
+                        </div>
+                    </div>
+                </div>
+
+                <label class="permiso-especial-option">
+                    <span class="permiso-especial-checkbox">
+                        {{ form.puede_cambiar_sucursal }}
+                    </span>
+
+                    <span class="permiso-especial-content">
+                        <span class="permiso-especial-name">
+                            Cambiar de sucursal operativa
+                        </span>
+
+                        <span class="permiso-especial-description">
+                            Permite seleccionar otra sucursal y operar
+                            temporalmente con la información de esa sucursal.
+                        </span>
+
+                        {% if usuario and usuario.is_superuser %}
+                            <span class="permiso-especial-note">
+                                <i class="bi bi-info-circle"></i>
+                                Los superusuarios tienen acceso total automáticamente.
+                            </span>
+                        {% elif not request.user.is_superuser %}
+                            <span class="permiso-especial-note">
+                                <i class="bi bi-lock"></i>
+                                Solo un superusuario puede modificar este permiso especial.
+                            </span>
+                        {% endif %}
+                    </span>
+                </label>
+
+                {% if form.puede_cambiar_sucursal.errors %}
+                    <div class="error-text">
+                        {{ form.puede_cambiar_sucursal.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
             <div class="form-actions">
                 <a href="{% url 'lista_usuarios' %}" class="btn-login btn-cancel">
                     Cancelar
@@ -189,10 +242,57 @@
                     </div>
 
                     <div class="usuario-estado-action">
-                        {% if request.user.pk == usuario.pk %}
-                            <div class="cuenta-propia">
-                                <i class="bi bi-shield-check"></i>
-                                Tu cuenta actual
+                        {% if usuario.is_active %}
+                            <div class="usuario-security-buttons">
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'cerrar_sesiones_usuario' usuario.pk %}"
+                                    class="estado-form"
+                                >
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="btn-estado btn-sesiones"
+                                        data-confirmar-sesiones
+                                        data-usuario="{{ usuario.username|escape }}"
+                                        data-propia="{% if request.user.pk == usuario.pk %}true{% else %}false{% endif %}"
+                                    >
+                                        <i class="bi bi-box-arrow-right"></i>
+
+                                        {% if request.user.pk == usuario.pk %}
+                                            Cerrar mis sesiones
+                                        {% else %}
+                                            Cerrar sus sesiones
+                                        {% endif %}
+                                    </button>
+                                </form>
+
+                                {% if request.user.pk != usuario.pk %}
+                                    <form
+                                        method="POST"
+                                        action="{% url 'cambiar_estado_usuario' usuario.pk %}"
+                                        class="estado-form"
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="btn-estado btn-deshabilitar"
+                                            data-confirmar-estado
+                                            data-usuario="{{ usuario.username|escape }}"
+                                        >
+                                            <i class="bi bi-person-x"></i>
+                                            Deshabilitar usuario
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <div class="cuenta-propia">
+                                        <i class="bi bi-shield-check"></i>
+                                        Tu cuenta actual
+                                    </div>
+                                {% endif %}
                             </div>
                         {% else %}
                             <form
@@ -202,25 +302,13 @@
                             >
                                 {% csrf_token %}
 
-                                {% if usuario.is_active %}
-                                    <button
-                                        type="submit"
-                                        class="btn-estado btn-deshabilitar"
-                                        data-confirmar-estado
-                                        data-usuario="{{ usuario.username|escape }}"
-                                    >
-                                        <i class="bi bi-person-x"></i>
-                                        Deshabilitar usuario
-                                    </button>
-                                {% else %}
-                                    <button
-                                        type="submit"
-                                        class="btn-estado btn-habilitar"
-                                    >
-                                        <i class="bi bi-person-check"></i>
-                                        Habilitar usuario
-                                    </button>
-                                {% endif %}
+                                <button
+                                    type="submit"
+                                    class="btn-estado btn-habilitar"
+                                >
+                                    <i class="bi bi-person-check"></i>
+                                    Habilitar usuario
+                                </button>
                             </form>
                         {% endif %}
                     </div>
@@ -458,6 +546,114 @@
         color: #86868b;
     }
 
+    .permisos-especiales {
+        margin-top: 4px;
+        margin-bottom: 28px;
+        padding: 16px;
+        border: 1.5px solid #d2d2d7;
+        border-radius: 16px;
+        background: #ffffff;
+    }
+
+    .permisos-especiales-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .permisos-especiales-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(0, 113, 227, 0.10);
+        color: #0071e3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 16px;
+    }
+
+    .permisos-especiales-title {
+        color: #1d1d1f;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+    }
+
+    .permisos-especiales-subtitle {
+        margin-top: 2px;
+        color: #86868b;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .permiso-especial-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 13px 14px;
+        border: 1px solid #e5e5ea;
+        border-radius: 13px;
+        background: #fbfbfd;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .permiso-especial-option:hover {
+        border-color: rgba(0, 113, 227, 0.35);
+        background: rgba(0, 113, 227, 0.025);
+    }
+
+    .permiso-especial-checkbox {
+        padding-top: 1px;
+        flex-shrink: 0;
+    }
+
+    .permiso-especial-checkbox input[type="checkbox"] {
+        width: 19px;
+        height: 19px;
+        accent-color: #0071e3;
+        cursor: pointer;
+    }
+
+    .permiso-especial-checkbox input[type="checkbox"]:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+    .permiso-especial-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .permiso-especial-name {
+        color: #1d1d1f;
+        font-size: 13px;
+        font-weight: 750;
+        line-height: 1.35;
+    }
+
+    .permiso-especial-description {
+        margin-top: 3px;
+        color: #6e6e73;
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    .permiso-especial-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 7px;
+        color: #86868b;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
     .usuario-estado-section {
         margin-top: 30px;
         padding-top: 26px;
@@ -549,6 +745,24 @@
         margin: 0;
     }
 
+    .usuario-security-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-sesiones {
+        background: rgba(0, 113, 227, 0.10);
+        color: #0071e3;
+    }
+
+    .btn-sesiones:hover {
+        background: rgba(0, 113, 227, 0.16);
+        transform: translateY(-1px);
+    }
+
     .btn-estado {
         border: none;
         border-radius: 11px;
@@ -638,10 +852,24 @@
             width: 100%;
         }
 
+        .usuario-security-buttons {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
         .cuenta-propia {
             width: 100%;
             justify-content: center;
             box-sizing: border-box;
+        }
+
+        .permisos-especiales {
+            padding: 14px;
+        }
+
+        .permiso-especial-option {
+            padding: 12px;
         }
 
         .form-actions {
@@ -723,10 +951,31 @@
                 const confirmado = window.confirm(
                     '¿Deseas deshabilitar al usuario "' +
                     usuario +
-                    '"?\n\nNo podrá iniciar sesión hasta que vuelva a habilitarse.'
+                    '"?\n\nSe cerrarán todas sus sesiones y no podrá iniciar sesión hasta que vuelva a habilitarse.'
                 );
 
                 if (!confirmado) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        const botonCerrarSesiones = document.querySelector(
+            "[data-confirmar-sesiones]"
+        );
+
+        if (botonCerrarSesiones) {
+            botonCerrarSesiones.addEventListener("click", function (e) {
+                const usuario = this.dataset.usuario || "este usuario";
+                const esPropia = this.dataset.propia === "true";
+
+                const mensaje = esPropia
+                    ? "¿Deseas cerrar todas tus sesiones?\n\nTambién se cerrará la sesión que estás usando ahora y tendrás que iniciar sesión nuevamente."
+                    : '¿Deseas cerrar todas las sesiones del usuario "' +
+                      usuario +
+                      '"?\n\nLa cuenta seguirá habilitada y podrá volver a iniciar sesión.';
+
+                if (!window.confirm(mensaje)) {
                     e.preventDefault();
                 }
             });
