@@ -7,6 +7,11 @@ app_name = "accesos"
 
 
 urlpatterns = [
+
+    # =====================================================
+    # ROLES
+    # =====================================================
+
     path(
         "roles/",
         views.roles_lista,
@@ -29,5 +34,15 @@ urlpatterns = [
         "roles/<int:pk>/eliminar/",
         views.rol_eliminar,
         name="rol_eliminar",
+    ),
+
+    # =====================================================
+    # SEGURIDAD
+    # =====================================================
+
+    path(
+        "seguridad/",
+        views.seguridad,
+        name="seguridad",
     ),
 ]

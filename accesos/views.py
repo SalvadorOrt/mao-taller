@@ -3,9 +3,11 @@ from collections import OrderedDict
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.sessions.models import Session
 from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from .forms import RolForm
 from .models import Rol
@@ -635,3 +637,62 @@ def rol_eliminar(request, pk):
             "usuarios_asignados": usuarios_asignados,
         },
     )
+
+# =========================================================
+# SEGURIDAD
+# =========================================================
+
+@permiso_requerido("accesos.cerrar_todas_sesiones")
+@require_POST
+def seguridad(request):
+    """
+    Cierra todas las sesiones activas del sistema.
+
+    Para ejecutar la acción el usuario debe escribir
+    exactamente: CERRAR SESIONES
+
+    La sesión del usuario que ejecuta la acción también
+    será eliminada.
+    """
+
+    confirmacion = (
+        request.POST
+        .get(
+            "confirmacion",
+            "",
+        )
+        .strip()
+        .upper()
+    )
+
+    # =====================================================
+    # VALIDAR CONFIRMACIÓN
+    # =====================================================
+
+    if confirmacion != "CERRAR SESIONES":
+
+        messages.error(
+            request,
+            (
+                'La confirmación no es correcta. '
+                'Debes escribir "CERRAR SESIONES".'
+            ),
+        )
+
+        return redirect(
+            "lista_usuarios"
+        )
+
+    # =====================================================
+    # CERRAR TODAS LAS SESIONES
+    # =====================================================
+
+    Session.objects.all().delete()
+
+    # La sesión actual también fue eliminada.
+    # En la siguiente petición el usuario deberá
+    # autenticarse nuevamente.
+    return redirect(
+        "login"
+    )
+
