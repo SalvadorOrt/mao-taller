@@ -3,254 +3,801 @@
 
 {% block title %}{% if usuario %}Editar{% else %}Nuevo{% endif %} Usuario | MAO{% endblock %}
 {% block page_title %}{% if usuario %}Editar Usuario: {{ usuario.username }}{% else %}Nuevo Usuario{% endif %}{% endblock %}
-{% block page_subtitle %}Configuración de credenciales, datos personales y accesos{% endblock %}
+{% block page_subtitle %}Configuración de credenciales, datos personales, asistencia y accesos{% endblock %}
 
 {% block content %}
+
 <div class="container ot-wrapper" style="max-width: 800px; margin: 0 auto;">
+
     <div class="ot-card" style="padding: 30px;">
-        <form method="POST" novalidate>
+
+        <form method="POST" novalidate id="formUsuario">
+
             {% csrf_token %}
 
+
+            <!-- =====================================================
+                 CREDENCIALES
+            ====================================================== -->
+
             <h3 class="form-section-title">
-                <i class="bi bi-shield-lock"></i> Credenciales de Acceso
+                <i class="bi bi-shield-lock"></i>
+                Credenciales de Acceso
             </h3>
 
             <div class="form-grid">
-                <div>
-                    <label class="form-label-mao">USUARIO (LOGIN)</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="error-text">{{ form.username.errors.0 }}</div>
-                    {% endif %}
-                </div>
 
                 <div>
+
                     <label class="form-label-mao">
-                        CONTRASEÑA
-                        {% if usuario %}
-                            <span class="label-help">(Dejar en blanco para no cambiar)</span>
-                        {% endif %}
+                        USUARIO (LOGIN)
                     </label>
-                    {{ form.password }}
-                    {% if form.password.errors %}
-                        <div class="error-text">{{ form.password.errors.0 }}</div>
+
+                    {{ form.username }}
+
+                    {% if form.username.errors %}
+                        <div class="error-text">
+                            {{ form.username.errors.0 }}
+                        </div>
                     {% endif %}
+
                 </div>
+
+
+                <div>
+
+                    <label class="form-label-mao">
+
+                        CONTRASEÑA
+
+                        {% if usuario %}
+                            <span class="label-help">
+                                (Dejar en blanco para no cambiar)
+                            </span>
+                        {% endif %}
+
+                    </label>
+
+                    {{ form.password }}
+
+                    {% if form.password.errors %}
+                        <div class="error-text">
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
             </div>
 
+
+            <!-- =====================================================
+                 DATOS PERSONALES
+            ====================================================== -->
+
             <h3 class="form-section-title">
-                <i class="bi bi-person-badge"></i> Datos Personales
+                <i class="bi bi-person-badge"></i>
+                Datos Personales
             </h3>
 
             <div class="form-grid">
+
                 <div>
-                    <label class="form-label-mao">NOMBRES</label>
+
+                    <label class="form-label-mao">
+                        NOMBRES
+                    </label>
+
                     {{ form.first_name }}
+
+                    {% if form.first_name.errors %}
+                        <div class="error-text">
+                            {{ form.first_name.errors.0 }}
+                        </div>
+                    {% endif %}
+
                 </div>
 
+
                 <div>
-                    <label class="form-label-mao">APELLIDOS</label>
+
+                    <label class="form-label-mao">
+                        APELLIDOS
+                    </label>
+
                     {{ form.last_name }}
+
+                    {% if form.last_name.errors %}
+                        <div class="error-text">
+                            {{ form.last_name.errors.0 }}
+                        </div>
+                    {% endif %}
+
                 </div>
 
+
                 <div>
-                    <label class="form-label-mao">CÉDULA</label>
+
+                    <label class="form-label-mao">
+                        CÉDULA
+                    </label>
+
                     {{ form.cedula }}
+
                     {% if form.cedula.errors %}
-                        <div class="error-text">{{ form.cedula.errors.0 }}</div>
+                        <div class="error-text">
+                            {{ form.cedula.errors.0 }}
+                        </div>
                     {% endif %}
+
                 </div>
 
+
                 <div>
-                    <label class="form-label-mao">CORREO ELECTRÓNICO</label>
+
+                    <label class="form-label-mao">
+                        CORREO ELECTRÓNICO
+                    </label>
+
                     {{ form.email }}
+
                     {% if form.email.errors %}
-                        <div class="error-text">{{ form.email.errors.0 }}</div>
+                        <div class="error-text">
+                            {{ form.email.errors.0 }}
+                        </div>
                     {% endif %}
+
                 </div>
+
             </div>
 
+
+            <!-- =====================================================
+                 CONTROL DE ASISTENCIA
+            ====================================================== -->
+
             <h3 class="form-section-title">
-                <i class="bi bi-briefcase"></i> Permisos y Asignación
+                <i class="bi bi-clock-history"></i>
+                Control de Asistencia
             </h3>
 
-            <div class="form-grid" style="margin-bottom: 25px;">
+
+            <div
+                class="asistencia-config-card"
+                id="asistenciaConfigCard"
+                data-tiene-pin="{% if asistencia_tiene_pin %}true{% else %}false{% endif %}"
+            >
+
+                <!-- ===============================================
+                     HABILITAR ASISTENCIA
+                ================================================ -->
+
+                <label class="asistencia-toggle-option">
+
+                    <span class="asistencia-checkbox">
+
+                        <input
+                            type="checkbox"
+                            name="asistencia_habilitada"
+                            id="asistenciaHabilitada"
+                            {% if asistencia_habilitada %}
+                                checked
+                            {% endif %}
+                        >
+
+                    </span>
+
+
+                    <span class="asistencia-toggle-content">
+
+                        <span class="asistencia-toggle-title">
+                            Habilitar registro de asistencia
+                        </span>
+
+                        <span class="asistencia-toggle-description">
+                            Permite que este trabajador registre
+                            entrada, inicio de almuerzo, fin de almuerzo
+                            y salida desde las terminales autorizadas de MAO.
+                        </span>
+
+                    </span>
+
+                </label>
+
+
+                <!-- ===============================================
+                     ESTADO DEL PIN
+                ================================================ -->
+
+                <div class="asistencia-pin-status">
+
+                    <div
+                        class="
+                            asistencia-pin-status-icon
+                            {% if asistencia_tiene_pin %}
+                                configurado
+                            {% else %}
+                                sin-configurar
+                            {% endif %}
+                        "
+                    >
+
+                        {% if asistencia_tiene_pin %}
+
+                            <i class="bi bi-shield-check"></i>
+
+                        {% else %}
+
+                            <i class="bi bi-shield-exclamation"></i>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="asistencia-pin-status-content">
+
+                        <div class="asistencia-pin-status-label">
+                            PIN DE ASISTENCIA
+                        </div>
+
+
+                        <div class="asistencia-pin-status-title">
+
+                            {% if asistencia_tiene_pin %}
+
+                                PIN configurado
+
+                            {% else %}
+
+                                PIN no configurado
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="asistencia-pin-status-description">
+
+                            {% if asistencia_tiene_pin %}
+
+                                El trabajador ya dispone de un PIN.
+                                Déjalo en blanco si no deseas modificarlo.
+
+                            {% else %}
+
+                                Para habilitar la asistencia debes asignar
+                                un PIN personal de exactamente 4 dígitos.
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===============================================
+                     PIN
+                ================================================ -->
+
+                <div
+                    id="asistenciaPinCampos"
+                    class="asistencia-pin-campos"
+                >
+
+                    <div class="asistencia-pin-grid">
+
+                        <div>
+
+                            <label class="form-label-mao">
+
+                                {% if asistencia_tiene_pin %}
+
+                                    NUEVO PIN DE ASISTENCIA
+
+                                {% else %}
+
+                                    PIN DE ASISTENCIA
+
+                                {% endif %}
+
+                            </label>
+
+
+                            <div class="pin-input-wrapper">
+
+                                <input
+                                    type="password"
+                                    name="pin_asistencia"
+                                    id="pinAsistencia"
+                                    maxlength="4"
+                                    inputmode="numeric"
+                                    pattern="[0-9]{4}"
+                                    autocomplete="new-password"
+                                    placeholder="4 dígitos"
+                                    aria-label="PIN de asistencia"
+                                >
+
+
+                                <button
+                                    type="button"
+                                    class="btn-ver-pin"
+                                    data-pin-target="pinAsistencia"
+                                    aria-label="Mostrar PIN"
+                                    title="Mostrar PIN"
+                                >
+
+                                    <i class="bi bi-eye"></i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if asistencia_tiene_pin %}
+
+                        <div class="field-help asistencia-pin-help">
+
+                            <i class="bi bi-info-circle"></i>
+
+                            Déjalo vacío para conservar el PIN actual.
+                            Escribe 4 números únicamente si deseas cambiarlo.
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="field-help asistencia-pin-help">
+
+                            <i class="bi bi-info-circle"></i>
+
+                            Solicita al trabajador un PIN personal
+                            de exactamente 4 números.
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ===============================================
+                     ERROR ASISTENCIA
+                ================================================ -->
+
+                {% if asistencia_error %}
+
+                    <div class="asistencia-error">
+
+                        <i class="bi bi-exclamation-circle-fill"></i>
+
+                        <span>
+                            {{ asistencia_error }}
+                        </span>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- ===============================================
+                     SEGURIDAD
+                ================================================ -->
+
+                <div class="asistencia-security-note">
+
+                    <i class="bi bi-lock-fill"></i>
+
+                    <span>
+                        El PIN de asistencia es independiente de la
+                        contraseña del ERP. Se almacena de forma
+                        protegida y no puede visualizarse posteriormente.
+                    </span>
+
+                </div>
+
+
+                <!-- ===============================================
+                     EVIDENCIA
+                ================================================ -->
+
+                <div class="asistencia-evidencia-note">
+
+                    <i class="bi bi-camera-fill"></i>
+
+                    <span>
+                        Cada marcación registra la terminal, sucursal,
+                        fecha y hora. Cuando la cámara está disponible
+                        también se guarda evidencia fotográfica.
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 PERMISOS Y ASIGNACIÓN
+            ====================================================== -->
+
+            <h3 class="form-section-title">
+                <i class="bi bi-briefcase"></i>
+                Permisos y Asignación
+            </h3>
+
+
+            <div
+                class="form-grid"
+                style="margin-bottom: 25px;"
+            >
+
+                <!-- ROLES -->
+
                 <div>
-                    <label class="form-label-mao">ROLES DEL USUARIO</label>
+
+                    <label class="form-label-mao">
+                        ROLES DEL USUARIO
+                    </label>
+
 
                     <div class="roles-grid">
+
                         {% for opcion in form.groups %}
+
                             <label class="rol-option">
+
                                 {{ opcion.tag }}
 
                                 <span class="rol-option-content">
+
                                     <span class="rol-option-name">
                                         {{ opcion.choice_label }}
                                     </span>
+
                                 </span>
+
                             </label>
+
                         {% empty %}
+
                             <span class="muted-text">
                                 No existen roles configurados.
                             </span>
+
                         {% endfor %}
+
                     </div>
 
+
                     {% if form.groups.errors %}
+
                         <div class="error-text">
                             {{ form.groups.errors.0 }}
                         </div>
+
                     {% endif %}
+
 
                     <div class="field-help">
-                        Los permisos del usuario se obtienen automáticamente
-                        de los roles seleccionados.
+
+                        Los permisos del usuario se obtienen
+                        automáticamente de los roles seleccionados.
+
                     </div>
+
                 </div>
+
+
+                <!-- SUCURSAL -->
 
                 <div>
-                    <label class="form-label-mao">SUCURSAL BASE</label>
 
-                    <div class="mao-select" data-target="inputSucursal">
-                        <button type="button" class="mao-select-btn">
-                            <span class="mao-select-text">Seleccionar sucursal</span>
+                    <label class="form-label-mao">
+                        SUCURSAL BASE
+                    </label>
+
+
+                    <div
+                        class="mao-select"
+                        data-target="inputSucursal"
+                    >
+
+                        <button
+                            type="button"
+                            class="mao-select-btn"
+                        >
+
+                            <span class="mao-select-text">
+                                Seleccionar sucursal
+                            </span>
+
                             <i class="bi bi-chevron-down"></i>
+
                         </button>
 
+
                         <div class="mao-select-menu">
+
                             {% for value, label in form.sucursal.field.choices %}
-                                <button type="button"
-                                        class="mao-select-option"
-                                        data-value="{{ value }}"
-                                        data-label="{{ label }}">
-                                    <span>{{ label }}</span>
+
+                                <button
+                                    type="button"
+                                    class="mao-select-option"
+                                    data-value="{{ value }}"
+                                    data-label="{{ label }}"
+                                >
+
+                                    <span>
+                                        {{ label }}
+                                    </span>
+
                                     <i class="bi bi-check2"></i>
+
                                 </button>
+
                             {% endfor %}
+
                         </div>
+
                     </div>
 
-                    <input type="hidden" name="sucursal" id="inputSucursal" value="{{ form.sucursal.value|default:'' }}">
+
+                    <input
+                        type="hidden"
+                        name="sucursal"
+                        id="inputSucursal"
+                        value="{{ form.sucursal.value|default:'' }}"
+                    >
+
 
                     {% if form.sucursal.errors %}
-                        <div class="error-text">{{ form.sucursal.errors.0 }}</div>
+
+                        <div class="error-text">
+                            {{ form.sucursal.errors.0 }}
+                        </div>
+
                     {% endif %}
+
                 </div>
+
             </div>
 
+
+            <!-- =====================================================
+                 PERMISOS ESPECIALES
+            ====================================================== -->
+
             <div class="permisos-especiales">
+
                 <div class="permisos-especiales-header">
+
                     <div class="permisos-especiales-icon">
                         <i class="bi bi-shield-check"></i>
                     </div>
 
+
                     <div>
+
                         <div class="permisos-especiales-title">
                             PERMISOS ESPECIALES
                         </div>
 
                         <div class="permisos-especiales-subtitle">
-                            Excepciones asignadas directamente a este usuario.
+                            Excepciones asignadas directamente
+                            a este usuario.
                         </div>
+
                     </div>
+
                 </div>
 
+
                 <label class="permiso-especial-option">
+
                     <span class="permiso-especial-checkbox">
                         {{ form.puede_cambiar_sucursal }}
                     </span>
 
+
                     <span class="permiso-especial-content">
+
                         <span class="permiso-especial-name">
                             Cambiar de sucursal operativa
                         </span>
 
+
                         <span class="permiso-especial-description">
+
                             Permite seleccionar otra sucursal y operar
                             temporalmente con la información de esa sucursal.
+
                         </span>
 
+
                         {% if usuario and usuario.is_superuser %}
+
                             <span class="permiso-especial-note">
+
                                 <i class="bi bi-info-circle"></i>
-                                Los superusuarios tienen acceso total automáticamente.
+
+                                Los superusuarios tienen acceso total
+                                automáticamente.
+
                             </span>
+
                         {% elif not request.user.is_superuser %}
+
                             <span class="permiso-especial-note">
+
                                 <i class="bi bi-lock"></i>
-                                Solo un superusuario puede modificar este permiso especial.
+
+                                Solo un superusuario puede modificar
+                                este permiso especial.
+
                             </span>
+
                         {% endif %}
+
                     </span>
+
                 </label>
 
+
                 {% if form.puede_cambiar_sucursal.errors %}
+
                     <div class="error-text">
                         {{ form.puede_cambiar_sucursal.errors.0 }}
                     </div>
+
                 {% endif %}
+
             </div>
 
+
+            <!-- =====================================================
+                 ACCIONES
+            ====================================================== -->
+
             <div class="form-actions">
-                <a href="{% url 'lista_usuarios' %}" class="btn-login btn-cancel">
+
+                <a
+                    href="{% url 'lista_usuarios' %}"
+                    class="btn-login btn-cancel"
+                >
                     Cancelar
                 </a>
 
-                <button type="submit" class="btn-login primary">
-                    <i class="bi bi-save2" style="margin-right: 6px;"></i> Guardar Usuario
+
+                <button
+                    type="submit"
+                    class="btn-login primary"
+                >
+
+                    <i
+                        class="bi bi-save2"
+                        style="margin-right: 6px;"
+                    ></i>
+
+                    Guardar Usuario
+
                 </button>
+
             </div>
+
         </form>
 
+
+        <!-- =========================================================
+             ESTADO DE CUENTA
+        ========================================================== -->
+
         {% if usuario %}
+
             <div class="usuario-estado-section">
+
                 <h3 class="form-section-title estado-section-title">
-                    <i class="bi bi-person-check"></i> Estado de la Cuenta
+
+                    <i class="bi bi-person-check"></i>
+
+                    Estado de la Cuenta
+
                 </h3>
 
-                <div class="usuario-estado-card {% if usuario.is_active %}activo{% else %}inactivo{% endif %}">
+
+                <div
+                    class="
+                        usuario-estado-card
+                        {% if usuario.is_active %}
+                            activo
+                        {% else %}
+                            inactivo
+                        {% endif %}
+                    "
+                >
+
                     <div class="usuario-estado-info">
+
                         <div class="usuario-estado-icon">
+
                             {% if usuario.is_active %}
+
                                 <i class="bi bi-check-circle-fill"></i>
+
                             {% else %}
+
                                 <i class="bi bi-slash-circle-fill"></i>
+
                             {% endif %}
+
                         </div>
+
 
                         <div>
-                            <div class="usuario-estado-label">ESTADO ACTUAL</div>
+
+                            <div class="usuario-estado-label">
+                                ESTADO ACTUAL
+                            </div>
+
 
                             <div class="usuario-estado-title">
+
                                 {% if usuario.is_active %}
+
                                     Habilitado
+
                                 {% else %}
+
                                     Deshabilitado
+
                                 {% endif %}
+
                             </div>
+
 
                             <div class="usuario-estado-description">
+
                                 {% if usuario.is_active %}
-                                    El usuario puede iniciar sesión y utilizar
-                                    los accesos que tiene asignados.
+
+                                    El usuario puede iniciar sesión y
+                                    utilizar los accesos que tiene asignados.
+
                                 {% else %}
+
                                     El usuario no puede iniciar sesión.
                                     Sus roles, sucursal y datos se conservan.
+
                                 {% endif %}
+
                             </div>
+
                         </div>
+
                     </div>
 
+
                     <div class="usuario-estado-action">
+
                         {% if usuario.is_active %}
+
                             <div class="usuario-security-buttons">
+
+
+                                <!-- CERRAR SESIONES -->
 
                                 <form
                                     method="POST"
                                     action="{% url 'cerrar_sesiones_usuario' usuario.pk %}"
                                     class="estado-form"
                                 >
+
                                     {% csrf_token %}
+
 
                                     <button
                                         type="submit"
@@ -259,23 +806,37 @@
                                         data-usuario="{{ usuario.username|escape }}"
                                         data-propia="{% if request.user.pk == usuario.pk %}true{% else %}false{% endif %}"
                                     >
+
                                         <i class="bi bi-box-arrow-right"></i>
 
+
                                         {% if request.user.pk == usuario.pk %}
+
                                             Cerrar mis sesiones
+
                                         {% else %}
+
                                             Cerrar sus sesiones
+
                                         {% endif %}
+
                                     </button>
+
                                 </form>
 
+
+                                <!-- DESHABILITAR -->
+
                                 {% if request.user.pk != usuario.pk %}
+
                                     <form
                                         method="POST"
                                         action="{% url 'cambiar_estado_usuario' usuario.pk %}"
                                         class="estado-form"
                                     >
+
                                         {% csrf_token %}
+
 
                                         <button
                                             type="submit"
@@ -283,47 +844,83 @@
                                             data-confirmar-estado
                                             data-usuario="{{ usuario.username|escape }}"
                                         >
+
                                             <i class="bi bi-person-x"></i>
+
                                             Deshabilitar usuario
+
                                         </button>
+
                                     </form>
+
                                 {% else %}
+
                                     <div class="cuenta-propia">
+
                                         <i class="bi bi-shield-check"></i>
+
                                         Tu cuenta actual
+
                                     </div>
+
                                 {% endif %}
+
                             </div>
+
                         {% else %}
+
                             <form
                                 method="POST"
                                 action="{% url 'cambiar_estado_usuario' usuario.pk %}"
                                 class="estado-form"
                             >
+
                                 {% csrf_token %}
+
 
                                 <button
                                     type="submit"
                                     class="btn-estado btn-habilitar"
                                 >
+
                                     <i class="bi bi-person-check"></i>
+
                                     Habilitar usuario
+
                                 </button>
+
                             </form>
+
                         {% endif %}
+
                     </div>
+
                 </div>
+
 
                 <div class="field-help estado-help">
-                    Deshabilitar una cuenta no elimina al usuario ni su historial.
-                    Solo impide que pueda iniciar sesión hasta que vuelva a habilitarse.
+
+                    Deshabilitar una cuenta no elimina al usuario
+                    ni su historial. Solo impide que pueda iniciar
+                    sesión hasta que vuelva a habilitarse.
+
                 </div>
+
             </div>
+
         {% endif %}
+
     </div>
+
 </div>
 
+
 <style>
+
+    /* =====================================================
+       GENERAL
+    ====================================================== */
+
     .form-section-title {
         margin-top: 0;
         margin-bottom: 20px;
@@ -361,6 +958,11 @@
         color: #ff9500;
     }
 
+
+    /* =====================================================
+       INPUTS
+    ====================================================== */
+
     .ot-card input:not([type="checkbox"]):not([type="hidden"]) {
         width: 100%;
         height: 44px;
@@ -382,6 +984,18 @@
         box-shadow: 0 0 0 4px rgba(0,113,227,0.14);
     }
 
+    .ot-card input:disabled {
+        background: #f5f5f7 !important;
+        color: #86868b;
+        cursor: not-allowed;
+        box-shadow: none !important;
+    }
+
+
+    /* =====================================================
+       SELECT
+    ====================================================== */
+
     .mao-select {
         position: relative;
         width: 100%;
@@ -392,7 +1006,11 @@
         height: 46px;
         border-radius: 14px;
         border: 1.5px solid #d2d2d7;
-        background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
+        background: linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fbfbfd 100%
+        );
         color: #1d1d1f;
         font-size: 14px;
         font-weight: 600;
@@ -432,6 +1050,7 @@
         top: calc(100% + 8px);
         left: 0;
         width: 100%;
+        box-sizing: border-box;
         background: rgba(255,255,255,0.96);
         backdrop-filter: blur(18px);
         border: 1px solid rgba(210,210,215,0.9);
@@ -453,6 +1072,7 @@
             opacity: 0;
             transform: translateY(-6px) scale(0.98);
         }
+
         to {
             opacity: 1;
             transform: translateY(0) scale(1);
@@ -493,6 +1113,11 @@
     .mao-select-option.active i {
         display: inline-block;
     }
+
+
+    /* =====================================================
+       ROLES
+    ====================================================== */
 
     .roles-grid {
         display: flex;
@@ -546,6 +1171,246 @@
         color: #86868b;
     }
 
+
+    /* =====================================================
+       ASISTENCIA
+    ====================================================== */
+
+    .asistencia-config-card {
+        margin-bottom: 30px;
+        padding: 18px;
+        border: 1.5px solid #d2d2d7;
+        border-radius: 16px;
+        background: #ffffff;
+    }
+
+    .asistencia-toggle-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        padding: 14px;
+        border: 1px solid #e5e5ea;
+        border-radius: 13px;
+        background: #fbfbfd;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .asistencia-toggle-option:hover {
+        border-color: rgba(0,113,227,0.35);
+        background: rgba(0,113,227,0.025);
+    }
+
+    .asistencia-toggle-option.habilitada {
+        border-color: rgba(52,199,89,0.30);
+        background: rgba(52,199,89,0.035);
+    }
+
+    .asistencia-checkbox {
+        padding-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .asistencia-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #0071e3;
+        cursor: pointer;
+    }
+
+    .asistencia-toggle-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .asistencia-toggle-title {
+        color: #1d1d1f;
+        font-size: 13px;
+        font-weight: 750;
+        line-height: 1.35;
+    }
+
+    .asistencia-toggle-description {
+        margin-top: 4px;
+        color: #6e6e73;
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+
+    /* =====================================================
+       ESTADO PIN
+    ====================================================== */
+
+    .asistencia-pin-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+        padding: 13px 14px;
+        border-radius: 13px;
+        background: #f5f5f7;
+    }
+
+    .asistencia-pin-status-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 38px;
+        font-size: 18px;
+    }
+
+    .asistencia-pin-status-icon.configurado {
+        background: rgba(52,199,89,0.12);
+        color: #248a3d;
+    }
+
+    .asistencia-pin-status-icon.sin-configurar {
+        background: rgba(255,149,0,0.12);
+        color: #b25a00;
+    }
+
+    .asistencia-pin-status-content {
+        min-width: 0;
+    }
+
+    .asistencia-pin-status-label {
+        color: #86868b;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+    }
+
+    .asistencia-pin-status-title {
+        margin-top: 2px;
+        color: #1d1d1f;
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .asistencia-pin-status-description {
+        margin-top: 2px;
+        color: #6e6e73;
+        font-size: 10px;
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       CAMPO PIN
+    ====================================================== */
+
+    .asistencia-pin-campos {
+        margin-top: 17px;
+    }
+
+    .asistencia-pin-campos.oculto {
+        display: none;
+    }
+
+    .asistencia-pin-grid {
+        max-width: 380px;
+    }
+
+    .asistencia-pin-help {
+        margin-top: 9px;
+    }
+
+    .asistencia-pin-help i {
+        margin-right: 4px;
+        color: #0071e3;
+    }
+
+    .pin-input-wrapper {
+        position: relative;
+    }
+
+    .pin-input-wrapper input {
+        padding-right: 46px !important;
+        letter-spacing: 0.16em;
+    }
+
+    .btn-ver-pin {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: none;
+        border-radius: 9px;
+        background: transparent;
+        color: #6e6e73;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .btn-ver-pin:hover {
+        background: #f5f5f7;
+        color: #0071e3;
+    }
+
+
+    /* =====================================================
+       ERROR ASISTENCIA
+    ====================================================== */
+
+    .asistencia-error {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        margin-top: 14px;
+        padding: 11px 13px;
+        border-radius: 11px;
+        background: rgba(255,59,48,0.08);
+        border: 1px solid rgba(255,59,48,0.14);
+        color: #d70015;
+        font-size: 11px;
+        font-weight: 650;
+        line-height: 1.4;
+    }
+
+    .asistencia-error i {
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+
+    /* =====================================================
+       NOTAS ASISTENCIA
+    ====================================================== */
+
+    .asistencia-security-note,
+    .asistencia-evidencia-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 14px;
+        color: #86868b;
+        font-size: 10px;
+        line-height: 1.45;
+    }
+
+    .asistencia-security-note i,
+    .asistencia-evidencia-note i {
+        color: #0071e3;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+
+    /* =====================================================
+       PERMISOS ESPECIALES
+    ====================================================== */
+
     .permisos-especiales {
         margin-top: 4px;
         margin-bottom: 28px;
@@ -566,7 +1431,7 @@
         width: 34px;
         height: 34px;
         border-radius: 10px;
-        background: rgba(0, 113, 227, 0.10);
+        background: rgba(0,113,227,0.10);
         color: #0071e3;
         display: flex;
         align-items: center;
@@ -602,8 +1467,8 @@
     }
 
     .permiso-especial-option:hover {
-        border-color: rgba(0, 113, 227, 0.35);
-        background: rgba(0, 113, 227, 0.025);
+        border-color: rgba(0,113,227,0.35);
+        background: rgba(0,113,227,0.025);
     }
 
     .permiso-especial-checkbox {
@@ -654,6 +1519,11 @@
         line-height: 1.4;
     }
 
+
+    /* =====================================================
+       ESTADO USUARIO
+    ====================================================== */
+
     .usuario-estado-section {
         margin-top: 30px;
         padding-top: 26px;
@@ -676,13 +1546,13 @@
     }
 
     .usuario-estado-card.activo {
-        border-color: rgba(52, 199, 89, 0.30);
-        background: rgba(52, 199, 89, 0.04);
+        border-color: rgba(52,199,89,0.30);
+        background: rgba(52,199,89,0.04);
     }
 
     .usuario-estado-card.inactivo {
-        border-color: rgba(255, 59, 48, 0.25);
-        background: rgba(255, 59, 48, 0.035);
+        border-color: rgba(255,59,48,0.25);
+        background: rgba(255,59,48,0.035);
     }
 
     .usuario-estado-info {
@@ -707,12 +1577,12 @@
 
     .usuario-estado-card.activo .usuario-estado-icon {
         color: #248a3d;
-        background: rgba(52, 199, 89, 0.12);
+        background: rgba(52,199,89,0.12);
     }
 
     .usuario-estado-card.inactivo .usuario-estado-icon {
         color: #d70015;
-        background: rgba(255, 59, 48, 0.10);
+        background: rgba(255,59,48,0.10);
     }
 
     .usuario-estado-label {
@@ -754,12 +1624,12 @@
     }
 
     .btn-sesiones {
-        background: rgba(0, 113, 227, 0.10);
+        background: rgba(0,113,227,0.10);
         color: #0071e3;
     }
 
     .btn-sesiones:hover {
-        background: rgba(0, 113, 227, 0.16);
+        background: rgba(0,113,227,0.16);
         transform: translateY(-1px);
     }
 
@@ -779,22 +1649,22 @@
     }
 
     .btn-deshabilitar {
-        background: rgba(255, 59, 48, 0.10);
+        background: rgba(255,59,48,0.10);
         color: #d70015;
     }
 
     .btn-deshabilitar:hover {
-        background: rgba(255, 59, 48, 0.16);
+        background: rgba(255,59,48,0.16);
         transform: translateY(-1px);
     }
 
     .btn-habilitar {
-        background: rgba(52, 199, 89, 0.12);
+        background: rgba(52,199,89,0.12);
         color: #248a3d;
     }
 
     .btn-habilitar:hover {
-        background: rgba(52, 199, 89, 0.18);
+        background: rgba(52,199,89,0.18);
         transform: translateY(-1px);
     }
 
@@ -816,6 +1686,11 @@
         margin-bottom: 0;
     }
 
+
+    /* =====================================================
+       ACCIONES
+    ====================================================== */
+
     .form-actions {
         display: flex;
         justify-content: flex-end;
@@ -836,9 +1711,31 @@
         margin-top: 5px;
     }
 
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
     @media (max-width: 768px) {
+
         .form-grid {
             grid-template-columns: 1fr;
+        }
+
+        .asistencia-config-card {
+            padding: 14px;
+        }
+
+        .asistencia-toggle-option {
+            padding: 12px;
+        }
+
+        .asistencia-pin-status {
+            align-items: flex-start;
+        }
+
+        .asistencia-pin-grid {
+            max-width: none;
         }
 
         .usuario-estado-card {
@@ -880,106 +1777,638 @@
             width: 100%;
         }
     }
+
 </style>
 
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".mao-select").forEach(function (selectBox) {
-            const targetId = selectBox.dataset.target;
-            const input = document.getElementById(targetId);
-            const btn = selectBox.querySelector(".mao-select-btn");
-            const text = selectBox.querySelector(".mao-select-text");
-            const options = selectBox.querySelectorAll(".mao-select-option");
 
-            function setValue(value, label) {
-                input.value = value;
-                text.textContent = label || "Seleccionar";
-                options.forEach(opt => {
-                    opt.classList.toggle("active", opt.dataset.value === value);
-                });
-            }
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
 
-            let initialValue = input.value || "";
-            let initialOption = Array.from(options).find(opt => opt.dataset.value === initialValue);
+            // =================================================
+            // SELECT DE SUCURSAL
+            // =================================================
 
-            if (initialOption) {
-                setValue(initialOption.dataset.value, initialOption.dataset.label);
-            } else {
-                let firstOption = Array.from(options).find(opt => opt.dataset.value !== "");
-                if (firstOption && !initialValue) {
-                    setValue(firstOption.dataset.value, firstOption.dataset.label);
-                }
-            }
+            document
+                .querySelectorAll(".mao-select")
+                .forEach(
+                    function (selectBox) {
 
-            btn.addEventListener("click", function (e) {
-                e.preventDefault();
+                        const targetId = (
+                            selectBox.dataset.target
+                        );
 
-                document.querySelectorAll(".mao-select").forEach(other => {
-                    if (other !== selectBox) {
-                        other.classList.remove("open");
+                        const input = (
+                            document.getElementById(
+                                targetId
+                            )
+                        );
+
+                        const btn = (
+                            selectBox.querySelector(
+                                ".mao-select-btn"
+                            )
+                        );
+
+                        const text = (
+                            selectBox.querySelector(
+                                ".mao-select-text"
+                            )
+                        );
+
+                        const options = (
+                            selectBox.querySelectorAll(
+                                ".mao-select-option"
+                            )
+                        );
+
+
+                        function setValue(
+                            value,
+                            label
+                        ) {
+
+                            input.value = value;
+
+                            text.textContent = (
+                                label || "Seleccionar"
+                            );
+
+                            options.forEach(
+                                function (opt) {
+
+                                    opt.classList.toggle(
+                                        "active",
+                                        opt.dataset.value === value
+                                    );
+
+                                }
+                            );
+                        }
+
+
+                        const initialValue = (
+                            input.value || ""
+                        );
+
+
+                        const initialOption = (
+                            Array
+                                .from(options)
+                                .find(
+                                    function (opt) {
+
+                                        return (
+                                            opt.dataset.value
+                                            === initialValue
+                                        );
+
+                                    }
+                                )
+                        );
+
+
+                        if (initialOption) {
+
+                            setValue(
+                                initialOption.dataset.value,
+                                initialOption.dataset.label
+                            );
+
+                        } else {
+
+                            const firstOption = (
+                                Array
+                                    .from(options)
+                                    .find(
+                                        function (opt) {
+
+                                            return (
+                                                opt.dataset.value
+                                                !== ""
+                                            );
+
+                                        }
+                                    )
+                            );
+
+
+                            if (
+                                firstOption
+                                && !initialValue
+                            ) {
+
+                                setValue(
+                                    firstOption.dataset.value,
+                                    firstOption.dataset.label
+                                );
+
+                            }
+
+                        }
+
+
+                        btn.addEventListener(
+                            "click",
+                            function (e) {
+
+                                e.preventDefault();
+
+                                document
+                                    .querySelectorAll(".mao-select")
+                                    .forEach(
+                                        function (other) {
+
+                                            if (
+                                                other
+                                                !== selectBox
+                                            ) {
+
+                                                other
+                                                    .classList
+                                                    .remove(
+                                                        "open"
+                                                    );
+
+                                            }
+
+                                        }
+                                    );
+
+
+                                selectBox
+                                    .classList
+                                    .toggle(
+                                        "open"
+                                    );
+
+                            }
+                        );
+
+
+                        options.forEach(
+                            function (option) {
+
+                                option.addEventListener(
+                                    "click",
+                                    function (e) {
+
+                                        e.preventDefault();
+
+                                        setValue(
+                                            option.dataset.value,
+                                            option.dataset.label
+                                        );
+
+                                        selectBox
+                                            .classList
+                                            .remove(
+                                                "open"
+                                            );
+
+                                    }
+                                );
+
+                            }
+                        );
+
                     }
-                });
-
-                selectBox.classList.toggle("open");
-            });
-
-            options.forEach(function (option) {
-                option.addEventListener("click", function (e) {
-                    e.preventDefault();
-                    setValue(option.dataset.value, option.dataset.label);
-                    selectBox.classList.remove("open");
-                });
-            });
-        });
-
-        document.addEventListener("click", function (e) {
-            if (!e.target.closest(".mao-select")) {
-                document.querySelectorAll(".mao-select").forEach(select => {
-                    select.classList.remove("open");
-                });
-            }
-        });
-
-        const botonDeshabilitar = document.querySelector(
-            "[data-confirmar-estado]"
-        );
-
-        if (botonDeshabilitar) {
-            botonDeshabilitar.addEventListener("click", function (e) {
-                const usuario = this.dataset.usuario || "este usuario";
-
-                const confirmado = window.confirm(
-                    '¿Deseas deshabilitar al usuario "' +
-                    usuario +
-                    '"?\n\nSe cerrarán todas sus sesiones y no podrá iniciar sesión hasta que vuelva a habilitarse.'
                 );
 
-                if (!confirmado) {
-                    e.preventDefault();
+
+            document.addEventListener(
+                "click",
+                function (e) {
+
+                    if (
+                        !e.target.closest(
+                            ".mao-select"
+                        )
+                    ) {
+
+                        document
+                            .querySelectorAll(
+                                ".mao-select"
+                            )
+                            .forEach(
+                                function (select) {
+
+                                    select
+                                        .classList
+                                        .remove(
+                                            "open"
+                                        );
+
+                                }
+                            );
+
+                    }
+
                 }
-            });
-        }
+            );
 
-        const botonCerrarSesiones = document.querySelector(
-            "[data-confirmar-sesiones]"
-        );
 
-        if (botonCerrarSesiones) {
-            botonCerrarSesiones.addEventListener("click", function (e) {
-                const usuario = this.dataset.usuario || "este usuario";
-                const esPropia = this.dataset.propia === "true";
+            // =================================================
+            // ASISTENCIA
+            // =================================================
 
-                const mensaje = esPropia
-                    ? "¿Deseas cerrar todas tus sesiones?\n\nTambién se cerrará la sesión que estás usando ahora y tendrás que iniciar sesión nuevamente."
-                    : '¿Deseas cerrar todas las sesiones del usuario "' +
-                      usuario +
-                      '"?\n\nLa cuenta seguirá habilitada y podrá volver a iniciar sesión.';
+            const formUsuario = (
+                document.getElementById(
+                    "formUsuario"
+                )
+            );
 
-                if (!window.confirm(mensaje)) {
-                    e.preventDefault();
+            const asistenciaConfigCard = (
+                document.getElementById(
+                    "asistenciaConfigCard"
+                )
+            );
+
+            const checkAsistencia = (
+                document.getElementById(
+                    "asistenciaHabilitada"
+                )
+            );
+
+            const camposAsistencia = (
+                document.getElementById(
+                    "asistenciaPinCampos"
+                )
+            );
+
+            const pinAsistencia = (
+                document.getElementById(
+                    "pinAsistencia"
+                )
+            );
+
+            const toggleVisual = (
+                document.querySelector(
+                    ".asistencia-toggle-option"
+                )
+            );
+
+            const asistenciaTienePin = (
+                asistenciaConfigCard
+                && asistenciaConfigCard.dataset.tienePin
+                === "true"
+            );
+
+
+            function actualizarEstadoAsistencia() {
+
+                if (
+                    !checkAsistencia
+                    || !camposAsistencia
+                ) {
+
+                    return;
                 }
-            });
+
+
+                const habilitada = (
+                    checkAsistencia.checked
+                );
+
+
+                camposAsistencia
+                    .classList
+                    .toggle(
+                        "oculto",
+                        !habilitada
+                    );
+
+
+                if (toggleVisual) {
+
+                    toggleVisual
+                        .classList
+                        .toggle(
+                            "habilitada",
+                            habilitada
+                        );
+
+                }
+
+
+                if (pinAsistencia) {
+
+                    pinAsistencia.disabled = (
+                        !habilitada
+                    );
+
+                }
+
+            }
+
+
+            if (checkAsistencia) {
+
+                checkAsistencia.addEventListener(
+                    "change",
+                    actualizarEstadoAsistencia
+                );
+
+                actualizarEstadoAsistencia();
+
+            }
+
+
+            // =================================================
+            // PIN SOLO NUMÉRICO Y MÁXIMO 4
+            // =================================================
+
+            if (pinAsistencia) {
+
+                pinAsistencia.addEventListener(
+                    "input",
+                    function () {
+
+                        this.value = (
+                            this.value
+                                .replace(
+                                    /\D/g,
+                                    ""
+                                )
+                                .slice(
+                                    0,
+                                    4
+                                )
+                        );
+
+                    }
+                );
+
+            }
+
+
+            // =================================================
+            // VALIDACIÓN VISUAL ANTES DEL POST
+            // =================================================
+            //
+            // El backend sigue siendo quien tiene la última
+            // palabra. Esto solo mejora la experiencia.
+            // =================================================
+
+            if (formUsuario) {
+
+                formUsuario.addEventListener(
+                    "submit",
+                    function (e) {
+
+                        if (
+                            !checkAsistencia
+                            || !checkAsistencia.checked
+                        ) {
+
+                            return;
+                        }
+
+
+                        const pin = (
+                            pinAsistencia
+                            ? pinAsistencia.value.trim()
+                            : ""
+                        );
+
+
+                        // Usuario que todavía NO tiene PIN:
+                        // debe ingresar uno.
+                        if (
+                            !asistenciaTienePin
+                            && pin.length !== 4
+                        ) {
+
+                            e.preventDefault();
+
+                            window.alert(
+                                "Debes ingresar un PIN de asistencia de exactamente 4 dígitos."
+                            );
+
+                            if (pinAsistencia) {
+                                pinAsistencia.focus();
+                            }
+
+                            return;
+                        }
+
+
+                        // Si ya tiene PIN, dejar vacío está permitido.
+                        // Pero si escribe uno nuevo, debe tener 4.
+                        if (
+                            asistenciaTienePin
+                            && pin !== ""
+                            && pin.length !== 4
+                        ) {
+
+                            e.preventDefault();
+
+                            window.alert(
+                                "El nuevo PIN de asistencia debe tener exactamente 4 dígitos."
+                            );
+
+                            pinAsistencia.focus();
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            // =================================================
+            // MOSTRAR / OCULTAR PIN
+            // =================================================
+
+            document
+                .querySelectorAll(
+                    "[data-pin-target]"
+                )
+                .forEach(
+                    function (boton) {
+
+                        boton.addEventListener(
+                            "click",
+                            function () {
+
+                                const targetId = (
+                                    this.dataset.pinTarget
+                                );
+
+                                const campo = (
+                                    document.getElementById(
+                                        targetId
+                                    )
+                                );
+
+                                if (!campo) {
+                                    return;
+                                }
+
+
+                                const mostrar = (
+                                    campo.type
+                                    === "password"
+                                );
+
+
+                                campo.type = (
+                                    mostrar
+                                    ? "text"
+                                    : "password"
+                                );
+
+
+                                const icono = (
+                                    this.querySelector("i")
+                                );
+
+
+                                if (icono) {
+
+                                    icono.className = (
+                                        mostrar
+                                        ? "bi bi-eye-slash"
+                                        : "bi bi-eye"
+                                    );
+
+                                }
+
+
+                                this.setAttribute(
+                                    "aria-label",
+                                    (
+                                        mostrar
+                                        ? "Ocultar PIN"
+                                        : "Mostrar PIN"
+                                    )
+                                );
+
+                            }
+                        );
+
+                    }
+                );
+
+
+            // =================================================
+            // DESHABILITAR USUARIO
+            // =================================================
+
+            const botonDeshabilitar = (
+                document.querySelector(
+                    "[data-confirmar-estado]"
+                )
+            );
+
+
+            if (botonDeshabilitar) {
+
+                botonDeshabilitar.addEventListener(
+                    "click",
+                    function (e) {
+
+                        const usuario = (
+                            this.dataset.usuario
+                            || "este usuario"
+                        );
+
+
+                        const confirmado = (
+                            window.confirm(
+                                '¿Deseas deshabilitar al usuario "' +
+                                usuario +
+                                '"?\n\n' +
+                                "Se cerrarán todas sus sesiones " +
+                                "y no podrá iniciar sesión hasta " +
+                                "que vuelva a habilitarse."
+                            )
+                        );
+
+
+                        if (!confirmado) {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            // =================================================
+            // CERRAR SESIONES
+            // =================================================
+
+            const botonCerrarSesiones = (
+                document.querySelector(
+                    "[data-confirmar-sesiones]"
+                )
+            );
+
+
+            if (botonCerrarSesiones) {
+
+                botonCerrarSesiones.addEventListener(
+                    "click",
+                    function (e) {
+
+                        const usuario = (
+                            this.dataset.usuario
+                            || "este usuario"
+                        );
+
+
+                        const esPropia = (
+                            this.dataset.propia
+                            === "true"
+                        );
+
+
+                        const mensaje = (
+                            esPropia
+                            ? (
+                                "¿Deseas cerrar todas tus sesiones?"
+                                + "\n\n"
+                                + "También se cerrará la sesión "
+                                + "que estás usando ahora y tendrás "
+                                + "que iniciar sesión nuevamente."
+                            )
+                            : (
+                                '¿Deseas cerrar todas las sesiones '
+                                + 'del usuario "'
+                                + usuario
+                                + '"?'
+                                + "\n\n"
+                                + "La cuenta seguirá habilitada "
+                                + "y podrá volver a iniciar sesión."
+                            )
+                        );
+
+
+                        if (
+                            !window.confirm(
+                                mensaje
+                            )
+                        ) {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+                );
+
+            }
+
         }
-    });
+    );
+
 </script>
+
 {% endblock %}

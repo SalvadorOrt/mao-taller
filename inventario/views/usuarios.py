@@ -11,7 +11,11 @@ from accesos.permissions import permiso_requerido
 from accesos.session_utils import (
     cerrar_sesiones_de_usuario,
 )
+from django.db import transaction
 
+from asistencia.models import (
+    ConfiguracionAsistenciaUsuario,
+)
 from inventario.forms import UsuarioForm
 from inventario.models import Usuario
 
@@ -57,8 +61,6 @@ def lista_usuarios(request):
             "usuarios": usuarios,
         },
     )
-
-
 # =========================================================
 # CREAR / EDITAR USUARIO
 # =========================================================
@@ -94,10 +96,11 @@ def gestionar_usuario(
         )
 
     # =====================================================
-    # EDITAR
+    # USUARIO
     # =====================================================
 
     if pk:
+
         usuario = get_object_or_404(
             Usuario,
             pk=pk,
@@ -108,11 +111,8 @@ def gestionar_usuario(
             "fue actualizado."
         )
 
-    # =====================================================
-    # CREAR
-    # =====================================================
-
     else:
+
         usuario = None
 
         mensaje_exito = (
@@ -121,24 +121,75 @@ def gestionar_usuario(
         )
 
     # =====================================================
+    # CONFIGURACIÓN ACTUAL DE ASISTENCIA
+    # =====================================================
+
+    configuracion_asistencia = None
+
+    if usuario is not None:
+
+        configuracion_asistencia = (
+            ConfiguracionAsistenciaUsuario.objects
+            .filter(
+                usuario=usuario
+            )
+            .first()
+        )
+
+    asistencia_tiene_pin = bool(
+        configuracion_asistencia
+        and configuracion_asistencia.tiene_pin
+    )
+
+    asistencia_error = None
+
+    # =====================================================
     # POST
     # =====================================================
 
     if request.method == "POST":
+
         form = UsuarioForm(
             request.POST,
             instance=usuario,
         )
 
+        # =================================================
+        # ASISTENCIA
+        # =================================================
+
+        asistencia_habilitada = (
+            request.POST.get(
+                "asistencia_habilitada"
+            )
+            == "on"
+        )
+
+        pin_asistencia = (
+            request.POST.get(
+                "pin_asistencia",
+                "",
+            )
+            .strip()
+        )
+
+        # =================================================
+        # VALIDAR FORMULARIO
+        # =================================================
+
         if form.is_valid():
 
-            # Un usuario nuevo debe tener contraseña.
+            # ---------------------------------------------
+            # USUARIO NUEVO DEBE TENER CONTRASEÑA ERP
+            # ---------------------------------------------
+
             if (
                 not pk
                 and not form.cleaned_data.get(
                     "password"
                 )
             ):
+
                 form.add_error(
                     "password",
                     (
@@ -148,24 +199,155 @@ def gestionar_usuario(
                 )
 
             else:
-                form.save()
 
-                messages.success(
-                    request,
-                    mensaje_exito,
-                )
+                # =========================================
+                # VALIDAR ASISTENCIA
+                # =========================================
 
-                return redirect(
-                    "lista_usuarios"
-                )
+                if asistencia_habilitada:
+
+                    # -------------------------------------
+                    # SE INGRESÓ UN PIN
+                    # -------------------------------------
+
+                    if pin_asistencia:
+
+                        if (
+                            not pin_asistencia.isdigit()
+                            or len(
+                                pin_asistencia
+                            ) != 4
+                        ):
+
+                            asistencia_error = (
+                                "El PIN de asistencia debe "
+                                "tener exactamente 4 dígitos."
+                            )
+
+                    # -------------------------------------
+                    # NO SE INGRESÓ PIN
+                    # -------------------------------------
+                    #
+                    # Si ya tenía uno, puede dejarlo vacío.
+                    #
+                    # Si todavía no tiene PIN, es obligatorio.
+                    # -------------------------------------
+
+                    elif not asistencia_tiene_pin:
+
+                        asistencia_error = (
+                            "Debes configurar un PIN "
+                            "de asistencia de 4 dígitos."
+                        )
+
+                # =========================================
+                # GUARDAR
+                # =========================================
+
+                if asistencia_error is None:
+
+                    with transaction.atomic():
+
+                        # ---------------------------------
+                        # GUARDAR USUARIO
+                        # ---------------------------------
+
+                        usuario_guardado = (
+                            form.save()
+                        )
+
+                        # ---------------------------------
+                        # ASISTENCIA HABILITADA
+                        # ---------------------------------
+
+                        if asistencia_habilitada:
+
+                            (
+                                config_asistencia,
+                                _
+                            ) = (
+                                ConfiguracionAsistenciaUsuario
+                                .objects
+                                .get_or_create(
+                                    usuario=usuario_guardado,
+                                    defaults={
+                                        "habilitado": True,
+                                    },
+                                )
+                            )
+
+                            config_asistencia.habilitado = (
+                                True
+                            )
+
+                            # ---------------------------------
+                            # NUEVO PIN
+                            # ---------------------------------
+                            #
+                            # Solo se modifica si el campo
+                            # contiene un nuevo PIN.
+                            # ---------------------------------
+
+                            if pin_asistencia:
+
+                                config_asistencia.set_pin(
+                                    pin_asistencia
+                                )
+
+                            config_asistencia.save()
+
+                        # ---------------------------------
+                        # ASISTENCIA DESHABILITADA
+                        # ---------------------------------
+
+                        else:
+
+                            config_asistencia = (
+                                ConfiguracionAsistenciaUsuario
+                                .objects
+                                .filter(
+                                    usuario=usuario_guardado
+                                )
+                                .first()
+                            )
+
+                            if (
+                                config_asistencia
+                                is not None
+                            ):
+
+                                config_asistencia.habilitado = (
+                                    False
+                                )
+
+                                config_asistencia.save(
+                                    update_fields=[
+                                        "habilitado",
+                                    ]
+                                )
+
+                    messages.success(
+                        request,
+                        mensaje_exito,
+                    )
+
+                    return redirect(
+                        "lista_usuarios"
+                    )
 
     # =====================================================
     # GET
     # =====================================================
 
     else:
+
         form = UsuarioForm(
             instance=usuario,
+        )
+
+        asistencia_habilitada = bool(
+            configuracion_asistencia
+            and configuracion_asistencia.habilitado
         )
 
     # =====================================================
@@ -178,10 +360,20 @@ def gestionar_usuario(
         {
             "form": form,
             "usuario": usuario,
+
+            "asistencia_habilitada": (
+                asistencia_habilitada
+            ),
+
+            "asistencia_tiene_pin": (
+                asistencia_tiene_pin
+            ),
+
+            "asistencia_error": (
+                asistencia_error
+            ),
         },
     )
-
-
 # =========================================================
 # HABILITAR / DESHABILITAR USUARIO
 # =========================================================

@@ -147,8 +147,7 @@ class ConfiguracionAsistenciaUsuario(
         pin,
     ):
         """
-        Configura un PIN de asistencia
-        de exactamente 6 dígitos.
+        "Configura un PIN de asistencia de 4 dígitos."
         """
 
         pin = str(
@@ -157,11 +156,10 @@ class ConfiguracionAsistenciaUsuario(
 
         if (
             not pin.isdigit()
-            or len(pin) != 6
+            or len(pin) != 4
         ):
             raise ValidationError(
-                "El PIN de asistencia debe "
-                "tener exactamente 6 dígitos."
+                "El PIN de asistencia debe tener exactamente 4 dígitos."
             )
 
         self.pin_hash = make_password(
