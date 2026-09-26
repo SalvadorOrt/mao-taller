@@ -1579,15 +1579,6 @@ def detalle_orden(request, pk):
     )
 
 
-
-    es_administrador = (
-    request.user.is_superuser
-    or request.user.groups.filter(
-        name="Administrador"
-    ).exists()
-)
-
-
     puede_reabrir = (
         orden.estado
         in [
@@ -1596,15 +1587,15 @@ def detalle_orden(request, pk):
             "ANULADA",
         ]
         and (
-            es_administrador
+            request.user.is_superuser
             or (
-                es_su_sucursal
-                and request.user.has_perm(
+                request.user.has_perm(
                     "ordenes_de_trabajo.change_ordentrabajo"
                 )
                 and request.user.has_perm(
                     "ordenes_de_trabajo.can_reopen_orden"
                 )
+                and es_su_sucursal
             )
         )
     )
