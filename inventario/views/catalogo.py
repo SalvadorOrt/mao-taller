@@ -1463,6 +1463,9 @@ def catalogo_atributos_categoria(
 @permiso_requerido(
     "inventario.add_producto"
 )
+@permiso_requerido(
+    "inventario.add_codigoproducto"
+)
 def catalogo_crear(
     request,
 ):
@@ -2108,6 +2111,9 @@ def catalogo_crear(
 @permiso_requerido(
     "inventario.change_producto"
 )
+@permiso_requerido(
+    "inventario.change_codigoproducto"
+)
 def catalogo_editar_codigo(
     request,
     codigo_id,
@@ -2255,11 +2261,15 @@ def catalogo_editar_codigo(
                                 .instance
                                 .pk
                             ):
-                                (
-                                    codigo_form
-                                    .instance
-                                    .delete()
-                                )
+
+                                if not request.user.has_perm(
+                                    "inventario.delete_codigoproducto"
+                                ):
+                                    raise ValidationError(
+                                        "No tienes permiso para eliminar códigos de producto."
+                                    )
+
+                                codigo_form.instance.delete()
 
                             continue
 

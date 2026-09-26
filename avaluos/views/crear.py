@@ -317,7 +317,27 @@ def iniciar_avaluo(request, orden_id):
             },
         )
     )
+    # =====================================================
+    # AVALÚO YA EXISTENTE
+    # =====================================================
 
+    if (
+        not creado
+        and not request.user.has_perm(
+            "avaluos.change_avaluomecanico"
+        )
+    ):
+        messages.info(
+            request,
+            "Esta orden ya tiene un avalúo registrado. "
+            "No tienes permiso para modificarlo.",
+        )
+
+        return redirect(
+            "avaluos:detalle_avaluo_paso",
+            pk=avaluo.pk,
+            paso=1,
+        )
     # =====================================================
     # COMPLETAR DATOS DEL AVALÚO EXISTENTE
     # =====================================================
