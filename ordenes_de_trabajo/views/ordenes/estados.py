@@ -1,6 +1,8 @@
-from django.shortcuts import  redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, permission_required
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
+
+from accesos.permissions import permiso_requerido
 
 from ...models import (
     OrdenTrabajo
@@ -12,7 +14,9 @@ from ..utils import (
 # =========================================================
 # ACCIONES DE ESTADO (Cerrar / Anular / Reabrir)
 # =========================================================
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.change_ordentrabajo"
+)
 def cerrar_orden(request, pk):
     if request.method != "POST":
         messages.error(request, "Método no permitido. Debe usar el botón oficial del sistema.")
@@ -40,7 +44,9 @@ def cerrar_orden(request, pk):
     messages.success(request, f"La orden {orden.numero_orden} ha sido cerrada.")
     return redirect("detalle_orden", pk=pk)
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.change_ordentrabajo"
+)
 def anular_orden(request, pk):
     if request.method == "POST":
         orden = get_object_or_404(OrdenTrabajo, pk=pk)
@@ -60,8 +66,13 @@ def anular_orden(request, pk):
         
     return redirect("detalle_orden", pk=pk)
 
-@login_required
-@permission_required('ordenes_de_trabajo.can_reopen_orden', raise_exception=True)
+@permiso_requerido(
+    "ordenes_de_trabajo.change_ordentrabajo"
+)
+@permission_required(
+    "ordenes_de_trabajo.can_reopen_orden",
+    raise_exception=True
+)
 def reabrir_orden(request, pk):
     if request.method == "POST":
         orden = get_object_or_404(OrdenTrabajo, pk=pk)

@@ -1,635 +1,1267 @@
 {% extends "base.html" %}
+
 {% load static %}
+
 {% load l10n %}
+
 {% load humanize %}
 
+
+
 {% block title %}Factura {{ factura.numero_factura }} | MAO{% endblock %}
+
 {% block page_title %}Factura {{ factura.numero_factura }}{% endblock %}
+
 {% block page_subtitle %}Detalle de factura electrónica{% endblock %}
+
+
 
 {% block content %}
 
+
+
 <!--
-    Se mantienen los estilos propios de facturación para los modales
-    y se reutiliza detalle_orden.css para que esta vista tenga el
-    MISMO lenguaje visual que el detalle de una OT.
+
+    Se mantienen los estilos propios de facturación para los modales
+
+    y se reutiliza detalle_orden.css para que esta vista tenga el
+
+    MISMO lenguaje visual que el detalle de una OT.
+
 -->
+
 <link rel="stylesheet" href="{% static 'facturacion/css/detalle_factura.css' %}">
+
 <link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
 
+
+
 <style>
+
 /* =========================================================
-   AJUSTES EXCLUSIVOS DE FACTURA
-   La base visual viene de detalle_orden.css
+
+   AJUSTES EXCLUSIVOS DE FACTURA
+
+   La base visual viene de detalle_orden.css
+
 ========================================================= */
+
+
 
 .factura-info-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
 }
+
+
 
 .factura-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    flex-wrap: wrap;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 6px;
+
+    flex-wrap: wrap;
+
 }
+
+
 
 .factura-status-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
 }
+
+
 
 .factura-meta-line {
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-top: 4px;
-    line-height: 1.35;
+
+    font-size: 0.72rem;
+
+    color: var(--muted);
+
+    margin-top: 4px;
+
+    line-height: 1.35;
+
 }
+
+
 
 .factura-small {
-    margin-top: 3px;
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.35;
-    overflow-wrap: anywhere;
+
+    margin-top: 3px;
+
+    font-size: 0.72rem;
+
+    color: var(--muted);
+
+    line-height: 1.35;
+
+    overflow-wrap: anywhere;
+
 }
+
+
 
 .factura-placa {
-    color: var(--accent);
-    letter-spacing: 0.05em;
-    font-size: 1rem;
-    font-weight: 800;
+
+    color: var(--accent);
+
+    letter-spacing: 0.05em;
+
+    font-size: 1rem;
+
+    font-weight: 800;
+
 }
+
+
 
 .factura-mini-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 8px;
+
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 8px;
+
+    margin-top: 8px;
+
 }
+
+
 
 .factura-mini-box {
-    background: #f5f5f7;
-    border: 1px solid #e6e8ec;
-    border-radius: 8px;
-    padding: 7px 8px;
+
+    background: #f5f5f7;
+
+    border: 1px solid #e6e8ec;
+
+    border-radius: 8px;
+
+    padding: 7px 8px;
+
 }
+
+
 
 .factura-mini-label {
-    font-size: 0.60rem;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 3px;
-    line-height: 1;
+
+    font-size: 0.60rem;
+
+    font-weight: 700;
+
+    color: var(--muted);
+
+    text-transform: uppercase;
+
+    margin-bottom: 3px;
+
+    line-height: 1;
+
 }
+
+
 
 .factura-mini-value {
-    font-size: 0.76rem;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.15;
+
+    font-size: 0.76rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+    line-height: 1.15;
+
 }
+
+
 
 .factura-context-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 10px;
+
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 8px;
+
+    margin-top: 10px;
+
 }
+
+
 
 .factura-context-box {
-    background: #f7f8fa;
-    border-radius: 8px;
-    padding: 9px 10px;
-    border-left: 3px solid var(--accent);
-    min-height: 48px;
+
+    background: #f7f8fa;
+
+    border-radius: 8px;
+
+    padding: 9px 10px;
+
+    border-left: 3px solid var(--accent);
+
+    min-height: 48px;
+
 }
+
+
 
 .factura-context-box.success {
-    border-left-color: var(--success);
+
+    border-left-color: var(--success);
+
 }
+
+
 
 .factura-context-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 4px;
+
+    font-size: 0.62rem;
+
+    font-weight: 700;
+
+    color: var(--muted);
+
+    text-transform: uppercase;
+
+    margin-bottom: 4px;
+
 }
+
+
 
 .factura-context-value {
-    font-size: 0.74rem;
-    font-weight: 600;
-    color: var(--text);
+
+    font-size: 0.74rem;
+
+    font-weight: 600;
+
+    color: var(--text);
+
 }
+
+
 
 .factura-readonly-table {
-    min-width: 900px;
+
+    min-width: 900px;
+
 }
+
+
 
 .factura-readonly-table tbody td {
-    font-size: 0.77rem;
-    color: var(--text);
-    line-height: 1.25;
+
+    font-size: 0.77rem;
+
+    color: var(--text);
+
+    line-height: 1.25;
+
 }
+
+
 
 .factura-readonly-table tbody td strong {
-    font-weight: 600;
+
+    font-weight: 600;
+
 }
+
+
 
 .factura-empty-cell {
-    text-align: center;
-    color: var(--muted) !important;
-    padding: 16px 8px !important;
+
+    text-align: center;
+
+    color: var(--muted) !important;
+
+    padding: 16px 8px !important;
+
 }
+
+
 
 .factura-procedimientos {
-    margin-top: 4px;
-    padding-left: 10px;
-    color: var(--muted);
-    font-size: 0.69rem;
-    line-height: 1.35;
+
+    margin-top: 4px;
+
+    padding-left: 10px;
+
+    color: var(--muted);
+
+    font-size: 0.69rem;
+
+    line-height: 1.35;
+
 }
+
+
 
 .factura-table-footer {
-    margin-top: 8px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
+
+    margin-top: 8px;
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
 }
+
+
 
 .factura-total-caption {
-    margin-top: 4px;
-    color: var(--muted);
-    font-size: 0.67rem;
-    line-height: 1.25;
+
+    margin-top: 4px;
+
+    color: var(--muted);
+
+    font-size: 0.67rem;
+
+    line-height: 1.25;
+
 }
+
+
 
 .factura-total-progress {
-    height: 4px;
-    width: 100%;
-    background: #e7e8ec;
-    border-radius: 999px;
-    overflow: hidden;
-    margin-top: 7px;
+
+    height: 4px;
+
+    width: 100%;
+
+    background: #e7e8ec;
+
+    border-radius: 999px;
+
+    overflow: hidden;
+
+    margin-top: 7px;
+
 }
+
+
 
 .factura-total-progress > span {
-    display: block;
-    height: 100%;
-    background: var(--accent);
-    border-radius: inherit;
+
+    display: block;
+
+    height: 100%;
+
+    background: var(--accent);
+
+    border-radius: inherit;
+
 }
+
+
 
 .factura-total-final {
-    grid-column: 1 / -1;
-    min-height: 52px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+
+    grid-column: 1 / -1;
+
+    min-height: 52px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
 }
+
+
 
 .factura-total-final .total-value {
-    font-size: 1.05rem;
+
+    font-size: 1.05rem;
+
 }
+
+
 
 .factura-sri-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
 }
+
+
 
 .factura-wide {
-    grid-column: 1 / -1;
+
+    grid-column: 1 / -1;
+
 }
+
+
 
 .factura-clave {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    word-break: break-all;
-    font-size: 0.72rem;
+
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    word-break: break-all;
+
+    font-size: 0.72rem;
+
 }
+
+
 
 .factura-alert {
-    padding: 9px 10px;
-    border-radius: 9px;
-    font-size: 0.74rem;
-    line-height: 1.4;
-    margin-bottom: 8px;
+
+    padding: 9px 10px;
+
+    border-radius: 9px;
+
+    font-size: 0.74rem;
+
+    line-height: 1.4;
+
+    margin-bottom: 8px;
+
 }
+
+
 
 .factura-alert.error {
-    background: #fff2f2;
-    border: 1px solid #ffd6d6;
-    color: #d70015;
+
+    background: #fff2f2;
+
+    border: 1px solid #ffd6d6;
+
+    color: #d70015;
+
 }
+
+
 
 .factura-alert.info {
-    background: #eef6ff;
-    border: 1px solid #cfe5ff;
-    color: #175cd3;
+
+    background: #eef6ff;
+
+    border: 1px solid #cfe5ff;
+
+    color: #175cd3;
+
 }
+
+
 
 .btn-login.warning {
-    background: #fff8e5;
-    border-color: #ffe0a3;
-    color: #9a6700;
+
+    background: #fff8e5;
+
+    border-color: #ffe0a3;
+
+    color: #9a6700;
+
 }
+
+
 
 .btn-login.danger {
-    background: #fff2f2;
-    border-color: #ffd6d6;
-    color: #d70015;
+
+    background: #fff2f2;
+
+    border-color: #ffd6d6;
+
+    color: #d70015;
+
 }
+
+
 
 .btn-login.disabled,
+
 .btn-login:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    pointer-events: none;
+
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+    pointer-events: none;
+
 }
+
+
 
 .factura-status-borrador {
-    background: #f5f5f7;
-    color: var(--muted);
-    border-color: var(--border);
+
+    background: #f5f5f7;
+
+    color: var(--muted);
+
+    border-color: var(--border);
+
 }
+
+
 
 .factura-status-generado,
+
 .factura-status-firmado {
-    background: #eef6ff;
-    color: #0062c4;
-    border-color: #cfe5ff;
+
+    background: #eef6ff;
+
+    color: #0062c4;
+
+    border-color: #cfe5ff;
+
 }
+
+
 
 .factura-status-recibido {
-    background: #fff5cc;
-    color: #9a6700;
-    border-color: #ffe0a3;
+
+    background: #fff5cc;
+
+    color: #9a6700;
+
+    border-color: #ffe0a3;
+
 }
+
+
 
 .factura-status-autorizado {
-    background: #e5fbe4;
-    color: #1f8939;
-    border-color: #b7efc5;
+
+    background: #e5fbe4;
+
+    color: #1f8939;
+
+    border-color: #b7efc5;
+
 }
+
+
 
 .factura-status-rechazado {
-    background: #ffebe9;
-    color: var(--danger);
-    border-color: #ffd6d6;
+
+    background: #ffebe9;
+
+    color: var(--danger);
+
+    border-color: #ffd6d6;
+
 }
+
+
 
 @media (max-width: 992px) {
-    .factura-info-grid,
-    .factura-sri-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+
+    .factura-info-grid,
+
+    .factura-sri-grid {
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    }
+
 }
+
+
 
 @media (max-width: 576px) {
-    .factura-info-grid,
-    .factura-sri-grid,
-    .factura-context-row,
-    .factura-mini-grid {
-        grid-template-columns: 1fr;
-    }
 
-    .factura-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
+    .factura-info-grid,
 
-    .factura-actions .btn-login {
-        flex: 1 1 auto;
-    }
+    .factura-sri-grid,
+
+    .factura-context-row,
+
+    .factura-mini-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+
+    .factura-actions {
+
+        width: 100%;
+
+        justify-content: flex-start;
+
+    }
+
+
+
+    .factura-actions .btn-login {
+
+        flex: 1 1 auto;
+
+    }
+
 }
+
+
+
 
 
 /* =========================================================
-   RESUMEN ECONÓMICO — MISMO COMPONENTE QUE DETALLE DE OT
+
+   RESUMEN ECONÓMICO — MISMO COMPONENTE QUE DETALLE DE OT
+
 ========================================================= */
+
 .factura-resumen-economico .totals-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    align-items: start;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 10px;
+
+    align-items: start;
+
 }
+
+
 
 .factura-resumen-economico .total-box {
-    min-width: 0;
-    min-height: 0;
-    height: auto;
-    padding: 11px 13px;
-    align-self: start;
+
+    min-width: 0;
+
+    min-height: 0;
+
+    height: auto;
+
+    padding: 11px 13px;
+
+    align-self: start;
+
 }
+
+
 
 .factura-resumen-economico .total-box.final {
-    grid-column: 1 / -1;
-    width: 100%;
-    padding: 12px 14px;
+
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    padding: 12px 14px;
+
 }
+
+
 
 .factura-resumen-economico .total-label {
-    margin-bottom: 4px;
-    font-size: 11px;
-    line-height: 1.2;
+
+    margin-bottom: 4px;
+
+    font-size: 11px;
+
+    line-height: 1.2;
+
 }
+
+
 
 .factura-resumen-economico .total-value {
-    font-size: 18px;
-    line-height: 1.2;
+
+    font-size: 18px;
+
+    line-height: 1.2;
+
 }
+
+
 
 .factura-resumen-economico .total-box-composicion {
-    display: flex;
-    flex-direction: column;
+
+    display: flex;
+
+    flex-direction: column;
+
 }
+
+
 
 .factura-resumen-economico .total-meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-    color: #6e6e73;
-    font-size: 11px;
-    line-height: 1.3;
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 4px;
+
+    margin-top: 6px;
+
+    color: #6e6e73;
+
+    font-size: 11px;
+
+    line-height: 1.3;
+
 }
+
+
 
 .factura-resumen-economico .total-meta strong {
-    color: #1d1d1f;
-    font-weight: 700;
+
+    color: #1d1d1f;
+
+    font-weight: 700;
+
 }
+
+
 
 .factura-resumen-economico .total-separador {
-    color: #b0b0b5;
+
+    color: #b0b0b5;
+
 }
+
+
 
 .factura-resumen-economico .total-barra {
-    width: 100%;
-    height: 5px;
-    margin-top: 7px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: #e8e8ed;
+
+    width: 100%;
+
+    height: 5px;
+
+    margin-top: 7px;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background: #e8e8ed;
+
 }
+
+
 
 .factura-resumen-economico .total-barra-valor {
-    width: 0;
-    height: 100%;
-    border-radius: inherit;
-    background: #0a74da;
-    transition: width 0.2s ease;
+
+    width: 0;
+
+    height: 100%;
+
+    border-radius: inherit;
+
+    background: #0a74da;
+
+    transition: width 0.2s ease;
+
 }
+
+
 
 .factura-resumen-economico .total-box-moi .total-barra-valor {
-    background: #34c759;
+
+    background: #34c759;
+
 }
+
+
 
 .factura-resumen-economico .total-box-moe .total-barra-valor {
-    background: #ff9500;
+
+    background: #ff9500;
+
 }
+
+
 
 .factura-resumen-economico .descuento-segmentado {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-    padding: 3px;
-    margin-top: 5px;
-    border-radius: 9px;
-    background: #ececf1;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 3px;
+
+    padding: 3px;
+
+    margin-top: 5px;
+
+    border-radius: 9px;
+
+    background: #ececf1;
+
 }
+
+
 
 .factura-resumen-economico .descuento-opcion {
-    border: 0;
-    border-radius: 7px;
-    padding: 7px 8px;
-    background: transparent;
-    color: #666;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: default;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    padding: 7px 8px;
+
+    background: transparent;
+
+    color: #666;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: default;
+
 }
+
+
 
 .factura-resumen-economico .descuento-opcion.activo {
-    background: #ffffff;
-    color: #1d1d1f;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+
+    background: #ffffff;
+
+    color: #1d1d1f;
+
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+
 }
+
+
 
 .factura-resumen-economico .descuento-opcion:disabled {
-    opacity: 1;
+
+    opacity: 1;
+
 }
+
+
 
 .factura-resumen-economico .descuento-lectura {
-    width: 100%;
-    height: 38px;
-    margin-top: 5px;
-    padding: 7px 10px;
-    border: 1px solid #dcdce1;
-    border-radius: 8px;
-    background: #fff;
-    color: #1d1d1f;
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
+
+    width: 100%;
+
+    height: 38px;
+
+    margin-top: 5px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #dcdce1;
+
+    border-radius: 8px;
+
+    background: #fff;
+
+    color: #1d1d1f;
+
+    font-size: 0.8rem;
+
+    display: flex;
+
+    align-items: center;
+
 }
+
+
 
 .factura-resumen-economico .descuento-resumen {
-    margin-top: 5px;
-    padding: 6px 8px;
-    border-radius: 7px;
-    background: rgba(0, 0, 0, 0.035);
-    color: #666;
-    font-size: 12px;
-    line-height: 1.25;
+
+    margin-top: 5px;
+
+    padding: 6px 8px;
+
+    border-radius: 7px;
+
+    background: rgba(0, 0, 0, 0.035);
+
+    color: #666;
+
+    font-size: 12px;
+
+    line-height: 1.25;
+
 }
+
+
 
 .factura-resumen-economico .descuento-resumen strong {
-    color: #333;
+
+    color: #333;
+
 }
+
+
 
 .factura-resumen-economico .descuento-total-valor {
-    margin-top: 5px;
+
+    margin-top: 5px;
+
 }
+
+
 
 .factura-resumen-economico .iva-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    font-size: 12px;
-    line-height: 1.2;
-    cursor: default;
-    opacity: 0.7;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-top: 6px;
+
+    font-size: 12px;
+
+    line-height: 1.2;
+
+    cursor: default;
+
+    opacity: 0.7;
+
 }
+
+
 
 .factura-resumen-economico .iva-checkbox-label input {
-    margin: 0;
+
+    margin: 0;
+
 }
+
+
 
 @media (max-width: 900px) {
-    .factura-resumen-economico .totals-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+
+    .factura-resumen-economico .totals-grid {
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    }
+
 }
+
+
 
 @media (max-width: 600px) {
-    .factura-resumen-economico .totals-grid {
-        grid-template-columns: 1fr;
-    }
 
-    .factura-resumen-economico .total-box.final {
-        grid-column: auto;
-    }
+    .factura-resumen-economico .totals-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+
+    .factura-resumen-economico .total-box.final {
+
+        grid-column: auto;
+
+    }
+
 }
+
 </style>
+
+
 
 <div class="container ot-wrapper">
 
-    <!-- =====================================================
-         ESTADO DE FACTURA
-    ====================================================== -->
-    <div
-        class="ot-card ot-header"
-        style="margin-bottom:15px;align-items:center;padding:15px;"
-    >
-        <div class="factura-status-row">
-            <span
-                style="font-size:14px;font-weight:700;color:var(--text);"
-            >
-                Estado de Factura:
-            </span>
-
-            <span class="ot-badge factura-status-{{ factura.estado|lower }}">
-                {{ factura.get_estado_display }}
-            </span>
-        </div>
-
-        <a
-            href="{% url 'facturacion:dashboard' %}"
-            class="btn-login"
-            style="background:#f5f5f7;color:var(--text);"
-        >
-            <i class="bi bi-arrow-left" style="margin-right:5px;"></i>
-            Volver a facturación
-        </a>
-    </div>
 
 
-    <!-- =====================================================
-         ESTADO SRI
-    ====================================================== -->
-    <div class="ot-card">
-        <div class="section-title">Estado SRI</div>
+    <!-- =====================================================
 
-        {% if factura.mensaje_sri and factura.estado == "RECHAZADO" %}
-            <div class="factura-alert error">
-                <strong>Mensaje del SRI:</strong>
-                {{ factura.mensaje_sri }}
-            </div>
-        {% endif %}
+         ESTADO DE FACTURA
 
-        <div class="info-grid factura-sri-grid">
-            <div class="info-box">
-                <div class="info-label">Estado</div>
-                <div class="info-value">
-                    {{ factura.get_estado_display }}
-                </div>
-            </div>
+    ====================================================== -->
 
-            <div class="info-box">
-                <div class="info-label">Ambiente</div>
-                <div class="info-value">
-                    {{ factura.get_ambiente_display }}
-                </div>
-            </div>
+    <div
 
-            <div class="info-box">
-                <div class="info-label">Número de factura</div>
-                <div class="info-value">
-                    {{ factura.numero_factura }}
-                </div>
-            </div>
+        class="ot-card ot-header"
 
-            <div class="info-box">
-                <div class="info-label">Tipo de emisión</div>
-                <div class="info-value">
-                    {{ factura.get_tipo_emision_display }}
-                </div>
-            </div>
+        style="margin-bottom:15px;align-items:center;padding:15px;"
 
-            <div class="info-box factura-wide">
-                <div class="info-label">Clave de acceso</div>
-                <div class="info-value factura-clave">
-                    {{ factura.clave_acceso|default:"Todavía no generada" }}
-                </div>
-            </div>
+    >
 
-            <div class="info-box factura-wide">
-                <div class="info-label">Número de autorización</div>
-                <div class="info-value factura-clave">
-                    {{ factura.numero_autorizacion|default:"Todavía no autorizado" }}
-                </div>
+        <div class="factura-status-row">
 
-                {% if factura.fecha_autorizacion %}
-                    <div class="factura-small">
-                        Autorizada:
-                        {{ factura.fecha_autorizacion|date:"d/m/Y H:i:s" }}
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+            <span
 
-        {% if factura.mensaje_sri and factura.estado != "RECHAZADO" %}
-            <div class="factura-alert info" style="margin-top:8px;">
-                <strong>Mensaje SRI:</strong>
-                {{ factura.mensaje_sri }}
-            </div>
-        {% endif %}
-    </div>
+                style="font-size:14px;font-weight:700;color:var(--text);"
+
+            >
+
+                Estado de Factura:
+
+            </span>
 
 
-    <!-- =====================================================
-         INFORMACIÓN GENERAL + ACCIONES
-    ====================================================== -->
-    <div class="ot-card">
 
-        <div
-            class="ot-header"
-            style="align-items:center;margin-bottom:10px;"
-        >
-            <div>
-                <div class="ot-title">
-                    Factura {{ factura.numero_factura }}
-                </div>
+            <span class="ot-badge factura-status-{{ factura.estado|lower }}">
 
-                <div class="ot-subtitle">
-                    <i class="bi bi-calendar3"></i>
-                    Emitida el {{ factura.fecha_emision|date:"d/m/Y" }}
-                    {% if factura.numero_orden_origen %}
-                        · Orden {{ factura.numero_orden_origen }}
-                    {% endif %}
-                    {% if factura.sucursal %}
-                        · {{ factura.sucursal.nombre }}
-                    {% endif %}
-                </div>
+                {{ factura.get_estado_display }}
 
-                <div class="factura-meta-line">
-                    Detalle del comprobante electrónico
+            </span>
 
-                    {% if anticipos %}
-                        · Anticipo / Abono
-                        {% if factura.abono_origen %}
-                            #{{ factura.abono_origen.pk }}
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
+        </div>
 
-            <div class="factura-actions">
+
+
+        <a
+
+            href="{% url 'facturacion:dashboard' %}"
+
+            class="btn-login"
+
+            style="background:#f5f5f7;color:var(--text);"
+
+        >
+
+            <i class="bi bi-arrow-left" style="margin-right:5px;"></i>
+
+            Volver a facturación
+
+        </a>
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+
+         ESTADO SRI
+
+    ====================================================== -->
+
+    <div class="ot-card">
+
+        <div class="section-title">Estado SRI</div>
+
+
+
+        {% if factura.mensaje_sri and factura.estado == "RECHAZADO" %}
+
+            <div class="factura-alert error">
+
+                <strong>Mensaje del SRI:</strong>
+
+                {{ factura.mensaje_sri }}
+
+            </div>
+
+        {% endif %}
+
+
+
+        <div class="info-grid factura-sri-grid">
+
+            <div class="info-box">
+
+                <div class="info-label">Estado</div>
+
+                <div class="info-value">
+
+                    {{ factura.get_estado_display }}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="info-box">
+
+                <div class="info-label">Ambiente</div>
+
+                <div class="info-value">
+
+                    {{ factura.get_ambiente_display }}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="info-box">
+
+                <div class="info-label">Número de factura</div>
+
+                <div class="info-value">
+
+                    {{ factura.numero_factura }}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="info-box">
+
+                <div class="info-label">Tipo de emisión</div>
+
+                <div class="info-value">
+
+                    {{ factura.get_tipo_emision_display }}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="info-box factura-wide">
+
+                <div class="info-label">Clave de acceso</div>
+
+                <div class="info-value factura-clave">
+
+                    {{ factura.clave_acceso|default:"Todavía no generada" }}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="info-box factura-wide">
+
+                <div class="info-label">Número de autorización</div>
+
+                <div class="info-value factura-clave">
+
+                    {{ factura.numero_autorizacion|default:"Todavía no autorizado" }}
+
+                </div>
+
+
+
+                {% if factura.fecha_autorizacion %}
+
+                    <div class="factura-small">
+
+                        Autorizada:
+
+                        {{ factura.fecha_autorizacion|date:"d/m/Y H:i:s" }}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+
+        {% if factura.mensaje_sri and factura.estado != "RECHAZADO" %}
+
+            <div class="factura-alert info" style="margin-top:8px;">
+
+                <strong>Mensaje SRI:</strong>
+
+                {{ factura.mensaje_sri }}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+
+         INFORMACIÓN GENERAL + ACCIONES
+
+    ====================================================== -->
+
+    <div class="ot-card">
+
+
+
+        <div
+
+            class="ot-header"
+
+            style="align-items:center;margin-bottom:10px;"
+
+        >
+
+            <div>
+
+                <div class="ot-title">
+
+                    Factura {{ factura.numero_factura }}
+
+                </div>
+
+
+
+                <div class="ot-subtitle">
+
+                    <i class="bi bi-calendar3"></i>
+
+                    Emitida el {{ factura.fecha_emision|date:"d/m/Y" }}
+
+                    {% if factura.numero_orden_origen %}
+
+                        · Orden {{ factura.numero_orden_origen }}
+
+                    {% endif %}
+
+                    {% if factura.sucursal %}
+
+                        · {{ factura.sucursal.nombre }}
+
+                    {% endif %}
+
+                </div>
+
+
+
+                <div class="factura-meta-line">
+
+                    Detalle del comprobante electrónico
+
+
+
+                    {% if anticipos %}
+
+                        · Anticipo / Abono
+
+                        {% if factura.abono_origen %}
+
+                            #{{ factura.abono_origen.pk }}
+
+                        {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="factura-actions">
+
                 {% if puede_editar %}
                     <button
                         type="button"
@@ -650,31 +1282,9 @@
                     Factura
                 </button>
 
-                {% if factura.xml_autorizado %}
+                {% if puede_descargar_xml %}
                     <a
-                        href="{{ factura.xml_autorizado.url }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="btn-login"
-                    >
-                        <i class="bi bi-file-earmark-code"></i>
-                        XML
-                    </a>
-                {% elif factura.xml_firmado %}
-                    <a
-                        href="{{ factura.xml_firmado.url }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="btn-login"
-                    >
-                        <i class="bi bi-file-earmark-code"></i>
-                        XML
-                    </a>
-                {% elif factura.xml_generado %}
-                    <a
-                        href="{{ factura.xml_generado.url }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href="{% url 'facturacion:descargar_xml_factura' factura.pk %}"
                         class="btn-login"
                     >
                         <i class="bi bi-file-earmark-code"></i>
@@ -691,1288 +1301,2513 @@
                     </button>
                 {% endif %}
 
-                {% if puede_emitir %}
-                    <button
-                        type="button"
-                        class="btn-login primary"
-                        onclick="abrirModalEmisionFactura()"
-                    >
-                        <i class="bi bi-send-check"></i>
-                        Emitir factura
-                    </button>
-                {% else %}
-                    <button
-                        type="button"
-                        class="btn-login primary disabled"
-                        disabled
-                    >
-                        <i class="bi bi-send-check"></i>
-                        Emitir factura
-                    </button>
-                {% endif %}
+                {% if perms.facturacion.change_facturaventa %}
 
-                <button
-                    type="button"
-                    class="btn-login disabled"
-                    disabled
-                    title="Pendiente de implementar"
-                >
-                    <i class="bi bi-envelope"></i>
-                    Enviar correo
-                </button>
-
-                {% if puede_reintentar %}
-                    <form
-                        method="post"
-                        action="{% url 'facturacion:reintentar_factura' factura.pk %}"
-                        style="display:inline;"
-                    >
-                        {% csrf_token %}
+                    {% if puede_emitir %}
                         <button
-                            type="submit"
-                            class="btn-login warning"
-                            title="Continuar el proceso de emisión desde el estado actual"
+                            type="button"
+                            class="btn-login primary"
+                            onclick="abrirModalEmisionFactura()"
+                        >
+                            <i class="bi bi-send-check"></i>
+                            Emitir factura
+                        </button>
+                    {% else %}
+                        <button
+                            type="button"
+                            class="btn-login primary disabled"
+                            disabled
+                        >
+                            <i class="bi bi-send-check"></i>
+                            Emitir factura
+                        </button>
+                    {% endif %}
+
+                    <button
+                        type="button"
+                        class="btn-login disabled"
+                        disabled
+                        title="Pendiente de implementar"
+                    >
+                        <i class="bi bi-envelope"></i>
+                        Enviar correo
+                    </button>
+
+                    {% if puede_reintentar %}
+                        <form
+                            method="post"
+                            action="{% url 'facturacion:reintentar_factura' factura.pk %}"
+                            style="display:inline;"
+                        >
+                            {% csrf_token %}
+                            <button
+                                type="submit"
+                                class="btn-login warning"
+                                title="Continuar el proceso de emisión desde el estado actual"
+                            >
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Reintentar
+                            </button>
+                        </form>
+                    {% else %}
+                        <button
+                            type="button"
+                            class="btn-login warning disabled"
+                            disabled
                         >
                             <i class="bi bi-arrow-clockwise"></i>
                             Reintentar
                         </button>
-                    </form>
-                {% else %}
+                    {% endif %}
+
                     <button
                         type="button"
-                        class="btn-login warning disabled"
+                        class="btn-login danger disabled"
                         disabled
+                        title="Pendiente de implementar"
                     >
-                        <i class="bi bi-arrow-clockwise"></i>
-                        Reintentar
+                        <i class="bi bi-x-circle"></i>
+                        Anular
                     </button>
+
                 {% endif %}
 
-                <button
-                    type="button"
-                    class="btn-login danger disabled"
-                    disabled
-                    title="Pendiente de implementar"
-                >
-                    <i class="bi bi-x-circle"></i>
-                    Anular
-                </button>
             </div>
+
         </div>
+
+
 
         <div class="section-title">Información general</div>
 
-        <div class="info-grid factura-info-grid">
-
-            <!-- COMPRADOR -->
-            <div class="info-box" style="justify-content:flex-start;">
-                <div class="info-label">Cliente / comprador</div>
-                <div class="info-value">
-                    {{ factura.razon_social_comprador|default:"CONSUMIDOR FINAL" }}
-                </div>
-
-                <div class="factura-small">
-                    {% if factura.tipo_identificacion_comprador == "07" %}
-                        Consumidor Final
-                    {% else %}
-                        C.I./RUC:
-                        {{ factura.identificacion_comprador|default:"-" }}
-                    {% endif %}
-                </div>
-
-                {% if factura.telefono_comprador %}
-                    <div class="factura-small">
-                        Celular: {{ factura.telefono_comprador }}
-                    </div>
-                {% endif %}
-
-                {% if factura.correo_comprador %}
-                    <div class="factura-small">
-                        Correo: {{ factura.correo_comprador }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- VEHÍCULO -->
-            <div class="info-box" style="justify-content:flex-start;">
-                <div class="info-label">Vehículo</div>
-                <div class="info-value">
-                    {{ factura.vehiculo_snapshot|default:"-" }}
-                </div>
-
-                <div class="factura-small">
-                    Año: {{ factura.anio_vehiculo_snapshot|default:"-" }}
-                    · Color: {{ factura.color_snapshot|default:"-" }}
-                </div>
-
-                {% if factura.numero_orden_origen %}
-                    <div class="factura-small">
-                        <span
-                            style="color:var(--accent);font-weight:700;"
-                        >
-                            <i class="bi bi-wrench-adjustable"></i>
-                            Orden: {{ factura.numero_orden_origen }}
-                        </span>
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- PLACA / KM -->
-            <div class="info-box" style="justify-content:flex-start;">
-                <div class="info-label">Placa</div>
-                <div class="factura-placa">
-                    {{ factura.placa_snapshot|default:"S/P" }}
-                </div>
-
-                <div class="factura-mini-grid">
-                    <div class="factura-mini-box">
-                        <div class="factura-mini-label">
-                            Kilometraje
-                        </div>
-                        <div class="factura-mini-value">
-                            {% if factura.kilometraje_snapshot is not None %}
-                                {{ factura.kilometraje_snapshot|intcomma }} km
-                            {% else %}
-                                -
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="factura-mini-box">
-                        <div class="factura-mini-label">
-                            Ambiente
-                        </div>
-                        <div class="factura-mini-value">
-                            {{ factura.get_ambiente_display }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="factura-context-row">
-            <div class="factura-context-box">
-                <div class="factura-context-label">
-                    {% if anticipos %}
-                        Origen del anticipo
-                    {% else %}
-                        Orden de origen
-                    {% endif %}
-                </div>
-
-                <div class="factura-context-value">
-                    {% if anticipos and factura.abono_origen %}
-                        Abono #{{ factura.abono_origen.pk }}
-                        {% if factura.numero_orden_origen %}
-                            · OT {{ factura.numero_orden_origen }}
-                        {% endif %}
-                    {% else %}
-                        {{ factura.numero_orden_origen|default:"SIN ORDEN DE ORIGEN" }}
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="factura-context-box success">
-                <div class="factura-context-label">
-                    Estado del comprobante
-                </div>
-                <div class="factura-context-value">
-                    {{ factura.get_estado_display }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- =====================================================
-         DETALLES DE FACTURA
-
-         Una factura de abono contiene una línea ANTICIPO.
-         Las facturas normales conservan REP / MOI / MOE /
-         detalles manuales exactamente como antes.
-    ====================================================== -->
-
-    {% if anticipos %}
-
-        <div class="ot-card">
-            <div class="section-title">
-                Anticipo / Abono
-            </div>
-
-            <div class="ot-table-wrap">
-                <table class="ot-table factura-readonly-table">
-                    <thead>
-                        <tr>
-                            <th style="width:18%;">Código / referencia</th>
-                            <th>Descripción</th>
-                            <th style="width:10%;text-align:right;">P.U.</th>
-                            <th style="width:10%;text-align:right;">Cantidad</th>
-                            <th style="width:10%;text-align:right;">Descuento</th>
-                            <th style="width:12%;text-align:right;">Valor</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for item in anticipos %}
-                            <tr>
-                                <td>
-                                    {{ item.codigo_principal|default:"-" }}
-
-                                    {% if item.codigo_auxiliar %}
-                                        <div class="factura-small">
-                                            Ref. {{ item.codigo_auxiliar }}
-                                        </div>
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    <strong>
-                                        {{ item.descripcion }}
-                                    </strong>
-
-                                    {% if factura.abono_origen %}
-                                        <div class="factura-small">
-                                            Abono #{{ factura.abono_origen.pk }}
-                                            {% if factura.numero_orden_origen %}
-                                                · OT {{ factura.numero_orden_origen }}
-                                            {% endif %}
-                                        </div>
-                                    {% endif %}
-                                </td>
-
-                                <td style="text-align:right;">
-                                    ${{ item.precio_unitario|floatformat:2 }}
-                                </td>
-
-                                <td style="text-align:right;">
-                                    {{ item.cantidad|floatformat:2 }}
-                                </td>
-
-                                <td style="text-align:right;">
-                                    ${{ item.descuento|floatformat:2 }}
-                                </td>
-
-                                <td style="text-align:right;font-weight:700;">
-                                    ${{ item.precio_total_sin_impuesto|floatformat:2 }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="factura-table-footer">
-                <div class="subtotal-pill">
-                    Sub total anticipo:
-                    ${{ subtotal_anticipos|floatformat:2 }}
-                </div>
-            </div>
-        </div>
-
-    {% else %}
-
-    <!-- =====================================================
-         REPUESTOS
-    ====================================================== -->
-    <div class="ot-card">
-        <div class="section-title">Repuestos</div>
-
-        <div class="ot-table-wrap">
-            <table class="ot-table factura-readonly-table">
-                <thead>
-                    <tr>
-                        <th style="width:18%;">Código / referencia</th>
-                        <th>Descripción</th>
-                        <th style="width:10%;text-align:right;">P.U.</th>
-                        <th style="width:10%;text-align:right;">Cantidad</th>
-                        <th style="width:10%;text-align:right;">Descuento</th>
-                        <th style="width:12%;text-align:right;">Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in repuestos %}
-                        <tr>
-                            <td>
-                                {{ item.codigo_principal|default:"-" }}
-                                {% if item.codigo_auxiliar %}
-                                    <div class="factura-small">
-                                        Ref. {{ item.codigo_auxiliar }}
-                                    </div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <strong>{{ item.descripcion }}</strong>
-                            </td>
-                            <td style="text-align:right;">
-                                ${{ item.precio_unitario|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;">
-                                {{ item.cantidad|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;">
-                                ${{ item.descuento|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;font-weight:700;">
-                                ${{ item.precio_total_sin_impuesto|floatformat:2 }}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="factura-empty-cell">
-                                No hay repuestos en esta factura.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="factura-table-footer">
-            <div class="subtotal-pill">
-                Sub total repuestos:
-                ${{ subtotal_repuestos|floatformat:2 }}
-            </div>
-        </div>
-    </div>
-
-
-    <!-- =====================================================
-         MANO DE OBRA INTERNA
-    ====================================================== -->
-    <div class="ot-card">
-        <div class="section-title">Mano de Obra Interna</div>
-
-        <div class="ot-table-wrap">
-            <table class="ot-table factura-readonly-table">
-                <thead>
-                    <tr>
-                        <th style="width:18%;">Cód. / referencia</th>
-                        <th>Descripción</th>
-                        <th style="width:10%;text-align:right;">P.U.</th>
-                        <th style="width:10%;text-align:right;">Cantidad</th>
-                        <th style="width:10%;text-align:right;">Descuento</th>
-                        <th style="width:12%;text-align:right;">Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in mano_obra_interna %}
-                        <tr>
-                            <td>{{ item.codigo_principal|default:"-" }}</td>
-                            <td>
-                                <strong>{{ item.descripcion }}</strong>
-
-                                {% if item.procedimientos.all %}
-                                    <div class="factura-procedimientos">
-                                        {% for procedimiento in item.procedimientos.all %}
-                                            <div>• {{ procedimiento.descripcion }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </td>
-                            <td style="text-align:right;">
-                                ${{ item.precio_unitario|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;">
-                                {{ item.cantidad|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;">
-                                ${{ item.descuento|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;font-weight:700;">
-                                ${{ item.precio_total_sin_impuesto|floatformat:2 }}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="factura-empty-cell">
-                                No hay mano de obra interna en esta factura.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="factura-table-footer">
-            <div class="subtotal-pill">
-                Sub total M.O.I.:
-                ${{ subtotal_moi|floatformat:2 }}
-            </div>
-        </div>
-    </div>
-
-
-    <!-- =====================================================
-         MANO DE OBRA EXTERNA
-    ====================================================== -->
-    <div class="ot-card">
-        <div class="section-title">Mano de Obra Externa</div>
-
-        <div class="ot-table-wrap">
-            <table class="ot-table factura-readonly-table">
-                <thead>
-                    <tr>
-                        <th style="width:18%;">Cód. / referencia</th>
-                        <th>Descripción</th>
-                        <th style="width:10%;text-align:right;">P.U.</th>
-                        <th style="width:10%;text-align:right;">Cantidad</th>
-                        <th style="width:10%;text-align:right;">Descuento</th>
-                        <th style="width:12%;text-align:right;">Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in mano_obra_externa %}
-                        <tr>
-                            <td>{{ item.codigo_principal|default:"-" }}</td>
-                            <td><strong>{{ item.descripcion }}</strong></td>
-                            <td style="text-align:right;">
-                                ${{ item.precio_unitario|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;">
-                                {{ item.cantidad|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;">
-                                ${{ item.descuento|floatformat:2 }}
-                            </td>
-                            <td style="text-align:right;font-weight:700;">
-                                ${{ item.precio_total_sin_impuesto|floatformat:2 }}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="factura-empty-cell">
-                                No hay mano de obra externa en esta factura.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="factura-table-footer">
-            <div class="subtotal-pill">
-                Sub total M.O.E.:
-                ${{ subtotal_moe|floatformat:2 }}
-            </div>
-        </div>
-    </div>
-
-
-    <!-- =====================================================
-         OTROS DETALLES
-    ====================================================== -->
-    {% if otros_detalles %}
-        <div class="ot-card">
-            <div class="section-title">Otros detalles</div>
-
-            <div class="ot-table-wrap">
-                <table class="ot-table factura-readonly-table">
-                    <thead>
-                        <tr>
-                            <th style="width:18%;">Código / referencia</th>
-                            <th>Descripción</th>
-                            <th style="width:12%;text-align:right;">Cantidad</th>
-                            <th style="width:14%;text-align:right;">Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in otros_detalles %}
-                            <tr>
-                                <td>{{ item.codigo_principal|default:"-" }}</td>
-                                <td>{{ item.descripcion }}</td>
-                                <td style="text-align:right;">
-                                    {{ item.cantidad|floatformat:2 }}
-                                </td>
-                                <td style="text-align:right;font-weight:700;">
-                                    ${{ item.precio_total_sin_impuesto|floatformat:2 }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="factura-table-footer">
-                <div class="subtotal-pill">
-                    Sub total otros:
-                    ${{ subtotal_otros|floatformat:2 }}
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
-
-
-    {% endif %}
-
-
-    <!-- =====================================================
-         RESUMEN ECONÓMICO
-         MISMO ASPECTO QUE EL RESUMEN DE LA ORDEN
-    ====================================================== -->
-    <div
-        class="ot-card factura-resumen-economico"
-        id="resumenEconomicoFactura"
-        data-repuestos="{{ subtotal_repuestos|default:'0.00'|unlocalize }}"
-        data-moi="{{ subtotal_moi|default:'0.00'|unlocalize }}"
-        data-moe="{{ subtotal_moe|default:'0.00'|unlocalize }}"
-        data-anticipo="{{ subtotal_anticipos|default:'0.00'|unlocalize }}"
-        data-descuento="{{ factura.total_descuento|default:'0.00'|unlocalize }}"
-        data-subtotal-bruto="{{ subtotal_bruto|default:'0.00'|unlocalize }}"
-    >
-        <div class="section-title">
-            Resumen económico
-        </div>
-
-        <div class="totals-grid">
-
-            {% if anticipos %}
-
-                <!-- ANTICIPO / ABONO -->
-                <div class="total-box total-box-composicion total-box-anticipo">
-                    <div class="total-label">
-                        Subtotal anticipo
-                    </div>
-
-                    <div class="total-value">
-                        ${{ subtotal_anticipos|default:"0.00"|floatformat:2 }}
-                    </div>
-
-                    <div class="total-meta">
-                        <strong id="porcentajeAnticipoFactura">100.00%</strong>
-                        <span>del subtotal facturado</span>
-                        <span class="total-separador">•</span>
-                        <span>
-                            {{ anticipos|length }} anticipo{{ anticipos|length|pluralize }}
-                        </span>
-                    </div>
-
-                    <div class="total-barra" aria-hidden="true">
-                        <div
-                            id="barraAnticipoFactura"
-                            class="total-barra-valor"
-                            style="width:100%;"
-                        ></div>
-                    </div>
-                </div>
-
-            {% else %}
-
-            <!-- REPUESTOS -->
-            <div class="total-box total-box-composicion total-box-repuestos">
-                <div class="total-label">
-                    Subtotal repuestos
-                </div>
-
-                <div class="total-value">
-                    ${{ subtotal_repuestos|default:"0.00"|floatformat:2 }}
-                </div>
-
-                <div class="total-meta">
-                    <strong id="porcentajeRepFactura">0.00%</strong>
-                    <span>del subtotal</span>
-                    <span class="total-separador">•</span>
-                    <span>
-                        {{ repuestos|length }} producto{{ repuestos|length|pluralize }}
-                    </span>
-                </div>
-
-                <div class="total-barra" aria-hidden="true">
-                    <div id="barraRepFactura" class="total-barra-valor"></div>
-                </div>
-            </div>
-
-            <!-- MANO DE OBRA INTERNA -->
-            <div class="total-box total-box-composicion total-box-moi">
-                <div class="total-label">
-                    Subtotal M.O. interna
-                </div>
-
-                <div class="total-value">
-                    ${{ subtotal_moi|default:"0.00"|floatformat:2 }}
-                </div>
-
-                <div class="total-meta">
-                    <strong id="porcentajeMOIFactura">0.00%</strong>
-                    <span>del subtotal</span>
-                    <span class="total-separador">•</span>
-                    <span>
-                        {{ mano_obra_interna|length }} servicio{{ mano_obra_interna|length|pluralize }}
-                    </span>
-                </div>
-
-                <div class="total-barra" aria-hidden="true">
-                    <div id="barraMOIFactura" class="total-barra-valor"></div>
-                </div>
-            </div>
-
-            <!-- MANO DE OBRA EXTERNA -->
-            <div class="total-box total-box-composicion total-box-moe">
-                <div class="total-label">
-                    Subtotal M.O. externa
-                </div>
-
-                <div class="total-value">
-                    ${{ subtotal_moe|default:"0.00"|floatformat:2 }}
-                </div>
-
-                <div class="total-meta">
-                    <strong id="porcentajeMOEFactura">0.00%</strong>
-                    <span>del subtotal</span>
-                    <span class="total-separador">•</span>
-                    <span>
-                        {{ mano_obra_externa|length }} servicio{{ mano_obra_externa|length|pluralize }}
-                    </span>
-                </div>
-
-                <div class="total-barra" aria-hidden="true">
-                    <div id="barraMOEFactura" class="total-barra-valor"></div>
-                </div>
-            </div>
-
-
-            {% endif %}
-
-            <!-- SUBTOTAL SIN IVA -->
-            <div class="total-box">
-                <div class="total-label">
-                    Subtotal sin IVA
-                </div>
-
-                <div class="total-value">
-                    ${{ factura.total_sin_impuestos|default:"0.00"|floatformat:2 }}
-                </div>
-
-                <div class="total-meta">
-                    Total después del descuento y antes del IVA
-                </div>
-            </div>
-
-            <!-- DESCUENTO -->
-            <div class="total-box">
-                <div class="total-label">
-                    Descuento
-                </div>
-
-                <div class="descuento-segmentado" aria-label="Tipo de descuento">
-                    <button
-                        type="button"
-                        class="descuento-opcion {% if factura.tipo_descuento == 'PORCENTAJE' %}activo{% endif %}"
-                        disabled
-                    >
-                        % Porcentaje
-                    </button>
-
-                    <button
-                        type="button"
-                        class="descuento-opcion {% if factura.tipo_descuento == 'VALOR_FIJO' or not factura.tipo_descuento %}activo{% endif %}"
-                        disabled
-                    >
-                        $ Valor fijo
-                    </button>
-                </div>
-
-                <div class="descuento-lectura">
-                    {% if factura.tipo_descuento == 'PORCENTAJE' and factura.descuento_ingresado %}
-                        {{ factura.descuento_ingresado|floatformat:2 }}
-                    {% else %}
-                        {{ factura.total_descuento|default:"0.00"|floatformat:2 }}
-                    {% endif %}
-                </div>
-
-                <div class="descuento-resumen">
-                    <strong>Representa:</strong>
-                    <span id="descuentoPorcentajeFactura">0.00%</span>
-                    <span aria-hidden="true">•</span>
-                    <span>${{ factura.total_descuento|default:"0.00"|floatformat:2 }}</span>
-                </div>
-
-                <div class="total-value descuento-total-valor">
-                    -${{ factura.total_descuento|default:"0.00"|floatformat:2 }}
-                </div>
-            </div>
-
-            <!-- IVA -->
-            <div class="total-box">
-                <div class="total-label">
-                    IVA {{ factura.porcentaje_iva|default:"0"|floatformat:2 }}%
-                </div>
-
-                <div class="total-value">
-                    ${{ factura.valor_iva|default:"0.00"|floatformat:2 }}
-                </div>
-
-                <label class="iva-checkbox-label">
-                    <input type="checkbox" checked disabled>
-                    IVA aplicado al total
-                </label>
-            </div>
-
-            <!-- TOTAL FINAL -->
-            <div class="total-box final">
-                <div class="total-label">
-                    Total a pagar
-                </div>
-
-                <div class="total-value">
-                    ${{ factura.importe_total|default:"0.00"|floatformat:2 }}
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <script>
-    (function () {
-        function numeroSeguro(valor) {
-            const numero = Number.parseFloat(valor || "0");
-            return Number.isFinite(numero) ? numero : 0;
-        }
-
-        function porcentaje(valor, total) {
-            if (total <= 0) return 0;
-            return Math.max(0, Math.min(100, (valor / total) * 100));
-        }
-
-        function aplicarPorcentaje(textoId, barraId, valor, total) {
-            const p = porcentaje(valor, total);
-            const texto = document.getElementById(textoId);
-            const barra = document.getElementById(barraId);
-
-            if (texto) texto.textContent = p.toFixed(2) + "%";
-            if (barra) barra.style.width = p.toFixed(2) + "%";
-        }
-
-        function inicializarResumenEconomicoFactura() {
-            const resumen = document.getElementById("resumenEconomicoFactura");
-            if (!resumen) return;
-
-            const rep = numeroSeguro(resumen.dataset.repuestos);
-            const moi = numeroSeguro(resumen.dataset.moi);
-            const moe = numeroSeguro(resumen.dataset.moe);
-            const anticipo = numeroSeguro(resumen.dataset.anticipo);
-            const descuento = numeroSeguro(resumen.dataset.descuento);
-            const subtotalBruto = numeroSeguro(resumen.dataset.subtotalBruto);
-
-            /*
-             * Factura normal:
-             * REP + MOI + MOE.
-             *
-             * Factura de abono:
-             * una línea ANTICIPO.
-             */
-            const baseComposicion =
-                rep + moi + moe + anticipo;
-
-            aplicarPorcentaje(
-                "porcentajeRepFactura",
-                "barraRepFactura",
-                rep,
-                baseComposicion
-            );
-
-            aplicarPorcentaje(
-                "porcentajeMOIFactura",
-                "barraMOIFactura",
-                moi,
-                baseComposicion
-            );
-
-            aplicarPorcentaje(
-                "porcentajeMOEFactura",
-                "barraMOEFactura",
-                moe,
-                baseComposicion
-            );
-
-            aplicarPorcentaje(
-                "porcentajeAnticipoFactura",
-                "barraAnticipoFactura",
-                anticipo,
-                baseComposicion
-            );
-
-            const porcentajeDescuento = porcentaje(descuento, subtotalBruto);
-            const textoDescuento = document.getElementById("descuentoPorcentajeFactura");
-            if (textoDescuento) {
-                textoDescuento.textContent = porcentajeDescuento.toFixed(2) + "%";
-            }
-        }
-
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", inicializarResumenEconomicoFactura);
-        } else {
-            inicializarResumenEconomicoFactura();
-        }
-    })();
-    </script>
-
-
-    <!-- =====================================================
-         ACCIONES INFERIORES
-    ====================================================== -->
-    <div class="sticky-actions">
-        <a
-            href="{% url 'facturacion:dashboard' %}"
-            class="btn-login"
-            style="background:#e5e5ea;border-color:#e5e5ea;color:var(--text);"
-        >
-            <i class="fas fa-arrow-left" style="margin-right:6px;"></i>
-            Volver
-        </a>
-    </div>
+
+
+        <div class="info-grid factura-info-grid">
+
+
+
+            <!-- COMPRADOR -->
+
+            <div class="info-box" style="justify-content:flex-start;">
+
+                <div class="info-label">Cliente / comprador</div>
+
+                <div class="info-value">
+
+                    {{ factura.razon_social_comprador|default:"CONSUMIDOR FINAL" }}
+
+                </div>
+
+
+
+                <div class="factura-small">
+
+                    {% if factura.tipo_identificacion_comprador == "07" %}
+
+                        Consumidor Final
+
+                    {% else %}
+
+                        C.I./RUC:
+
+                        {{ factura.identificacion_comprador|default:"-" }}
+
+                    {% endif %}
+
+                </div>
+
+
+
+                {% if factura.telefono_comprador %}
+
+                    <div class="factura-small">
+
+                        Celular: {{ factura.telefono_comprador }}
+
+                    </div>
+
+                {% endif %}
+
+
+
+                {% if factura.correo_comprador %}
+
+                    <div class="factura-small">
+
+                        Correo: {{ factura.correo_comprador }}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+
+            <!-- VEHÍCULO -->
+
+            <div class="info-box" style="justify-content:flex-start;">
+
+                <div class="info-label">Vehículo</div>
+
+                <div class="info-value">
+
+                    {{ factura.vehiculo_snapshot|default:"-" }}
+
+                </div>
+
+
+
+                <div class="factura-small">
+
+                    Año: {{ factura.anio_vehiculo_snapshot|default:"-" }}
+
+                    · Color: {{ factura.color_snapshot|default:"-" }}
+
+                </div>
+
+
+
+                {% if factura.numero_orden_origen %}
+
+                    <div class="factura-small">
+
+                        <span
+
+                            style="color:var(--accent);font-weight:700;"
+
+                        >
+
+                            <i class="bi bi-wrench-adjustable"></i>
+
+                            Orden: {{ factura.numero_orden_origen }}
+
+                        </span>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+
+            <!-- PLACA / KM -->
+
+            <div class="info-box" style="justify-content:flex-start;">
+
+                <div class="info-label">Placa</div>
+
+                <div class="factura-placa">
+
+                    {{ factura.placa_snapshot|default:"S/P" }}
+
+                </div>
+
+
+
+                <div class="factura-mini-grid">
+
+                    <div class="factura-mini-box">
+
+                        <div class="factura-mini-label">
+
+                            Kilometraje
+
+                        </div>
+
+                        <div class="factura-mini-value">
+
+                            {% if factura.kilometraje_snapshot is not None %}
+
+                                {{ factura.kilometraje_snapshot|intcomma }} km
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="factura-mini-box">
+
+                        <div class="factura-mini-label">
+
+                            Ambiente
+
+                        </div>
+
+                        <div class="factura-mini-value">
+
+                            {{ factura.get_ambiente_display }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="factura-context-row">
+
+            <div class="factura-context-box">
+
+                <div class="factura-context-label">
+
+                    {% if anticipos %}
+
+                        Origen del anticipo
+
+                    {% else %}
+
+                        Orden de origen
+
+                    {% endif %}
+
+                </div>
+
+
+
+                <div class="factura-context-value">
+
+                    {% if anticipos and factura.abono_origen %}
+
+                        Abono #{{ factura.abono_origen.pk }}
+
+                        {% if factura.numero_orden_origen %}
+
+                            · OT {{ factura.numero_orden_origen }}
+
+                        {% endif %}
+
+                    {% else %}
+
+                        {{ factura.numero_orden_origen|default:"SIN ORDEN DE ORIGEN" }}
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <div class="factura-context-box success">
+
+                <div class="factura-context-label">
+
+                    Estado del comprobante
+
+                </div>
+
+                <div class="factura-context-value">
+
+                    {{ factura.get_estado_display }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+
+         DETALLES DE FACTURA
+
+
+
+         Una factura de abono contiene una línea ANTICIPO.
+
+         Las facturas normales conservan REP / MOI / MOE /
+
+         detalles manuales exactamente como antes.
+
+    ====================================================== -->
+
+
+
+    {% if anticipos %}
+
+
+
+        <div class="ot-card">
+
+            <div class="section-title">
+
+                Anticipo / Abono
+
+            </div>
+
+
+
+            <div class="ot-table-wrap">
+
+                <table class="ot-table factura-readonly-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th style="width:18%;">Código / referencia</th>
+
+                            <th>Descripción</th>
+
+                            <th style="width:10%;text-align:right;">P.U.</th>
+
+                            <th style="width:10%;text-align:right;">Cantidad</th>
+
+                            <th style="width:10%;text-align:right;">Descuento</th>
+
+                            <th style="width:12%;text-align:right;">Valor</th>
+
+                        </tr>
+
+                    </thead>
+
+
+
+                    <tbody>
+
+                        {% for item in anticipos %}
+
+                            <tr>
+
+                                <td>
+
+                                    {{ item.codigo_principal|default:"-" }}
+
+
+
+                                    {% if item.codigo_auxiliar %}
+
+                                        <div class="factura-small">
+
+                                            Ref. {{ item.codigo_auxiliar }}
+
+                                        </div>
+
+                                    {% endif %}
+
+                                </td>
+
+
+
+                                <td>
+
+                                    <strong>
+
+                                        {{ item.descripcion }}
+
+                                    </strong>
+
+
+
+                                    {% if factura.abono_origen %}
+
+                                        <div class="factura-small">
+
+                                            Abono #{{ factura.abono_origen.pk }}
+
+                                            {% if factura.numero_orden_origen %}
+
+                                                · OT {{ factura.numero_orden_origen }}
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    {% endif %}
+
+                                </td>
+
+
+
+                                <td style="text-align:right;">
+
+                                    ${{ item.precio_unitario|floatformat:2 }}
+
+                                </td>
+
+
+
+                                <td style="text-align:right;">
+
+                                    {{ item.cantidad|floatformat:2 }}
+
+                                </td>
+
+
+
+                                <td style="text-align:right;">
+
+                                    ${{ item.descuento|floatformat:2 }}
+
+                                </td>
+
+
+
+                                <td style="text-align:right;font-weight:700;">
+
+                                    ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+
+            <div class="factura-table-footer">
+
+                <div class="subtotal-pill">
+
+                    Sub total anticipo:
+
+                    ${{ subtotal_anticipos|floatformat:2 }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+    {% else %}
+
+
+
+    <!-- =====================================================
+
+         REPUESTOS
+
+    ====================================================== -->
+
+    <div class="ot-card">
+
+        <div class="section-title">Repuestos</div>
+
+
+
+        <div class="ot-table-wrap">
+
+            <table class="ot-table factura-readonly-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th style="width:18%;">Código / referencia</th>
+
+                        <th>Descripción</th>
+
+                        <th style="width:10%;text-align:right;">P.U.</th>
+
+                        <th style="width:10%;text-align:right;">Cantidad</th>
+
+                        <th style="width:10%;text-align:right;">Descuento</th>
+
+                        <th style="width:12%;text-align:right;">Valor</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for item in repuestos %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ item.codigo_principal|default:"-" }}
+
+                                {% if item.codigo_auxiliar %}
+
+                                    <div class="factura-small">
+
+                                        Ref. {{ item.codigo_auxiliar }}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <strong>{{ item.descripcion }}</strong>
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                ${{ item.precio_unitario|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                {{ item.cantidad|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                ${{ item.descuento|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;font-weight:700;">
+
+                                ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="6" class="factura-empty-cell">
+
+                                No hay repuestos en esta factura.
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <div class="factura-table-footer">
+
+            <div class="subtotal-pill">
+
+                Sub total repuestos:
+
+                ${{ subtotal_repuestos|floatformat:2 }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+
+         MANO DE OBRA INTERNA
+
+    ====================================================== -->
+
+    <div class="ot-card">
+
+        <div class="section-title">Mano de Obra Interna</div>
+
+
+
+        <div class="ot-table-wrap">
+
+            <table class="ot-table factura-readonly-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th style="width:18%;">Cód. / referencia</th>
+
+                        <th>Descripción</th>
+
+                        <th style="width:10%;text-align:right;">P.U.</th>
+
+                        <th style="width:10%;text-align:right;">Cantidad</th>
+
+                        <th style="width:10%;text-align:right;">Descuento</th>
+
+                        <th style="width:12%;text-align:right;">Valor</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for item in mano_obra_interna %}
+
+                        <tr>
+
+                            <td>{{ item.codigo_principal|default:"-" }}</td>
+
+                            <td>
+
+                                <strong>{{ item.descripcion }}</strong>
+
+
+
+                                {% if item.procedimientos.all %}
+
+                                    <div class="factura-procedimientos">
+
+                                        {% for procedimiento in item.procedimientos.all %}
+
+                                            <div>• {{ procedimiento.descripcion }}</div>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                ${{ item.precio_unitario|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                {{ item.cantidad|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                ${{ item.descuento|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;font-weight:700;">
+
+                                ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="6" class="factura-empty-cell">
+
+                                No hay mano de obra interna en esta factura.
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <div class="factura-table-footer">
+
+            <div class="subtotal-pill">
+
+                Sub total M.O.I.:
+
+                ${{ subtotal_moi|floatformat:2 }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+
+         MANO DE OBRA EXTERNA
+
+    ====================================================== -->
+
+    <div class="ot-card">
+
+        <div class="section-title">Mano de Obra Externa</div>
+
+
+
+        <div class="ot-table-wrap">
+
+            <table class="ot-table factura-readonly-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th style="width:18%;">Cód. / referencia</th>
+
+                        <th>Descripción</th>
+
+                        <th style="width:10%;text-align:right;">P.U.</th>
+
+                        <th style="width:10%;text-align:right;">Cantidad</th>
+
+                        <th style="width:10%;text-align:right;">Descuento</th>
+
+                        <th style="width:12%;text-align:right;">Valor</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for item in mano_obra_externa %}
+
+                        <tr>
+
+                            <td>{{ item.codigo_principal|default:"-" }}</td>
+
+                            <td><strong>{{ item.descripcion }}</strong></td>
+
+                            <td style="text-align:right;">
+
+                                ${{ item.precio_unitario|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                {{ item.cantidad|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;">
+
+                                ${{ item.descuento|floatformat:2 }}
+
+                            </td>
+
+                            <td style="text-align:right;font-weight:700;">
+
+                                ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="6" class="factura-empty-cell">
+
+                                No hay mano de obra externa en esta factura.
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <div class="factura-table-footer">
+
+            <div class="subtotal-pill">
+
+                Sub total M.O.E.:
+
+                ${{ subtotal_moe|floatformat:2 }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+
+         OTROS DETALLES
+
+    ====================================================== -->
+
+    {% if otros_detalles %}
+
+        <div class="ot-card">
+
+            <div class="section-title">Otros detalles</div>
+
+
+
+            <div class="ot-table-wrap">
+
+                <table class="ot-table factura-readonly-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th style="width:18%;">Código / referencia</th>
+
+                            <th>Descripción</th>
+
+                            <th style="width:12%;text-align:right;">Cantidad</th>
+
+                            <th style="width:14%;text-align:right;">Valor</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for item in otros_detalles %}
+
+                            <tr>
+
+                                <td>{{ item.codigo_principal|default:"-" }}</td>
+
+                                <td>{{ item.descripcion }}</td>
+
+                                <td style="text-align:right;">
+
+                                    {{ item.cantidad|floatformat:2 }}
+
+                                </td>
+
+                                <td style="text-align:right;font-weight:700;">
+
+                                    ${{ item.precio_total_sin_impuesto|floatformat:2 }}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+
+            <div class="factura-table-footer">
+
+                <div class="subtotal-pill">
+
+                    Sub total otros:
+
+                    ${{ subtotal_otros|floatformat:2 }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+
+
+
+
+
+    {% endif %}
+
+
+
+
+
+    <!-- =====================================================
+
+         RESUMEN ECONÓMICO
+
+         MISMO ASPECTO QUE EL RESUMEN DE LA ORDEN
+
+    ====================================================== -->
+
+    <div
+
+        class="ot-card factura-resumen-economico"
+
+        id="resumenEconomicoFactura"
+
+        data-repuestos="{{ subtotal_repuestos|default:'0.00'|unlocalize }}"
+
+        data-moi="{{ subtotal_moi|default:'0.00'|unlocalize }}"
+
+        data-moe="{{ subtotal_moe|default:'0.00'|unlocalize }}"
+
+        data-anticipo="{{ subtotal_anticipos|default:'0.00'|unlocalize }}"
+
+        data-descuento="{{ factura.total_descuento|default:'0.00'|unlocalize }}"
+
+        data-subtotal-bruto="{{ subtotal_bruto|default:'0.00'|unlocalize }}"
+
+    >
+
+        <div class="section-title">
+
+            Resumen económico
+
+        </div>
+
+
+
+        <div class="totals-grid">
+
+
+
+            {% if anticipos %}
+
+
+
+                <!-- ANTICIPO / ABONO -->
+
+                <div class="total-box total-box-composicion total-box-anticipo">
+
+                    <div class="total-label">
+
+                        Subtotal anticipo
+
+                    </div>
+
+
+
+                    <div class="total-value">
+
+                        ${{ subtotal_anticipos|default:"0.00"|floatformat:2 }}
+
+                    </div>
+
+
+
+                    <div class="total-meta">
+
+                        <strong id="porcentajeAnticipoFactura">100.00%</strong>
+
+                        <span>del subtotal facturado</span>
+
+                        <span class="total-separador">•</span>
+
+                        <span>
+
+                            {{ anticipos|length }} anticipo{{ anticipos|length|pluralize }}
+
+                        </span>
+
+                    </div>
+
+
+
+                    <div class="total-barra" aria-hidden="true">
+
+                        <div
+
+                            id="barraAnticipoFactura"
+
+                            class="total-barra-valor"
+
+                            style="width:100%;"
+
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+
+            {% else %}
+
+
+
+            <!-- REPUESTOS -->
+
+            <div class="total-box total-box-composicion total-box-repuestos">
+
+                <div class="total-label">
+
+                    Subtotal repuestos
+
+                </div>
+
+
+
+                <div class="total-value">
+
+                    ${{ subtotal_repuestos|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+
+
+                <div class="total-meta">
+
+                    <strong id="porcentajeRepFactura">0.00%</strong>
+
+                    <span>del subtotal</span>
+
+                    <span class="total-separador">•</span>
+
+                    <span>
+
+                        {{ repuestos|length }} producto{{ repuestos|length|pluralize }}
+
+                    </span>
+
+                </div>
+
+
+
+                <div class="total-barra" aria-hidden="true">
+
+                    <div id="barraRepFactura" class="total-barra-valor"></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- MANO DE OBRA INTERNA -->
+
+            <div class="total-box total-box-composicion total-box-moi">
+
+                <div class="total-label">
+
+                    Subtotal M.O. interna
+
+                </div>
+
+
+
+                <div class="total-value">
+
+                    ${{ subtotal_moi|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+
+
+                <div class="total-meta">
+
+                    <strong id="porcentajeMOIFactura">0.00%</strong>
+
+                    <span>del subtotal</span>
+
+                    <span class="total-separador">•</span>
+
+                    <span>
+
+                        {{ mano_obra_interna|length }} servicio{{ mano_obra_interna|length|pluralize }}
+
+                    </span>
+
+                </div>
+
+
+
+                <div class="total-barra" aria-hidden="true">
+
+                    <div id="barraMOIFactura" class="total-barra-valor"></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- MANO DE OBRA EXTERNA -->
+
+            <div class="total-box total-box-composicion total-box-moe">
+
+                <div class="total-label">
+
+                    Subtotal M.O. externa
+
+                </div>
+
+
+
+                <div class="total-value">
+
+                    ${{ subtotal_moe|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+
+
+                <div class="total-meta">
+
+                    <strong id="porcentajeMOEFactura">0.00%</strong>
+
+                    <span>del subtotal</span>
+
+                    <span class="total-separador">•</span>
+
+                    <span>
+
+                        {{ mano_obra_externa|length }} servicio{{ mano_obra_externa|length|pluralize }}
+
+                    </span>
+
+                </div>
+
+
+
+                <div class="total-barra" aria-hidden="true">
+
+                    <div id="barraMOEFactura" class="total-barra-valor"></div>
+
+                </div>
+
+            </div>
+
+
+
+
+
+            {% endif %}
+
+
+
+            <!-- SUBTOTAL SIN IVA -->
+
+            <div class="total-box">
+
+                <div class="total-label">
+
+                    Subtotal sin IVA
+
+                </div>
+
+
+
+                <div class="total-value">
+
+                    ${{ factura.total_sin_impuestos|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+
+
+                <div class="total-meta">
+
+                    Total después del descuento y antes del IVA
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DESCUENTO -->
+
+            <div class="total-box">
+
+                <div class="total-label">
+
+                    Descuento
+
+                </div>
+
+
+
+                <div class="descuento-segmentado" aria-label="Tipo de descuento">
+
+                    <button
+
+                        type="button"
+
+                        class="descuento-opcion {% if factura.tipo_descuento == 'PORCENTAJE' %}activo{% endif %}"
+
+                        disabled
+
+                    >
+
+                        % Porcentaje
+
+                    </button>
+
+
+
+                    <button
+
+                        type="button"
+
+                        class="descuento-opcion {% if factura.tipo_descuento == 'VALOR_FIJO' or not factura.tipo_descuento %}activo{% endif %}"
+
+                        disabled
+
+                    >
+
+                        $ Valor fijo
+
+                    </button>
+
+                </div>
+
+
+
+                <div class="descuento-lectura">
+
+                    {% if factura.tipo_descuento == 'PORCENTAJE' and factura.descuento_ingresado %}
+
+                        {{ factura.descuento_ingresado|floatformat:2 }}
+
+                    {% else %}
+
+                        {{ factura.total_descuento|default:"0.00"|floatformat:2 }}
+
+                    {% endif %}
+
+                </div>
+
+
+
+                <div class="descuento-resumen">
+
+                    <strong>Representa:</strong>
+
+                    <span id="descuentoPorcentajeFactura">0.00%</span>
+
+                    <span aria-hidden="true">•</span>
+
+                    <span>${{ factura.total_descuento|default:"0.00"|floatformat:2 }}</span>
+
+                </div>
+
+
+
+                <div class="total-value descuento-total-valor">
+
+                    -${{ factura.total_descuento|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+            </div>
+
+
+
+            <!-- IVA -->
+
+            <div class="total-box">
+
+                <div class="total-label">
+
+                    IVA {{ factura.porcentaje_iva|default:"0"|floatformat:2 }}%
+
+                </div>
+
+
+
+                <div class="total-value">
+
+                    ${{ factura.valor_iva|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+
+
+                <label class="iva-checkbox-label">
+
+                    <input type="checkbox" checked disabled>
+
+                    IVA aplicado al total
+
+                </label>
+
+            </div>
+
+
+
+            <!-- TOTAL FINAL -->
+
+            <div class="total-box final">
+
+                <div class="total-label">
+
+                    Total a pagar
+
+                </div>
+
+
+
+                <div class="total-value">
+
+                    ${{ factura.importe_total|default:"0.00"|floatformat:2 }}
+
+                </div>
+
+            </div>
+
+
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+    (function () {
+
+        function numeroSeguro(valor) {
+
+            const numero = Number.parseFloat(valor || "0");
+
+            return Number.isFinite(numero) ? numero : 0;
+
+        }
+
+
+
+        function porcentaje(valor, total) {
+
+            if (total <= 0) return 0;
+
+            return Math.max(0, Math.min(100, (valor / total) * 100));
+
+        }
+
+
+
+        function aplicarPorcentaje(textoId, barraId, valor, total) {
+
+            const p = porcentaje(valor, total);
+
+            const texto = document.getElementById(textoId);
+
+            const barra = document.getElementById(barraId);
+
+
+
+            if (texto) texto.textContent = p.toFixed(2) + "%";
+
+            if (barra) barra.style.width = p.toFixed(2) + "%";
+
+        }
+
+
+
+        function inicializarResumenEconomicoFactura() {
+
+            const resumen = document.getElementById("resumenEconomicoFactura");
+
+            if (!resumen) return;
+
+
+
+            const rep = numeroSeguro(resumen.dataset.repuestos);
+
+            const moi = numeroSeguro(resumen.dataset.moi);
+
+            const moe = numeroSeguro(resumen.dataset.moe);
+
+            const anticipo = numeroSeguro(resumen.dataset.anticipo);
+
+            const descuento = numeroSeguro(resumen.dataset.descuento);
+
+            const subtotalBruto = numeroSeguro(resumen.dataset.subtotalBruto);
+
+
+
+            /*
+
+             * Factura normal:
+
+             * REP + MOI + MOE.
+
+             *
+
+             * Factura de abono:
+
+             * una línea ANTICIPO.
+
+             */
+
+            const baseComposicion =
+
+                rep + moi + moe + anticipo;
+
+
+
+            aplicarPorcentaje(
+
+                "porcentajeRepFactura",
+
+                "barraRepFactura",
+
+                rep,
+
+                baseComposicion
+
+            );
+
+
+
+            aplicarPorcentaje(
+
+                "porcentajeMOIFactura",
+
+                "barraMOIFactura",
+
+                moi,
+
+                baseComposicion
+
+            );
+
+
+
+            aplicarPorcentaje(
+
+                "porcentajeMOEFactura",
+
+                "barraMOEFactura",
+
+                moe,
+
+                baseComposicion
+
+            );
+
+
+
+            aplicarPorcentaje(
+
+                "porcentajeAnticipoFactura",
+
+                "barraAnticipoFactura",
+
+                anticipo,
+
+                baseComposicion
+
+            );
+
+
+
+            const porcentajeDescuento = porcentaje(descuento, subtotalBruto);
+
+            const textoDescuento = document.getElementById("descuentoPorcentajeFactura");
+
+            if (textoDescuento) {
+
+                textoDescuento.textContent = porcentajeDescuento.toFixed(2) + "%";
+
+            }
+
+        }
+
+
+
+        if (document.readyState === "loading") {
+
+            document.addEventListener("DOMContentLoaded", inicializarResumenEconomicoFactura);
+
+        } else {
+
+            inicializarResumenEconomicoFactura();
+
+        }
+
+    })();
+
+    </script>
+
+
+
+
+
+    <!-- =====================================================
+
+         ACCIONES INFERIORES
+
+    ====================================================== -->
+
+    <div class="sticky-actions">
+
+        <a
+
+            href="{% url 'facturacion:dashboard' %}"
+
+            class="btn-login"
+
+            style="background:#e5e5ea;border-color:#e5e5ea;color:var(--text);"
+
+        >
+
+            <i class="fas fa-arrow-left" style="margin-right:6px;"></i>
+
+            Volver
+
+        </a>
+
+    </div>
+
+
 
 </div>
 
 
+
+
+
+{% if perms.facturacion.change_facturaventa %}
+
 <!-- =========================================================
-     FORMULARIO DE EMISIÓN
+
+     FORMULARIO DE EMISIÓN
+
 ========================================================= -->
 
+
+
 <form
-    id="formEmitirFactura"
-    method="post"
-    action="{% url 'facturacion:emitir_factura' factura.pk %}"
-    style="display:none;"
+
+    id="formEmitirFactura"
+
+    method="post"
+
+    action="{% url 'facturacion:emitir_factura' factura.pk %}"
+
+    style="display:none;"
+
 >
-    {% csrf_token %}
+
+    {% csrf_token %}
+
 </form>
 
 
+
+
+
 <!-- =========================================================
-     DATOS DE COMPRADOR
-     Se reutiliza el modal existente, pero su tarjeta visual
-     queda oculta en esta pantalla.
+
+     DATOS DE COMPRADOR
+
+     Se reutiliza el modal existente, pero su tarjeta visual
+
+     queda oculta en esta pantalla.
+
 ========================================================= -->
 
+
+
 <style>
+
 .detalle-factura-comprador-modal > .ot-card{
-    display:none!important;
+
+    display:none!important;
+
 }
+
 </style>
 
+
+
 <div class="detalle-factura-comprador-modal">
-    {% include "includes/detalle_factura/comprador.html" %}
+
+    {% include "includes/detalle_factura/comprador.html" %}
+
 </div>
 
 
+
+
+
 <!-- =========================================================
-     MODAL EMITIR FACTURA
+
+     MODAL EMITIR FACTURA
+
 ========================================================= -->
+
+
 
 {% include "includes/detalle_factura/modal_emitir_factura.html" %}
 
+{% endif %}
+
+
 
 <!-- =========================================================
-     IFRAME OCULTO PARA FACTURA / RIDE
+
+     IFRAME OCULTO PARA FACTURA / RIDE
+
 ========================================================= -->
 
+
+
 <iframe
-    id="iframeImpresionFactura"
-    title="Factura"
-    style="
-        position:absolute;
-        top:-10000px;
-        left:-10000px;
-        width:1000px;
-        height:1000px;
-        border:none;
-    "
+
+    id="iframeImpresionFactura"
+
+    title="Factura"
+
+    style="
+
+        position:absolute;
+
+        top:-10000px;
+
+        left:-10000px;
+
+        width:1000px;
+
+        height:1000px;
+
+        border:none;
+
+    "
+
 ></iframe>
+
+
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
+
 <script>
+
 /* =========================================================
-   SNAPSHOT ACTUAL DEL COMPRADOR
-   El include comprador.html originalmente se usa también
-   durante la preparación desde OT. Aquí sobrescribimos sus
-   campos con los datos YA GUARDADOS en FacturaVenta.
+
+   SNAPSHOT ACTUAL DEL COMPRADOR
+
+   El include comprador.html originalmente se usa también
+
+   durante la preparación desde OT. Aquí sobrescribimos sus
+
+   campos con los datos YA GUARDADOS en FacturaVenta.
+
 ========================================================= */
+
+
 
 function cargarSnapshotCompradorFacturaGuardada() {
-    const valores = {
-        facturaTipoIdentificacion: "{{ factura.tipo_identificacion_comprador|default:''|escapejs }}",
-        facturaIdentificacion: "{{ factura.identificacion_comprador|default:''|escapejs }}",
-        facturaRazonSocial: "{{ factura.razon_social_comprador|default:''|escapejs }}",
-        facturaDireccion: "{{ factura.direccion_comprador|default:''|escapejs }}",
-        facturaTelefono: "{{ factura.telefono_comprador|default:''|escapejs }}",
-        facturaCorreo: "{{ factura.correo_comprador|default:''|escapejs }}"
-    };
 
-    Object.entries(valores).forEach(([id, valor]) => {
-        const campo = document.getElementById(id);
-        if (campo) campo.value = valor;
-    });
+    const valores = {
 
-    const nombre = document.getElementById("compradorResumenNombre");
-    const identificacion = document.getElementById("compradorResumenIdentificacion");
-    const contacto = document.getElementById("compradorResumenContacto");
+        facturaTipoIdentificacion: "{{ factura.tipo_identificacion_comprador|default:''|escapejs }}",
 
-    if (nombre) {
-        nombre.textContent =
-            valores.facturaRazonSocial ||
-            "SIN NOMBRE";
-    }
+        facturaIdentificacion: "{{ factura.identificacion_comprador|default:''|escapejs }}",
 
-    if (identificacion) {
-        identificacion.textContent =
-            valores.facturaTipoIdentificacion === "07"
-                ? "Consumidor Final"
-                : (
-                    valores.facturaIdentificacion
-                        ? `C.I./RUC: ${valores.facturaIdentificacion}`
-                        : "Sin identificación registrada"
-                );
-    }
+        facturaRazonSocial: "{{ factura.razon_social_comprador|default:''|escapejs }}",
 
-    if (contacto) {
-        const partes = [];
+        facturaDireccion: "{{ factura.direccion_comprador|default:''|escapejs }}",
 
-        if (valores.facturaTelefono) {
-            partes.push(valores.facturaTelefono);
-        }
+        facturaTelefono: "{{ factura.telefono_comprador|default:''|escapejs }}",
 
-        if (valores.facturaCorreo) {
-            partes.push(valores.facturaCorreo);
-        }
+        facturaCorreo: "{{ factura.correo_comprador|default:''|escapejs }}"
 
-        contacto.textContent =
-            partes.length
-                ? partes.join(" · ")
-                : "Sin teléfono ni correo registrado";
-    }
+    };
+
+
+
+    Object.entries(valores).forEach(([id, valor]) => {
+
+        const campo = document.getElementById(id);
+
+        if (campo) campo.value = valor;
+
+    });
+
+
+
+    const nombre = document.getElementById("compradorResumenNombre");
+
+    const identificacion = document.getElementById("compradorResumenIdentificacion");
+
+    const contacto = document.getElementById("compradorResumenContacto");
+
+
+
+    if (nombre) {
+
+        nombre.textContent =
+
+            valores.facturaRazonSocial ||
+
+            "SIN NOMBRE";
+
+    }
+
+
+
+    if (identificacion) {
+
+        identificacion.textContent =
+
+            valores.facturaTipoIdentificacion === "07"
+
+                ? "Consumidor Final"
+
+                : (
+
+                    valores.facturaIdentificacion
+
+                        ? `C.I./RUC: ${valores.facturaIdentificacion}`
+
+                        : "Sin identificación registrada"
+
+                );
+
+    }
+
+
+
+    if (contacto) {
+
+        const partes = [];
+
+
+
+        if (valores.facturaTelefono) {
+
+            partes.push(valores.facturaTelefono);
+
+        }
+
+
+
+        if (valores.facturaCorreo) {
+
+            partes.push(valores.facturaCorreo);
+
+        }
+
+
+
+        contacto.textContent =
+
+            partes.length
+
+                ? partes.join(" · ")
+
+                : "Sin teléfono ni correo registrado";
+
+    }
+
 }
 
 
+
+
+
 /* =========================================================
-   ASOCIAR SNAPSHOT DEL COMPRADOR AL FORMULARIO DE EMISIÓN
+
+   ASOCIAR SNAPSHOT DEL COMPRADOR AL FORMULARIO DE EMISIÓN
+
 ========================================================= */
+
+
 
 function asociarCamposCompradorAFormularioEmision() {
-    [
-        "facturaTipoIdentificacion",
-        "facturaIdentificacion",
-        "facturaRazonSocial",
-        "facturaDireccion",
-        "facturaTelefono",
-        "facturaCorreo",
-        "facturaCompradorClienteId"
-    ].forEach(id => {
-        const campo = document.getElementById(id);
 
-        if (campo) {
-            campo.setAttribute(
-                "form",
-                "formEmitirFactura"
-            );
-        }
-    });
+    [
+
+        "facturaTipoIdentificacion",
+
+        "facturaIdentificacion",
+
+        "facturaRazonSocial",
+
+        "facturaDireccion",
+
+        "facturaTelefono",
+
+        "facturaCorreo",
+
+        "facturaCompradorClienteId"
+
+    ].forEach(id => {
+
+        const campo = document.getElementById(id);
+
+
+
+        if (campo) {
+
+            campo.setAttribute(
+
+                "form",
+
+                "formEmitirFactura"
+
+            );
+
+        }
+
+    });
+
 }
 
 
+
+
+
 /* =========================================================
-   CARGAR SNAPSHOT REAL DE FACTURAVENTA
+
+   CARGAR SNAPSHOT REAL DE FACTURAVENTA
+
 ========================================================= */
+
+
 
 function cargarCompradorDesdeFactura() {
-    const valores = {
-        facturaTipoIdentificacion:
-            "{{ factura.tipo_identificacion_comprador|default_if_none:''|escapejs }}",
-        facturaIdentificacion:
-            "{{ factura.identificacion_comprador|default_if_none:''|escapejs }}",
-        facturaRazonSocial:
-            "{{ factura.razon_social_comprador|default_if_none:''|escapejs }}",
-        facturaDireccion:
-            "{{ factura.direccion_comprador|default_if_none:''|escapejs }}",
-        facturaTelefono:
-            "{{ factura.telefono_comprador|default_if_none:''|escapejs }}",
-        facturaCorreo:
-            "{{ factura.correo_comprador|default_if_none:''|escapejs }}"
-    };
 
-    Object.entries(valores).forEach(([id, valor]) => {
-        const campo = document.getElementById(id);
+    const valores = {
 
-        if (campo) {
-            campo.value = valor || "";
-        }
-    });
+        facturaTipoIdentificacion:
 
-    const clienteId =
-        document.getElementById(
-            "facturaCompradorClienteId"
-        );
+            "{{ factura.tipo_identificacion_comprador|default_if_none:''|escapejs }}",
 
-    if (clienteId) {
-        clienteId.value = "";
-    }
+        facturaIdentificacion:
 
-    const comprador = {
-        cliente_id: "",
-        tipo_identificacion:
-            valores.facturaTipoIdentificacion,
-        identificacion:
-            valores.facturaIdentificacion,
-        razon_social:
-            valores.facturaRazonSocial,
-        direccion:
-            valores.facturaDireccion,
-        telefono:
-            valores.facturaTelefono,
-        correo:
-            valores.facturaCorreo
-    };
+            "{{ factura.identificacion_comprador|default_if_none:''|escapejs }}",
 
-    if (
-        typeof aplicarCompradorFactura === "function" &&
-        comprador.tipo_identificacion &&
-        comprador.identificacion &&
-        comprador.razon_social
-    ) {
-        aplicarCompradorFactura(
-            comprador
-        );
-    }
+        facturaRazonSocial:
+
+            "{{ factura.razon_social_comprador|default_if_none:''|escapejs }}",
+
+        facturaDireccion:
+
+            "{{ factura.direccion_comprador|default_if_none:''|escapejs }}",
+
+        facturaTelefono:
+
+            "{{ factura.telefono_comprador|default_if_none:''|escapejs }}",
+
+        facturaCorreo:
+
+            "{{ factura.correo_comprador|default_if_none:''|escapejs }}"
+
+    };
+
+
+
+    Object.entries(valores).forEach(([id, valor]) => {
+
+        const campo = document.getElementById(id);
+
+
+
+        if (campo) {
+
+            campo.value = valor || "";
+
+        }
+
+    });
+
+
+
+    const clienteId =
+
+        document.getElementById(
+
+            "facturaCompradorClienteId"
+
+        );
+
+
+
+    if (clienteId) {
+
+        clienteId.value = "";
+
+    }
+
+
+
+    const comprador = {
+
+        cliente_id: "",
+
+        tipo_identificacion:
+
+            valores.facturaTipoIdentificacion,
+
+        identificacion:
+
+            valores.facturaIdentificacion,
+
+        razon_social:
+
+            valores.facturaRazonSocial,
+
+        direccion:
+
+            valores.facturaDireccion,
+
+        telefono:
+
+            valores.facturaTelefono,
+
+        correo:
+
+            valores.facturaCorreo
+
+    };
+
+
+
+    if (
+
+        typeof aplicarCompradorFactura === "function" &&
+
+        comprador.tipo_identificacion &&
+
+        comprador.identificacion &&
+
+        comprador.razon_social
+
+    ) {
+
+        aplicarCompradorFactura(
+
+            comprador
+
+        );
+
+    }
+
 }
 
 
-/* =========================================================
-   ABRIR MODAL DE EMISIÓN
 
-   IMPORTANTE:
-   - modal_emitir_factura.html ya define abrirModalEmisionFactura().
-   - Guardamos esa función original en abrirModalEmisionFacturaBase.
-   - Esta pantalla solo la envuelve para asociar el comprador
-     guardado y precargar la forma de pago existente.
-   - Debe existir UNA sola función abrirModalEmisionFacturaDetalle()
-     para evitar recursión.
+
+
+/* =========================================================
+
+   ABRIR MODAL DE EMISIÓN
+
+
+
+   IMPORTANTE:
+
+   - modal_emitir_factura.html ya define abrirModalEmisionFactura().
+
+   - Guardamos esa función original en abrirModalEmisionFacturaBase.
+
+   - Esta pantalla solo la envuelve para asociar el comprador
+
+     guardado y precargar la forma de pago existente.
+
+   - Debe existir UNA sola función abrirModalEmisionFacturaDetalle()
+
+     para evitar recursión.
+
 ========================================================= */
+
+
 
 const abrirModalEmisionFacturaBase =
-    typeof abrirModalEmisionFactura === "function"
-        ? abrirModalEmisionFactura
-        : null;
+
+    typeof abrirModalEmisionFactura === "function"
+
+        ? abrirModalEmisionFactura
+
+        : null;
+
+
 
 function abrirModalEmisionFacturaDetalle() {
-    asociarCamposCompradorAFormularioEmision();
 
-    if (abrirModalEmisionFacturaBase) {
-        abrirModalEmisionFacturaBase();
-    }
+    asociarCamposCompradorAFormularioEmision();
 
-    precargarPagoExistenteEnModal();
+
+
+    if (abrirModalEmisionFacturaBase) {
+
+        abrirModalEmisionFacturaBase();
+
+    }
+
+
+
+    precargarPagoExistenteEnModal();
+
 }
 
+
+
 window.abrirModalEmisionFactura =
-    abrirModalEmisionFacturaDetalle;
+
+    abrirModalEmisionFacturaDetalle;
+
+
+
 
 
 /* =========================================================
-   PRECARGAR PAGO EXISTENTE
+
+   PRECARGAR PAGO EXISTENTE
+
 ========================================================= */
 
+
+
 function precargarPagoExistenteEnModal() {
-    {% if pagos %}
-        {% with pago=pagos.0 %}
 
-        const formaPago =
-            "{{ pago.forma_pago|default_if_none:''|escapejs }}";
+    {% if pagos %}
 
-        const entidadId =
-            "{{ pago.entidad_financiera_id|default_if_none:''|escapejs }}";
+        {% with pago=pagos.0 %}
 
-        const entidadNombre =
-            "{{ pago.entidad_financiera_nombre|default_if_none:''|escapejs }}";
 
-        const referencia =
-            "{{ pago.referencia|default_if_none:''|escapejs }}";
 
-        const observacion =
-            "{{ pago.observacion|default_if_none:''|escapejs }}";
+        const formaPago =
 
-        const metodosModal = {
-            "01": ["EFECTIVO", "Efectivo"],
-            "16": ["TARJETA_DEBITO", "Tarjeta de débito"],
-            "19": ["TARJETA_CREDITO", "Tarjeta de crédito"],
-            "20": ["TRANSFERENCIA", "Transferencia"]
-        };
+            "{{ pago.forma_pago|default_if_none:''|escapejs }}";
 
-        const datosForma =
-            metodosModal[formaPago];
 
-        if (
-            datosForma &&
-            typeof seleccionarFormaPagoFactura === "function"
-        ) {
-            seleccionarFormaPagoFactura(
-                datosForma[0],
-                formaPago,
-                datosForma[1]
-            );
-        }
 
-        if (
-            entidadId &&
-            entidadNombre &&
-            typeof seleccionarEntidadFinancieraFactura === "function"
-        ) {
-            seleccionarEntidadFinancieraFactura(
-                entidadId,
-                entidadNombre
-            );
-        }
-        else if (entidadNombre) {
-            entidadFinancieraFacturaSeleccionada =
-                "OTRA";
+        const entidadId =
 
-            const hiddenNombre =
-                document.getElementById(
-                    "entidadFinancieraNombreFactura"
-                );
+            "{{ pago.entidad_financiera_id|default_if_none:''|escapejs }}";
 
-            const texto =
-                document.getElementById(
-                    "textoEntidadFinancieraFactura"
-                );
 
-            const otra =
-                document.getElementById(
-                    "otraEntidadFinancieraFactura"
-                );
 
-            const grupoOtra =
-                document.getElementById(
-                    "grupoOtraEntidadFinancieraFactura"
-                );
+        const entidadNombre =
 
-            if (hiddenNombre) {
-                hiddenNombre.value =
-                    entidadNombre;
-            }
+            "{{ pago.entidad_financiera_nombre|default_if_none:''|escapejs }}";
 
-            if (texto) {
-                texto.textContent =
-                    "Otra institución financiera";
-            }
 
-            if (otra) {
-                otra.value =
-                    entidadNombre;
-            }
 
-            grupoOtra?.classList.add(
-                "visible"
-            );
-        }
+        const referencia =
 
-        const inputReferencia =
-            document.getElementById(
-                "referenciaPagoFactura"
-            );
+            "{{ pago.referencia|default_if_none:''|escapejs }}";
 
-        const inputObservacion =
-            document.getElementById(
-                "observacionPagoFactura"
-            );
 
-        if (inputReferencia) {
-            inputReferencia.value =
-                referencia;
-        }
 
-        if (inputObservacion) {
-            inputObservacion.value =
-                observacion;
-        }
+        const observacion =
 
-        {% endwith %}
-    {% endif %}
+            "{{ pago.observacion|default_if_none:''|escapejs }}";
+
+
+
+        const metodosModal = {
+
+            "01": ["EFECTIVO", "Efectivo"],
+
+            "16": ["TARJETA_DEBITO", "Tarjeta de débito"],
+
+            "19": ["TARJETA_CREDITO", "Tarjeta de crédito"],
+
+            "20": ["TRANSFERENCIA", "Transferencia"]
+
+        };
+
+
+
+        const datosForma =
+
+            metodosModal[formaPago];
+
+
+
+        if (
+
+            datosForma &&
+
+            typeof seleccionarFormaPagoFactura === "function"
+
+        ) {
+
+            seleccionarFormaPagoFactura(
+
+                datosForma[0],
+
+                formaPago,
+
+                datosForma[1]
+
+            );
+
+        }
+
+
+
+        if (
+
+            entidadId &&
+
+            entidadNombre &&
+
+            typeof seleccionarEntidadFinancieraFactura === "function"
+
+        ) {
+
+            seleccionarEntidadFinancieraFactura(
+
+                entidadId,
+
+                entidadNombre
+
+            );
+
+        }
+
+        else if (entidadNombre) {
+
+            entidadFinancieraFacturaSeleccionada =
+
+                "OTRA";
+
+
+
+            const hiddenNombre =
+
+                document.getElementById(
+
+                    "entidadFinancieraNombreFactura"
+
+                );
+
+
+
+            const texto =
+
+                document.getElementById(
+
+                    "textoEntidadFinancieraFactura"
+
+                );
+
+
+
+            const otra =
+
+                document.getElementById(
+
+                    "otraEntidadFinancieraFactura"
+
+                );
+
+
+
+            const grupoOtra =
+
+                document.getElementById(
+
+                    "grupoOtraEntidadFinancieraFactura"
+
+                );
+
+
+
+            if (hiddenNombre) {
+
+                hiddenNombre.value =
+
+                    entidadNombre;
+
+            }
+
+
+
+            if (texto) {
+
+                texto.textContent =
+
+                    "Otra institución financiera";
+
+            }
+
+
+
+            if (otra) {
+
+                otra.value =
+
+                    entidadNombre;
+
+            }
+
+
+
+            grupoOtra?.classList.add(
+
+                "visible"
+
+            );
+
+        }
+
+
+
+        const inputReferencia =
+
+            document.getElementById(
+
+                "referenciaPagoFactura"
+
+            );
+
+
+
+        const inputObservacion =
+
+            document.getElementById(
+
+                "observacionPagoFactura"
+
+            );
+
+
+
+        if (inputReferencia) {
+
+            inputReferencia.value =
+
+                referencia;
+
+        }
+
+
+
+        if (inputObservacion) {
+
+            inputObservacion.value =
+
+                observacion;
+
+        }
+
+
+
+        {% endwith %}
+
+    {% endif %}
+
 }
+
+
+
 
 
 document.addEventListener(
-    "DOMContentLoaded",
-    function() {
-        asociarCamposCompradorAFormularioEmision();
-        cargarCompradorDesdeFactura();
-        cargarSnapshotCompradorFacturaGuardada();
 
-        {% if messages %}
-            {% for message in messages %}
-                {% if message.tags == "success" %}
-                    Swal.fire({
-                        title:"Proceso completado",
-                        text:"{{ message|escapejs }}",
-                        icon:"success",
-                        confirmButtonColor:"#34c759"
-                    });
-                {% elif message.tags == "error" %}
-                    Swal.fire({
-                        title:"No se pudo procesar",
-                        text:"{{ message|escapejs }}",
-                        icon:"error",
-                        confirmButtonColor:"#ff3b30"
-                    });
-                {% elif message.tags == "warning" %}
-                    Swal.fire({
-                        title:"Advertencia",
-                        text:"{{ message|escapejs }}",
-                        icon:"warning",
-                        confirmButtonColor:"#ff9500"
-                    });
-                {% else %}
-                    Swal.fire({
-                        title:"Información",
-                        text:"{{ message|escapejs }}",
-                        icon:"info",
-                        confirmButtonColor:"#0071e3"
-                    });
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    }
+    "DOMContentLoaded",
+
+    function() {
+
+        asociarCamposCompradorAFormularioEmision();
+
+        cargarCompradorDesdeFactura();
+
+        cargarSnapshotCompradorFacturaGuardada();
+
+
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                {% if message.tags == "success" %}
+
+                    Swal.fire({
+
+                        title:"Proceso completado",
+
+                        text:"{{ message|escapejs }}",
+
+                        icon:"success",
+
+                        confirmButtonColor:"#34c759"
+
+                    });
+
+                {% elif message.tags == "error" %}
+
+                    Swal.fire({
+
+                        title:"No se pudo procesar",
+
+                        text:"{{ message|escapejs }}",
+
+                        icon:"error",
+
+                        confirmButtonColor:"#ff3b30"
+
+                    });
+
+                {% elif message.tags == "warning" %}
+
+                    Swal.fire({
+
+                        title:"Advertencia",
+
+                        text:"{{ message|escapejs }}",
+
+                        icon:"warning",
+
+                        confirmButtonColor:"#ff9500"
+
+                    });
+
+                {% else %}
+
+                    Swal.fire({
+
+                        title:"Información",
+
+                        text:"{{ message|escapejs }}",
+
+                        icon:"info",
+
+                        confirmButtonColor:"#0071e3"
+
+                    });
+
+                {% endif %}
+
+            {% endfor %}
+
+        {% endif %}
+
+    }
+
 );
+
 function imprimirFacturaDirecto(event) {
-    const boton = event?.currentTarget;
 
-    if (!boton || boton.disabled) {
-        return;
-    }
+    const boton = event?.currentTarget;
 
-    const htmlOriginal = boton.innerHTML;
 
-    boton.disabled = true;
-    boton.innerHTML =
-        '<span class="spinner-border spinner-border-sm me-1"></span> Preparando factura...';
 
-    let iframe =
-        document.getElementById("iframeImpresionFactura");
+    if (!boton || boton.disabled) {
 
-    if (!iframe) {
-        iframe = document.createElement("iframe");
+        return;
 
-        iframe.id = "iframeImpresionFactura";
-        iframe.title = "Factura";
-        iframe.style.position = "absolute";
-        iframe.style.top = "-10000px";
-        iframe.style.left = "-10000px";
-        iframe.style.width = "1000px";
-        iframe.style.height = "1000px";
-        iframe.style.border = "none";
+    }
 
-        document.body.appendChild(iframe);
-    }
 
-    iframe.src =
-        "{% url 'facturacion:ride_factura' factura.pk %}";
 
-    setTimeout(function () {
-        boton.disabled = false;
-        boton.innerHTML = htmlOriginal;
-    }, 2000);
+    const htmlOriginal = boton.innerHTML;
+
+
+
+    boton.disabled = true;
+
+    boton.innerHTML =
+
+        '<span class="spinner-border spinner-border-sm me-1"></span> Preparando factura...';
+
+
+
+    let iframe =
+
+        document.getElementById("iframeImpresionFactura");
+
+
+
+    if (!iframe) {
+
+        iframe = document.createElement("iframe");
+
+
+
+        iframe.id = "iframeImpresionFactura";
+
+        iframe.title = "Factura";
+
+        iframe.style.position = "absolute";
+
+        iframe.style.top = "-10000px";
+
+        iframe.style.left = "-10000px";
+
+        iframe.style.width = "1000px";
+
+        iframe.style.height = "1000px";
+
+        iframe.style.border = "none";
+
+
+
+        document.body.appendChild(iframe);
+
+    }
+
+
+
+    iframe.src =
+
+        "{% url 'facturacion:ride_factura' factura.pk %}";
+
+
+
+    setTimeout(function () {
+
+        boton.disabled = false;
+
+        boton.innerHTML = htmlOriginal;
+
+    }, 2000);
+
 }
+
 </script>
+
+
 
 {% endblock %}

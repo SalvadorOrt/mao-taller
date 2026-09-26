@@ -934,23 +934,31 @@
                 </div>
 
                 <div class="lista-cot-header-subtitle">
-                    Cree proformas independientes o consulte las vinculadas a órdenes de trabajo.
+                    {% if puede_crear_cotizacion %}
+                        Cree proformas independientes o consulte las vinculadas a órdenes de trabajo.
+                    {% else %}
+                        Consulte y dé seguimiento a las proformas disponibles.
+                    {% endif %}
                 </div>
 
             </div>
 
 
-            <button
-                type="button"
-                class="btn-login primary"
-                onclick="abrirModalNuevaProforma()"
-            >
-                <i
-                    class="bi bi-plus-circle"
-                    style="margin-right: 6px;"
-                ></i>
-                Nueva Proforma
-            </button>
+            {% if puede_crear_cotizacion %}
+
+                <button
+                    type="button"
+                    class="btn-login primary"
+                    onclick="abrirModalNuevaProforma()"
+                >
+                    <i
+                        class="bi bi-plus-circle"
+                        style="margin-right: 6px;"
+                    ></i>
+                    Nueva Proforma
+                </button>
+
+            {% endif %}
 
         </div>
 
@@ -1824,7 +1832,7 @@
 
                                         <!-- NUEVA REVISIÓN -->
 
-                                        {% if cotizacion.estado == "APROBADA" and cotizacion.es_vigente %}
+                                        {% if puede_crear_revision_cotizacion and cotizacion.estado == "APROBADA" and cotizacion.es_vigente %}
 
                                             <div
                                                 class="
@@ -1905,31 +1913,39 @@
 
                                 <p class="lista-cot-empty-text">
 
-                                    Intenta cambiar los filtros de búsqueda
-                                    o crea una nueva proforma.
+                                    {% if puede_crear_cotizacion %}
+                                        Intenta cambiar los filtros de búsqueda
+                                        o crea una nueva proforma.
+                                    {% else %}
+                                        Intenta cambiar los filtros de búsqueda.
+                                    {% endif %}
 
                                 </p>
 
 
-                                <div
-                                    style="
-                                        margin-top: 15px;
-                                    "
-                                >
+                                {% if puede_crear_cotizacion %}
 
-                                    <button
-                type="button"
-                class="btn-login primary"
-                onclick="abrirModalNuevaProforma()"
-            >
-                <i
-                    class="bi bi-plus-circle"
-                    style="margin-right: 6px;"
-                ></i>
-                Nueva Proforma
-            </button>
+                                    <div
+                                        style="
+                                            margin-top: 15px;
+                                        "
+                                    >
 
-                                </div>
+                                        <button
+                                            type="button"
+                                            class="btn-login primary"
+                                            onclick="abrirModalNuevaProforma()"
+                                        >
+                                            <i
+                                                class="bi bi-plus-circle"
+                                                style="margin-right: 6px;"
+                                            ></i>
+                                            Nueva Proforma
+                                        </button>
+
+                                    </div>
+
+                                {% endif %}
 
                             </td>
 
@@ -1947,6 +1963,8 @@
 
 </div>
 
+
+{% if puede_crear_cotizacion %}
 
 <!-- =========================================================
      MODAL NUEVA PROFORMA
@@ -2214,6 +2232,8 @@
         </form>
     </div>
 </div>
+
+{% endif %}
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

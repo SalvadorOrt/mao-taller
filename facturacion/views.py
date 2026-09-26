@@ -1,7 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -13,7 +13,7 @@ from django.shortcuts import (
 )
 from django.urls import reverse
 from django.views.decorators.http import require_POST
-
+from accesos.permissions import permiso_requerido
 from ordenes_de_trabajo.models import (
     AbonoOrdenTrabajo,
     OrdenTrabajo,
@@ -579,7 +579,7 @@ def _nombre_xml_factura(
 # DASHBOARD
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def dashboard_facturacion(request):
     """
     Dashboard principal de facturación.
@@ -684,6 +684,22 @@ def dashboard_facturacion(request):
 
         "total_rechazadas":
             total_rechazadas,
+
+        "puede_crear_factura":
+            (
+                request.user.is_superuser
+                or request.user.has_perm(
+                    "facturacion.add_facturaventa"
+                )
+            ),
+
+        "puede_editar_factura":
+            (
+                request.user.is_superuser
+                or request.user.has_perm(
+                    "facturacion.change_facturaventa"
+                )
+            ),
     }
 
     return render(
@@ -698,7 +714,7 @@ def dashboard_facturacion(request):
 # BUSCAR OT PARA NUEVA FACTURA
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def buscar_ordenes_facturacion(request):
     """
     Endpoint JSON para el modal "+ Nueva factura".
@@ -948,7 +964,7 @@ def buscar_ordenes_facturacion(request):
 # BUSCAR ABONOS PARA NUEVA FACTURA
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def buscar_abonos_facturacion(request):
     """
     Endpoint JSON para buscar abonos pendientes de facturación.
@@ -1206,7 +1222,7 @@ def buscar_abonos_facturacion(request):
 # DETALLE DE ABONO PARA FACTURACIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def detalle_abono_facturacion(
     request,
     abono_id,
@@ -1451,7 +1467,7 @@ def detalle_abono_facturacion(
 # CREAR FACTURA DESDE ABONO
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def crear_factura_desde_abono(
     request,
@@ -1591,7 +1607,7 @@ def crear_factura_desde_abono(
 # CREAR FACTURA DESDE OT
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def crear_factura_desde_ot(
     request,
@@ -1779,7 +1795,7 @@ def crear_factura_desde_ot(
 # DETALLE DE FACTURA
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def detalle_factura(
     request,
     factura_id,
@@ -1902,18 +1918,28 @@ def detalle_factura(
     # ESTADO
     # =====================================================
 
+    tiene_permiso_cambio = (
+    request.user.is_superuser
+    or request.user.has_perm(
+        "facturacion.change_facturaventa"
+    )
+)
+
     puede_editar = (
-        _factura_editable(
+        tiene_permiso_cambio
+        and _factura_editable(
             factura
         )
     )
 
     puede_emitir = (
-        factura.estado == "BORRADOR"
+        tiene_permiso_cambio
+        and factura.estado == "BORRADOR"
     )
 
     puede_reintentar = (
-        factura.estado
+        tiene_permiso_cambio
+        and factura.estado
         in {
             "GENERADO",
             "FIRMADO",
@@ -1923,7 +1949,8 @@ def detalle_factura(
     )
 
     puede_consultar_sri = (
-        factura.estado
+        tiene_permiso_cambio
+        and factura.estado
         in {
             "RECIBIDO",
             "FIRMADO",
@@ -1939,8 +1966,14 @@ def detalle_factura(
     )
 
     puede_enviar_correo = (
-        factura.estado == "AUTORIZADO"
+        tiene_permiso_cambio
+        and factura.estado == "AUTORIZADO"
         and bool(factura.xml_autorizado)
+    )
+
+    puede_anular = (
+        tiene_permiso_cambio
+        and factura.estado != "AUTORIZADO"
     )
 
     context = {
@@ -1968,7 +2001,8 @@ def detalle_factura(
 
         "puede_enviar_correo":
             puede_enviar_correo,
-
+        "puede_anular":
+            puede_anular,
         # -----------------------------------------
         # DETALLES
         # -----------------------------------------
@@ -2061,7 +2095,7 @@ def detalle_factura(
 # ACTUALIZAR COMPRADOR
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 @transaction.atomic
 def actualizar_comprador(
@@ -2287,7 +2321,7 @@ def actualizar_comprador(
 # GUARDAR FORMA DE PAGO
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def guardar_forma_pago(
     request,
@@ -2415,7 +2449,7 @@ def guardar_forma_pago(
 # EMITIR FACTURA
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def emitir_factura(
     request,
@@ -2659,7 +2693,7 @@ def emitir_factura(
 # REINTENTAR / CONTINUAR EMISIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def reintentar_factura(
     request,
@@ -2807,7 +2841,7 @@ def reintentar_factura(
 # CONSULTAR ESTADO EN SRI
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def consultar_estado_sri(
     request,
@@ -2861,7 +2895,7 @@ def consultar_estado_sri(
 # DESCARGAR XML
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def descargar_xml_factura(
     request,
     factura_id,
@@ -2927,7 +2961,7 @@ def descargar_xml_factura(
 # CORREO
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def enviar_factura_correo(
     request,
@@ -2991,7 +3025,7 @@ def enviar_factura_correo(
 # ANULACIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def anular_factura(
     request,
@@ -3038,7 +3072,7 @@ def anular_factura(
 # FACTURA MANUAL / VENTA DIRECTA
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def nueva_factura_manual(
     request,
 ):
@@ -3061,7 +3095,7 @@ def nueva_factura_manual(
     )
 
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 @require_POST
 def crear_factura_manual(
     request,
@@ -3089,7 +3123,7 @@ def crear_factura_manual(
 # DETALLE DE OT PARA FACTURACIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido("facturacion.view_facturaventa")
 def detalle_orden_facturacion(
     request,
     orden_id,

@@ -4,10 +4,6 @@ from django.db.models import Q
 from .models import Permiso, Rol
 
 
-# =========================================================
-# FORMULARIO DE ROLES
-# =========================================================
-
 class RolForm(forms.ModelForm):
 
     permissions = forms.ModelMultipleChoiceField(
@@ -43,32 +39,25 @@ class RolForm(forms.ModelForm):
         }
 
 
-    # =====================================================
-    # INICIALIZACIÓN
-    # =====================================================
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            **kwargs,
+        )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # =================================================
-        # PERMISOS DISPONIBLES
-        # =================================================
-        #
-        # La lista se genera automáticamente desde los
-        # permisos registrados por Django.
-        #
-        # Por lo tanto, si mañana agregamos una aplicación
-        # nueva, sus permisos aparecerán automáticamente
-        # después de ejecutar las migraciones.
-        #
-        # Se excluyen únicamente componentes internos de
-        # Django que no deben formar parte de los roles
-        # operativos de MAO.
-        # =================================================
+        # Django genera automáticamente los permisos
+        # de cada modelo. Por eso una aplicación nueva
+        # aparecerá en el editor después de sus migraciones.
 
         permisos = (
             Permiso.objects
-            .select_related("content_type")
+            .select_related(
+                "content_type"
+            )
             .exclude(
                 content_type__app_label__in=[
                     "admin",
@@ -79,38 +68,21 @@ class RolForm(forms.ModelForm):
             )
         )
 
-        # =================================================
-        # ACCESOS
-        # =================================================
-        #
-        # En la aplicación "accesos" tenemos dos proxies:
-        #
-        #   Rol
-        #   Permiso
-        #
-        # Los permisos sobre Rol SÍ son útiles:
-        #
-        #   view_rol
-        #   add_rol
-        #   change_rol
-        #   delete_rol
-        #
-        # porque permiten decidir qué usuarios pueden
-        # administrar roles desde la web.
-        #
-        # Los permisos automáticos del proxy "Permiso"
-        # no necesitamos mostrarlos.
-        # =================================================
-
+        # El proxy Permiso no necesita aparecer.
         permisos = permisos.exclude(
             Q(
-                content_type__app_label="accesos",
-                content_type__model="permiso",
+                content_type__app_label=
+                    "accesos",
+                content_type__model=
+                    "permiso",
             )
         )
 
-        self.fields["permissions"].queryset = (
-            permisos.order_by(
+        self.fields[
+            "permissions"
+        ].queryset = (
+            permisos
+            .order_by(
                 "content_type__app_label",
                 "content_type__model",
                 "codename",
@@ -118,15 +90,14 @@ class RolForm(forms.ModelForm):
         )
 
 
-    # =====================================================
-    # VALIDACIÓN DEL NOMBRE
-    # =====================================================
-
     def clean_name(self):
 
         nombre = (
             self.cleaned_data
-            .get("name", "")
+            .get(
+                "name",
+                "",
+            )
             .strip()
         )
 
@@ -135,28 +106,24 @@ class RolForm(forms.ModelForm):
                 "El nombre del rol es obligatorio."
             )
 
-        # -------------------------------------------------
-        # EVITAR NOMBRES DUPLICADOS
-        # -------------------------------------------------
-
-        roles_existentes = Rol.objects.filter(
-            name__iexact=nombre
+        existentes = (
+            Rol.objects
+            .filter(
+                name__iexact=nombre
+            )
         )
 
-        # -------------------------------------------------
-        # SI ESTAMOS EDITANDO, EXCLUIR EL ROL ACTUAL
-        # -------------------------------------------------
-
-        if self.instance and self.instance.pk:
-
-            roles_existentes = (
-                roles_existentes.exclude(
+        if (
+            self.instance
+            and self.instance.pk
+        ):
+            existentes = (
+                existentes.exclude(
                     pk=self.instance.pk
                 )
             )
 
-        if roles_existentes.exists():
-
+        if existentes.exists():
             raise forms.ValidationError(
                 "Ya existe un rol con ese nombre."
             )

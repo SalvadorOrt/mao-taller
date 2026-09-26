@@ -2,9 +2,8 @@ import uuid
 import traceback
 from django.core.paginator import Paginator
 from decimal import Decimal
-
+from accesos.permissions import permiso_requerido
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -1361,7 +1360,9 @@ def guardar_detalle_cotizacion(
 # LISTADO DE COTIZACIONES / PROFORMAS
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.view_cotizacion"
+)
 def lista_cotizaciones(
     request,
 ):
@@ -1742,6 +1743,29 @@ def lista_cotizaciones(
     )
 
     # =====================================================
+    # PERMISOS DE INTERFAZ
+    # =====================================================
+
+    puede_crear_cotizacion = (
+        request.user.is_superuser
+        or request.user.has_perm(
+            "ordenes_de_trabajo.add_cotizacion"
+        )
+    )
+
+    puede_modificar_cotizacion = (
+        request.user.is_superuser
+        or request.user.has_perm(
+            "ordenes_de_trabajo.change_cotizacion"
+        )
+    )
+
+    puede_crear_revision_cotizacion = (
+        puede_crear_cotizacion
+        and puede_modificar_cotizacion
+    )
+
+    # =====================================================
     # RENDER
     # =====================================================
 
@@ -1817,13 +1841,27 @@ def lista_cotizaciones(
 
             "limite_resultados":
                 LIMITE_RESULTADOS,
+
+            # ---------------------------------------------
+            # PERMISOS DE INTERFAZ
+            # ---------------------------------------------
+            "puede_crear_cotizacion":
+                puede_crear_cotizacion,
+
+            "puede_modificar_cotizacion":
+                puede_modificar_cotizacion,
+
+            "puede_crear_revision_cotizacion":
+                puede_crear_revision_cotizacion,
         },
     )
 # =========================================================
 # CREAR COTIZACIÓN INDEPENDIENTE
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.add_cotizacion"
+)
 def crear_cotizacion(
     request,
 ):
@@ -2180,7 +2218,9 @@ def crear_cotizacion(
 # NUEVA COTIZACIÓN DESDE OT
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.add_cotizacion"
+)
 def nueva_cotizacion_desde_ot(
     request,
     pk_orden,
@@ -2332,7 +2372,9 @@ def nueva_cotizacion_desde_ot(
 # DETALLE COTIZACIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.view_cotizacion"
+)
 def detalle_cotizacion(
     request,
     pk,
@@ -2377,10 +2419,27 @@ def detalle_cotizacion(
 
     puede_editar = (
         cotizacion.puede_editarse()
+        and (
+            request.user.is_superuser
+            or request.user.has_perm(
+                "ordenes_de_trabajo.change_cotizacion"
+            )
+        )
     )
 
     puede_crear_revision = (
         cotizacion.puede_crear_revision()
+        and (
+            request.user.is_superuser
+            or (
+                request.user.has_perm(
+                    "ordenes_de_trabajo.add_cotizacion"
+                )
+                and request.user.has_perm(
+                    "ordenes_de_trabajo.change_cotizacion"
+                )
+            )
+        )
     )
 
     revision_anterior = (
@@ -2405,6 +2464,23 @@ def detalle_cotizacion(
     # =====================================================
 
     if request.method == "POST":
+
+        if (
+            not request.user.is_superuser
+            and not request.user.has_perm(
+                "ordenes_de_trabajo.change_cotizacion"
+            )
+        ):
+
+            messages.error(
+                request,
+                "No tienes permisos para modificar cotizaciones.",
+            )
+
+            return redirect(
+                "detalle_cotizacion",
+                pk=cotizacion.pk,
+            )
 
         if not puede_editar:
 
@@ -2979,7 +3055,12 @@ def validar_trazabilidad_revision(
 # CREAR NUEVA REVISIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.add_cotizacion"
+)
+@permiso_requerido(
+    "ordenes_de_trabajo.change_cotizacion"
+)
 def crear_revision_cotizacion(
     request,
     pk,
@@ -4114,7 +4195,9 @@ def sincronizar_servicios_cotizacion(
 # APROBAR / SINCRONIZAR COTIZACIÓN
 # =========================================================
 
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.change_cotizacion"
+)
 def aprobar_cotizacion(
     request,
     pk,

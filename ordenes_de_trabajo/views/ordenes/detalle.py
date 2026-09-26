@@ -1,1103 +1,2243 @@
 from decimal import Decimal
 
+
+
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+
+
 from django.db import transaction
+
 from django.db.models import Q
+
 from django.shortcuts import render, redirect, get_object_or_404
+
 from django.urls import reverse
 
+from accesos.permissions import permiso_requerido
+
+
+
 from inventario.models import CodigoProducto, Categoria
+
 from servicios.models import ServicioCatalogo
 
+
+
 from ...models import (
+
     OrdenTrabajo,
+
     OrdenCroquisDanio,
+
     OrdenInsumoDetalle,
+
     OrdenServicioDetalle,
+
     OrdenServicioProcedimientoDetalle,
+
     PlantillaRecomendacion,
+
     OrdenRecomendacion,
+
     Tecnico,
+
 )
 
+
+
 from ..utils import (
+
     parse_decimal,
+
     parse_cantidad,
+
     obtener_sucursal_activa,
+
     puede_operar_orden_desde_sucursal_activa,
+
 )
+
+
+
 
 
 def item(lista, i, default=""):
+
     if i < len(lista):
+
         return str(lista[i]).strip()
+
     return default
 
 
+
+
+
 def buscar_producto(p_id, barras, empaque):
+
     if p_id:
+
         producto = CodigoProducto.objects.filter(id=p_id, activo=True).first()
+
         if producto:
+
             return producto
+
+
 
     codigo_busqueda = barras or empaque
 
+
+
     if codigo_busqueda:
+
         producto = CodigoProducto.objects.filter(
+
             Q(codigo=codigo_busqueda)
+
             | Q(codigo_barras=codigo_busqueda)
+
             | Q(nombre_comercial__icontains=codigo_busqueda)
+
         ).first()
 
+
+
         if producto and producto.activo:
+
             return producto
+
+
 
     return None
 
 
+
+
+
 def merge_repuestos(request, orden):
+
     detalle_ids = request.POST.getlist("rep_detalle_id[]")
+
     producto_ids = request.POST.getlist("rep_producto_id[]")
+
     descripciones = request.POST.getlist("rep_descripcion[]")
+
     precios = request.POST.getlist("rep_pu[]")
+
     cantidades = request.POST.getlist("rep_cantidad[]")
+
     categorias = request.POST.getlist("rep_categoria_id[]")
+
     barras_list = request.POST.getlist("rep_codigo_barras[]")
+
     empaques = request.POST.getlist("rep_codigo_empaque[]")
+
     deletes = request.POST.getlist("rep_delete[]")
+
     marcados = request.POST.getlist("rep_marcado[]")
+
     total = max(
+
         len(detalle_ids),
+
         len(producto_ids),
+
         len(descripciones),
+
         len(precios),
+
         len(cantidades),
+
         len(categorias),
+
         len(barras_list),
+
         len(empaques),
+
         len(deletes),
+
         len(marcados),
+
         0,
+
     )
 
+
+
     existentes = {
+
         str(obj.id): obj
+
         for obj in OrdenInsumoDetalle.objects.select_for_update().filter(orden=orden)
+
     }
 
+
+
     for i in range(total):
+
         detalle_id = item(detalle_ids, i)
+
         producto_id = item(producto_ids, i)
+
         descripcion = item(descripciones, i)
+
         pu_str = item(precios, i)
+
         cantidad_str = item(cantidades, i)
+
         categoria_id = item(categorias, i)
+
         barras = item(barras_list, i)
+
         empaque = item(empaques, i)
+
         eliminar = item(deletes, i) == "1"
+
         marcado = item(marcados, i) == "1"
 
+
+
         if not detalle_id and not producto_id and not descripcion:
+
             continue
 
+
+
         if detalle_id:
+
             detalle = existentes.get(detalle_id)
 
+
+
             if not detalle:
+
                 continue
+
+
 
             if eliminar:
+
                 detalle.delete()
+
                 continue
 
+
+
             cantidad = parse_cantidad(cantidad_str, Decimal("1.00"))
+
             if cantidad <= 0:
+
                 continue
+
+
 
             producto = buscar_producto(producto_id, barras, empaque)
 
+
+
             precio_default = (
+
                 Decimal(producto.precio_venta or 0)
+
                 if producto
+
                 else Decimal("0.00")
+
             )
 
+
+
             precio = parse_decimal(pu_str, precio_default)
+
+
 
             detalle.producto = producto
+
             detalle.descripcion_factura = descripcion
+
             detalle.cantidad = cantidad
+
             detalle.precio_unitario = precio
+
             detalle.categoria_referencia_id = None if producto else (categoria_id or None)
+
             detalle.codigo_barras_referencia = None if producto else (barras or None)
+
             detalle.codigo_empaque_referencia = None if producto else (empaque or None)
+
             detalle.orden_item = i + 1
+
             detalle.marcado = marcado
+
             detalle.save()
 
+
+
         else:
+
             if eliminar:
+
                 continue
 
+
+
             cantidad = parse_cantidad(cantidad_str, Decimal("1.00"))
+
             if cantidad <= 0:
+
                 continue
+
+
 
             producto = buscar_producto(producto_id, barras, empaque)
 
+
+
             precio_default = (
+
                 Decimal(producto.precio_venta or 0)
+
                 if producto
+
                 else Decimal("0.00")
+
             )
+
+
 
             precio = parse_decimal(pu_str, precio_default)
 
+
+
             OrdenInsumoDetalle.objects.create(
+
                 orden=orden,
+
                 producto=producto,
+
                 descripcion_factura=descripcion,
+
                 cantidad=cantidad,
+
                 precio_unitario=precio,
+
                 categoria_referencia_id=None if producto else (categoria_id or None),
+
                 codigo_barras_referencia=None if producto else (barras or None),
+
                 codigo_empaque_referencia=None if producto else (empaque or None),
+
                 orden_item=i + 1,
+
                 marcado=marcado,
+
             )
+
+
+
 
 
 def merge_procedimientos(request, detalle_servicio, prefix, uid):
+
     proc_ids = request.POST.getlist(f"{prefix}_procedimiento_id_{uid}[]")
+
     proc_descs = request.POST.getlist(f"{prefix}_procedimientos_{uid}[]")
+
     proc_deletes = request.POST.getlist(f"{prefix}_procedimiento_delete_{uid}[]")
 
+
+
     total = max(
+
         len(proc_ids),
+
         len(proc_descs),
+
         len(proc_deletes),
+
         0,
+
     )
 
+
+
     existentes = {
+
         str(obj.id): obj
+
         for obj in OrdenServicioProcedimientoDetalle.objects.select_for_update().filter(
+
             detalle_servicio=detalle_servicio
+
         )
+
     }
+
+
 
     vistos = set()
 
+
+
     for i in range(total):
+
         proc_id = item(proc_ids, i)
+
         descripcion = item(proc_descs, i)
+
         eliminar = item(proc_deletes, i) == "1"
 
+
+
         if not proc_id and not descripcion:
+
             continue
+
+
 
         clave = descripcion.upper()
 
+
+
         if clave and clave in vistos:
+
             continue
 
+
+
         if clave:
+
             vistos.add(clave)
 
+
+
         if proc_id:
+
             proc = existentes.get(proc_id)
 
+
+
             if not proc:
+
                 continue
 
+
+
             if eliminar:
+
                 proc.delete()
+
                 continue
+
+
 
             proc.descripcion = descripcion
+
             proc.orden_item = i + 1
+
             proc.save()
 
+
+
         else:
+
             if eliminar:
+
                 continue
+
+
 
             if not descripcion:
+
                 continue
 
+
+
             OrdenServicioProcedimientoDetalle.objects.create(
+
                 detalle_servicio=detalle_servicio,
+
                 descripcion=descripcion,
+
                 orden_item=i + 1,
+
             )
+
+
+
 
 
 def merge_servicios(request, orden):
+
     recomendaciones_auto_ids = set()
 
+
+
     for prefix, tipo_bd in [("moi", "MEC"), ("moe", "EXT")]:
+
         detalle_ids = request.POST.getlist(f"{prefix}_detalle_id[]")
+
         uid_list = request.POST.getlist(f"{prefix}_uid[]")
+
         desc_list = request.POST.getlist(f"{prefix}_descripcion[]")
+
         pu_list = request.POST.getlist(f"{prefix}_pu[]")
+
         cant_list = request.POST.getlist(f"{prefix}_cantidad[]")
+
         serv_ids = request.POST.getlist(f"{prefix}_servicio_id[]")
+
         variante_list = request.POST.getlist(f"{prefix}_variante_precio[]")
+
         deletes = request.POST.getlist(f"{prefix}_delete[]")
 
+
+
         total = max(
+
             len(detalle_ids),
+
             len(uid_list),
+
             len(desc_list),
+
             len(pu_list),
+
             len(cant_list),
+
             len(serv_ids),
+
             len(variante_list),
+
             len(deletes),
+
             0,
+
         )
 
+
+
         existentes = {
+
             str(obj.id): obj
+
             for obj in OrdenServicioDetalle.objects.select_for_update().filter(
+
                 orden=orden,
+
                 tipo_servicio=tipo_bd,
+
             )
+
         }
 
+
+
         for i in range(total):
+
             detalle_id = item(detalle_ids, i)
+
             uid = item(uid_list, i) or detalle_id or str(i)
+
             descripcion = item(desc_list, i)
+
             precio_str = item(pu_list, i, "0.00")
+
             cantidad_str = item(cant_list, i, "1.00")
+
             servicio_id = item(serv_ids, i)
+
             variante = item(variante_list, i).upper() or "NORMAL"
+
             eliminar = item(deletes, i) == "1"
+
+
 
             servicio = None
 
+
+
             if servicio_id:
+
                 servicio = ServicioCatalogo.objects.filter(
+
                     id=servicio_id,
+
                     activo=True,
+
                 ).first()
 
+
+
             if servicio and not descripcion:
+
                 descripcion = servicio.descripcion
 
+
+
             if not detalle_id and not descripcion and not servicio:
+
                 continue
 
+
+
             if detalle_id:
+
                 detalle = existentes.get(detalle_id)
 
+
+
                 if not detalle:
+
                     continue
+
+
 
                 if eliminar:
+
                     detalle.delete()
+
                     continue
+
+
 
                 cantidad = parse_decimal(cantidad_str, Decimal("1.00"))
+
                 if cantidad <= 0:
+
                     continue
 
+
+
                 precio = parse_decimal(precio_str, Decimal("0.00"))
+
+
 
                 detalle.servicio = servicio
+
                 detalle.descripcion_servicio = descripcion
+
                 detalle.cantidad = cantidad
+
                 detalle.precio_unitario = precio
+
                 detalle.orden_item = i + 1
+
                 detalle.tipo_servicio = tipo_bd
+
                 detalle.variante_precio_aplicada = variante
+
                 detalle.save()
 
+
+
             else:
+
                 if eliminar:
+
                     continue
 
+
+
                 cantidad = parse_decimal(cantidad_str, Decimal("1.00"))
+
                 if cantidad <= 0:
+
                     continue
+
+
 
                 precio = parse_decimal(precio_str, Decimal("0.00"))
 
+
+
                 detalle = OrdenServicioDetalle.objects.create(
+
                     orden=orden,
+
                     servicio=servicio,
+
                     descripcion_servicio=descripcion,
+
                     cantidad=cantidad,
+
                     precio_unitario=precio,
+
                     orden_item=i + 1,
+
                     tipo_servicio=tipo_bd,
+
                     variante_precio_aplicada=variante,
+
                 )
 
+
+
             if servicio:
+
                 recs = PlantillaRecomendacion.objects.filter(
+
                     activo=True,
+
                     servicios=servicio,
+
                 ).values_list("id", flat=True)
+
+
 
                 recomendaciones_auto_ids.update(recs)
 
+
+
             merge_procedimientos(
+
                 request=request,
+
                 detalle_servicio=detalle,
+
                 prefix=prefix,
+
                 uid=uid,
+
             )
+
+
 
     return recomendaciones_auto_ids
 
 
+
+
+
 def merge_recomendaciones_automaticas(orden, recomendaciones_auto_ids):
+
     claves_existentes = {
+
         (
+
             (obj.titulo or "").strip().upper(),
+
             (obj.texto or "").strip().upper(),
+
         )
+
         for obj in OrdenRecomendacion.objects.filter(orden=orden)
+
     }
+
+
 
     orden_item = OrdenRecomendacion.objects.filter(orden=orden).count() + 1
 
+
+
     for rec in PlantillaRecomendacion.objects.filter(
+
         id__in=recomendaciones_auto_ids,
+
         activo=True,
+
     ).order_by("orden_visual", "titulo"):
 
+
+
         clave = (
+
             rec.titulo.strip().upper(),
+
             rec.texto.strip().upper(),
+
         )
+
+
 
         if clave in claves_existentes:
+
             continue
 
+
+
         OrdenRecomendacion.objects.create(
+
             orden=orden,
+
             plantilla=rec,
+
             titulo=rec.titulo,
+
             texto=rec.texto,
+
             orden_item=orden_item,
+
         )
 
+
+
         claves_existentes.add(clave)
+
         orden_item += 1
 
 
+
+
+
 def merge_recomendaciones_manuales(request, orden):
+
     detalle_ids = request.POST.getlist("recomendacion_detalle_id[]")
+
     plantilla_ids = request.POST.getlist("recomendacion_id[]")
+
     titulos = request.POST.getlist("recomendacion_titulo[]")
+
     textos = request.POST.getlist("recomendacion_texto[]")
+
     deletes = request.POST.getlist("recomendacion_delete[]")
 
+
+
     total = max(
+
         len(detalle_ids),
+
         len(plantilla_ids),
+
         len(titulos),
+
         len(textos),
+
         len(deletes),
+
         0,
+
     )
 
+
+
     existentes = {
+
         str(obj.id): obj
+
         for obj in OrdenRecomendacion.objects.select_for_update().filter(
+
             orden=orden
+
         )
+
     }
 
+
+
     claves = {
+
         (
+
             (obj.titulo or "").strip().upper(),
+
             (obj.texto or "").strip().upper(),
+
         )
+
         for obj in existentes.values()
+
     }
+
+
 
     orden_item = len(existentes) + 1
 
+
+
     for i in range(total):
+
         detalle_id = item(detalle_ids, i)
+
         plantilla_id = item(plantilla_ids, i)
+
         titulo = item(titulos, i)
+
         texto = item(textos, i)
+
         eliminar = item(deletes, i) == "1"
 
+
+
         if not detalle_id and not titulo and not texto:
+
             continue
 
+
+
         if not titulo:
+
             titulo = "RECOMENDACIÓN"
 
+
+
         if detalle_id:
+
             recomendacion = existentes.get(detalle_id)
 
+
+
             if not recomendacion:
+
                 continue
 
+
+
             if eliminar:
+
                 recomendacion.delete()
+
                 continue
+
+
 
             recomendacion.titulo = titulo
+
             recomendacion.texto = texto
+
             recomendacion.orden_item = i + 1
+
             recomendacion.save()
 
+
+
         else:
+
             if eliminar:
+
                 continue
+
+
 
             clave = (titulo.upper(), texto.upper())
 
+
+
             if clave in claves:
+
                 continue
+
+
 
             plantilla = None
 
+
+
             if plantilla_id and plantilla_id.isdigit():
+
                 plantilla = PlantillaRecomendacion.objects.filter(
+
                     id=plantilla_id
+
                 ).first()
 
+
+
             OrdenRecomendacion.objects.create(
+
                 orden=orden,
+
                 plantilla=plantilla,
+
                 titulo=titulo,
+
                 texto=texto,
+
                 orden_item=orden_item,
+
             )
+
+
 
             claves.add(clave)
+
             orden_item += 1
+
 def guardar_detalle_ot(request, pk):
-    with transaction.atomic():
-        orden = (
-            OrdenTrabajo.objects
-            .select_for_update(of=("self",))
-            .get(pk=pk)
+
+    if not request.user.has_perm(
+
+        "ordenes_de_trabajo.change_ordentrabajo"
+
+    ):
+
+        messages.error(
+
+            request,
+
+            "No tienes permisos para modificar esta orden.",
+
         )
+
+        return redirect(
+
+            "detalle_orden",
+
+            pk=pk,
+
+        )
+
+    with transaction.atomic():
+
+        orden = (
+
+            OrdenTrabajo.objects
+
+            .select_for_update(of=("self",))
+
+            .get(pk=pk)
+
+        )
+
+
 
         if orden.estado != "ABIERTA":
+
             messages.error(
+
                 request,
+
                 "No se puede modificar una orden que no esté abierta.",
-            )
-            return redirect(
-                "detalle_orden",
-                pk=orden.pk,
+
             )
 
+            return redirect(
+
+                "detalle_orden",
+
+                pk=orden.pk,
+
+            )
+
+
+
         version_form = request.POST.get(
+
             "orden_version"
+
         )
+
+
 
         version_coincide = True
 
+
+
         if (
+
             version_form
+
             and version_form.isdigit()
+
         ):
+
             version_coincide = (
+
                 int(version_form)
+
                 == orden.version
+
             )
 
+
+
         # ==========================================
+
         # GUARDAR REPUESTOS, SERVICIOS
+
         # Y RECOMENDACIONES
+
         # ==========================================
+
+
 
         merge_repuestos(
+
             request,
+
             orden,
+
         )
+
+
 
         recomendaciones_auto_ids = (
+
             merge_servicios(
+
                 request,
+
                 orden,
+
             )
+
         )
+
+
 
         merge_recomendaciones_automaticas(
+
             orden=orden,
+
             recomendaciones_auto_ids=(
+
                 recomendaciones_auto_ids
+
             ),
+
         )
+
+
 
         merge_recomendaciones_manuales(
+
             request,
+
             orden,
+
         )
 
+
+
         # ==========================================
+
         # GUARDAR CABECERA
+
         # ==========================================
+
+
 
         if version_coincide:
 
+
+
             # ======================================
+
             # PRÓXIMO MANTENIMIENTO
+
             # ======================================
+
             #
+
             # El kilometraje NO se modifica aquí.
+
             #
+
             # Se registra al crear la OT o desde
+
             # el modal de edición de recepción.
+
             # Esta vista solamente guarda el
+
             # intervalo de mantenimiento.
+
             # ======================================
+
+
 
             intervalo_str = (
+
                 request.POST.get(
+
                     "intervalo_mantenimiento_km",
+
                     "",
+
                 )
+
                 .strip()
+
             )
+
+
 
             if intervalo_str.isdigit():
+
                 intervalo = int(
+
                     intervalo_str
+
                 )
+
+
 
                 if intervalo > 0:
+
                     orden.intervalo_mantenimiento_km = (
+
                         intervalo
+
                     )
+
                 else:
+
                     orden.intervalo_mantenimiento_km = (
+
                         None
+
                     )
+
             else:
+
                 orden.intervalo_mantenimiento_km = (
+
                     None
+
                 )
 
+
+
             # ======================================
+
             # DESCUENTO
+
             # ======================================
+
+
 
             tipo_descuento = (
+
                 request.POST.get(
+
                     "tipo_descuento",
+
                     "PORCENTAJE",
+
                 )
+
                 .strip()
+
                 .upper()
+
             )
+
+
 
             tipos_descuento_validos = {
+
                 "PORCENTAJE",
+
                 "VALOR_FIJO",
+
             }
 
+
+
             if (
+
                 tipo_descuento
+
                 not in tipos_descuento_validos
+
             ):
+
                 tipo_descuento = (
+
                     "PORCENTAJE"
+
                 )
+
+
 
             descuento_ingresado = (
+
                 parse_decimal(
+
                     request.POST.get(
+
                         "descuento_ingresado",
+
                         "0",
+
                     ),
+
                     Decimal("0.00"),
+
                 )
+
             )
 
-            if (
-                descuento_ingresado
-                < Decimal("0.00")
-            ):
-                descuento_ingresado = (
-                    Decimal("0.00")
-                )
+
 
             if (
-                tipo_descuento
-                == "PORCENTAJE"
-                and descuento_ingresado
-                > Decimal("100.00")
+
+                descuento_ingresado
+
+                < Decimal("0.00")
+
             ):
+
                 descuento_ingresado = (
-                    Decimal("100.00")
+
+                    Decimal("0.00")
+
                 )
+
+
+
+            if (
+
+                tipo_descuento
+
+                == "PORCENTAJE"
+
+                and descuento_ingresado
+
+                > Decimal("100.00")
+
+            ):
+
+                descuento_ingresado = (
+
+                    Decimal("100.00")
+
+                )
+
+
 
             valores_sumar_iva = (
+
                 request.POST.getlist(
+
                     "sumar_iva_al_total"
+
                 )
+
             )
+
+
 
             sumar_iva_al_total = (
+
                 "1" in valores_sumar_iva
+
             )
+
+
 
             orden.tipo_descuento = (
+
                 tipo_descuento
+
             )
+
+
 
             orden.descuento_ingresado = (
+
                 descuento_ingresado
+
             )
+
+
 
             orden.sumar_iva_al_total = (
+
                 sumar_iva_al_total
+
             )
+
+
 
             orden.observaciones_tecnicas = (
+
                 request.POST.get(
+
                     "observaciones_tecnicas",
+
                     "",
+
                 )
+
                 .strip()
+
             )
+
+
 
         else:
+
             messages.warning(
+
                 request,
+
                 "La orden fue modificada por otro usuario mientras "
+
                 "estaba abierta. Se guardaron los detalles enviados, "
+
                 "pero no se sobrescribió la cabecera.",
+
             )
 
+
+
         # ==========================================
+
         # ACTUALIZAR VERSIÓN
+
         # ==========================================
+
+
 
         orden.version += 1
 
+
+
         if version_coincide:
+
             orden.save(
+
                 update_fields=[
+
                     "intervalo_mantenimiento_km",
+
                     "proximo_mantenimiento_km",
+
                     "tipo_descuento",
+
                     "descuento_ingresado",
+
                     "sumar_iva_al_total",
+
                     "observaciones_tecnicas",
+
                     "version",
+
                     "actualizado_en",
+
                 ]
-            )
-        else:
-            orden.save(
-                update_fields=[
-                    "version",
-                    "actualizado_en",
-                ]
+
             )
 
+        else:
+
+            orden.save(
+
+                update_fields=[
+
+                    "version",
+
+                    "actualizado_en",
+
+                ]
+
+            )
+
+
+
         # El modelo calcula:
+
         # - subtotal sin IVA
+
         # - porcentaje de descuento equivalente
+
         # - valor monetario del descuento
+
         # - valor del IVA
+
         # - total final
+
         #
+
         # El IVA siempre se calcula y se muestra.
+
         # Solo se suma al total cuando
+
         # sumar_iva_al_total es True.
+
+
 
         orden.calcular_total()
 
+
+
     messages.success(
+
         request,
+
         "Orden actualizada correctamente.",
+
     )
+
+
 
     return redirect(
+
         "detalle_orden",
+
         pk=pk,
+
     )
-@login_required
+
+@permiso_requerido(
+    "ordenes_de_trabajo.view_ordentrabajo"
+)
 def detalle_orden(request, pk):
+
     sucursal_activa = (
+
         obtener_sucursal_activa(
+
             request
+
         )
+
     )
+
+
 
     orden = get_object_or_404(
+
         OrdenTrabajo.objects
+
         .select_related(
+
             "sucursal",
+
             "cliente",
+
             "expediente",
+
             "configuracion_iva",
+
         )
+
         .prefetch_related(
+
             "insumos_historicos",
+
             "servicios_historicos",
+
             "insumos_detalles",
+
             "servicios_detalles",
+
             "servicios_detalles__procedimientos_detalle",
+
             "recomendaciones_items",
+
             "tecnicos",
 
+
+
             # ======================================
+
             # ABONOS
+
             # ======================================
+
             "abonos",
+
             "abonos__usuario",
+
         ),
+
         pk=pk,
+
     )
+
+
 
     url_anterior = request.META.get(
+
         "HTTP_REFERER"
+
     )
+
+
 
     if (
+
         not url_anterior
+
         or f"ordenes/{pk}" in url_anterior
+
     ):
+
         url_anterior = reverse(
+
             "lista_ordenes"
+
         )
+
+
 
     es_su_sucursal = (
+
         puede_operar_orden_desde_sucursal_activa(
+
             request,
+
             orden,
+
         )
+
     )
+
+
 
     puede_reabrir = (
-        request.user.has_perm(
-            "ordenes_de_trabajo.can_reopen_orden"
+
+        es_su_sucursal
+
+        and request.user.has_perm(
+
+            "ordenes_de_trabajo.change_ordentrabajo"
+
         )
+
+        and request.user.has_perm(
+
+            "ordenes_de_trabajo.can_reopen_orden"
+
+        )
+
         and orden.estado
+
         in [
+
             "TERMINADA",
+
             "CERRADA",
+
             "ANULADA",
+
         ]
+
     )
+
+
 
     puede_editar = (
+
         es_su_sucursal
+
         and orden.estado == "ABIERTA"
+
+        and request.user.has_perm(
+
+            "ordenes_de_trabajo.change_ordentrabajo"
+
+        )
+
     )
 
+
+
     # =========================================================
+
     # PERMISO PARA REGISTRAR ABONOS
+
     # =========================================================
+
+
 
     puede_registrar_abono = (
+
         es_su_sucursal
+
         and orden.estado == "ABIERTA"
+
         and request.user.has_perm(
+
             "ordenes_de_trabajo.add_abonoordentrabajo"
+
         )
+
     )
+
+
 
     if request.method == "POST":
+
         if not puede_editar:
+
             messages.error(
+
                 request,
+
                 "Operación denegada: No tiene permisos "
+
                 "para modificar esta orden.",
+
             )
+
+
 
             return redirect(
+
                 "detalle_orden",
+
                 pk=orden.pk,
+
             )
 
+
+
         return guardar_detalle_ot(
+
             request,
+
             pk,
+
         )
+
+
 
     categorias = (
+
         Categoria.objects
+
         .all()
+
         .order_by("nombre")
+
         if puede_editar
+
         else []
+
     )
+
+
 
     tecnicos_disponibles = (
+
         Tecnico.objects
+
         .filter(
+
             activo=True
+
         )
+
         .order_by(
+
             "nombre"
+
         )
+
     )
+
+
 
     croquis = (
+
         OrdenCroquisDanio.objects
+
         .filter(
+
             orden=orden
+
         )
+
         .first()
+
     )
+
+
 
     croquis_url = (
+
         croquis.imagen_generada.url
+
         if (
+
             croquis
+
             and croquis.imagen_generada
+
         )
+
         else ""
+
     )
 
+
+
     # =========================================================
+
     # RECALCULAR ECONOMÍA DE LA OT
+
     # =========================================================
+
     #
+
     # IMPORTANTE:
+
     # Los abonos NO forman parte de calcular_total().
+
     # calcular_total() sigue trabajando únicamente con
+
     # repuestos, mano de obra, descuento e IVA.
+
     # =========================================================
+
+
 
     orden.calcular_total()
 
+
+
     subtotal = Decimal(
+
         orden.subtotal_sin_iva
+
         or 0
+
     )
+
+
 
     descuento = Decimal(
+
         orden.valor_descuento
+
         or 0
+
     )
+
+
 
     porcentaje_descuento = Decimal(
+
         orden.descuento_porcentaje
+
         or 0
+
     )
+
+
 
     descuento_ingresado = Decimal(
+
         orden.descuento_ingresado
+
         or 0
+
     )
+
+
 
     porcentaje_iva = Decimal(
+
         orden.porcentaje_iva
+
         or 0
+
     )
+
+
 
     iva = Decimal(
+
         orden.valor_iva
+
         or 0
+
     )
+
+
 
     total_final = Decimal(
+
         orden.total_final
+
         or 0
+
     )
 
+
+
     # =========================================================
+
     # ABONOS DE LA ORDEN
+
     # =========================================================
+
     #
+
     # Un abono:
+
     #
+
     # - NO modifica total_final.
+
     # - NO modifica descuento.
+
     # - NO modifica IVA.
+
     # - NO modifica subtotal.
+
     #
+
     # Solamente sirve para conocer cuánto dinero ha entregado
+
     # el cliente y cuánto queda pendiente.
+
     #
+
     # Los abonos ANULADOS se conservan para historial,
+
     # pero NO se suman al total abonado.
+
     # =========================================================
+
+
 
     abonos = list(
+
         orden.abonos.all()
+
     )
+
+
 
     abonos_vigentes = [
+
         abono
+
         for abono in abonos
+
         if abono.estado != "ANULADO"
+
     ]
 
+
+
     total_abonado = sum(
+
         (
+
             Decimal(
+
                 abono.monto
+
                 or 0
+
             )
+
             for abono in abonos_vigentes
+
         ),
+
         Decimal("0.00"),
+
     )
+
+
 
     total_abonado = total_abonado.quantize(
+
         Decimal("0.01")
+
     )
 
+
+
     # =========================================================
+
     # SALDO
+
     # =========================================================
+
+
 
     diferencia_abonos = (
+
         total_final
+
         - total_abonado
+
     ).quantize(
+
         Decimal("0.01")
+
     )
+
+
 
     # Saldo normal pendiente de cobrar.
+
     saldo_pendiente = max(
+
         diferencia_abonos,
+
         Decimal("0.00"),
+
     )
+
+
 
     # Puede existir un abono antes de haber cargado todos
+
     # los trabajos de la OT.
+
     #
+
     # Ejemplo:
+
     # OT actual: $0
+
     # Abono:     $100
+
     #
+
     # En ese caso no mostramos saldo negativo.
+
     # Mostramos $100 como saldo a favor / anticipo.
+
     saldo_a_favor = max(
+
         -diferencia_abonos,
+
         Decimal("0.00"),
+
     )
 
+
+
     # =========================================================
+
     # RENDER
+
     # =========================================================
+
+
 
     return render(
+
         request,
+
         "detalle_orden.html",
+
         {
+
             "orden": orden,
+
             "croquis": croquis,
+
             "croquis_url": croquis_url,
 
+
+
             "categorias_inventario": (
+
                 categorias
+
             ),
+
+
 
             "tecnicos_disponibles": (
+
                 tecnicos_disponibles
+
             ),
+
+
 
             "sucursal_activa": (
+
                 sucursal_activa
+
             ),
+
+
 
             "puede_editar": (
+
                 puede_editar
+
             ),
+
+
 
             "puede_reabrir": (
+
                 puede_reabrir
+
             ),
+
+
 
             "puede_registrar_abono": (
+
                 puede_registrar_abono
+
             ),
+
+
 
             "url_anterior": (
+
                 url_anterior
+
             ),
 
+
+
             # ======================================
+
             # VALORES ECONÓMICOS DE LA OT
+
             # ======================================
+
+
 
             "subtotal": subtotal,
+
             "descuento": descuento,
 
+
+
             "porcentaje_descuento": (
+
                 porcentaje_descuento
+
             ),
+
+
 
             "descuento_ingresado": (
+
                 descuento_ingresado
+
             ),
 
+
+
             "porcentaje_iva": (
+
                 porcentaje_iva
+
             ),
+
+
 
             "iva": iva,
 
+
+
             "total_final": (
+
                 total_final
+
             ),
 
+
+
             # ======================================
+
             # ABONOS
+
             # ======================================
+
+
 
             "abonos": abonos,
 
+
+
             "total_abonado": (
+
                 total_abonado
+
             ),
+
+
 
             "saldo_pendiente": (
+
                 saldo_pendiente
+
             ),
+
+
 
             "saldo_a_favor": (
+
                 saldo_a_favor
+
             ),
 
+
+
             # ======================================
+
             # CONFIGURACIÓN SELECCIONADA
+
             # ======================================
+
+
 
             "tipo_descuento": (
+
                 orden.tipo_descuento
+
             ),
+
+
 
             "sumar_iva_al_total": (
+
                 orden.sumar_iva_al_total
+
             ),
 
+
+
             # ======================================
+
             # VALORES PARA HTML / JS
+
             # ======================================
+
+
 
             "porcentaje_iva_html": str(
+
                 porcentaje_iva
+
             ).replace(
+
                 ",",
+
                 ".",
+
             ),
+
+
 
             "descuento_porcentaje_html": str(
+
                 porcentaje_descuento
+
             ).replace(
+
                 ",",
+
                 ".",
+
             ),
 
+
+
             "descuento_ingresado_html": str(
+
                 descuento_ingresado
+
             ).replace(
+
                 ",",
+
                 ".",
+
             ),
+
         },
+
     )

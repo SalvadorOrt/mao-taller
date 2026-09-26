@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from barcode.codex import Code128
 from barcode.writer import SVGWriter
 
-from django.contrib.auth.decorators import login_required
+from accesos.permissions import permiso_requerido
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -456,7 +456,9 @@ def _nombre_documento_preview(orden, razon_social):
     return "_".join(partes)
 
 
-@login_required
+@permiso_requerido(
+    "facturacion.add_facturaventa"
+)
 @xframe_options_sameorigin
 def vista_previa_factura_ot(request, orden_id):
     """
@@ -639,7 +641,9 @@ def vista_previa_factura_ot(request, orden_id):
 # FACTURA / RIDE
 # ==========================================================
 
-@login_required
+@permiso_requerido(
+    "facturacion.view_facturaventa"
+)
 @xframe_options_sameorigin
 def ride_factura(
     request,

@@ -829,15 +829,19 @@
         </form>
 
 
-        <button type="button"
-                class="fact-new-btn"
-                onclick="abrirModalNuevaFactura()">
+        {% if puede_crear_factura %}
 
-            <i class="bi bi-plus-lg"></i>
+            <button type="button"
+                    class="fact-new-btn"
+                    onclick="abrirModalNuevaFactura()">
 
-            Nueva factura
+                <i class="bi bi-plus-lg"></i>
 
-        </button>
+                Nueva factura
+
+            </button>
+
+        {% endif %}
 
     </div>
 
@@ -1197,21 +1201,30 @@
                                 </h5>
 
 
-                                <p class="fact-empty-text">
+                        <p class="fact-empty-text">
 
-                                    {% if q %}
+                            {% if q %}
 
-                                        Prueba con otro número de factura,
-                                        OT, placa, cliente o identificación.
+                                Prueba con otro número de factura,
+                                OT, placa, cliente o identificación.
 
-                                    {% else %}
+                            {% else %}
 
-                                        Usa “Nueva factura” para seleccionar
-                                        una orden lista para facturar.
+                                {% if puede_crear_factura %}
 
-                                    {% endif %}
+                                    Usa “Nueva factura” para seleccionar
+                                    una orden lista para facturar.
 
-                                </p>
+                                {% else %}
+
+                                    Todavía no existen facturas disponibles
+                                    para consultar.
+
+                                {% endif %}
+
+                            {% endif %}
+
+                        </p>
 
                             </td>
 
@@ -1233,7 +1246,7 @@
 <!-- =========================================================
      MODAL NUEVA FACTURA
 ========================================================= -->
-
+{% if puede_crear_factura %}
 <div id="modalNuevaFactura"
      class="nf-overlay">
 
@@ -1346,7 +1359,7 @@
 
 </div>
 
-
+{% endif %}
 <!-- =========================================================
      SWEETALERT
 ========================================================= -->

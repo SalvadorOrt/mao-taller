@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from accesos.permissions import permiso_requerido
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -32,7 +32,9 @@ from ..utils import (
 # EDITAR RECEPCIÓN DE ORDEN
 # MODAL RÁPIDO COMPLETO
 # =========================================================
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.change_ordentrabajo"
+)
 def editar_recepcion_orden(request, pk):
 
     orden = get_object_or_404(

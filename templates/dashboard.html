@@ -302,35 +302,67 @@
                  NÚMERO DE ORDEN
                  ===================================================== -->
 
-            <div
-                class="small mb-2 text-center text-muted"
-            >
+            <div class="small mb-2 text-center text-muted">
 
-                <strong>
-                    {{ vehiculo.numero_orden }}
-                </strong>
+    <strong>
+        {{ vehiculo.numero_orden }}
+    </strong>
 
+    <div
+        style="
+            margin-top: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            color: #6e6e73;
+        "
+    >
+        <i class="bi bi-calendar-event"></i>
 
-                {% if vehiculo.es_migrada %}
+        <span>
+            Ingresó:
+            {{ vehiculo.fecha_ingreso|date:"d/m/Y H:i" }}
+        </span>
+    </div>
 
-                <div style="margin-top: 4px;">
+                <div
+                    style="
+                        margin-top: 3px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 5px;
+                        font-size: 10px;
+                        font-weight: 700;
+                        color: #0071e3;
+                    "
+                >
+                    <i class="bi bi-clock-history"></i>
 
-                    <span
-                        style="
-                            background: #fff5cc;
-                            color: #d97706;
-                            padding: 2px 6px;
-                            border-radius: 6px;
-                            font-weight: 700;
-                            font-size: 9px;
-                            border: 1px solid #ffcc00;
-                        "
-                    >
-                        MIGRADA
+                    <span>
+                        En taller:
+                        {{ vehiculo.tiempo_en_taller }}
                     </span>
-
                 </div>
 
+                {% if vehiculo.es_migrada %}
+                    <div style="margin-top: 4px;">
+                        <span
+                            style="
+                                background: #fff5cc;
+                                color: #d97706;
+                                padding: 2px 6px;
+                                border-radius: 6px;
+                                font-weight: 700;
+                                font-size: 9px;
+                                border: 1px solid #ffcc00;
+                            "
+                        >
+                            MIGRADA
+                        </span>
+                    </div>
                 {% endif %}
 
             </div>

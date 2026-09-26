@@ -2,7 +2,7 @@ import uuid
 
 from decimal import Decimal
 
-from django.contrib.auth.decorators import login_required
+from accesos.permissions import permiso_requerido
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
@@ -68,7 +68,9 @@ def limpiar_email_opcional(valor):
 # =========================================================
 # CREAR ORDEN
 # =========================================================
-@login_required
+@permiso_requerido(
+    "ordenes_de_trabajo.add_ordentrabajo"
+)
 def crear_orden(request):
 
     sucursal_activa = obtener_sucursal_activa(request)
