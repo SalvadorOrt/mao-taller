@@ -7,12 +7,22 @@
 {% block header_actions %}
 
 <style>
+
+    /* ==========================================================
+       HEADER
+       ========================================================== */
+
     .header-actions-mao {
         display: flex;
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
     }
+
+
+    /* ==========================================================
+       SELECTOR DE SUCURSAL
+       ========================================================== */
 
     .mao-combobox {
         position: relative;
@@ -28,112 +38,186 @@
         min-width: 260px;
         width: 260px;
         height: 44px;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+
+        border:
+            1px solid rgba(0, 0, 0, 0.08);
+
         border-radius: 14px;
+
         background: #fff;
-        color: var(--text, #1d1d1f);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
-        padding: 0 42px 0 14px;
+
+        color:
+            var(--text, #1d1d1f);
+
+        box-shadow:
+            0 6px 18px rgba(0, 0, 0, 0.04);
+
+        padding:
+            0 42px 0 14px;
+
         font-size: 0.90rem;
         font-weight: 600;
-        transition: all 0.2s ease;
+
+        transition:
+            all 0.2s ease;
+
         cursor: pointer;
     }
 
     .mao-combobox-input:hover:not(:disabled) {
-        border-color: rgba(0, 0, 0, 0.14);
+        border-color:
+            rgba(0, 0, 0, 0.14);
     }
 
     .mao-combobox-input:focus {
         outline: none;
-        border-color: var(--accent, #0071e3);
-        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+
+        border-color:
+            var(--accent, #0071e3);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(0, 113, 227, 0.12);
     }
 
     .mao-combobox-input:disabled {
         opacity: 1;
+
         background: #f5f5f7;
         color: #86868b;
-        border: 1px solid transparent;
+
+        border:
+            1px solid transparent;
+
         cursor: not-allowed;
     }
 
     .mao-combobox-icon {
         position: absolute;
+
         right: 14px;
         top: 50%;
-        transform: translateY(-50%);
+
+        transform:
+            translateY(-50%);
+
         color: #6e6e73;
+
         pointer-events: none;
-        transition: transform 0.2s ease;
+
+        transition:
+            transform 0.2s ease;
     }
 
-    .mao-combobox.open .mao-combobox-icon {
-        transform: translateY(-50%) rotate(180deg);
+    .mao-combobox.open
+    .mao-combobox-icon {
+        transform:
+            translateY(-50%)
+            rotate(180deg);
     }
 
     .mao-combobox-menu {
         position: absolute;
-        top: calc(100% + 8px);
+
+        top:
+            calc(100% + 8px);
+
         left: 0;
+
         width: 100%;
+
         background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+
+        border:
+            1px solid rgba(0, 0, 0, 0.08);
+
         border-radius: 16px;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+
+        box-shadow:
+            0 18px 40px
+            rgba(0, 0, 0, 0.12);
+
         padding: 8px;
+
         z-index: 1100;
+
         display: none;
     }
 
-    .mao-combobox.open .mao-combobox-menu {
+    .mao-combobox.open
+    .mao-combobox-menu {
         display: block;
-        animation: maoDropdownFade 0.16s ease;
+
+        animation:
+            maoDropdownFade 0.16s ease;
     }
 
     @keyframes maoDropdownFade {
+
         from {
             opacity: 0;
-            transform: translateY(-4px);
+
+            transform:
+                translateY(-4px);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0);
+
+            transform:
+                translateY(0);
         }
     }
 
     .mao-combobox-options {
         max-height: 220px;
+
         overflow-y: auto;
+
         display: flex;
+
         flex-direction: column;
+
         gap: 4px;
     }
 
     .mao-combobox-option {
         width: 100%;
+
         border: none;
+
         background: transparent;
+
         text-align: left;
-        padding: 10px 12px;
+
+        padding:
+            10px 12px;
+
         border-radius: 12px;
+
         color: #1d1d1f;
+
         font-weight: 500;
+
         transition:
             background 0.15s ease,
             color 0.15s ease;
+
         cursor: pointer;
     }
 
     .mao-combobox-option:hover {
-        background: rgba(0, 113, 227, 0.08);
+        background:
+            rgba(0, 113, 227, 0.08);
     }
 
     .mao-combobox-option.active {
-        background: var(--accent, #0071e3);
+        background:
+            var(--accent, #0071e3);
+
         color: #fff;
     }
+
 </style>
 
 
@@ -145,6 +229,7 @@
         class="m-0"
         id="formSucursalActiva"
     >
+
         {% csrf_token %}
 
         <input
@@ -154,6 +239,7 @@
             value="{% if sucursal_activa %}{{ sucursal_activa.id }}{% endif %}"
         >
 
+
         <div
             class="mao-combobox"
             id="maoComboboxSucursal"
@@ -161,6 +247,7 @@
 
             <div
                 class="mao-combobox-input-wrap"
+
                 {% if not puede_cambiar_sucursal %}
                     title="Operando en tu sucursal asignada"
                 {% endif %}
@@ -170,24 +257,38 @@
                     type="text"
                     id="maoComboboxInput"
                     class="mao-combobox-input"
+
                     value="{% if sucursal_activa %}{{ sucursal_activa.nombre|upper }}{% if not puede_cambiar_sucursal %} (TU SUCURSAL){% endif %}{% else %}SELECCIONAR SUCURSAL{% endif %}"
+
                     readonly
+
                     {% if not puede_cambiar_sucursal %}
                         disabled
                     {% endif %}
                 >
 
+
                 {% if puede_cambiar_sucursal %}
 
                     <i
-                        class="bi bi-chevron-down mao-combobox-icon"
+                        class="
+                            bi
+                            bi-chevron-down
+                            mao-combobox-icon
+                        "
                     ></i>
 
                 {% else %}
 
                     <i
-                        class="bi bi-lock-fill mao-combobox-icon"
-                        style="opacity: 0.4;"
+                        class="
+                            bi
+                            bi-lock-fill
+                            mao-combobox-icon
+                        "
+                        style="
+                            opacity: 0.4;
+                        "
                     ></i>
 
                 {% endif %}
@@ -197,32 +298,41 @@
 
             {% if puede_cambiar_sucursal %}
 
-            <div
-                class="mao-combobox-menu"
-                id="maoComboboxMenu"
-            >
-
                 <div
-                    class="mao-combobox-options"
-                    id="maoComboboxOptions"
+                    class="mao-combobox-menu"
+                    id="maoComboboxMenu"
                 >
 
-                    {% for sucursal in sucursales %}
-
-                    <button
-                        type="button"
-                        class="mao-combobox-option {% if sucursal_activa and sucursal.id == sucursal_activa.id %}active{% endif %}"
-                        data-id="{{ sucursal.id }}"
-                        data-name="{{ sucursal.nombre|upper }}"
+                    <div
+                        class="mao-combobox-options"
+                        id="maoComboboxOptions"
                     >
-                        {{ sucursal.nombre|upper }}
-                    </button>
 
-                    {% endfor %}
+                        {% for sucursal in sucursales %}
+
+                            <button
+                                type="button"
+
+                                class="
+                                    mao-combobox-option
+
+                                    {% if sucursal_activa and sucursal.id == sucursal_activa.id %}
+                                        active
+                                    {% endif %}
+                                "
+
+                                data-id="{{ sucursal.id }}"
+
+                                data-name="{{ sucursal.nombre|upper }}"
+                            >
+                                {{ sucursal.nombre|upper }}
+                            </button>
+
+                        {% endfor %}
+
+                    </div>
 
                 </div>
-
-            </div>
 
             {% endif %}
 
@@ -233,14 +343,29 @@
 
     {% if perms.ordenes_de_trabajo.add_ordentrabajo %}
 
-    <a
-        href="{% url 'crear_orden' %}"
-        class="btn-login px-4 text-decoration-none"
-        style="width: auto;"
-    >
-        <i class="bi bi-plus-lg me-2"></i>
-        Nueva OT
-    </a>
+        <a
+            href="{% url 'crear_orden' %}"
+            class="
+                btn-login
+                px-4
+                text-decoration-none
+            "
+            style="
+                width: auto;
+            "
+        >
+
+            <i
+                class="
+                    bi
+                    bi-plus-lg
+                    me-2
+                "
+            ></i>
+
+            Nueva OT
+
+        </a>
 
     {% endif %}
 
@@ -252,195 +377,556 @@
 
 {% block content %}
 
+<style>
+
+    /* ==========================================================
+       RESUMEN DEL TALLER
+       ========================================================== */
+
+    .dashboard-resumen {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        margin-top: 22px;
+
+        padding:
+            10px 15px;
+
+        background: #ffffff;
+
+        border:
+            1px solid rgba(0, 0, 0, 0.06);
+
+        border-radius: 14px;
+
+        box-shadow:
+            0 4px 14px
+            rgba(0, 0, 0, 0.035);
+    }
+
+    .dashboard-resumen-icono {
+        width: 38px;
+        height: 38px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        flex: 0 0 auto;
+
+        border-radius: 11px;
+
+        background:
+            rgba(0, 113, 227, 0.10);
+
+        color: #0071e3;
+
+        font-size: 18px;
+    }
+
+    .dashboard-resumen-label {
+        font-size: 9px;
+
+        line-height: 1.2;
+
+        font-weight: 800;
+
+        color: #86868b;
+
+        text-transform: uppercase;
+
+        letter-spacing: 0.6px;
+    }
+
+    .dashboard-resumen-total {
+        margin-top: 2px;
+
+        font-size: 22px;
+
+        line-height: 1;
+
+        font-weight: 800;
+
+        color: #1d1d1f;
+    }
+
+
+    /* ==========================================================
+       REP / MOI / MOE
+       ========================================================== */
+
+    .dashboard-trabajos {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        flex-wrap: wrap;
+
+        gap: 5px;
+
+        width: 100%;
+    }
+
+    .dashboard-trabajo-badge {
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 4px;
+
+        padding:
+            4px 7px;
+
+        border-radius: 7px;
+
+        font-size: 9px;
+
+        line-height: 1;
+
+        font-weight: 800;
+
+        white-space: nowrap;
+    }
+
+    .dashboard-trabajo-rep {
+        background:
+            rgba(0, 113, 227, 0.08);
+
+        color: #0071e3;
+    }
+
+    .dashboard-trabajo-moi {
+        background:
+            rgba(52, 199, 89, 0.10);
+
+        color: #248a3d;
+    }
+
+    .dashboard-trabajo-moe {
+        background:
+            rgba(175, 82, 222, 0.10);
+
+        color: #8944ab;
+    }
+
+
+    /* ==========================================================
+       RESPONSIVE
+       ========================================================== */
+
+    @media (max-width: 575px) {
+
+        .dashboard-resumen {
+            width: 100%;
+
+            justify-content: center;
+        }
+
+        .dashboard-trabajo-badge {
+            padding:
+                4px 6px;
+        }
+    }
+
+</style>
+
+
+<!-- ==========================================================
+     TOTAL DE VEHÍCULOS EN EL TALLER
+     ========================================================== -->
+
+{% if not sin_sucursal_activa %}
+
+    <div class="dashboard-resumen">
+
+        <div class="dashboard-resumen-icono">
+
+            <i
+                class="
+                    bi
+                    bi-car-front-fill
+                "
+            ></i>
+
+        </div>
+
+
+        <div>
+
+            <div class="dashboard-resumen-label">
+                Vehículos en taller
+            </div>
+
+            <div class="dashboard-resumen-total">
+                {{ total_vehiculos }}
+            </div>
+
+        </div>
+
+    </div>
+
+{% endif %}
+
+
+
+<!-- ==========================================================
+     VEHÍCULOS
+     ========================================================== -->
+
 <div
-    class="row g-4 mt-4"
+    class="row g-4 mt-3"
     id="contenedorTarjetas"
 >
 
     {% for vehiculo in ordenes_activas %}
 
-    <div class="col-md-4 col-lg-3 tarjeta-carro">
-
         <div
-            class="login-card w-100 p-3 tarjeta-click"
-            data-url="{% url 'detalle_orden' vehiculo.id %}"
-            style="cursor: pointer;"
-        >
-
-            <div class="mb-3">
-    <div class="placa-vehiculo">
-
-        <div
-            class="placa-header js-placa-color"
-            style="
-                background-color:
-                {% if vehiculo.es_migrada %}
-                    #86868b
-                {% elif vehiculo.color %}
-                    {{ vehiculo.color }}
-                {% else %}
-                    #1d1d1f
-                {% endif %};
+            class="
+                col-md-4
+                col-lg-3
+                tarjeta-carro
             "
         >
-            {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
-        </div>
-
-        <div class="placa-numero">
-            {{ vehiculo.placa }}
-        </div>
-
-        <div class="placa-footer">
-            {{ vehiculo.cliente|default:"SIN CLIENTE" }}
-        </div>
-
-    </div>
-</div>
-
-
-            <!-- =====================================================
-                 NÚMERO DE ORDEN
-                 ===================================================== -->
-
-            <div class="small mb-2 text-center text-muted">
-
-    <strong>
-        {{ vehiculo.numero_orden }}
-    </strong>
-
-    <div
-        style="
-            margin-top: 6px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            font-size: 10px;
-            color: #6e6e73;
-        "
-    >
-        <i class="bi bi-calendar-event"></i>
-
-        <span>
-            Ingresó:
-            {{ vehiculo.fecha_ingreso|date:"d/m/Y H:i" }}
-        </span>
-    </div>
-
-                <div
-                    style="
-                        margin-top: 3px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        gap: 5px;
-                        font-size: 10px;
-                        font-weight: 700;
-                        color: #0071e3;
-                    "
-                >
-                    <i class="bi bi-clock-history"></i>
-
-                    <span>
-                        En taller:
-                        {{ vehiculo.tiempo_en_taller }}
-                    </span>
-                </div>
-
-                {% if vehiculo.es_migrada %}
-                    <div style="margin-top: 4px;">
-                        <span
-                            style="
-                                background: #fff5cc;
-                                color: #d97706;
-                                padding: 2px 6px;
-                                border-radius: 6px;
-                                font-weight: 700;
-                                font-size: 9px;
-                                border: 1px solid #ffcc00;
-                            "
-                        >
-                            MIGRADA
-                        </span>
-                    </div>
-                {% endif %}
-
-            </div>
-
-
-            <!-- =====================================================
-                 ITEMS / ESTADO
-                 ===================================================== -->
 
             <div
-                class="login-footer mt-auto pt-2"
+                class="
+                    login-card
+                    w-100
+                    p-3
+                    tarjeta-click
+                "
+
+                data-url="
+                    {% url 'detalle_orden' vehiculo.id %}
+                "
+
                 style="
-                    text-align: center;
-                    color: var(--accent);
-                    font-weight: 500;
-                    border-top: 1px solid rgba(0,0,0,0.05);
+                    cursor: pointer;
                 "
             >
 
-                <div>
 
-                    <i class="bi bi-tools me-1"></i>
+                <!-- =================================================
+                     VEHÍCULO / PLACA / CLIENTE
+                     ================================================= -->
 
-                    {{ vehiculo.items_count|default:"0" }} items
+                <div class="mb-3">
+
+                    <div class="placa-vehiculo">
+
+
+                        <!-- MODELO -->
+
+                        <div
+                            class="
+                                placa-header
+                                js-placa-color
+                            "
+
+                            style="
+                                background-color:
+                                    {% if vehiculo.color %}
+                                        {{ vehiculo.color }}
+                                    {% else %}
+                                        #1d1d1f
+                                    {% endif %};
+                            "
+                        >
+                            {{ vehiculo.vehiculo|default:"SIN VEHÍCULO" }}
+                        </div>
+
+
+                        <!-- PLACA -->
+
+                        <div class="placa-numero">
+
+                            {{ vehiculo.placa|default:"SIN PLACA" }}
+
+                        </div>
+
+
+                        <!-- CLIENTE -->
+
+                        <div class="placa-footer">
+
+                            {{ vehiculo.cliente|default:"SIN CLIENTE" }}
+
+                        </div>
+
+                    </div>
 
                 </div>
 
 
+                <!-- =================================================
+                     ORDEN / FECHA / TIEMPO
+                     ================================================= -->
+
                 <div
-                    class="mt-1"
-                    style="
-                        font-size: 0.8rem;
-                        color: #6e6e73;
+                    class="
+                        small
+                        mb-2
+                        text-center
+                        text-muted
                     "
                 >
-                    {{ vehiculo.estado }}
+
+                    <strong>
+                        {{ vehiculo.numero_orden }}
+                    </strong>
+
+
+                    <!-- FECHA DE INGRESO -->
+
+                    <div
+                        style="
+                            margin-top: 6px;
+
+                            display: flex;
+
+                            justify-content: center;
+
+                            align-items: center;
+
+                            gap: 5px;
+
+                            font-size: 10px;
+
+                            color: #6e6e73;
+                        "
+                    >
+
+                        <i
+                            class="
+                                bi
+                                bi-calendar-event
+                            "
+                        ></i>
+
+
+                        <span>
+
+                            Ingresó:
+
+                            {{ vehiculo.fecha_ingreso|date:"d/m/Y H:i" }}
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- TIEMPO EN TALLER -->
+
+                    <div
+                        style="
+                            margin-top: 3px;
+
+                            display: flex;
+
+                            justify-content: center;
+
+                            align-items: center;
+
+                            gap: 5px;
+
+                            font-size: 10px;
+
+                            font-weight: 700;
+
+                            color: #0071e3;
+                        "
+                    >
+
+                        <i
+                            class="
+                                bi
+                                bi-clock-history
+                            "
+                        ></i>
+
+
+                        <span>
+
+                            En taller:
+
+                            {{ vehiculo.tiempo_en_taller }}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     REP / MOI / MOE
+                     ================================================= -->
+
+                <div
+                    class="
+                        login-footer
+                        mt-auto
+                        pt-2
+                    "
+
+                    style="
+                        text-align: center;
+
+                        border-top:
+                            1px solid
+                            rgba(0, 0, 0, 0.05);
+                    "
+                >
+
+                    <div class="dashboard-trabajos">
+
+
+                        <!-- REPUESTOS -->
+
+                        <span
+                            class="
+                                dashboard-trabajo-badge
+                                dashboard-trabajo-rep
+                            "
+
+                            title="Repuestos"
+                        >
+
+                            <i
+                                class="
+                                    bi
+                                    bi-box-seam
+                                "
+                            ></i>
+
+                            REP
+
+                            {{ vehiculo.repuestos_count|default:"0" }}
+
+                        </span>
+
+
+                        <!-- MANO DE OBRA INTERNA -->
+
+                        <span
+                            class="
+                                dashboard-trabajo-badge
+                                dashboard-trabajo-moi
+                            "
+
+                            title="Mano de obra interna"
+                        >
+
+                            <i
+                                class="
+                                    bi
+                                    bi-tools
+                                "
+                            ></i>
+
+                            MOI
+
+                            {{ vehiculo.moi_count|default:"0" }}
+
+                        </span>
+
+
+                        <!-- MANO DE OBRA EXTERNA -->
+
+                        <span
+                            class="
+                                dashboard-trabajo-badge
+                                dashboard-trabajo-moe
+                            "
+
+                            title="Mano de obra externa"
+                        >
+
+                            <i
+                                class="
+                                    bi
+                                    bi-box-arrow-up-right
+                                "
+                            ></i>
+
+                            MOE
+
+                            {{ vehiculo.moe_count|default:"0" }}
+
+                        </span>
+
+                    </div>
+
                 </div>
 
             </div>
 
         </div>
-
-    </div>
 
 
     {% empty %}
 
 
-    <div class="col-12 mt-2">
+        <div class="col-12 mt-2">
 
-        <div
-            class="login-card mx-auto text-center py-5"
-            style="max-width: 500px;"
-        >
-
-            <i
+            <div
                 class="
-                    bi bi-inbox
-                    text-muted
-                    display-1
-                    opacity-50
-                    mb-3
-                    d-block
+                    login-card
+                    mx-auto
+                    text-center
+                    py-5
                 "
-            ></i>
 
-            <h2 class="login-title mt-2">
-                Sin órdenes activas
-            </h2>
+                style="
+                    max-width: 500px;
+                "
+            >
 
-            <p class="login-subtitle mb-0">
-                No hay órdenes de trabajo abiertas
-                en este momento.
-            </p>
+                <i
+                    class="
+                        bi
+                        bi-car-front
+                        text-muted
+                        display-1
+                        opacity-50
+                        mb-3
+                        d-block
+                    "
+                ></i>
+
+
+                <h2
+                    class="
+                        login-title
+                        mt-2
+                    "
+                >
+                    Sin vehículos en taller
+                </h2>
+
+
+                <p
+                    class="
+                        login-subtitle
+                        mb-0
+                    "
+                >
+                    No hay vehículos actualmente
+                    en el piso del taller.
+                </p>
+
+            </div>
 
         </div>
-
-    </div>
 
     {% endfor %}
 
@@ -462,9 +948,7 @@ document.addEventListener(
         // CONTRASTE AUTOMÁTICO DEL MODELO DEL VEHÍCULO
         // =========================================================
         //
-        // Conservamos el fondo original de vehiculo.color.
-        //
-        // Fondo claro  -> texto negro
+        // Fondo claro  -> texto oscuro
         // Fondo oscuro -> texto blanco
         //
         // =========================================================
@@ -540,31 +1024,21 @@ document.addEventListener(
 
 
                 // =================================================
-                // TEXTO AUTOMÁTICO
+                // COLOR DEL TEXTO
                 // =================================================
 
                 if (
                     luminosidad >= 150
                 ) {
 
-                    // Fondo claro:
-                    // blanco, plata, crema, amarillo,
-                    // beige, gris muy claro, etc.
-
                     encabezado.style.color =
                         '#1d1d1f';
 
                 } else {
 
-                    // Fondo oscuro:
-                    // negro, rojo, azul, vino,
-                    // verde oscuro, plomo, etc.
-
                     encabezado.style.color =
                         '#ffffff';
-
                 }
-
             }
         );
 
@@ -612,13 +1086,10 @@ document.addEventListener(
                                 )
                                     ? ''
                                     : 'none';
-
                         }
                     );
-
                 }
             );
-
         }
 
 
@@ -640,19 +1111,16 @@ document.addEventListener(
                     function () {
 
                         const url =
-                            this.dataset.url;
+                            this.dataset.url.trim();
 
 
                         if (url) {
 
                             window.location.href =
                                 url;
-
                         }
-
                     }
                 );
-
             }
         );
 
@@ -692,7 +1160,7 @@ document.addEventListener(
         ) {
 
             // =====================================================
-            // ABRIR / CERRAR COMBOBOX
+            // ABRIR / CERRAR
             // =====================================================
 
             input.addEventListener(
@@ -704,7 +1172,6 @@ document.addEventListener(
                     combobox.classList.toggle(
                         'open'
                     );
-
                 }
             );
 
@@ -726,9 +1193,7 @@ document.addEventListener(
                         combobox.classList.remove(
                             'open'
                         );
-
                     }
-
                 }
             );
 
@@ -758,24 +1223,18 @@ document.addEventListener(
 
                                 hidden.value =
                                     id;
-
                             }
 
 
                             if (form) {
 
                                 form.submit();
-
                             }
-
                         }
                     );
-
                 }
             );
-
         }
-
     }
 );
 

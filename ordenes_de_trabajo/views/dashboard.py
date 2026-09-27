@@ -126,6 +126,9 @@ def dashboard_taller(request):
                 "ordenes_activas":
                     [],
 
+                "total_vehiculos":
+                    0,
+
                 "sucursal_activa":
                     None,
 
@@ -141,7 +144,7 @@ def dashboard_taller(request):
         )
 
     # =====================================================
-    # ÓRDENES ACTIVAS
+    # VEHÍCULOS ACTUALMENTE EN EL TALLER
     # =====================================================
 
     ordenes = (
@@ -153,16 +156,13 @@ def dashboard_taller(request):
         )
         .prefetch_related(
             "servicios_detalles",
+            "servicios_detalles__servicio",
             "insumos_detalles",
         )
         .filter(
             sucursal=sucursal_activa,
             es_migrada=False,
-            estado__in=[
-                "ABIERTA",
-                "ESPERA_REP",
-                "TRABAJO_EXT",
-            ],
+            estado="ABIERTA",
         )
         .order_by(
             "-fecha_ingreso"
@@ -180,6 +180,71 @@ def dashboard_taller(request):
     for orden in ordenes:
 
         # =================================================
+        # DETALLES DE LA ORDEN
+        # =================================================
+
+        repuestos = list(
+            orden.insumos_detalles.all()
+        )
+
+        servicios = list(
+            orden.servicios_detalles.all()
+        )
+
+        # =================================================
+        # REPUESTOS
+        # =================================================
+
+        repuestos_count = len(
+            repuestos
+        )
+
+        # =================================================
+        # MANO DE OBRA INTERNA
+        # =================================================
+        #
+        # Todo servicio que NO sea EXT se considera
+        # mano de obra interna.
+        # =================================================
+
+        moi_count = sum(
+            1
+            for servicio in servicios
+            if (
+                servicio.tipo_servicio != "EXT"
+                and getattr(
+                    servicio.servicio,
+                    "categoria",
+                    None,
+                ) != "EXT"
+            )
+        )
+
+        # =================================================
+        # MANO DE OBRA EXTERNA
+        # =================================================
+        #
+        # Se considera externa cuando:
+        #
+        # - tipo_servicio == EXT
+        # o
+        # - el catálogo tiene categoría EXT
+        # =================================================
+
+        moe_count = sum(
+            1
+            for servicio in servicios
+            if (
+                servicio.tipo_servicio == "EXT"
+                or getattr(
+                    servicio.servicio,
+                    "categoria",
+                    None,
+                ) == "EXT"
+            )
+        )
+
+        # =================================================
         # TIEMPO QUE LLEVA EL VEHÍCULO EN EL TALLER
         # =================================================
 
@@ -187,12 +252,16 @@ def dashboard_taller(request):
         horas_en_taller = 0
         minutos_en_taller = 0
 
-        tiempo_en_taller = "Recién ingresado"
+        tiempo_en_taller = (
+            "Recién ingresado"
+        )
 
         if orden.fecha_ingreso:
 
             diferencia = (
-                ahora - orden.fecha_ingreso
+                ahora
+                -
+                orden.fecha_ingreso
             )
 
             total_segundos = max(
@@ -202,20 +271,35 @@ def dashboard_taller(request):
                 0,
             )
 
+            # =============================================
+            # DÍAS
+            # =============================================
+
             dias_en_taller = (
-                total_segundos // 86400
+                total_segundos
+                // 86400
             )
+
+            # =============================================
+            # HORAS RESTANTES
+            # =============================================
 
             horas_en_taller = (
                 (
-                    total_segundos % 86400
+                    total_segundos
+                    % 86400
                 )
                 // 3600
             )
 
+            # =============================================
+            # MINUTOS RESTANTES
+            # =============================================
+
             minutos_en_taller = (
                 (
-                    total_segundos % 3600
+                    total_segundos
+                    % 3600
                 )
                 // 60
             )
@@ -232,11 +316,14 @@ def dashboard_taller(request):
                 )
 
                 if horas_en_taller > 0:
+
                     tiempo_en_taller = (
                         f"{texto_dias} "
                         f"{horas_en_taller} h"
                     )
+
                 else:
+
                     tiempo_en_taller = (
                         texto_dias
                     )
@@ -255,7 +342,7 @@ def dashboard_taller(request):
                 )
 
         # =================================================
-        # AGREGAR AL DASHBOARD
+        # AGREGAR VEHÍCULO AL DASHBOARD
         # =================================================
 
         ordenes_activas.append(
@@ -275,12 +362,22 @@ def dashboard_taller(request):
                 "cliente":
                     orden.nombre_cliente_final,
 
-                "items_count":
-                    (
-                        orden.servicios_detalles.count()
-                        +
-                        orden.insumos_detalles.count()
-                    ),
+                # =========================================
+                # DETALLE DE TRABAJOS
+                # =========================================
+
+                "repuestos_count":
+                    repuestos_count,
+
+                "moi_count":
+                    moi_count,
+
+                "moe_count":
+                    moe_count,
+
+                # =========================================
+                # COLOR
+                # =========================================
 
                 "color":
                     (
@@ -288,8 +385,9 @@ def dashboard_taller(request):
                         or "#1d1d1f"
                     ),
 
-                "estado":
-                    orden.get_estado_display(),
+                # =========================================
+                # SUCURSAL
+                # =========================================
 
                 "sucursal":
                     (
@@ -297,6 +395,10 @@ def dashboard_taller(request):
                         if orden.sucursal
                         else ""
                     ),
+
+                # =========================================
+                # TOTAL
+                # =========================================
 
                 "total_general":
                     orden.total_general,
@@ -317,10 +419,22 @@ def dashboard_taller(request):
                 "tiempo_en_taller":
                     tiempo_en_taller,
 
+                # =========================================
+                # EXPEDIENTE
+                # =========================================
+
                 "expediente_id":
                     orden.expediente_id,
             }
         )
+
+    # =====================================================
+    # TOTAL DE VEHÍCULOS EN EL TALLER
+    # =====================================================
+
+    total_vehiculos = len(
+        ordenes_activas
+    )
 
     # =====================================================
     # RENDER
@@ -332,6 +446,9 @@ def dashboard_taller(request):
         {
             "ordenes_activas":
                 ordenes_activas,
+
+            "total_vehiculos":
+                total_vehiculos,
 
             "sucursal_activa":
                 sucursal_activa,
