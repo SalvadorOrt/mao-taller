@@ -1267,7 +1267,123 @@
 
 
 <script>
+    /* ==========================================================
+   CALCULAR PRÓXIMO MANTENIMIENTO EN TIEMPO REAL
+   ========================================================== */
 
+function actualizarProximoMantenimiento() {
+
+    const inputKilometraje =
+        document.getElementById(
+            'id_kilometraje'
+        );
+
+    const inputIntervalo =
+        document.getElementById(
+            'id_intervalo_mantenimiento_km'
+        );
+
+    const resultado =
+        document.getElementById(
+            'id_proximo_mantenimiento_km'
+        );
+
+
+    if (
+        !inputKilometraje ||
+        !inputIntervalo ||
+        !resultado
+    ) {
+        return;
+    }
+
+
+    // ======================================================
+    // OBTENER VALORES
+    // ======================================================
+
+    const kilometrajeTexto =
+        String(
+            inputKilometraje.value || ''
+        ).replace(
+            /[^0-9]/g,
+            ''
+        );
+
+
+    const intervaloTexto =
+        String(
+            inputIntervalo.value || ''
+        ).replace(
+            /[^0-9]/g,
+            ''
+        );
+
+
+    // ======================================================
+    // SI FALTA ALGÚN VALOR
+    // ======================================================
+
+    if (
+        kilometrajeTexto === '' ||
+        intervaloTexto === ''
+    ) {
+
+        resultado.textContent =
+            '-';
+
+        return;
+    }
+
+
+    // ======================================================
+    // CONVERTIR A NÚMEROS
+    // ======================================================
+
+    const kilometraje =
+        parseInt(
+            kilometrajeTexto,
+            10
+        );
+
+
+    const intervalo =
+        parseInt(
+            intervaloTexto,
+            10
+        );
+
+
+    if (
+        Number.isNaN(kilometraje) ||
+        Number.isNaN(intervalo)
+    ) {
+
+        resultado.textContent =
+            '-';
+
+        return;
+    }
+
+
+    // ======================================================
+    // CALCULAR
+    // ======================================================
+
+    const proximoMantenimiento =
+        kilometraje +
+        intervalo;
+
+
+    // ======================================================
+    // MOSTRAR RESULTADO
+    // ======================================================
+
+    resultado.textContent =
+        proximoMantenimiento.toLocaleString(
+            'es-EC'
+        );
+}
     /* ==========================================================
        CONFIRMAR ACCIONES
        ========================================================== */
