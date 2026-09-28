@@ -302,228 +302,361 @@
 
     }
 
-
     /* =========================================================
+
        AJUSTES MAO - CONSERVANDO EL FORMATO ORIGINAL
+
        ========================================================= */
 
     :root {
+
         --mao-blue: #003b73;
+
         --mao-blue-dark: #001f3f;
+
         --mao-red: #9b111e;
+
         --mao-black: #000000;
+
         --mao-border: #303942;
+
     }
 
     @page {
+
         size: A4 portrait;
+
         margin: 5mm;
+
     }
 
     .page {
+
         width: 100%;
+
         color: var(--mao-black);
+
     }
 
     .titulo-ot,
+
     .numero-ot {
+
         font-weight: 400 !important;
+
     }
 
     .section-title {
+
         background: var(--mao-blue) !important;
+
         color: #ffffff !important;
+
         border: 1px solid var(--mao-blue) !important;
+
         border-left: 5px solid var(--mao-blue-dark) !important;
+
         font-weight: 400 !important;
+
     }
 
     .panel,
+
     .field,
+
     .check-card,
+
     .observacion-card,
+
     .report,
+
     .legal-card,
+
     .foto-recepcion-print-card {
+
         background: #ffffff !important;
+
         border-color: var(--mao-border) !important;
+
     }
 
     .label,
+
     .check-title,
+
     .observacion-title {
+
         color: var(--mao-blue) !important;
+
     }
 
     .value,
+
     .observacion-texto,
+
     .report,
+
     .legal-text {
+
         color: #000000 !important;
+
     }
 
     .trabajos-table {
+
         width: 100% !important;
+
         border-collapse: collapse !important;
+
     }
 
     .trabajos-table th {
+
         background: var(--mao-blue) !important;
+
         color: #ffffff !important;
+
         border-color: var(--mao-blue-dark) !important;
+
         padding: 6px 8px !important;
+
         font-size: 9px !important;
+
         line-height: 1.2 !important;
+
         font-weight: 700 !important;
+
     }
 
     .trabajos-table td {
+
         background: #ffffff !important;
+
         color: #000000 !important;
+
         border-color: #6d7680 !important;
+
         padding: 7px 8px !important;
+
         font-size: 11px !important;
+
         line-height: 1.3 !important;
+
         vertical-align: middle !important;
+
     }
 
     .trabajos-table td.center {
+
         width: 42px !important;
+
         font-size: 10px !important;
+
     }
 
     .parking-warning {
+
         background: #ffffff !important;
+
         color: var(--mao-red) !important;
+
         border: 1.5px solid var(--mao-red) !important;
+
         border-left: 5px solid var(--mao-red) !important;
+
         font-weight: 700 !important;
+
     }
 
     .fotos-recepcion-final {
+
         margin-top: 8px;
+
         break-before: auto;
+
         page-break-before: auto;
+
         break-inside: auto;
+
         page-break-inside: auto;
+
     }
 
     .fotos-recepcion-final .panel {
+
         break-inside: auto !important;
+
         page-break-inside: auto !important;
+
     }
 
     .fotos-observacion-final {
+
         margin-bottom: 6px;
+
     }
 
     .page-sin-fotos .trabajos-table td {
-        min-height: 31px !important;
-        height: 31px !important;
-        font-size: 11.5px !important;
+        min-height: 27px !important;
+        height: 27px !important;
+        font-size: 11px !important;
     }
 
     .page-sin-fotos .legal-grid {
-        margin-top: 8px !important;
-        gap: 8px !important;
+        margin-top: 6px !important;
+        gap: 6px !important;
     }
 
     .page-sin-fotos .legal-card {
-        min-height: 178px !important;
+        min-height: 156px !important;
     }
 
     .page-sin-fotos .legal-body {
-        min-height: 150px !important;
+        min-height: 128px !important;
         display: flex !important;
         flex-direction: column !important;
-        padding: 9px !important;
+        padding: 7px 8px !important;
     }
 
     .page-sin-fotos .legal-text {
-        font-size: 8px !important;
-        line-height: 1.35 !important;
+        font-size: 7.5px !important;
+        line-height: 1.28 !important;
     }
 
     .page-sin-fotos .legal-signatures {
         margin-top: auto !important;
-        padding-top: 10px !important;
+        padding-top: 7px !important;
     }
 
     .page-sin-fotos .legal-signature,
     .page-sin-fotos .digital-signature-wrap {
-        min-height: 42px !important;
-        height: 42px !important;
+        min-height: 34px !important;
+        height: 34px !important;
     }
 
     .page-sin-fotos .img-firma {
-        max-height: 38px !important;
+        max-height: 30px !important;
     }
 
     @media print {
+
         html, body {
+
             margin: 0 !important;
+
             padding: 0 !important;
+
         }
 
         body {
+
             -webkit-print-color-adjust: exact !important;
+
             print-color-adjust: exact !important;
+
         }
 
         .page {
+
             width: 100% !important;
+
             max-width: none !important;
+
             min-height: 0 !important;
+
             height: auto !important;
+
             margin: 0 !important;
+
             padding: 0 !important;
+
             box-shadow: none !important;
+
             overflow: visible !important;
+
         }
 
         .section-title {
+
             background: var(--mao-blue) !important;
+
             color: #ffffff !important;
+
         }
 
         .trabajos-table th {
+
             background: var(--mao-blue) !important;
+
             color: #ffffff !important;
+
             font-size: 8.5pt !important;
+
         }
 
         .trabajos-table td {
-            font-size: 10pt !important;
-            line-height: 1.28 !important;
-            padding: 2mm 2.2mm !important;
+            font-size: 9.5pt !important;
+            line-height: 1.24 !important;
+            padding: 1.7mm 2mm !important;
         }
 
-        .page-sin-fotos {
-            min-height: 276mm !important;
-        }
+        
 
         .page-sin-fotos .trabajos-table td {
-            height: 8.5mm !important;
-            font-size: 10.4pt !important;
+            height: 7.2mm !important;
+            font-size: 9.8pt !important;
         }
 
         .page-sin-fotos .legal-card {
-            min-height: 50mm !important;
-        }
-
-        .page-sin-fotos .legal-body {
             min-height: 43mm !important;
         }
 
+        .page-sin-fotos .legal-body {
+            min-height: 35mm !important;
+            padding: 1.8mm 2mm !important;
+        }
+
         .fotos-recepcion-final {
+
             break-before: auto !important;
+
             page-break-before: auto !important;
+
         }
 
         .foto-recepcion-print-card {
+
+            break-inside: avoid !important;
+
+            page-break-inside: avoid !important;
+
+        }
+
+        .section {
+            margin-bottom: 1.8mm !important;
+        }
+
+        .section-title {
+            margin-bottom: 1.2mm !important;
+            padding-top: 1.2mm !important;
+            padding-bottom: 1.2mm !important;
+        }
+
+        .legal-grid,
+        .trabajos-table,
+        .report,
+        .observacion-card,
+        .field {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
         }
+
+        .legal-text {
+            orphans: 3;
+            widows: 3;
+        }
+
+
     }
 
 </style>
@@ -1149,20 +1282,35 @@
                 </div>
 
                                 <!-- =================================================
+
                      OBJETOS ADICIONALES
+
                      Solo se imprime cuando existen.
+
                      ================================================= -->
+
                 {% if orden.ordenobjetoadicional_set.all %}
+
                     <div class="field" style="margin-top:7px; margin-bottom:0;">
+
                         <div class="label">Objetos adicionales</div>
+
                         <div class="value">
+
                             {% for obj in orden.ordenobjetoadicional_set.all %}
+
                                 {{ obj.cantidad }}x {{ obj.descripcion|upper }}
+
                                 {% if obj.observacion %}({{ obj.observacion }}){% endif %}
+
                                 {% if not forloop.last %}, {% endif %}
+
                             {% endfor %}
+
                         </div>
+
                     </div>
+
                 {% endif %}
 
 <!-- =================================================
@@ -1197,72 +1345,128 @@
 
             {% endif %}
 
-            
-
         </div>
 
     </div>
 
         <!-- =========================================================
+
          REPORTE DEL CLIENTE / MOTIVO DE INGRESO
+
          Solo se imprime cuando existe información.
+
          ========================================================= -->
+
     {% if orden.sintomas_cliente or orden.sintomas_items.all %}
+
         <div class="section">
+
             <div class="section-title">
+
                 Reporte del cliente / motivo de ingreso
+
             </div>
+
             <div class="report">
+
                 {% if orden.sintomas_cliente %}
+
                     {{ orden.sintomas_cliente|upper }}
+
                 {% else %}
+
                     {% for s in orden.sintomas_items.all %}
+
                         • {{ s.descripcion|upper }}
+
                         {% if not forloop.last %}<br>{% endif %}
+
                     {% endfor %}
+
                 {% endif %}
+
             </div>
+
         </div>
+
     {% endif %}
 
     <!-- =========================================================
+
          TRABAJOS A REALIZAR
+
          Mantiene el formato original a todo el ancho.
+
          ========================================================= -->
+
     {% if orden.trabajos_solicitados_items.all or orden.servicios_detalles.all %}
+
         <div class="section">
+
             <div class="section-title">
+
                 Trabajos a realizar
+
             </div>
+
             <table class="trabajos-table">
+
                 <thead>
+
                     <tr>
+
                         <th style="width:42px;" class="center">#</th>
+
                         <th>Descripción de las Operaciones</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     {% for t in orden.trabajos_solicitados_items.all %}
+
                         <tr>
+
                             <td class="center">{{ forloop.counter }}</td>
+
                             <td>{{ t.descripcion_manual|upper }}</td>
+
                         </tr>
+
                     {% endfor %}
+
                     {% for s in orden.servicios_detalles.all %}
+
                         <tr>
+
                             <td class="center">-</td>
+
                             <td>
+
                                 {% if s.servicio %}
+
                                     {{ s.servicio.descripcion|upper }}
+
                                 {% else %}
+
                                     {{ s.descripcion_servicio|upper }}
+
                                 {% endif %}
+
                             </td>
+
                         </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
+
         </div>
+
     {% endif %}
 
 <!-- =========================================================
@@ -1549,48 +1753,86 @@
 
     </div>
 
-
     <!-- =========================================================
+
          EVIDENCIA FOTOGRÁFICA DEL INGRESO
+
          Solo aparece cuando existen fotografías.
+
          ========================================================= -->
+
     {% if fotos_recepcion %}
+
         <div class="section fotos-recepcion-final">
+
             <div class="section-title">
+
                 Evidencia fotográfica del ingreso
+
             </div>
+
             <div class="panel">
+
                 {% if observaciones_fotos %}
+
                     <div class="observacion-card fotos-observacion-final">
+
                         <div class="observacion-title">
+
                             Observación de la evidencia fotográfica
+
                         </div>
+
                         <div class="observacion-texto">
+
                             {% for observacion in observaciones_fotos %}
+
                                 {{ observacion|linebreaksbr }}
+
                                 {% if not forloop.last %}<br>{% endif %}
+
                             {% endfor %}
+
                         </div>
+
                     </div>
+
                 {% endif %}
 
                 <div class="fotos-recepcion-grid-print">
+
                     {% for foto in fotos_recepcion %}
+
                         <div class="foto-recepcion-print-card">
+
                             {% if foto.imagen %}
+
                                 <img
+
                                     src="{{ foto.imagen.url }}"
+
                                     alt="Foto {{ forloop.counter }} del estado del vehículo al ingreso - OT {{ orden.numero_orden }}"
+
                                 >
+
                             {% endif %}
+
                             <div class="foto-recepcion-print-info">
+
                                 <strong>Foto {{ forloop.counter }}</strong>
+
                             </div>
+
                         </div>
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
         </div>
+
     {% endif %}
 
 </div>
