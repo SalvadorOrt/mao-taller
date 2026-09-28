@@ -447,7 +447,19 @@ def lista_ordenes(request):
     # PAGINACIÓN
     # =====================================================
 
-    LIMITE_RESULTADOS = 40
+    # Si existe al menos un filtro por fecha,
+    # mostramos TODOS los registros encontrados
+    # en una sola página.
+    #
+    # Sin filtro por fecha, el listado mantiene
+    # la paginación normal de 40 registros.
+    if fecha_inicio or fecha_fin:
+        LIMITE_RESULTADOS = max(
+            total_filtrado,
+            1,
+        )
+    else:
+        LIMITE_RESULTADOS = 40
 
     paginator = Paginator(
         ordenes,
