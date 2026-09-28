@@ -1,2029 +1,643 @@
 {% load static %}
 
 <style>
-
     /* =========================================================
+       CROQUIS - IMPRESIÓN
 
-       FICHA TÉCNICA / ORDEN DE TRABAJO
+       V1 = sistema antiguo:
+            base_autos.svg + PNG transparente de daños
 
-       DISEÑO A4 PROFESIONAL
-
+       V2 = sistema nuevo:
+            PNG final con las 5 vistas + daños
        ========================================================= */
 
-    :root {
-
-        --ot-ink: #000000;
-
-        --ot-muted: #1a1a1a;
-
-        --ot-border: #2f3b46;
-
-        --ot-soft: #ffffff;
-
-        --ot-head: #003b73;
-
-        --ot-accent: #003b73;
-
-        --ot-danger: #9b111e;
-
-        --ot-success: #0b5d1e;
-
-        --ot-warning: #ffffff;
-
-    }
-
-    * {
-
-        box-sizing: border-box;
-
-    }
-
-    .page {
-
+    .sketch-box {
         width: 100%;
-
-        color: var(--ot-ink);
-
-        font-family: Arial, Helvetica, sans-serif;
-
-        font-size: 10px;
-
-        line-height: 1.3;
-
-    }
-
-    /* =========================================================
-
-       CABECERA HORIZONTAL
-
-       ========================================================= */
-
-    .ot-header {
-
-        display: grid;
-
-        grid-template-columns: 1.05fr 1fr 1.05fr;
-
-        gap: 8px;
-
-        align-items: stretch;
-
-        margin-bottom: 7px;
-
-        border-bottom: 3px solid var(--ot-accent);
-
-        padding-bottom: 6px;
-
-    }
-
-    .ot-header-left,
-
-    .ot-header-center,
-
-    .ot-header-right {
-
-        min-width: 0;
-
-    }
-
-    .ot-header-left {
-
+        min-height: 110px;
         display: flex;
-
         align-items: center;
-
-        gap: 8px;
-
-    }
-
-    .ot-logo img {
-
-        display: block;
-
-        max-width: 118px;
-
-        max-height: 48px;
-
-        object-fit: contain;
-
-    }
-
-    .ot-company {
-
-        font-size: 8px;
-
-        line-height: 1.25;
-
-        color: var(--ot-muted);
-
-    }
-
-    .ot-header-center {
-
-        display: flex;
-
-        flex-direction: column;
-
-        align-items: center;
-
         justify-content: center;
-
-        text-align: center;
-
-    }
-
-    .ot-title {
-
-        font-size: 17px;
-
-        line-height: 1;
-
-        font-weight: 400;
-
-        letter-spacing: .02em;
-
-        color: var(--ot-ink);
-
-    }
-
-    .ot-number {
-
-        margin-top: 5px;
-
-        font-size: 12px;
-
-        font-weight: 400;
-
-        color: var(--ot-accent);
-
-    }
-
-    .ot-plate {
-
-        margin-top: 3px;
-
-        font-size: 10px;
-
-        font-weight: 400;
-
-        letter-spacing: .08em;
-
-    }
-
-    .ot-header-right {
-
-        display: grid;
-
-        grid-template-columns: 1fr;
-
-        align-content: center;
-
-        gap: 3px;
-
-    }
-
-    .header-meta-row {
-
-        display: grid;
-
-        grid-template-columns: 74px 1fr;
-
-        gap: 5px;
-
-        align-items: baseline;
-
-        border-bottom: 1px solid #edf0f4;
-
-        padding: 2px 0;
-
-    }
-
-    .header-meta-label {
-
-        color: var(--ot-muted);
-
-        font-size: 7.5px;
-
-        font-weight: 700;
-
-        text-transform: uppercase;
-
-    }
-
-    .header-meta-value {
-
-        font-size: 8.5px;
-
-        font-weight: 700;
-
-        text-align: right;
-
-        overflow-wrap: anywhere;
-
-    }
-
-    /* =========================================================
-
-       SECCIONES
-
-       ========================================================= */
-
-    .section {
-
-        margin-bottom: 6px;
-
-    }
-
-    .section-title {
-
-        display: flex;
-
-        align-items: center;
-
-        min-height: 23px;
-
-        margin-bottom: 4px;
-
-        padding: 4px 7px;
-
-        border: 1px solid var(--ot-border);
-
-        border: 1px solid var(--ot-accent);
-
-        border-radius: 5px;
-
-        background: var(--ot-accent);
-
-        color: #ffffff;
-
-        font-size: 9px;
-
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-        letter-spacing: .04em;
-
-    }
-
-    .panel {
-
-        border: 1px solid var(--ot-border);
-
-        border-radius: 7px;
-
-        background: #fff;
-
-        padding: 6px;
-
-    }
-
-    .section-title-light,
-
-    .compact-card-title-light {
-
-        font-weight: 400 !important;
-
-    }
-
-    /* =========================================================
-
-       CLIENTE + VEHÍCULO EN UNA SOLA FRANJA
-
-       ========================================================= */
-
-    .info-grid {
-
-        display: grid;
-
-        grid-template-columns: 1.5fr 1fr .95fr .8fr;
-
-        gap: 4px;
-
-    }
-
-    .info-item {
-
-        min-width: 0;
-
-        border: 1px solid #e5e9f0;
-
-        border-radius: 5px;
-
-        background: #fff;
-
-        padding: 4px 6px;
-
-    }
-
-    .info-item.span-2 {
-
-        grid-column: span 2;
-
-    }
-
-    .info-label {
-
-        margin-bottom: 1px;
-
-        color: var(--ot-accent);
-
-        font-size: 7px;
-
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-        letter-spacing: .03em;
-
-    }
-
-    .info-value {
-
-        color: var(--ot-ink);
-
-        font-size: 9px;
-
-        line-height: 1.2;
-
-        font-weight: 700;
-
-        overflow-wrap: anywhere;
-
-    }
-
-    .info-value.placa {
-
-        color: var(--ot-accent);
-
-        font-size: 10.5px;
-
-        letter-spacing: .08em;
-
-    }
-
-    /* =========================================================
-
-       ESTADO DEL VEHÍCULO: CROQUIS + DATOS/CHECKLIST
-
-       ========================================================= */
-
-    .estado-grid {
-
-        display: grid;
-
-        grid-template-columns: 58% 42%;
-
-        gap: 6px;
-
-        align-items: stretch;
-
-    }
-
-    .estado-grid.sin-croquis {
-
-        grid-template-columns: 1fr;
-
-    }
-
-    .croquis-box {
-
-        min-height: 126px;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
         overflow: hidden;
-
-        border: 1px solid #e5e9f0;
-
-        border-radius: 6px;
-
-        background: #fff;
-
-        padding: 4px;
-
+        background: #ffffff;
+        border-radius: 8px;
     }
 
-    .img-croquis-final {
-
-        display: block;
-
-        width: 100%;
-
-        max-height: 155px;
-
-        object-fit: contain;
-
-        margin: 0 auto;
-
-    }
+    /* =========================================================
+       CROQUIS V1 - HISTÓRICO
+       ========================================================= */
 
     .croquis-v1-wrap {
-
         position: relative;
-
         width: 100%;
-
         aspect-ratio: 1000 / 220;
-
         overflow: hidden;
-
-        background: #fff;
-
+        background: #ffffff;
     }
 
     .croquis-v1-base,
-
     .croquis-v1-danios {
-
         position: absolute;
-
-        inset: 0;
-
+        top: 0;
+        left: 0;
         width: 100%;
-
         height: 100%;
-
         object-fit: fill;
-
         display: block;
-
     }
 
     .croquis-v1-base {
-
         z-index: 1;
-
     }
 
     .croquis-v1-danios {
-
         z-index: 2;
-
         pointer-events: none;
-
-    }
-
-    .estado-side {
-
-        display: flex;
-
-        flex-direction: column;
-
-        gap: 5px;
-
-        min-width: 0;
-
-    }
-
-    .estado-meta {
-
-        display: grid;
-
-        grid-template-columns: 1fr 1.2fr;
-
-        gap: 4px;
-
-    }
-
-    .mini-field {
-
-        border: 1px solid #e5e9f0;
-
-        border-radius: 5px;
-
-        padding: 4px 5px;
-
-        background: var(--ot-soft);
-
-        min-width: 0;
-
-    }
-
-    .mini-field-label {
-
-        color: var(--ot-accent);
-
-        font-size: 7px;
-
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-    }
-
-    .mini-field-value {
-
-        margin-top: 1px;
-
-        font-size: 8.5px;
-
-        font-weight: 800;
-
-        overflow-wrap: anywhere;
-
-    }
-
-    .checklist-compact {
-
-        display: grid;
-
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-
-        gap: 4px;
-
-        flex: 1;
-
-    }
-
-    .check-card {
-
-        min-width: 0;
-
-        border: 1px solid #e5e9f0;
-
-        border-radius: 5px;
-
-        padding: 4px;
-
-        background: #fff;
-
-    }
-
-    .check-title {
-
-        margin-bottom: 3px;
-
-        color: var(--ot-accent);
-
-        font-size: 7.2px;
-
-        line-height: 1;
-
-        font-weight: 800;
-
-        text-align: center;
-
-        text-transform: uppercase;
-
-    }
-
-    .check-list {
-
-        list-style: none;
-
-        margin: 0;
-
-        padding: 0;
-
-    }
-
-    .check-list li {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 3px;
-
-        margin: 0 0 2px 0;
-
-        padding: 0;
-
-        font-size: 7.3px;
-
-        line-height: 1.12;
-
-        white-space: nowrap;
-
-    }
-
-    .check-box {
-
-        flex: 0 0 auto;
-
-        display: inline-block;
-
-        width: 9px;
-
-        height: 9px;
-
-        border: 1px solid #7b8798;
-
-        border-radius: 2px;
-
-        background: #fff;
-
-    }
-
-    .check-box.checked {
-
-        position: relative;
-
-        border-color: var(--ot-accent);
-
-        background: var(--ot-accent);
-
-    }
-
-    .check-box.checked::after {
-
-        content: "✓";
-
-        position: absolute;
-
-        left: 1px;
-
-        top: -3px;
-
-        color: #fff;
-
-        font-size: 8px;
-
-        font-weight: 900;
-
     }
 
     /* =========================================================
-
-       OBSERVACIONES / OBJETOS
-
+       CROQUIS V2 - NUEVO
        ========================================================= */
 
-    .state-footer-grid {
-
-        display: grid;
-
-        grid-template-columns: 1fr;
-
-        gap: 4px;
-
-        margin-top: 5px;
-
-    }
-
-    .note-card {
-
-        border: 1px solid var(--ot-border);
-
-        border-radius: 6px;
-
-        background: #fff;
-
-        padding: 5px 7px;
-
-        break-inside: avoid;
-
-        page-break-inside: avoid;
-
-    }
-
-    .note-title {
-
-        margin-bottom: 2px;
-
-        color: var(--ot-accent);
-
-        font-size: 7px;
-
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-        letter-spacing: .03em;
-
-    }
-
-    .note-text {
-
-        color: var(--ot-ink);
-
-        font-size: 8.7px;
-
-        line-height: 1.28;
-
-        overflow-wrap: anywhere;
-
-    }
-
-    /* =========================================================
-
-       SÍNTOMAS + TRABAJOS
-
-       ========================================================= */
-
-    .operations-grid {
-
-        display: grid;
-
-        grid-template-columns: 31% 69%;
-
-        gap: 6px;
-
-        align-items: start;
-
-        margin-bottom: 6px;
-
-    }
-
-    .operations-grid.single {
-
-        grid-template-columns: 1fr;
-
-    }
-
-    .compact-card {
-
-        border: 1px solid var(--ot-border);
-
-        border-radius: 7px;
-
-        background: #fff;
-
-        overflow: hidden;
-
-        break-inside: avoid;
-
-        page-break-inside: avoid;
-
-    }
-
-    .compact-card-title {
-
-        padding: 4px 7px;
-
-        border-bottom: 1px solid var(--ot-border);
-
-        background: var(--ot-accent);
-
-        color: #ffffff;
-
-        font-size: 8.5px;
-
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-        letter-spacing: .03em;
-
-    }
-
-    .compact-card-body {
-
-        padding: 6px 7px;
-
-        font-size: 8.7px;
-
-        line-height: 1.28;
-
-    }
-
-    .symptom-list {
-
-        margin: 0;
-
-        padding-left: 15px;
-
-    }
-
-    .symptom-list li {
-
-        margin-bottom: 2px;
-
-    }
-
-    .jobs-table {
-
-        width: 100%;
-
-        border-collapse: collapse;
-
-    }
-
-    .jobs-table th,
-
-    .jobs-table td {
-
-        border-bottom: 1px solid #e8ebf0;
-
-        padding: 4px 5px;
-
-        font-size: 8.4px;
-
-        line-height: 1.2;
-
-        vertical-align: top;
-
-    }
-
-    .jobs-table th {
-
-        background: var(--ot-accent);
-
-        color: #ffffff;
-
-        font-size: 7.2px;
-
-        text-align: left;
-
-        text-transform: uppercase;
-
-    }
-
-    .jobs-table .num {
-
-        width: 30px;
-
-        text-align: center;
-
-    }
-
-    .jobs-table tbody tr:last-child td {
-
-        border-bottom: none;
-
-    }
-
-    /* =========================================================
-
-       BLOQUES LEGALES / FIRMAS
-
-       ========================================================= */
-
-    .legal-grid {
-
-        display: grid;
-
-        grid-template-columns: 1fr 1fr;
-
-        gap: 6px;
-
-        align-items: start;
-
-    }
-
-    .legal-card {
-
-        border: 1px solid var(--ot-border);
-
-        border-radius: 7px;
-
-        background: #fff;
-
-        overflow: hidden;
-
-        break-inside: avoid;
-
-        page-break-inside: avoid;
-
-    }
-
-    .legal-title {
-
-        padding: 4px 7px;
-
-        border-bottom: 1px solid var(--ot-border);
-
-        background: var(--ot-head);
-
-        font-size: 8.5px;
-
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-    }
-
-    .legal-body {
-
-        padding: 6px 7px;
-
-    }
-
-    .legal-text {
-
-        font-size: 7.35px;
-
-        line-height: 1.27;
-
-        text-align: justify;
-
-    }
-
-    .parking-warning {
-
-        margin-top: 5px;
-
-        padding: 4px 6px;
-
-        border: 1.5px solid var(--ot-danger);
-
-        border-left: 5px solid var(--ot-danger);
-
-        border-radius: 5px;
-
-        background: #ffffff;
-
-        color: var(--ot-danger);
-
-        font-size: 7.2px;
-
-        line-height: 1.2;
-
-        font-weight: 700;
-
-    }
-
-    .legal-signatures {
-
-        display: grid;
-
-        grid-template-columns: 1fr 1fr;
-
-        gap: 7px;
-
-        margin-top: 7px;
-
-    }
-
-    .signature-block {
-
-        min-width: 0;
-
-        text-align: center;
-
-    }
-
-    .legal-signature {
-
-        position: relative;
-
-        height: 34px;
-
-        border-bottom: 1px solid #8792a2;
-
-        display: flex;
-
-        align-items: flex-end;
-
-        justify-content: center;
-
-        overflow: hidden;
-
-    }
-
-    .digital-signature-wrap {
-
-        align-items: center;
-
-    }
-
-    .img-firma {
-
+    .img-croquis-final {
         display: block;
-
-        max-width: 100%;
-
-        max-height: 31px;
-
+        width: 100%;
+        height: auto;
+        max-height: 170px;
         object-fit: contain;
-
+        margin: 0 auto;
     }
 
-    .legal-signature-label {
-
-        position: absolute;
-
-        left: 0;
-
-        right: 0;
-
-        bottom: 1px;
-
-        color: var(--ot-muted);
-
-        font-size: 6.5px;
-
-    }
-
-    .digital-signature-wrap .legal-signature-label {
-
-        opacity: .78;
-
-    }
-
-    .legal-name {
-
-        margin-top: 2px;
-
-        font-size: 6.8px;
-
-        line-height: 1.1;
-
-        text-align: left;
-
-    }
-
-    .legal-name-line {
-
-        font-weight: 700;
-
-    }
-
-    .delivery-meta {
-
-        display: grid;
-
-        grid-template-columns: 1fr 1fr;
-
-        gap: 6px;
-
-        margin-top: 6px;
-
-        font-size: 7px;
-
+    .croquis-sin-registro {
+        width: 100%;
+        padding: 30px 15px;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 600;
+        color: #777;
+        border: 1px dashed #bbb;
+        border-radius: 6px;
+        background: #fafafa;
     }
 
     /* =========================================================
-
-       EVIDENCIA FOTOGRÁFICA AL FINAL
-
+       OBSERVACIONES
        ========================================================= */
 
-    .fotos-recepcion-final {
-
-        margin-top: 7px;
-
-        break-before: auto;
-
-        page-break-before: auto;
-
-        break-inside: auto;
-
-        page-break-inside: auto;
-
+    .observaciones-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 10px;
     }
 
-    .fotos-observacion {
+    .observacion-card {
+        border: 1px solid #d9dee8;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 9px 10px;
+        min-height: 58px;
+        break-inside: avoid;
+    }
 
+    .observacion-title {
         margin-bottom: 5px;
-
+        font-size: 8px;
+        font-weight: 800;
+        color: #4b5563;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
+
+    .observacion-texto {
+        font-size: 9.5px;
+        line-height: 1.45;
+        color: #111827;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* =========================================================
+       FOTOS DE RECEPCIÓN
+       ========================================================= */
 
     .fotos-recepcion-grid-print {
-
-        display: flex;
-
-        flex-wrap: wrap;
-
-        gap: 6px;
-
-        width: 100%;
-
-        break-inside: auto;
-
-        page-break-inside: auto;
-
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
     }
 
     .foto-recepcion-print-card {
-
-        flex: 0 0 calc(33.333% - 4px);
-
-        width: calc(33.333% - 4px);
-
-        max-width: calc(33.333% - 4px);
-
-        border: 1px solid var(--ot-border);
-
-        border-radius: 7px;
-
+        border: 1px solid #d9dee8;
+        border-radius: 8px;
         overflow: hidden;
-
-        background: #fff;
-
+        background: #ffffff;
         break-inside: avoid;
-
-        page-break-inside: avoid;
-
     }
 
     .foto-recepcion-print-card img {
-
         display: block;
-
         width: 100%;
-
-        height: 116px;
-
+        height: 115px;
         object-fit: cover;
-
         background: #f3f4f6;
-
     }
 
     .foto-recepcion-print-info {
-
-        padding: 4px 6px;
-
-        font-size: 7.5px;
-
-        line-height: 1.1;
-
-        color: var(--ot-muted);
-
-    }
-
-    /* =========================================================
-
-       PANTALLA
-
-       ========================================================= */
-
-    
-    /* =========================================================
-       A4 SIN FOTOS
-       Aprovecha mejor la hoja sin perjudicar OTs con fotos.
-       ========================================================= */
-
-    .page-sin-fotos .operations-grid {
-        grid-template-columns: 29% 71%;
-        gap: 7px;
-        margin-bottom: 8px;
-        align-items: stretch;
-    }
-
-    .page-sin-fotos .operations-grid.single {
-        grid-template-columns: 1fr;
-    }
-
-    .page-sin-fotos .operations-grid .compact-card {
-        min-height: 116px;
-    }
-
-    .page-sin-fotos .compact-card-title {
-        min-height: 27px;
-        display: flex;
-        align-items: center;
-        padding: 5px 8px;
-        font-size: 9.5px;
-    }
-
-    .page-sin-fotos .compact-card-body {
-        padding: 8px 9px;
-        font-size: 9.8px;
-        line-height: 1.38;
-    }
-
-    .page-sin-fotos .symptom-list li {
-        margin-bottom: 4px;
-    }
-
-    .page-sin-fotos .jobs-table th {
-        padding: 6px 8px;
-        font-size: 8.5px;
-        line-height: 1.2;
-    }
-
-    .page-sin-fotos .jobs-table td {
-        height: 29px;
-        padding: 6px 8px;
-        font-size: 10.2px;
-        line-height: 1.28;
-    }
-
-    .page-sin-fotos .jobs-table .num {
-        width: 38px;
-        font-size: 9px;
-    }
-
-    .page-sin-fotos .legal-grid {
-        gap: 8px;
-        margin-top: 2px;
-        align-items: stretch;
-    }
-
-    .page-sin-fotos .legal-card {
-        min-height: 174px;
-    }
-
-    .page-sin-fotos .legal-body {
-        min-height: 145px;
-        display: flex;
-        flex-direction: column;
-        padding: 8px 9px;
-    }
-
-    .page-sin-fotos .legal-text {
-        font-size: 8px;
-        line-height: 1.34;
-    }
-
-    .page-sin-fotos .parking-warning {
-        margin-top: 7px;
-        padding: 5px 7px;
-        font-size: 7.5px;
-    }
-
-    .page-sin-fotos .legal-signatures {
-        margin-top: auto;
-        padding-top: 10px;
-    }
-
-    .page-sin-fotos .legal-signature {
-        height: 43px;
-    }
-
-    .page-sin-fotos .img-firma {
-        max-height: 39px;
-    }
-
-    .page-sin-fotos .legal-name,
-    .page-sin-fotos .delivery-meta {
-        font-size: 7.3px;
-    }
-
-@media screen {
-
-        .page {
-
-            max-width: 210mm;
-
-            margin: 16px auto;
-
-            padding: 8mm;
-
-            background: #fff;
-
-            box-shadow: 0 6px 24px rgba(16, 24, 40, .12);
-
-        }
-
-    }
-
-    /* =========================================================
-
-       IMPRESIÓN A4
-
-       ========================================================= */
-
-    @page {
-
-        size: A4 portrait;
-
-        margin: 5mm;
-
+        padding: 6px 7px;
+        font-size: 7.8px;
+        line-height: 1.35;
+        color: #4b5563;
+        overflow-wrap: anywhere;
     }
 
     @media print {
-
-        /* =====================================================
-
-           IMPRESIÓN CON COLORES FUERTES / COMPATIBLE CON B/N
-
-           ===================================================== */
-
-        :root {
-
-            --ot-ink: #000000;
-
-            --ot-muted: #111111;
-
-            --ot-border: #2f3b46;
-
-            --ot-soft: #ffffff;
-
-            --ot-head: #003b73;
-
-            --ot-accent: #003b73;
-
-            --ot-danger: #9b111e;
-
-            --ot-success: #0b5d1e;
-
-            --ot-warning: #ffffff;
-
-        }
-
-        /*
-
-         * Azul y rojo oscuros:
-
-         * - se ven fuertes en pantalla / impresión a color;
-
-         * - en impresora B/N se convierten a tonos oscuros;
-
-         * - nunca dependemos solo del color: también hay bordes y contraste.
-
-         */
-
-        .ot-header {
-
-            border-bottom: 3px solid var(--ot-accent) !important;
-
-        }
-
-        .section-title,
-
-        .compact-card-title,
-
-        .legal-title,
-
-        .jobs-table th {
-
-            background: var(--ot-accent) !important;
-
-            color: #ffffff !important;
-
-            border-color: var(--ot-accent) !important;
-
-        }
-
-        .section-title {
-
-            border: 1px solid var(--ot-accent) !important;
-
-            border-left: 5px solid #001f3f !important;
-
-        }
-
-        .info-label,
-
-        .mini-field-label,
-
-        .note-title,
-
-        .check-title {
-
-            color: var(--ot-accent) !important;
-
-        }
-
-        .panel,
-
-        .info-item,
-
-        .croquis-box,
-
-        .mini-field,
-
-        .check-card,
-
-        .note-card,
-
-        .compact-card,
-
-        .legal-card,
-
+        .sketch-box,
+        .croquis-v1-wrap,
+        .observacion-card,
         .foto-recepcion-print-card {
-
-            background: #ffffff !important;
-
-            border-color: #2f3b46 !important;
-
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
-        .mini-field {
-
-            background: #ffffff !important;
-
-        }
-
-        .check-box {
-
-            border: 1.3px solid #000000 !important;
-
-            background: #ffffff !important;
-
-        }
-
-        .check-box.checked {
-
-            border-color: #000000 !important;
-
-            background: #000000 !important;
-
-        }
-
-        .check-box.checked::after {
-
-            color: #ffffff !important;
-
-        }
-
-        .parking-warning {
-
-            background: #ffffff !important;
-
-            color: var(--ot-danger) !important;
-
-            border: 1.5px solid var(--ot-danger) !important;
-
-            border-left: 5px solid var(--ot-danger) !important;
-
-            font-weight: 700 !important;
-
-        }
-
-        .legal-signature {
-
-            border-bottom: 1.3px solid #000000 !important;
-
-        }
-
-        html,
-
-        body {
-
-            margin: 0 !important;
-
-            padding: 0 !important;
-
-        }
-
-        body {
-
-            -webkit-print-color-adjust: exact !important;
-
-            print-color-adjust: exact !important;
-
-        }
-
-        .page {
-
-            width: 100% !important;
-
-            max-width: none !important;
-
-            min-height: 0 !important;
-
-            height: auto !important;
-
-            margin: 0 !important;
-
-            padding: 0 !important;
-
-            box-shadow: none !important;
-
-            overflow: visible !important;
-
-            font-size: 9pt !important;
-
-        }
-
-        .ot-title {
-
-            font-size: 15pt !important;
-
-        }
-
-        .ot-number {
-
-            font-size: 10.5pt !important;
-
-        }
-
-        .info-value,
-
-        .note-text {
-
-            font-size: 8.7pt !important;
-
-        }
-
-        .section-title {
-
-            font-size: 8.5pt !important;
-
-        }
-
-        .legal-text {
-
-            font-size: 7.1pt !important;
-
-            line-height: 1.25 !important;
-
-        }
-
-        .legal-card,
-
-        .note-card,
-
-        .compact-card,
-
-        .foto-recepcion-print-card {
-
-            break-inside: avoid !important;
-
-            page-break-inside: avoid !important;
-
-        }
-
-        .fotos-recepcion-final {
-
-            break-before: auto !important;
-
-            page-break-before: auto !important;
-
+        .img-croquis-final {
+            width: 100%;
+            max-height: 160px;
+            object-fit: contain;
         }
 
         .fotos-recepcion-grid-print {
-
-            break-inside: auto !important;
-
-            page-break-inside: auto !important;
-
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
-
     }
 
+    @media (max-width: 700px) {
+        .observaciones-grid,
+        .fotos-recepcion-grid-print {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
-<div class="page{% if not fotos_recepcion %} page-sin-fotos{% endif %}">
+
+<div class="page">
 
     <!-- =========================================================
-
-         CABECERA HORIZONTAL
-
+         CABECERA
          ========================================================= -->
 
-    <div class="ot-header">
+    <table class="top-table">
 
-        <div class="ot-header-left">
+        <tr>
 
-            <div class="ot-logo">
+            <td class="top-left">
 
-                {% if empresa and empresa.logo %}
+                <div class="logo">
 
-                    <img
+                    {% if empresa and empresa.logo %}
 
-                        src="{{ empresa.logo.url }}"
+                        <img
+                            src="{{ empresa.logo.url }}"
+                            alt="Logo Empresa"
+                        >
 
-                        alt="Logo Empresa"
+                    {% else %}
 
-                    >
-
-                {% else %}
-
-                    <img
-
-                        src="{% static 'logo.png' %}"
-
-                        alt="Logo MAO"
-
-                    >
-
-                {% endif %}
-
-            </div>
-
-            <div class="ot-company">
-
-                <strong>
-
-                    {{ empresa.razon_social|default:"MANTENIMIENTO AUTOMOTRIZ ORTEGA" }}
-
-                </strong>
-
-                <br>
-
-                RUC:
-
-                {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
-
-                <br>
-
-                {{ empresa.direccion|default:"Quito, Ecuador" }}
-
-            </div>
-
-        </div>
-
-        <div class="ot-header-center">
-
-            <div class="ot-title">
-
-                ORDEN DE TRABAJO
-
-            </div>
-
-            <div class="ot-number">
-
-                N° {{ orden.numero_orden|default:"000000" }}
-
-            </div>
-
-            <div class="ot-plate">
-
-                {{ orden.placa|upper|default:"S/P" }}
-
-            </div>
-
-        </div>
-
-        <div class="ot-header-right">
-
-            <div class="header-meta-row">
-
-                <div class="header-meta-label">
-
-                    Sucursal
-
-                </div>
-
-                <div class="header-meta-value">
-
-                    {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
-
-                </div>
-
-            </div>
-
-            <div class="header-meta-row">
-
-                <div class="header-meta-label">
-
-                    Ingreso
-
-                </div>
-
-                <div class="header-meta-value">
-
-                    {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
-
-                </div>
-
-            </div>
-
-            <div class="header-meta-row">
-
-                <div class="header-meta-label">
-
-                    Estado
-
-                </div>
-
-                <div class="header-meta-value">
-
-                    {{ orden.get_estado_display|default:"ABIERTA" }}
-
-                </div>
-
-            </div>
-
-            <div class="header-meta-row">
-
-                <div class="header-meta-label">
-
-                    Impresión
-
-                </div>
-
-                <div class="header-meta-value">
-
-                    {% now "d/m/Y H:i" %}
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- =========================================================
-
-         CLIENTE Y VEHÍCULO EN UNA SOLA FRANJA
-
-         ========================================================= -->
-
-    <div class="section">
-
-        <div class="section-title section-title-light">
-
-            Cliente y vehículo
-
-        </div>
-
-        <div class="panel">
-
-            <div class="info-grid">
-
-                <div class="info-item span-2">
-
-                    <div class="info-label">
-
-                        Cliente / Razón social
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item">
-
-                    <div class="info-label">
-
-                        RUC / C.I.
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.identificacion_cliente_final|default:"-" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item">
-
-                    <div class="info-label">
-
-                        Teléfono
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.telefono_cliente_final|default:"-" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item span-2">
-
-                    <div class="info-label">
-
-                        Marca / Modelo
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.vehiculo|upper|default:"-" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item">
-
-                    <div class="info-label">
-
-                        Placa
-
-                    </div>
-
-                    <div class="info-value placa">
-
-                        {{ orden.placa|upper|default:"S/P" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item">
-
-                    <div class="info-label">
-
-                        Kilometraje
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.kilometraje|default:"0" }} KM
-
-                    </div>
-
-                </div>
-
-                <div class="info-item span-2">
-
-                    <div class="info-label">
-
-                        Color / Año
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.color|upper|default:"-" }}
-
-                        /
-
-                        {{ orden.anio_vehiculo|default:"-" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item">
-
-                    <div class="info-label">
-
-                        Clave / PIN
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.clave_encendido|default:"-" }}
-
-                    </div>
-
-                </div>
-
-                <div class="info-item">
-
-                    <div class="info-label">
-
-                        Combustible
-
-                    </div>
-
-                    <div class="info-value">
-
-                        {{ orden.get_nivel_combustible_display|default:"-" }}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- =========================================================
-
-         ESTADO DEL VEHÍCULO
-
-         ========================================================= -->
-
-    <div class="section">
-
-        <div class="section-title section-title-light">
-
-            Estado del vehículo al ingreso
-
-        </div>
-
-        <div class="panel">
-
-            <div
-
-                class="
-
-                    estado-grid
-
-                    {% if not croquis or not croquis.imagen_generada %}
-
-                        sin-croquis
+                        <img
+                            src="{% static 'logo.png' %}"
+                            alt="Logo MAO"
+                        >
 
                     {% endif %}
 
-                "
+                </div>
 
-            >
 
-                {% if croquis and croquis.imagen_generada %}
+                <div class="company">
 
-                    <div class="croquis-box">
+                    RUC:
+                    {{ empresa.ruc|default:"SIN RUC ASIGNADO" }}
+
+                    <br>
+
+                    {{ empresa.direccion|default:"Quito, Ecuador" }}
+
+                </div>
+
+            </td>
+
+
+            <td class="top-right">
+
+                <div class="titulo-ot">
+                    Orden de Trabajo
+                </div>
+
+
+                <div class="numero-ot">
+
+                    N°
+                    {{ orden.numero_orden|default:"000000" }}
+
+                </div>
+
+
+                <table class="meta-table">
+
+                    <tr>
+
+                        <td>
+
+                            <span>
+                                Sucursal
+                            </span>
+
+                            {{ orden.sucursal.nombre|upper|default:"PRINCIPAL" }}
+
+                        </td>
+
+
+                        <td>
+
+                            <span>
+                                Fecha impresión
+                            </span>
+
+                            {% now "d/m/Y H:i" %}
+
+                        </td>
+
+
+                        <td>
+
+                            <span>
+                                Estado
+                            </span>
+
+                            {{ orden.get_estado_display|default:"ABIERTA" }}
+
+                        </td>
+
+                    </tr>
+
+                </table>
+
+            </td>
+
+        </tr>
+
+    </table>
+
+
+
+    <!-- =========================================================
+         CLIENTE Y VEHÍCULO
+         ========================================================= -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Cliente y vehículo
+        </div>
+
+
+        <div class="panel">
+
+            <div class="grid-2">
+
+
+                <!-- CLIENTE -->
+
+                <div>
+
+                    <div class="field">
+
+                        <div class="label">
+                            Cliente / Razón social
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.nombre_cliente_final|upper|default:"CLIENTE MOSTRADOR" }}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="grid-2">
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                RUC / C.I.
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.identificacion_cliente_final|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Teléfono
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.telefono_cliente_final|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- VEHÍCULO -->
+
+                <div>
+
+
+                    <div class="grid-3">
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Placa
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.placa|upper|default:"S/P" }}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Kilometraje
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.kilometraje|default:"0" }} KM
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Clave / PIN
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.clave_encendido|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="grid-2">
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Marca / Modelo
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.vehiculo|upper|default:"VOLKSWAGEN GOLF" }}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <div class="label">
+                                Color / Año
+                            </div>
+
+                            <div class="value">
+
+                                {{ orden.color|upper|default:"-" }}
+                                /
+                                {{ orden.anio_vehiculo|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         ESTADO DEL VEHÍCULO
+         ========================================================= -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Estado del vehículo al ingreso
+        </div>
+
+
+        <div class="panel">
+
+            <div class="vehicle-row">
+
+
+                <!-- =================================================
+                     CROQUIS COMPATIBLE V1 / V2
+
+                     V1 = base_autos.svg + imagen antigua de daños
+                     V2 = PNG final con las 5 vistas + daños
+                     ================================================= -->
+
+                <div class="sketch-box">
+
+                    {% if croquis and croquis.imagen_generada %}
 
                         {% if croquis.version_croquis == 2 %}
 
+                            <!-- =====================================
+                                 V2 - CROQUIS NUEVO
+                                 ===================================== -->
+
                             <img
-
                                 src="{{ croquis.imagen_generada.url }}"
-
                                 class="img-croquis-final"
-
                                 alt="Croquis de daños del vehículo"
-
                             >
 
                         {% else %}
 
+                            <!-- =====================================
+                                 V1 - CROQUIS HISTÓRICO
+                                 ===================================== -->
+
                             <div class="croquis-v1-wrap">
 
                                 <img
-
                                     src="{% static 'base_autos.svg' %}"
-
                                     class="croquis-v1-base"
-
-                                    alt="Base del croquis"
-
+                                    alt="Base del croquis del vehículo"
                                 >
 
                                 <img
-
                                     src="{{ croquis.imagen_generada.url }}"
-
                                     class="croquis-v1-danios"
-
-                                    alt="Daños registrados"
-
+                                    alt="Daños registrados en el vehículo"
                                 >
 
                             </div>
 
                         {% endif %}
 
-                    </div>
+                    {% else %}
 
-                {% endif %}
-
-                <div class="estado-side">
-
-                    <div class="estado-meta">
-
-                        <div class="mini-field">
-
-                            <div class="mini-field-label">
-
-                                Combustible
-
-                            </div>
-
-                            <div class="mini-field-value">
-
-                                {{ orden.get_nivel_combustible_display|default:"-" }}
-
-                            </div>
-
+                        <div class="croquis-sin-registro">
+                            SIN CROQUIS REGISTRADO
                         </div>
 
-                        <div class="mini-field">
+                    {% endif %}
 
-                            <div class="mini-field-label">
+                </div>
 
-                                Ingreso
 
-                            </div>
 
-                            <div class="mini-field-value">
+                <!-- =================================================
+                     COMBUSTIBLE / INGRESO
+                     ================================================= -->
 
-                                {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+                <div class="fuel-box">
 
-                            </div>
+
+                    <div class="field">
+
+                        <div class="label">
+                            Combustible
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.get_nivel_combustible_display|default:"1/2" }}
 
                         </div>
 
                     </div>
 
-                    <div class="checklist-compact">
+
+
+                    <div class="field">
+
+                        <div class="label">
+                            Ingreso
+                        </div>
+
+                        <div class="value">
+
+                            {{ orden.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                     CHECKLIST
+                     ================================================= -->
+
+                <div class="vehicle-checks">
+
+                    <div class="grid-3">
+
+
+                        <!-- EXTERIOR -->
 
                         <div class="check-card">
 
                             <div class="check-title">
-
                                 Exterior
-
                             </div>
 
                             <ul class="check-list">
 
                                 <li>
 
-                                    <span class="check-box {% if chk.tapacubos %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.tapacubos %}checked{% endif %}">
+                                    </span>
 
                                     Tapacubos
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.plumas %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.plumas %}checked{% endif %}">
+                                    </span>
 
                                     Plumas
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.antena %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.antena %}checked{% endif %}">
+                                    </span>
 
                                     Antena
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.faros_lunas %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.faros_lunas %}checked{% endif %}">
+                                    </span>
 
                                     Faros
 
@@ -2033,43 +647,52 @@
 
                         </div>
 
+
+
+                        <!-- INTERIOR -->
+
                         <div class="check-card">
 
                             <div class="check-title">
-
                                 Interior
-
                             </div>
 
                             <ul class="check-list">
 
                                 <li>
 
-                                    <span class="check-box {% if chk.radio %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.radio %}checked{% endif %}">
+                                    </span>
 
                                     Radio / LCD
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.encendedor_cig %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.encendedor_cig %}checked{% endif %}">
+                                    </span>
 
                                     Encendedor
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.matricula %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.matricula %}checked{% endif %}">
+                                    </span>
 
                                     Matrícula
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.tuerca_seguridad %}checked{% endif %}">
+                                    </span>
 
                                     Tuerca Seg.
 
@@ -2079,43 +702,52 @@
 
                         </div>
 
+
+
+                        <!-- BAÚL -->
+
                         <div class="check-card">
 
                             <div class="check-title">
-
                                 Baúl
-
                             </div>
 
                             <ul class="check-list">
 
                                 <li>
 
-                                    <span class="check-box {% if chk.gata %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.gata %}checked{% endif %}">
+                                    </span>
 
                                     Gata
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.herramientas %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.herramientas %}checked{% endif %}">
+                                    </span>
 
                                     Herr.
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.llanta_emergencia %}checked{% endif %}">
+                                    </span>
 
                                     Llanta E.
 
                                 </li>
 
+
                                 <li>
 
-                                    <span class="check-box {% if chk.triangulos %}checked{% endif %}"></span>
+                                    <span class="check-box {% if chk.triangulos %}checked{% endif %}">
+                                    </span>
 
                                     Triángulos
 
@@ -2125,257 +757,331 @@
 
                         </div>
 
+
                     </div>
 
                 </div>
 
+
+
+                <!-- =================================================
+                     OBJETOS ADICIONALES
+                     ================================================= -->
+
+                <div
+                    class="field"
+                    style="
+                        margin-top:7px;
+                        margin-bottom:0;
+                    "
+                >
+
+                    <div class="label">
+                        Objetos adicionales
+                    </div>
+
+
+                    <div class="value">
+
+
+                        {% for obj in orden.ordenobjetoadicional_set.all %}
+
+
+                            {{ obj.cantidad }}x
+                            {{ obj.descripcion|upper }}
+
+
+                            {% if obj.observacion %}
+
+                                ({{ obj.observacion }})
+
+                            {% endif %}
+
+
+                            {% if not forloop.last %}
+
+                                ,
+
+                            {% endif %}
+
+
+                        {% empty %}
+
+
+                            NINGUNO REPORTADO
+
+
+                        {% endfor %}
+
+
+                    </div>
+
+                </div>
+
+
             </div>
 
-            {% if orden.ordenobjetoadicional_set.all or orden.observaciones_recepcion %}
 
-                <div class="state-footer-grid">
+            <!-- =================================================
+                 OBSERVACIONES DEL ESTADO AL INGRESO
+                 Solo se imprimen cuando existen.
+                 ================================================= -->
 
-                    {% if orden.ordenobjetoadicional_set.all %}
+            {% if orden.observaciones_recepcion %}
 
-                        <div class="note-card">
+                <div class="observaciones-grid">
 
-                            <div class="note-title">
+                    <div class="observacion-card">
 
-                                Objetos adicionales
-
-                            </div>
-
-                            <div class="note-text">
-
-                                {% for obj in orden.ordenobjetoadicional_set.all %}
-
-                                    {{ obj.cantidad }}x
-
-                                    {{ obj.descripcion|upper }}
-
-                                    {% if obj.observacion %}
-
-                                        ({{ obj.observacion }})
-
-                                    {% endif %}
-
-                                    {% if not forloop.last %}
-
-                                        ·
-
-                                    {% endif %}
-
-                                {% endfor %}
-
-                            </div>
-
+                        <div class="observacion-title">
+                            Observaciones de cómo llega el vehículo
                         </div>
 
-                    {% endif %}
-
-                    {% if orden.observaciones_recepcion %}
-
-                        <div class="note-card">
-
-                            <div class="note-title">
-
-                                Observaciones de cómo llega el vehículo
-
-                            </div>
-
-                            <div class="note-text">
-
-                                {{ orden.observaciones_recepcion|linebreaksbr }}
-
-                            </div>
-
+                        <div class="observacion-texto">
+                            {{ orden.observaciones_recepcion|linebreaksbr }}
                         </div>
 
-                    {% endif %}
+                    </div>
 
                 </div>
 
             {% endif %}
+
+
+            <!-- =================================================
+                 FOTOS DEL ESTADO AL INGRESO
+                 Solo se imprimen cuando existen.
+                 ================================================= -->
+
+            {% if orden.fotos_recepcion.all %}
+
+                <div style="margin-top:10px;">
+
+                    <div class="label" style="margin-bottom:6px;">
+                        Fotos del estado del vehículo al ingreso
+                    </div>
+
+                    <div class="fotos-recepcion-grid-print">
+
+                        {% for foto in orden.fotos_recepcion.all %}
+
+                            <div class="foto-recepcion-print-card">
+
+                                {% if foto.imagen %}
+
+                                    <img
+                                        src="{{ foto.imagen.url }}"
+                                        alt="Estado del vehículo al ingreso - OT {{ orden.numero_orden }}"
+                                    >
+
+                                {% endif %}
+
+                                <div class="foto-recepcion-print-info">
+
+                                    {% if foto.descripcion %}
+
+                                        {{ foto.descripcion }}
+
+                                    {% else %}
+
+                                        Foto del estado al ingreso
+
+                                    {% endif %}
+
+                                    {% if foto.fecha_subida %}
+
+                                        <br>
+                                        {{ foto.fecha_subida|date:"d/m/Y H:i" }}
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
 
         </div>
 
     </div>
 
+
+
     <!-- =========================================================
-
-         REPORTE DEL CLIENTE + TRABAJOS
-
-         SOLO CUANDO HAY INFORMACIÓN
-
+         REPORTE DEL CLIENTE
          ========================================================= -->
 
-    {% if orden.sintomas_cliente or orden.sintomas_items.all or orden.trabajos_solicitados_items.all or orden.servicios_detalles.all %}
+    <div class="section">
 
-        <div
 
-            class="
+        <div class="section-title">
+            Reporte del cliente / motivo de ingreso
+        </div>
 
-                operations-grid
 
-                {% if not orden.sintomas_cliente and not orden.sintomas_items.all %}
+        <div class="report">
 
-                    single
 
-                {% elif not orden.trabajos_solicitados_items.all and not orden.servicios_detalles.all %}
+            {% if orden.sintomas_cliente %}
 
-                    single
 
-                {% endif %}
+                {{ orden.sintomas_cliente|upper }}
 
-            "
 
-        >
+            {% else %}
 
-            {% if orden.sintomas_cliente or orden.sintomas_items.all %}
 
-                <div class="compact-card">
+                {% for s in orden.sintomas_items.all %}
 
-                    <div class="compact-card-title">
 
-                        Reporte del cliente / motivo de ingreso
+                    • {{ s.descripcion|upper }}
 
-                    </div>
+                    <br>
 
-                    <div class="compact-card-body">
 
-                        {% if orden.sintomas_cliente %}
+                {% empty %}
 
-                            {{ orden.sintomas_cliente|upper }}
 
-                        {% else %}
+                    REVISIÓN TÉCNICA GENERAL / NO ESPECIFICADO
 
-                            <ul class="symptom-list">
 
-                                {% for s in orden.sintomas_items.all %}
+                {% endfor %}
 
-                                    <li>
-
-                                        {{ s.descripcion|upper }}
-
-                                    </li>
-
-                                {% endfor %}
-
-                            </ul>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
 
             {% endif %}
 
-            {% if orden.trabajos_solicitados_items.all or orden.servicios_detalles.all %}
-
-                <div class="compact-card">
-
-                    <div class="compact-card-title compact-card-title-light">
-
-                        Trabajos a realizar
-
-                    </div>
-
-                    <table class="jobs-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th class="num">
-
-                                    #
-
-                                </th>
-
-                                <th>
-
-                                    Descripción de las operaciones
-
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {% for t in orden.trabajos_solicitados_items.all %}
-
-                                <tr>
-
-                                    <td class="num">
-
-                                        {{ forloop.counter }}
-
-                                    </td>
-
-                                    <td>
-
-                                        {{ t.descripcion_manual|upper }}
-
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                            {% for s in orden.servicios_detalles.all %}
-
-                                <tr>
-
-                                    <td class="num">
-
-                                        -
-
-                                    </td>
-
-                                    <td>
-
-                                        {% if s.servicio %}
-
-                                            {{ s.servicio.descripcion|upper }}
-
-                                        {% else %}
-
-                                            {{ s.descripcion_servicio|upper }}
-
-                                        {% endif %}
-
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% endif %}
 
         </div>
 
-    {% endif %}
+    </div>
+
+
 
     <!-- =========================================================
+         TRABAJOS A REALIZAR
+         ========================================================= -->
 
-         AUTORIZACIÓN + RECIBÍ CONFORME
+    <div class="section">
 
+
+        <div class="section-title">
+            Trabajos a realizar
+        </div>
+
+
+        <table class="trabajos-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th
+                        style="width:40px;"
+                        class="center"
+                    >
+                        #
+                    </th>
+
+                    <th>
+                        Descripción de las Operaciones
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+
+            <tbody>
+
+
+                {% for t in orden.trabajos_solicitados_items.all %}
+
+
+                    <tr>
+
+                        <td class="center">
+                            {{ forloop.counter }}
+                        </td>
+
+                        <td>
+                            {{ t.descripcion_manual|upper }}
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+
+                {% for s in orden.servicios_detalles.all %}
+
+
+                    <tr>
+
+                        <td class="center">
+                            -
+                        </td>
+
+                        <td>
+                            {{ s.servicio.descripcion|upper }}
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+
+                {% for i in "1"|make_list %}
+
+
+                    <tr>
+
+                        <td style="height:18px;">
+                        </td>
+
+                        <td>
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         AUTORIZACIÓN Y RECIBÍ CONFORME
          ========================================================= -->
 
     <div class="legal-grid">
 
-        <!-- AUTORIZACIÓN -->
+
+        <!-- =====================================================
+             AUTORIZACIÓN
+             ===================================================== -->
 
         <div class="legal-card">
+
 
             <div class="legal-title">
 
@@ -2383,71 +1089,72 @@
 
             </div>
 
+
             <div class="legal-body">
+
 
                 <div class="legal-text">
 
                     Autorizo a
-
                     <strong>
-
                         MANTENIMIENTO AUTOMOTRIZ ORTEGA (MAO)
-
                     </strong>
-
                     a realizar la revisión, diagnóstico,
-
                     comprobación y los trabajos descritos
-
                     en esta orden de trabajo.
 
                     También autorizo el desmontaje de componentes,
-
                     las pruebas de funcionamiento y la movilización
-
                     del vehículo dentro o fuera de las instalaciones
-
                     cuando sea necesaria para el diagnóstico o la
-
                     verificación de la reparación.
 
                     Declaro que los datos, objetos, accesorios,
-
                     nivel de combustible, kilometraje y estado exterior
-
                     registrados corresponden a las condiciones del
-
                     vehículo al momento de su ingreso.
 
                 </div>
 
+
+
                 <div class="parking-warning">
 
                     Vehículo no retirado en la fecha indicada:
-
                     se cobrará $4,00 de parqueadero diario.
 
                 </div>
 
+
+
                 <div class="legal-signatures">
 
-                    <div class="signature-block">
 
-                        <div class="legal-signature digital-signature-wrap">
+                    <!-- CLIENTE -->
+
+                    <div>
+
+
+                        <div
+                            class="
+                                legal-signature
+                                digital-signature-wrap
+                            "
+                        >
+
 
                             {% if orden.firma_cliente %}
 
+
                                 <img
-
                                     src="{{ orden.firma_cliente.url }}"
-
                                     class="img-firma"
-
                                     alt="Firma del cliente"
-
                                 >
 
+
                             {% endif %}
+
 
                             <div class="legal-signature-label">
 
@@ -2455,7 +1162,10 @@
 
                             </div>
 
+
                         </div>
+
+
 
                         <div class="legal-name">
 
@@ -2469,9 +1179,15 @@
 
                         </div>
 
+
                     </div>
 
-                    <div class="signature-block">
+
+
+                    <!-- MAO -->
+
+                    <div>
+
 
                         <div class="legal-signature">
 
@@ -2483,15 +1199,20 @@
 
                         </div>
 
+
+
                         <div class="legal-name">
 
                             Nombre:
 
-                            <span class="legal-name-line"></span>
+                            <span class="legal-name-line">
+                            </span>
 
                         </div>
 
+
                     </div>
+
 
                 </div>
 
@@ -2499,9 +1220,14 @@
 
         </div>
 
-        <!-- RECIBÍ CONFORME -->
+
+
+        <!-- =====================================================
+             RECIBÍ CONFORME
+             ===================================================== -->
 
         <div class="legal-card">
+
 
             <div class="legal-title">
 
@@ -2509,39 +1235,39 @@
 
             </div>
 
+
             <div class="legal-body">
+
 
                 <div class="legal-text">
 
                     Declaro haber revisado las condiciones de entrega
-
                     del vehículo, las reparaciones, servicios y trabajos
-
                     efectuados.
 
                     Recibo el vehículo a satisfacción y sin reclamos
-
                     pendientes visibles al momento de la entrega.
 
                     Se recomienda realizar cualquier observación
-
                     relacionada con la reparación dentro de los
-
                     <strong>15 días</strong>
-
                     posteriores a la entrega.
 
                     Declaro también haber recibido los repuestos
-
                     reemplazados, cuando hayan sido solicitados
-
                     y se encuentren disponibles.
 
                 </div>
 
+
+
                 <div class="legal-signatures">
 
-                    <div class="signature-block">
+
+                    <!-- MAO -->
+
+                    <div>
+
 
                         <div class="legal-signature">
 
@@ -2553,17 +1279,26 @@
 
                         </div>
 
+
+
                         <div class="legal-name">
 
                             Nombre:
 
-                            <span class="legal-name-line"></span>
+                            <span class="legal-name-line">
+                            </span>
 
                         </div>
 
+
                     </div>
 
-                    <div class="signature-block">
+
+
+                    <!-- CLIENTE -->
+
+                    <div>
+
 
                         <div class="legal-signature">
 
@@ -2575,243 +1310,52 @@
 
                         </div>
 
+
+
                         <div class="legal-name">
 
                             Nombre:
 
-                            <span class="legal-name-line"></span>
+                            <span class="legal-name-line">
+                            </span>
 
                         </div>
 
+
                     </div>
 
+
                 </div>
+
+
 
                 <div class="delivery-meta">
 
                     <div>
 
-                        <strong>Fecha:</strong>
+                        <strong>
+                            Fecha:
+                        </strong>
 
                     </div>
+
 
                     <div>
 
-                        <strong>Hora:</strong>
+                        <strong>
+                            Hora:
+                        </strong>
 
                     </div>
 
                 </div>
 
+
             </div>
 
         </div>
+
 
     </div>
 
-    <!-- =========================================================
-
-         EVIDENCIA FOTOGRÁFICA
-
-         SOLO SI EXISTEN FOTOS
-
-         QUEDA AL FINAL Y FLUYE A LA SIGUIENTE HOJA SI ES NECESARIO
-
-         ========================================================= -->
-
-    {% if fotos_recepcion %}
-
-        <div class="section fotos-recepcion-final">
-
-            <div class="section-title">
-
-                Evidencia fotográfica del ingreso
-
-            </div>
-
-            <div class="panel">
-
-                {% if observaciones_fotos %}
-
-                    <div class="note-card fotos-observacion">
-
-                        <div class="note-title">
-
-                            Observación de la evidencia fotográfica
-
-                        </div>
-
-                        <div class="note-text">
-
-                            {% for observacion in observaciones_fotos %}
-
-                                {{ observacion|linebreaksbr }}
-
-                                {% if not forloop.last %}
-
-                                    <br>
-
-                                {% endif %}
-
-                            {% endfor %}
-
-                        </div>
-
-                    </div>
-
-                {% endif %}
-
-                <div class="fotos-recepcion-grid-print">
-
-                    {% for foto in fotos_recepcion %}
-
-                        <div class="foto-recepcion-print-card">
-
-                            {% if foto.imagen %}
-
-                                <img
-
-                                    src="{{ foto.imagen.url }}"
-
-                                    alt="Foto {{ forloop.counter }} del vehículo - OT {{ orden.numero_orden }}"
-
-                                >
-
-                            {% endif %}
-
-                            <div class="foto-recepcion-print-info">
-
-                                <strong>
-
-                                    Foto {{ forloop.counter }}
-
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    {% endfor %}
-
-                </div>
-
-            </div>
-
-        </div>
-
-    {% endif %}
-
 </div>
-
-<style>
-
-@media print {
-
-    .section-title-light,
-
-    .compact-card-title-light {
-
-        color: #ffffff !important;
-
-        font-weight: 400 !important;
-
-    }
-
-
-
-        /* =================================================
-           CUANDO NO HAY FOTOS: APROVECHAR MÁS DEL A4
-           ================================================= */
-
-        .page.page-sin-fotos {
-            min-height: 276mm !important;
-        }
-
-        .page-sin-fotos .operations-grid {
-            grid-template-columns: 29% 71% !important;
-            gap: 2.2mm !important;
-            margin-bottom: 2.2mm !important;
-            align-items: stretch !important;
-        }
-
-        .page-sin-fotos .operations-grid .compact-card {
-            min-height: 34mm !important;
-        }
-
-        .page-sin-fotos .compact-card-title {
-            min-height: 7.5mm !important;
-            padding: 1.5mm 2.2mm !important;
-            font-size: 8.8pt !important;
-        }
-
-        .page-sin-fotos .compact-card-body {
-            padding: 2.2mm 2.4mm !important;
-            font-size: 9pt !important;
-            line-height: 1.35 !important;
-        }
-
-        .page-sin-fotos .jobs-table th {
-            padding: 1.7mm 2.2mm !important;
-            font-size: 8pt !important;
-        }
-
-        .page-sin-fotos .jobs-table td {
-            height: 8.2mm !important;
-            padding: 1.8mm 2.2mm !important;
-            font-size: 9.4pt !important;
-            line-height: 1.28 !important;
-        }
-
-        .page-sin-fotos .jobs-table .num {
-            width: 10mm !important;
-            font-size: 8.5pt !important;
-        }
-
-        .page-sin-fotos .legal-grid {
-            gap: 2.2mm !important;
-            margin-top: 1.2mm !important;
-            align-items: stretch !important;
-        }
-
-        .page-sin-fotos .legal-card {
-            min-height: 50mm !important;
-        }
-
-        .page-sin-fotos .legal-body {
-            min-height: 43mm !important;
-            display: flex !important;
-            flex-direction: column !important;
-            padding: 2.2mm 2.4mm !important;
-        }
-
-        .page-sin-fotos .legal-text {
-            font-size: 7.5pt !important;
-            line-height: 1.32 !important;
-        }
-
-        .page-sin-fotos .legal-signatures {
-            margin-top: auto !important;
-            padding-top: 2.5mm !important;
-        }
-
-        .page-sin-fotos .legal-signature {
-            height: 12mm !important;
-        }
-
-        .page-sin-fotos .img-firma {
-            max-height: 10.5mm !important;
-        }
-
-}
-
-.section-title-light,
-
-.compact-card-title-light {
-
-    color: #ffffff !important;
-
-    font-weight: 400 !important;
-
-}
-
-</style>
