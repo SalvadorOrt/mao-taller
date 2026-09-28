@@ -32,6 +32,13 @@
                         id="nuevo_sintoma"
                         class="form-control-apple"
                         placeholder="Ej: Ruido al frenar, vibración, humo, etc."
+                        autocomplete="off"
+                        onkeydown="
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                agregarSintoma();
+                            }
+                        "
                     >
 
                     <button
@@ -42,6 +49,10 @@
                         <i class="bi bi-plus-lg"></i>
                         Agregar síntoma
                     </button>
+                </div>
+
+                <div class="form-text mt-2">
+                    Registre cada síntoma o queja del cliente por separado.
                 </div>
 
             </div>
@@ -69,122 +80,178 @@
                 <!-- ================================== -->
                 <!-- TRABAJOS COMUNES -->
                 <!-- ================================== -->
+                <div class="mb-2">
+                    <span class="small text-muted">
+                        Seleccione uno o varios trabajos comunes.
+                    </span>
+                </div>
+
                 <div
                     class="trabajos-grid"
                     id="grid_trabajos_realizar"
                 >
-                    <label class="badge-trabajo">
+
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_cambio_aceite_motor"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_cambio_aceite_motor"
                             class="trabajo-checkbox"
                             value="Cambio aceite y filtro motor"
                         >
                         Cambio aceite y filtro motor
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_cambio_aceite_caja"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_cambio_aceite_caja"
                             class="trabajo-checkbox"
                             value="Cambio aceite caja"
                         >
                         Cambio aceite caja
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_cambio_diferencial"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_cambio_diferencial"
                             class="trabajo-checkbox"
                             value="Cambio diferencial"
                         >
                         Cambio diferencial
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_refrigerante_motor"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_refrigerante_motor"
                             class="trabajo-checkbox"
                             value="Cambio refrigerante motor"
                         >
                         Cambio refrigerante motor
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_liquido_hidraulico"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_liquido_hidraulico"
                             class="trabajo-checkbox"
                             value="Cambio líquido hidráulico"
                         >
                         Cambio líquido hidráulico
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_kit_embrague"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_kit_embrague"
                             class="trabajo-checkbox"
                             value="Cambio kit de embrague"
                         >
                         Cambio kit de embrague
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_abc_frenos"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_abc_frenos"
                             class="trabajo-checkbox"
                             value="ABC de frenos"
                         >
                         ABC de frenos
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_abc_motor"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_abc_motor"
                             class="trabajo-checkbox"
                             value="ABC de motor"
                         >
                         ABC de motor
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_alineacion_balanceo"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_alineacion_balanceo"
                             class="trabajo-checkbox"
                             value="Alineación y balanceo"
                         >
                         Alineación y balanceo
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_calibracion_valvulas"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_calibracion_valvulas"
                             class="trabajo-checkbox"
                             value="Calibración de válvulas"
                         >
                         Calibración de válvulas
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_scanneo"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_scanneo"
                             class="trabajo-checkbox"
                             value="Scanneo"
                         >
                         Scanneo
                     </label>
 
-                    <label class="badge-trabajo">
+                    <label
+                        class="badge-trabajo"
+                        for="trabajo_revision_niveles_luces"
+                    >
                         <input
                             type="checkbox"
+                            id="trabajo_revision_niveles_luces"
                             class="trabajo-checkbox"
                             value="Revisión de niveles y luces"
                         >
                         Revisión de niveles y luces
                     </label>
+
                 </div>
 
 
                 <!-- ================================== -->
-                <!-- TRABAJOS ESPECIALES -->
+                <!-- TRABAJOS SELECCIONADOS / MANUALES -->
                 <!-- ================================== -->
                 <div
                     class="mt-4"
@@ -194,13 +261,18 @@
                     "
                 >
                     <label class="form-label-custom">
-                        TRABAJOS ESPECIALES O ADICIONALES
+                        TRABAJOS SELECCIONADOS Y ADICIONALES
                     </label>
+
+                    <div class="form-text mb-3">
+                        Aquí se muestran los trabajos seleccionados y los
+                        trabajos ingresados manualmente.
+                    </div>
 
                     <div class="tabla-mini">
                         <div class="tabla-mini-header tabla-2">
                             <div>#</div>
-                            <div>Trabajo especial o adicional</div>
+                            <div>Trabajo solicitado</div>
                             <div>Acción</div>
                         </div>
 
@@ -213,6 +285,13 @@
                             id="nuevo_trabajo_manual"
                             class="form-control-apple"
                             placeholder="Otro trabajo no listado. Ej: Limpieza de inyectores"
+                            autocomplete="off"
+                            onkeydown="
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    agregarTrabajoManual();
+                                }
+                            "
                         >
 
                         <button
@@ -226,14 +305,17 @@
                     </div>
                 </div>
 
+                <!--
+                    IMPORTANTE:
+                    No crear aquí otro input hidden de trabajos_json.
 
-                <!-- Campo oculto para enviar los trabajos -->
-                <input
-                    type="hidden"
-                    id="trabajos_solicitados_json"
-                    name="trabajos_solicitados_json"
-                    value="[]"
-                >
+                    El formulario principal crear_orden.html ya contiene:
+                    - id_sintomas_json
+                    - id_trabajos_json
+                    - id_objetos_json
+
+                    El JavaScript central sincroniza esas listas.
+                -->
 
             </div>
         </div>
@@ -243,7 +325,10 @@
         <!-- OBSERVACIONES DE RECEPCIÓN -->
         <!-- ========================================== -->
         <div class="col-12 mt-2">
-            <label class="form-label-custom">
+            <label
+                class="form-label-custom"
+                for="id_obs_recepcion"
+            >
                 OBSERVACIONES DE RECEPCIÓN
             </label>
 
@@ -254,6 +339,11 @@
                 rows="3"
                 placeholder="Ej: Cliente deja pertenencias en la guantera, el vehículo presenta rayones previos..."
             ></textarea>
+
+            <div class="form-text mt-2">
+                Registre aquí cualquier novedad general observada durante
+                la recepción del vehículo.
+            </div>
         </div>
 
     </div>

@@ -1,26 +1,125 @@
+<style>
+    #step_7 .resumen-final-card {
+        background: #ffffff;
+        border: 1px solid #e5e5e7;
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    }
+
+    #step_7 .firma-card {
+        border: 2px solid var(--apple-warning);
+        padding: 18px;
+        border-radius: 16px;
+        background: #fffdf5;
+    }
+
+    #step_7 .firma-canvas-wrap {
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 2px solid var(--apple-border);
+        background: #ffffff;
+    }
+
+    #step_7 #canvasFirma {
+        cursor: crosshair;
+        touch-action: none;
+        width: 100%;
+        height: 180px;
+        display: block;
+    }
+
+    #step_7 .firma-ayuda {
+        color: var(--apple-muted);
+        font-size: 0.86rem;
+        margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+        #step_7 .resumen-final-card {
+            padding: 15px;
+        }
+
+        #step_7 .firma-card {
+            padding: 14px;
+        }
+
+        #step_7 #canvasFirma {
+            height: 160px;
+        }
+    }
+</style>
+
+
 <div class="step-container" id="step_7">
+
     <div class="section-header">
-        <i class="bi bi-check-circle-fill text-success"></i> 7. Confirmación y Firma
+        <i class="bi bi-check-circle-fill text-success"></i>
+        7. Confirmación y Firma
     </div>
-    
-    <div class="bg-light rounded p-4 border mb-4 shadow-sm" id="resumen_final">
+
+
+    <!-- ========================================== -->
+    <!-- RESUMEN FINAL -->
+    <!-- ========================================== -->
+    <div
+        class="resumen-final-card mb-4"
+        id="resumen_final"
+        aria-live="polite"
+    >
+        <div class="text-center py-4 text-muted">
+            <div
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+            ></div>
+            Preparando resumen de la orden...
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- FIRMA DEL CLIENTE -->
+    <!-- ========================================== -->
+    <div class="firma-card">
+
+        <label class="form-label-custom text-dark mb-3">
+            <i class="bi bi-pen"></i>
+            FIRMA DEL CLIENTE
+            <span class="text-muted">
+                (Opcional)
+            </span>
+        </label>
+
+        <div class="firma-canvas-wrap">
+            <canvas
+                id="canvasFirma"
+                aria-label="Área para firma del cliente"
+            ></canvas>
         </div>
 
-    <div class="ot-card" style="border: 2px solid var(--apple-warning); padding: 15px; border-radius: 12px; background: #fffdf5;">
-        <label class="form-label-custom text-dark mb-3">
-            <i class="bi bi-pen"></i> FIRMA DEL CLIENTE (Opcional - Dibuje aquí)
-        </label>
-        
-        <div style="position: relative; border-radius: 12px; overflow: hidden; border: 2px solid var(--apple-border); background: #fff;">
-            <canvas id="canvasFirma" style="cursor: crosshair; touch-action: none; width: 100%; height: 180px; display: block;"></canvas>
+        <input
+            type="hidden"
+            name="firma_base64"
+            id="id_firma_base64"
+        >
+
+        <div class="firma-ayuda">
+            Dibuje la firma con el mouse, dedo o lápiz digital.
         </div>
-        
-        <input type="hidden" name="firma_base64" id="id_firma_base64">
-        
+
         <div class="text-center mt-3">
-            <button type="button" class="btn-mao btn-mao-secondary btn-pill small" onclick="limpiarFirma()">
-                <i class="bi bi-eraser"></i> Borrar Firma
+            <button
+                type="button"
+                class="btn-mao btn-mao-secondary btn-pill small"
+                onclick="limpiarFirma()"
+            >
+                <i class="bi bi-eraser"></i>
+                Borrar firma
             </button>
         </div>
+
     </div>
+
 </div>

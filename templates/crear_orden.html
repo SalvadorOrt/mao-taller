@@ -2034,54 +2034,473 @@
     });
 
     // ==========================================
+    // UTILIDADES DE RECEPCIÓN
+    // ==========================================
+    function escaparHtml(valor) {
+        return String(valor ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function sincronizarJsonRecepcion() {
+        const inputSintomas =
+            document.getElementById('id_sintomas_json');
+
+        const inputTrabajos =
+            document.getElementById('id_trabajos_json');
+
+        const inputObjetos =
+            document.getElementById('id_objetos_json');
+
+        if (inputSintomas) {
+            inputSintomas.value =
+                JSON.stringify(sintomas);
+        }
+
+        if (inputTrabajos) {
+            inputTrabajos.value =
+                JSON.stringify(trabajos);
+        }
+
+        if (inputObjetos) {
+            inputObjetos.value =
+                JSON.stringify(objetos);
+        }
+    }
+
+    function sincronizarCheckboxesTrabajos() {
+        document
+            .querySelectorAll('.trabajo-checkbox')
+            .forEach(chk => {
+
+                const descripcion =
+                    String(chk.value || '')
+                        .trim()
+                        .toLowerCase();
+
+                chk.checked =
+                    trabajos.some(
+                        item =>
+                            String(
+                                item.descripcion || ''
+                            )
+                                .trim()
+                                .toLowerCase()
+                            ===
+                            descripcion
+                    );
+            });
+    }
+
+
+    // ==========================================
     // SÍNTOMAS
     // ==========================================
     function renderSintomas() {
-        const body = document.getElementById('tabla_sintomas_body');
-        if (!sintomas.length) return body.innerHTML = `<div class="empty-note px-3">Aún no hay síntomas registrados.</div>`;
-        body.innerHTML = sintomas.map((item, index) => `<div class="tabla-mini-row tabla-2"><div><strong>${index + 1}</strong></div><div>${item.descripcion}</div><div><button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="eliminarSintoma(${index})"><i class="bi bi-trash"></i></button></div></div>`).join('');
+        const body =
+            document.getElementById(
+                'tabla_sintomas_body'
+            );
+
+        if (!body) {
+            return;
+        }
+
+        if (!sintomas.length) {
+            body.innerHTML = `
+                <div class="empty-note px-3">
+                    Aún no hay síntomas registrados.
+                </div>
+            `;
+
+            sincronizarJsonRecepcion();
+            return;
+        }
+
+        body.innerHTML =
+            sintomas
+                .map(
+                    (item, index) => `
+                        <div class="tabla-mini-row tabla-2">
+                            <div>
+                                <strong>${index + 1}</strong>
+                            </div>
+
+                            <div>
+                                ${escaparHtml(item.descripcion)}
+                            </div>
+
+                            <div>
+                                <button
+                                    type="button"
+                                    class="btn-mao btn-mao-danger-soft btn-pill"
+                                    onclick="eliminarSintoma(${index})"
+                                    title="Eliminar síntoma"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `
+                )
+                .join('');
+
+        sincronizarJsonRecepcion();
     }
+
     function agregarSintoma() {
-        const input = document.getElementById('nuevo_sintoma'); const valor = input.value.trim();
-        if (!valor) return mostrarAlerta({ icon: 'warning', title: 'Falta el síntoma', text: 'Escriba una queja antes de agregar.', focusId: 'nuevo_sintoma' });
-        sintomas.push({ descripcion: valor }); input.value = ''; renderSintomas();
+        const input =
+            document.getElementById(
+                'nuevo_sintoma'
+            );
+
+        if (!input) {
+            return;
+        }
+
+        const valor =
+            input.value.trim();
+
+        if (!valor) {
+            return mostrarAlerta({
+                icon: 'warning',
+                title: 'Falta el síntoma',
+                text: 'Escriba una queja antes de agregar.',
+                focusId: 'nuevo_sintoma'
+            });
+        }
+
+        sintomas.push({
+            descripcion: valor
+        });
+
+        input.value = '';
+
+        renderSintomas();
+
+        programarGuardadoBorradorRecepcion(
+            false
+        );
     }
-    function eliminarSintoma(index) { sintomas.splice(index, 1); renderSintomas(); }
+
+    function eliminarSintoma(index) {
+        if (
+            index < 0 ||
+            index >= sintomas.length
+        ) {
+            return;
+        }
+
+        sintomas.splice(
+            index,
+            1
+        );
+
+        renderSintomas();
+
+        programarGuardadoBorradorRecepcion(
+            false
+        );
+    }
+
 
     // ==========================================
     // TRABAJOS
     // ==========================================
     function renderTrabajos() {
-        const body = document.getElementById('tabla_trabajos_body');
-        if (!trabajos.length) return body.innerHTML = `<div class="empty-note px-3">Aún no hay trabajos seleccionados.</div>`;
-        body.innerHTML = trabajos.map((item, index) => `<div class="tabla-mini-row tabla-2"><div><strong>${index + 1}</strong></div><div>${item.descripcion}</div><div><button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="eliminarTrabajo(${index})"><i class="bi bi-trash"></i></button></div></div>`).join('');
+        const body =
+            document.getElementById(
+                'tabla_trabajos_body'
+            );
+
+        if (!body) {
+            return;
+        }
+
+        if (!trabajos.length) {
+            body.innerHTML = `
+                <div class="empty-note px-3">
+                    Aún no hay trabajos seleccionados.
+                </div>
+            `;
+
+            sincronizarCheckboxesTrabajos();
+            sincronizarJsonRecepcion();
+            return;
+        }
+
+        body.innerHTML =
+            trabajos
+                .map(
+                    (item, index) => `
+                        <div class="tabla-mini-row tabla-2">
+                            <div>
+                                <strong>${index + 1}</strong>
+                            </div>
+
+                            <div>
+                                ${escaparHtml(item.descripcion)}
+                            </div>
+
+                            <div>
+                                <button
+                                    type="button"
+                                    class="btn-mao btn-mao-danger-soft btn-pill"
+                                    onclick="eliminarTrabajo(${index})"
+                                    title="Eliminar trabajo"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `
+                )
+                .join('');
+
+        sincronizarCheckboxesTrabajos();
+        sincronizarJsonRecepcion();
     }
-    function agregarTrabajoSiNoExiste(texto) { if (!trabajos.some(t => t.descripcion.toLowerCase() === texto.toLowerCase())) trabajos.push({ descripcion: texto }); renderTrabajos(); }
+
+    function agregarTrabajoSiNoExiste(texto) {
+        const descripcion =
+            String(
+                texto || ''
+            ).trim();
+
+        if (!descripcion) {
+            return;
+        }
+
+        const existe =
+            trabajos.some(
+                item =>
+                    String(
+                        item.descripcion || ''
+                    )
+                        .trim()
+                        .toLowerCase()
+                    ===
+                    descripcion.toLowerCase()
+            );
+
+        if (!existe) {
+            trabajos.push({
+                descripcion: descripcion
+            });
+        }
+
+        renderTrabajos();
+
+        programarGuardadoBorradorRecepcion(
+            false
+        );
+    }
+
     function eliminarTrabajo(index) {
-        const texto = trabajos[index].descripcion; trabajos.splice(index, 1);
-        document.querySelectorAll('.trabajo-predefinido').forEach(chk => { if (chk.value === texto) chk.checked = false; }); renderTrabajos();
+        const item =
+            trabajos[index];
+
+        if (!item) {
+            return;
+        }
+
+        trabajos.splice(
+            index,
+            1
+        );
+
+        renderTrabajos();
+
+        programarGuardadoBorradorRecepcion(
+            false
+        );
     }
+
     function agregarTrabajoManual() {
-        const input = document.getElementById('nuevo_trabajo_manual'); const valor = input.value.trim();
-        if (!valor) return mostrarAlerta({ icon: 'warning', title: 'Falta el trabajo', text: 'Escriba un trabajo antes de agregarlo.', focusId: 'nuevo_trabajo_manual' });
-        agregarTrabajoSiNoExiste(valor); input.value = '';
+        const input =
+            document.getElementById(
+                'nuevo_trabajo_manual'
+            );
+
+        if (!input) {
+            return;
+        }
+
+        const valor =
+            input.value.trim();
+
+        if (!valor) {
+            return mostrarAlerta({
+                icon: 'warning',
+                title: 'Falta el trabajo',
+                text: 'Escriba un trabajo antes de agregarlo.',
+                focusId: 'nuevo_trabajo_manual'
+            });
+        }
+
+        agregarTrabajoSiNoExiste(
+            valor
+        );
+
+        input.value = '';
     }
+
 
     // ==========================================
     // OBJETOS ADICIONALES
     // ==========================================
     function renderObjetos() {
-        const body = document.getElementById('tabla_objetos_body');
-        if (!objetos.length) return body.innerHTML = `<div class="empty-note px-3">No hay objetos adicionales registrados.</div>`;
-        body.innerHTML = objetos.map((item, index) => `<div class="tabla-mini-row tabla-3"><div>${item.descripcion}</div><div>${item.cantidad}</div><div>${item.observacion || '-'}</div><div><button type="button" class="btn-mao btn-mao-danger-soft btn-pill" onclick="eliminarObjeto(${index})"><i class="bi bi-trash"></i></button></div></div>`).join('');
+        const body =
+            document.getElementById(
+                'tabla_objetos_body'
+            );
+
+        if (!body) {
+            return;
+        }
+
+        if (!objetos.length) {
+            body.innerHTML = `
+                <div class="empty-note px-3">
+                    No hay objetos adicionales registrados.
+                </div>
+            `;
+
+            sincronizarJsonRecepcion();
+            return;
+        }
+
+        body.innerHTML =
+            objetos
+                .map(
+                    (item, index) => `
+                        <div class="tabla-mini-row tabla-3">
+                            <div>
+                                ${escaparHtml(item.descripcion)}
+                            </div>
+
+                            <div>
+                                ${escaparHtml(item.cantidad)}
+                            </div>
+
+                            <div>
+                                ${
+                                    item.observacion
+                                        ? escaparHtml(item.observacion)
+                                        : '-'
+                                }
+                            </div>
+
+                            <div>
+                                <button
+                                    type="button"
+                                    class="btn-mao btn-mao-danger-soft btn-pill"
+                                    onclick="eliminarObjeto(${index})"
+                                    title="Eliminar objeto"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `
+                )
+                .join('');
+
+        sincronizarJsonRecepcion();
     }
+
     function agregarObjeto() {
-        const desc = document.getElementById('obj_desc').value.trim(); const cant = document.getElementById('obj_cant').value.trim(); const obs = document.getElementById('obj_obs').value.trim();
-        if (!desc) return mostrarAlerta({ icon: 'warning', title: 'Falta la descripción', text: 'Ingrese el nombre del objeto adicional.', focusId: 'obj_desc' });
-        objetos.push({ descripcion: desc, cantidad: cant && parseInt(cant) > 0 ? parseInt(cant) : 1, observacion: obs });
-        document.getElementById('obj_desc').value = ''; document.getElementById('obj_cant').value = '1'; document.getElementById('obj_obs').value = ''; renderObjetos();
+        const inputDesc =
+            document.getElementById(
+                'obj_desc'
+            );
+
+        const inputCant =
+            document.getElementById(
+                'obj_cant'
+            );
+
+        const inputObs =
+            document.getElementById(
+                'obj_obs'
+            );
+
+        if (!inputDesc) {
+            return;
+        }
+
+        const desc =
+            inputDesc.value.trim();
+
+        const cant =
+            inputCant
+                ? inputCant.value.trim()
+                : '';
+
+        const obs =
+            inputObs
+                ? inputObs.value.trim()
+                : '';
+
+        if (!desc) {
+            return mostrarAlerta({
+                icon: 'warning',
+                title: 'Falta la descripción',
+                text: 'Ingrese el nombre del objeto adicional.',
+                focusId: 'obj_desc'
+            });
+        }
+
+        objetos.push({
+            descripcion: desc,
+            cantidad:
+                cant &&
+                parseInt(cant, 10) > 0
+                    ? parseInt(cant, 10)
+                    : 1,
+            observacion: obs
+        });
+
+        inputDesc.value = '';
+
+        if (inputCant) {
+            inputCant.value = '1';
+        }
+
+        if (inputObs) {
+            inputObs.value = '';
+        }
+
+        renderObjetos();
+
+        programarGuardadoBorradorRecepcion(
+            false
+        );
     }
-    function eliminarObjeto(index) { objetos.splice(index, 1); renderObjetos(); }
+
+    function eliminarObjeto(index) {
+        if (
+            index < 0 ||
+            index >= objetos.length
+        ) {
+            return;
+        }
+
+        objetos.splice(
+            index,
+            1
+        );
+
+        renderObjetos();
+
+        programarGuardadoBorradorRecepcion(
+            false
+        );
+    }
+
 
     // ==========================================
     // NAVEGACIÓN Y VALIDACIONES
@@ -2583,39 +3002,445 @@ function buscarCedula() {
     // RESUMEN Y GUARDADO
     // ==========================================
     function generarResumen() {
-        const sintomasHtml = sintomas.length ? `<ul>${sintomas.map(s => `<li>${s.descripcion}</li>`).join('')}</ul>` : '<p class="text-muted">Ninguno detallado</p>';
-        const trabajosHtml = trabajos.length ? `<ul>${trabajos.map(t => `<li>${t.descripcion}</li>`).join('')}</ul>` : '<p class="text-muted">No se registraron trabajos.</p>';
-        const objetosHtml = objetos.length ? `<ul>${objetos.map(o => `<li>${o.descripcion} (${o.cantidad}) ${o.observacion ? '- ' + o.observacion : ''}</li>`).join('')}</ul>` : '<p class="text-muted">No hay objetos adicionales.</p>';
-        const sucursalNombre = `{% if sucursal_activa %}{{ sucursal_activa.nombre|escapejs }}{% else %}SIN SUCURSAL{% endif %}`;
-        
-        // Capturar la clave (Si está vacía, mostramos "N/A")
-        const claveEncendido = document.getElementById('id_clave_encendido').value.trim() || 'N/A';
 
-        document.getElementById('resumen_final').innerHTML = `
-            <h5 class="text-primary mb-3"><i class="bi bi-file-earmark-check"></i> OT - ${document.getElementById('id_placa').value.toUpperCase()}</h5>
-            <div class="row text-dark">
-                <div class="col-md-6">
-                    <p><strong>Sucursal:</strong> ${sucursalNombre}</p>
-                    <p><strong>Vehículo:</strong> ${document.getElementById('id_vehiculo').value}</p>
-                    <p><strong>Color:</strong> ${document.getElementById('id_color').value} | <strong>KM:</strong> ${document.getElementById('id_kilometraje').value}</p>
+        // ==========================================
+        // UTILIDAD LOCAL
+        // ==========================================
+        const valorCampo = (id, fallback = '-') => {
+            const campo =
+                document.getElementById(id);
+
+            if (!campo) {
+                return fallback;
+            }
+
+            const valor =
+                String(campo.value || '').trim();
+
+            return valor
+                ? escaparHtml(valor)
+                : fallback;
+        };
+
+
+        // ==========================================
+        // SÍNTOMAS
+        // ==========================================
+        const sintomasHtml =
+            sintomas.length
+                ? `
+                    <ul class="mb-0 ps-3">
+                        ${
+                            sintomas
+                                .map(
+                                    item => `
+                                        <li class="mb-1">
+                                            ${escaparHtml(item.descripcion)}
+                                        </li>
+                                    `
+                                )
+                                .join('')
+                        }
+                    </ul>
+                `
+                : `
+                    <p class="text-muted mb-0">
+                        Ninguno detallado.
+                    </p>
+                `;
+
+
+        // ==========================================
+        // TRABAJOS
+        // ==========================================
+        const trabajosHtml =
+            trabajos.length
+                ? `
+                    <ul class="mb-0 ps-3">
+                        ${
+                            trabajos
+                                .map(
+                                    item => `
+                                        <li class="mb-1">
+                                            <i class="bi bi-check2 text-success me-1"></i>
+                                            ${escaparHtml(item.descripcion)}
+                                        </li>
+                                    `
+                                )
+                                .join('')
+                        }
+                    </ul>
+                `
+                : `
+                    <p class="text-muted mb-0">
+                        No se registraron trabajos.
+                    </p>
+                `;
+
+
+        // ==========================================
+        // OBJETOS ADICIONALES
+        // ==========================================
+        const objetosHtml =
+            objetos.length
+                ? `
+                    <ul class="mb-0 ps-3">
+                        ${
+                            objetos
+                                .map(
+                                    item => `
+                                        <li class="mb-1">
+                                            ${escaparHtml(item.descripcion)}
+                                            <span class="text-muted">
+                                                × ${escaparHtml(item.cantidad)}
+                                            </span>
+                                            ${
+                                                item.observacion
+                                                    ? `
+                                                        <span class="text-muted">
+                                                            — ${escaparHtml(item.observacion)}
+                                                        </span>
+                                                    `
+                                                    : ''
+                                            }
+                                        </li>
+                                    `
+                                )
+                                .join('')
+                        }
+                    </ul>
+                `
+                : `
+                    <p class="text-muted mb-0">
+                        No hay objetos adicionales.
+                    </p>
+                `;
+
+
+        // ==========================================
+        // CHECKLIST FÍSICO
+        // ==========================================
+        const checklistCampos = [
+            ['matricula', 'Matrícula'],
+            ['plumas', 'Plumas'],
+            ['radio', 'Radio'],
+            ['pantalla', 'Pantalla'],
+            ['tuerca_seguridad', 'Tuerca de seguridad'],
+            ['encendedor_cig', 'Encendedor / cigarrera'],
+            ['triangulos', 'Triángulos'],
+            ['gata', 'Gata'],
+            ['herramientas', 'Herramientas'],
+            ['llanta_emergencia', 'Llanta de emergencia'],
+            ['faros_lunas', 'Faros / lunas'],
+            ['tapacubos', 'Tapacubos'],
+            ['antena', 'Antena']
+        ];
+
+        const checklistSeleccionado =
+            checklistCampos
+                .filter(
+                    ([name]) => {
+                        const campo =
+                            document.querySelector(
+                                `input[type="checkbox"][name="${name}"]`
+                            );
+
+                        return !!(
+                            campo &&
+                            campo.checked
+                        );
+                    }
+                )
+                .map(
+                    ([, etiqueta]) =>
+                        etiqueta
+                );
+
+        const checklistHtml =
+            checklistSeleccionado.length
+                ? `
+                    <div class="d-flex flex-wrap gap-2">
+                        ${
+                            checklistSeleccionado
+                                .map(
+                                    etiqueta => `
+                                        <span
+                                            class="badge rounded-pill text-bg-light border"
+                                            style="
+                                                color: #1d1d1f !important;
+                                                padding: 8px 10px;
+                                            "
+                                        >
+                                            <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                            ${escaparHtml(etiqueta)}
+                                        </span>
+                                    `
+                                )
+                                .join('')
+                        }
+                    </div>
+                `
+                : `
+                    <p class="text-muted mb-0">
+                        No se marcaron elementos del checklist.
+                    </p>
+                `;
+
+
+        // ==========================================
+        // DATOS GENERALES
+        // ==========================================
+        const sucursalNombre =
+            `{% if sucursal_activa %}{{ sucursal_activa.nombre|escapejs }}{% else %}SIN SUCURSAL{% endif %}`;
+
+        const claveEncendido =
+            valorCampo(
+                'id_clave_encendido',
+                'N/A'
+            );
+
+        const identificacionCliente =
+            valorCampo(
+                'id_identificacion_cliente',
+                ''
+            )
+            ||
+            valorCampo(
+                'id_identificacion',
+                '-'
+            );
+
+        const combustible =
+            valorCampo(
+                'id_combustible',
+                valorCampo(
+                    'id_nivel_combustible',
+                    '-'
+                )
+            );
+
+        const observacionesCampo =
+            document.getElementById(
+                'id_obs_recepcion'
+            );
+
+        const observaciones =
+            observacionesCampo &&
+            String(
+                observacionesCampo.value || ''
+            ).trim()
+                ? escaparHtml(
+                    observacionesCampo.value.trim()
+                )
+                : `
+                    <span class="text-muted">
+                        Sin observaciones
+                    </span>
+                `;
+
+
+        // ==========================================
+        // EVIDENCIA FOTOGRÁFICA
+        // ==========================================
+        const observacionFotosCampo =
+            document.getElementById(
+                'id_descripcion_fotos'
+            );
+
+        const observacionFotos =
+            observacionFotosCampo &&
+            String(
+                observacionFotosCampo.value || ''
+            ).trim()
+                ? escaparHtml(
+                    observacionFotosCampo.value.trim()
+                )
+                : `
+                    <span class="text-muted">
+                        Sin observación fotográfica.
+                    </span>
+                `;
+
+        const cantidadFotos =
+            typeof fotosSeleccionadas !== 'undefined'
+                ? fotosSeleccionadas.length
+                : (
+                    document.getElementById('id_fotos')
+                        ?.files
+                        ?.length || 0
+                );
+
+
+        // ==========================================
+        // PINTAR RESUMEN
+        // ==========================================
+        const resumen =
+            document.getElementById(
+                'resumen_final'
+            );
+
+        if (!resumen) {
+            return;
+        }
+
+        resumen.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div>
+                    <div class="small text-muted text-uppercase fw-bold">
+                        Confirmación de orden
+                    </div>
+
+                    <h5 class="text-primary mb-0">
+                        <i class="bi bi-file-earmark-check me-1"></i>
+                        OT · ${valorCampo('id_placa', 'SIN PLACA').toUpperCase()}
+                    </h5>
                 </div>
+
+                <span class="badge rounded-pill text-bg-success px-3 py-2">
+                    <i class="bi bi-check2-circle me-1"></i>
+                    Listo para guardar
+                </span>
+            </div>
+
+            <div class="row g-3">
+
                 <div class="col-md-6">
-                    <p><strong>Cliente:</strong> ${document.getElementById('id_nombre').value || 'Consumidor Final'}</p>
-                    <p><strong>CI/RUC:</strong> ${document.getElementById('id_identificacion_cliente').value || document.getElementById('id_identificacion').value || '-'}</p>
-                    <p><strong>Combustible:</strong> ${document.getElementById('id_combustible').value} | <strong>Clave/PIN:</strong> <span style="color: var(--apple-blue); font-weight: bold;">${claveEncendido}</span></p>
+                    <div class="border rounded-3 p-3 h-100 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Vehículo
+                        </div>
+
+                        <p class="mb-1">
+                            <strong>Vehículo:</strong>
+                            ${valorCampo('id_vehiculo')}
+                        </p>
+
+                        <p class="mb-1">
+                            <strong>Color:</strong>
+                            ${valorCampo('id_color')}
+                        </p>
+
+                        <p class="mb-1">
+                            <strong>Kilometraje:</strong>
+                            ${valorCampo('id_kilometraje')}
+                        </p>
+
+                        <p class="mb-1">
+                            <strong>Combustible:</strong>
+                            ${combustible}
+                        </p>
+
+                        <p class="mb-0">
+                            <strong>Clave/PIN:</strong>
+                            <span class="text-primary fw-bold">
+                                ${claveEncendido}
+                            </span>
+                        </p>
+                    </div>
                 </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Cliente
+                        </div>
+
+                        <p class="mb-1">
+                            <strong>Cliente:</strong>
+                            ${valorCampo('id_nombre', 'Consumidor Final')}
+                        </p>
+
+                        <p class="mb-1">
+                            <strong>CI/RUC:</strong>
+                            ${identificacionCliente}
+                        </p>
+
+                        <p class="mb-0">
+                            <strong>Sucursal:</strong>
+                            ${escaparHtml(sucursalNombre)}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Síntomas y quejas
+                        </div>
+
+                        ${sintomasHtml}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Trabajos solicitados
+                        </div>
+
+                        ${trabajosHtml}
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Checklist de recepción
+                        </div>
+
+                        ${checklistHtml}
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Objetos adicionales
+                        </div>
+
+                        ${objetosHtml}
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Evidencia fotográfica
+                        </div>
+
+                        <p class="mb-2">
+                            <strong>Fotografías seleccionadas:</strong>
+                            ${cantidadFotos}
+                        </p>
+
+                        <div>
+                            <strong>Observación:</strong>
+                            ${observacionFotos}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 bg-white">
+                        <div class="small text-muted text-uppercase fw-bold mb-2">
+                            Observaciones de recepción
+                        </div>
+
+                        <div>
+                            ${observaciones}
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <hr>
-            <div class="row">
-                <div class="col-md-6"><h6>Síntomas y quejas</h6>${sintomasHtml}</div>
-                <div class="col-md-6"><h6>Trabajos a realizar</h6>${trabajosHtml}</div>
+
+            <div class="alert alert-success mt-3 mb-0 py-2">
+                <i class="bi bi-info-circle me-1"></i>
+                Revise la información antes de guardar la orden.
             </div>
-            <hr>
-            <h6>Objetos adicionales</h6>${objetosHtml}
-            <p class="mt-3"><strong>Observaciones:</strong> ${document.getElementById('id_obs_recepcion').value || '<span class="text-muted">Sin observaciones</span>'}</p>
-            <div class="alert alert-success mt-3 py-2"><i class="bi bi-info-circle"></i> Datos validados. Listo para generar orden.</div>
         `;
     }
+
 
     function prepararGuardado(e) {
         // Evitar el envío automático mientras preparamos los datos.
@@ -2741,58 +3566,182 @@ function buscarCedula() {
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        renderSintomas(); renderTrabajos(); renderObjetos(); inicializarSelectorColor();
-        document.querySelectorAll('.trabajo-predefinido').forEach(chk => {
-            chk.addEventListener('change', function () {
-                if (this.checked) agregarTrabajoSiNoExiste(this.value);
-                else { const index = trabajos.findIndex(t => t.descripcion === this.value); if (index !== -1) { trabajos.splice(index, 1); renderTrabajos(); } }
-            });
-        });
-        const tipoDocumento = document.getElementById('id_tipo_documento');
-const identificacion = document.getElementById('id_identificacion');
-const btnBuscarCedula = document.getElementById('btn_buscar_cedula');
-const identificacionPaso2 = document.getElementById('id_identificacion_cliente');
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
 
-if (tipoDocumento && identificacion) {
-    tipoDocumento.addEventListener('change', function () {
-        if (this.value === 'S') {
-            identificacion.value = '';
-            identificacion.disabled = true;
+            // ==========================================
+            // INICIALIZACIÓN GENERAL
+            // ==========================================
+            renderSintomas();
+            renderTrabajos();
+            renderObjetos();
 
-            if (identificacionPaso2) {
-                identificacionPaso2.value = '';
-                identificacionPaso2.readOnly = true;
+            sincronizarJsonRecepcion();
+            sincronizarCheckboxesTrabajos();
+
+            inicializarSelectorColor();
+
+
+            // ==========================================
+            // TRABAJOS PREDEFINIDOS
+            // ==========================================
+            document
+                .querySelectorAll(
+                    '.trabajo-checkbox'
+                )
+                .forEach(chk => {
+
+                    chk.addEventListener(
+                        'change',
+                        function () {
+
+                            const descripcion =
+                                String(
+                                    this.value || ''
+                                ).trim();
+
+                            if (!descripcion) {
+                                return;
+                            }
+
+                            if (this.checked) {
+
+                                agregarTrabajoSiNoExiste(
+                                    descripcion
+                                );
+
+                            } else {
+
+                                const index =
+                                    trabajos.findIndex(
+                                        item =>
+                                            String(
+                                                item.descripcion || ''
+                                            )
+                                                .trim()
+                                                .toLowerCase()
+                                            ===
+                                            descripcion.toLowerCase()
+                                    );
+
+                                if (index !== -1) {
+
+                                    trabajos.splice(
+                                        index,
+                                        1
+                                    );
+
+                                    renderTrabajos();
+
+                                } else {
+
+                                    sincronizarCheckboxesTrabajos();
+
+                                }
+
+                                programarGuardadoBorradorRecepcion(
+                                    false
+                                );
+                            }
+                        }
+                    );
+                });
+
+
+            // ==========================================
+            // TIPO DE DOCUMENTO
+            // ==========================================
+            const tipoDocumento =
+                document.getElementById(
+                    'id_tipo_documento'
+                );
+
+            const identificacion =
+                document.getElementById(
+                    'id_identificacion'
+                );
+
+            const btnBuscarCedula =
+                document.getElementById(
+                    'btn_buscar_cedula'
+                );
+
+            const identificacionPaso2 =
+                document.getElementById(
+                    'id_identificacion_cliente'
+                );
+
+            if (
+                tipoDocumento &&
+                identificacion
+            ) {
+
+                tipoDocumento.addEventListener(
+                    'change',
+                    function () {
+
+                        if (this.value === 'S') {
+
+                            identificacion.value = '';
+                            identificacion.disabled = true;
+
+                            if (identificacionPaso2) {
+                                identificacionPaso2.value = '';
+                                identificacionPaso2.readOnly = true;
+                            }
+
+                            if (btnBuscarCedula) {
+                                btnBuscarCedula.disabled = true;
+                                btnBuscarCedula.style.opacity = '0.5';
+                                btnBuscarCedula.style.cursor = 'not-allowed';
+                            }
+
+                        } else {
+
+                            identificacion.disabled = false;
+
+                            if (identificacionPaso2) {
+                                identificacionPaso2.readOnly = false;
+                            }
+
+                            if (btnBuscarCedula) {
+                                btnBuscarCedula.disabled = false;
+                                btnBuscarCedula.style.opacity = '1';
+                                btnBuscarCedula.style.cursor = 'pointer';
+                            }
+                        }
+                    }
+                );
+
+                /*
+                 * Ejecutarlo también al cargar permite
+                 * aplicar correctamente el modo "Sin documento"
+                 * si el selector ya viene con ese valor.
+                 */
+                tipoDocumento.dispatchEvent(
+                    new Event(
+                        'change',
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
             }
 
-            if (btnBuscarCedula) {
-                btnBuscarCedula.disabled = true;
-                btnBuscarCedula.style.opacity = '0.5';
-                btnBuscarCedula.style.cursor = 'not-allowed';
-            }
-        } else {
-            identificacion.disabled = false;
 
-            if (identificacionPaso2) {
-                identificacionPaso2.readOnly = false;
-            }
-
-            if (btnBuscarCedula) {
-                btnBuscarCedula.disabled = false;
-                btnBuscarCedula.style.opacity = '1';
-                btnBuscarCedula.style.cursor = 'pointer';
-            }
+            // ==========================================
+            // BORRADOR LOCAL
+            // ==========================================
+            /*
+             * Se ejecuta al final para que Paso 5,
+             * Paso 6 y la firma ya tengan sus
+             * componentes registrados.
+             */
+            inicializarSistemaBorradorRecepcion();
         }
-    });
-}
+    );
 
-        /*
-         * Debe ejecutarse al final, cuando Paso 5, Paso 6
-         * y la firma ya registraron sus componentes.
-         */
-        inicializarSistemaBorradorRecepcion();
-    });
 
-    
 </script>
 {% endblock %}
