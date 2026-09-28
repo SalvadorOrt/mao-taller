@@ -44,30 +44,48 @@ def resolver_sucursal_filtro(
     # -----------------------------------------------------
     # USUARIO SIN PERMISO
     # -----------------------------------------------------
+
     if not puede_cambiar:
+
         if sucursal_activa:
-            return str(sucursal_activa.id)
+            return str(
+                sucursal_activa.id
+            )
 
         return ""
 
     # -----------------------------------------------------
     # USUARIO CON PERMISO
     # -----------------------------------------------------
-    sucursal_id_req = request.GET.get(parametro)
+
+    sucursal_id_req = request.GET.get(
+        parametro
+    )
 
     # Entró por primera vez:
     # usamos su sucursal activa.
+
     if sucursal_id_req is None:
+
         if sucursal_activa:
-            return str(sucursal_activa.id)
+            return str(
+                sucursal_activa.id
+            )
 
-        return "todas" if permitir_todas else ""
+        return (
+            "todas"
+            if permitir_todas
+            else ""
+        )
 
-    sucursal_id_req = sucursal_id_req.strip()
+    sucursal_id_req = (
+        sucursal_id_req.strip()
+    )
 
     # -----------------------------------------------------
     # TODAS LAS SUCURSALES
     # -----------------------------------------------------
+
     if (
         permitir_todas
         and sucursal_id_req == "todas"
@@ -77,15 +95,24 @@ def resolver_sucursal_filtro(
     # -----------------------------------------------------
     # SIN VALOR
     # -----------------------------------------------------
-    if not sucursal_id_req:
-        if sucursal_activa:
-            return str(sucursal_activa.id)
 
-        return "todas" if permitir_todas else ""
+    if not sucursal_id_req:
+
+        if sucursal_activa:
+            return str(
+                sucursal_activa.id
+            )
+
+        return (
+            "todas"
+            if permitir_todas
+            else ""
+        )
 
     # -----------------------------------------------------
     # VALIDAR QUE LA SUCURSAL EXISTA Y ESTÉ ACTIVA
     # -----------------------------------------------------
+
     existe = (
         Sucursal.objects
         .filter(
@@ -100,10 +127,17 @@ def resolver_sucursal_filtro(
 
     # Si mandaron algo inválido por URL,
     # regresamos a la sucursal activa.
-    if sucursal_activa:
-        return str(sucursal_activa.id)
 
-    return "todas" if permitir_todas else ""
+    if sucursal_activa:
+        return str(
+            sucursal_activa.id
+        )
+
+    return (
+        "todas"
+        if permitir_todas
+        else ""
+    )
 
 
 # =========================================================
@@ -114,33 +148,46 @@ def resolver_sucursal_filtro(
     "ordenes_de_trabajo.view_ordentrabajo"
 )
 def dashboard_taller(request):
-    sucursal_activa = obtener_sucursal_activa(
-        request
+
+    sucursal_activa = (
+        obtener_sucursal_activa(
+            request
+        )
     )
 
     puede_cambiar_sucursal = (
-        usuario_puede_cambiar_sucursal(request)
+        usuario_puede_cambiar_sucursal(
+            request
+        )
     )
 
     sucursales = (
         Sucursal.objects
-        .filter(activa=True)
-        .order_by("nombre")
+        .filter(
+            activa=True
+        )
+        .order_by(
+            "nombre"
+        )
     )
 
     # -----------------------------------------------------
     # SUCURSAL QUE SE ESTÁ CONSULTANDO
     # -----------------------------------------------------
-    sucursal_filtro = resolver_sucursal_filtro(
-        request=request,
-        sucursal_activa=sucursal_activa,
-        parametro="sucursal_filtro",
-        permitir_todas=True,
+
+    sucursal_filtro = (
+        resolver_sucursal_filtro(
+            request=request,
+            sucursal_activa=sucursal_activa,
+            parametro="sucursal_filtro",
+            permitir_todas=True,
+        )
     )
 
     # -----------------------------------------------------
     # ÓRDENES ABIERTAS
     # -----------------------------------------------------
+
     ordenes_activas = (
         OrdenTrabajo.objects
         .filter(
@@ -172,35 +219,54 @@ def dashboard_taller(request):
     # -----------------------------------------------------
     # FILTRAR SUCURSAL
     # -----------------------------------------------------
+
     if (
         not puede_cambiar_sucursal
         and not sucursal_activa
     ):
-        ordenes_activas = ordenes_activas.none()
+
+        ordenes_activas = (
+            ordenes_activas.none()
+        )
 
     elif (
         sucursal_filtro
         and sucursal_filtro != "todas"
     ):
+
         ordenes_activas = (
             ordenes_activas.filter(
                 sucursal_id=sucursal_filtro,
             )
         )
 
+    # -----------------------------------------------------
+    # TEMPLATE
+    # -----------------------------------------------------
+
     return render(
         request,
         "dashboard.html",
         {
-            "ordenes_activas": ordenes_activas,
+            "ordenes_activas": (
+                ordenes_activas
+            ),
 
-            # Sucursal real con la que trabaja el usuario
-            "sucursal_activa": sucursal_activa,
+            # Sucursal real con la que
+            # trabaja el usuario.
+            "sucursal_activa": (
+                sucursal_activa
+            ),
 
-            # Sucursal que está consultando
-            "sucursal_filtro": sucursal_filtro,
+            # Sucursal que está
+            # consultando.
+            "sucursal_filtro": (
+                sucursal_filtro
+            ),
 
-            "sucursales": sucursales,
+            "sucursales": (
+                sucursales
+            ),
 
             "puede_cambiar_sucursal": (
                 puede_cambiar_sucursal
@@ -217,12 +283,17 @@ def dashboard_taller(request):
     "ordenes_de_trabajo.view_ordentrabajo"
 )
 def lista_ordenes(request):
-    sucursal_activa = obtener_sucursal_activa(
-        request
+
+    sucursal_activa = (
+        obtener_sucursal_activa(
+            request
+        )
     )
 
     puede_cambiar_sucursal = (
-        usuario_puede_cambiar_sucursal(request)
+        usuario_puede_cambiar_sucursal(
+            request
+        )
     )
 
     # =====================================================
@@ -231,25 +302,35 @@ def lista_ordenes(request):
 
     sucursales = (
         Sucursal.objects
-        .filter(activa=True)
-        .order_by("nombre")
+        .filter(
+            activa=True
+        )
+        .order_by(
+            "nombre"
+        )
     )
 
     tecnicos = (
         Tecnico.objects
-        .filter(activo=True)
-        .order_by("nombre")
+        .filter(
+            activo=True
+        )
+        .order_by(
+            "nombre"
+        )
     )
 
     # =====================================================
     # SUCURSAL
     # =====================================================
 
-    sucursal_filtro = resolver_sucursal_filtro(
-        request=request,
-        sucursal_activa=sucursal_activa,
-        parametro="sucursal_filtro",
-        permitir_todas=True,
+    sucursal_filtro = (
+        resolver_sucursal_filtro(
+            request=request,
+            sucursal_activa=sucursal_activa,
+            parametro="sucursal_filtro",
+            permitir_todas=True,
+        )
     )
 
     # =====================================================
@@ -280,19 +361,28 @@ def lista_ordenes(request):
         not puede_cambiar_sucursal
         and not sucursal_activa
     ):
-        ordenes = ordenes.none()
+
+        ordenes = (
+            ordenes.none()
+        )
 
     elif (
         sucursal_filtro
         and sucursal_filtro != "todas"
     ):
-        ordenes = ordenes.filter(
-            sucursal_id=sucursal_filtro
+
+        ordenes = (
+            ordenes.filter(
+                sucursal_id=sucursal_filtro
+            )
         )
 
     # Este total ya respeta la sucursal
     # que el usuario puede consultar.
-    total_general = ordenes.count()
+
+    total_general = (
+        ordenes.count()
+    )
 
     # =====================================================
     # BÚSQUEDA
@@ -304,29 +394,32 @@ def lista_ordenes(request):
     ).strip()
 
     if q:
-        ordenes = ordenes.filter(
-            Q(
-                numero_orden__icontains=q
-            )
-            |
-            Q(
-                numero_orden_origen__icontains=q
-            )
-            |
-            Q(
-                placa__icontains=q
-            )
-            |
-            Q(
-                vehiculo__icontains=q
-            )
-            |
-            Q(
-                cliente__nombre_completo__icontains=q
-            )
-            |
-            Q(
-                cliente_respaldo__icontains=q
+
+        ordenes = (
+            ordenes.filter(
+                Q(
+                    numero_orden__icontains=q
+                )
+                |
+                Q(
+                    numero_orden_origen__icontains=q
+                )
+                |
+                Q(
+                    placa__icontains=q
+                )
+                |
+                Q(
+                    vehiculo__icontains=q
+                )
+                |
+                Q(
+                    cliente__nombre_completo__icontains=q
+                )
+                |
+                Q(
+                    cliente_respaldo__icontains=q
+                )
             )
         )
 
@@ -340,8 +433,11 @@ def lista_ordenes(request):
     ).strip()
 
     if estado:
-        ordenes = ordenes.filter(
-            estado=estado
+
+        ordenes = (
+            ordenes.filter(
+                estado=estado
+            )
         )
 
     # =====================================================
@@ -354,8 +450,11 @@ def lista_ordenes(request):
     ).strip()
 
     if tecnico_id:
-        ordenes = ordenes.filter(
-            tecnicos__id=tecnico_id
+
+        ordenes = (
+            ordenes.filter(
+                tecnicos__id=tecnico_id
+            )
         )
 
     # =====================================================
@@ -368,8 +467,13 @@ def lista_ordenes(request):
     ).strip()
 
     if fecha_inicio:
-        ordenes = ordenes.filter(
-            fecha_ingreso__date__gte=fecha_inicio
+
+        ordenes = (
+            ordenes.filter(
+                fecha_ingreso__date__gte=(
+                    fecha_inicio
+                )
+            )
         )
 
     # =====================================================
@@ -382,8 +486,13 @@ def lista_ordenes(request):
     ).strip()
 
     if fecha_fin:
-        ordenes = ordenes.filter(
-            fecha_ingreso__date__lte=fecha_fin
+
+        ordenes = (
+            ordenes.filter(
+                fecha_ingreso__date__lte=(
+                    fecha_fin
+                )
+            )
         )
 
     # =====================================================
@@ -396,82 +505,130 @@ def lista_ordenes(request):
     ).strip()
 
     if tipo_orden == "normal":
-        ordenes = ordenes.filter(
-            es_migrada=False
+
+        ordenes = (
+            ordenes.filter(
+                es_migrada=False
+            )
         )
 
     elif tipo_orden == "migrada":
-        ordenes = ordenes.filter(
-            es_migrada=True
+
+        ordenes = (
+            ordenes.filter(
+                es_migrada=True
+            )
         )
 
     # =====================================================
     # EVITAR DUPLICADOS
     # =====================================================
 
-    ordenes = ordenes.distinct()
+    ordenes = (
+        ordenes.distinct()
+    )
 
     # =====================================================
     # TOTALES
     # =====================================================
 
-    total_filtrado = ordenes.count()
+    total_filtrado = (
+        ordenes.count()
+    )
 
     # =====================================================
     # FILTROS ACTIVOS
     # =====================================================
 
     sucursal_activa_id = (
-        str(sucursal_activa.id)
+        str(
+            sucursal_activa.id
+        )
         if sucursal_activa
         else ""
     )
 
     filtro_sucursal_activo = (
         sucursal_filtro
-        and sucursal_filtro
-        != sucursal_activa_id
+        and (
+            sucursal_filtro
+            != sucursal_activa_id
+        )
     )
 
-    filtros_activos = any([
-        q,
-        estado,
-        tecnico_id,
-        fecha_inicio,
-        fecha_fin,
-        tipo_orden,
-        filtro_sucursal_activo,
-    ])
+    filtros_activos = any(
+        [
+            q,
+            estado,
+            tecnico_id,
+            fecha_inicio,
+            fecha_fin,
+            tipo_orden,
+            filtro_sucursal_activo,
+        ]
+    )
 
     # =====================================================
     # PAGINACIÓN
     # =====================================================
 
-    # Si existe al menos un filtro por fecha,
-    # mostramos TODOS los registros encontrados
-    # en una sola página.
+    # IMPORTANTE:
     #
-    # Sin filtro por fecha, el listado mantiene
-    # la paginación normal de 40 registros.
-    if fecha_inicio or fecha_fin:
+    # Si existe fecha_inicio o fecha_fin,
+    # mostramos TODOS los registros que
+    # coincidan con el filtro en una sola página.
+    #
+    # Ejemplo:
+    #
+    # 01/09/2026 - 28/09/2026
+    # Resultado: 186 órdenes
+    #
+    # Se mostrarán las 186 órdenes.
+    #
+    # Si NO hay filtro de fechas,
+    # mantenemos 40 registros por página.
+
+    if (
+        fecha_inicio
+        or fecha_fin
+    ):
+
         LIMITE_RESULTADOS = max(
             total_filtrado,
             1,
         )
+
     else:
+
         LIMITE_RESULTADOS = 40
+
+    # -----------------------------------------------------
+    # CREAR PAGINADOR
+    # -----------------------------------------------------
 
     paginator = Paginator(
         ordenes,
         LIMITE_RESULTADOS,
     )
 
-    page_number = request.GET.get(
-        "page"
+    # -----------------------------------------------------
+    # PÁGINA SOLICITADA
+    # -----------------------------------------------------
+
+    page_number = (
+        request.GET.get(
+            "page"
+        )
     )
 
-    page_obj = paginator.get_page(
-        page_number
+    # -----------------------------------------------------
+    # OBTENER PÁGINA
+    # -----------------------------------------------------
+
+    page_obj = (
+        paginator.get_page(
+            page_number
+        )
     )
 
     # =====================================================
@@ -501,15 +658,31 @@ def lista_ordenes(request):
             # ---------------------------------------------
             # ÓRDENES
             # ---------------------------------------------
-            "ordenes": page_obj,
-            "page_obj": page_obj,
+
+            "ordenes": (
+                page_obj
+            ),
+
+            "page_obj": (
+                page_obj
+            ),
 
             # ---------------------------------------------
             # SUCURSALES
             # ---------------------------------------------
-            "sucursal_activa": sucursal_activa,
-            "sucursales": sucursales,
-            "sucursal_filtro": sucursal_filtro,
+
+            "sucursal_activa": (
+                sucursal_activa
+            ),
+
+            "sucursales": (
+                sucursales
+            ),
+
+            "sucursal_filtro": (
+                sucursal_filtro
+            ),
+
             "puede_cambiar_sucursal": (
                 puede_cambiar_sucursal
             ),
@@ -517,34 +690,71 @@ def lista_ordenes(request):
             # ---------------------------------------------
             # MAESTROS
             # ---------------------------------------------
-            "tecnicos": tecnicos,
+
+            "tecnicos": (
+                tecnicos
+            ),
 
             # ---------------------------------------------
             # FILTROS
             # ---------------------------------------------
-            "q": q,
-            "estado": estado,
-            "tecnico_id": tecnico_id,
-            "fecha_inicio": fecha_inicio,
-            "fecha_fin": fecha_fin,
-            "tipo_orden": tipo_orden,
+
+            "q": (
+                q
+            ),
+
+            "estado": (
+                estado
+            ),
+
+            "tecnico_id": (
+                tecnico_id
+            ),
+
+            "fecha_inicio": (
+                fecha_inicio
+            ),
+
+            "fecha_fin": (
+                fecha_fin
+            ),
+
+            "tipo_orden": (
+                tipo_orden
+            ),
 
             # ---------------------------------------------
             # TOTALES
             # ---------------------------------------------
-            "total_general": total_general,
-            "total_filtrado": total_filtrado,
+
+            "total_general": (
+                total_general
+            ),
+
+            "total_filtrado": (
+                total_filtrado
+            ),
 
             # ---------------------------------------------
             # ESTADO FILTROS
             # ---------------------------------------------
-            "filtros_activos": filtros_activos,
+
+            "filtros_activos": (
+                filtros_activos
+            ),
 
             # ---------------------------------------------
             # PAGINACIÓN
             # ---------------------------------------------
-            "desde": desde,
-            "hasta": hasta,
+
+            "desde": (
+                desde
+            ),
+
+            "hasta": (
+                hasta
+            ),
+
             "limite_resultados": (
                 LIMITE_RESULTADOS
             ),
