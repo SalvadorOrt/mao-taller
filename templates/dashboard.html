@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
+
 {% load static %}
 
-{% block title %}Panel de Control | MAO{% endblock %}
+
+{% block title %}
+Panel de Control | MAO
+{% endblock %}
+
 
 
 {% block header_actions %}
@@ -9,7 +14,7 @@
 <style>
 
     /* ==========================================================
-       HEADER
+       ACCIONES DEL HEADER
        ========================================================== */
 
     .header-actions-mao {
@@ -21,7 +26,7 @@
 
 
     /* ==========================================================
-       SELECTOR DE SUCURSAL
+       COMBOBOX SUCURSAL
        ========================================================== */
 
     .mao-combobox {
@@ -40,17 +45,19 @@
         height: 44px;
 
         border:
-            1px solid rgba(0, 0, 0, 0.08);
+            1px solid
+            rgba(0, 0, 0, 0.08);
 
         border-radius: 14px;
 
-        background: #fff;
+        background: #ffffff;
 
         color:
             var(--text, #1d1d1f);
 
         box-shadow:
-            0 6px 18px rgba(0, 0, 0, 0.04);
+            0 6px 18px
+            rgba(0, 0, 0, 0.04);
 
         padding:
             0 42px 0 14px;
@@ -84,6 +91,7 @@
         opacity: 1;
 
         background: #f5f5f7;
+
         color: #86868b;
 
         border:
@@ -126,10 +134,11 @@
 
         width: 100%;
 
-        background: #fff;
+        background: #ffffff;
 
         border:
-            1px solid rgba(0, 0, 0, 0.08);
+            1px solid
+            rgba(0, 0, 0, 0.08);
 
         border-radius: 16px;
 
@@ -215,7 +224,7 @@
         background:
             var(--accent, #0071e3);
 
-        color: #fff;
+        color: #ffffff;
     }
 
 </style>
@@ -345,11 +354,13 @@
 
         <a
             href="{% url 'crear_orden' %}"
+
             class="
                 btn-login
                 px-4
                 text-decoration-none
             "
+
             style="
                 width: auto;
             "
@@ -380,7 +391,7 @@
 <style>
 
     /* ==========================================================
-       RESUMEN DEL TALLER
+       TOTAL VEHÍCULOS
        ========================================================== */
 
     .dashboard-resumen {
@@ -398,7 +409,8 @@
         background: #ffffff;
 
         border:
-            1px solid rgba(0, 0, 0, 0.06);
+            1px solid
+            rgba(0, 0, 0, 0.06);
 
         border-radius: 14px;
 
@@ -453,6 +465,177 @@
         font-weight: 800;
 
         color: #1d1d1f;
+    }
+
+
+    /* ==========================================================
+       INFORMACIÓN OPERATIVA + TÉCNICOS
+       ========================================================== */
+
+    .dashboard-operacion {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            88px;
+
+        gap: 10px;
+
+        width: 100%;
+
+        margin-top: 4px;
+        margin-bottom: 8px;
+
+        min-height: 72px;
+    }
+
+
+    /* ==========================================================
+       INFORMACIÓN DE OT - IZQUIERDA
+       ========================================================== */
+
+    .dashboard-ot-info {
+        min-width: 0;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+
+        text-align: center;
+    }
+
+    .dashboard-numero-ot {
+        font-size: 11px;
+
+        font-weight: 800;
+
+        color: #1d1d1f;
+
+        line-height: 1.2;
+    }
+
+    .dashboard-fecha {
+        margin-top: 6px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 5px;
+
+        font-size: 9px;
+
+        color: #6e6e73;
+
+        line-height: 1.2;
+    }
+
+    .dashboard-tiempo {
+        margin-top: 4px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 5px;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        color: #0071e3;
+
+        line-height: 1.2;
+    }
+
+
+    /* ==========================================================
+       TÉCNICOS - DERECHA
+       ========================================================== */
+
+    .dashboard-tecnicos {
+        min-width: 0;
+
+        padding-left: 10px;
+
+        border-left:
+            1px solid #e5e5ea;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+    }
+
+    .dashboard-tecnicos-titulo {
+        display: flex;
+
+        align-items: center;
+
+        gap: 4px;
+
+        margin-bottom: 5px;
+
+        font-size: 8px;
+
+        font-weight: 800;
+
+        color: #86868b;
+
+        text-transform: uppercase;
+
+        letter-spacing: 0.4px;
+
+        line-height: 1;
+    }
+
+    .dashboard-tecnicos-titulo i {
+        color: #0071e3;
+
+        font-size: 10px;
+    }
+
+    .dashboard-tecnico-nombre {
+        width: 100%;
+
+        margin-bottom: 2px;
+
+        font-size: 9px;
+
+        font-weight: 700;
+
+        color: #1d1d1f;
+
+        line-height: 1.25;
+
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-tecnico-nombre:last-child {
+        margin-bottom: 0;
+    }
+
+    .dashboard-sin-tecnico {
+        font-size: 8px;
+
+        font-weight: 700;
+
+        color: #b26a00;
+
+        line-height: 1.25;
+    }
+
+    .dashboard-sin-tecnico i {
+        color: #ff9500;
+
+        margin-right: 2px;
     }
 
 
@@ -531,9 +714,33 @@
             justify-content: center;
         }
 
-        .dashboard-trabajo-badge {
-            padding:
-                4px 6px;
+        .dashboard-operacion {
+            grid-template-columns:
+                minmax(0, 1fr)
+                82px;
+        }
+
+        .dashboard-tecnicos {
+            padding-left: 8px;
+        }
+    }
+
+    @media (max-width: 390px) {
+
+        .dashboard-operacion {
+            grid-template-columns:
+                minmax(0, 1fr)
+                76px;
+
+            gap: 7px;
+        }
+
+        .dashboard-tecnicos-titulo {
+            font-size: 7px;
+        }
+
+        .dashboard-tecnico-nombre {
+            font-size: 8px;
         }
     }
 
@@ -541,7 +748,7 @@
 
 
 <!-- ==========================================================
-     TOTAL DE VEHÍCULOS EN EL TALLER
+     RESUMEN VEHÍCULOS EN TALLER
      ========================================================== -->
 
 {% if not sin_sucursal_activa %}
@@ -579,7 +786,7 @@
 
 
 <!-- ==========================================================
-     VEHÍCULOS
+     TARJETAS DE VEHÍCULOS
      ========================================================== -->
 
 <div
@@ -605,9 +812,7 @@
                     tarjeta-click
                 "
 
-                data-url="
-                    {% url 'detalle_orden' vehiculo.id %}
-                "
+                data-url="{% url 'detalle_orden' vehiculo.id %}"
 
                 style="
                     cursor: pointer;
@@ -624,7 +829,7 @@
                     <div class="placa-vehiculo">
 
 
-                        <!-- MODELO -->
+                        <!-- MODELO / COLOR VEHÍCULO -->
 
                         <div
                             class="
@@ -668,99 +873,113 @@
 
 
                 <!-- =================================================
-                     ORDEN / FECHA / TIEMPO
+                     INFORMACIÓN OPERATIVA + TÉCNICOS
                      ================================================= -->
 
-                <div
-                    class="
-                        small
-                        mb-2
-                        text-center
-                        text-muted
-                    "
-                >
-
-                    <strong>
-                        {{ vehiculo.numero_orden }}
-                    </strong>
+                <div class="dashboard-operacion">
 
 
-                    <!-- FECHA DE INGRESO -->
+                    <!-- =============================================
+                         OT / FECHA / TIEMPO
+                         ============================================= -->
 
-                    <div
-                        style="
-                            margin-top: 6px;
+                    <div class="dashboard-ot-info">
 
-                            display: flex;
+                        <div class="dashboard-numero-ot">
 
-                            justify-content: center;
+                            {{ vehiculo.numero_orden }}
 
-                            align-items: center;
-
-                            gap: 5px;
-
-                            font-size: 10px;
-
-                            color: #6e6e73;
-                        "
-                    >
-
-                        <i
-                            class="
-                                bi
-                                bi-calendar-event
-                            "
-                        ></i>
+                        </div>
 
 
-                        <span>
+                        <div class="dashboard-fecha">
 
-                            Ingresó:
+                            <i
+                                class="
+                                    bi
+                                    bi-calendar-event
+                                "
+                            ></i>
 
-                            {{ vehiculo.fecha_ingreso|date:"d/m/Y H:i" }}
+                            <span>
+                                {{ vehiculo.fecha_ingreso|date:"d/m/Y H:i" }}
+                            </span>
 
-                        </span>
+                        </div>
+
+
+                        <div class="dashboard-tiempo">
+
+                            <i
+                                class="
+                                    bi
+                                    bi-clock-history
+                                "
+                            ></i>
+
+                            <span>
+
+                                En taller:
+
+                                {{ vehiculo.tiempo_en_taller }}
+
+                            </span>
+
+                        </div>
 
                     </div>
 
 
-                    <!-- TIEMPO EN TALLER -->
+                    <!-- =============================================
+                         TÉCNICOS - DERECHA
+                         ============================================= -->
 
-                    <div
-                        style="
-                            margin-top: 3px;
+                    <div class="dashboard-tecnicos">
 
-                            display: flex;
+                        <div class="dashboard-tecnicos-titulo">
 
-                            justify-content: center;
+                            <i
+                                class="
+                                    bi
+                                    bi-person-fill
+                                "
+                            ></i>
 
-                            align-items: center;
+                            Técnicos
 
-                            gap: 5px;
-
-                            font-size: 10px;
-
-                            font-weight: 700;
-
-                            color: #0071e3;
-                        "
-                    >
-
-                        <i
-                            class="
-                                bi
-                                bi-clock-history
-                            "
-                        ></i>
+                        </div>
 
 
-                        <span>
+                        {% if vehiculo.tecnicos %}
 
-                            En taller:
+                            {% for tecnico in vehiculo.tecnicos %}
 
-                            {{ vehiculo.tiempo_en_taller }}
+                                <div
+                                    class="dashboard-tecnico-nombre"
 
-                        </span>
+                                    title="{{ tecnico }}"
+                                >
+                                    {{ tecnico|upper }}
+                                </div>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                            <div class="dashboard-sin-tecnico">
+
+                                <i
+                                    class="
+                                        bi
+                                        bi-exclamation-triangle-fill
+                                    "
+                                ></i>
+
+                                SIN ASIGNAR
+
+                            </div>
+
+                        {% endif %}
 
                     </div>
 
@@ -876,6 +1095,10 @@
     {% empty %}
 
 
+        <!-- =================================================
+             SIN VEHÍCULOS
+             ================================================= -->
+
         <div class="col-12 mt-2">
 
             <div
@@ -946,11 +1169,6 @@ document.addEventListener(
 
         // =========================================================
         // CONTRASTE AUTOMÁTICO DEL MODELO DEL VEHÍCULO
-        // =========================================================
-        //
-        // Fondo claro  -> texto oscuro
-        // Fondo oscuro -> texto blanco
-        //
         // =========================================================
 
         const encabezadosVehiculo =
@@ -1023,10 +1241,6 @@ document.addEventListener(
                     / 1000;
 
 
-                // =================================================
-                // COLOR DEL TEXTO
-                // =================================================
-
                 if (
                     luminosidad >= 150
                 ) {
@@ -1044,7 +1258,7 @@ document.addEventListener(
 
 
         // =========================================================
-        // BUSCADOR GENERAL DE TARJETAS
+        // BUSCADOR GENERAL
         // =========================================================
 
         const buscador =
@@ -1094,7 +1308,7 @@ document.addEventListener(
 
 
         // =========================================================
-        // REDIRECCIÓN DE LAS TARJETAS AL DETALLE
+        // CLICK EN TARJETA
         // =========================================================
 
         const tarjetasClick =
@@ -1111,7 +1325,7 @@ document.addEventListener(
                     function () {
 
                         const url =
-                            this.dataset.url.trim();
+                            this.dataset.url;
 
 
                         if (url) {
@@ -1126,7 +1340,7 @@ document.addEventListener(
 
 
         // =========================================================
-        // DROPDOWN / COMBOBOX DE SUCURSALES
+        // COMBOBOX DE SUCURSAL
         // =========================================================
 
         const combobox =

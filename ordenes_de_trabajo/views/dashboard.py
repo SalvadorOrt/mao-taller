@@ -158,6 +158,7 @@ def dashboard_taller(request):
             "servicios_detalles",
             "servicios_detalles__servicio",
             "insumos_detalles",
+            "tecnicos",
         )
         .filter(
             sucursal=sucursal_activa,
@@ -191,6 +192,19 @@ def dashboard_taller(request):
             orden.servicios_detalles.all()
         )
 
+        tecnicos = list(
+            orden.tecnicos.all()
+        )
+
+        # =================================================
+        # NOMBRES DE TÉCNICOS
+        # =================================================
+
+        tecnicos_nombres = [
+            tecnico.nombre
+            for tecnico in tecnicos
+        ]
+
         # =================================================
         # REPUESTOS
         # =================================================
@@ -201,10 +215,6 @@ def dashboard_taller(request):
 
         # =================================================
         # MANO DE OBRA INTERNA
-        # =================================================
-        #
-        # Todo servicio que NO sea EXT se considera
-        # mano de obra interna.
         # =================================================
 
         moi_count = sum(
@@ -222,13 +232,6 @@ def dashboard_taller(request):
 
         # =================================================
         # MANO DE OBRA EXTERNA
-        # =================================================
-        #
-        # Se considera externa cuando:
-        #
-        # - tipo_servicio == EXT
-        # o
-        # - el catálogo tiene categoría EXT
         # =================================================
 
         moe_count = sum(
@@ -347,6 +350,10 @@ def dashboard_taller(request):
 
         ordenes_activas.append(
             {
+                # =========================================
+                # DATOS PRINCIPALES
+                # =========================================
+
                 "id":
                     orden.id,
 
@@ -363,7 +370,14 @@ def dashboard_taller(request):
                     orden.nombre_cliente_final,
 
                 # =========================================
-                # DETALLE DE TRABAJOS
+                # TÉCNICOS
+                # =========================================
+
+                "tecnicos":
+                    tecnicos_nombres,
+
+                # =========================================
+                # REP / MOI / MOE
                 # =========================================
 
                 "repuestos_count":
@@ -376,7 +390,7 @@ def dashboard_taller(request):
                     moe_count,
 
                 # =========================================
-                # COLOR
+                # COLOR DEL VEHÍCULO
                 # =========================================
 
                 "color":
