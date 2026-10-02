@@ -321,6 +321,309 @@ def decimal_dos(valor):
 
 
 # ==========================================================
+# HISTORIAL DEL MISMO VEHÍCULO
+# ==========================================================
+
+
+def normalizar_placa(valor):
+    """
+    Normaliza una placa para comparar formatos como:
+
+        PBA-1234
+        PBA 1234
+        pba1234
+
+    como la misma placa.
+    """
+
+    return re.sub(
+        r"[^A-Z0-9]",
+        "",
+        str(
+            valor or ""
+        ).strip().upper(),
+    )
+
+
+def prioridad_mismo_vehiculo(
+    fila,
+    orden_actual,
+):
+    """
+    Devuelve una prioridad adicional SOLO cuando:
+
+    - la placa es exactamente la misma, y
+    - el repuesto/servicio también es suficientemente parecido.
+
+    Prioridad:
+        4 = producto/código/servicio exacto
+        3 = descripción prácticamente idéntica
+        2 = descripción muy parecida
+        1 = similitud global excepcional
+        0 = no dar prioridad especial
+    """
+
+    placa_actual = normalizar_placa(
+        getattr(
+            orden_actual,
+            "placa",
+            "",
+        )
+    )
+
+    placa_historica = normalizar_placa(
+        fila.get(
+            "placa"
+        )
+    )
+
+    if (
+        not placa_actual
+        or not placa_historica
+        or placa_actual
+        != placa_historica
+    ):
+        return 0
+
+    detalle = (
+        fila.get(
+            "detalle_similitud"
+        )
+        or {}
+    )
+
+    # Identidad estructurada exacta.
+    if (
+        detalle.get(
+            "producto_exacto"
+        )
+        or detalle.get(
+            "codigo_exacto"
+        )
+        or detalle.get(
+            "servicio_exacto"
+        )
+    ):
+        return 4
+
+    # REP usa "descripcion".
+    # MOI / MOE usan "descripcion_padre".
+    descripcion = detalle.get(
+        "descripcion"
+    )
+
+    if descripcion is None:
+        descripcion = detalle.get(
+            "descripcion_padre"
+        )
+
+    try:
+        descripcion = float(
+            descripcion or 0
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        descripcion = 0.0
+
+    procedimientos = detalle.get(
+        "procedimientos"
+    )
+
+    try:
+        procedimientos = (
+            float(
+                procedimientos
+            )
+            if procedimientos is not None
+            else None
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        procedimientos = None
+
+    # Descripción prácticamente exacta.
+    if (
+        descripcion >= 95
+        and (
+            procedimientos is None
+            or procedimientos >= 75
+        )
+    ):
+        return 3
+
+    # Descripción suficientemente fuerte para considerarla
+    # antecedente del mismo trabajo/repuesto.
+    if (
+        descripcion >= 88
+        and (
+            procedimientos is None
+            or procedimientos >= 65
+        )
+    ):
+        return 2
+
+    try:
+        similitud = float(
+            fila.get(
+                "similitud",
+                0,
+            )
+            or 0
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        similitud = 0.0
+
+    if similitud >= 95:
+        return 1
+
+    return 0
+
+
+def ordenar_resultados(
+    resultados,
+    orden_actual,
+):
+    """
+    Prioriza:
+
+    1. mismo vehículo + mismo ítem
+    2. similitud
+    3. fecha
+
+    Así, si este mismo auto ya tuvo el mismo filtro,
+    repuesto o servicio, ese antecedente aparece primero.
+    """
+
+    resultados.sort(
+        key=lambda fila: (
+            prioridad_mismo_vehiculo(
+                fila,
+                orden_actual,
+            ),
+            fila.get(
+                "similitud",
+                0,
+            ),
+            fila.get(
+                "fecha"
+            )
+            or date.min,
+        ),
+        reverse=True,
+    )
+
+
+def obtener_antecedente_mismo_vehiculo(
+    resultados,
+    orden_actual,
+):
+    """
+    Devuelve el antecedente MÁS RECIENTE del mismo vehículo
+    cuando el ítem es suficientemente equivalente.
+
+    Se entrega aparte para que el frontend pueda mostrar:
+
+        "Anterior en este vehículo: $XX.XX · OT-XXXXX"
+    """
+
+    candidatos = [
+        fila
+        for fila in resultados
+        if (
+            prioridad_mismo_vehiculo(
+                fila,
+                orden_actual,
+            )
+            >= 2
+            and decimal_seguro(
+                fila.get(
+                    "precio_unitario"
+                )
+            )
+            > CERO
+        )
+    ]
+
+    if not candidatos:
+        return None
+
+    candidatos.sort(
+        key=lambda fila: (
+            fila.get(
+                "fecha"
+            )
+            or date.min,
+            prioridad_mismo_vehiculo(
+                fila,
+                orden_actual,
+            ),
+            fila.get(
+                "similitud",
+                0,
+            ),
+        ),
+        reverse=True,
+    )
+
+    fila = candidatos[0]
+
+    return {
+        "orden_id": fila.get(
+            "orden_id"
+        ),
+        "numero_orden": fila.get(
+            "numero_orden"
+        ),
+        "fecha": fila.get(
+            "fecha"
+        ),
+        "sucursal": fila.get(
+            "sucursal"
+        ),
+        "placa": fila.get(
+            "placa"
+        ),
+        "vehiculo": fila.get(
+            "vehiculo"
+        ),
+        "anio": fila.get(
+            "anio"
+        ),
+        "kilometraje": fila.get(
+            "kilometraje"
+        ),
+        "descripcion": fila.get(
+            "descripcion"
+        ),
+        "referencia": fila.get(
+            "referencia"
+        ),
+        "precio_unitario": fila.get(
+            "precio_unitario"
+        ),
+        "similitud": fila.get(
+            "similitud"
+        ),
+        "origen": fila.get(
+            "origen"
+        ),
+        "prioridad": (
+            prioridad_mismo_vehiculo(
+                fila,
+                orden_actual,
+            )
+        ),
+    }
+
+
+# ==========================================================
 
 # SIMILITUD DE TEXTO
 
@@ -3060,20 +3363,9 @@ def buscar_repuestos(
 
 
 
-    resultados.sort(
-
-        key=lambda fila: (
-
-            fila["similitud"],
-
-            fila["fecha"]
-
-            or date.min,
-
-        ),
-
-        reverse=True,
-
+    ordenar_resultados(
+        resultados,
+        orden_actual,
     )
 
 
@@ -4542,13 +4834,9 @@ def buscar_mano_obra(
     # ORDENAR RESULTADOS
     # ======================================================
 
-    resultados.sort(
-        key=lambda fila: (
-            fila["similitud"],
-            fila["fecha"]
-            or date.min,
-        ),
-        reverse=True,
+    ordenar_resultados(
+        resultados,
+        orden_actual,
     )
 
     # ======================================================
@@ -5316,6 +5604,19 @@ def consultar_precio(
         )
 
 
+        antecedente_mismo_vehiculo = (
+
+            obtener_antecedente_mismo_vehiculo(
+
+                resultados,
+
+                orden_actual,
+
+            )
+
+        )
+
+
 
         return {
 
@@ -5366,6 +5667,12 @@ def consultar_precio(
             "sugerencia": (
 
                 sugerencia
+
+            ),
+
+            "antecedente_mismo_vehiculo": (
+
+                antecedente_mismo_vehiculo
 
             ),
 
@@ -5454,6 +5761,19 @@ def consultar_precio(
         )
 
 
+        antecedente_mismo_vehiculo = (
+
+            obtener_antecedente_mismo_vehiculo(
+
+                resultados,
+
+                orden_actual,
+
+            )
+
+        )
+
+
 
         return {
 
@@ -5518,6 +5838,12 @@ def consultar_precio(
             "sugerencia": (
 
                 sugerencia
+
+            ),
+
+            "antecedente_mismo_vehiculo": (
+
+                antecedente_mismo_vehiculo
 
             ),
 

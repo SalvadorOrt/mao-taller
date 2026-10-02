@@ -1996,14 +1996,24 @@ function renderResultadoConsultaPrecio(
                 : [];
 
     renderCoincidenciasPrecio(
-        coincidencias,
-        resultado.total_coincidencias
-    );
+    coincidencias,
+            resultado.total_coincidencias
+        );
 
 
-    // =====================================================
-    // BOTÓN PRINCIPAL
-    // =====================================================
+        // =====================================================
+        // ÚLTIMO ANTECEDENTE DEL MISMO VEHÍCULO
+        // =====================================================
+
+        renderAntecedenteMismoVehiculo(
+            resultado.antecedente_mismo_vehiculo ||
+            null
+        );
+
+
+        // =====================================================
+        // BOTÓN PRINCIPAL
+        // =====================================================
 
     const boton =
         document.getElementById(
@@ -2271,7 +2281,333 @@ function renderCatalogoConsultaPrecio(
     box.style.display =
         'block';
 }
+// =========================================================
+// ÚLTIMO ANTECEDENTE DEL MISMO VEHÍCULO
+// =========================================================
 
+function renderAntecedenteMismoVehiculo(
+    antecedente
+) {
+
+    // Eliminar el aviso de la consulta anterior
+    const anterior =
+        document.getElementById(
+            'consultaAntecedenteMismoVehiculo'
+        );
+
+    if (anterior) {
+        anterior.remove();
+    }
+
+
+    // Si este vehículo nunca tuvo este mismo
+    // repuesto/servicio, no mostramos nada.
+    if (
+        !antecedente ||
+        typeof antecedente !== 'object'
+    ) {
+        return;
+    }
+
+
+    const lista =
+        document.getElementById(
+            'consultaCoincidenciasLista'
+        );
+
+    if (!lista) {
+        return;
+    }
+
+
+    const precio =
+        numeroPrecio(
+            antecedente.precio_unitario ??
+            antecedente.precio
+        );
+
+
+    if (
+        precio === null ||
+        precio <= 0
+    ) {
+        return;
+    }
+
+
+    const numeroOrden =
+        antecedente.numero_orden ||
+        antecedente.orden ||
+        'OT sin número';
+
+
+    const fecha =
+        fechaPrecio(
+            antecedente.fecha
+        );
+
+
+    const kilometraje = (
+        antecedente.kilometraje !== null &&
+        antecedente.kilometraje !== undefined &&
+        antecedente.kilometraje !== ''
+    )
+        ? kilometrajePrecio(
+            antecedente.kilometraje
+        )
+        : '';
+
+
+    const sucursal =
+        textoSeguroPrecio(
+            antecedente.sucursal ||
+            antecedente.sucursal_codigo ||
+            ''
+        );
+
+
+    const placa =
+        textoSeguroPrecio(
+            antecedente.placa ||
+            ''
+        );
+
+
+    const descripcion =
+        textoSeguroPrecio(
+            antecedente.descripcion ||
+            ''
+        );
+
+
+    const referencia =
+        textoSeguroPrecio(
+            antecedente.referencia ||
+            antecedente.codigo ||
+            ''
+        );
+
+
+    const metadatos = [
+        numeroOrden,
+        fecha !== '-' ? fecha : '',
+        kilometraje,
+        sucursal
+    ]
+        .filter(Boolean)
+        .join(' · ');
+
+
+    const puedeEditar =
+        String(
+            obtenerModalConsultaPrecios()
+                ?.dataset
+                ?.puedeEditar ||
+            ''
+        ).toLowerCase() === 'true';
+
+
+    const botonAplicar =
+        puedeEditar
+            ? `
+                <button
+                    type="button"
+                    class="
+                        consulta-btn-aplicar-item
+                        btn-aplicar-precio-historico
+                    "
+                    data-precio="${precio}"
+                >
+                    Aplicar
+                    ${escaparHTMLPrecio(
+                        dineroPrecio(precio)
+                    )}
+                </button>
+            `
+            : '';
+
+
+    const box =
+        document.createElement(
+            'div'
+        );
+
+
+    box.id =
+        'consultaAntecedenteMismoVehiculo';
+
+
+    /*
+     * Reutilizamos el diseño existente
+     * del modal, sin crear un CSS nuevo.
+     */
+    box.className =
+        'consulta-explicacion';
+
+
+    box.style.cssText = `
+        margin: 10px;
+        border: 1px solid rgba(0, 113, 227, 0.20);
+        border-radius: 10px;
+        background: rgba(0, 113, 227, 0.05);
+    `;
+
+
+    box.innerHTML = `
+
+        <div
+            style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+            "
+        >
+
+            <div style="min-width:0;">
+
+                <div
+                    style="
+                        color:#0071e3;
+                        font-size:0.70rem;
+                        font-weight:800;
+                        text-transform:uppercase;
+                        margin-bottom:4px;
+                    "
+                >
+                    <i
+                        class="bi bi-car-front"
+                        style="margin-right:4px;"
+                    ></i>
+
+                    Último en este vehículo
+                </div>
+
+
+                <div
+                    style="
+                        color:#111111;
+                        font-size:0.78rem;
+                        font-weight:700;
+                    "
+                >
+                    ${escaparHTMLPrecio(
+                        metadatos
+                    )}
+                </div>
+
+
+                ${
+                    placa
+                        ? `
+                            <div
+                                style="
+                                    margin-top:3px;
+                                    color:#6e6e73;
+                                    font-size:0.68rem;
+                                "
+                            >
+                                Placa:
+                                ${escaparHTMLPrecio(
+                                    placa
+                                )}
+                            </div>
+                        `
+                        : ''
+                }
+
+
+                ${
+                    descripcion
+                        ? `
+                            <div
+                                style="
+                                    margin-top:4px;
+                                    color:#4a4a4a;
+                                    font-size:0.70rem;
+                                "
+                            >
+                                ${escaparHTMLPrecio(
+                                    descripcion
+                                )}
+                            </div>
+                        `
+                        : ''
+                }
+
+
+                ${
+                    referencia
+                        ? `
+                            <div
+                                style="
+                                    margin-top:2px;
+                                    color:#86868b;
+                                    font-size:0.66rem;
+                                "
+                            >
+                                Ref.:
+                                ${escaparHTMLPrecio(
+                                    referencia
+                                )}
+                            </div>
+                        `
+                        : ''
+                }
+
+            </div>
+
+
+            <div
+                style="
+                    flex:0 0 auto;
+                    text-align:right;
+                "
+            >
+
+                <div
+                    style="
+                        color:#6e6e73;
+                        font-size:0.60rem;
+                        font-weight:800;
+                        text-transform:uppercase;
+                    "
+                >
+                    Último P.U.
+                </div>
+
+
+                <div
+                    style="
+                        color:#111111;
+                        font-size:1.05rem;
+                        font-weight:800;
+                        margin:2px 0 6px;
+                    "
+                >
+                    ${escaparHTMLPrecio(
+                        dineroPrecio(precio)
+                    )}
+                </div>
+
+
+                ${botonAplicar}
+
+            </div>
+
+        </div>
+    `;
+
+
+    /*
+     * Lo colocamos antes del listado normal
+     * de antecedentes.
+     */
+    lista.parentNode.insertBefore(
+        box,
+        lista
+    );
+}
 
 // =========================================================
 // COINCIDENCIAS
