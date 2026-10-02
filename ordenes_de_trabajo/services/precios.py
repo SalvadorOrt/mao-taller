@@ -363,6 +363,33 @@ def prioridad_mismo_vehiculo(
         0 = no dar prioridad especial
     """
 
+    # ======================================================
+    # IDENTIDAD DEL VEHÍCULO
+    #
+    # 1. Primero usamos expediente_id, porque el historial
+    #    de visitas ya agrupa el mismo vehículo por expediente.
+    #
+    # 2. Si no existe expediente en alguno de los registros,
+    #    usamos la placa como respaldo.
+    # ======================================================
+
+    expediente_actual = getattr(
+        orden_actual,
+        "expediente_id",
+        None,
+    )
+
+    expediente_historico = fila.get(
+        "expediente_id"
+    )
+
+    mismo_expediente = bool(
+        expediente_actual
+        and expediente_historico
+        and expediente_actual
+        == expediente_historico
+    )
+
     placa_actual = normalizar_placa(
         getattr(
             orden_actual,
@@ -377,11 +404,16 @@ def prioridad_mismo_vehiculo(
         )
     )
 
-    if (
-        not placa_actual
-        or not placa_historica
-        or placa_actual
-        != placa_historica
+    misma_placa = bool(
+        placa_actual
+        and placa_historica
+        and placa_actual
+        == placa_historica
+    )
+
+    if not (
+        mismo_expediente
+        or misma_placa
     ):
         return 0
 
@@ -577,6 +609,9 @@ def obtener_antecedente_mismo_vehiculo(
     return {
         "orden_id": fila.get(
             "orden_id"
+        ),
+        "expediente_id": fila.get(
+            "expediente_id"
         ),
         "numero_orden": fila.get(
             "numero_orden"
@@ -1650,6 +1685,12 @@ def construir_resultado(
         "item_id": item_id,
 
         "orden_id": orden.pk,
+
+        "expediente_id": getattr(
+            orden,
+            "expediente_id",
+            None,
+        ),
 
         "numero_orden": (
 
