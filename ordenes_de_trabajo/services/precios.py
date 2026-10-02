@@ -3342,33 +3342,15 @@ def buscar_repuestos(
 
         )
 
-        .filter(
+        .exclude(
 
-            Q(
+            precio_unitario__isnull=True
 
-                precio_unitario__gt=CERO
+        )
 
-            )
+        .exclude(
 
-            |
-
-            (
-
-                Q(
-
-                    subtotal__gt=CERO
-
-                )
-
-                &
-
-                Q(
-
-                    cantidad__gt=CERO
-
-                )
-
-            )
+            precio_unitario__lte=CERO
 
         )
 
@@ -3389,34 +3371,6 @@ def buscar_repuestos(
             item.orden_id
 
             == orden_actual.pk
-
-        ):
-
-            continue
-
-
-
-        precio_unitario_historico = (
-
-            obtener_precio_unitario_historico_repuesto(
-
-                item
-
-            )
-
-        )
-
-
-
-        if (
-
-            precio_unitario_historico
-
-            is None
-
-            or precio_unitario_historico
-
-            <= CERO
 
         ):
 
@@ -3486,7 +3440,7 @@ def buscar_repuestos(
 
                 precio_unitario=(
 
-                    precio_unitario_historico
+                    item.precio_unitario
 
                 ),
 
@@ -3510,6 +3464,147 @@ def buscar_repuestos(
 
         )
 
+
+
+
+    # ------------------------------------------------------
+    # HISTÓRICOS DEL MISMO VEHÍCULO SIN P.U.
+    #
+    # Algunos datos migrados de Getsoft tienen:
+    #
+    #     precio_unitario = NULL
+    #     cantidad > 0
+    #     subtotal > 0
+    #
+    # No abrimos esta regla a toda la base porque eso vuelve
+    # muy costosa la consulta. Se recupera SOLO para el mismo
+    # vehículo actual (expediente o placa).
+    # ------------------------------------------------------
+
+    expediente_actual_id = getattr(
+        orden_actual,
+        "expediente_id",
+        None,
+    )
+
+    placa_actual = str(
+        getattr(
+            orden_actual,
+            "placa",
+            "",
+        )
+        or ""
+    ).strip()
+
+    identidad_mismo_vehiculo = Q()
+
+    if expediente_actual_id:
+        identidad_mismo_vehiculo |= Q(
+            orden__expediente_id=
+                expediente_actual_id
+        )
+
+    if placa_actual:
+        identidad_mismo_vehiculo |= Q(
+            orden__placa__iexact=
+                placa_actual
+        )
+
+    if identidad_mismo_vehiculo:
+
+        historicos_mismo_vehiculo = (
+
+            OrdenInsumoHistorico.objects
+
+            .select_related(
+                "orden",
+                "orden__sucursal",
+            )
+
+            .filter(
+                identidad_mismo_vehiculo,
+                cantidad__gt=CERO,
+                subtotal__gt=CERO,
+            )
+
+            .filter(
+                Q(
+                    precio_unitario__isnull=True
+                )
+                |
+                Q(
+                    precio_unitario__lte=CERO
+                )
+            )
+        )
+
+        for item in historicos_mismo_vehiculo.iterator(
+            chunk_size=200
+        ):
+
+            if (
+                item.orden_id
+                == orden_actual.pk
+            ):
+                continue
+
+            precio_unitario_historico = (
+                obtener_precio_unitario_historico_repuesto(
+                    item
+                )
+            )
+
+            if (
+                precio_unitario_historico
+                is None
+                or precio_unitario_historico
+                <= CERO
+            ):
+                continue
+
+            (
+                similitud,
+                detalle,
+            ) = (
+                calcular_similitud_repuesto_historico(
+                    orden_actual=
+                        orden_actual,
+                    item=item,
+                    descripcion=
+                        descripcion,
+                    codigo=codigo,
+                    codigo_producto=
+                        codigo_producto,
+                )
+            )
+
+            if (
+                similitud
+                * 100
+                < UMBRAL_COINCIDENCIA
+            ):
+                continue
+
+            resultados.append(
+                construir_resultado(
+                    item_id=item.id,
+                    orden=item.orden,
+                    descripcion=(
+                        item.descripcion_original
+                    ),
+                    precio_unitario=(
+                        precio_unitario_historico
+                    ),
+                    cantidad=item.cantidad,
+                    origen="MIGRADA",
+                    similitud=similitud,
+                    referencia=(
+                        item.codigo_original
+                    ),
+                    detalle_similitud=
+                        detalle,
+                )
+            )
 
 
     ordenar_resultados(
