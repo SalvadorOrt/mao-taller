@@ -1693,9 +1693,16 @@ def construir_resultado(
         ),
 
         "numero_orden": (
-
-            orden.numero_orden
-
+            orden.numero_orden_origen
+            if (
+                getattr(orden, "es_migrada", False)
+                and getattr(
+                    orden,
+                    "numero_orden_origen",
+                    None,
+                )
+            )
+            else orden.numero_orden
         ),
 
         "fecha": obtener_fecha_orden(
@@ -2793,68 +2800,6 @@ def calcular_similitud_repuesto_actual(
 
 
 # ==========================================================
-# PRECIO UNITARIO HISTÓRICO DE REPUESTO
-# ==========================================================
-
-
-def obtener_precio_unitario_historico_repuesto(
-    item,
-):
-    """
-    Obtiene el P.U. utilizable de un repuesto histórico.
-
-    Regla:
-    1. Si precio_unitario existe y es > 0, usarlo.
-    2. Si no existe, pero subtotal > 0 y cantidad > 0:
-           P.U. = subtotal / cantidad
-    3. En cualquier otro caso, no existe un precio válido.
-
-    Esto permite recuperar correctamente históricos migrados
-    donde Getsoft guardó cantidad y subtotal, pero dejó
-    precio_unitario en NULL.
-    """
-
-    precio = decimal_seguro(
-        getattr(
-            item,
-            "precio_unitario",
-            None,
-        )
-    )
-
-    if precio > CERO:
-        return decimal_dos(
-            precio
-        )
-
-    cantidad = decimal_seguro(
-        getattr(
-            item,
-            "cantidad",
-            None,
-        )
-    )
-
-    subtotal = decimal_seguro(
-        getattr(
-            item,
-            "subtotal",
-            None,
-        )
-    )
-
-    if (
-        cantidad > CERO
-        and subtotal > CERO
-    ):
-        return decimal_dos(
-            subtotal / cantidad
-        )
-
-    return None
-
-
-# ==========================================================
 
 # PUNTUACIÓN REPUESTO HISTÓRICO
 
@@ -3464,147 +3409,6 @@ def buscar_repuestos(
 
         )
 
-
-
-
-    # ------------------------------------------------------
-    # HISTÓRICOS DEL MISMO VEHÍCULO SIN P.U.
-    #
-    # Algunos datos migrados de Getsoft tienen:
-    #
-    #     precio_unitario = NULL
-    #     cantidad > 0
-    #     subtotal > 0
-    #
-    # No abrimos esta regla a toda la base porque eso vuelve
-    # muy costosa la consulta. Se recupera SOLO para el mismo
-    # vehículo actual (expediente o placa).
-    # ------------------------------------------------------
-
-    expediente_actual_id = getattr(
-        orden_actual,
-        "expediente_id",
-        None,
-    )
-
-    placa_actual = str(
-        getattr(
-            orden_actual,
-            "placa",
-            "",
-        )
-        or ""
-    ).strip()
-
-    identidad_mismo_vehiculo = Q()
-
-    if expediente_actual_id:
-        identidad_mismo_vehiculo |= Q(
-            orden__expediente_id=
-                expediente_actual_id
-        )
-
-    if placa_actual:
-        identidad_mismo_vehiculo |= Q(
-            orden__placa__iexact=
-                placa_actual
-        )
-
-    if identidad_mismo_vehiculo:
-
-        historicos_mismo_vehiculo = (
-
-            OrdenInsumoHistorico.objects
-
-            .select_related(
-                "orden",
-                "orden__sucursal",
-            )
-
-            .filter(
-                identidad_mismo_vehiculo,
-                cantidad__gt=CERO,
-                subtotal__gt=CERO,
-            )
-
-            .filter(
-                Q(
-                    precio_unitario__isnull=True
-                )
-                |
-                Q(
-                    precio_unitario__lte=CERO
-                )
-            )
-        )
-
-        for item in historicos_mismo_vehiculo.iterator(
-            chunk_size=200
-        ):
-
-            if (
-                item.orden_id
-                == orden_actual.pk
-            ):
-                continue
-
-            precio_unitario_historico = (
-                obtener_precio_unitario_historico_repuesto(
-                    item
-                )
-            )
-
-            if (
-                precio_unitario_historico
-                is None
-                or precio_unitario_historico
-                <= CERO
-            ):
-                continue
-
-            (
-                similitud,
-                detalle,
-            ) = (
-                calcular_similitud_repuesto_historico(
-                    orden_actual=
-                        orden_actual,
-                    item=item,
-                    descripcion=
-                        descripcion,
-                    codigo=codigo,
-                    codigo_producto=
-                        codigo_producto,
-                )
-            )
-
-            if (
-                similitud
-                * 100
-                < UMBRAL_COINCIDENCIA
-            ):
-                continue
-
-            resultados.append(
-                construir_resultado(
-                    item_id=item.id,
-                    orden=item.orden,
-                    descripcion=(
-                        item.descripcion_original
-                    ),
-                    precio_unitario=(
-                        precio_unitario_historico
-                    ),
-                    cantidad=item.cantidad,
-                    origen="MIGRADA",
-                    similitud=similitud,
-                    referencia=(
-                        item.codigo_original
-                    ),
-                    detalle_similitud=
-                        detalle,
-                )
-            )
 
 
     ordenar_resultados(
