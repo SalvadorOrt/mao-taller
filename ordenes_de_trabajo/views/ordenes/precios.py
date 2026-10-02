@@ -143,10 +143,18 @@ def _id_opcional(
         123
     """
 
-    if valor in {
-        None,
-        "",
-    }:
+    # IMPORTANTE:
+    # No usamos:
+    #
+    # if valor in {None, ""}:
+    #
+    # porque si por error llega una lista,
+    # Python intentaría buscarla dentro de un set
+    # y produciría:
+    #
+    # TypeError: unhashable type: 'list'
+    #
+    if valor is None or valor == "":
         return None
 
     try:
@@ -186,12 +194,41 @@ def _procesar_procedimientos(
     - duplicados exactos
 
     Conserva el orden de pantalla.
+
+    También admite objetos por compatibilidad futura:
+
+    {
+        "descripcion": "...",
+    }
+
+    {
+        "texto": "...",
+    }
+
+    {
+        "nombre": "...",
+    }
     """
 
-    if valor in {
-        None,
-        "",
-    }:
+    # IMPORTANTE:
+    # `valor` normalmente ES una lista:
+    #
+    # []
+    #
+    # o:
+    #
+    # [
+    #     "CAMBIO DE REFRIGERANTE",
+    #     "CAMBIO DE TERMOSTATO",
+    # ]
+    #
+    # Por eso NO podemos usar:
+    #
+    # if valor in {None, ""}:
+    #
+    # porque una lista no es hashable.
+    #
+    if valor is None or valor == "":
         return []
 
     if not isinstance(
@@ -208,9 +245,7 @@ def _procesar_procedimientos(
     for procedimiento in valor:
 
         # ----------------------------------------------
-        # FUTURO:
-        # también soportamos objetos por si después
-        # el JS manda más datos de la hija.
+        # SOPORTAR TEXTO O OBJETO
         # ----------------------------------------------
 
         if isinstance(
@@ -231,9 +266,7 @@ def _procesar_procedimientos(
             )
 
         else:
-            descripcion = (
-                procedimiento
-            )
+            descripcion = procedimiento
 
         descripcion = _texto(
             descripcion
@@ -242,9 +275,11 @@ def _procesar_procedimientos(
         if not descripcion:
             continue
 
-        clave = (
-            descripcion.upper()
-        )
+        # ----------------------------------------------
+        # EVITAR DUPLICADOS
+        # ----------------------------------------------
+
+        clave = descripcion.upper()
 
         if clave in vistos:
             continue
@@ -486,7 +521,12 @@ def consultar_precio(request):
 
     if tipo == "REP":
 
-        # Un repuesto no utiliza estos campos.
+        # Un repuesto no utiliza:
+        #
+        # - servicio_id
+        # - variante
+        # - procedimientos
+        #
         servicio_id = None
         variante = "NORMAL"
         procedimientos = []
