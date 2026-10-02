@@ -14,6 +14,7 @@ urlpatterns = [
     # ==========================================================
     # DASHBOARD
     # ==========================================================
+
     path(
         "",
         dashboard.dashboard_taller,
@@ -36,6 +37,7 @@ urlpatterns = [
     # ==========================================================
     # ÓRDENES DE TRABAJO
     # ==========================================================
+
     path(
         "ordenes/",
         ordenes.lista_ordenes,
@@ -54,9 +56,11 @@ urlpatterns = [
         name="detalle_orden",
     ),
 
+
     # ==========================================================
     # ABONOS DE ORDEN DE TRABAJO
     # ==========================================================
+
     path(
         "orden/<int:pk>/abonos/agregar/",
         ordenes.registrar_abono,
@@ -99,14 +103,17 @@ urlpatterns = [
         name="editar_observacion_abono",
     ),
 
+
     # ==========================================================
     # COTIZACIONES
     # ==========================================================
+
     path(
-    "cotizaciones/",
-    ordenes.lista_cotizaciones,
-    name="lista_cotizaciones",
-),
+        "cotizaciones/",
+        ordenes.lista_cotizaciones,
+        name="lista_cotizaciones",
+    ),
+
     path(
         "cotizacion/nueva/",
         ordenes.crear_cotizacion,
@@ -147,6 +154,7 @@ urlpatterns = [
     # ==========================================================
     # IMPRESIÓN
     # ==========================================================
+
     path(
         "orden/<int:pk>/imprimir/",
         impresion.imprimir_tecnico,
@@ -163,6 +171,7 @@ urlpatterns = [
     # ==========================================================
     # VEHÍCULOS / HISTORIAL
     # ==========================================================
+
     path(
         "vehiculos/",
         ordenes.historial_vehiculos,
@@ -179,6 +188,7 @@ urlpatterns = [
     # ==========================================================
     # CLIENTES
     # ==========================================================
+
     path(
         "clientes/",
         clientes.lista_clientes,
@@ -207,6 +217,7 @@ urlpatterns = [
     # ==========================================================
     # API - VEHÍCULOS
     # ==========================================================
+
     path(
         "api/regcheck/",
         api.consultar_regcheck,
@@ -223,6 +234,7 @@ urlpatterns = [
     # ==========================================================
     # API - CLIENTES
     # ==========================================================
+
     path(
         "api/consultar_cedula/",
         api.consultar_cedula_api,
@@ -239,6 +251,7 @@ urlpatterns = [
     # ==========================================================
     # API - REPUESTOS
     # ==========================================================
+
     path(
         "api/buscar-repuestos/",
         api.api_buscar_repuestos_ot,
@@ -249,9 +262,21 @@ urlpatterns = [
     # ==========================================================
     # API - SERVICIOS
     # ==========================================================
+
     path(
         "api/buscar-servicios-ot/",
         api.api_buscar_servicios_ot,
         name="api_buscar_servicios_ot",
+    ),
+
+
+    # ==========================================================
+    # API - CONSULTA HISTÓRICA DE PRECIOS
+    # ==========================================================
+
+    path(
+        "api/consultar-precio/",
+        ordenes.consultar_precio,
+        name="consultar_precio",
     ),
 ]

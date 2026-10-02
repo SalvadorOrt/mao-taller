@@ -327,7 +327,7 @@
 
 
 {% include "includes/detalle_orden/modal_editar_recepcion.html" %}
-
+{% include "includes/detalle_orden/consulta_precios.html" %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -554,7 +554,9 @@
 <script
     src="{% static 'js/detalle_orden/mano_obra.js' %}?v=10"
 ></script>
-
+<script
+    src="{% static 'js/detalle_orden/precios.js' %}?v=1"
+></script>
 <script
     src="{% static 'js/detalle_orden.js' %}?v=4"
 ></script>
