@@ -1,1964 +1,3932 @@
 {% load static %}
 
-<style>
-    /* =========================================================
-       MODAL CONSULTA DE PRECIOS
-    ========================================================= */
 
-    #modalConsultaPrecios {
-        display: none;
-        position: fixed;
-        inset: 0;
 
-        width: 100%;
-        height: 100%;
+\<style>
 
-        background: rgba(0, 0, 0, 0.60);
+    /\* =========================================================
 
-        z-index: 10050;
+       MODAL CONSULTA DE PRECIOS
 
-        justify-content: center;
-        align-items: center;
+    ========================================================= \*/
 
-        backdrop-filter: blur(4px);
 
-        padding: 20px;
 
-        box-sizing: border-box;
-    }
+    #modalConsultaPrecios {
 
+        display: none;
 
-    .consulta-precios-dialog {
-        background: #ffffff;
+        position: fixed;
 
-        width: 100%;
-        max-width: 900px;
+        inset: 0;
 
-        max-height: 95vh;
 
-        border-radius: 20px;
 
-        overflow: hidden;
+        width: 100%;
 
-        display: flex;
-        flex-direction: column;
+        height: 100%;
 
-        box-shadow:
-            0 20px 50px
-            rgba(0, 0, 0, 0.30);
-    }
 
 
-    /* =========================================================
-       HEADER
-    ========================================================= */
+        background: rgba(0, 0, 0, 0.60);
 
-    .consulta-precios-header {
-        padding: 15px 25px;
 
-        border-bottom:
-            1px solid var(--border-soft);
 
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        z-index: 10050;
 
-        gap: 15px;
 
-        background: var(--head);
-    }
 
+        justify-content: center;
 
-    .consulta-precios-header-left {
-        min-width: 0;
+        align-items: center;
 
-        display: flex;
-        align-items: center;
 
-        gap: 11px;
-    }
 
+        backdrop-filter: blur(4px);
 
-    .consulta-precios-icono {
-        width: 38px;
-        height: 38px;
 
-        flex: 0 0 auto;
 
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 20px;
 
-        border-radius: 11px;
 
-        background:
-            rgba(0, 113, 227, 0.10);
 
-        color: #0071e3;
+        box-sizing: border-box;
 
-        font-size: 1.05rem;
-    }
+    }
 
 
-    .consulta-precios-titulo-wrap {
-        min-width: 0;
-    }
 
 
-    .consulta-precios-titulo {
-        margin: 0;
 
-        font-size: 1.2rem;
-        font-weight: 700;
+    .consulta-precios-dialog {
 
-        color: var(--primary);
-    }
+        background: #ffffff;
 
 
-    .consulta-precios-subtitulo {
-        margin-top: 2px;
 
-        color: var(--muted);
+        width: 100%;
 
-        font-size: 0.74rem;
-        font-weight: 600;
-    }
+        max-width: 900px;
 
 
-    .consulta-precios-cerrar {
-        background: none;
-        border: none;
 
-        font-size: 1.5rem;
+        max-height: 95vh;
 
-        cursor: pointer;
 
-        color: var(--muted);
 
-        padding: 4px 7px;
+        border-radius: 20px;
 
-        border-radius: 8px;
 
-        line-height: 1;
 
-        transition:
-            background 0.15s ease,
-            color 0.15s ease;
-    }
+        overflow: hidden;
 
 
-    .consulta-precios-cerrar:hover {
-        background: #f2f2f7;
-        color: #111111;
-    }
 
+        display: flex;
 
-    /* =========================================================
-       CUERPO
-    ========================================================= */
+        flex-direction: column;
 
-    .consulta-precios-body {
-        overflow-y: auto;
 
-        padding: 25px;
 
-        margin: 0;
+        box-shadow:
 
-        background: #ffffff;
-    }
+            0 20px 50px
 
+            rgba(0, 0, 0, 0.30);
 
-    /* =========================================================
-       ESTADO DE CARGA
-    ========================================================= */
+    
 
-    .consulta-precios-cargando {
-        display: none;
+        /* HACER TODO EL MODAL MÁS PEQUEÑO SIN CAMBIAR SU DISEÑO */
+        transform: scale(0.80);
+        transform-origin: center;
+}
 
-        padding: 50px 20px;
 
-        text-align: center;
-    }
 
 
-    .consulta-precios-spinner {
-        width: 36px;
-        height: 36px;
 
-        margin: 0 auto 14px;
+    /\* =========================================================
 
-        border:
-            3px solid #e5e5ea;
+       HEADER
 
-        border-top-color:
-            #0071e3;
+    ========================================================= \*/
 
-        border-radius: 50%;
 
-        animation:
-            consultaPrecioGirar
-            0.8s linear infinite;
-    }
 
+    .consulta-precios-header {
 
-    @keyframes consultaPrecioGirar {
-        to {
-            transform: rotate(360deg);
-        }
-    }
+        padding: 15px 25px;
 
 
-    .consulta-precios-cargando-texto {
-        color: var(--muted);
 
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
+        border-bottom:
 
+            1px solid var(--border-soft);
 
-    /* =========================================================
-       ERROR
-    ========================================================= */
 
-    .consulta-precios-error {
-        display: none;
 
-        padding: 14px 15px;
+        display: flex;
 
-        margin-bottom: 18px;
+        justify-content: space-between;
 
-        border:
-            1px solid rgba(
-                255,
-                59,
-                48,
-                0.22
-            );
+        align-items: center;
 
-        border-radius: 12px;
 
-        background:
-            rgba(
-                255,
-                59,
-                48,
-                0.07
-            );
 
-        color: #c62828;
+        gap: 15px;
 
-        font-size: 0.82rem;
-        font-weight: 600;
 
-        line-height: 1.45;
-    }
 
+        background: var(--head);
 
-    /* =========================================================
-       CONTENIDO
-    ========================================================= */
+    }
 
-    #consultaPreciosContenido {
-        display: none;
-    }
 
 
-    /* =========================================================
-       ARTÍCULO CONSULTADO
-    ========================================================= */
 
-    .consulta-precios-item-box {
-        margin-bottom: 20px;
 
-        background: #fbfbfd;
+    .consulta-precios-header-left {
 
-        border:
-            1px solid
-            var(--border-soft);
+        min-width: 0;
 
-        border-radius: 14px;
 
-        overflow: hidden;
-    }
 
+        display: flex;
 
-    .consulta-precios-item-top {
-        padding: 14px 15px;
+        align-items: center;
 
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
 
-        gap: 15px;
 
-        background: #ffffff;
-    }
+        gap: 11px;
 
+    }
 
-    .consulta-precios-item-info {
-        min-width: 0;
-        flex: 1;
-    }
 
 
-    .consulta-precios-label {
-        display: block;
 
-        margin-bottom: 4px;
 
-        font-size: 0.66rem;
+    .consulta-precios-icono {
 
-        color: var(--muted);
+        width: 38px;
 
-        text-transform: uppercase;
+        height: 38px;
 
-        font-weight: 800;
 
-        letter-spacing: 0.04em;
-    }
 
+        flex: 0 0 auto;
 
-    .consulta-precios-item-nombre {
-        color: #111111;
 
-        font-size: 0.97rem;
-        font-weight: 800;
 
-        overflow-wrap: anywhere;
-    }
+        display: flex;
 
+        align-items: center;
 
-    .consulta-precios-item-codigo {
-        margin-top: 3px;
+        justify-content: center;
 
-        color: var(--muted);
 
-        font-size: 0.75rem;
-        font-weight: 600;
 
-        overflow-wrap: anywhere;
-    }
+        border-radius: 11px;
 
 
-    .consulta-precios-tipo-badge {
-        flex: 0 0 auto;
 
-        display: inline-flex;
-        align-items: center;
+        background:
 
-        gap: 5px;
+            rgba(0, 113, 227, 0.10);
 
-        padding: 5px 9px;
 
-        border-radius: 999px;
 
-        background:
-            rgba(0, 113, 227, 0.08);
+        color: #0071e3;
 
-        border:
-            1px solid
-            rgba(0, 113, 227, 0.18);
 
-        color: #0071e3;
 
-        font-size: 0.67rem;
-        font-weight: 800;
-    }
+        font-size: 1.05rem;
 
+    }
 
-    /* =========================================================
-       VEHÍCULO ACTUAL
-    ========================================================= */
 
-    .consulta-precios-contexto {
-        padding: 12px 15px;
 
-        border-top:
-            1px solid
-            var(--border-soft);
 
-        display: grid;
 
-        grid-template-columns:
-            2fr
-            0.7fr
-            1fr
-            1fr;
+    .consulta-precios-titulo-wrap {
 
-        gap: 12px;
+        min-width: 0;
 
-        background: #fbfbfd;
-    }
+    }
 
 
-    .consulta-contexto-item {
-        min-width: 0;
-    }
 
 
-    .consulta-contexto-valor {
-        color: #111111;
 
-        font-size: 0.80rem;
-        font-weight: 700;
+    .consulta-precios-titulo {
 
-        overflow-wrap: anywhere;
-    }
+        margin: 0;
 
 
-    /* =========================================================
-       PROCEDIMIENTOS
-    ========================================================= */
 
-    .consulta-procedimientos-box {
-        display: none;
+        font-size: 1.2rem;
 
-        margin-bottom: 20px;
+        font-weight: 700;
 
-        padding: 15px;
 
-        background: #fbfbfd;
 
-        border:
-            1px solid
-            var(--border-soft);
+        color: var(--primary);
 
-        border-radius: 12px;
-    }
+    }
 
 
-    .consulta-procedimientos-lista {
-        display: grid;
 
-        gap: 7px;
 
-        margin-top: 9px;
-    }
 
+    .consulta-precios-subtitulo {
 
-    .consulta-procedimiento-item {
-        display: flex;
+        margin-top: 2px;
 
-        align-items: flex-start;
 
-        gap: 8px;
 
-        padding: 8px 10px;
+        color: var(--muted);
 
-        background: #ffffff;
 
-        border:
-            1px solid #e5e5ea;
 
-        border-radius: 9px;
+        font-size: 0.74rem;
 
-        color: #333333;
+        font-weight: 600;
 
-        font-size: 0.78rem;
-        font-weight: 600;
+    }
 
-        line-height: 1.35;
-    }
 
 
-    .consulta-procedimiento-check {
-        flex: 0 0 auto;
 
-        color: #34c759;
 
-        font-size: 0.8rem;
+    .consulta-precios-cerrar {
 
-        margin-top: 1px;
-    }
+        background: none;
 
+        border: none;
 
-    /* =========================================================
-       PRECIO SUGERIDO
-    ========================================================= */
 
-    .consulta-precios-sugerencia {
-        margin-bottom: 20px;
 
-        padding: 20px;
+        font-size: 1.5rem;
 
-        border-radius: 16px;
 
-        border:
-            1px solid
-            rgba(0, 113, 227, 0.20);
 
-        background:
-            linear-gradient(
-                135deg,
-                rgba(0, 113, 227, 0.08),
-                rgba(0, 113, 227, 0.025)
-            );
+        cursor: pointer;
 
-        display: grid;
 
-        grid-template-columns:
-            1fr auto;
 
-        align-items: center;
+        color: var(--muted);
 
-        gap: 20px;
-    }
 
 
-    .consulta-sugerencia-caption {
-        color: #0071e3;
+        padding: 4px 7px;
 
-        font-size: 0.70rem;
-        font-weight: 800;
 
-        text-transform: uppercase;
 
-        letter-spacing: 0.04em;
+        border-radius: 8px;
 
-        margin-bottom: 5px;
-    }
 
 
-    .consulta-sugerencia-precio {
-        color: #111111;
+        line-height: 1;
 
-        font-size: 2.15rem;
-        font-weight: 800;
 
-        line-height: 1;
-    }
 
+        transition:
 
-    .consulta-sugerencia-ayuda {
-        margin-top: 7px;
+            *background* 0.15s ease,
 
-        color: var(--muted);
+            color 0.15s ease;
 
-        font-size: 0.76rem;
+    }
 
-        line-height: 1.4;
-    }
 
 
-    .consulta-sugerencia-lado {
-        display: flex;
-        flex-direction: column;
 
-        align-items: flex-end;
 
-        gap: 8px;
-    }
+    .consulta-precios-cerrar:hover {
 
+        background: #f2f2f7;
 
-    .consulta-confianza-badge {
-        display: inline-flex;
+        color: #111111;
 
-        align-items: center;
+    }
 
-        gap: 6px;
 
-        padding: 6px 10px;
 
-        border-radius: 999px;
 
-        background: #f5f5f7;
 
-        border: 1px solid #d2d2d7;
+    /\* =========================================================
 
-        color: #6e6e73;
+       CUERPO
 
-        font-size: 0.70rem;
-        font-weight: 800;
-    }
+    ========================================================= \*/
 
 
-    .consulta-confianza-badge.alta {
-        color: #248a3d;
 
-        background:
-            rgba(52, 199, 89, 0.10);
+    .consulta-precios-body {
 
-        border-color:
-            rgba(52, 199, 89, 0.28);
-    }
+        overflow-y: auto;
 
 
-    .consulta-confianza-badge.media {
-        color: #b26a00;
 
-        background:
-            rgba(255, 149, 0, 0.10);
+        padding: 25px;
 
-        border-color:
-            rgba(255, 149, 0, 0.28);
-    }
 
 
-    .consulta-confianza-badge.baja {
-        color: #c62828;
+        margin: 0;
 
-        background:
-            rgba(255, 59, 48, 0.08);
 
-        border-color:
-            rgba(255, 59, 48, 0.22);
-    }
 
+        background: #ffffff;
 
-    /* =========================================================
-       SECCIÓN
-    ========================================================= */
+    }
 
-    .consulta-precios-seccion {
-        margin-bottom: 20px;
 
-        background: #fbfbfd;
 
-        border:
-            1px solid
-            var(--border-soft);
 
-        border-radius: 14px;
 
-        overflow: hidden;
-    }
+    /\* =========================================================
 
+       ESTADO DE CARGA
 
-    .consulta-seccion-header {
-        padding: 11px 14px;
+    ========================================================= \*/
 
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
 
-        gap: 10px;
 
-        border-bottom:
-            1px solid
-            var(--border-soft);
+    .consulta-precios-cargando {
 
-        background: #ffffff;
-    }
+        display: none;
 
 
-    .consulta-seccion-titulo {
-        color: #111111;
 
-        font-size: 0.80rem;
-        font-weight: 800;
-    }
+        padding: 50px 20px;
 
 
-    .consulta-seccion-subtitulo {
-        color: var(--muted);
 
-        font-size: 0.68rem;
-        font-weight: 600;
-    }
+        text-align: center;
 
+    }
 
-    /* =========================================================
-       MÉTRICAS
-    ========================================================= */
 
-    .consulta-precios-metricas {
-        display: grid;
 
-        grid-template-columns:
-            repeat(4, 1fr);
 
-        gap: 10px;
 
-        padding: 14px;
-    }
+    .consulta-precios-spinner {
 
+        width: 36px;
 
-    .consulta-metrica {
-        min-width: 0;
+        height: 36px;
 
-        padding: 11px 12px;
 
-        background: #ffffff;
 
-        border:
-            1px solid #e5e5ea;
+        margin: 0 auto 14px;
 
-        border-radius: 10px;
-    }
 
 
-    .consulta-metrica-label {
-        color: var(--muted);
+        border:
 
-        font-size: 0.64rem;
-        font-weight: 800;
+            3px solid #e5e5ea;
 
-        text-transform: uppercase;
 
-        margin-bottom: 5px;
-    }
 
+        border-top-color:
 
-    .consulta-metrica-valor {
-        color: #111111;
+            #0071e3;
 
-        font-size: 0.95rem;
-        font-weight: 800;
 
-        overflow-wrap: anywhere;
-    }
 
+        border-radius: 50%;
 
-    .consulta-metrica-valor.azul {
-        color: #0071e3;
-    }
 
 
-    /* =========================================================
-       INVENTARIO
-    ========================================================= */
+        animation:
 
-    #consultaInventarioBox {
-        display: none;
-    }
+            consultaPrecioGirar
 
+            0.8s linear infinite;
 
-    #consultaServicioCatalogoBox {
-        display: none;
-    }
+    }
 
 
-    .consulta-referencia-grid {
-        display: grid;
 
-        grid-template-columns:
-            repeat(3, 1fr);
 
-        gap: 10px;
 
-        padding: 14px;
-    }
+    @keyframes consultaPrecioGirar {
 
+        to {
 
-    .consulta-referencia-item {
-        padding: 10px 11px;
+            transform: rotate(360deg);
 
-        border:
-            1px solid #e5e5ea;
+        }
 
-        border-radius: 10px;
+    }
 
-        background: #ffffff;
-    }
 
 
-    /* =========================================================
-       EXPLICACIÓN
-    ========================================================= */
 
-    .consulta-explicacion {
-        padding: 12px 14px;
 
-        border-top:
-            1px solid
-            var(--border-soft);
+    .consulta-precios-cargando-texto {
 
-        background: #ffffff;
+        color: var(--muted);
 
-        color: #4a4a4a;
 
-        font-size: 0.77rem;
 
-        line-height: 1.5;
-    }
+        font-size: 0.85rem;
 
+        font-weight: 600;
 
-    .consulta-explicacion strong {
-        color: #111111;
-    }
+    }
 
 
-    /* =========================================================
-       ANTECEDENTES
-    ========================================================= */
 
-    .consulta-coincidencias-lista {
-        padding: 10px;
 
-        display: grid;
 
-        gap: 9px;
-    }
+    /\* =========================================================
 
+       ERROR
 
-    .consulta-coincidencia {
-        border:
-            1px solid #e2e2e7;
+    ========================================================= \*/
 
-        border-radius: 12px;
 
-        background: #ffffff;
 
-        overflow: hidden;
+    .consulta-precios-error {
 
-        transition:
-            border-color 0.15s ease,
-            box-shadow 0.15s ease;
-    }
+        display: none;
 
 
-    .consulta-coincidencia:hover {
-        border-color:
-            rgba(0, 113, 227, 0.30);
 
-        box-shadow:
-            0 4px 14px
-            rgba(0, 0, 0, 0.05);
-    }
+        padding: 14px 15px;
 
 
-    .consulta-coincidencia-top {
-        padding: 11px 12px;
 
-        display: flex;
+        margin-bottom: 18px;
 
-        justify-content: space-between;
-        align-items: flex-start;
 
-        gap: 12px;
-    }
 
+        border:
 
-    .consulta-coincidencia-info {
-        min-width: 0;
-        flex: 1;
-    }
+            1px solid rgba(
 
+                255,
 
-    .consulta-coincidencia-orden {
-        color: #111111;
+                59,
 
-        font-size: 0.80rem;
-        font-weight: 800;
-    }
+                48,
 
+                0.22
 
-    .consulta-coincidencia-meta {
-        margin-top: 3px;
+            );
 
-        color: var(--muted);
 
-        font-size: 0.70rem;
-        font-weight: 600;
 
-        line-height: 1.4;
-    }
+        border-radius: 12px;
 
 
-    .consulta-coincidencia-precio {
-        flex: 0 0 auto;
 
-        text-align: right;
-    }
+        background:
 
+            rgba(
 
-    .consulta-coincidencia-precio-label {
-        color: var(--muted);
+                255,
 
-        font-size: 0.62rem;
-        font-weight: 800;
+                59,
 
-        text-transform: uppercase;
-    }
+                48,
 
+                0.07
 
-    .consulta-coincidencia-precio-valor {
-        margin-top: 2px;
+            );
 
-        color: #111111;
 
-        font-size: 1rem;
-        font-weight: 800;
-    }
 
+        color: #c62828;
 
-    .consulta-coincidencia-detalle {
-        padding:
-            10px 12px 11px;
 
-        border-top:
-            1px solid #f0f0f2;
 
-        display: grid;
+        font-size: 0.82rem;
 
-        grid-template-columns:
-            1fr auto;
+        font-weight: 600;
 
-        gap: 12px;
 
-        align-items: center;
 
-        background: #fbfbfd;
-    }
+        line-height: 1.45;
 
+    }
 
-    .consulta-coincidencia-descripcion {
-        min-width: 0;
 
-        color: #4a4a4a;
 
-        font-size: 0.75rem;
 
-        line-height: 1.4;
-    }
 
+    /\* =========================================================
 
-    .consulta-similitud {
-        display: inline-flex;
+       CONTENIDO
 
-        align-items: center;
+    ========================================================= \*/
 
-        padding: 4px 7px;
 
-        margin-top: 5px;
 
-        border-radius: 999px;
+    #consultaPreciosContenido {
 
-        color: #0071e3;
+        display: none;
 
-        background:
-            rgba(0, 113, 227, 0.08);
+    }
 
-        font-size: 0.64rem;
-        font-weight: 800;
-    }
 
 
-    .consulta-btn-aplicar-item {
-        height: 34px;
 
-        padding: 0 12px;
 
-        border:
-            1px solid
-            rgba(0, 113, 227, 0.22);
+    /\* =========================================================
 
-        border-radius: 9px;
+       ARTÍCULO CONSULTADO
 
-        background: #ffffff;
+    ========================================================= \*/
 
-        color: #0071e3;
 
-        font-size: 0.72rem;
-        font-weight: 800;
 
-        cursor: pointer;
+    .consulta-precios-item-box {
 
-        white-space: nowrap;
+        margin-bottom: 20px;
 
-        transition:
-            background 0.15s ease,
-            border-color 0.15s ease;
-    }
 
 
-    .consulta-btn-aplicar-item:hover {
-        background:
-            rgba(0, 113, 227, 0.07);
+        background: #fbfbfd;
 
-        border-color: #0071e3;
-    }
 
 
-    /* =========================================================
-       VACÍO
-    ========================================================= */
+        border:
 
-    .consulta-precios-vacio {
-        padding: 35px 20px;
+            1px solid
 
-        text-align: center;
+            var(--border-soft);
 
-        color: var(--muted);
-    }
 
 
-    .consulta-precios-vacio i {
-        display: block;
+        border-radius: 14px;
 
-        margin-bottom: 9px;
 
-        font-size: 1.6rem;
 
-        color: #c7c7cc;
-    }
+        overflow: hidden;
 
+    }
 
-    .consulta-precios-vacio strong {
-        display: block;
 
-        color: #4a4a4a;
 
-        font-size: 0.84rem;
 
-        margin-bottom: 4px;
-    }
 
+    .consulta-precios-item-top {
 
-    .consulta-precios-vacio span {
-        font-size: 0.74rem;
-    }
+        padding: 14px 15px;
 
 
-    /* =========================================================
-       FOOTER
-    ========================================================= */
 
-    .consulta-precios-footer {
-        padding: 15px 25px;
+        display: flex;
 
-        border-top:
-            1px solid
-            var(--border-soft);
+        justify-content: space-between;
 
-        display: flex;
+        align-items: flex-start;
 
-        justify-content: space-between;
-        align-items: center;
 
-        gap: 10px;
 
-        background: var(--head);
-    }
+        gap: 15px;
 
 
-    .consulta-footer-info {
-        color: var(--muted);
 
-        font-size: 0.71rem;
+        background: #ffffff;
 
-        line-height: 1.35;
-    }
+    }
 
 
-    .consulta-footer-acciones {
-        display: flex;
 
-        justify-content: flex-end;
 
-        align-items: center;
 
-        gap: 10px;
-    }
+    .consulta-precios-item-info {
 
+        min-width: 0;
 
-    #btnAplicarPrecioSugerido:disabled {
-        opacity: 0.50;
+        flex: 1;
 
-        cursor: default;
-    }
+    }
 
 
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
 
-    @media (max-width: 760px) {
 
-        #modalConsultaPrecios {
-            padding: 10px;
-        }
 
+    .consulta-precios-label {
 
-        .consulta-precios-dialog {
-            max-height: 98vh;
+        display: block;
 
-            border-radius: 16px;
-        }
 
 
-        .consulta-precios-header {
-            padding: 13px 15px;
-        }
+        margin-bottom: 4px;
 
 
-        .consulta-precios-body {
-            padding: 15px;
-        }
 
+        font-size: 0.66rem;
 
-        .consulta-precios-contexto {
-            grid-template-columns:
-                1fr 1fr;
-        }
 
 
-        .consulta-precios-sugerencia {
-            grid-template-columns:
-                1fr;
+        color: var(--muted);
 
-            padding: 16px;
-        }
 
 
-        .consulta-sugerencia-lado {
-            align-items: flex-start;
-        }
+        text-transform: uppercase;
 
 
-        .consulta-precios-metricas {
-            grid-template-columns:
-                1fr 1fr;
-        }
 
+        font-weight: 800;
 
-        .consulta-referencia-grid {
-            grid-template-columns:
-                1fr 1fr;
-        }
 
 
-        .consulta-coincidencia-detalle {
-            grid-template-columns:
-                1fr;
-        }
+        letter-spacing: 0.04em;
 
+    }
 
-        .consulta-btn-aplicar-item {
-            width: 100%;
-        }
 
 
-        .consulta-precios-footer {
-            padding: 12px 15px;
 
-            flex-direction: column;
 
-            align-items: stretch;
-        }
+    .consulta-precios-item-nombre {
 
+        color: #111111;
 
-        .consulta-footer-info {
-            text-align: center;
-        }
 
 
-        .consulta-footer-acciones {
-            width: 100%;
-        }
+        font-size: 0.97rem;
 
+        font-weight: 800;
 
-        .consulta-footer-acciones .btn-login {
-            flex: 1;
-        }
-    }
 
 
-    @media (max-width: 480px) {
+        overflow-wrap: anywhere;
 
-        .consulta-precios-contexto,
-        .consulta-precios-metricas,
-        .consulta-referencia-grid {
-            grid-template-columns:
-                1fr;
-        }
+    }
 
 
-        .consulta-sugerencia-precio {
-            font-size: 1.8rem;
-        }
 
 
-        .consulta-precios-item-top {
-            flex-direction: column;
-        }
-    }
-</style>
 
+    .consulta-precios-item-codigo {
 
-<!-- =========================================================
-     MODAL CONSULTA DE PRECIOS
-========================================================= -->
+        margin-top: 3px;
 
-<div
-    id="modalConsultaPrecios"
 
-    data-orden-id="{{ orden.pk }}"
 
-    data-consulta-url="{% url 'consultar_precio' %}"
+        color: var(--muted);
 
-    data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
->
 
-    <div class="consulta-precios-dialog">
 
+        font-size: 0.75rem;
 
-        <!-- =====================================================
-             HEADER
-        ====================================================== -->
+        font-weight: 600;
 
-        <div class="consulta-precios-header">
 
-            <div class="consulta-precios-header-left">
 
-                <div class="consulta-precios-icono">
+        overflow-wrap: anywhere;
 
-                    <i class="bi bi-search"></i>
+    }
 
-                </div>
 
 
-                <div class="consulta-precios-titulo-wrap">
 
-                    <h3 class="consulta-precios-titulo">
-                        Consultar precio
-                    </h3>
 
-                    <div class="consulta-precios-subtitulo">
-                        Historial de precios de MAO
-                    </div>
+    .consulta-precios-tipo-badge {
 
-                </div>
+        flex: 0 0 auto;
 
-            </div>
 
 
-            <button
-                type="button"
+        display: inline-flex;
 
-                class="consulta-precios-cerrar"
+        align-items: center;
 
-                onclick="cerrarModalConsultaPrecios()"
 
-                aria-label="Cerrar"
-                title="Cerrar"
-            >
-                &times;
-            </button>
 
-        </div>
+        gap: 5px;
 
 
-        <!-- =====================================================
-             BODY
-        ====================================================== -->
 
-        <div class="consulta-precios-body">
+        padding: 5px 9px;
 
 
-            <!-- =================================================
-                 CARGANDO
-            ================================================== -->
 
-            <div
-                id="consultaPreciosCargando"
-                class="consulta-precios-cargando"
-            >
+        border-radius: 999px;
 
-                <div class="consulta-precios-spinner">
-                </div>
 
-                <div class="consulta-precios-cargando-texto">
-                    Buscando antecedentes en todas las sucursales...
-                </div>
 
-            </div>
+        background:
 
+            rgba(0, 113, 227, 0.08);
 
-            <!-- =================================================
-                 ERROR
-            ================================================== -->
 
-            <div
-                id="consultaPreciosError"
-                class="consulta-precios-error"
-            >
-            </div>
 
+        border:
 
-            <!-- =================================================
-                 CONTENIDO
-            ================================================== -->
+            1px solid
 
-            <div id="consultaPreciosContenido">
+            rgba(0, 113, 227, 0.18);
 
 
-                <!-- =============================================
-                     ÍTEM CONSULTADO
-                ============================================== -->
 
-                <div class="consulta-precios-item-box">
+        color: #0071e3;
 
 
-                    <div class="consulta-precios-item-top">
 
-                        <div class="consulta-precios-item-info">
+        font-size: 0.67rem;
 
-                            <span class="consulta-precios-label">
-                                Consultando
-                            </span>
+        font-weight: 800;
 
-                            <div
-                                id="consultaPrecioDescripcion"
-                                class="consulta-precios-item-nombre"
-                            >
-                                -
-                            </div>
+    }
 
-                            <div
-                                id="consultaPrecioCodigo"
-                                class="consulta-precios-item-codigo"
-                            >
-                            </div>
 
-                        </div>
 
 
-                        <span
-                            id="consultaPrecioTipo"
-                            class="consulta-precios-tipo-badge"
-                        >
-                            <i class="bi bi-search"></i>
 
-                            <span>
-                                -
-                            </span>
-                        </span>
+    /\* =========================================================
 
-                    </div>
+       VEHÍCULO ACTUAL
 
+    ========================================================= \*/
 
-                    <!-- =========================================
-                         CONTEXTO DE LA OT
-                    ========================================== -->
 
-                    <div class="consulta-precios-contexto">
 
+    .consulta-precios-contexto {
 
-                        <div class="consulta-contexto-item">
+        padding: 12px 15px;
 
-                            <span class="consulta-precios-label">
-                                Vehículo
-                            </span>
 
-                            <div
-                                id="consultaPrecioVehiculo"
-                                class="consulta-contexto-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        border-top:
 
+            1px solid
 
-                        <div class="consulta-contexto-item">
+            var(--border-soft);
 
-                            <span class="consulta-precios-label">
-                                Año
-                            </span>
 
-                            <div
-                                id="consultaPrecioAnio"
-                                class="consulta-contexto-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        display: grid;
 
 
-                        <div class="consulta-contexto-item">
 
-                            <span class="consulta-precios-label">
-                                Kilometraje
-                            </span>
+        grid-template-columns:
 
-                            <div
-                                id="consultaPrecioKilometraje"
-                                class="consulta-contexto-valor"
-                            >
-                                -
-                            </div>
+            2fr
 
-                        </div>
+            0.7fr
 
+            1fr
 
-                        <div class="consulta-contexto-item">
+            1fr;
 
-                            <span class="consulta-precios-label">
-                                Sucursal actual
-                            </span>
 
-                            <div
-                                id="consultaPrecioSucursal"
-                                class="consulta-contexto-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        gap: 12px;
 
 
-                    </div>
 
-                </div>
+        background: #fbfbfd;
 
+    }
 
-                <!-- =============================================
-                     PROCEDIMIENTOS ACTUALES
-                     SOLO MOI / MOE CUANDO APLIQUE
-                ============================================== -->
 
-                <div
-                    id="consultaProcedimientosBox"
-                    class="consulta-procedimientos-box"
-                >
 
-                    <span class="consulta-precios-label">
-                        Procedimientos actuales
-                    </span>
 
-                    <div
-                        id="consultaProcedimientosLista"
-                        class="consulta-procedimientos-lista"
-                    >
-                    </div>
 
-                </div>
+    .consulta-contexto-item {
 
+        min-width: 0;
 
-                <!-- =============================================
-                     SUGERENCIA PRINCIPAL
-                ============================================== -->
+    }
 
-                <div class="consulta-precios-sugerencia">
 
 
-                    <div>
 
-                        <div class="consulta-sugerencia-caption">
-                            Precio unitario sugerido
-                        </div>
 
-                        <div
-                            id="consultaPrecioSugerido"
-                            class="consulta-sugerencia-precio"
-                        >
-                            $0.00
-                        </div>
+    .consulta-contexto-valor {
 
-                        <div
-                            id="consultaPrecioSugeridoAyuda"
-                            class="consulta-sugerencia-ayuda"
-                        >
-                            Basado en antecedentes comparables
-                            encontrados en MAO.
-                        </div>
+        color: #111111;
 
-                    </div>
 
 
-                    <div class="consulta-sugerencia-lado">
+        font-size: 0.80rem;
 
-                        <span
-                            id="consultaPrecioConfianza"
-                            class="consulta-confianza-badge"
-                        >
-                            Confianza:
-                            <strong>-</strong>
-                        </span>
+        font-weight: 700;
 
-                    </div>
 
-                </div>
 
+        overflow-wrap: anywhere;
 
-                <!-- =============================================
-                     INVENTARIO
-                     SOLO REPUESTOS IDENTIFICADOS
-                ============================================== -->
+    }
 
-                <div
-                    id="consultaInventarioBox"
-                    class="consulta-precios-seccion"
-                >
 
-                    <div class="consulta-seccion-header">
 
-                        <div>
 
-                            <div class="consulta-seccion-titulo">
-                                Inventario actual
-                            </div>
 
-                            <div class="consulta-seccion-subtitulo">
-                                Referencia actual del producto
-                            </div>
+    /\* =========================================================
 
-                        </div>
+       PROCEDIMIENTOS
 
-                        <i
-                            class="bi bi-box-seam"
-                            style="color:#0071e3;"
-                        ></i>
+    ========================================================= \*/
 
-                    </div>
 
 
-                    <div class="consulta-referencia-grid">
+    .consulta-procedimientos-box {
 
+        display: none;
 
-                        <div class="consulta-referencia-item">
 
-                            <span class="consulta-precios-label">
-                                Código
-                            </span>
 
-                            <div
-                                id="consultaInventarioCodigo"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
+        margin-bottom: 20px;
 
-                        </div>
 
 
-                        <div class="consulta-referencia-item">
+        padding: 15px;
 
-                            <span class="consulta-precios-label">
-                                Precio venta
-                            </span>
 
-                            <div
-                                id="consultaInventarioPrecio"
-                                class="consulta-metrica-valor azul"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        background: #fbfbfd;
 
 
-                        <div class="consulta-referencia-item">
 
-                            <span class="consulta-precios-label">
-                                Stock sucursal
-                            </span>
+        border:
 
-                            <div
-                                id="consultaInventarioStockSucursal"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
+            1px solid
 
-                        </div>
+            var(--border-soft);
 
 
-                        <div class="consulta-referencia-item">
 
-                            <span class="consulta-precios-label">
-                                Stock total MAO
-                            </span>
+        border-radius: 12px;
 
-                            <div
-                                id="consultaInventarioStockTotal"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
+    }
 
-                        </div>
 
 
-                        <div class="consulta-referencia-item">
 
-                            <span class="consulta-precios-label">
-                                Marca
-                            </span>
 
-                            <div
-                                id="consultaInventarioMarca"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
+    .consulta-procedimientos-lista {
 
-                        </div>
+        display: grid;
 
 
-                        <div class="consulta-referencia-item">
 
-                            <span class="consulta-precios-label">
-                                Producto
-                            </span>
+        gap: 7px;
 
-                            <div
-                                id="consultaInventarioProducto"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
 
+        margin-top: 9px;
 
-                    </div>
+    }
 
-                </div>
 
 
-                <!-- =============================================
-                     CATÁLOGO SERVICIO
-                     SOLO MOI / MOE CON SERVICIO IDENTIFICADO
-                ============================================== -->
 
-                <div
-                    id="consultaServicioCatalogoBox"
-                    class="consulta-precios-seccion"
-                >
 
-                    <div class="consulta-seccion-header">
+    .consulta-procedimiento-item {
 
-                        <div>
+        display: flex;
 
-                            <div class="consulta-seccion-titulo">
-                                Catálogo de servicios
-                            </div>
 
-                            <div class="consulta-seccion-subtitulo">
-                                Referencia configurada actualmente
-                            </div>
 
-                        </div>
+        align-items: flex-start;
 
-                        <i
-                            class="bi bi-tools"
-                            style="color:#0071e3;"
-                        ></i>
 
-                    </div>
 
+        gap: 8px;
 
-                    <div class="consulta-referencia-grid">
 
 
-                        <div class="consulta-referencia-item">
+        padding: 8px 10px;
 
-                            <span class="consulta-precios-label">
-                                Código
-                            </span>
 
-                            <div
-                                id="consultaServicioCodigo"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        background: #ffffff;
 
 
-                        <div class="consulta-referencia-item">
 
-                            <span class="consulta-precios-label">
-                                Precio catálogo
-                            </span>
+        border:
 
-                            <div
-                                id="consultaServicioPrecioCatalogo"
-                                class="consulta-metrica-valor azul"
-                            >
-                                -
-                            </div>
+            1px solid #e5e5ea;
 
-                        </div>
 
 
-                        <div class="consulta-referencia-item">
+        border-radius: 9px;
 
-                            <span class="consulta-precios-label">
-                                Precio sucursal
-                            </span>
 
-                            <div
-                                id="consultaServicioPrecioSucursal"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        color: #333333;
 
 
-                    </div>
 
-                </div>
+        font-size: 0.78rem;
 
+        font-weight: 600;
 
-                <!-- =============================================
-                     ORIGEN DEL PRECIO SUGERIDO
-                ============================================== -->
 
-                <div
-                    id="consultaResumenHistoricoBox"
-                    class="consulta-precios-seccion"
-                >
 
-                    <div class="consulta-seccion-header">
+        line-height: 1.35;
 
-                        <div>
+    }
 
-                            <div class="consulta-seccion-titulo">
-                                Origen de la sugerencia
-                            </div>
 
-                            <div class="consulta-seccion-subtitulo">
-                                Resumen de los antecedentes utilizados
-                            </div>
 
-                        </div>
 
-                        <i
-                            class="bi bi-graph-up"
-                            style="color:#0071e3;"
-                        ></i>
 
-                    </div>
+    .consulta-procedimiento-check {
 
+        flex: 0 0 auto;
 
-                    <div class="consulta-precios-metricas">
 
 
-                        <div class="consulta-metrica">
+        color: #34c759;
 
-                            <div class="consulta-metrica-label">
-                                Último precio
-                            </div>
 
-                            <div
-                                id="consultaUltimoPrecio"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
 
-                        </div>
+        font-size: 0.8rem;
 
 
-                        <div class="consulta-metrica">
 
-                            <div class="consulta-metrica-label">
-                                Mediana
-                            </div>
+        margin-top: 1px;
 
-                            <div
-                                id="consultaMedianaPrecio"
-                                class="consulta-metrica-valor azul"
-                            >
-                                -
-                            </div>
+    }
 
-                        </div>
 
 
-                        <div class="consulta-metrica">
 
-                            <div class="consulta-metrica-label">
-                                Rango
-                            </div>
 
-                            <div
-                                id="consultaRangoPrecio"
-                                class="consulta-metrica-valor"
-                            >
-                                -
-                            </div>
+    /\* =========================================================
 
-                        </div>
+       PRECIO SUGERIDO
 
+    ========================================================= \*/
 
-                        <div class="consulta-metrica">
 
-                            <div class="consulta-metrica-label">
-                                Comparables
-                            </div>
 
-                            <div
-                                id="consultaCantidadComparables"
-                                class="consulta-metrica-valor"
-                            >
-                                0
-                            </div>
+    .consulta-precios-sugerencia {
 
-                        </div>
+        margin-bottom: 20px;
 
 
-                    </div>
 
+        padding: 20px;
 
-                    <div
-                        id="consultaExplicacionSugerencia"
-                        class="consulta-explicacion"
-                    >
-                        <strong>
-                            Cómo se obtuvo:
-                        </strong>
 
-                        El sistema compara antecedentes históricos
-                        de todas las sucursales y prioriza los casos
-                        más parecidos al ítem actual.
-                    </div>
 
-                </div>
+        border-radius: 16px;
 
 
-                <!-- =============================================
-                     ANTECEDENTES
-                ============================================== -->
 
-                <div class="consulta-precios-seccion">
+        border:
 
-                    <div class="consulta-seccion-header">
+            1px solid
 
-                        <div>
+            rgba(0, 113, 227, 0.20);
 
-                            <div class="consulta-seccion-titulo">
-                                Antecedentes encontrados
-                            </div>
 
-                            <div
-                                id="consultaCoincidenciasSubtitulo"
-                                class="consulta-seccion-subtitulo"
-                            >
-                                Precios utilizados anteriormente
-                            </div>
 
-                        </div>
+        background:
 
-                        <i
-                            class="bi bi-clock-history"
-                            style="color:#0071e3;"
-                        ></i>
+            linear-gradient(
 
-                    </div>
+                135deg,
 
+                rgba(0, 113, 227, 0.08),
 
-                    <!--
-                        precios.js insertará aquí las coincidencias.
+                rgba(0, 113, 227, 0.025)
 
-                        Cada coincidencia podrá mostrar:
+            );
 
-                        - número de OT
-                        - fecha
-                        - sucursal
-                        - vehículo
-                        - año
-                        - kilometraje
-                        - descripción
-                        - código
-                        - procedimientos
-                        - similitud
-                        - P.U.
-                        - botón Aplicar
-                    -->
 
-                    <div
-                        id="consultaCoincidenciasLista"
-                        class="consulta-coincidencias-lista"
-                    >
-                    </div>
 
+        display: grid;
 
-                    <div
-                        id="consultaCoincidenciasVacio"
-                        class="consulta-precios-vacio"
-                        style="display:none;"
-                    >
 
-                        <i class="bi bi-search"></i>
 
-                        <strong>
-                            No se encontraron antecedentes suficientes
-                        </strong>
+        grid-template-columns:
 
-                        <span>
-                            Puede mantener el precio actual o
-                            ingresarlo manualmente.
-                        </span>
+            1fr auto;
 
-                    </div>
 
-                </div>
 
+        align-items: center;
 
-            </div>
 
-        </div>
 
+        gap: 20px;
 
-        <!-- =====================================================
-             FOOTER
-        ====================================================== -->
+    }
 
-        <div class="consulta-precios-footer">
 
-            <div class="consulta-footer-info">
-                Aplicar un precio modifica únicamente el
-                P.U. de la fila actual.
-                La orden no se guarda automáticamente.
-            </div>
 
 
-            <div class="consulta-footer-acciones">
 
-                <button
-                    type="button"
+    .consulta-sugerencia-caption {
 
-                    class="btn-login"
+        color: #0071e3;
 
-                    style="width:auto;"
 
-                    onclick="cerrarModalConsultaPrecios()"
-                >
-                    Cerrar
-                </button>
 
+        font-size: 0.70rem;
 
-                {% if puede_editar %}
+        font-weight: 800;
 
-                    <button
-                        type="button"
 
-                        id="btnAplicarPrecioSugerido"
 
-                        class="btn-login primary"
+        text-transform: uppercase;
 
-                        style="
-                            width:auto;
-                            padding:0 20px;
-                        "
 
-                        onclick="aplicarPrecioSugerido()"
 
-                        disabled
-                    >
-                        <i
-                            class="bi bi-check2"
-                            style="margin-right:5px;"
-                        ></i>
+        letter-spacing: 0.04em;
 
-                        Aplicar sugerencia
-                    </button>
 
-                {% endif %}
 
-            </div>
+        margin-bottom: 5px;
 
-        </div>
+    }
 
 
-    </div>
 
-</div>
+
+
+    .consulta-sugerencia-precio {
+
+        color: #111111;
+
+
+
+        font-size: 2.15rem;
+
+        font-weight: 800;
+
+
+
+        line-height: 1;
+
+    }
+
+
+
+
+
+    .consulta-sugerencia-ayuda {
+
+        margin-top: 7px;
+
+
+
+        color: var(--muted);
+
+
+
+        font-size: 0.76rem;
+
+
+
+        line-height: 1.4;
+
+    }
+
+
+
+
+
+    .consulta-sugerencia-lado {
+
+        display: flex;
+
+        flex-direction: column;
+
+
+
+        align-items: flex-end;
+
+
+
+        gap: 8px;
+
+    }
+
+
+
+
+
+    .consulta-confianza-badge {
+
+        display: inline-flex;
+
+
+
+        align-items: center;
+
+
+
+        gap: 6px;
+
+
+
+        padding: 6px 10px;
+
+
+
+        border-radius: 999px;
+
+
+
+        background: #f5f5f7;
+
+
+
+        border: 1px solid #d2d2d7;
+
+
+
+        color: #6e6e73;
+
+
+
+        font-size: 0.70rem;
+
+        font-weight: 800;
+
+    }
+
+
+
+
+
+    .consulta-confianza-badge.alta {
+
+        color: #248a3d;
+
+
+
+        background:
+
+            rgba(52, 199, 89, 0.10);
+
+
+
+        border-color:
+
+            rgba(52, 199, 89, 0.28);
+
+    }
+
+
+
+
+
+    .consulta-confianza-badge.media {
+
+        color: #b26a00;
+
+
+
+        background:
+
+            rgba(255, 149, 0, 0.10);
+
+
+
+        border-color:
+
+            rgba(255, 149, 0, 0.28);
+
+    }
+
+
+
+
+
+    .consulta-confianza-badge.baja {
+
+        color: #c62828;
+
+
+
+        background:
+
+            rgba(255, 59, 48, 0.08);
+
+
+
+        border-color:
+
+            rgba(255, 59, 48, 0.22);
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       SECCIÓN
+
+    ========================================================= \*/
+
+
+
+    .consulta-precios-seccion {
+
+        margin-bottom: 20px;
+
+
+
+        background: #fbfbfd;
+
+
+
+        border:
+
+            1px solid
+
+            var(--border-soft);
+
+
+
+        border-radius: 14px;
+
+
+
+        overflow: hidden;
+
+    }
+
+
+
+
+
+    .consulta-seccion-header {
+
+        padding: 11px 14px;
+
+
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+
+
+        gap: 10px;
+
+
+
+        border-bottom:
+
+            1px solid
+
+            var(--border-soft);
+
+
+
+        background: #ffffff;
+
+    }
+
+
+
+
+
+    .consulta-seccion-titulo {
+
+        color: #111111;
+
+
+
+        font-size: 0.80rem;
+
+        font-weight: 800;
+
+    }
+
+
+
+
+
+    .consulta-seccion-subtitulo {
+
+        color: var(--muted);
+
+
+
+        font-size: 0.68rem;
+
+        font-weight: 600;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       MÉTRICAS
+
+    ========================================================= \*/
+
+
+
+    .consulta-precios-metricas {
+
+        display: grid;
+
+
+
+        grid-template-columns:
+
+            repeat(4, 1fr);
+
+
+
+        gap: 10px;
+
+
+
+        padding: 14px;
+
+    }
+
+
+
+
+
+    .consulta-metrica {
+
+        min-width: 0;
+
+
+
+        padding: 11px 12px;
+
+
+
+        background: #ffffff;
+
+
+
+        border:
+
+            1px solid #e5e5ea;
+
+
+
+        border-radius: 10px;
+
+    }
+
+
+
+
+
+    .consulta-metrica-label {
+
+        color: var(--muted);
+
+
+
+        font-size: 0.64rem;
+
+        font-weight: 800;
+
+
+
+        text-transform: uppercase;
+
+
+
+        margin-bottom: 5px;
+
+    }
+
+
+
+
+
+    .consulta-metrica-valor {
+
+        color: #111111;
+
+
+
+        font-size: 0.95rem;
+
+        font-weight: 800;
+
+
+
+        overflow-wrap: anywhere;
+
+    }
+
+
+
+
+
+    .consulta-metrica-valor.azul {
+
+        color: #0071e3;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       INVENTARIO
+
+    ========================================================= \*/
+
+
+
+    #consultaInventarioBox {
+
+        display: none;
+
+    }
+
+
+
+
+
+    #consultaServicioCatalogoBox {
+
+        display: none;
+
+    }
+
+
+
+
+
+    .consulta-referencia-grid {
+
+        display: grid;
+
+
+
+        grid-template-columns:
+
+            repeat(3, 1fr);
+
+
+
+        gap: 10px;
+
+
+
+        padding: 14px;
+
+    }
+
+
+
+
+
+    .consulta-referencia-item {
+
+        padding: 10px 11px;
+
+
+
+        border:
+
+            1px solid #e5e5ea;
+
+
+
+        border-radius: 10px;
+
+
+
+        background: #ffffff;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       EXPLICACIÓN
+
+    ========================================================= \*/
+
+
+
+    .consulta-explicacion {
+
+        padding: 12px 14px;
+
+
+
+        border-top:
+
+            1px solid
+
+            var(--border-soft);
+
+
+
+        background: #ffffff;
+
+
+
+        color: #4a4a4a;
+
+
+
+        font-size: 0.77rem;
+
+
+
+        line-height: 1.5;
+
+    }
+
+
+
+
+
+    .consulta-explicacion strong {
+
+        color: #111111;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       ANTECEDENTES
+
+    ========================================================= \*/
+
+
+
+    .consulta-coincidencias-lista {
+
+        padding: 10px;
+
+
+
+        display: grid;
+
+
+
+        gap: 9px;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia {
+
+        border:
+
+            1px solid #e2e2e7;
+
+
+
+        border-radius: 12px;
+
+
+
+        background: #ffffff;
+
+
+
+        overflow: hidden;
+
+
+
+        transition:
+
+            border-color 0.15s ease,
+
+            box-shadow 0.15s ease;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia:hover {
+
+        border-color:
+
+            rgba(0, 113, 227, 0.30);
+
+
+
+        box-shadow:
+
+            0 4px 14px
+
+            rgba(0, 0, 0, 0.05);
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-top {
+
+        padding: 11px 12px;
+
+
+
+        display: flex;
+
+
+
+        justify-content: space-between;
+
+        align-items: flex-start;
+
+
+
+        gap: 12px;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-info {
+
+        min-width: 0;
+
+        flex: 1;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-orden {
+
+        color: #111111;
+
+
+
+        font-size: 0.80rem;
+
+        font-weight: 800;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-meta {
+
+        margin-top: 3px;
+
+
+
+        color: var(--muted);
+
+
+
+        font-size: 0.70rem;
+
+        font-weight: 600;
+
+
+
+        line-height: 1.4;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-precio {
+
+        flex: 0 0 auto;
+
+
+
+        text-align: right;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-precio-label {
+
+        color: var(--muted);
+
+
+
+        font-size: 0.62rem;
+
+        font-weight: 800;
+
+
+
+        text-transform: uppercase;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-precio-valor {
+
+        margin-top: 2px;
+
+
+
+        color: #111111;
+
+
+
+        font-size: 1rem;
+
+        font-weight: 800;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-detalle {
+
+        padding:
+
+            10px 12px 11px;
+
+
+
+        border-top:
+
+            1px solid #f0f0f2;
+
+
+
+        display: grid;
+
+
+
+        grid-template-columns:
+
+            1fr auto;
+
+
+
+        gap: 12px;
+
+
+
+        align-items: center;
+
+
+
+        background: #fbfbfd;
+
+    }
+
+
+
+
+
+    .consulta-coincidencia-descripcion {
+
+        min-width: 0;
+
+
+
+        color: #4a4a4a;
+
+
+
+        font-size: 0.75rem;
+
+
+
+        line-height: 1.4;
+
+    }
+
+
+
+
+
+    .consulta-similitud {
+
+        display: inline-flex;
+
+
+
+        align-items: center;
+
+
+
+        padding: 4px 7px;
+
+
+
+        margin-top: 5px;
+
+
+
+        border-radius: 999px;
+
+
+
+        color: #0071e3;
+
+
+
+        background:
+
+            rgba(0, 113, 227, 0.08);
+
+
+
+        font-size: 0.64rem;
+
+        font-weight: 800;
+
+    }
+
+
+
+
+
+    .consulta-btn-aplicar-item {
+
+        height: 34px;
+
+
+
+        padding: 0 12px;
+
+
+
+        border:
+
+            1px solid
+
+            rgba(0, 113, 227, 0.22);
+
+
+
+        border-radius: 9px;
+
+
+
+        background: #ffffff;
+
+
+
+        color: #0071e3;
+
+
+
+        font-size: 0.72rem;
+
+        font-weight: 800;
+
+
+
+        cursor: pointer;
+
+
+
+        white-space: nowrap;
+
+
+
+        transition:
+
+            *background* 0.15s ease,
+
+            border-color 0.15s ease;
+
+    }
+
+
+
+
+
+    .consulta-btn-aplicar-item:hover {
+
+        background:
+
+            rgba(0, 113, 227, 0.07);
+
+
+
+        border-color: #0071e3;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       VACÍO
+
+    ========================================================= \*/
+
+
+
+    .consulta-precios-vacio {
+
+        padding: 35px 20px;
+
+
+
+        text-align: center;
+
+
+
+        color: var(--muted);
+
+    }
+
+
+
+
+
+    .consulta-precios-vacio i {
+
+        display: block;
+
+
+
+        margin-bottom: 9px;
+
+
+
+        font-size: 1.6rem;
+
+
+
+        color: #c7c7cc;
+
+    }
+
+
+
+
+
+    .consulta-precios-vacio strong {
+
+        display: block;
+
+
+
+        color: #4a4a4a;
+
+
+
+        font-size: 0.84rem;
+
+
+
+        margin-bottom: 4px;
+
+    }
+
+
+
+
+
+    .consulta-precios-vacio span {
+
+        font-size: 0.74rem;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       FOOTER
+
+    ========================================================= \*/
+
+
+
+    .consulta-precios-footer {
+
+        padding: 15px 25px;
+
+
+
+        border-top:
+
+            1px solid
+
+            var(--border-soft);
+
+
+
+        display: flex;
+
+
+
+        justify-content: space-between;
+
+        align-items: center;
+
+
+
+        gap: 10px;
+
+
+
+        background: var(--head);
+
+    }
+
+
+
+
+
+    .consulta-footer-info {
+
+        color: var(--muted);
+
+
+
+        font-size: 0.71rem;
+
+
+
+        line-height: 1.35;
+
+    }
+
+
+
+
+
+    .consulta-footer-acciones {
+
+        display: flex;
+
+
+
+        justify-content: flex-end;
+
+
+
+        align-items: center;
+
+
+
+        gap: 10px;
+
+    }
+
+
+
+
+
+    #btnAplicarPrecioSugerido:disabled {
+
+        opacity: 0.50;
+
+
+
+        cursor: default;
+
+    }
+
+
+
+
+
+    /\* =========================================================
+
+       RESPONSIVE
+
+    ========================================================= \*/
+
+
+
+    @media (max-width: 760px) {
+
+
+
+        #modalConsultaPrecios {
+
+            padding: 10px;
+
+        }
+
+
+
+
+
+        .consulta-precios-dialog {
+
+            max-height: 98vh;
+
+
+
+            border-radius: 16px;
+
+        }
+
+
+
+
+
+        .consulta-precios-header {
+
+            padding: 13px 15px;
+
+        }
+
+
+
+
+
+        .consulta-precios-body {
+
+            padding: 15px;
+
+        }
+
+
+
+
+
+        .consulta-precios-contexto {
+
+            grid-template-columns:
+
+                1fr 1fr;
+
+        }
+
+
+
+
+
+        .consulta-precios-sugerencia {
+
+            grid-template-columns:
+
+                1fr;
+
+
+
+            padding: 16px;
+
+        }
+
+
+
+
+
+        .consulta-sugerencia-lado {
+
+            align-items: flex-start;
+
+        }
+
+
+
+
+
+        .consulta-precios-metricas {
+
+            grid-template-columns:
+
+                1fr 1fr;
+
+        }
+
+
+
+
+
+        .consulta-referencia-grid {
+
+            grid-template-columns:
+
+                1fr 1fr;
+
+        }
+
+
+
+
+
+        .consulta-coincidencia-detalle {
+
+            grid-template-columns:
+
+                1fr;
+
+        }
+
+
+
+
+
+        .consulta-btn-aplicar-item {
+
+            width: 100%;
+
+        }
+
+
+
+
+
+        .consulta-precios-footer {
+
+            padding: 12px 15px;
+
+
+
+            flex-direction: column;
+
+
+
+            align-items: stretch;
+
+        }
+
+
+
+
+
+        .consulta-footer-info {
+
+            text-align: center;
+
+        }
+
+
+
+
+
+        .consulta-footer-acciones {
+
+            width: 100%;
+
+        }
+
+
+
+
+
+        .consulta-footer-acciones .btn-login {
+
+            flex: 1;
+
+        }
+
+    }
+
+
+
+
+
+    @media (max-width: 480px) {
+
+
+
+        .consulta-precios-contexto,
+
+        .consulta-precios-metricas,
+
+        .consulta-referencia-grid {
+
+            grid-template-columns:
+
+                1fr;
+
+        }
+
+
+
+
+
+        .consulta-sugerencia-precio {
+
+            font-size: 1.8rem;
+
+        }
+
+
+
+
+
+        .consulta-precios-item-top {
+
+            flex-direction: column;
+
+        }
+
+    }
+
+\</style>
+
+
+
+
+
+\<!-- =========================================================
+
+     MODAL CONSULTA DE PRECIOS
+
+\========================================================= -->
+
+
+
+\<div
+
+    id="modalConsultaPrecios"
+
+
+
+    data-orden-id="{{ orden.pk }}"
+
+
+
+    data-consulta-url="{% url 'consultar_precio' %}"
+
+
+
+    data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
+
+\>
+
+
+
+    \<div class="consulta-precios-dialog">
+
+
+
+
+
+        \<!-- =====================================================
+
+             HEADER
+
+        ====================================================== -->
+
+
+
+        \<div class="consulta-precios-header">
+
+
+
+            \<div class="consulta-precios-header-left">
+
+
+
+                \<div class="consulta-precios-icono">
+
+
+
+                    \<i class="bi bi-search">\</i>
+
+
+
+                \</div>
+
+
+
+
+
+                \<div class="consulta-precios-titulo-wrap">
+
+
+
+                    \<h3 class="consulta-precios-titulo">
+
+                        Consultar precio
+
+                    \</h3>
+
+
+
+                    \<div class="consulta-precios-subtitulo">
+
+                        Historial de precios de MAO
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+            \</div>
+
+
+
+
+
+            \<button
+
+                type="button"
+
+
+
+                class="consulta-precios-cerrar"
+
+
+
+                onclick="cerrarModalConsultaPrecios()"
+
+
+
+                aria-label="Cerrar"
+
+                title="Cerrar"
+
+            >
+
+                &times;
+
+            \</button>
+
+
+
+        \</div>
+
+
+
+
+
+        \<!-- =====================================================
+
+             BODY
+
+        ====================================================== -->
+
+
+
+        \<div class="consulta-precios-body">
+
+
+
+
+
+            \<!-- =================================================
+
+                 CARGANDO
+
+            ================================================== -->
+
+
+
+            \<div
+
+                id="consultaPreciosCargando"
+
+                class="consulta-precios-cargando"
+
+            >
+
+
+
+                \<div class="consulta-precios-spinner">
+
+                \</div>
+
+
+
+                \<div class="consulta-precios-cargando-texto">
+
+                    Buscando antecedentes en todas las sucursales...
+
+                \</div>
+
+
+
+            \</div>
+
+
+
+
+
+            \<!-- =================================================
+
+                 ERROR
+
+            ================================================== -->
+
+
+
+            \<div
+
+                id="consultaPreciosError"
+
+                class="consulta-precios-error"
+
+            >
+
+            \</div>
+
+
+
+
+
+            \<!-- =================================================
+
+                 CONTENIDO
+
+            ================================================== -->
+
+
+
+            \<div id="consultaPreciosContenido">
+
+
+
+
+
+                \<!-- =============================================
+
+                     ÍTEM CONSULTADO
+
+                ============================================== -->
+
+
+
+                \<div class="consulta-precios-item-box">
+
+
+
+
+
+                    \<div class="consulta-precios-item-top">
+
+
+
+                        \<div class="consulta-precios-item-info">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Consultando
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaPrecioDescripcion"
+
+                                class="consulta-precios-item-nombre"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                            \<div
+
+                                id="consultaPrecioCodigo"
+
+                                class="consulta-precios-item-codigo"
+
+                            >
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<span
+
+                            id="consultaPrecioTipo"
+
+                            class="consulta-precios-tipo-badge"
+
+                        >
+
+                            \<i class="bi bi-search">\</i>
+
+
+
+                            \<span>
+
+                                -
+
+                            \</span>
+
+                        \</span>
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<!-- =========================================
+
+                         CONTEXTO DE LA OT
+
+                    ========================================== -->
+
+
+
+                    \<div class="consulta-precios-contexto">
+
+
+
+
+
+                        \<div class="consulta-contexto-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Vehículo
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaPrecioVehiculo"
+
+                                class="consulta-contexto-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-contexto-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Año
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaPrecioAnio"
+
+                                class="consulta-contexto-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-contexto-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Kilometraje
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaPrecioKilometraje"
+
+                                class="consulta-contexto-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-contexto-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Sucursal actual
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaPrecioSucursal"
+
+                                class="consulta-contexto-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+                \<!-- =============================================
+
+                     PROCEDIMIENTOS ACTUALES
+
+                     SOLO MOI / MOE CUANDO APLIQUE
+
+                ============================================== -->
+
+
+
+                \<div
+
+                    id="consultaProcedimientosBox"
+
+                    class="consulta-procedimientos-box"
+
+                >
+
+
+
+                    \<span class="consulta-precios-label">
+
+                        Procedimientos actuales
+
+                    \</span>
+
+
+
+                    \<div
+
+                        id="consultaProcedimientosLista"
+
+                        class="consulta-procedimientos-lista"
+
+                    >
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+                \<!-- =============================================
+
+                     SUGERENCIA PRINCIPAL
+
+                ============================================== -->
+
+
+
+                \<div class="consulta-precios-sugerencia">
+
+
+
+
+
+                    \<div>
+
+
+
+                        \<div class="consulta-sugerencia-caption">
+
+                            Precio unitario sugerido
+
+                        \</div>
+
+
+
+                        \<div
+
+                            id="consultaPrecioSugerido"
+
+                            class="consulta-sugerencia-precio"
+
+                        >
+
+                            $0.00
+
+                        \</div>
+
+
+
+                        \<div
+
+                            id="consultaPrecioSugeridoAyuda"
+
+                            class="consulta-sugerencia-ayuda"
+
+                        >
+
+                            Basado en antecedentes comparables
+
+                            encontrados en MAO.
+
+                        \</div>
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<div class="consulta-sugerencia-lado">
+
+
+
+                        \<span
+
+                            id="consultaPrecioConfianza"
+
+                            class="consulta-confianza-badge"
+
+                        >
+
+                            Confianza:
+
+                            \<strong>-\</strong>
+
+                        \</span>
+
+
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+                \<!-- =============================================
+
+                     INVENTARIO
+
+                     SOLO REPUESTOS IDENTIFICADOS
+
+                ============================================== -->
+
+
+
+                \<div
+
+                    id="consultaInventarioBox"
+
+                    class="consulta-precios-seccion"
+
+                >
+
+
+
+                    \<div class="consulta-seccion-header">
+
+
+
+                        \<div>
+
+
+
+                            \<div class="consulta-seccion-titulo">
+
+                                Inventario actual
+
+                            \</div>
+
+
+
+                            \<div class="consulta-seccion-subtitulo">
+
+                                Referencia actual del producto
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+                        \<i
+
+                            class="bi bi-box-seam"
+
+                            style="color:#0071e3;"
+
+                        >\</i>
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<div class="consulta-referencia-grid">
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Código
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaInventarioCodigo"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Precio venta
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaInventarioPrecio"
+
+                                class="consulta-metrica-valor azul"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Stock sucursal
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaInventarioStockSucursal"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Stock total MAO
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaInventarioStockTotal"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Marca
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaInventarioMarca"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Producto
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaInventarioProducto"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+                \<!-- =============================================
+
+                     CATÁLOGO SERVICIO
+
+                     SOLO MOI / MOE CON SERVICIO IDENTIFICADO
+
+                ============================================== -->
+
+
+
+                \<div
+
+                    id="consultaServicioCatalogoBox"
+
+                    class="consulta-precios-seccion"
+
+                >
+
+
+
+                    \<div class="consulta-seccion-header">
+
+
+
+                        \<div>
+
+
+
+                            \<div class="consulta-seccion-titulo">
+
+                                Catálogo de servicios
+
+                            \</div>
+
+
+
+                            \<div class="consulta-seccion-subtitulo">
+
+                                Referencia configurada actualmente
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+                        \<i
+
+                            class="bi bi-tools"
+
+                            style="color:#0071e3;"
+
+                        >\</i>
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<div class="consulta-referencia-grid">
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Código
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaServicioCodigo"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Precio catálogo
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaServicioPrecioCatalogo"
+
+                                class="consulta-metrica-valor azul"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-referencia-item">
+
+
+
+                            \<span class="consulta-precios-label">
+
+                                Precio sucursal
+
+                            \</span>
+
+
+
+                            \<div
+
+                                id="consultaServicioPrecioSucursal"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+                \<!-- =============================================
+
+                     ORIGEN DEL PRECIO SUGERIDO
+
+                ============================================== -->
+
+
+
+                \<div
+
+                    id="consultaResumenHistoricoBox"
+
+                    class="consulta-precios-seccion"
+
+                >
+
+
+
+                    \<div class="consulta-seccion-header">
+
+
+
+                        \<div>
+
+
+
+                            \<div class="consulta-seccion-titulo">
+
+                                Origen de la sugerencia
+
+                            \</div>
+
+
+
+                            \<div class="consulta-seccion-subtitulo">
+
+                                Resumen de los antecedentes utilizados
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+                        \<i
+
+                            class="bi bi-graph-up"
+
+                            style="color:#0071e3;"
+
+                        >\</i>
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<div class="consulta-precios-metricas">
+
+
+
+
+
+                        \<div class="consulta-metrica">
+
+
+
+                            \<div class="consulta-metrica-label">
+
+                                Último precio
+
+                            \</div>
+
+
+
+                            \<div
+
+                                id="consultaUltimoPrecio"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-metrica">
+
+
+
+                            \<div class="consulta-metrica-label">
+
+                                Mediana
+
+                            \</div>
+
+
+
+                            \<div
+
+                                id="consultaMedianaPrecio"
+
+                                class="consulta-metrica-valor azul"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-metrica">
+
+
+
+                            \<div class="consulta-metrica-label">
+
+                                Rango
+
+                            \</div>
+
+
+
+                            \<div
+
+                                id="consultaRangoPrecio"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                -
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                        \<div class="consulta-metrica">
+
+
+
+                            \<div class="consulta-metrica-label">
+
+                                Comparables
+
+                            \</div>
+
+
+
+                            \<div
+
+                                id="consultaCantidadComparables"
+
+                                class="consulta-metrica-valor"
+
+                            >
+
+                                0
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<div
+
+                        id="consultaExplicacionSugerencia"
+
+                        class="consulta-explicacion"
+
+                    >
+
+                        \<strong>
+
+                            Cómo se obtuvo:
+
+                        \</strong>
+
+
+
+                        El sistema compara antecedentes históricos
+
+                        de todas las sucursales y prioriza los casos
+
+                        más parecidos al ítem actual.
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+                \<!-- =============================================
+
+                     ANTECEDENTES
+
+                ============================================== -->
+
+
+
+                \<div class="consulta-precios-seccion">
+
+
+
+                    \<div class="consulta-seccion-header">
+
+
+
+                        \<div>
+
+
+
+                            \<div class="consulta-seccion-titulo">
+
+                                Antecedentes encontrados
+
+                            \</div>
+
+
+
+                            \<div
+
+                                id="consultaCoincidenciasSubtitulo"
+
+                                class="consulta-seccion-subtitulo"
+
+                            >
+
+                                Precios utilizados anteriormente
+
+                            \</div>
+
+
+
+                        \</div>
+
+
+
+                        \<i
+
+                            class="bi bi-clock-history"
+
+                            style="color:#0071e3;"
+
+                        >\</i>
+
+
+
+                    \</div>
+
+
+
+
+
+                    \<!--
+
+                        precios.js insertará aquí las coincidencias.
+
+
+
+                        Cada coincidencia podrá mostrar:
+
+
+
+                        - número de OT
+
+                        - fecha
+
+                        - sucursal
+
+                        - vehículo
+
+                        - año
+
+                        - kilometraje
+
+                        - descripción
+
+                        - código
+
+                        - procedimientos
+
+                        - similitud
+
+                        - P.U.
+
+                        - botón Aplicar
+
+                    -->
+
+
+
+                    \<div
+
+                        id="consultaCoincidenciasLista"
+
+                        class="consulta-coincidencias-lista"
+
+                    >
+
+                    \</div>
+
+
+
+
+
+                    \<div
+
+                        id="consultaCoincidenciasVacio"
+
+                        class="consulta-precios-vacio"
+
+                        style="display:none;"
+
+                    >
+
+
+
+                        \<i class="bi bi-search">\</i>
+
+
+
+                        \<strong>
+
+                            No se encontraron antecedentes suficientes
+
+                        \</strong>
+
+
+
+                        \<span>
+
+                            Puede mantener el precio actual o
+
+                            ingresarlo manualmente.
+
+                        \</span>
+
+
+
+                    \</div>
+
+
+
+                \</div>
+
+
+
+
+
+            \</div>
+
+
+
+        \</div>
+
+
+
+
+
+        \<!-- =====================================================
+
+             FOOTER
+
+        ====================================================== -->
+
+
+
+        \<div class="consulta-precios-footer">
+
+
+
+            \<div class="consulta-footer-info">
+
+                Aplicar un precio modifica únicamente el
+
+                P.U. de la fila actual.
+
+                La orden no se guarda automáticamente.
+
+            \</div>
+
+
+
+
+
+            \<div class="consulta-footer-acciones">
+
+
+
+                \<button
+
+                    type="button"
+
+
+
+                    class="btn-login"
+
+
+
+                    style="width:auto;"
+
+
+
+                    onclick="cerrarModalConsultaPrecios()"
+
+                >
+
+                    Cerrar
+
+                \</button>
+
+
+
+
+
+                {% if puede_editar %}
+
+
+
+                    \<button
+
+                        type="button"
+
+
+
+                        id="btnAplicarPrecioSugerido"
+
+
+
+                        class="btn-login primary"
+
+
+
+                        style="
+
+                            width:auto;
+
+                            padding:0 20px;
+
+                        "
+
+
+
+                        onclick="aplicarPrecioSugerido()"
+
+
+
+                        disabled
+
+                    >
+
+                        \<i
+
+                            class="bi bi-check2"
+
+                            style="margin-right:5px;"
+
+                        >\</i>
+
+
+
+                        Aplicar sugerencia
+
+                    \</button>
+
+
+
+                {% endif %}
+
+
+
+            \</div>
+
+
+
+        \</div>
+
+
+
+
+
+    \</div>
+
+
+
+\</div>
