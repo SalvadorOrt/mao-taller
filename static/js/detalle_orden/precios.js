@@ -411,7 +411,7 @@ function ponerModalPrecioCargando() {
         inventario.style.display = 'none';
     }
 
-    // Ocultar catálogo anterior
+        // Ocultar catálogo anterior
     const catalogo =
         document.getElementById(
             'consultaServicioCatalogoBox'
@@ -420,47 +420,47 @@ function ponerModalPrecioCargando() {
     if (catalogo) {
         catalogo.style.display = 'none';
     }
-}
-// =====================================================
-// LIMPIAR "ÚLTIMO EN ESTE VEHÍCULO"
-// =====================================================
 
-const mismoVehiculo =
-    document.getElementById(
-        'consultaAntecedenteMismoVehiculo'
+
+    // =====================================================
+    // LIMPIAR "ÚLTIMO EN ESTE VEHÍCULO"
+    // =====================================================
+
+    const mismoVehiculo =
+        document.getElementById(
+            'consultaAntecedenteMismoVehiculo'
+        );
+
+    if (mismoVehiculo) {
+        mismoVehiculo.style.display = 'none';
+    }
+
+    ponerTextoPrecio(
+        'consultaAntecedenteMismoVehiculoMeta',
+        '-'
     );
 
-if (mismoVehiculo) {
-    mismoVehiculo.classList.remove(
-        'visible'
-    );
-}
-
-ponerTextoPrecio(
-    'consultaAntecedenteMismoVehiculoMeta',
-    '-'
-);
-
-ponerTextoPrecio(
-    'consultaAntecedenteMismoVehiculoDescripcion',
-    '',
-    ''
-);
-
-ponerTextoPrecio(
-    'consultaAntecedenteMismoVehiculoPrecio',
-    '-'
-);
-
-const botonMismoVehiculo =
-    document.getElementById(
-        'btnAplicarAntecedenteMismoVehiculo'
+    ponerTextoPrecio(
+        'consultaAntecedenteMismoVehiculoDescripcion',
+        '',
+        ''
     );
 
-if (botonMismoVehiculo) {
-    botonMismoVehiculo.disabled = true;
-    botonMismoVehiculo.dataset.precio = '';
-    botonMismoVehiculo.textContent = 'Aplicar';
+    ponerTextoPrecio(
+        'consultaAntecedenteMismoVehiculoPrecio',
+        '-'
+    );
+
+    const botonMismoVehiculo =
+        document.getElementById(
+            'btnAplicarAntecedenteMismoVehiculo'
+        );
+
+    if (botonMismoVehiculo) {
+        botonMismoVehiculo.disabled = true;
+        botonMismoVehiculo.dataset.precio = '';
+        botonMismoVehiculo.textContent = 'Aplicar';
+    }
 }
 function ponerModalPrecioContenido() {
 
@@ -2324,14 +2324,157 @@ function renderCatalogoConsultaPrecio(
 // =========================================================
 // ÚLTIMO ANTECEDENTE DEL MISMO VEHÍCULO
 // =========================================================
+function obtenerOCrearAntecedenteMismoVehiculo() {
+
+    let box =
+        document.getElementById(
+            'consultaAntecedenteMismoVehiculo'
+        );
+
+    if (box) {
+        return box;
+    }
+
+
+    const sugerencia =
+        document.querySelector(
+            '#modalConsultaPrecios ' +
+            '.consulta-precios-sugerencia'
+        );
+
+    if (!sugerencia) {
+        return null;
+    }
+
+
+    box =
+        document.createElement(
+            'div'
+        );
+
+    box.id =
+        'consultaAntecedenteMismoVehiculo';
+
+    box.style.cssText = `
+        display: none;
+        margin: 0 0 12px;
+        padding: 9px 11px;
+        border: 1px solid rgba(0, 113, 227, 0.20);
+        border-radius: 10px;
+        background: rgba(0, 113, 227, 0.05);
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    `;
+
+
+    box.innerHTML = `
+        <div
+            style="
+                min-width:0;
+                flex:1;
+            "
+        >
+
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:5px;
+                    margin-bottom:3px;
+                    color:#0071e3;
+                    font-size:0.64rem;
+                    font-weight:800;
+                    text-transform:uppercase;
+                "
+            >
+                <i class="bi bi-car-front"></i>
+                Último en este vehículo
+            </div>
+
+
+            <div
+                id="consultaAntecedenteMismoVehiculoMeta"
+                style="
+                    color:#111111;
+                    font-size:0.70rem;
+                    font-weight:700;
+                    line-height:1.3;
+                "
+            >
+                -
+            </div>
+
+
+            <div
+                id="consultaAntecedenteMismoVehiculoDescripcion"
+                style="
+                    margin-top:2px;
+                    color:#6e6e73;
+                    font-size:0.64rem;
+                    line-height:1.3;
+                "
+            >
+            </div>
+
+        </div>
+
+
+        <div
+            style="
+                flex:0 0 auto;
+                display:flex;
+                align-items:center;
+                gap:8px;
+            "
+        >
+
+            <div
+                id="consultaAntecedenteMismoVehiculoPrecio"
+                style="
+                    color:#111111;
+                    font-size:0.96rem;
+                    font-weight:800;
+                    white-space:nowrap;
+                "
+            >
+                -
+            </div>
+
+
+            <button
+                type="button"
+                id="btnAplicarAntecedenteMismoVehiculo"
+                class="
+                    consulta-btn-aplicar-item
+                    btn-aplicar-precio-historico
+                "
+                data-precio=""
+                disabled
+            >
+                Aplicar
+            </button>
+
+        </div>
+    `;
+
+
+    sugerencia.insertAdjacentElement(
+        'afterend',
+        box
+    );
+
+
+    return box;
+}
+
+
 function renderAntecedenteMismoVehiculo(
     antecedente
 ) {
 
     const box =
-        document.getElementById(
-            'consultaAntecedenteMismoVehiculo'
-        );
+        obtenerOCrearAntecedenteMismoVehiculo();
 
     if (!box) {
         return;
@@ -2344,24 +2487,16 @@ function renderAntecedenteMismoVehiculo(
         );
 
 
-    // =====================================================
-    // SIN ANTECEDENTE
-    // =====================================================
-
     if (
         !antecedente ||
-        typeof antecedente !==
-            'object'
+        typeof antecedente !== 'object'
     ) {
 
-        box.classList.remove(
-            'visible'
-        );
+        box.style.display = 'none';
 
         if (boton) {
             boton.disabled = true;
             boton.dataset.precio = '';
-            boton.textContent = 'Aplicar';
         }
 
         return;
@@ -2380,23 +2515,16 @@ function renderAntecedenteMismoVehiculo(
         precio <= 0
     ) {
 
-        box.classList.remove(
-            'visible'
-        );
+        box.style.display = 'none';
 
         if (boton) {
             boton.disabled = true;
             boton.dataset.precio = '';
-            boton.textContent = 'Aplicar';
         }
 
         return;
     }
 
-
-    // =====================================================
-    // DATOS
-    // =====================================================
 
     const numeroOrden =
         textoSeguroPrecio(
@@ -2405,10 +2533,12 @@ function renderAntecedenteMismoVehiculo(
             'OT sin número'
         );
 
+
     const fecha =
         fechaPrecio(
             antecedente.fecha
         );
+
 
     const kilometraje = (
         antecedente.kilometraje !== null &&
@@ -2420,6 +2550,7 @@ function renderAntecedenteMismoVehiculo(
         )
         : '';
 
+
     const sucursal =
         textoSeguroPrecio(
             antecedente.sucursal ||
@@ -2427,17 +2558,20 @@ function renderAntecedenteMismoVehiculo(
             ''
         );
 
+
     const placa =
         textoSeguroPrecio(
             antecedente.placa ||
             ''
         );
 
+
     const descripcion =
         textoSeguroPrecio(
             antecedente.descripcion ||
             ''
         );
+
 
     const referencia =
         textoSeguroPrecio(
@@ -2449,9 +2583,7 @@ function renderAntecedenteMismoVehiculo(
 
     const metadatos = [
         numeroOrden,
-        fecha !== '-'
-            ? fecha
-            : '',
+        fecha !== '-' ? fecha : '',
         kilometraje,
         sucursal
     ]
@@ -2472,20 +2604,18 @@ function renderAntecedenteMismoVehiculo(
         .join(' · ');
 
 
-    // =====================================================
-    // PINTAR
-    // =====================================================
-
     ponerTextoPrecio(
         'consultaAntecedenteMismoVehiculoMeta',
         metadatos
     );
+
 
     ponerTextoPrecio(
         'consultaAntecedenteMismoVehiculoDescripcion',
         detalle,
         ''
     );
+
 
     ponerTextoPrecio(
         'consultaAntecedenteMismoVehiculoPrecio',
@@ -2495,25 +2625,40 @@ function renderAntecedenteMismoVehiculo(
     );
 
 
+    const modal =
+        obtenerModalConsultaPrecios();
+
+
+    const puedeEditar =
+        String(
+            modal?.dataset?.puedeEditar ||
+            ''
+        ).toLowerCase() === 'true';
+
+
     if (boton) {
 
-        boton.disabled = false;
+        boton.style.display =
+            puedeEditar
+                ? ''
+                : 'none';
+
+        boton.disabled =
+            !puedeEditar;
 
         boton.dataset.precio =
-            String(
-                precio
-            );
+            puedeEditar
+                ? String(precio)
+                : '';
 
         boton.textContent =
             `Aplicar ${dineroPrecio(precio)}`;
     }
 
 
-    box.classList.add(
-        'visible'
-    );
+    box.style.display =
+        'flex';
 }
-
 // =========================================================
 // COINCIDENCIAS
 // =========================================================
