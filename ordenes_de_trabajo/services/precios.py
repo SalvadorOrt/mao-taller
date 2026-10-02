@@ -2793,6 +2793,68 @@ def calcular_similitud_repuesto_actual(
 
 
 # ==========================================================
+# PRECIO UNITARIO HISTÓRICO DE REPUESTO
+# ==========================================================
+
+
+def obtener_precio_unitario_historico_repuesto(
+    item,
+):
+    """
+    Obtiene el P.U. utilizable de un repuesto histórico.
+
+    Regla:
+    1. Si precio_unitario existe y es > 0, usarlo.
+    2. Si no existe, pero subtotal > 0 y cantidad > 0:
+           P.U. = subtotal / cantidad
+    3. En cualquier otro caso, no existe un precio válido.
+
+    Esto permite recuperar correctamente históricos migrados
+    donde Getsoft guardó cantidad y subtotal, pero dejó
+    precio_unitario en NULL.
+    """
+
+    precio = decimal_seguro(
+        getattr(
+            item,
+            "precio_unitario",
+            None,
+        )
+    )
+
+    if precio > CERO:
+        return decimal_dos(
+            precio
+        )
+
+    cantidad = decimal_seguro(
+        getattr(
+            item,
+            "cantidad",
+            None,
+        )
+    )
+
+    subtotal = decimal_seguro(
+        getattr(
+            item,
+            "subtotal",
+            None,
+        )
+    )
+
+    if (
+        cantidad > CERO
+        and subtotal > CERO
+    ):
+        return decimal_dos(
+            subtotal / cantidad
+        )
+
+    return None
+
+
+# ==========================================================
 
 # PUNTUACIÓN REPUESTO HISTÓRICO
 
@@ -3280,15 +3342,33 @@ def buscar_repuestos(
 
         )
 
-        .exclude(
+        .filter(
 
-            precio_unitario__isnull=True
+            Q(
 
-        )
+                precio_unitario__gt=CERO
 
-        .exclude(
+            )
 
-            precio_unitario__lte=CERO
+            |
+
+            (
+
+                Q(
+
+                    subtotal__gt=CERO
+
+                )
+
+                &
+
+                Q(
+
+                    cantidad__gt=CERO
+
+                )
+
+            )
 
         )
 
@@ -3309,6 +3389,34 @@ def buscar_repuestos(
             item.orden_id
 
             == orden_actual.pk
+
+        ):
+
+            continue
+
+
+
+        precio_unitario_historico = (
+
+            obtener_precio_unitario_historico_repuesto(
+
+                item
+
+            )
+
+        )
+
+
+
+        if (
+
+            precio_unitario_historico
+
+            is None
+
+            or precio_unitario_historico
+
+            <= CERO
 
         ):
 
@@ -3378,7 +3486,7 @@ def buscar_repuestos(
 
                 precio_unitario=(
 
-                    item.precio_unitario
+                    precio_unitario_historico
 
                 ),
 
