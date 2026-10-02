@@ -1614,17 +1614,33 @@ async function consultarPrecioFila(
             );
 
 
-        let respuestaJson;
+        const respuestaTexto =
+        await respuesta.text();
+
+        let respuestaJson = null;
 
         try {
 
             respuestaJson =
-                await respuesta.json();
+                respuestaTexto
+                    ? JSON.parse(respuestaTexto)
+                    : {};
 
         } catch (error) {
 
+            console.error(
+                'Respuesta no JSON del servidor:',
+                {
+                    status: respuesta.status,
+                    statusText: respuesta.statusText,
+                    url: respuesta.url,
+                    contenido: respuestaTexto
+                }
+            );
+
             throw new Error(
-                'El servidor devolvió una respuesta no válida.'
+                `El servidor respondió HTTP ${respuesta.status}. ` +
+                `Revise la consola o el log de Django.`
             );
         }
 
