@@ -4851,20 +4851,20 @@ def calcular_sugerencia(
     Calcula la sugerencia histórica.
 
     REGLA MAO:
-    El precio sugerido será el PRECIO MÁS ALTO
-    registrado entre los antecedentes comparables.
+    - Primero toma únicamente antecedentes realmente comparables.
+    - Los resultados ya llegan ordenados por similitud y fecha.
+    - De esos antecedentes se usan como máximo los
+      MAXIMO_COMPARABLES_SUGERENCIA más parecidos.
+    - El precio sugerido es el PRECIO MÁS ALTO registrado
+      dentro de ese grupo principal.
 
-    Solo se consideran antecedentes que:
-    - tengan similitud suficiente
-    - tengan precio mayor que cero
+    Esto evita que un precio extremo de una coincidencia lejana,
+    por ejemplo $280 para un filtro de aire, se convierta en la
+    sugerencia solo por estar dentro de miles de coincidencias.
 
-    La mediana y el promedio se mantienen únicamente
-    como información estadística para el modal.
+    La mediana y el promedio se conservan únicamente como
+    información estadística para el modal.
     """
-
-    # ======================================================
-    # ANTECEDENTES COMPARABLES
-    # ======================================================
 
     comparables = [
         fila
@@ -4888,12 +4888,7 @@ def calcular_sugerencia(
         )
     ]
 
-    # ======================================================
-    # SIN ANTECEDENTES
-    # ======================================================
-
     if not comparables:
-
         return {
             "precio_sugerido": None,
             "confianza": "BAJA",
@@ -4906,15 +4901,11 @@ def calcular_sugerencia(
             "mejor_similitud": None,
         }
 
-    # ======================================================
-    # PRINCIPALES PARA ESTADÍSTICAS
-    # ======================================================
-
     principales = comparables[
         :MAXIMO_COMPARABLES_SUGERENCIA
     ]
 
-    precios_principales = [
+    precios = [
         decimal_seguro(
             fila[
                 "precio_unitario"
@@ -4924,59 +4915,25 @@ def calcular_sugerencia(
         in principales
     ]
 
-    # ======================================================
-    # TODOS LOS PRECIOS COMPARABLES
-    # ======================================================
-
-    precios_comparables = [
-        decimal_seguro(
-            fila[
-                "precio_unitario"
-            ]
-        )
-        for fila
-        in comparables
-    ]
-
-    # ======================================================
-    # PRECIO SUGERIDO = EL MÁS ALTO REGISTRADO
-    # ======================================================
-
-    precio_maximo = decimal_dos(
+    sugerido = decimal_dos(
         max(
-            precios_comparables
+            precios
         )
     )
-
-    # ======================================================
-    # MEDIANA SOLO INFORMATIVA
-    # ======================================================
 
     mediana = mediana_ponderada(
         principales
     )
 
-    # ======================================================
-    # PROMEDIO SOLO INFORMATIVO
-    # ======================================================
-
     promedio = promedio_ponderado(
         principales
     )
-
-    # ======================================================
-    # MEJOR SIMILITUD
-    # ======================================================
 
     mejor_similitud = (
         principales[0][
             "similitud"
         ]
     )
-
-    # ======================================================
-    # CONFIANZA
-    # ======================================================
 
     if (
         len(principales) >= 5
@@ -4993,12 +4950,8 @@ def calcular_sugerencia(
     else:
         confianza = "BAJA"
 
-    # ======================================================
-    # ÚLTIMO PRECIO REGISTRADO
-    # ======================================================
-
     por_fecha = sorted(
-        comparables,
+        principales,
         key=lambda fila: (
             fila["fecha"]
             or date.min
@@ -5014,13 +4967,9 @@ def calcular_sugerencia(
         else None
     )
 
-    # ======================================================
-    # RESPUESTA
-    # ======================================================
-
     return {
         "precio_sugerido": (
-            precio_maximo
+            sugerido
         ),
 
         "confianza": (
@@ -5028,7 +4977,7 @@ def calcular_sugerencia(
         ),
 
         "cantidad_comparables": (
-            len(comparables)
+            len(principales)
         ),
 
         "mediana": (
@@ -5041,299 +4990,29 @@ def calcular_sugerencia(
 
         "minimo": decimal_dos(
             min(
-                precios_comparables
+                precios
             )
-        ),
-
-        "maximo": (
-            precio_maximo
-        ),
-
-        "ultimo_precio": (
-            ultimo_precio
-        ),
-
-        "mejor_similitud": (
-            mejor_similitud
-        ),
-    }
-
-    comparables = [
-
-        fila
-
-        for fila in resultados
-
-        if (
-
-            fila.get(
-
-                "similitud",
-
-                0,
-
-            )
-
-            >= UMBRAL_COMPARABLE
-
-            and fila.get(
-
-                "precio_unitario"
-
-            )
-
-            is not None
-
-            and decimal_seguro(
-
-                fila.get(
-
-                    "precio_unitario"
-
-                )
-
-            )
-
-            > CERO
-
-        )
-
-    ]
-
-
-
-    if not comparables:
-
-
-
-        return {
-
-            "precio_sugerido": None,
-
-            "confianza": "BAJA",
-
-            "cantidad_comparables": 0,
-
-            "mediana": None,
-
-            "promedio_ponderado": None,
-
-            "minimo": None,
-
-            "maximo": None,
-
-            "ultimo_precio": None,
-
-            "mejor_similitud": None,
-
-        }
-
-
-
-    principales = comparables[
-
-        :MAXIMO_COMPARABLES_SUGERENCIA
-
-    ]
-
-
-
-    precios = [
-
-        decimal_seguro(
-
-            fila[
-
-                "precio_unitario"
-
-            ]
-
-        )
-
-        for fila
-
-        in principales
-
-    ]
-
-
-
-    sugerido = mediana_ponderada(
-
-        principales
-
-    )
-
-
-
-    promedio = promedio_ponderado(
-
-        principales
-
-    )
-
-
-
-    mejor_similitud = (
-
-        principales[0][
-
-            "similitud"
-
-        ]
-
-    )
-
-
-
-    # ------------------------------------------------------
-
-    # CONFIANZA
-
-    # ------------------------------------------------------
-
-
-
-    if (
-
-        len(principales) >= 5
-
-        and mejor_similitud >= 80
-
-    ):
-
-        confianza = "ALTA"
-
-
-
-    elif (
-
-        len(principales) >= 2
-
-        and mejor_similitud >= 70
-
-    ):
-
-        confianza = "MEDIA"
-
-
-
-    else:
-
-        confianza = "BAJA"
-
-
-
-    # ------------------------------------------------------
-
-    # ÚLTIMO PRECIO ENTRE CASOS COMPARABLES
-
-    # ------------------------------------------------------
-
-
-
-    por_fecha = sorted(
-
-        principales,
-
-        key=lambda fila: (
-
-            fila["fecha"]
-
-            or date.min
-
-        ),
-
-        reverse=True,
-
-    )
-
-
-
-    ultimo_precio = (
-
-        por_fecha[0][
-
-            "precio_unitario"
-
-        ]
-
-        if por_fecha
-
-        else None
-
-    )
-
-
-
-    return {
-
-        "precio_sugerido": (
-
-            sugerido
-
-        ),
-
-        "confianza": (
-
-            confianza
-
-        ),
-
-        "cantidad_comparables": (
-
-            len(principales)
-
-        ),
-
-        "mediana": (
-
-            sugerido
-
-        ),
-
-        "promedio_ponderado": (
-
-            promedio
-
-        ),
-
-        "minimo": decimal_dos(
-
-            min(precios)
-
         ),
 
         "maximo": decimal_dos(
-
-            max(precios)
-
+            max(
+                precios
+            )
         ),
 
         "ultimo_precio": (
-
             ultimo_precio
-
         ),
 
         "mejor_similitud": (
-
             mejor_similitud
-
         ),
-
     }
 
 
-
-
-
 # ==========================================================
-
 # DATOS DE CONTEXTO DE LA OT
-
 # ==========================================================
-
 
 
 def obtener_contexto_orden(
