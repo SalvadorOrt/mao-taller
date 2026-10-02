@@ -2,29 +2,59 @@
 
 
 
+
+
+
+
 <style>
+
+
 
     /* =========================================================
 
+
+
        MODAL CONSULTA DE PRECIOS
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     #modalConsultaPrecios {
+
+
 
         display: none;
 
+
+
         position: fixed;
+
+
 
         inset: 0;
 
 
 
+
+
+
+
         width: 100%;
 
+
+
         height: 100%;
+
+
+
+
 
 
 
@@ -32,13 +62,27 @@
 
 
 
+
+
+
+
         z-index: 10050;
+
+
+
+
 
 
 
         justify-content: center;
 
+
+
         align-items: center;
+
+
+
+
 
 
 
@@ -46,11 +90,21 @@
 
 
 
+
+
+
+
         padding: 20px;
 
 
 
+
+
+
+
         box-sizing: border-box;
+
+
 
     }
 
@@ -58,15 +112,33 @@
 
 
 
+
+
+
+
+
+
     .consulta-precios-dialog {
+
+
 
         background: #ffffff;
 
 
 
+
+
+
+
         width: 100%;
 
+
+
         max-width: 900px;
+
+
+
+
 
 
 
@@ -74,7 +146,15 @@
 
 
 
+
+
+
+
         border-radius: 20px;
+
+
+
+
 
 
 
@@ -82,19 +162,41 @@
 
 
 
+
+
+
+
         display: flex;
+
+
 
         flex-direction: column;
 
 
 
+
+
+
+
         box-shadow:
+
+
 
             0 20px 50px
 
+
+
             rgba(0, 0, 0, 0.30);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -102,29 +204,57 @@
 
     /* =========================================================
 
+
+
        HEADER
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-header {
+
+
 
         padding: 15px 25px;
 
 
 
+
+
+
+
         border-bottom:
+
+
 
             1px solid var(--border-soft);
 
 
 
+
+
+
+
         display: flex;
+
+
 
         justify-content: space-between;
 
+
+
         align-items: center;
+
+
+
+
 
 
 
@@ -132,9 +262,21 @@
 
 
 
+
+
+
+
         background: var(--head);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -142,19 +284,39 @@
 
     .consulta-precios-header-left {
 
+
+
         min-width: 0;
+
+
+
+
 
 
 
         display: flex;
 
+
+
         align-items: center;
+
+
+
+
 
 
 
         gap: 11px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -162,9 +324,17 @@
 
     .consulta-precios-icono {
 
+
+
         width: 38px;
 
+
+
         height: 38px;
+
+
+
+
 
 
 
@@ -172,11 +342,23 @@
 
 
 
+
+
+
+
         display: flex;
+
+
 
         align-items: center;
 
+
+
         justify-content: center;
+
+
+
+
 
 
 
@@ -184,9 +366,19 @@
 
 
 
+
+
+
+
         background:
 
+
+
             rgba(0, 113, 227, 0.10);
+
+
+
+
 
 
 
@@ -194,9 +386,21 @@
 
 
 
+
+
+
+
         font-size: 1.05rem;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -204,9 +408,19 @@
 
     .consulta-precios-titulo-wrap {
 
+
+
         min-width: 0;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -214,19 +428,39 @@
 
     .consulta-precios-titulo {
 
+
+
         margin: 0;
+
+
+
+
 
 
 
         font-size: 1.2rem;
 
+
+
         font-weight: 700;
+
+
+
+
 
 
 
         color: var(--primary);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -234,7 +468,13 @@
 
     .consulta-precios-subtitulo {
 
+
+
         margin-top: 2px;
+
+
+
+
 
 
 
@@ -242,9 +482,17 @@
 
 
 
+
+
+
+
         font-size: 0.74rem;
 
+
+
         font-weight: 600;
+
+
 
     }
 
@@ -252,11 +500,25 @@
 
 
 
+
+
+
+
+
+
     .consulta-precios-cerrar {
+
+
 
         background: none;
 
+
+
         border: none;
+
+
+
+
 
 
 
@@ -264,7 +526,15 @@
 
 
 
+
+
+
+
         cursor: pointer;
+
+
+
+
 
 
 
@@ -272,7 +542,15 @@
 
 
 
+
+
+
+
         padding: 4px 7px;
+
+
+
+
 
 
 
@@ -280,17 +558,37 @@
 
 
 
+
+
+
+
         line-height: 1;
+
+
+
+
 
 
 
         transition:
 
-            *background* 0.15s ease,
+
+
+            background 0.15s ease,
+
+
 
             color 0.15s ease;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -298,9 +596,15 @@
 
     .consulta-precios-cerrar:hover {
 
+
+
         background: #f2f2f7;
 
+
+
         color: #111111;
+
+
 
     }
 
@@ -308,17 +612,37 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        CUERPO
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-body {
 
+
+
         overflow-y: auto;
+
+
+
+
 
 
 
@@ -326,11 +650,21 @@
 
 
 
+
+
+
+
         margin: 0;
 
 
 
+
+
+
+
         background: #ffffff;
+
+
 
     }
 
@@ -338,17 +672,37 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        ESTADO DE CARGA
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-cargando {
 
+
+
         display: none;
+
+
+
+
 
 
 
@@ -356,7 +710,13 @@
 
 
 
+
+
+
+
         text-align: center;
+
+
 
     }
 
@@ -364,11 +724,25 @@
 
 
 
+
+
+
+
+
+
     .consulta-precios-spinner {
+
+
 
         width: 36px;
 
+
+
         height: 36px;
+
+
+
+
 
 
 
@@ -376,15 +750,31 @@
 
 
 
+
+
+
+
         border:
+
+
 
             3px solid #e5e5ea;
 
 
 
+
+
+
+
         border-top-color:
 
+
+
             #0071e3;
+
+
+
+
 
 
 
@@ -392,13 +782,29 @@
 
 
 
+
+
+
+
         animation:
+
+
 
             consultaPrecioGirar
 
+
+
             0.8s linear infinite;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -406,13 +812,27 @@
 
     @keyframes consultaPrecioGirar {
 
+
+
         to {
+
+
 
             transform: rotate(360deg);
 
+
+
         }
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -420,13 +840,23 @@
 
     .consulta-precios-cargando-texto {
 
+
+
         color: var(--muted);
+
+
+
+
 
 
 
         font-size: 0.85rem;
 
+
+
         font-weight: 600;
+
+
 
     }
 
@@ -434,21 +864,45 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        ERROR
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-error {
+
+
 
         display: none;
 
 
 
+
+
+
+
         padding: 14px 15px;
+
+
+
+
 
 
 
@@ -456,19 +910,39 @@
 
 
 
+
+
+
+
         border:
+
+
 
             1px solid rgba(
 
+
+
                 255,
+
+
 
                 59,
 
+
+
                 48,
+
+
 
                 0.22
 
+
+
             );
+
+
+
+
 
 
 
@@ -476,19 +950,39 @@
 
 
 
+
+
+
+
         background:
+
+
 
             rgba(
 
+
+
                 255,
+
+
 
                 59,
 
+
+
                 48,
+
+
 
                 0.07
 
+
+
             );
+
+
+
+
 
 
 
@@ -496,13 +990,25 @@
 
 
 
+
+
+
+
         font-size: 0.82rem;
+
+
 
         font-weight: 600;
 
 
 
+
+
+
+
         line-height: 1.45;
+
+
 
     }
 
@@ -510,17 +1016,35 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
+
+
 
        CONTENIDO
 
+
+
     ========================================================= */
+
+
+
+
 
 
 
     #consultaPreciosContenido {
 
+
+
         display: none;
+
+
 
     }
 
@@ -528,17 +1052,37 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        ARTÍCULO CONSULTADO
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-item-box {
 
+
+
         margin-bottom: 20px;
+
+
+
+
 
 
 
@@ -546,11 +1090,23 @@
 
 
 
+
+
+
+
         border:
+
+
 
             1px solid
 
+
+
             var(--border-soft);
+
+
+
+
 
 
 
@@ -558,7 +1114,13 @@
 
 
 
+
+
+
+
         overflow: hidden;
+
+
 
     }
 
@@ -566,17 +1128,37 @@
 
 
 
+
+
+
+
+
+
     .consulta-precios-item-top {
+
+
 
         padding: 14px 15px;
 
 
 
+
+
+
+
         display: flex;
+
+
 
         justify-content: space-between;
 
+
+
         align-items: flex-start;
+
+
+
+
 
 
 
@@ -584,9 +1166,21 @@
 
 
 
+
+
+
+
         background: #ffffff;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -594,11 +1188,23 @@
 
     .consulta-precios-item-info {
 
+
+
         min-width: 0;
+
+
 
         flex: 1;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -606,7 +1212,13 @@
 
     .consulta-precios-label {
 
+
+
         display: block;
+
+
+
+
 
 
 
@@ -614,11 +1226,23 @@
 
 
 
+
+
+
+
         font-size: 0.66rem;
 
 
 
+
+
+
+
         color: var(--muted);
+
+
+
+
 
 
 
@@ -626,13 +1250,29 @@
 
 
 
+
+
+
+
         font-weight: 800;
+
+
+
+
 
 
 
         letter-spacing: 0.04em;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -640,19 +1280,39 @@
 
     .consulta-precios-item-nombre {
 
+
+
         color: #111111;
+
+
+
+
 
 
 
         font-size: 0.97rem;
 
+
+
         font-weight: 800;
+
+
+
+
 
 
 
         overflow-wrap: anywhere;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -660,7 +1320,13 @@
 
     .consulta-precios-item-codigo {
 
+
+
         margin-top: 3px;
+
+
+
+
 
 
 
@@ -668,15 +1334,33 @@
 
 
 
+
+
+
+
         font-size: 0.75rem;
+
+
 
         font-weight: 600;
 
 
 
+
+
+
+
         overflow-wrap: anywhere;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -684,13 +1368,25 @@
 
     .consulta-precios-tipo-badge {
 
+
+
         flex: 0 0 auto;
+
+
+
+
 
 
 
         display: inline-flex;
 
+
+
         align-items: center;
+
+
+
+
 
 
 
@@ -698,7 +1394,15 @@
 
 
 
+
+
+
+
         padding: 5px 9px;
+
+
+
+
 
 
 
@@ -706,17 +1410,35 @@
 
 
 
+
+
+
+
         background:
+
+
 
             rgba(0, 113, 227, 0.08);
 
 
 
+
+
+
+
         border:
+
+
 
             1px solid
 
+
+
             rgba(0, 113, 227, 0.18);
+
+
+
+
 
 
 
@@ -724,11 +1446,25 @@
 
 
 
+
+
+
+
         font-size: 0.67rem;
+
+
 
         font-weight: 800;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -736,23 +1472,45 @@
 
     /* =========================================================
 
+
+
        VEHÍCULO ACTUAL
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-contexto {
+
+
 
         padding: 12px 15px;
 
 
 
+
+
+
+
         border-top:
+
+
 
             1px solid
 
+
+
             var(--border-soft);
+
+
+
+
 
 
 
@@ -760,15 +1518,31 @@
 
 
 
+
+
+
+
         grid-template-columns:
+
+
 
             2fr
 
+
+
             0.7fr
+
+
 
             1fr
 
+
+
             1fr;
+
+
+
+
 
 
 
@@ -776,9 +1550,21 @@
 
 
 
+
+
+
+
         background: #fbfbfd;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -786,9 +1572,19 @@
 
     .consulta-contexto-item {
 
+
+
         min-width: 0;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -796,17 +1592,31 @@
 
     .consulta-contexto-valor {
 
+
+
         color: #111111;
+
+
+
+
 
 
 
         font-size: 0.80rem;
 
+
+
         font-weight: 700;
 
 
 
+
+
+
+
         overflow-wrap: anywhere;
+
+
 
     }
 
@@ -814,21 +1624,45 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        PROCEDIMIENTOS
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-procedimientos-box {
+
+
 
         display: none;
 
 
 
+
+
+
+
         margin-bottom: 20px;
+
+
+
+
 
 
 
@@ -836,21 +1670,45 @@
 
 
 
+
+
+
+
         background: #fbfbfd;
+
+
+
+
 
 
 
         border:
 
+
+
             1px solid
+
+
 
             var(--border-soft);
 
 
 
+
+
+
+
         border-radius: 12px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -858,7 +1716,13 @@
 
     .consulta-procedimientos-lista {
 
+
+
         display: grid;
+
+
+
+
 
 
 
@@ -866,7 +1730,13 @@
 
 
 
+
+
+
+
         margin-top: 9px;
+
+
 
     }
 
@@ -874,9 +1744,21 @@
 
 
 
+
+
+
+
+
+
     .consulta-procedimiento-item {
 
+
+
         display: flex;
+
+
+
+
 
 
 
@@ -884,7 +1766,15 @@
 
 
 
+
+
+
+
         gap: 8px;
+
+
+
+
 
 
 
@@ -892,17 +1782,35 @@
 
 
 
+
+
+
+
         background: #ffffff;
+
+
+
+
 
 
 
         border:
 
+
+
             1px solid #e5e5ea;
 
 
 
+
+
+
+
         border-radius: 9px;
+
+
+
+
 
 
 
@@ -910,15 +1818,33 @@
 
 
 
+
+
+
+
         font-size: 0.78rem;
+
+
 
         font-weight: 600;
 
 
 
+
+
+
+
         line-height: 1.35;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -926,7 +1852,13 @@
 
     .consulta-procedimiento-check {
 
+
+
         flex: 0 0 auto;
+
+
+
+
 
 
 
@@ -934,11 +1866,21 @@
 
 
 
+
+
+
+
         font-size: 0.8rem;
 
 
 
+
+
+
+
         margin-top: 1px;
+
+
 
     }
 
@@ -946,17 +1888,37 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        PRECIO SUGERIDO
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-sugerencia {
 
+
+
         margin-bottom: 20px;
+
+
+
+
 
 
 
@@ -964,29 +1926,59 @@
 
 
 
+
+
+
+
         border-radius: 16px;
+
+
+
+
 
 
 
         border:
 
+
+
             1px solid
+
+
 
             rgba(0, 113, 227, 0.20);
 
 
 
+
+
+
+
         background:
+
+
 
             linear-gradient(
 
+
+
                 135deg,
+
+
 
                 rgba(0, 113, 227, 0.08),
 
+
+
                 rgba(0, 113, 227, 0.025)
 
+
+
             );
+
+
+
+
 
 
 
@@ -994,9 +1986,19 @@
 
 
 
+
+
+
+
         grid-template-columns:
 
+
+
             1fr auto;
+
+
+
+
 
 
 
@@ -1004,7 +2006,13 @@
 
 
 
+
+
+
+
         gap: 20px;
+
+
 
     }
 
@@ -1012,19 +2020,41 @@
 
 
 
+
+
+
+
+
+
     .consulta-sugerencia-caption {
+
+
 
         color: #0071e3;
 
 
 
+
+
+
+
         font-size: 0.70rem;
+
+
 
         font-weight: 800;
 
 
 
+
+
+
+
         text-transform: uppercase;
+
+
+
+
 
 
 
@@ -1032,9 +2062,21 @@
 
 
 
+
+
+
+
         margin-bottom: 5px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1042,17 +2084,31 @@
 
     .consulta-sugerencia-precio {
 
+
+
         color: #111111;
+
+
+
+
 
 
 
         font-size: 2.15rem;
 
+
+
         font-weight: 800;
 
 
 
+
+
+
+
         line-height: 1;
+
+
 
     }
 
@@ -1060,13 +2116,29 @@
 
 
 
+
+
+
+
+
+
     .consulta-sugerencia-ayuda {
+
+
 
         margin-top: 7px;
 
 
 
+
+
+
+
         color: var(--muted);
+
+
+
+
 
 
 
@@ -1074,7 +2146,13 @@
 
 
 
+
+
+
+
         line-height: 1.4;
+
+
 
     }
 
@@ -1082,11 +2160,25 @@
 
 
 
+
+
+
+
+
+
     .consulta-sugerencia-lado {
+
+
 
         display: flex;
 
+
+
         flex-direction: column;
+
+
+
+
 
 
 
@@ -1094,7 +2186,13 @@
 
 
 
+
+
+
+
         gap: 8px;
+
+
 
     }
 
@@ -1102,9 +2200,21 @@
 
 
 
+
+
+
+
+
+
     .consulta-confianza-badge {
 
+
+
         display: inline-flex;
+
+
+
+
 
 
 
@@ -1112,7 +2222,15 @@
 
 
 
+
+
+
+
         gap: 6px;
+
+
+
+
 
 
 
@@ -1120,7 +2238,15 @@
 
 
 
+
+
+
+
         border-radius: 999px;
+
+
+
+
 
 
 
@@ -1128,7 +2254,15 @@
 
 
 
+
+
+
+
         border: 1px solid #d2d2d7;
+
+
+
+
 
 
 
@@ -1136,11 +2270,25 @@
 
 
 
+
+
+
+
         font-size: 0.70rem;
+
+
 
         font-weight: 800;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1148,21 +2296,43 @@
 
     .consulta-confianza-badge.alta {
 
+
+
         color: #248a3d;
+
+
+
+
 
 
 
         background:
 
+
+
             rgba(52, 199, 89, 0.10);
+
+
+
+
 
 
 
         border-color:
 
+
+
             rgba(52, 199, 89, 0.28);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1170,21 +2340,43 @@
 
     .consulta-confianza-badge.media {
 
+
+
         color: #b26a00;
+
+
+
+
 
 
 
         background:
 
+
+
             rgba(255, 149, 0, 0.10);
+
+
+
+
 
 
 
         border-color:
 
+
+
             rgba(255, 149, 0, 0.28);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1192,19 +2384,35 @@
 
     .consulta-confianza-badge.baja {
 
+
+
         color: #c62828;
+
+
+
+
 
 
 
         background:
 
+
+
             rgba(255, 59, 48, 0.08);
+
+
+
+
 
 
 
         border-color:
 
+
+
             rgba(255, 59, 48, 0.22);
+
+
 
     }
 
@@ -1212,17 +2420,37 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        SECCIÓN
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-seccion {
 
+
+
         margin-bottom: 20px;
+
+
+
+
 
 
 
@@ -1230,11 +2458,23 @@
 
 
 
+
+
+
+
         border:
+
+
 
             1px solid
 
+
+
             var(--border-soft);
+
+
+
+
 
 
 
@@ -1242,9 +2482,21 @@
 
 
 
+
+
+
+
         overflow: hidden;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1252,15 +2504,29 @@
 
     .consulta-seccion-header {
 
+
+
         padding: 11px 14px;
+
+
+
+
 
 
 
         display: flex;
 
+
+
         justify-content: space-between;
 
+
+
         align-items: center;
+
+
+
+
 
 
 
@@ -1268,17 +2534,37 @@
 
 
 
+
+
+
+
         border-bottom:
 
+
+
             1px solid
+
+
 
             var(--border-soft);
 
 
 
+
+
+
+
         background: #ffffff;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1286,15 +2572,31 @@
 
     .consulta-seccion-titulo {
 
+
+
         color: #111111;
+
+
+
+
 
 
 
         font-size: 0.80rem;
 
+
+
         font-weight: 800;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1302,15 +2604,31 @@
 
     .consulta-seccion-subtitulo {
 
+
+
         color: var(--muted);
+
+
+
+
 
 
 
         font-size: 0.68rem;
 
+
+
         font-weight: 600;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1318,21 +2636,41 @@
 
     /* =========================================================
 
+
+
        MÉTRICAS
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-metricas {
+
+
 
         display: grid;
 
 
 
+
+
+
+
         grid-template-columns:
 
+
+
             repeat(4, 1fr);
+
+
+
+
 
 
 
@@ -1340,9 +2678,21 @@
 
 
 
+
+
+
+
         padding: 14px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1350,7 +2700,13 @@
 
     .consulta-metrica {
 
+
+
         min-width: 0;
+
+
+
+
 
 
 
@@ -1358,19 +2714,41 @@
 
 
 
+
+
+
+
         background: #ffffff;
+
+
+
+
 
 
 
         border:
 
+
+
             1px solid #e5e5ea;
+
+
+
+
 
 
 
         border-radius: 10px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1378,13 +2756,25 @@
 
     .consulta-metrica-label {
 
+
+
         color: var(--muted);
+
+
+
+
 
 
 
         font-size: 0.64rem;
 
+
+
         font-weight: 800;
+
+
+
+
 
 
 
@@ -1392,9 +2782,21 @@
 
 
 
+
+
+
+
         margin-bottom: 5px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1402,19 +2804,39 @@
 
     .consulta-metrica-valor {
 
+
+
         color: #111111;
+
+
+
+
 
 
 
         font-size: 0.95rem;
 
+
+
         font-weight: 800;
+
+
+
+
 
 
 
         overflow-wrap: anywhere;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1422,9 +2844,19 @@
 
     .consulta-metrica-valor.azul {
 
+
+
         color: #0071e3;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1432,17 +2864,35 @@
 
     /* =========================================================
 
+
+
        INVENTARIO
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     #consultaInventarioBox {
+
+
 
         display: none;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1450,9 +2900,19 @@
 
     #consultaServicioCatalogoBox {
 
+
+
         display: none;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1460,13 +2920,25 @@
 
     .consulta-referencia-grid {
 
+
+
         display: grid;
+
+
+
+
 
 
 
         grid-template-columns:
 
+
+
             repeat(3, 1fr);
+
+
+
+
 
 
 
@@ -1474,9 +2946,21 @@
 
 
 
+
+
+
+
         padding: 14px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1484,13 +2968,25 @@
 
     .consulta-referencia-item {
 
+
+
         padding: 10px 11px;
+
+
+
+
 
 
 
         border:
 
+
+
             1px solid #e5e5ea;
+
+
+
+
 
 
 
@@ -1498,7 +2994,13 @@
 
 
 
+
+
+
+
         background: #ffffff;
+
+
 
     }
 
@@ -1506,25 +3008,53 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        EXPLICACIÓN
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-explicacion {
+
+
 
         padding: 12px 14px;
 
 
 
+
+
+
+
         border-top:
+
+
 
             1px solid
 
+
+
             var(--border-soft);
+
+
+
+
 
 
 
@@ -1532,7 +3062,15 @@
 
 
 
+
+
+
+
         color: #4a4a4a;
+
+
+
+
 
 
 
@@ -1540,9 +3078,21 @@
 
 
 
+
+
+
+
         line-height: 1.5;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1550,9 +3100,19 @@
 
     .consulta-explicacion strong {
 
+
+
         color: #111111;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1560,15 +3120,29 @@
 
     /* =========================================================
 
+
+
        ANTECEDENTES
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-coincidencias-lista {
 
+
+
         padding: 10px;
+
+
+
+
 
 
 
@@ -1576,7 +3150,13 @@
 
 
 
+
+
+
+
         gap: 9px;
+
+
 
     }
 
@@ -1584,11 +3164,25 @@
 
 
 
+
+
+
+
+
+
     .consulta-coincidencia {
+
+
 
         border:
 
+
+
             1px solid #e2e2e7;
+
+
+
+
 
 
 
@@ -1596,7 +3190,15 @@
 
 
 
+
+
+
+
         background: #ffffff;
+
+
+
+
 
 
 
@@ -1604,13 +3206,29 @@
 
 
 
+
+
+
+
         transition:
+
+
 
             border-color 0.15s ease,
 
+
+
             box-shadow 0.15s ease;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1618,19 +3236,39 @@
 
     .consulta-coincidencia:hover {
 
+
+
         border-color:
+
+
 
             rgba(0, 113, 227, 0.30);
 
 
 
+
+
+
+
         box-shadow:
+
+
 
             0 4px 14px
 
+
+
             rgba(0, 0, 0, 0.05);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1638,7 +3276,13 @@
 
     .consulta-coincidencia-top {
 
+
+
         padding: 11px 12px;
+
+
+
+
 
 
 
@@ -1646,15 +3290,33 @@
 
 
 
+
+
+
+
         justify-content: space-between;
+
+
 
         align-items: flex-start;
 
 
 
+
+
+
+
         gap: 12px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1662,11 +3324,23 @@
 
     .consulta-coincidencia-info {
 
+
+
         min-width: 0;
+
+
 
         flex: 1;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1674,15 +3348,31 @@
 
     .consulta-coincidencia-orden {
 
+
+
         color: #111111;
+
+
+
+
 
 
 
         font-size: 0.80rem;
 
+
+
         font-weight: 800;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1690,7 +3380,13 @@
 
     .consulta-coincidencia-meta {
 
+
+
         margin-top: 3px;
+
+
+
+
 
 
 
@@ -1698,15 +3394,33 @@
 
 
 
+
+
+
+
         font-size: 0.70rem;
+
+
 
         font-weight: 600;
 
 
 
+
+
+
+
         line-height: 1.4;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1714,13 +3428,27 @@
 
     .consulta-coincidencia-precio {
 
+
+
         flex: 0 0 auto;
+
+
+
+
 
 
 
         text-align: right;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1728,17 +3456,31 @@
 
     .consulta-coincidencia-precio-label {
 
+
+
         color: var(--muted);
+
+
+
+
 
 
 
         font-size: 0.62rem;
 
+
+
         font-weight: 800;
 
 
 
+
+
+
+
         text-transform: uppercase;
+
+
 
     }
 
@@ -1746,9 +3488,21 @@
 
 
 
+
+
+
+
+
+
     .consulta-coincidencia-precio-valor {
 
+
+
         margin-top: 2px;
+
+
+
+
 
 
 
@@ -1756,9 +3510,17 @@
 
 
 
+
+
+
+
         font-size: 1rem;
 
+
+
         font-weight: 800;
+
+
 
     }
 
@@ -1766,17 +3528,37 @@
 
 
 
+
+
+
+
+
+
     .consulta-coincidencia-detalle {
 
+
+
         padding:
+
+
 
             10px 12px 11px;
 
 
 
+
+
+
+
         border-top:
 
+
+
             1px solid #f0f0f2;
+
+
+
+
 
 
 
@@ -1784,9 +3566,19 @@
 
 
 
+
+
+
+
         grid-template-columns:
 
+
+
             1fr auto;
+
+
+
+
 
 
 
@@ -1794,13 +3586,29 @@
 
 
 
+
+
+
+
         align-items: center;
+
+
+
+
 
 
 
         background: #fbfbfd;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1808,7 +3616,13 @@
 
     .consulta-coincidencia-descripcion {
 
+
+
         min-width: 0;
+
+
+
+
 
 
 
@@ -1816,11 +3630,21 @@
 
 
 
+
+
+
+
         font-size: 0.75rem;
 
 
 
+
+
+
+
         line-height: 1.4;
+
+
 
     }
 
@@ -1828,13 +3652,29 @@
 
 
 
+
+
+
+
+
+
     .consulta-similitud {
+
+
 
         display: inline-flex;
 
 
 
+
+
+
+
         align-items: center;
+
+
+
+
 
 
 
@@ -1842,7 +3682,15 @@
 
 
 
+
+
+
+
         margin-top: 5px;
+
+
+
+
 
 
 
@@ -1850,19 +3698,37 @@
 
 
 
+
+
+
+
         color: #0071e3;
+
+
+
+
 
 
 
         background:
 
+
+
             rgba(0, 113, 227, 0.08);
+
+
+
+
 
 
 
         font-size: 0.64rem;
 
+
+
         font-weight: 800;
+
+
 
     }
 
@@ -1870,9 +3736,21 @@
 
 
 
+
+
+
+
+
+
     .consulta-btn-aplicar-item {
 
+
+
         height: 34px;
+
+
+
+
 
 
 
@@ -1880,15 +3758,31 @@
 
 
 
+
+
+
+
         border:
 
+
+
             1px solid
+
+
 
             rgba(0, 113, 227, 0.22);
 
 
 
+
+
+
+
         border-radius: 9px;
+
+
+
+
 
 
 
@@ -1896,13 +3790,27 @@
 
 
 
+
+
+
+
         color: #0071e3;
+
+
+
+
 
 
 
         font-size: 0.72rem;
 
+
+
         font-weight: 800;
+
+
+
+
 
 
 
@@ -1910,17 +3818,37 @@
 
 
 
+
+
+
+
         white-space: nowrap;
+
+
+
+
 
 
 
         transition:
 
-            *background* 0.15s ease,
+
+
+            background 0.15s ease,
+
+
 
             border-color 0.15s ease;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1928,13 +3856,23 @@
 
     .consulta-btn-aplicar-item:hover {
 
+
+
         background:
+
+
 
             rgba(0, 113, 227, 0.07);
 
 
 
+
+
+
+
         border-color: #0071e3;
+
+
 
     }
 
@@ -1942,17 +3880,37 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
 
+
+
        VACÍO
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-vacio {
 
+
+
         padding: 35px 20px;
+
+
+
+
 
 
 
@@ -1960,9 +3918,21 @@
 
 
 
+
+
+
+
         color: var(--muted);
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1970,7 +3940,13 @@
 
     .consulta-precios-vacio i {
 
+
+
         display: block;
+
+
+
+
 
 
 
@@ -1978,13 +3954,29 @@
 
 
 
+
+
+
+
         font-size: 1.6rem;
+
+
+
+
 
 
 
         color: #c7c7cc;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -1992,7 +3984,13 @@
 
     .consulta-precios-vacio strong {
 
+
+
         display: block;
+
+
+
+
 
 
 
@@ -2000,13 +3998,29 @@
 
 
 
+
+
+
+
         font-size: 0.84rem;
+
+
+
+
 
 
 
         margin-bottom: 4px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -2014,9 +4028,19 @@
 
     .consulta-precios-vacio span {
 
+
+
         font-size: 0.74rem;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -2024,23 +4048,45 @@
 
     /* =========================================================
 
+
+
        FOOTER
+
+
 
     ========================================================= */
 
 
 
+
+
+
+
     .consulta-precios-footer {
+
+
 
         padding: 15px 25px;
 
 
 
+
+
+
+
         border-top:
+
+
 
             1px solid
 
+
+
             var(--border-soft);
+
+
+
+
 
 
 
@@ -2048,9 +4094,19 @@
 
 
 
+
+
+
+
         justify-content: space-between;
 
+
+
         align-items: center;
+
+
+
+
 
 
 
@@ -2058,7 +4114,13 @@
 
 
 
+
+
+
+
         background: var(--head);
+
+
 
     }
 
@@ -2066,9 +4128,21 @@
 
 
 
+
+
+
+
+
+
     .consulta-footer-info {
 
+
+
         color: var(--muted);
+
+
+
+
 
 
 
@@ -2076,7 +4150,13 @@
 
 
 
+
+
+
+
         line-height: 1.35;
+
+
 
     }
 
@@ -2084,9 +4164,21 @@
 
 
 
+
+
+
+
+
+
     .consulta-footer-acciones {
 
+
+
         display: flex;
+
+
+
+
 
 
 
@@ -2094,13 +4186,29 @@
 
 
 
+
+
+
+
         align-items: center;
+
+
+
+
 
 
 
         gap: 10px;
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -2108,11 +4216,19 @@
 
     #btnAplicarPrecioSugerido:disabled {
 
+
+
         opacity: 0.50;
 
 
 
+
+
+
+
         cursor: default;
+
+
 
     }
 
@@ -2120,11 +4236,25 @@
 
 
 
+
+
+
+
+
+
     /* =========================================================
+
+
 
        RESPONSIVE
 
+
+
     ========================================================= */
+
+
+
+
 
 
 
@@ -2132,11 +4262,25 @@
 
 
 
+
+
+
+
         #modalConsultaPrecios {
+
+
 
             padding: 10px;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2144,13 +4288,27 @@
 
         .consulta-precios-dialog {
 
+
+
             max-height: 98vh;
+
+
+
+
 
 
 
             border-radius: 16px;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2158,9 +4316,19 @@
 
         .consulta-precios-header {
 
+
+
             padding: 13px 15px;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2168,9 +4336,19 @@
 
         .consulta-precios-body {
 
+
+
             padding: 15px;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2178,11 +4356,23 @@
 
         .consulta-precios-contexto {
 
+
+
             grid-template-columns:
+
+
 
                 1fr 1fr;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2190,15 +4380,31 @@
 
         .consulta-precios-sugerencia {
 
+
+
             grid-template-columns:
+
+
 
                 1fr;
 
 
 
+
+
+
+
             padding: 16px;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2206,9 +4412,19 @@
 
         .consulta-sugerencia-lado {
 
+
+
             align-items: flex-start;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2216,11 +4432,23 @@
 
         .consulta-precios-metricas {
 
+
+
             grid-template-columns:
+
+
 
                 1fr 1fr;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2228,11 +4456,23 @@
 
         .consulta-referencia-grid {
 
+
+
             grid-template-columns:
+
+
 
                 1fr 1fr;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2240,11 +4480,23 @@
 
         .consulta-coincidencia-detalle {
 
+
+
             grid-template-columns:
+
+
 
                 1fr;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2252,9 +4504,19 @@
 
         .consulta-btn-aplicar-item {
 
+
+
             width: 100%;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2262,7 +4524,13 @@
 
         .consulta-precios-footer {
 
+
+
             padding: 12px 15px;
+
+
+
+
 
 
 
@@ -2270,9 +4538,21 @@
 
 
 
+
+
+
+
             align-items: stretch;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2280,9 +4560,19 @@
 
         .consulta-footer-info {
 
+
+
             text-align: center;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2290,9 +4580,19 @@
 
         .consulta-footer-acciones {
 
+
+
             width: 100%;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2300,11 +4600,23 @@
 
         .consulta-footer-acciones .btn-login {
 
+
+
             flex: 1;
+
+
 
         }
 
+
+
     }
+
+
+
+
+
+
 
 
 
@@ -2314,15 +4626,29 @@
 
 
 
+
+
+
+
         .consulta-precios-contexto,
+
+
 
         .consulta-precios-metricas,
 
+
+
         .consulta-referencia-grid {
+
+
 
             grid-template-columns:
 
+
+
                 1fr;
+
+
 
         }
 
@@ -2330,11 +4656,27 @@
 
 
 
+
+
+
+
+
+
         .consulta-sugerencia-precio {
+
+
 
             font-size: 1.8rem;
 
+
+
         }
+
+
+
+
+
+
 
 
 
@@ -2342,398 +4684,911 @@
 
         .consulta-precios-item-top {
 
+
+
             flex-direction: column;
+
+
 
         }
 
+
+
     }
+
+
+
 
 
     /* =========================================================
+
        MODO COMPACTO - CONSULTA DE PRECIOS
+
        Mantiene estilos y funcionalidad; reduce tamaño y espacio.
+
     ========================================================= */
 
+
+
     #modalConsultaPrecios {
+
         padding: 12px;
+
     }
+
+
 
     .consulta-precios-dialog {
+
         width: 100%;
+
         max-width: 760px;
+
         max-height: 90vh;
+
         border-radius: 14px;
+
         box-shadow: 0 14px 38px rgba(0, 0, 0, 0.26);
+
     }
+
+
 
     .consulta-precios-header {
+
         padding: 10px 16px;
+
         gap: 10px;
+
     }
+
+
 
     .consulta-precios-header-left {
+
         gap: 8px;
+
     }
+
+
 
     .consulta-precios-icono {
+
         width: 32px;
+
         height: 32px;
+
         border-radius: 9px;
+
         font-size: 0.95rem;
+
     }
+
+
 
     .consulta-precios-titulo {
+
         font-size: 1.05rem;
+
     }
+
+
 
     .consulta-precios-subtitulo {
+
         margin-top: 1px;
+
         font-size: 0.68rem;
+
     }
+
+
 
     .consulta-precios-cerrar {
+
         font-size: 1.25rem;
+
         padding: 3px 6px;
+
         border-radius: 7px;
+
     }
+
+
 
     .consulta-precios-body {
+
         padding: 14px;
+
     }
+
+
 
     .consulta-precios-cargando {
+
         padding: 30px 14px;
+
     }
+
+
 
     .consulta-precios-spinner {
+
         width: 30px;
+
         height: 30px;
+
         margin: 0 auto 10px;
+
     }
+
+
 
     .consulta-precios-cargando-texto {
+
         font-size: 0.78rem;
+
     }
+
+
 
     .consulta-precios-error {
+
         padding: 10px 12px;
+
         margin-bottom: 12px;
+
         border-radius: 9px;
+
         font-size: 0.74rem;
+
     }
+
+
 
     .consulta-precios-item-box {
+
         margin-bottom: 12px;
+
         border-radius: 11px;
+
     }
 
+
+
     .consulta-precios-item-top {
+
         padding: 10px 12px;
+
+        gap: 10px;
+
+    }
+
+
+
+    .consulta-precios-label {
+
+        margin-bottom: 3px;
+
+        font-size: 0.60rem;
+
+    }
+
+
+
+    .consulta-precios-item-nombre {
+
+        font-size: 0.88rem;
+
+    }
+
+
+
+    .consulta-precios-item-codigo {
+
+        margin-top: 2px;
+
+        font-size: 0.66rem;
+
+    }
+
+
+
+    .consulta-precios-tipo-badge {
+
+        padding: 4px 8px;
+
+        font-size: 0.62rem;
+
+    }
+
+
+
+    .consulta-precios-contexto {
+
+        padding: 8px 12px;
+
+        gap: 8px;
+
+    }
+
+
+
+    .consulta-contexto-valor {
+
+        font-size: 0.73rem;
+
+    }
+
+
+
+    .consulta-procedimientos-box {
+
+        margin-bottom: 12px;
+
+        padding: 10px 12px;
+
+        border-radius: 10px;
+
+    }
+
+
+
+    .consulta-procedimientos-lista {
+
+        gap: 5px;
+
+        margin-top: 6px;
+
+    }
+
+
+
+    .consulta-procedimiento-item {
+
+        gap: 6px;
+
+        padding: 6px 8px;
+
+        border-radius: 7px;
+
+        font-size: 0.70rem;
+
+    }
+
+
+
+    .consulta-precios-sugerencia {
+
+        margin-bottom: 12px;
+
+        padding: 12px 14px;
+
+        border-radius: 12px;
+
+        gap: 12px;
+
+    }
+
+
+
+    .consulta-sugerencia-caption {
+
+        margin-bottom: 3px;
+
+        font-size: 0.64rem;
+
+    }
+
+
+
+    .consulta-sugerencia-precio {
+
+        font-size: 1.65rem;
+
+    }
+
+
+
+    .consulta-sugerencia-ayuda {
+
+        margin-top: 4px;
+
+        font-size: 0.68rem;
+
+        line-height: 1.35;
+
+    }
+
+
+
+    .consulta-sugerencia-lado {
+
+        gap: 5px;
+
+    }
+
+
+
+    .consulta-confianza-badge {
+
+        padding: 5px 9px;
+
+        font-size: 0.64rem;
+
+    }
+
+
+
+    .consulta-precios-seccion {
+
+        margin-bottom: 12px;
+
+        border-radius: 11px;
+
+    }
+
+
+
+    .consulta-seccion-header {
+
+        padding: 8px 11px;
+
+        gap: 8px;
+
+    }
+
+
+
+    .consulta-seccion-titulo {
+
+        font-size: 0.74rem;
+
+    }
+
+
+
+    .consulta-seccion-subtitulo {
+
+        font-size: 0.62rem;
+
+    }
+
+
+
+    .consulta-precios-metricas {
+
+        gap: 7px;
+
+        padding: 10px;
+
+    }
+
+
+
+    .consulta-metrica {
+
+        padding: 8px 9px;
+
+        border-radius: 8px;
+
+    }
+
+
+
+    .consulta-metrica-label {
+
+        margin-bottom: 3px;
+
+        font-size: 0.58rem;
+
+    }
+
+
+
+    .consulta-metrica-valor {
+
+        font-size: 0.84rem;
+
+    }
+
+
+
+    .consulta-referencia-grid {
+
+        gap: 7px;
+
+        padding: 10px;
+
+    }
+
+
+
+    .consulta-referencia-item {
+
+        padding: 7px 9px;
+
+        border-radius: 8px;
+
+    }
+
+
+
+    .consulta-explicacion {
+
+        padding: 8px 11px;
+
+        font-size: 0.67rem;
+
+        line-height: 1.35;
+
+    }
+
+
+
+    .consulta-coincidencias-lista {
+
+        padding: 8px;
+
+        gap: 6px;
+
+        max-height: 280px;
+
+        overflow-y: auto;
+
+        overscroll-behavior: contain;
+
+    }
+
+
+
+    .consulta-coincidencia {
+
+        border-radius: 9px;
+
+    }
+
+
+
+    .consulta-coincidencia-top {
+
+        padding: 8px 10px;
+
+        gap: 8px;
+
+    }
+
+
+
+    .consulta-coincidencia-orden {
+
+        font-size: 0.74rem;
+
+    }
+
+
+
+    .consulta-coincidencia-meta {
+
+        margin-top: 2px;
+
+        font-size: 0.64rem;
+
+        line-height: 1.3;
+
+    }
+
+
+
+    .consulta-coincidencia-precio-label {
+
+        font-size: 0.56rem;
+
+    }
+
+
+
+    .consulta-coincidencia-precio-valor {
+
+        margin-top: 1px;
+
+        font-size: 0.86rem;
+
+    }
+
+
+
+    .consulta-coincidencia-detalle {
+
+        padding: 7px 10px 8px;
+
+        gap: 8px;
+
+    }
+
+
+
+    .consulta-coincidencia-descripcion {
+
+        font-size: 0.68rem;
+
+        line-height: 1.3;
+
+    }
+
+
+
+    .consulta-similitud {
+
+        padding: 3px 6px;
+
+        margin-top: 4px;
+
+        font-size: 0.58rem;
+
+    }
+
+
+
+    .consulta-btn-aplicar-item {
+
+        height: 30px;
+
+        padding: 0 10px;
+
+        border-radius: 8px;
+
+        font-size: 0.66rem;
+
+    }
+
+
+
+    .consulta-precios-vacio {
+
+        padding: 22px 15px;
+
+    }
+
+
+
+    .consulta-precios-footer {
+
+        padding: 10px 16px;
+
+        gap: 8px;
+
+    }
+
+
+
+    .consulta-footer-info {
+
+        font-size: 0.65rem;
+
+        line-height: 1.30;
+
+    }
+
+
+
+    .consulta-footer-acciones {
+
+        gap: 8px;
+
+    }
+
+
+
+    #btnAplicarPrecioSugerido {
+
+        height: 34px;
+
+        padding: 0 14px !important;
+
+        font-size: 0.75rem;
+
+    }
+
+
+
+    .consulta-precios-footer .btn-login {
+
+        min-height: 34px;
+
+    }
+
+
+
+    @media (max-width: 760px) {
+
+        #modalConsultaPrecios {
+
+            padding: 8px;
+
+        }
+
+
+
+        .consulta-precios-dialog {
+
+            max-width: 100%;
+
+            max-height: 96vh;
+
+            border-radius: 12px;
+
+        }
+
+
+
+        .consulta-precios-header {
+
+            padding: 9px 12px;
+
+        }
+
+
+
+        .consulta-precios-body {
+
+            padding: 10px;
+
+        }
+
+
+
+        .consulta-precios-contexto {
+
+            grid-template-columns: 1fr 1fr;
+
+        }
+
+
+
+        .consulta-precios-sugerencia {
+
+            grid-template-columns: 1fr auto;
+
+            padding: 10px 12px;
+
+        }
+
+
+
+        .consulta-sugerencia-lado {
+
+            align-items: flex-end;
+
+        }
+
+
+
+        .consulta-precios-metricas,
+
+        .consulta-referencia-grid {
+
+            gap: 6px;
+
+            padding: 8px;
+
+        }
+
+
+
+        .consulta-coincidencias-lista {
+
+            max-height: 240px;
+
+        }
+
+
+
+        .consulta-precios-footer {
+
+            padding: 9px 12px;
+
+        }
+
+    }
+
+
+
+    @media (max-width: 480px) {
+
+        .consulta-precios-contexto,
+
+        .consulta-precios-metricas,
+
+        .consulta-referencia-grid {
+
+            grid-template-columns: 1fr 1fr;
+
+        }
+
+
+
+        .consulta-precios-item-top {
+
+            gap: 7px;
+
+        }
+
+
+
+        .consulta-sugerencia-precio {
+
+            font-size: 1.45rem;
+
+        }
+
+
+
+        .consulta-precios-sugerencia {
+
+            grid-template-columns: 1fr;
+
+        }
+
+
+
+        .consulta-sugerencia-lado {
+
+            align-items: flex-start;
+
+        }
+
+
+
+        .consulta-coincidencias-lista {
+
+            max-height: 220px;
+
+        }
+
+
+
+        .consulta-precios-footer {
+
+            flex-direction: column;
+
+            align-items: stretch;
+
+        }
+
+
+
+        .consulta-footer-acciones {
+
+            width: 100%;
+
+        }
+
+
+
+        .consulta-footer-acciones .btn-login {
+
+            flex: 1;
+
+        }
+
+    }
+
+
+
+
+    /* =========================================================
+       ÚLTIMO ANTECEDENTE DEL MISMO VEHÍCULO
+       Compacto: aparece debajo del precio sugerido.
+    ========================================================= */
+
+    .consulta-mismo-vehiculo {
+        display: none;
+
+        margin: -2px 0 12px;
+        padding: 8px 11px;
+
+        border:
+            1px solid
+            rgba(0, 113, 227, 0.18);
+
+        border-radius: 10px;
+
+        background:
+            rgba(0, 113, 227, 0.045);
+
+        align-items: center;
+        justify-content: space-between;
+
         gap: 10px;
     }
 
-    .consulta-precios-label {
-        margin-bottom: 3px;
-        font-size: 0.60rem;
+    .consulta-mismo-vehiculo.visible {
+        display: flex;
     }
 
-    .consulta-precios-item-nombre {
-        font-size: 0.88rem;
+    .consulta-mismo-vehiculo-info {
+        min-width: 0;
+        flex: 1;
     }
 
-    .consulta-precios-item-codigo {
-        margin-top: 2px;
-        font-size: 0.66rem;
-    }
+    .consulta-mismo-vehiculo-titulo {
+        display: flex;
+        align-items: center;
 
-    .consulta-precios-tipo-badge {
-        padding: 4px 8px;
-        font-size: 0.62rem;
-    }
-
-    .consulta-precios-contexto {
-        padding: 8px 12px;
-        gap: 8px;
-    }
-
-    .consulta-contexto-valor {
-        font-size: 0.73rem;
-    }
-
-    .consulta-procedimientos-box {
-        margin-bottom: 12px;
-        padding: 10px 12px;
-        border-radius: 10px;
-    }
-
-    .consulta-procedimientos-lista {
         gap: 5px;
-        margin-top: 6px;
+
+        margin-bottom: 2px;
+
+        color: #0071e3;
+
+        font-size: 0.61rem;
+        font-weight: 800;
+
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
     }
 
-    .consulta-procedimiento-item {
-        gap: 6px;
-        padding: 6px 8px;
-        border-radius: 7px;
-        font-size: 0.70rem;
+    .consulta-mismo-vehiculo-meta {
+        color: #111111;
+
+        font-size: 0.69rem;
+        font-weight: 700;
+
+        line-height: 1.25;
+
+        overflow-wrap: anywhere;
     }
 
-    .consulta-precios-sugerencia {
-        margin-bottom: 12px;
-        padding: 12px 14px;
-        border-radius: 12px;
-        gap: 12px;
-    }
-
-    .consulta-sugerencia-caption {
-        margin-bottom: 3px;
-        font-size: 0.64rem;
-    }
-
-    .consulta-sugerencia-precio {
-        font-size: 1.65rem;
-    }
-
-    .consulta-sugerencia-ayuda {
-        margin-top: 4px;
-        font-size: 0.68rem;
-        line-height: 1.35;
-    }
-
-    .consulta-sugerencia-lado {
-        gap: 5px;
-    }
-
-    .consulta-confianza-badge {
-        padding: 5px 9px;
-        font-size: 0.64rem;
-    }
-
-    .consulta-precios-seccion {
-        margin-bottom: 12px;
-        border-radius: 11px;
-    }
-
-    .consulta-seccion-header {
-        padding: 8px 11px;
-        gap: 8px;
-    }
-
-    .consulta-seccion-titulo {
-        font-size: 0.74rem;
-    }
-
-    .consulta-seccion-subtitulo {
-        font-size: 0.62rem;
-    }
-
-    .consulta-precios-metricas {
-        gap: 7px;
-        padding: 10px;
-    }
-
-    .consulta-metrica {
-        padding: 8px 9px;
-        border-radius: 8px;
-    }
-
-    .consulta-metrica-label {
-        margin-bottom: 3px;
-        font-size: 0.58rem;
-    }
-
-    .consulta-metrica-valor {
-        font-size: 0.84rem;
-    }
-
-    .consulta-referencia-grid {
-        gap: 7px;
-        padding: 10px;
-    }
-
-    .consulta-referencia-item {
-        padding: 7px 9px;
-        border-radius: 8px;
-    }
-
-    .consulta-explicacion {
-        padding: 8px 11px;
-        font-size: 0.67rem;
-        line-height: 1.35;
-    }
-
-    .consulta-coincidencias-lista {
-        padding: 8px;
-        gap: 6px;
-        max-height: 280px;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-    }
-
-    .consulta-coincidencia {
-        border-radius: 9px;
-    }
-
-    .consulta-coincidencia-top {
-        padding: 8px 10px;
-        gap: 8px;
-    }
-
-    .consulta-coincidencia-orden {
-        font-size: 0.74rem;
-    }
-
-    .consulta-coincidencia-meta {
+    .consulta-mismo-vehiculo-descripcion {
         margin-top: 2px;
-        font-size: 0.64rem;
-        line-height: 1.3;
+
+        color: #6e6e73;
+
+        font-size: 0.62rem;
+
+        line-height: 1.25;
+
+        overflow-wrap: anywhere;
     }
 
-    .consulta-coincidencia-precio-label {
-        font-size: 0.56rem;
-    }
+    .consulta-mismo-vehiculo-lado {
+        flex: 0 0 auto;
 
-    .consulta-coincidencia-precio-valor {
-        margin-top: 1px;
-        font-size: 0.86rem;
-    }
+        display: flex;
+        align-items: center;
 
-    .consulta-coincidencia-detalle {
-        padding: 7px 10px 8px;
         gap: 8px;
     }
 
-    .consulta-coincidencia-descripcion {
-        font-size: 0.68rem;
-        line-height: 1.3;
+    .consulta-mismo-vehiculo-precio {
+        color: #111111;
+
+        font-size: 0.94rem;
+        font-weight: 800;
+
+        white-space: nowrap;
     }
 
-    .consulta-similitud {
-        padding: 3px 6px;
-        margin-top: 4px;
-        font-size: 0.58rem;
-    }
+    .consulta-mismo-vehiculo .consulta-btn-aplicar-item {
+        height: 28px;
 
-    .consulta-btn-aplicar-item {
-        height: 30px;
-        padding: 0 10px;
-        border-radius: 8px;
-        font-size: 0.66rem;
-    }
+        padding: 0 9px;
 
-    .consulta-precios-vacio {
-        padding: 22px 15px;
-    }
-
-    .consulta-precios-footer {
-        padding: 10px 16px;
-        gap: 8px;
-    }
-
-    .consulta-footer-info {
-        font-size: 0.65rem;
-        line-height: 1.30;
-    }
-
-    .consulta-footer-acciones {
-        gap: 8px;
-    }
-
-    #btnAplicarPrecioSugerido {
-        height: 34px;
-        padding: 0 14px !important;
-        font-size: 0.75rem;
-    }
-
-    .consulta-precios-footer .btn-login {
-        min-height: 34px;
-    }
-
-    @media (max-width: 760px) {
-        #modalConsultaPrecios {
-            padding: 8px;
-        }
-
-        .consulta-precios-dialog {
-            max-width: 100%;
-            max-height: 96vh;
-            border-radius: 12px;
-        }
-
-        .consulta-precios-header {
-            padding: 9px 12px;
-        }
-
-        .consulta-precios-body {
-            padding: 10px;
-        }
-
-        .consulta-precios-contexto {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .consulta-precios-sugerencia {
-            grid-template-columns: 1fr auto;
-            padding: 10px 12px;
-        }
-
-        .consulta-sugerencia-lado {
-            align-items: flex-end;
-        }
-
-        .consulta-precios-metricas,
-        .consulta-referencia-grid {
-            gap: 6px;
-            padding: 8px;
-        }
-
-        .consulta-coincidencias-lista {
-            max-height: 240px;
-        }
-
-        .consulta-precios-footer {
-            padding: 9px 12px;
-        }
+        font-size: 0.63rem;
     }
 
     @media (max-width: 480px) {
-        .consulta-precios-contexto,
-        .consulta-precios-metricas,
-        .consulta-referencia-grid {
-            grid-template-columns: 1fr 1fr;
-        }
 
-        .consulta-precios-item-top {
-            gap: 7px;
-        }
-
-        .consulta-sugerencia-precio {
-            font-size: 1.45rem;
-        }
-
-        .consulta-precios-sugerencia {
-            grid-template-columns: 1fr;
-        }
-
-        .consulta-sugerencia-lado {
+        .consulta-mismo-vehiculo {
             align-items: flex-start;
         }
 
-        .consulta-coincidencias-lista {
-            max-height: 220px;
-        }
-
-        .consulta-precios-footer {
+        .consulta-mismo-vehiculo-lado {
             flex-direction: column;
-            align-items: stretch;
-        }
+            align-items: flex-end;
 
-        .consulta-footer-acciones {
-            width: 100%;
-        }
-
-        .consulta-footer-acciones .btn-login {
-            flex: 1;
+            gap: 5px;
         }
     }
 
@@ -2743,17 +5598,37 @@
 
 
 
+
+
+
+
+
+
 <!-- =========================================================
+
+
 
      MODAL CONSULTA DE PRECIOS
 
-\========================================================= -->
+
+
+========================================================= -->
+
+
+
+
 
 
 
 <div
 
+
+
     id="modalConsultaPrecios"
+
+
+
+
 
 
 
@@ -2761,13 +5636,27 @@
 
 
 
+
+
+
+
     data-consulta-url="{% url 'consultar_precio' %}"
+
+
+
+
 
 
 
     data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
 
+
+
 >
+
+
+
+
 
 
 
@@ -2777,11 +5666,25 @@
 
 
 
+
+
+
+
+
+
         <!-- =====================================================
+
+
 
              HEADER
 
+
+
         ====================================================== -->
+
+
+
+
 
 
 
@@ -2789,7 +5692,15 @@
 
 
 
+
+
+
+
             <div class="consulta-precios-header-left">
+
+
+
+
 
 
 
@@ -2797,11 +5708,25 @@
 
 
 
+
+
+
+
                     <i class="bi bi-search"></i>
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
 
 
 
@@ -2811,23 +5736,47 @@
 
 
 
+
+
+
+
                     <h3 class="consulta-precios-titulo">
 
+
+
                         Consultar precio
+
+
 
                     </h3>
 
 
 
+
+
+
+
                     <div class="consulta-precios-subtitulo">
 
+
+
                         Historial de precios de MAO
+
+
 
                     </div>
 
 
 
+
+
+
+
                 </div>
+
+
+
+
 
 
 
@@ -2837,9 +5786,21 @@
 
 
 
+
+
+
+
+
+
             <button
 
+
+
                 type="button"
+
+
+
+
 
 
 
@@ -2847,19 +5808,39 @@
 
 
 
+
+
+
+
                 onclick="cerrarModalConsultaPrecios()"
+
+
+
+
 
 
 
                 aria-label="Cerrar"
 
+
+
                 title="Cerrar"
+
+
 
             >
 
+
+
                 &times;
 
+
+
             </button>
+
+
+
+
 
 
 
@@ -2869,11 +5850,25 @@
 
 
 
+
+
+
+
+
+
         <!-- =====================================================
+
+
 
              BODY
 
+
+
         ====================================================== -->
+
+
+
+
 
 
 
@@ -2883,39 +5878,83 @@
 
 
 
+
+
+
+
+
+
             <!-- =================================================
 
+
+
                  CARGANDO
+
+
 
             ================================================== -->
 
 
 
+
+
+
+
             <div
+
+
 
                 id="consultaPreciosCargando"
 
+
+
                 class="consulta-precios-cargando"
 
+
+
             >
+
+
+
+
 
 
 
                 <div class="consulta-precios-spinner">
 
+
+
                 </div>
+
+
+
+
 
 
 
                 <div class="consulta-precios-cargando-texto">
 
+
+
                     Buscando antecedentes en todas las sucursales...
+
+
 
                 </div>
 
 
 
+
+
+
+
             </div>
+
+
+
+
+
+
 
 
 
@@ -2923,19 +5962,35 @@
 
             <!-- =================================================
 
+
+
                  ERROR
 
+
+
             ================================================== -->
+
+
+
+
 
 
 
             <div
 
+
+
                 id="consultaPreciosError"
+
+
 
                 class="consulta-precios-error"
 
+
+
             >
+
+
 
             </div>
 
@@ -2943,11 +5998,25 @@
 
 
 
+
+
+
+
+
+
             <!-- =================================================
+
+
 
                  CONTENIDO
 
+
+
             ================================================== -->
+
+
+
+
 
 
 
@@ -2957,11 +6026,25 @@
 
 
 
+
+
+
+
+
+
                 <!-- =============================================
+
+
 
                      ÍTEM CONSULTADO
 
+
+
                 ============================================== -->
+
+
+
+
 
 
 
@@ -2971,7 +6054,17 @@
 
 
 
+
+
+
+
+
+
                     <div class="consulta-precios-item-top">
+
+
+
+
 
 
 
@@ -2979,37 +6072,75 @@
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
 
+
+
                                 Consultando
+
+
 
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaPrecioDescripcion"
 
+
+
                                 class="consulta-precios-item-nombre"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaPrecioCodigo"
+
+
 
                                 class="consulta-precios-item-codigo"
 
+
+
                             >
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3019,25 +6150,53 @@
 
 
 
+
+
+
+
+
+
                         <span
+
+
 
                             id="consultaPrecioTipo"
 
+
+
                             class="consulta-precios-tipo-badge"
 
+
+
                         >
+
+
 
                             <i class="bi bi-search"></i>
 
 
 
+
+
+
+
                             <span>
+
+
 
                                 -
 
+
+
                             </span>
 
+
+
                         </span>
+
+
+
+
 
 
 
@@ -3047,11 +6206,25 @@
 
 
 
+
+
+
+
+
+
                     <!-- =========================================
+
+
 
                          CONTEXTO DE LA OT
 
+
+
                     ========================================== -->
+
+
+
+
 
 
 
@@ -3061,29 +6234,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-contexto-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Vehículo
 
+
+
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaPrecioVehiculo"
 
+
+
                                 class="consulta-contexto-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3093,29 +6298,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-contexto-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Año
 
+
+
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaPrecioAnio"
 
+
+
                                 class="consulta-contexto-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3125,33 +6362,71 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-contexto-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Kilometraje
 
+
+
                             </span>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaPrecioKilometraje"
+
+
 
                                 class="consulta-contexto-valor"
 
+
+
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
@@ -3161,29 +6436,61 @@
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
 
+
+
                                 Sucursal actual
+
+
 
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaPrecioSucursal"
 
+
+
                                 class="consulta-contexto-valor"
+
+
 
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
@@ -3193,7 +6500,17 @@
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
 
 
 
@@ -3201,41 +6518,81 @@
 
                 <!-- =============================================
 
+
+
                      PROCEDIMIENTOS ACTUALES
+
+
 
                      SOLO MOI / MOE CUANDO APLIQUE
 
+
+
                 ============================================== -->
+
+
+
+
 
 
 
                 <div
 
+
+
                     id="consultaProcedimientosBox"
 
+
+
                     class="consulta-procedimientos-box"
+
+
 
                 >
 
 
 
+
+
+
+
                     <span class="consulta-precios-label">
 
+
+
                         Procedimientos actuales
+
+
 
                     </span>
 
 
 
+
+
+
+
                     <div
+
+
 
                         id="consultaProcedimientosLista"
 
+
+
                         class="consulta-procedimientos-lista"
+
+
 
                     >
 
+
+
                     </div>
+
+
+
+
 
 
 
@@ -3245,11 +6602,25 @@
 
 
 
+
+
+
+
+
+
                 <!-- =============================================
+
+
 
                      SUGERENCIA PRINCIPAL
 
+
+
                 ============================================== -->
+
+
+
+
 
 
 
@@ -3259,49 +6630,103 @@
 
 
 
+
+
+
+
+
+
                     <div>
+
+
+
+
 
 
 
                         <div class="consulta-sugerencia-caption">
 
+
+
                             Precio unitario sugerido
+
+
 
                         </div>
 
 
 
+
+
+
+
                         <div
+
+
 
                             id="consultaPrecioSugerido"
 
+
+
                             class="consulta-sugerencia-precio"
+
+
 
                         >
 
+
+
                             $0.00
 
+
+
                         </div>
+
+
+
+
 
 
 
                         <div
 
+
+
                             id="consultaPrecioSugeridoAyuda"
+
+
 
                             class="consulta-sugerencia-ayuda"
 
+
+
                         >
+
+
 
                             Basado en antecedentes comparables
 
+
+
                             encontrados en MAO.
 
+
+
                         </div>
+
+
+
+
 
 
 
                     </div>
+
+
+
+
+
+
 
 
 
@@ -3311,23 +6736,47 @@
 
 
 
+
+
+
+
                         <span
+
+
 
                             id="consultaPrecioConfianza"
 
+
+
                             class="consulta-confianza-badge"
+
+
 
                         >
 
+
+
                             Confianza:
 
+
+
                             <strong>-</strong>
+
+
 
                         </span>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -3337,23 +6786,112 @@
 
 
 
+
+
+
+
+
+
+                
                 <!-- =============================================
+                     ÚLTIMO ANTECEDENTE DEL MISMO VEHÍCULO
+                ============================================== -->
+
+                <div
+                    id="consultaAntecedenteMismoVehiculo"
+                    class="consulta-mismo-vehiculo"
+                >
+
+                    <div class="consulta-mismo-vehiculo-info">
+
+                        <div class="consulta-mismo-vehiculo-titulo">
+                            <i class="bi bi-car-front"></i>
+                            Último en este vehículo
+                        </div>
+
+                        <div
+                            id="consultaAntecedenteMismoVehiculoMeta"
+                            class="consulta-mismo-vehiculo-meta"
+                        >
+                            -
+                        </div>
+
+                        <div
+                            id="consultaAntecedenteMismoVehiculoDescripcion"
+                            class="consulta-mismo-vehiculo-descripcion"
+                        >
+                        </div>
+
+                    </div>
+
+                    <div class="consulta-mismo-vehiculo-lado">
+
+                        <div
+                            id="consultaAntecedenteMismoVehiculoPrecio"
+                            class="consulta-mismo-vehiculo-precio"
+                        >
+                            -
+                        </div>
+
+                        {% if puede_editar %}
+
+                            <button
+                                type="button"
+                                id="btnAplicarAntecedenteMismoVehiculo"
+                                class="
+                                    consulta-btn-aplicar-item
+                                    btn-aplicar-precio-historico
+                                "
+                                data-precio=""
+                                disabled
+                            >
+                                Aplicar
+                            </button>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+<!-- =============================================
+
+
 
                      INVENTARIO
 
+
+
                      SOLO REPUESTOS IDENTIFICADOS
+
+
 
                 ============================================== -->
 
 
 
+
+
+
+
                 <div
+
+
 
                     id="consultaInventarioBox"
 
+
+
                     class="consulta-precios-seccion"
 
+
+
                 >
+
+
+
+
 
 
 
@@ -3361,23 +6899,47 @@
 
 
 
+
+
+
+
                         <div>
 
 
 
+
+
+
+
                             <div class="consulta-seccion-titulo">
+
+
 
                                 Inventario actual
 
+
+
                             </div>
 
 
 
+
+
+
+
                             <div class="consulta-seccion-subtitulo">
+
+
 
                                 Referencia actual del producto
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3385,17 +6947,37 @@
 
 
 
+
+
+
+
                         <i
+
+
 
                             class="bi bi-box-seam"
 
+
+
                             style="color:#0071e3;"
+
+
 
                         ></i>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
 
 
 
@@ -3407,29 +6989,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
+
+
+
+
 
 
 
                             <span class="consulta-precios-label">
 
+
+
                                 Código
+
+
 
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaInventarioCodigo"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3439,29 +7053,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Precio venta
 
+
+
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaInventarioPrecio"
 
+
+
                                 class="consulta-metrica-valor azul"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3471,29 +7117,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Stock sucursal
 
+
+
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaInventarioStockSucursal"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3503,29 +7181,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Stock total MAO
 
+
+
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaInventarioStockTotal"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3535,33 +7245,71 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Marca
 
+
+
                             </span>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaInventarioMarca"
+
+
 
                                 class="consulta-metrica-valor"
 
+
+
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
@@ -3571,35 +7319,71 @@
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
 
+
+
                                 Producto
+
+
 
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaInventarioProducto"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
 
 
                     </div>
+
+
+
+
 
 
 
@@ -3609,23 +7393,49 @@
 
 
 
+
+
+
+
+
+
                 <!-- =============================================
+
+
 
                      CATÁLOGO SERVICIO
 
+
+
                      SOLO MOI / MOE CON SERVICIO IDENTIFICADO
+
+
 
                 ============================================== -->
 
 
 
+
+
+
+
                 <div
+
+
 
                     id="consultaServicioCatalogoBox"
 
+
+
                     class="consulta-precios-seccion"
 
+
+
                 >
+
+
+
+
 
 
 
@@ -3633,23 +7443,47 @@
 
 
 
+
+
+
+
                         <div>
+
+
+
+
 
 
 
                             <div class="consulta-seccion-titulo">
 
+
+
                                 Catálogo de servicios
 
+
+
                             </div>
+
+
+
+
 
 
 
                             <div class="consulta-seccion-subtitulo">
 
+
+
                                 Referencia configurada actualmente
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3657,17 +7491,37 @@
 
 
 
+
+
+
+
                         <i
+
+
 
                             class="bi bi-tools"
 
+
+
                             style="color:#0071e3;"
+
+
 
                         ></i>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
 
 
 
@@ -3679,29 +7533,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Código
 
+
+
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaServicioCodigo"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3711,33 +7597,71 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-referencia-item">
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
+
+
 
                                 Precio catálogo
 
+
+
                             </span>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaServicioPrecioCatalogo"
+
+
 
                                 class="consulta-metrica-valor azul"
 
+
+
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
@@ -3747,35 +7671,71 @@
 
 
 
+
+
+
+
                             <span class="consulta-precios-label">
 
+
+
                                 Precio sucursal
+
+
 
                             </span>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaServicioPrecioSucursal"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
 
 
                     </div>
+
+
+
+
 
 
 
@@ -3785,21 +7745,45 @@
 
 
 
+
+
+
+
+
+
                 <!-- =============================================
 
+
+
                      ORIGEN DEL PRECIO SUGERIDO
+
+
 
                 ============================================== -->
 
 
 
+
+
+
+
                 <div
+
+
 
                     id="consultaResumenHistoricoBox"
 
+
+
                     class="consulta-precios-seccion"
 
+
+
                 >
+
+
+
+
 
 
 
@@ -3807,23 +7791,47 @@
 
 
 
+
+
+
+
                         <div>
+
+
+
+
 
 
 
                             <div class="consulta-seccion-titulo">
 
+
+
                                 Origen de la sugerencia
 
+
+
                             </div>
+
+
+
+
 
 
 
                             <div class="consulta-seccion-subtitulo">
 
+
+
                                 Resumen de los antecedentes utilizados
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3831,17 +7839,37 @@
 
 
 
+
+
+
+
                         <i
+
+
 
                             class="bi bi-graph-up"
 
+
+
                             style="color:#0071e3;"
+
+
 
                         ></i>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
 
 
 
@@ -3853,29 +7881,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-metrica">
 
 
 
+
+
+
+
                             <div class="consulta-metrica-label">
+
+
 
                                 Último precio
 
+
+
                             </div>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaUltimoPrecio"
 
+
+
                                 class="consulta-metrica-valor"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3885,29 +7945,61 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-metrica">
 
 
 
+
+
+
+
                             <div class="consulta-metrica-label">
+
+
 
                                 Mediana
 
+
+
                             </div>
 
 
 
+
+
+
+
                             <div
+
+
 
                                 id="consultaMedianaPrecio"
 
+
+
                                 class="consulta-metrica-valor azul"
+
+
 
                             >
 
+
+
                                 -
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -3917,33 +8009,71 @@
 
 
 
+
+
+
+
+
+
                         <div class="consulta-metrica">
 
 
 
+
+
+
+
                             <div class="consulta-metrica-label">
+
+
 
                                 Rango
 
+
+
                             </div>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaRangoPrecio"
+
+
 
                                 class="consulta-metrica-valor"
 
+
+
                             >
 
+
+
                                 -
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
@@ -3953,35 +8083,73 @@
 
 
 
+
+
+
+
                             <div class="consulta-metrica-label">
+
+
 
                                 Comparables
 
+
+
                             </div>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaCantidadComparables"
+
+
 
                                 class="consulta-metrica-valor"
 
+
+
                             >
 
+
+
                                 0
+
+
 
                             </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
 
 
 
 
 
                     </div>
+
+
+
+
+
+
 
 
 
@@ -3989,31 +8157,63 @@
 
                     <div
 
+
+
                         id="consultaExplicacionSugerencia"
+
+
 
                         class="consulta-explicacion"
 
+
+
                     >
+
+
 
                         <strong>
 
+
+
                             Cómo se obtuvo:
+
+
 
                         </strong>
 
 
 
+
+
+
+
                         El sistema compara antecedentes históricos
+
+
 
                         de todas las sucursales y prioriza los casos
 
+
+
                         más parecidos al ítem actual.
+
+
 
                     </div>
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
 
 
 
@@ -4021,9 +8221,17 @@
 
                 <!-- =============================================
 
+
+
                      ANTECEDENTES
 
+
+
                 ============================================== -->
+
+
+
+
 
 
 
@@ -4031,7 +8239,15 @@
 
 
 
+
+
+
+
                     <div class="consulta-seccion-header">
+
+
+
+
 
 
 
@@ -4039,25 +8255,51 @@
 
 
 
+
+
+
+
                             <div class="consulta-seccion-titulo">
+
+
 
                                 Antecedentes encontrados
 
+
+
                             </div>
+
+
+
+
 
 
 
                             <div
 
+
+
                                 id="consultaCoincidenciasSubtitulo"
+
+
 
                                 class="consulta-seccion-subtitulo"
 
+
+
                             >
+
+
 
                                 Precios utilizados anteriormente
 
+
+
                             </div>
+
+
+
+
 
 
 
@@ -4065,17 +8307,37 @@
 
 
 
+
+
+
+
                         <i
+
+
 
                             class="bi bi-clock-history"
 
+
+
                             style="color:#0071e3;"
+
+
 
                         ></i>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
 
 
 
@@ -4083,7 +8345,13 @@
 
                     <!--
 
+
+
                         precios.js insertará aquí las coincidencias.
+
+
+
+
 
 
 
@@ -4091,41 +8359,81 @@
 
 
 
+
+
+
+
                         - número de OT
+
+
 
                         - fecha
 
+
+
                         - sucursal
+
+
 
                         - vehículo
 
+
+
                         - año
+
+
 
                         - kilometraje
 
+
+
                         - descripción
+
+
 
                         - código
 
+
+
                         - procedimientos
+
+
 
                         - similitud
 
+
+
                         - P.U.
 
+
+
                         - botón Aplicar
+
+
 
                     -->
 
 
 
+
+
+
+
                     <div
+
+
 
                         id="consultaCoincidenciasLista"
 
+
+
                         class="consulta-coincidencias-lista"
 
+
+
                     >
+
+
 
                     </div>
 
@@ -4133,15 +8441,33 @@
 
 
 
+
+
+
+
+
+
                     <div
+
+
 
                         id="consultaCoincidenciasVacio"
 
+
+
                         class="consulta-precios-vacio"
+
+
 
                         style="display:none;"
 
+
+
                     >
+
+
+
+
 
 
 
@@ -4149,25 +8475,51 @@
 
 
 
+
+
+
+
                         <strong>
 
+
+
                             No se encontraron antecedentes suficientes
+
+
 
                         </strong>
 
 
 
+
+
+
+
                         <span>
+
+
 
                             Puede mantener el precio actual o
 
+
+
                             ingresarlo manualmente.
+
+
 
                         </span>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -4177,7 +8529,17 @@
 
 
 
+
+
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -4187,11 +8549,25 @@
 
 
 
+
+
+
+
+
+
         <!-- =====================================================
+
+
 
              FOOTER
 
+
+
         ====================================================== -->
+
+
+
+
 
 
 
@@ -4199,15 +8575,33 @@
 
 
 
+
+
+
+
             <div class="consulta-footer-info">
+
+
 
                 Aplicar un precio modifica únicamente el
 
+
+
                 P.U. de la fila actual.
+
+
 
                 La orden no se guarda automáticamente.
 
+
+
             </div>
+
+
+
+
+
+
 
 
 
@@ -4217,9 +8611,19 @@
 
 
 
+
+
+
+
                 <button
 
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -4227,17 +8631,37 @@
 
 
 
+
+
+
+
                     style="width:auto;"
+
+
+
+
 
 
 
                     onclick="cerrarModalConsultaPrecios()"
 
+
+
                 >
+
+
 
                     Cerrar
 
+
+
                 </button>
+
+
+
+
+
+
 
 
 
@@ -4247,9 +8671,19 @@
 
 
 
+
+
+
+
                     <button
 
+
+
                         type="button"
+
+
+
+
 
 
 
@@ -4257,17 +8691,35 @@
 
 
 
+
+
+
+
                         class="btn-login primary"
+
+
+
+
 
 
 
                         style="
 
+
+
                             width:auto;
+
+
 
                             padding:0 20px;
 
+
+
                         "
+
+
+
+
 
 
 
@@ -4275,23 +8727,47 @@
 
 
 
+
+
+
+
                         disabled
+
+
 
                     >
 
+
+
                         <i
+
+
 
                             class="bi bi-check2"
 
+
+
                             style="margin-right:5px;"
+
+
 
                         ></i>
 
 
 
+
+
+
+
                         Aplicar sugerencia
 
+
+
                     </button>
+
+
+
+
 
 
 
@@ -4299,7 +8775,15 @@
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -4309,7 +8793,17 @@
 
 
 
+
+
+
+
+
+
     </div>
+
+
+
+
 
 
 
