@@ -2755,31 +2755,10 @@ function crearHTMLCoincidenciaPrecio(
             item.precio
         );
 
-    const numeroOrdenOriginal =
-    textoSeguroPrecio(
-        antecedente.numero_orden ||
-        antecedente.orden ||
-        'OT sin número'
-    );
-
-
-let numeroOrden =
-    numeroOrdenOriginal;
-
-
-const coincidenciaMigrada =
-    numeroOrdenOriginal.match(
-        /^MIG-[^-]+-\d{4}-(.+?)-(?:H\d+|HPROFORMA.*)$/
-    );
-
-
-if (
-    coincidenciaMigrada &&
-    coincidenciaMigrada[1]
-) {
-    numeroOrden =
-        coincidenciaMigrada[1];
-}
+    const numeroOrden =
+        item.numero_orden ||
+        item.orden ||
+        'OT sin número';
 
     const fecha =
         fechaPrecio(
