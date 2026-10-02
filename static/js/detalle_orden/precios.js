@@ -301,8 +301,10 @@ window.cerrarModalConsultaPrecios =
 // =========================================================
 // ESTADOS DEL MODAL
 // =========================================================
-
 function ponerModalPrecioCargando() {
+
+    // Quitar cualquier precio de la consulta anterior
+    precioSugeridoActual = null;
 
     const cargando =
         document.getElementById(
@@ -319,33 +321,106 @@ function ponerModalPrecioCargando() {
             'consultaPreciosError'
         );
 
-    if (cargando) {
-        cargando.style.display =
-            'block';
-    }
-
-    if (contenido) {
-        contenido.style.display =
-            'none';
-    }
-
-    if (error) {
-        error.style.display =
-            'none';
-
-        error.textContent = '';
-    }
-
     const boton =
         document.getElementById(
             'btnAplicarPrecioSugerido'
         );
 
+    // Mostrar "Buscando..."
+    if (cargando) {
+        cargando.style.display = 'block';
+    }
+
+    // Ocultar todo el resultado de la búsqueda anterior
+    if (contenido) {
+        contenido.style.display = 'none';
+    }
+
+    // Borrar errores anteriores
+    if (error) {
+        error.style.display = 'none';
+        error.textContent = '';
+    }
+
+    // IMPORTANTE:
+    // desactivar y limpiar el botón del precio anterior
     if (boton) {
         boton.disabled = true;
+
+        boton.innerHTML = `
+            <i
+                class="bi bi-check2"
+                style="margin-right:5px;"
+            ></i>
+            Aplicar sugerencia
+        `;
+    }
+
+    // Limpiar métricas anteriores
+    ponerTextoPrecio(
+        'consultaPrecioSugerido',
+        '-'
+    );
+
+    ponerTextoPrecio(
+        'consultaUltimoPrecio',
+        '-'
+    );
+
+    ponerTextoPrecio(
+        'consultaMedianaPrecio',
+        '-'
+    );
+
+    ponerTextoPrecio(
+        'consultaRangoPrecio',
+        '-'
+    );
+
+    ponerTextoPrecio(
+        'consultaCantidadComparables',
+        '0'
+    );
+
+    // Limpiar historial anterior
+    const lista =
+        document.getElementById(
+            'consultaCoincidenciasLista'
+        );
+
+    if (lista) {
+        lista.innerHTML = '';
+    }
+
+    const vacio =
+        document.getElementById(
+            'consultaCoincidenciasVacio'
+        );
+
+    if (vacio) {
+        vacio.style.display = 'none';
+    }
+
+    // Ocultar inventario anterior
+    const inventario =
+        document.getElementById(
+            'consultaInventarioBox'
+        );
+
+    if (inventario) {
+        inventario.style.display = 'none';
+    }
+
+    // Ocultar catálogo anterior
+    const catalogo =
+        document.getElementById(
+            'consultaServicioCatalogoBox'
+        );
+
+    if (catalogo) {
+        catalogo.style.display = 'none';
     }
 }
-
 
 function ponerModalPrecioContenido() {
 
