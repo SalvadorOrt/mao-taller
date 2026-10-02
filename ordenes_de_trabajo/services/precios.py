@@ -5375,28 +5375,35 @@ def promedio_ponderado(
 # ==========================================================
 
 
-
 def calcular_sugerencia(
     resultados,
 ):
     """
-    Calcula la sugerencia histórica.
+    Calcula una sugerencia histórica robusta.
 
     REGLA MAO:
-    - Primero toma únicamente antecedentes realmente comparables.
-    - Los resultados ya llegan ordenados por similitud y fecha.
-    - De esos antecedentes se usan como máximo los
-      MAXIMO_COMPARABLES_SUGERENCIA más parecidos.
-    - El precio sugerido es el PRECIO MÁS ALTO registrado
-      dentro de ese grupo principal.
 
-    Esto evita que un precio extremo de una coincidencia lejana,
-    por ejemplo $280 para un filtro de aire, se convierta en la
-    sugerencia solo por estar dentro de miles de coincidencias.
+    1. Solo usa antecedentes con similitud suficiente.
+    2. Toma como máximo los antecedentes más comparables.
+    3. Detecta valores atípicos mediante IQR.
+    4. Los atípicos NO participan en la sugerencia.
+    5. Cada antecedente recibe un peso según:
+       - similitud;
+       - antigüedad.
+    6. El precio sugerido corresponde al percentil 65
+       ponderado.
 
-    La mediana y el promedio se conservan únicamente como
-    información estadística para el modal.
+    Esto busca un precio ligeramente superior al centro
+    del mercado histórico de MAO, sin caer automáticamente
+    en el valor máximo.
+
+    El rango mínimo/máximo se conserva sobre los antecedentes
+    originales para que el usuario pueda ver el rango real.
     """
+
+    # =====================================================
+    # FILTRAR COMPARABLES
+    # =====================================================
 
     comparables = [
         fila
@@ -5407,10 +5414,12 @@ def calcular_sugerencia(
                 0,
             )
             >= UMBRAL_COMPARABLE
+
             and fila.get(
                 "precio_unitario"
             )
             is not None
+
             and decimal_seguro(
                 fila.get(
                     "precio_unitario"
@@ -5420,11 +5429,19 @@ def calcular_sugerencia(
         )
     ]
 
+
+    # =====================================================
+    # SIN DATOS
+    # =====================================================
+
     if not comparables:
+
         return {
             "precio_sugerido": None,
             "confianza": "BAJA",
             "cantidad_comparables": 0,
+            "cantidad_utilizados": 0,
+            "atipicos_excluidos": 0,
             "mediana": None,
             "promedio_ponderado": None,
             "minimo": None,
@@ -5433,33 +5450,396 @@ def calcular_sugerencia(
             "mejor_similitud": None,
         }
 
+
+    # =====================================================
+    # TOMAR LOS MÁS COMPARABLES
+    # =====================================================
+
     principales = comparables[
         :MAXIMO_COMPARABLES_SUGERENCIA
     ]
 
-    precios = [
+
+    precios_originales = [
         decimal_seguro(
             fila[
                 "precio_unitario"
             ]
         )
-        for fila
-        in principales
+        for fila in principales
     ]
 
-    sugerido = decimal_dos(
-        max(
-            precios
+
+    # =====================================================
+    # PERCENTIL SIMPLE
+    # Se usa para obtener Q1 y Q3.
+    # =====================================================
+
+    def percentil_simple(
+        valores,
+        proporcion,
+    ):
+
+        valores = sorted(
+            valores
         )
+
+        cantidad = len(
+            valores
+        )
+
+        if cantidad == 1:
+            return valores[0]
+
+        posicion = (
+            (cantidad - 1)
+            * proporcion
+        )
+
+        inferior = int(
+            posicion
+        )
+
+        superior = min(
+            inferior + 1,
+            cantidad - 1,
+        )
+
+        fraccion = (
+            posicion
+            - inferior
+        )
+
+        fraccion_decimal = (
+            decimal_seguro(
+                str(
+                    fraccion
+                )
+            )
+        )
+
+        return (
+            valores[inferior]
+            +
+            (
+                valores[superior]
+                - valores[inferior]
+            )
+            * fraccion_decimal
+        )
+
+
+    # =====================================================
+    # ELIMINAR PRECIOS ATÍPICOS
+    # Método IQR:
+    #
+    # Q1 - 1.5 * IQR
+    # Q3 + 1.5 * IQR
+    # =====================================================
+
+    principales_limpios = list(
+        principales
     )
+
+    if len(
+        precios_originales
+    ) >= 7:
+
+        q1 = percentil_simple(
+            precios_originales,
+            0.25,
+        )
+
+        q3 = percentil_simple(
+            precios_originales,
+            0.75,
+        )
+
+        iqr = (
+            q3
+            - q1
+        )
+
+        # Si todos los precios son prácticamente iguales,
+        # no tiene sentido aplicar filtro IQR.
+        if iqr > CERO:
+
+            factor_iqr = (
+                decimal_seguro(
+                    "1.5"
+                )
+            )
+
+            limite_inferior = (
+                q1
+                -
+                (
+                    factor_iqr
+                    * iqr
+                )
+            )
+
+            limite_superior = (
+                q3
+                +
+                (
+                    factor_iqr
+                    * iqr
+                )
+            )
+
+
+            filtrados = [
+                fila
+                for fila in principales
+                if (
+                    decimal_seguro(
+                        fila[
+                            "precio_unitario"
+                        ]
+                    )
+                    >= limite_inferior
+
+                    and decimal_seguro(
+                        fila[
+                            "precio_unitario"
+                        ]
+                    )
+                    <= limite_superior
+                )
+            ]
+
+
+            # Seguridad:
+            # nunca nos quedamos sin antecedentes.
+            if filtrados:
+                principales_limpios = (
+                    filtrados
+                )
+
+
+    # =====================================================
+    # PESO POR ANTIGÜEDAD
+    # =====================================================
+
+    def peso_recencia(
+        fecha_fila,
+    ):
+
+        if not fecha_fila:
+            return 0.35
+
+
+        # Por si alguna fecha llega como datetime.
+        if (
+            hasattr(
+                fecha_fila,
+                "date",
+            )
+            and callable(
+                fecha_fila.date
+            )
+        ):
+            try:
+                fecha_fila = (
+                    fecha_fila.date()
+                )
+            except Exception:
+                pass
+
+
+        try:
+
+            dias = (
+                date.today()
+                - fecha_fila
+            ).days
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            return 0.35
+
+
+        dias = max(
+            dias,
+            0,
+        )
+
+
+        # 0 - 3 meses
+        if dias <= 90:
+            return 1.00
+
+        # 4 - 6 meses
+        if dias <= 180:
+            return 0.90
+
+        # 7 - 12 meses
+        if dias <= 365:
+            return 0.75
+
+        # 13 - 24 meses
+        if dias <= 730:
+            return 0.55
+
+        # Más de 2 años
+        return 0.35
+
+
+    # =====================================================
+    # PERCENTIL PONDERADO
+    # =====================================================
+
+    def percentil_ponderado(
+        filas,
+        proporcion=0.65,
+    ):
+
+        datos = []
+
+
+        for fila in filas:
+
+            precio = decimal_seguro(
+                fila[
+                    "precio_unitario"
+                ]
+            )
+
+
+            similitud = float(
+                fila.get(
+                    "similitud",
+                    0,
+                )
+                or 0
+            )
+
+
+            # La similitud pesa de forma no lineal.
+            #
+            # 95% pesa mucho más que 65%.
+            peso_similitud = (
+                similitud
+                / 100.0
+            ) ** 2
+
+
+            recencia = peso_recencia(
+                fila.get(
+                    "fecha"
+                )
+            )
+
+
+            peso = (
+                peso_similitud
+                * recencia
+            )
+
+
+            if peso <= 0:
+                continue
+
+
+            datos.append(
+                (
+                    precio,
+                    decimal_seguro(
+                        str(
+                            peso
+                        )
+                    ),
+                )
+            )
+
+
+        if not datos:
+            return None
+
+
+        # Percentil requiere precios ordenados
+        # de menor a mayor.
+        datos.sort(
+            key=lambda item: (
+                item[0]
+            )
+        )
+
+
+        peso_total = sum(
+            (
+                item[1]
+                for item in datos
+            ),
+            CERO,
+        )
+
+
+        if peso_total <= CERO:
+            return None
+
+
+        objetivo = (
+            peso_total
+            * decimal_seguro(
+                str(
+                    proporcion
+                )
+            )
+        )
+
+
+        acumulado = CERO
+
+
+        for (
+            precio,
+            peso,
+        ) in datos:
+
+            acumulado += peso
+
+            if acumulado >= objetivo:
+                return precio
+
+
+        return datos[-1][0]
+
+
+    # =====================================================
+    # PRECIO SUGERIDO
+    # =====================================================
+
+    sugerido = percentil_ponderado(
+        principales_limpios,
+        proporcion=0.65,
+    )
+
+
+    if sugerido is not None:
+
+        sugerido = decimal_dos(
+            sugerido
+        )
+
+
+    # =====================================================
+    # ESTADÍSTICAS
+    # =====================================================
 
     mediana = mediana_ponderada(
-        principales
+        principales_limpios
     )
 
+
     promedio = promedio_ponderado(
-        principales
+        principales_limpios
     )
+
 
     mejor_similitud = (
         principales[0][
@@ -5467,29 +5847,55 @@ def calcular_sugerencia(
         ]
     )
 
+
+    # =====================================================
+    # CONFIANZA
+    # =====================================================
+
+    cantidad_utilizados = len(
+        principales_limpios
+    )
+
+
     if (
-        len(principales) >= 5
+        cantidad_utilizados >= 5
         and mejor_similitud >= 80
     ):
+
         confianza = "ALTA"
 
+
     elif (
-        len(principales) >= 2
+        cantidad_utilizados >= 2
         and mejor_similitud >= 70
     ):
+
         confianza = "MEDIA"
 
+
     else:
+
         confianza = "BAJA"
+
+
+    # =====================================================
+    # ÚLTIMO PRECIO
+    #
+    # Aquí NO eliminamos atípicos porque queremos mostrar
+    # cuál fue realmente el último precio registrado.
+    # =====================================================
 
     por_fecha = sorted(
         principales,
         key=lambda fila: (
-            fila["fecha"]
+            fila.get(
+                "fecha"
+            )
             or date.min
         ),
         reverse=True,
     )
+
 
     ultimo_precio = (
         por_fecha[0][
@@ -5499,7 +5905,13 @@ def calcular_sugerencia(
         else None
     )
 
+
+    # =====================================================
+    # RESPUESTA
+    # =====================================================
+
     return {
+
         "precio_sugerido": (
             sugerido
         ),
@@ -5508,8 +5920,24 @@ def calcular_sugerencia(
             confianza
         ),
 
+        # Seguimos mostrando cuántos antecedentes
+        # principales fueron encontrados.
         "cantidad_comparables": (
-            len(principales)
+            len(
+                principales
+            )
+        ),
+
+        # Cuántos participaron realmente en el cálculo.
+        "cantidad_utilizados": (
+            cantidad_utilizados
+        ),
+
+        "atipicos_excluidos": (
+            len(
+                principales
+            )
+            - cantidad_utilizados
         ),
 
         "mediana": (
@@ -5520,15 +5948,17 @@ def calcular_sugerencia(
             promedio
         ),
 
+        # El rango sigue mostrando TODO el rango observado
+        # entre los 15 principales.
         "minimo": decimal_dos(
             min(
-                precios
+                precios_originales
             )
         ),
 
         "maximo": decimal_dos(
             max(
-                precios
+                precios_originales
             )
         ),
 
@@ -5540,7 +5970,6 @@ def calcular_sugerencia(
             mejor_similitud
         ),
     }
-
 
 # ==========================================================
 # DATOS DE CONTEXTO DE LA OT
