@@ -1,880 +1,1763 @@
 {% extends "base.html" %}
+
 {% load static %}
+
 {% load l10n %}
+
 {% block title %}
+
     Detalle OT | MAO
+
 {% endblock %}
+
+
 
 {% block page_title %}
+
     Orden {{ orden.numero_orden }}
+
 {% endblock %}
 
+
+
 {% block page_subtitle %}
+
     Detalle operativo de la orden
+
 {% endblock %}
+
+
 
 {% block content %}
 
+
+
 <link
+
     rel="stylesheet"
+
     href="{% static 'css/detalle_orden.css' %}?v=28"
+
 >
+
+
 
 <div
+
     class="container ot-wrapper"
+
     data-puede-editar="{{ puede_editar|yesno:'true,false' }}"
+
 >
 
+
+
     <!-- =====================================================
+
          ESTADO Y ACCIONES SUPERIORES
+
     ====================================================== -->
+
     <div
+
         class="ot-card ot-header"
+
         style="
+
             margin-bottom: 15px;
+
             align-items: center;
+
             padding: 15px;
+
         "
+
     >
 
+
+
         <div
+
             style="
+
                 display: flex;
+
                 align-items: center;
+
                 gap: 10px;
+
                 flex-wrap: wrap;
+
             "
+
         >
+
             <span
+
                 style="
+
                     font-size: 14px;
+
                     font-weight: 700;
+
                     color: var(--text);
+
                 "
+
             >
+
                 Estado de Orden:
+
             </span>
+
+
 
             {% if orden.estado == "ABIERTA" %}
 
+
+
                 <span
+
                     class="ot-badge"
+
                     style="
+
                         background: #e5fbe4;
+
                         color: #1f8939;
+
                         border-color: #b7efc5;
+
                     "
+
                 >
+
                     EN TALLER / ABIERTA
+
                 </span>
+
+
 
             {% elif orden.estado == "CERRADA" %}
 
+
+
                 <span
+
                     class="ot-badge"
+
                     style="
+
                         background: #f5f5f7;
+
                         color: var(--muted);
+
                         border-color: var(--border);
+
                     "
+
                 >
+
                     ENTREGADO / CERRADA
+
                 </span>
+
+
 
             {% else %}
 
+
+
                 <span
+
                     class="ot-badge"
+
                     style="
+
                         background: #ffebe9;
+
                         color: var(--danger);
+
                         border-color: #ffd6d6;
+
                     "
+
                 >
+
                     ANULADA
+
                 </span>
 
+
+
             {% endif %}
+
+
 
             {% if orden.es_migrada %}
 
+
+
                 <span
+
                     class="ot-badge"
+
                     style="
+
                         background: #fff5cc;
+
                         color: #d97706;
+
                         border-color: #ffcc00;
+
                     "
+
                 >
+
                     MIGRADA (ETL)
+
                 </span>
 
+
+
             {% endif %}
+
         </div>
 
+
+
         <div
+
             style="
+
                 display: flex;
+
                 gap: 8px;
+
                 flex-wrap: wrap;
+
             "
+
         >
 
+
+
             <button
+
                 type="button"
+
                 onclick="abrirModalRecepcion()"
+
                 class="btn-login"
+
                 style="
+
                     background: #f5f5f7;
+
                     color: var(--text);
+
                 "
+
             >
+
                 {% if puede_editar %}
 
+
+
                     <i
+
                         class="bi bi-pencil-square"
+
                         style="margin-right: 5px;"
+
                     ></i>
+
+
 
                     Editar Recepción
 
+
+
                 {% else %}
 
+
+
                     <i
+
                         class="bi bi-eye"
+
                         style="margin-right: 5px;"
+
                     ></i>
+
+
 
                     Ver Recepción
 
+
+
                 {% endif %}
+
             </button>
+
+
 
             {% if puede_reabrir and orden.estado != "ABIERTA" %}
 
+
+
                 <button
+
                     type="button"
+
                     onclick="confirmarReabrir('formReabrir')"
+
                     class="btn-login"
+
                     style="
+
                         background: #ff9500;
+
                         border-color: #ff9500;
+
                         color: #ffffff;
+
                     "
+
                 >
+
                     <i
+
                         class="bi bi-unlock"
+
                         style="margin-right: 5px;"
+
                     ></i>
 
+
+
                     Reabrir Orden
+
                 </button>
+
+
 
             {% endif %}
 
+
+
         </div>
+
+
 
     </div>
 
+
+
     <!-- =====================================================
+
          FORMULARIO PRINCIPAL DE LA ORDEN
 
+
+
          IMPORTANTE:
+
          Dentro de este formulario no puede existir ningún otro
+
          elemento <form>.
+
     ====================================================== -->
+
     <form
+
         method="post"
+
         id="formDetalleOT"
+
         novalidate
+
     >
+
         {% csrf_token %}
 
-        <input
-            type="hidden"
-            name="orden_version"
-            value="{{ orden.version }}"
-        >
+
 
         <input
+
             type="hidden"
-            id="porcentajeIva"
-            value="{{ orden.porcentaje_iva|default_if_none:'0.00'|unlocalize }}"
+
+            name="orden_version"
+
+            value="{{ orden.version }}"
+
         >
+
+
+
+        <input
+
+            type="hidden"
+
+            id="porcentajeIva"
+
+            value="{{ orden.porcentaje_iva|default_if_none:'0.00'|unlocalize }}"
+
+        >
+
+
 
         <!-- Información general -->
+
         {% include "includes/detalle_orden/info_general.html" %}
 
+
+
         <!-- Repuestos -->
+
         {% include "includes/detalle_orden/tabla_repuestos.html" %}
 
+
+
         <!-- Mano de obra interna -->
+
         {% include "includes/detalle_orden/tabla_moi.html" %}
 
+
+
         <!-- Mano de obra externa -->
+
         {% include "includes/detalle_orden/tabla_moe.html" %}
 
+
+
         <!-- Resumen económico -->
+
         {% include "includes/detalle_orden/resumen.html" %}
 
+
+
         <!-- Recomendaciones -->
+
         {% include "includes/detalle_orden/recomendaciones.html" %}
 
+
+
         <!-- =================================================
+
              ACCIONES INFERIORES
+
         ================================================== -->
+
         <div class="sticky-actions">
 
+
+
             <a
+
                 href="{{ url_anterior }}"
+
                 class="btn-login"
+
                 style="
+
                     background: #e5e5ea;
+
                     border-color: #e5e5ea;
+
                     color: var(--text);
+
                 "
+
             >
+
                 <i
+
                     class="fas fa-arrow-left"
+
                     style="margin-right: 6px;"
+
                 ></i>
 
+
+
                 Volver
+
             </a>
+
+
 
             {% if puede_editar %}
 
+
+
                 <button
+
                     type="button"
+
                     id="btnGuardarDetalleOT"
+
                     class="btn-login primary"
+
                     onclick="guardarOTDirecto()"
+
                 >
+
                     {% if orden.estado != "ABIERTA" %}
 
+
+
                         <i
+
                             class="bi bi-shield-check"
+
                             style="margin-right: 5px;"
+
                         ></i>
+
+
 
                         Guardar Correcciones
 
+
+
                     {% else %}
+
+
 
                         Guardar detalle de OT
 
+
+
                     {% endif %}
+
                 </button>
+
+
 
             {% endif %}
 
+
+
         </div>
 
+
+
     </form>
 
+
+
     <!-- =====================================================
+
          FORMULARIO INDEPENDIENTE PARA REGISTRAR ABONOS
 
+
+
          Los campos visuales están en resumen.html y se asocian
+
          a este formulario mediante form="formRegistrarAbono".
+
          Así evitamos formularios anidados.
+
     ====================================================== -->
+
     {% if puede_registrar_abono %}
+
         <form
+
             id="formRegistrarAbono"
+
             method="post"
+
             action="{% url 'registrar_abono' orden.pk %}"
+
             style="display: none;"
+
         >
+
             {% csrf_token %}
+
         </form>
+
     {% endif %}
 
+
+
     <!-- =====================================================
+
          FORMULARIOS INDEPENDIENTES DE ACCIONES
 
+
+
          Se colocan después del formulario principal para evitar
+
          formularios anidados.
+
     ====================================================== -->
+
     <form
+
         id="form_cerrar_orden"
+
         method="post"
+
         action="{% url 'cerrar_orden' orden.pk %}"
+
         style="display: none;"
+
     >
+
         {% csrf_token %}
+
     </form>
 
+
+
     <form
+
         id="form_anular_orden"
+
         method="post"
+
         action="{% url 'anular_orden' orden.pk %}"
+
         style="display: none;"
+
     >
+
         {% csrf_token %}
+
     </form>
 
+
+
     <form
+
         id="formReabrir"
+
         method="post"
+
         action="{% url 'reabrir_orden' orden.pk %}"
+
         style="display: none;"
+
     >
+
         {% csrf_token %}
+
     </form>
+
+
 
 </div>
 
 
+
+
+
 {% include "includes/detalle_orden/modal_editar_recepcion.html" %}
+
 {% include "includes/detalle_orden/consulta_precios.html" %}
+
+{% include "includes/detalle_orden/modal_historial.html" %}
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
+
 <script>
+
     function guardarOTDirecto() {
+
         const formulario = document.getElementById(
+
             "formDetalleOT"
+
         );
+
+
 
         const botonGuardar = document.getElementById(
+
             "btnGuardarDetalleOT"
+
         );
+
+
 
         if (!formulario) {
+
             Swal.fire({
+
                 title: "Error",
+
                 text: "No se encontró el formulario de la orden.",
+
                 icon: "error",
+
                 confirmButtonColor: "#ff3b30"
+
             });
 
+
+
             return;
+
         }
 
+
+
         if (
+
             typeof mostrarEstadoDescuento === "function" &&
+
             !mostrarEstadoDescuento()
+
         ) {
+
             const mensajeError = document.getElementById(
+
                 "descuentoError"
+
             );
 
+
+
             Swal.fire({
+
                 title: "Descuento inválido",
+
                 text:
+
                     mensajeError?.textContent ||
+
                     "Revise el descuento ingresado.",
+
                 icon: "warning",
+
                 confirmButtonColor: "#ff9500"
+
             });
+
+
 
             document.getElementById(
+
                 "descuento_ingresado"
+
             )?.focus();
 
+
+
             return;
+
         }
+
+
 
         /*
+
          * Verificación de seguridad:
+
          * comprueba que los campos editables realmente pertenecen
+
          * al formulario principal.
+
          */
+
         const campoRepuesto = document.querySelector(
+
             '[name="rep_descripcion[]"]'
+
         );
+
+
 
         const campoManoObra = document.querySelector(
+
             '[name="moi_descripcion[]"]'
+
         );
 
+
+
         if (
+
             campoRepuesto &&
+
             campoRepuesto.form !== formulario
+
         ) {
+
             Swal.fire({
+
                 title: "Error de formulario",
+
                 text:
+
                     "Los campos de repuestos no pertenecen al " +
+
                     "formulario principal. Revise si existe un " +
+
                     "formulario interno en algún archivo incluido.",
+
                 icon: "error",
+
                 confirmButtonColor: "#ff3b30"
+
             });
 
+
+
             return;
+
         }
+
+
 
         if (
+
             campoManoObra &&
+
             campoManoObra.form !== formulario
+
         ) {
+
             Swal.fire({
+
                 title: "Error de formulario",
+
                 text:
+
                     "Los campos de mano de obra no pertenecen al " +
+
                     "formulario principal. Revise si existe un " +
+
                     "formulario interno en algún archivo incluido.",
+
                 icon: "error",
+
                 confirmButtonColor: "#ff3b30"
+
             });
 
+
+
             return;
+
         }
+
+
 
         if (botonGuardar) {
+
             botonGuardar.disabled = true;
+
         }
 
+
+
         Swal.fire({
+
             title: "Guardando...",
+
             html:
+
                 "Sincronizando repuestos, servicios " +
+
                 "y recomendaciones...",
+
             allowOutsideClick: false,
+
             allowEscapeKey: false,
 
+
+
             didOpen: function () {
+
                 Swal.showLoading();
 
+
+
                 /*
+
                  * requestSubmit respeta el envío normal del formulario
+
                  * y las validaciones registradas por JavaScript.
+
                  */
+
                 if (
+
                     typeof formulario.requestSubmit ===
+
                     "function"
+
                 ) {
+
                     formulario.requestSubmit();
+
                 } else {
+
                     formulario.submit();
+
                 }
+
             }
+
         });
+
     }
+
+
+
 
 
     function confirmarReabrir(formId) {
+
         Swal.fire({
+
             title: "¿Reabrir Orden Histórica?",
+
             text:
+
                 'Esta orden volverá a estar "ABIERTA". ' +
+
                 "Usa esta opción solo si necesitas realizar " +
+
                 "cambios profundos en el detalle técnico.",
+
             icon: "warning",
+
             showCancelButton: true,
+
             confirmButtonColor: "#ff9500",
+
             cancelButtonColor: "#6e6e73",
+
             confirmButtonText: "Sí, reabrir",
+
             cancelButtonText: "Cancelar"
+
         }).then(function (result) {
+
             if (!result.isConfirmed) {
+
                 return;
+
             }
+
+
 
             const formulario = document.getElementById(
+
                 formId
+
             );
 
+
+
             if (formulario) {
+
                 formulario.submit();
+
             }
+
         });
+
     }
 
 
+
+
+
     document.addEventListener(
+
         "DOMContentLoaded",
+
         function () {
+
             {% if messages %}
+
+
 
                 {% for message in messages %}
 
+
+
                     {% if message.tags == "success" %}
 
+
+
                         Swal.fire({
+
                             title: "¡Guardado Exitoso!",
+
                             text: "{{ message|escapejs }}",
+
                             icon: "success",
+
                             confirmButtonColor: "#34c759",
+
                             confirmButtonText: "Entendido",
+
                             timer: 2500
+
                         });
+
+
 
                     {% elif message.tags == "error" %}
 
+
+
                         Swal.fire({
+
                             title: "Error",
+
                             text: "{{ message|escapejs }}",
+
                             icon: "error",
+
                             confirmButtonColor: "#ff3b30"
+
                         });
+
+
 
                     {% elif message.tags == "warning" %}
 
+
+
                         Swal.fire({
+
                             title: "Advertencia",
+
                             text: "{{ message|escapejs }}",
+
                             icon: "warning",
+
                             confirmButtonColor: "#ff9500"
+
                         });
+
+
 
                     {% endif %}
 
+
+
                 {% endfor %}
+
+
 
             {% endif %}
 
+
+
             if (
+
                 typeof recalcularTotales ===
+
                 "function"
+
             ) {
+
                 recalcularTotales();
+
             }
+
         }
+
     );
+
 </script>
 
+
+
 <script
+
     src="{% static 'js/detalle_orden/base.js' %}?v=21"
+
 ></script>
 
+
+
 <script
+
     src="{% static 'js/detalle_orden/recepcion.js' %}?v=2"
+
 ></script>
 
+
+
 <script
+
     src="{% static 'js/detalle_orden/repuestos.js' %}?v=8"
+
 ></script>
 
+
+
 <script
+
     src="{% static 'js/detalle_orden/ordenar_repuestos.js' %}?v=1"
+
 ></script>
 
+
+
 <script
+
     src="{% static 'js/detalle_orden/mano_obra.js' %}?v=10"
+
 ></script>
+
 <script src="{% static 'js/detalle_orden/precios.js' %}?v=4"></script>
+
+<script src="{% static 'js/detalle_orden/historial.js' %}?v=1"></script>
+
 <script
+
     src="{% static 'js/detalle_orden.js' %}?v=4"
+
 ></script>
+
+
 
 <script>
+
     /* =========================================================
+
        MARCAR TODA LA FILA EN ROJO
+
        SI P.U. / CANTIDAD / VALOR ES 0 O NEGATIVO
 
+
+
        IMPORTANTE:
+
        - Se pinta la fila completa.
+
        - Los inputs permanecen blancos.
+
        - Aplica a Repuestos, MOI y MOE.
+
        - Detecta filas nuevas agregadas con JavaScript.
+
        ========================================================= */
+
+
 
     (function () {
 
+
+
         /* =====================================================
+
            CONVERTIR TEXTO A NÚMERO
+
            ===================================================== */
+
         function convertirNumero(valor) {
 
+
+
             if (
+
                 valor === null ||
+
                 valor === undefined ||
+
                 String(valor).trim() === ""
+
             ) {
+
                 return null;
+
             }
+
+
 
             let texto =
+
                 String(valor).trim();
 
+
+
             /*
+
              * Soporta:
+
              *
+
              * 0.00
+
              * 0,00
+
              * 1.234,56
+
              * 1234.56
+
              */
+
             if (
+
                 texto.includes(",") &&
+
                 texto.includes(".")
+
             ) {
+
                 texto = texto
+
                     .replace(/\./g, "")
+
                     .replace(",", ".");
+
             } else {
+
                 texto =
+
                     texto.replace(",", ".");
+
             }
 
+
+
             const numero =
+
                 Number(texto);
 
+
+
             return Number.isFinite(numero)
+
                 ? numero
+
                 : null;
+
         }
 
 
+
+
+
         /* =====================================================
+
            VALIDAR UNA FILA
+
            ===================================================== */
+
         function validarFilaNumerica(fila) {
 
+
+
             if (!fila) {
+
                 return;
+
             }
 
+
+
             /*
+
              * No validamos filas eliminadas visualmente.
+
              */
+
             if (
+
                 fila.classList.contains("fila-eliminada") ||
+
                 fila.classList.contains("fila-eliminada-moi") ||
+
                 fila.classList.contains("fila-eliminada-moe")
+
             ) {
+
                 fila.classList.remove(
+
                     "fila-error-numero"
+
                 );
 
+
+
                 return;
+
             }
 
+
+
             /*
+
              * Solo revisamos:
+
              * - P.U.
+
              * - Cantidad
+
              * - Valor
+
              */
+
             const campos =
+
                 fila.querySelectorAll(
+
                     "input.pu, " +
+
                     "input.cantidad, " +
+
                     "input.valor"
+
                 );
+
+
 
             /*
+
              * Si la fila no tiene campos numéricos,
+
              * no debe marcarse.
+
              */
+
             if (!campos.length) {
+
                 fila.classList.remove(
+
                     "fila-error-numero"
+
                 );
 
+
+
                 return;
+
             }
+
+
 
             let tieneError = false;
 
+
+
             campos.forEach(function (campo) {
 
+
+
                 const numero =
+
                     convertirNumero(
+
                         campo.value
+
                     );
 
+
+
                 /*
+
                  * Regla visual:
+
                  *
+
                  * 0        -> rojo
+
                  * negativo -> rojo
+
                  * positivo -> normal
+
                  * vacío    -> normal
+
                  */
+
                 if (
+
                     numero !== null &&
+
                     numero <= 0
+
                 ) {
+
                     tieneError = true;
+
                 }
+
             });
 
+
+
             /*
+
              * Se marca TODA LA FILA.
+
              */
+
             fila.classList.toggle(
+
                 "fila-error-numero",
+
                 tieneError
+
             );
+
         }
 
 
+
+
+
         /* =====================================================
+
            VALIDAR TODAS LAS FILAS
+
            ===================================================== */
+
         function actualizarErroresNumericos() {
 
+
+
             const filas =
+
                 document.querySelectorAll(
+
                     `
+
                     #cuerpoTablaRepuestos > tr.fila-repuesto,
+
                     #cuerpoTablaMOI > tr.fila-padre-moi,
+
                     #cuerpoTablaMOE > tr.fila-padre-moe
+
                     `
+
                 );
+
+
 
             filas.forEach(
+
                 validarFilaNumerica
+
             );
+
         }
 
 
+
+
+
         /* =====================================================
+
            ACTUALIZAR AL ESCRIBIR
+
            ===================================================== */
+
         document.addEventListener(
+
             "input",
+
             function (event) {
+
+
 
                 const campo =
+
                     event.target;
 
+
+
                 if (
+
                     !campo.matches(
+
                         ".ot-table input.pu, " +
+
                         ".ot-table input.cantidad, " +
+
                         ".ot-table input.valor"
+
                     )
+
                 ) {
+
                     return;
+
                 }
+
+
 
                 const fila =
+
                     campo.closest("tr");
 
-                /*
-                 * Validamos inmediatamente.
-                 */
-                validarFilaNumerica(
-                    fila
-                );
+
 
                 /*
-                 * calcularFila() puede modificar después
-                 * el campo Valor.
-                 *
-                 * Por eso volvemos a revisar al terminar
-                 * el ciclo actual de JavaScript.
+
+                 * Validamos inmediatamente.
+
                  */
-                setTimeout(
-                    function () {
-                        validarFilaNumerica(
-                            fila
-                        );
-                    },
-                    0
+
+                validarFilaNumerica(
+
+                    fila
+
                 );
+
+
+
+                /*
+
+                 * calcularFila() puede modificar después
+
+                 * el campo Valor.
+
+                 *
+
+                 * Por eso volvemos a revisar al terminar
+
+                 * el ciclo actual de JavaScript.
+
+                 */
+
+                setTimeout(
+
+                    function () {
+
+                        validarFilaNumerica(
+
+                            fila
+
+                        );
+
+                    },
+
+                    0
+
+                );
+
             }
+
         );
 
 
+
+
+
         /* =====================================================
+
            ACTUALIZAR AL CAMBIAR
+
            ===================================================== */
+
         document.addEventListener(
+
             "change",
+
             function (event) {
 
+
+
                 if (
+
                     !event.target.matches(
+
                         ".ot-table input.pu, " +
+
                         ".ot-table input.cantidad, " +
+
                         ".ot-table input.valor"
+
                     )
+
                 ) {
+
                     return;
+
                 }
 
+
+
                 validarFilaNumerica(
+
                     event.target.closest("tr")
+
                 );
+
             }
+
         );
 
 
+
+
+
         /* =====================================================
+
            INICIALIZACIÓN
+
            ===================================================== */
+
         function iniciarValidacionNumerica() {
 
+
+
             /*
+
              * Validar todo apenas se carga la OT.
+
              */
+
             actualizarErroresNumericos();
 
+
+
             const formulario =
+
                 document.getElementById(
+
                     "formDetalleOT"
+
                 );
+
+
 
             if (!formulario) {
+
                 return;
+
             }
 
+
+
             /*
+
              * Detecta filas nuevas creadas por:
+
              *
+
              * + Agregar repuesto
+
              * + Agregar MOI
+
              * + Agregar MOE
+
              */
+
             const observer =
+
                 new MutationObserver(
+
                     function (mutaciones) {
 
+
+
                         const cambioEstructural =
+
                             mutaciones.some(
+
                                 function (mutacion) {
+
                                     return (
+
                                         mutacion.type ===
+
                                         "childList"
+
                                     );
+
                                 }
+
                             );
 
+
+
                         if (cambioEstructural) {
+
                             actualizarErroresNumericos();
+
                         }
+
                     }
+
                 );
 
+
+
             observer.observe(
+
                 formulario,
+
                 {
+
                     childList: true,
+
                     subtree: true
+
                 }
+
             );
+
         }
+
+
+
 
 
         /* =====================================================
+
            ARRANQUE
+
            ===================================================== */
+
         if (
+
             document.readyState ===
+
             "loading"
+
         ) {
+
             document.addEventListener(
+
                 "DOMContentLoaded",
+
                 iniciarValidacionNumerica
+
             );
+
         } else {
+
             iniciarValidacionNumerica();
+
         }
+
+
+
 
 
         /*
+
          * Disponible globalmente por si repuestos.js
+
          * o mano_obra.js necesita forzar una validación.
+
          */
+
         window.actualizarErroresNumericos =
+
             actualizarErroresNumericos;
 
+
+
     })();
+
 </script>
+
+
 
 {% endblock %}
