@@ -5,11 +5,8 @@
 {% load l10n %}
 
 {% block title %}
-
-    Detalle OT | MAO
-
+    {{ orden.placa|upper|default:"S/P" }} · {{ orden.vehiculo|upper|default:"VEHÍCULO"|truncatechars:28 }} · {{ orden.numero_orden }}
 {% endblock %}
-
 
 
 {% block page_title %}
