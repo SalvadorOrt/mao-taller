@@ -2,32 +2,51 @@
 
 <style>
     /* =========================================================
-       MODAL HISTORIAL DEL VEHÍCULO - COMPACTO HORIZONTAL
+       MODAL HISTORIAL DEL VEHÍCULO
+       VERSIÓN COMPACTA Y CLARA
     ========================================================= */
 
     #modalHistorialOrden {
         display: none;
+
         position: fixed;
         inset: 0;
+
         z-index: 10060;
 
         width: 100%;
         height: 100%;
 
-        padding: 12px;
+        padding: 10px;
+
         box-sizing: border-box;
 
         align-items: center;
         justify-content: center;
 
-        background: rgba(0, 0, 0, 0.58);
-        backdrop-filter: blur(4px);
+        background:
+            rgba(0, 0, 0, 0.58);
+
+        backdrop-filter:
+            blur(4px);
     }
 
+
+    /* =========================================================
+       CONTENEDOR PRINCIPAL
+       YA NO TIENE ALTURA FIJA
+    ========================================================= */
+
     .historial-orden-dialog {
-        width: min(1100px, 96vw);
-        height: min(760px, 88vh);
-        max-height: 88vh;
+        width:
+            min(
+                1080px,
+                96vw
+            );
+
+        height: auto;
+
+        max-height: 92vh;
 
         display: flex;
         flex-direction: column;
@@ -35,11 +54,26 @@
         overflow: hidden;
 
         background: #ffffff;
-        border: 1px solid var(--border-soft, #efeff2);
-        border-radius: 14px;
 
-        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+        border:
+            1px solid
+            var(
+                --border-soft,
+                #efeff2
+            );
+
+        border-radius: 13px;
+
+        box-shadow:
+            0 16px 44px
+            rgba(
+                0,
+                0,
+                0,
+                0.28
+            );
     }
+
 
     /* =========================================================
        HEADER
@@ -48,18 +82,31 @@
     .historial-orden-header {
         flex: 0 0 auto;
 
-        min-height: 48px;
-        padding: 8px 13px;
+        min-height: 42px;
+
+        padding:
+            6px 10px;
 
         display: flex;
         align-items: center;
         justify-content: space-between;
 
-        gap: 10px;
+        gap: 8px;
 
-        border-bottom: 1px solid var(--border-soft, #efeff2);
-        background: var(--head, #fbfbfd);
+        border-bottom:
+            1px solid
+            var(
+                --border-soft,
+                #efeff2
+            );
+
+        background:
+            var(
+                --head,
+                #fbfbfd
+            );
     }
+
 
     .historial-orden-header-left {
         min-width: 0;
@@ -67,12 +114,13 @@
         display: flex;
         align-items: center;
 
-        gap: 8px;
+        gap: 7px;
     }
 
+
     .historial-orden-icono {
-        width: 30px;
-        height: 30px;
+        width: 27px;
+        height: 27px;
 
         flex: 0 0 auto;
 
@@ -80,43 +128,62 @@
         align-items: center;
         justify-content: center;
 
-        border-radius: 8px;
+        border-radius: 7px;
 
-        background: rgba(0, 113, 227, 0.10);
+        background:
+            rgba(
+                0,
+                113,
+                227,
+                0.09
+            );
+
         color: #0071e3;
 
-        font-size: 0.9rem;
+        font-size: 0.80rem;
     }
+
 
     .historial-orden-titulo-wrap {
         min-width: 0;
     }
 
+
     .historial-orden-titulo {
         margin: 0;
 
-        color: var(--primary, #1d1d1f);
+        color:
+            var(
+                --primary,
+                #1d1d1f
+            );
 
-        font-size: 0.94rem;
+        font-size: 0.86rem;
         font-weight: 800;
 
-        line-height: 1.15;
+        line-height: 1.10;
     }
+
 
     .historial-orden-subtitulo {
         margin-top: 1px;
 
-        color: var(--muted, #6e6e73);
+        color:
+            var(
+                --muted,
+                #6e6e73
+            );
 
-        font-size: 0.62rem;
+        font-size: 0.56rem;
         font-weight: 600;
 
-        line-height: 1.2;
+        line-height: 1.15;
     }
 
+
     .historial-orden-cerrar {
-        width: 30px;
-        height: 30px;
+        width: 27px;
+        height: 27px;
 
         flex: 0 0 auto;
 
@@ -127,13 +194,18 @@
         justify-content: center;
 
         border: 0;
-        border-radius: 8px;
+
+        border-radius: 7px;
 
         background: transparent;
 
-        color: var(--muted, #6e6e73);
+        color:
+            var(
+                --muted,
+                #6e6e73
+            );
 
-        font-size: 1.25rem;
+        font-size: 1.15rem;
         line-height: 1;
 
         cursor: pointer;
@@ -143,43 +215,61 @@
             color 0.15s ease;
     }
 
+
     .historial-orden-cerrar:hover {
         background: #f2f2f7;
+
         color: #111111;
     }
 
+
     /* =========================================================
        BODY
+       IMPORTANTE:
+       NO FUERZA EL MODAL A LLENAR TODA LA PANTALLA
     ========================================================= */
 
     .historial-orden-body {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
+
         min-height: 0;
 
-        padding: 8px;
+        max-height:
+            calc(
+                92vh - 82px
+            );
+
+        padding: 7px;
 
         overflow: hidden;
 
         background: #ffffff;
     }
 
+
     #historialOrdenContenido {
         display: none;
 
         width: 100%;
-        height: 100%;
+
+        height: auto;
 
         min-height: 0;
+
+        max-height: 100%;
+
+        overflow: hidden;
     }
 
+
     /* =========================================================
-       CARGA / ERROR
+       CARGA
     ========================================================= */
 
     .historial-orden-cargando {
         display: none;
 
-        height: 100%;
+        min-height: 180px;
 
         align-items: center;
         justify-content: center;
@@ -189,160 +279,254 @@
         text-align: center;
     }
 
-    .historial-orden-cargando[style*="block"] {
-        display: flex !important;
-    }
 
     .historial-orden-spinner {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
 
-        margin-bottom: 9px;
+        margin-bottom: 8px;
 
-        border: 3px solid #e5e5ea;
-        border-top-color: #0071e3;
+        border:
+            3px solid
+            #e5e5ea;
+
+        border-top-color:
+            #0071e3;
+
         border-radius: 50%;
 
-        animation: historialOrdenGirar 0.8s linear infinite;
+        animation:
+            historialOrdenGirar
+            0.8s linear infinite;
     }
 
+
     @keyframes historialOrdenGirar {
+
         to {
-            transform: rotate(360deg);
+            transform:
+                rotate(360deg);
         }
+
     }
+
 
     .historial-orden-cargando-texto {
         color: #4a4a4a;
 
-        font-size: 0.76rem;
+        font-size: 0.70rem;
         font-weight: 700;
     }
 
+
     .historial-orden-cargando-ayuda {
-        margin-top: 3px;
+        margin-top: 2px;
 
-        color: var(--muted, #6e6e73);
+        color:
+            var(
+                --muted,
+                #6e6e73
+            );
 
-        font-size: 0.63rem;
+        font-size: 0.57rem;
     }
+
+
+    /* =========================================================
+       ERROR
+    ========================================================= */
 
     .historial-orden-error {
         display: none;
 
-        margin: 4px;
-        padding: 10px 12px;
+        margin: 3px;
 
-        border: 1px solid rgba(255, 59, 48, 0.22);
-        border-radius: 9px;
+        padding:
+            9px 10px;
 
-        background: rgba(255, 59, 48, 0.07);
+        border:
+            1px solid
+            rgba(
+                255,
+                59,
+                48,
+                0.22
+            );
+
+        border-radius: 8px;
+
+        background:
+            rgba(
+                255,
+                59,
+                48,
+                0.07
+            );
 
         color: #c62828;
 
-        font-size: 0.72rem;
+        font-size: 0.66rem;
         font-weight: 650;
     }
 
+
     /* =========================================================
-       FOOTER
+       FOOTER COMPACTO
     ========================================================= */
 
     .historial-orden-footer {
         flex: 0 0 auto;
 
-        min-height: 42px;
-        padding: 7px 12px;
+        min-height: 34px;
+
+        padding:
+            5px 9px;
 
         display: flex;
         align-items: center;
         justify-content: space-between;
 
-        gap: 8px;
+        gap: 7px;
 
-        border-top: 1px solid var(--border-soft, #efeff2);
-        background: var(--head, #fbfbfd);
+        border-top:
+            1px solid
+            var(
+                --border-soft,
+                #efeff2
+            );
+
+        background:
+            var(
+                --head,
+                #fbfbfd
+            );
     }
+
 
     .historial-orden-footer-info {
-        color: var(--muted, #6e6e73);
+        color:
+            var(
+                --muted,
+                #6e6e73
+            );
 
-        font-size: 0.60rem;
-        line-height: 1.25;
+        font-size: 0.53rem;
+
+        line-height: 1.15;
     }
 
+
     .historial-orden-footer-info i {
-        margin-right: 4px;
+        margin-right: 3px;
+
         color: #0071e3;
     }
 
-    .historial-orden-btn-cerrar {
-        height: 30px;
-        padding: 0 12px;
 
-        border: 1px solid #d2d2d7;
-        border-radius: 7px;
+    .historial-orden-btn-cerrar {
+        height: 27px;
+
+        padding:
+            0 10px;
+
+        border:
+            1px solid
+            #d2d2d7;
+
+        border-radius: 6px;
 
         background: #ffffff;
 
         color: #1d1d1f;
 
-        font-size: 0.68rem;
+        font-size: 0.61rem;
         font-weight: 700;
 
         cursor: pointer;
     }
 
+
     .historial-orden-btn-cerrar:hover {
         background: #f5f5f7;
     }
+
 
     body.historial-orden-abierto {
         overflow: hidden;
     }
 
+
     /* =========================================================
        RESPONSIVE
     ========================================================= */
 
-    @media (max-width: 760px) {
+    @media (
+        max-width: 760px
+    ) {
+
         #modalHistorialOrden {
-            padding: 6px;
+            padding: 5px;
         }
+
 
         .historial-orden-dialog {
             width: 100%;
-            height: 94vh;
-            max-height: 94vh;
 
-            border-radius: 11px;
+            height: auto;
+
+            max-height: 96vh;
+
+            border-radius: 10px;
         }
+
 
         .historial-orden-header {
-            padding: 7px 9px;
+            min-height: 40px;
+
+            padding:
+                5px 8px;
         }
+
 
         .historial-orden-body {
-            padding: 6px;
+            max-height:
+                calc(
+                    96vh - 78px
+                );
+
+            padding: 5px;
         }
+
 
         .historial-orden-footer {
-            padding: 6px 9px;
+            min-height: 32px;
+
+            padding:
+                4px 8px;
         }
+
     }
 
-    @media (max-width: 520px) {
+
+    @media (
+        max-width: 520px
+    ) {
+
         .historial-orden-subtitulo {
             display: none;
         }
+
 
         .historial-orden-footer-info {
             display: none;
         }
 
+
         .historial-orden-footer {
-            justify-content: flex-end;
+            justify-content:
+                flex-end;
         }
+
     }
 </style>
 
@@ -353,12 +537,17 @@
     data-historial-url="{% url 'historial_modal_orden' orden.pk %}"
     aria-hidden="true"
 >
+
     <div
         class="historial-orden-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="historialOrdenTitulo"
     >
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
 
         <div class="historial-orden-header">
 
@@ -367,6 +556,7 @@
                 <div class="historial-orden-icono">
                     <i class="bi bi-clock-history"></i>
                 </div>
+
 
                 <div class="historial-orden-titulo-wrap">
 
@@ -377,6 +567,7 @@
                         Historial del vehículo
                     </h3>
 
+
                     <div class="historial-orden-subtitulo">
                         Visitas anteriores ·
                         {{ orden.placa|upper|default:"SIN PLACA" }}
@@ -385,6 +576,7 @@
                 </div>
 
             </div>
+
 
             <button
                 type="button"
@@ -399,45 +591,66 @@
         </div>
 
 
+        <!-- =====================================================
+             BODY
+        ====================================================== -->
+
         <div class="historial-orden-body">
 
             <div
                 id="historialOrdenCargando"
                 class="historial-orden-cargando"
             >
+
                 <div class="historial-orden-spinner"></div>
+
 
                 <div class="historial-orden-cargando-texto">
                     Consultando historial...
                 </div>
 
+
                 <div class="historial-orden-cargando-ayuda">
                     Cargando visitas y trabajos anteriores.
                 </div>
+
             </div>
+
 
             <div
                 id="historialOrdenError"
                 class="historial-orden-error"
             >
+
                 <i class="bi bi-exclamation-triangle"></i>
 
                 <span id="historialOrdenErrorTexto">
                     No fue posible cargar el historial.
                 </span>
+
             </div>
+
 
             <div id="historialOrdenContenido"></div>
 
         </div>
 
 
+        <!-- =====================================================
+             FOOTER
+        ====================================================== -->
+
         <div class="historial-orden-footer">
 
             <div class="historial-orden-footer-info">
+
                 <i class="bi bi-eye"></i>
-                Solo consulta · la OT actual no se modifica
+
+                Solo consulta ·
+                la OT actual no se modifica
+
             </div>
+
 
             <button
                 type="button"
@@ -450,4 +663,5 @@
         </div>
 
     </div>
+
 </div>
