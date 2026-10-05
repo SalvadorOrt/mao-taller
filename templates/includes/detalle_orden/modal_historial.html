@@ -1,64 +1,45 @@
 {% load static %}
 
 <style>
-
     /* =========================================================
-       MODAL HISTORIAL DEL VEHÍCULO
+       MODAL HISTORIAL DEL VEHÍCULO - COMPACTO HORIZONTAL
     ========================================================= */
 
     #modalHistorialOrden {
         display: none;
-
         position: fixed;
         inset: 0;
+        z-index: 10060;
 
         width: 100%;
         height: 100%;
 
-        background:
-            rgba(0, 0, 0, 0.60);
-
-        z-index: 10060;
-
-        justify-content: center;
-        align-items: center;
-
-        backdrop-filter: blur(4px);
-
         padding: 12px;
-
         box-sizing: border-box;
+
+        align-items: center;
+        justify-content: center;
+
+        background: rgba(0, 0, 0, 0.58);
+        backdrop-filter: blur(4px);
     }
 
-
-    /* =========================================================
-       DIALOG
-    ========================================================= */
-
     .historial-orden-dialog {
-        width: 100%;
-
-        max-width: 1050px;
-        max-height: 94vh;
+        width: min(1100px, 96vw);
+        height: min(760px, 88vh);
+        max-height: 88vh;
 
         display: flex;
         flex-direction: column;
 
-        background: #ffffff;
-
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 14px;
-
         overflow: hidden;
 
-        box-shadow:
-            0 14px 38px
-            rgba(0, 0, 0, 0.28);
-    }
+        background: #ffffff;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 14px;
 
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+    }
 
     /* =========================================================
        HEADER
@@ -67,23 +48,18 @@
     .historial-orden-header {
         flex: 0 0 auto;
 
-        padding: 10px 16px;
-
-        border-bottom:
-            1px solid
-            var(--border-soft, #efeff2);
+        min-height: 48px;
+        padding: 8px 13px;
 
         display: flex;
-
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
 
         gap: 10px;
 
-        background:
-            var(--head, #fbfbfd);
+        border-bottom: 1px solid var(--border-soft, #efeff2);
+        background: var(--head, #fbfbfd);
     }
-
 
     .historial-orden-header-left {
         min-width: 0;
@@ -94,10 +70,9 @@
         gap: 8px;
     }
 
-
     .historial-orden-icono {
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
 
         flex: 0 0 auto;
 
@@ -105,78 +80,73 @@
         align-items: center;
         justify-content: center;
 
-        border-radius: 9px;
+        border-radius: 8px;
 
-        background:
-            rgba(0, 113, 227, 0.10);
-
+        background: rgba(0, 113, 227, 0.10);
         color: #0071e3;
 
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
-
 
     .historial-orden-titulo-wrap {
         min-width: 0;
     }
 
-
     .historial-orden-titulo {
         margin: 0;
 
-        color:
-            var(--primary, #1d1d1f);
+        color: var(--primary, #1d1d1f);
 
-        font-size: 1.05rem;
-        font-weight: 700;
+        font-size: 0.94rem;
+        font-weight: 800;
 
-        line-height: 1.2;
+        line-height: 1.15;
     }
-
 
     .historial-orden-subtitulo {
         margin-top: 1px;
 
-        color:
-            var(--muted, #6e6e73);
+        color: var(--muted, #6e6e73);
 
-        font-size: 0.68rem;
+        font-size: 0.62rem;
         font-weight: 600;
 
-        line-height: 1.3;
+        line-height: 1.2;
     }
 
-
     .historial-orden-cerrar {
+        width: 30px;
+        height: 30px;
+
         flex: 0 0 auto;
 
-        background: none;
-        border: none;
+        padding: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 0;
+        border-radius: 8px;
+
+        background: transparent;
+
+        color: var(--muted, #6e6e73);
 
         font-size: 1.25rem;
+        line-height: 1;
 
         cursor: pointer;
-
-        color:
-            var(--muted, #6e6e73);
-
-        padding: 3px 6px;
-
-        border-radius: 7px;
-
-        line-height: 1;
 
         transition:
             background 0.15s ease,
             color 0.15s ease;
     }
 
-
     .historial-orden-cerrar:hover {
         background: #f2f2f7;
         color: #111111;
     }
-
 
     /* =========================================================
        BODY
@@ -184,215 +154,95 @@
 
     .historial-orden-body {
         flex: 1 1 auto;
-
         min-height: 0;
 
-        overflow-y: auto;
+        padding: 8px;
 
-        overscroll-behavior: contain;
-
-        padding: 14px;
-
-        margin: 0;
+        overflow: hidden;
 
         background: #ffffff;
     }
 
+    #historialOrdenContenido {
+        display: none;
+
+        width: 100%;
+        height: 100%;
+
+        min-height: 0;
+    }
 
     /* =========================================================
-       SCROLL
-    ========================================================= */
-
-    .historial-orden-body::-webkit-scrollbar {
-        width: 8px;
-    }
-
-
-    .historial-orden-body::-webkit-scrollbar-track {
-        background: #f5f5f7;
-    }
-
-
-    .historial-orden-body::-webkit-scrollbar-thumb {
-        background: #c7c7cc;
-
-        border-radius: 999px;
-
-        border:
-            2px solid #f5f5f7;
-    }
-
-
-    .historial-orden-body::-webkit-scrollbar-thumb:hover {
-        background: #a8a8ad;
-    }
-
-
-    /* =========================================================
-       CARGANDO
+       CARGA / ERROR
     ========================================================= */
 
     .historial-orden-cargando {
         display: none;
 
-        padding: 42px 20px;
+        height: 100%;
+
+        align-items: center;
+        justify-content: center;
+
+        flex-direction: column;
 
         text-align: center;
     }
 
+    .historial-orden-cargando[style*="block"] {
+        display: flex !important;
+    }
 
     .historial-orden-spinner {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
 
-        margin:
-            0 auto 10px;
+        margin-bottom: 9px;
 
-        border:
-            3px solid #e5e5ea;
-
-        border-top-color:
-            #0071e3;
-
+        border: 3px solid #e5e5ea;
+        border-top-color: #0071e3;
         border-radius: 50%;
 
-        animation:
-            historialOrdenGirar
-            0.8s linear infinite;
+        animation: historialOrdenGirar 0.8s linear infinite;
     }
-
 
     @keyframes historialOrdenGirar {
-
         to {
-            transform:
-                rotate(360deg);
+            transform: rotate(360deg);
         }
-
     }
-
 
     .historial-orden-cargando-texto {
-        color:
-            var(--muted, #6e6e73);
+        color: #4a4a4a;
 
-        font-size: 0.78rem;
-        font-weight: 600;
+        font-size: 0.76rem;
+        font-weight: 700;
     }
-
 
     .historial-orden-cargando-ayuda {
-        margin-top: 4px;
+        margin-top: 3px;
 
-        color: #8e8e93;
+        color: var(--muted, #6e6e73);
 
-        font-size: 0.66rem;
-
-        line-height: 1.35;
+        font-size: 0.63rem;
     }
-
-
-    /* =========================================================
-       ERROR
-    ========================================================= */
 
     .historial-orden-error {
         display: none;
 
+        margin: 4px;
         padding: 10px 12px;
 
-        margin-bottom: 12px;
-
-        border:
-            1px solid
-            rgba(255, 59, 48, 0.22);
-
+        border: 1px solid rgba(255, 59, 48, 0.22);
         border-radius: 9px;
 
-        background:
-            rgba(255, 59, 48, 0.07);
+        background: rgba(255, 59, 48, 0.07);
 
         color: #c62828;
 
-        font-size: 0.74rem;
-        font-weight: 600;
-
-        line-height: 1.45;
-    }
-
-
-    .historial-orden-error i {
-        margin-right: 5px;
-    }
-
-
-    /* =========================================================
-       CONTENIDO AJAX
-    ========================================================= */
-
-    #historialOrdenContenido {
-        display: none;
-    }
-
-
-    /* =========================================================
-       ESTADO VACÍO
-    ========================================================= */
-
-    .historial-orden-vacio {
-        padding: 38px 20px;
-
-        text-align: center;
-
-        color:
-            var(--muted, #6e6e73);
-    }
-
-
-    .historial-orden-vacio-icono {
-        width: 42px;
-        height: 42px;
-
-        margin:
-            0 auto 10px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border-radius: 12px;
-
-        background: #f5f5f7;
-
-        color: #8e8e93;
-
-        font-size: 1.1rem;
-    }
-
-
-    .historial-orden-vacio strong {
-        display: block;
-
-        margin-bottom: 4px;
-
-        color: #4a4a4a;
-
-        font-size: 0.84rem;
-    }
-
-
-    .historial-orden-vacio span {
-        display: block;
-
-        max-width: 420px;
-
-        margin: auto;
-
         font-size: 0.72rem;
-
-        line-height: 1.45;
+        font-weight: 650;
     }
-
 
     /* =========================================================
        FOOTER
@@ -401,447 +251,203 @@
     .historial-orden-footer {
         flex: 0 0 auto;
 
-        padding: 10px 16px;
-
-        border-top:
-            1px solid
-            var(--border-soft, #efeff2);
+        min-height: 42px;
+        padding: 7px 12px;
 
         display: flex;
-
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
 
         gap: 8px;
 
-        background:
-            var(--head, #fbfbfd);
+        border-top: 1px solid var(--border-soft, #efeff2);
+        background: var(--head, #fbfbfd);
     }
-
 
     .historial-orden-footer-info {
-        min-width: 0;
+        color: var(--muted, #6e6e73);
 
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.65rem;
-
-        line-height: 1.30;
+        font-size: 0.60rem;
+        line-height: 1.25;
     }
-
 
     .historial-orden-footer-info i {
         margin-right: 4px;
-
         color: #0071e3;
     }
 
-
-    .historial-orden-footer-acciones {
-        flex: 0 0 auto;
-
-        display: flex;
-
-        justify-content: flex-end;
-        align-items: center;
-
-        gap: 8px;
-    }
-
-
     .historial-orden-btn-cerrar {
-        min-height: 34px;
+        height: 30px;
+        padding: 0 12px;
 
-        padding:
-            0 14px;
-
-        display: inline-flex;
-
-        align-items: center;
-        justify-content: center;
-
-        gap: 5px;
-
-        border:
-            1px solid #d2d2d7;
-
-        border-radius: 8px;
+        border: 1px solid #d2d2d7;
+        border-radius: 7px;
 
         background: #ffffff;
 
         color: #1d1d1f;
 
-        font-size: 0.75rem;
+        font-size: 0.68rem;
         font-weight: 700;
 
         cursor: pointer;
-
-        transition:
-            background 0.15s ease,
-            border-color 0.15s ease;
     }
-
 
     .historial-orden-btn-cerrar:hover {
         background: #f5f5f7;
-
-        border-color: #c7c7cc;
     }
-
-
-    /* =========================================================
-       BLOQUEAR SCROLL DEL BODY
-    ========================================================= */
 
     body.historial-orden-abierto {
         overflow: hidden;
     }
-
 
     /* =========================================================
        RESPONSIVE
     ========================================================= */
 
     @media (max-width: 760px) {
-
         #modalHistorialOrden {
-            padding: 8px;
+            padding: 6px;
         }
-
 
         .historial-orden-dialog {
-            max-width: 100%;
-            max-height: 96vh;
+            width: 100%;
+            height: 94vh;
+            max-height: 94vh;
 
-            border-radius: 12px;
+            border-radius: 11px;
         }
-
 
         .historial-orden-header {
-            padding: 9px 12px;
+            padding: 7px 9px;
         }
-
 
         .historial-orden-body {
-            padding: 10px;
+            padding: 6px;
         }
-
 
         .historial-orden-footer {
-            padding: 9px 12px;
+            padding: 6px 9px;
         }
-
     }
 
-
-    @media (max-width: 480px) {
-
-        #modalHistorialOrden {
-            padding: 5px;
-        }
-
-
-        .historial-orden-dialog {
-            max-height: 98vh;
-
-            border-radius: 10px;
-        }
-
-
-        .historial-orden-header {
-            padding: 8px 10px;
-        }
-
-
-        .historial-orden-icono {
-            width: 29px;
-            height: 29px;
-
-            border-radius: 8px;
-
-            font-size: 0.85rem;
-        }
-
-
-        .historial-orden-titulo {
-            font-size: 0.94rem;
-        }
-
-
+    @media (max-width: 520px) {
         .historial-orden-subtitulo {
-            font-size: 0.61rem;
+            display: none;
         }
-
-
-        .historial-orden-body {
-            padding: 8px;
-        }
-
-
-        .historial-orden-footer {
-            padding: 8px 10px;
-
-            flex-direction: column;
-
-            align-items: stretch;
-        }
-
 
         .historial-orden-footer-info {
-            text-align: center;
+            display: none;
         }
 
-
-        .historial-orden-footer-acciones {
-            width: 100%;
+        .historial-orden-footer {
+            justify-content: flex-end;
         }
-
-
-        .historial-orden-btn-cerrar {
-            width: 100%;
-        }
-
     }
-
 </style>
 
 
-
-<!-- =========================================================
-     MODAL HISTORIAL DEL VEHÍCULO
-========================================================= -->
-
 <div
-
     id="modalHistorialOrden"
-
     data-orden-id="{{ orden.pk }}"
-
-    data-historial-url="
-        {% url 'historial_modal_orden' orden.pk %}
-    "
-
+    data-historial-url="{% url 'historial_modal_orden' orden.pk %}"
+    aria-hidden="true"
 >
-
     <div
-
         class="historial-orden-dialog"
-
         role="dialog"
-
         aria-modal="true"
-
         aria-labelledby="historialOrdenTitulo"
-
     >
-
-
-        <!-- =====================================================
-             HEADER
-        ====================================================== -->
 
         <div class="historial-orden-header">
 
-
             <div class="historial-orden-header-left">
 
-
                 <div class="historial-orden-icono">
-
                     <i class="bi bi-clock-history"></i>
-
                 </div>
-
 
                 <div class="historial-orden-titulo-wrap">
 
                     <h3
-
                         id="historialOrdenTitulo"
-
                         class="historial-orden-titulo"
-
                     >
                         Historial del vehículo
                     </h3>
 
-
                     <div class="historial-orden-subtitulo">
-
                         Visitas anteriores ·
                         {{ orden.placa|upper|default:"SIN PLACA" }}
-
                     </div>
 
                 </div>
 
-
             </div>
 
-
             <button
-
                 type="button"
-
                 class="historial-orden-cerrar"
-
                 onclick="cerrarModalHistorialOrden()"
-
                 aria-label="Cerrar"
-
                 title="Cerrar"
-
             >
                 &times;
             </button>
 
-
         </div>
 
-
-
-        <!-- =====================================================
-             BODY
-        ====================================================== -->
 
         <div class="historial-orden-body">
 
-
-            <!-- =================================================
-                 CARGANDO
-            ================================================== -->
-
             <div
-
                 id="historialOrdenCargando"
-
                 class="historial-orden-cargando"
-
             >
-
-                <div class="historial-orden-spinner">
-                </div>
-
+                <div class="historial-orden-spinner"></div>
 
                 <div class="historial-orden-cargando-texto">
-
-                    Consultando historial del vehículo...
-
+                    Consultando historial...
                 </div>
-
 
                 <div class="historial-orden-cargando-ayuda">
-
-                    Cargando visitas, repuestos y trabajos anteriores.
-
+                    Cargando visitas y trabajos anteriores.
                 </div>
-
             </div>
 
-
-
-            <!-- =================================================
-                 ERROR
-            ================================================== -->
-
             <div
-
                 id="historialOrdenError"
-
                 class="historial-orden-error"
-
             >
-
                 <i class="bi bi-exclamation-triangle"></i>
 
                 <span id="historialOrdenErrorTexto">
-
                     No fue posible cargar el historial.
-
                 </span>
-
             </div>
 
-
-
-            <!-- =================================================
-                 CONTENIDO
-            ================================================== -->
-
-            <div id="historialOrdenContenido">
-
-                <!--
-                    historial.js colocará aquí:
-
-                    historial_modal_contenido.html
-
-                    El contenido tendrá:
-
-                    - vehículo
-                    - visitas anteriores
-                    - línea de tiempo / carrusel
-                    - kilometraje
-                    - técnicos
-                    - reporte del cliente
-                    - trabajos solicitados
-                    - repuestos
-                    - mano de obra interna
-                    - procedimientos
-                    - mano de obra externa
-                    - observaciones técnicas
-                    - recomendaciones
-                    - resumen económico
-                -->
-
-            </div>
-
+            <div id="historialOrdenContenido"></div>
 
         </div>
 
-
-
-        <!-- =====================================================
-             FOOTER
-        ====================================================== -->
 
         <div class="historial-orden-footer">
 
-
             <div class="historial-orden-footer-info">
-
                 <i class="bi bi-eye"></i>
-
-                Historial en modo consulta.
-                La orden actual no se modifica.
-
+                Solo consulta · la OT actual no se modifica
             </div>
 
-
-            <div class="historial-orden-footer-acciones">
-
-
-                <button
-
-                    type="button"
-
-                    class="historial-orden-btn-cerrar"
-
-                    onclick="cerrarModalHistorialOrden()"
-
-                >
-
-                    Cerrar
-
-                </button>
-
-
-            </div>
-
+            <button
+                type="button"
+                class="historial-orden-btn-cerrar"
+                onclick="cerrarModalHistorialOrden()"
+            >
+                Cerrar
+            </button>
 
         </div>
 
-
     </div>
-
 </div>

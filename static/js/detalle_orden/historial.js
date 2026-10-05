@@ -1,40 +1,16 @@
 /* ============================================================
-   HISTORIAL DEL VEHÍCULO DENTRO DE DETALLE DE ORDEN
-   ============================================================
-
-   Responsabilidades:
-
-   - Abrir el modal.
-   - Consultar el historial por fetch.
-   - Mostrar estado de carga.
-   - Mostrar errores.
-   - Insertar el HTML recibido desde Django.
-   - Seleccionar una visita.
-   - Navegar Anterior / Siguiente.
-   - Mantener sincronizada la línea de tiempo.
-   - Cerrar con botón, ESC o clic fuera.
-   - Evitar solicitudes duplicadas.
-
-   ============================================================ */
-
-
-/* ============================================================
-   ESTADO GENERAL
+   HISTORIAL DEL VEHÍCULO - MODAL COMPACTO HORIZONTAL
 ============================================================ */
 
 let historialOrdenAbortController = null;
-
 let historialOrdenCargado = false;
-
 let historialOrdenCargando = false;
-
 let historialOrdenIdActivo = null;
-
 let historialOrdenUltimoFoco = null;
 
 
 /* ============================================================
-   OBTENER ELEMENTOS PRINCIPALES
+   ELEMENTOS
 ============================================================ */
 
 function obtenerModalHistorialOrden() {
@@ -73,7 +49,7 @@ function obtenerErrorTextoHistorialOrden() {
 
 
 /* ============================================================
-   MOSTRAR / OCULTAR ESTADOS
+   ESTADOS VISUALES
 ============================================================ */
 
 function mostrarCargaHistorialOrden() {
@@ -89,7 +65,7 @@ function mostrarCargaHistorialOrden() {
 
 
     if (cargando) {
-        cargando.style.display = "block";
+        cargando.style.display = "flex";
     }
 
     if (contenido) {
@@ -155,16 +131,13 @@ function mostrarErrorHistorialOrden(
         cargando.style.display = "none";
     }
 
-
     if (contenido) {
         contenido.style.display = "none";
     }
 
-
     if (errorTexto) {
         errorTexto.textContent = mensaje;
     }
-
 
     if (error) {
         error.style.display = "block";
@@ -174,7 +147,7 @@ function mostrarErrorHistorialOrden(
 
 
 /* ============================================================
-   ABRIR MODAL
+   ABRIR
 ============================================================ */
 
 async function abrirModalHistorialOrden() {
@@ -183,26 +156,16 @@ async function abrirModalHistorialOrden() {
         obtenerModalHistorialOrden();
 
     if (!modal) {
-
         console.error(
             "No se encontró #modalHistorialOrden."
         );
-
         return;
     }
 
 
-    /* --------------------------------------------------------
-       Recordar elemento que tenía foco
-    -------------------------------------------------------- */
-
     historialOrdenUltimoFoco =
         document.activeElement;
 
-
-    /* --------------------------------------------------------
-       Abrir modal
-    -------------------------------------------------------- */
 
     modal.style.display = "flex";
 
@@ -217,10 +180,6 @@ async function abrirModalHistorialOrden() {
     );
 
 
-    /* --------------------------------------------------------
-       Si ya está cargado no consultamos nuevamente
-    -------------------------------------------------------- */
-
     if (historialOrdenCargado) {
 
         mostrarContenidoHistorialOrden();
@@ -233,18 +192,10 @@ async function abrirModalHistorialOrden() {
     }
 
 
-    /* --------------------------------------------------------
-       Evitar doble llamada
-    -------------------------------------------------------- */
-
     if (historialOrdenCargando) {
         return;
     }
 
-
-    /* --------------------------------------------------------
-       URL configurada en modal_historial.html
-    -------------------------------------------------------- */
 
     const url = (
         modal.dataset.historialUrl || ""
@@ -252,11 +203,9 @@ async function abrirModalHistorialOrden() {
 
 
     if (!url) {
-
         mostrarErrorHistorialOrden(
             "No se configuró la URL del historial."
         );
-
         return;
     }
 
@@ -269,7 +218,7 @@ async function abrirModalHistorialOrden() {
 
 
 /* ============================================================
-   CARGAR HISTORIAL POR FETCH
+   FETCH
 ============================================================ */
 
 async function cargarHistorialOrden(url) {
@@ -279,14 +228,8 @@ async function cargarHistorialOrden(url) {
     mostrarCargaHistorialOrden();
 
 
-    /* --------------------------------------------------------
-       Cancelar llamada anterior si existe
-    -------------------------------------------------------- */
-
     if (historialOrdenAbortController) {
-
         historialOrdenAbortController.abort();
-
     }
 
 
@@ -316,11 +259,9 @@ async function cargarHistorialOrden(url) {
 
 
         if (!respuesta.ok) {
-
             throw new Error(
                 `Error HTTP ${respuesta.status}`
             );
-
         }
 
 
@@ -333,11 +274,9 @@ async function cargarHistorialOrden(url) {
 
 
         if (!contenido) {
-
             throw new Error(
                 "No se encontró el contenedor del historial."
             );
-
         }
 
 
@@ -345,21 +284,14 @@ async function cargarHistorialOrden(url) {
 
 
         historialOrdenCargado = true;
-
         historialOrdenCargando = false;
 
 
         ocultarCargaHistorialOrden();
-
         mostrarContenidoHistorialOrden();
 
 
-        /* ----------------------------------------------------
-           Inicializar carrusel recién insertado
-        ---------------------------------------------------- */
-
         inicializarHistorialOrden();
-
 
         enfocarCerrarHistorialOrden();
 
@@ -373,9 +305,7 @@ async function cargarHistorialOrden(url) {
             error &&
             error.name === "AbortError"
         ) {
-
             return;
-
         }
 
 
@@ -395,7 +325,7 @@ async function cargarHistorialOrden(url) {
 
 
 /* ============================================================
-   INICIALIZAR HISTORIAL
+   INICIALIZAR
 ============================================================ */
 
 function inicializarHistorialOrden() {
@@ -407,13 +337,6 @@ function inicializarHistorialOrden() {
         return;
     }
 
-
-    /* --------------------------------------------------------
-       Buscar visita marcada como predeterminada.
-
-       En nuestro template:
-       la última visita anterior es la predeterminada.
-    -------------------------------------------------------- */
 
     const botonPredeterminado =
         contenido.querySelector(
@@ -427,27 +350,19 @@ function inicializarHistorialOrden() {
             botonPredeterminado.dataset.ordenId;
 
         if (ordenId) {
-
             seleccionarOrdenHistorialModal(
                 ordenId,
                 false
             );
-
             return;
-
         }
 
     }
 
 
-    /* --------------------------------------------------------
-       Fallback:
-       seleccionar último elemento de timeline.
-    -------------------------------------------------------- */
-
     const botones =
         contenido.querySelectorAll(
-            ".hm-timeline-button"
+            ".hm-timeline-button[data-orden-id]"
         );
 
 
@@ -458,18 +373,10 @@ function inicializarHistorialOrden() {
                 botones.length - 1
             ];
 
-        const ordenId =
-            ultimo.dataset.ordenId;
-
-
-        if (ordenId) {
-
-            seleccionarOrdenHistorialModal(
-                ordenId,
-                false
-            );
-
-        }
+        seleccionarOrdenHistorialModal(
+            ultimo.dataset.ordenId,
+            false
+        );
 
     }
 
@@ -477,7 +384,7 @@ function inicializarHistorialOrden() {
 
 
 /* ============================================================
-   SELECCIONAR UNA OT DEL HISTORIAL
+   SELECCIONAR VISITA
 ============================================================ */
 
 function seleccionarOrdenHistorialModal(
@@ -502,51 +409,31 @@ function seleccionarOrdenHistorialModal(
         String(ordenId);
 
 
-    /* --------------------------------------------------------
-       Timeline
-    -------------------------------------------------------- */
-
-    const timelineItems =
-        contenido.querySelectorAll(
+    contenido
+        .querySelectorAll(
             ".hm-timeline-item"
+        )
+        .forEach(
+            (item) => {
+                item.classList.remove(
+                    "active"
+                );
+            }
         );
 
 
-    timelineItems.forEach(
-        (item) => {
-
-            item.classList.remove(
-                "active"
-            );
-
-        }
-    );
-
-
-    /* --------------------------------------------------------
-       Paneles
-    -------------------------------------------------------- */
-
-    const paneles =
-        contenido.querySelectorAll(
+    contenido
+        .querySelectorAll(
             ".hm-panel"
+        )
+        .forEach(
+            (panel) => {
+                panel.classList.remove(
+                    "active"
+                );
+            }
         );
 
-
-    paneles.forEach(
-        (panel) => {
-
-            panel.classList.remove(
-                "active"
-            );
-
-        }
-    );
-
-
-    /* --------------------------------------------------------
-       Elementos seleccionados
-    -------------------------------------------------------- */
 
     const timelineItem =
         document.getElementById(
@@ -561,21 +448,13 @@ function seleccionarOrdenHistorialModal(
 
 
     if (!timelineItem || !panel) {
-
-        console.warn(
-            "No se encontró la visita del historial:",
-            ordenId
-        );
-
         return;
-
     }
 
 
     timelineItem.classList.add(
         "active"
     );
-
 
     panel.classList.add(
         "active"
@@ -586,53 +465,20 @@ function seleccionarOrdenHistorialModal(
         ordenId;
 
 
-    /* --------------------------------------------------------
-       Centrar visita seleccionada en timeline
-    -------------------------------------------------------- */
-
-    if (animarScroll) {
-
-        timelineItem.scrollIntoView({
-            behavior: "smooth",
-            inline: "center",
-            block: "nearest"
-        });
-
-    } else {
-
-        timelineItem.scrollIntoView({
-            behavior: "auto",
-            inline: "center",
-            block: "nearest"
-        });
-
-    }
+    seleccionarTabHistorialModal(
+        ordenId,
+        "repuestos"
+    );
 
 
-    /* --------------------------------------------------------
-       Al cambiar de visita regresar al inicio del contenido.
-
-       Solo desplazamos el BODY del modal.
-       No movemos la página de detalle_orden.
-    -------------------------------------------------------- */
-
-    const bodyModal =
-        document.querySelector(
-            "#modalHistorialOrden .historial-orden-body"
-        );
-
-
-    if (bodyModal) {
-
-        bodyModal.scrollTo({
-            top: 0,
-            behavior:
-                animarScroll
-                    ? "smooth"
-                    : "auto"
-        });
-
-    }
+    timelineItem.scrollIntoView({
+        behavior:
+            animarScroll
+                ? "smooth"
+                : "auto",
+        inline: "center",
+        block: "nearest"
+    });
 
 
     actualizarNavegacionHistorialOrden();
@@ -641,7 +487,74 @@ function seleccionarOrdenHistorialModal(
 
 
 /* ============================================================
-   OBTENER IDS DEL CARRUSEL
+   PESTAÑAS REP / MOI / MOE / NOTAS / ABONOS
+============================================================ */
+
+function seleccionarTabHistorialModal(
+    ordenId,
+    tabNombre
+) {
+
+    const panelOrden =
+        document.getElementById(
+            `hm-panel-${ordenId}`
+        );
+
+
+    if (!panelOrden) {
+        return;
+    }
+
+
+    panelOrden
+        .querySelectorAll(
+            ".hm-tab-btn"
+        )
+        .forEach(
+            (boton) => {
+
+                boton.classList.toggle(
+                    "active",
+                    boton.dataset.hmTabBtn ===
+                        tabNombre
+                );
+
+            }
+        );
+
+
+    panelOrden
+        .querySelectorAll(
+            ".hm-tab-panel"
+        )
+        .forEach(
+            (panel) => {
+
+                panel.classList.toggle(
+                    "active",
+                    panel.dataset.hmTabPanel ===
+                        tabNombre
+                );
+
+
+                if (
+                    panel.dataset.hmTabPanel ===
+                    tabNombre
+                ) {
+
+                    panel.scrollTop = 0;
+                    panel.scrollLeft = 0;
+
+                }
+
+            }
+        );
+
+}
+
+
+/* ============================================================
+   IDS DEL CARRUSEL
 ============================================================ */
 
 function obtenerIdsHistorialOrden() {
@@ -674,7 +587,7 @@ function obtenerIdsHistorialOrden() {
 
 
 /* ============================================================
-   MOVER ANTERIOR / SIGUIENTE
+   ANTERIOR / SIGUIENTE
 ============================================================ */
 
 function moverHistorialModal(
@@ -689,11 +602,6 @@ function moverHistorialModal(
         return;
     }
 
-
-    /* --------------------------------------------------------
-       Si por alguna razón no existe activo,
-       seleccionar la última visita.
-    -------------------------------------------------------- */
 
     if (!historialOrdenIdActivo) {
 
@@ -731,9 +639,7 @@ function moverHistorialModal(
         paso !== -1 &&
         paso !== 1
     ) {
-
         return;
-
     }
 
 
@@ -741,24 +647,11 @@ function moverHistorialModal(
         indiceActual + paso;
 
 
-    /* --------------------------------------------------------
-       No hacemos loop.
-
-       Ejemplo:
-       visita más antigua:
-       no puede ir más atrás.
-
-       visita más reciente:
-       no puede avanzar.
-    -------------------------------------------------------- */
-
     if (
         nuevoIndice < 0 ||
         nuevoIndice >= ids.length
     ) {
-
         return;
-
     }
 
 
@@ -770,7 +663,7 @@ function moverHistorialModal(
 
 
 /* ============================================================
-   ACTUALIZAR ESTADO DE BOTONES ANTERIOR / SIGUIENTE
+   HABILITAR / DESHABILITAR FLECHAS
 ============================================================ */
 
 function actualizarNavegacionHistorialOrden() {
@@ -806,77 +699,35 @@ function actualizarNavegacionHistorialOrden() {
     }
 
 
-    const botones =
-        panelActivo.querySelectorAll(
-            ".hm-carousel-button"
+    const botonAnterior =
+        panelActivo.querySelector(
+            ".hm-btn-anterior"
         );
 
 
-    if (botones.length < 2) {
-        return;
+    const botonSiguiente =
+        panelActivo.querySelector(
+            ".hm-btn-siguiente"
+        );
+
+
+    if (botonAnterior) {
+        botonAnterior.disabled =
+            indiceActual <= 0;
     }
 
 
-    const botonAnterior =
-        botones[0];
-
-    const botonSiguiente =
-        botones[1];
-
-
-    const esPrimera =
-        indiceActual <= 0;
-
-
-    const esUltima =
-        indiceActual >=
-        ids.length - 1;
-
-
-    botonAnterior.disabled =
-        esPrimera;
-
-
-    botonSiguiente.disabled =
-        esUltima;
-
-
-    /* --------------------------------------------------------
-       Estilo visual del estado disabled
-    -------------------------------------------------------- */
-
-    [
-        botonAnterior,
-        botonSiguiente
-    ].forEach(
-        (boton) => {
-
-            if (boton.disabled) {
-
-                boton.style.opacity =
-                    "0.42";
-
-                boton.style.cursor =
-                    "default";
-
-            } else {
-
-                boton.style.opacity =
-                    "";
-
-                boton.style.cursor =
-                    "";
-
-            }
-
-        }
-    );
+    if (botonSiguiente) {
+        botonSiguiente.disabled =
+            indiceActual >=
+            ids.length - 1;
+    }
 
 }
 
 
 /* ============================================================
-   CERRAR MODAL
+   CERRAR
 ============================================================ */
 
 function cerrarModalHistorialOrden() {
@@ -903,10 +754,6 @@ function cerrarModalHistorialOrden() {
     );
 
 
-    /* --------------------------------------------------------
-       Cancelar carga pendiente
-    -------------------------------------------------------- */
-
     if (
         historialOrdenAbortController &&
         historialOrdenCargando
@@ -919,14 +766,10 @@ function cerrarModalHistorialOrden() {
     }
 
 
-    /* --------------------------------------------------------
-       Regresar foco al botón que abrió el modal
-    -------------------------------------------------------- */
-
     if (
         historialOrdenUltimoFoco &&
-        typeof historialOrdenUltimoFoco.focus
-            === "function"
+        typeof historialOrdenUltimoFoco.focus ===
+            "function"
     ) {
 
         historialOrdenUltimoFoco.focus();
@@ -937,8 +780,7 @@ function cerrarModalHistorialOrden() {
 
 
 /* ============================================================
-   RECARGAR HISTORIAL
-   Útil si posteriormente quieres refrescar sin recargar OT.
+   RECARGAR
 ============================================================ */
 
 async function recargarHistorialOrden() {
@@ -962,7 +804,6 @@ async function recargarHistorialOrden() {
 
 
     historialOrdenCargado = false;
-
     historialOrdenIdActivo = null;
 
 
@@ -971,9 +812,7 @@ async function recargarHistorialOrden() {
 
 
     if (contenido) {
-
         contenido.innerHTML = "";
-
     }
 
 
@@ -985,7 +824,7 @@ async function recargarHistorialOrden() {
 
 
 /* ============================================================
-   ENFOCAR BOTÓN CERRAR
+   FOCO
 ============================================================ */
 
 function enfocarCerrarHistorialOrden() {
@@ -1006,9 +845,11 @@ function enfocarCerrarHistorialOrden() {
 
     if (botonCerrar) {
 
-        setTimeout(
+        window.setTimeout(
             () => {
+
                 botonCerrar.focus();
+
             },
             20
         );
@@ -1024,9 +865,7 @@ function enfocarCerrarHistorialOrden() {
 
 document.addEventListener(
     "keydown",
-    function (
-        event
-    ) {
+    function (event) {
 
         const modal =
             obtenerModalHistorialOrden();
@@ -1036,90 +875,50 @@ document.addEventListener(
             !modal ||
             modal.style.display !== "flex"
         ) {
-
             return;
-
         }
 
 
-        /* ----------------------------------------------------
-           ESC
-        ---------------------------------------------------- */
-
-        if (
-            event.key === "Escape"
-        ) {
+        if (event.key === "Escape") {
 
             event.preventDefault();
 
             cerrarModalHistorialOrden();
 
             return;
-
         }
 
 
-        /* ----------------------------------------------------
-           FLECHA IZQUIERDA
-        ---------------------------------------------------- */
+        const tag =
+            document.activeElement
+                ?.tagName
+                ?.toLowerCase();
+
 
         if (
-            event.key === "ArrowLeft"
+            tag === "input" ||
+            tag === "textarea" ||
+            tag === "select"
         ) {
-
-            /* No interferir si usuario está sobre input */
-            const tag =
-                document.activeElement
-                    ?.tagName
-                    ?.toLowerCase();
+            return;
+        }
 
 
-            if (
-                tag !== "input" &&
-                tag !== "textarea" &&
-                tag !== "select"
-            ) {
+        if (event.key === "ArrowLeft") {
 
-                event.preventDefault();
+            event.preventDefault();
 
-                moverHistorialModal(
-                    -1
-                );
-
-            }
+            moverHistorialModal(-1);
 
             return;
-
         }
 
 
-        /* ----------------------------------------------------
-           FLECHA DERECHA
-        ---------------------------------------------------- */
+        if (event.key === "ArrowRight") {
 
-        if (
-            event.key === "ArrowRight"
-        ) {
+            event.preventDefault();
 
-            const tag =
-                document.activeElement
-                    ?.tagName
-                    ?.toLowerCase();
-
-
-            if (
-                tag !== "input" &&
-                tag !== "textarea" &&
-                tag !== "select"
-            ) {
-
-                event.preventDefault();
-
-                moverHistorialModal(
-                    1
-                );
-
-            }
+            moverHistorialModal(1);
 
         }
 
@@ -1128,25 +927,19 @@ document.addEventListener(
 
 
 /* ============================================================
-   CLIC EN EL FONDO DEL MODAL
+   CLIC FUERA
 ============================================================ */
 
 document.addEventListener(
     "click",
-    function (
-        event
-    ) {
+    function (event) {
 
         const modal =
             obtenerModalHistorialOrden();
 
 
-        if (!modal) {
-            return;
-        }
-
-
         if (
+            modal &&
             event.target === modal
         ) {
 
@@ -1159,34 +952,7 @@ document.addEventListener(
 
 
 /* ============================================================
-   PREVENIR QUE CLIC DENTRO DEL DIALOG CIERRE MODAL
-============================================================ */
-
-document.addEventListener(
-    "click",
-    function (
-        event
-    ) {
-
-        const dialog =
-            event.target.closest(
-                ".historial-orden-dialog"
-            );
-
-
-        if (!dialog) {
-            return;
-        }
-
-
-        event.stopPropagation();
-
-    }
-);
-
-
-/* ============================================================
-   INICIALIZACIÓN
+   ARRANQUE
 ============================================================ */
 
 document.addEventListener(
@@ -1202,8 +968,6 @@ document.addEventListener(
         }
 
 
-        /* El modal inicia cerrado */
-
         modal.style.display =
             "none";
 
@@ -1215,3 +979,26 @@ document.addEventListener(
 
     }
 );
+
+
+/* ============================================================
+   EXPONER FUNCIONES
+============================================================ */
+
+window.abrirModalHistorialOrden =
+    abrirModalHistorialOrden;
+
+window.cerrarModalHistorialOrden =
+    cerrarModalHistorialOrden;
+
+window.seleccionarOrdenHistorialModal =
+    seleccionarOrdenHistorialModal;
+
+window.seleccionarTabHistorialModal =
+    seleccionarTabHistorialModal;
+
+window.moverHistorialModal =
+    moverHistorialModal;
+
+window.recargarHistorialOrden =
+    recargarHistorialOrden;

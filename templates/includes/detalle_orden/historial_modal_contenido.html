@@ -1,216 +1,113 @@
 {% load humanize %}
 
 <style>
-
     /* =========================================================
-       HISTORIAL DEL VEHÍCULO DENTRO DE LA OT
-       SOLO CONSULTA
+       HISTORIAL COMPACTO HORIZONTAL
+       Una visita a la vez + pestañas
     ========================================================= */
 
+    .hm-shell {
+        height: 100%;
+        min-height: 0;
 
-    /* =========================================================
-       VEHÍCULO
-    ========================================================= */
-
-    .hm-vehiculo {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
 
-        gap: 12px;
+        gap: 6px;
+    }
 
-        padding: 10px 12px;
-        margin-bottom: 10px;
+    /* =========================================================
+       VEHÍCULO + TIMELINE EN UNA ZONA SUPERIOR
+    ========================================================= */
 
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
+    .hm-topbar {
+        flex: 0 0 auto;
 
-        border-radius: 10px;
+        display: grid;
+        grid-template-columns: minmax(220px, 0.8fr) minmax(0, 2.2fr);
+
+        gap: 8px;
+    }
+
+    .hm-vehicle-strip,
+    .hm-timeline-strip {
+        min-width: 0;
+
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 9px;
 
         background: #fbfbfd;
     }
 
-
-    .hm-vehiculo-main {
-        min-width: 0;
+    .hm-vehicle-strip {
+        padding: 7px 9px;
     }
 
+    .hm-vehicle-label {
+        color: var(--muted, #6e6e73);
 
-    .hm-vehiculo-label {
-        margin-bottom: 2px;
-
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.58rem;
+        font-size: 0.48rem;
         font-weight: 800;
 
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }
 
+    .hm-vehicle-name {
+        margin-top: 2px;
 
-    .hm-vehiculo-nombre {
         color: #111111;
 
-        font-size: 0.86rem;
+        font-size: 0.76rem;
         font-weight: 800;
 
-        line-height: 1.25;
+        line-height: 1.18;
 
         overflow-wrap: anywhere;
     }
 
-
-    .hm-vehiculo-meta {
+    .hm-vehicle-meta {
         margin-top: 3px;
 
         display: flex;
         align-items: center;
         flex-wrap: wrap;
 
-        gap: 5px;
+        gap: 4px;
 
-        color:
-            var(--muted, #6e6e73);
+        color: var(--muted, #6e6e73);
 
-        font-size: 0.66rem;
-        font-weight: 600;
+        font-size: 0.56rem;
+        font-weight: 650;
     }
 
+    .hm-plate {
+        padding: 2px 6px;
 
-    .hm-placa {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        border: 1px solid rgba(0, 113, 227, 0.18);
+        border-radius: 6px;
 
-        padding: 3px 8px;
-
-        border:
-            1px solid
-            rgba(0, 113, 227, 0.18);
-
-        border-radius: 7px;
-
-        background:
-            rgba(0, 113, 227, 0.06);
+        background: rgba(0, 113, 227, 0.06);
 
         color: #0071e3;
 
-        font-size: 0.70rem;
         font-weight: 800;
-
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
     }
 
-
-    .hm-visitas-badge {
-        flex: 0 0 auto;
-
-        display: inline-flex;
-        align-items: center;
-
-        gap: 5px;
-
-        padding: 5px 9px;
-
-        border-radius: 999px;
-
-        background: #ffffff;
-
-        border:
-            1px solid #e5e5ea;
-
-        color: #6e6e73;
-
-        font-size: 0.63rem;
-        font-weight: 800;
-
-        white-space: nowrap;
+    .hm-timeline-strip {
+        padding: 5px 7px;
     }
-
-
-    /* =========================================================
-       LÍNEA DE TIEMPO
-    ========================================================= */
-
-    .hm-timeline-box {
-        position: relative;
-
-        margin-bottom: 10px;
-
-        padding: 8px 9px 6px;
-
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 10px;
-
-        background: #ffffff;
-    }
-
-
-    .hm-timeline-top {
-        display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        gap: 10px;
-
-        margin-bottom: 6px;
-    }
-
-
-    .hm-timeline-title {
-        color: #111111;
-
-        font-size: 0.70rem;
-        font-weight: 800;
-    }
-
-
-    .hm-timeline-help {
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.60rem;
-        font-weight: 600;
-    }
-
 
     .hm-timeline-scroll {
+        width: 100%;
+
         overflow-x: auto;
         overflow-y: hidden;
 
-        padding: 6px 2px 5px;
-
+        scrollbar-width: thin;
         scroll-behavior: smooth;
-
-        overscroll-behavior-x: contain;
     }
-
-
-    .hm-timeline-scroll::-webkit-scrollbar {
-        height: 6px;
-    }
-
-
-    .hm-timeline-scroll::-webkit-scrollbar-track {
-        background: #f5f5f7;
-
-        border-radius: 999px;
-    }
-
-
-    .hm-timeline-scroll::-webkit-scrollbar-thumb {
-        background: #c7c7cc;
-
-        border-radius: 999px;
-    }
-
 
     .hm-timeline-list {
         position: relative;
@@ -218,41 +115,35 @@
         display: flex;
         align-items: flex-start;
 
-        gap: 12px;
-
         width: max-content;
         min-width: 100%;
 
-        padding: 5px 6px 2px;
-    }
+        gap: 8px;
 
+        padding: 1px 4px;
+    }
 
     .hm-timeline-line {
         position: absolute;
 
-        top: 22px;
-        left: 26px;
-        right: 26px;
+        top: 14px;
+        left: 18px;
+        right: 18px;
 
-        height: 2px;
+        height: 1px;
 
-        background: #e5e5e7;
-
-        z-index: 0;
+        background: #dcdce1;
     }
-
 
     .hm-timeline-item {
         position: relative;
-
         z-index: 1;
 
-        width: 94px;
-        flex: 0 0 94px;
+        width: 72px;
+        flex: 0 0 72px;
 
         text-align: center;
     }
-
 
     .hm-timeline-button {
         width: 100%;
@@ -260,7 +151,6 @@
         padding: 0;
 
         border: 0;
-
         background: transparent;
 
         color: inherit;
@@ -270,436 +160,315 @@
         cursor: pointer;
     }
 
-
     .hm-timeline-number {
-        width: 34px;
-        height: 34px;
+        width: 27px;
+        height: 27px;
 
-        margin:
-            0 auto;
+        margin: auto;
 
         display: flex;
-
         align-items: center;
         justify-content: center;
 
-        border:
-            2px solid #d2d2d7;
-
+        border: 1.5px solid #cfcfd4;
         border-radius: 50%;
 
         background: #ffffff;
 
-        color: #1d1d1f;
-
-        font-size: 0.68rem;
-        font-weight: 800;
-
-        transition:
-            all 0.15s ease;
-    }
-
-
-    .hm-timeline-button:hover
-    .hm-timeline-number {
-        border-color: #0071e3;
-
-        color: #0071e3;
-
-        transform:
-            translateY(-1px);
-    }
-
-
-    .hm-timeline-item.active
-    .hm-timeline-number {
-        border-color: #0071e3;
-
-        background: #0071e3;
-
-        color: #ffffff;
-
-        box-shadow:
-            0 0 0 4px
-            rgba(0, 113, 227, 0.09);
-    }
-
-
-    .hm-timeline-fecha {
-        margin-top: 6px;
-
-        color: #1d1d1f;
-
-        font-size: 0.58rem;
-        font-weight: 700;
-
-        line-height: 1.2;
-    }
-
-
-    .hm-timeline-km {
-        margin-top: 2px;
-
-        color:
-            var(--muted, #6e6e73);
+        color: #4a4a4a;
 
         font-size: 0.56rem;
-        font-weight: 600;
+        font-weight: 800;
 
-        line-height: 1.2;
+        transition: all 0.14s ease;
     }
 
+    .hm-timeline-fecha {
+        margin-top: 3px;
 
-    .hm-timeline-alerta {
-        margin-top: 2px;
+        color: #4a4a4a;
 
-        color: #c9342f;
-
-        font-size: 0.50rem;
+        font-size: 0.49rem;
         font-weight: 700;
-    }
-
-
-    /* =========================================================
-       PANEL DE LA OT
-    ========================================================= */
-
-    .hm-panel {
-        display: none;
-    }
-
-
-    .hm-panel.active {
-        display: block;
-
-        animation:
-            hmFade
-            0.16s ease;
-    }
-
-
-    @keyframes hmFade {
-
-        from {
-            opacity: 0;
-
-            transform:
-                translateY(2px);
-        }
-
-        to {
-            opacity: 1;
-
-            transform:
-                translateY(0);
-        }
-
-    }
-
-
-    /* =========================================================
-       CABECERA DE LA VISITA
-    ========================================================= */
-
-    .hm-visita-header {
-        display: flex;
-
-        justify-content: space-between;
-        align-items: flex-start;
-
-        gap: 10px;
-
-        padding: 10px 12px;
-
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 10px;
-
-        background: #ffffff;
-    }
-
-
-    .hm-visita-main {
-        min-width: 0;
-    }
-
-
-    .hm-visita-position {
-        margin-bottom: 2px;
-
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.55rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-        letter-spacing: 0.04em;
-    }
-
-
-    .hm-visita-numero {
-        margin: 0;
-
-        color: #111111;
-
-        font-size: 1rem;
-        font-weight: 800;
 
         line-height: 1.15;
     }
 
+    .hm-timeline-item.active .hm-timeline-number {
+        border-color: #0071e3;
+        background: #0071e3;
 
-    .hm-visita-meta {
-        margin-top: 3px;
+        color: #ffffff;
 
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.62rem;
-        font-weight: 600;
-
-        line-height: 1.35;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
     }
 
-
-    .hm-visita-cliente {
-        margin-top: 4px;
-
-        color: #4a4a4a;
-
-        font-size: 0.62rem;
-        font-weight: 600;
-    }
-
-
-    .hm-visita-cliente strong {
-        color: #111111;
-
-        font-weight: 700;
-    }
-
-
-    .hm-visita-badges {
-        flex: 0 0 auto;
-
-        display: flex;
-        align-items: flex-end;
-
-        flex-direction: column;
-
-        gap: 5px;
-    }
-
-
-    .hm-status {
-        display: inline-flex;
-
-        align-items: center;
-        justify-content: center;
-
-        min-height: 21px;
-
-        padding: 3px 8px;
-
-        border:
-            1px solid transparent;
-
-        border-radius: 999px;
-
-        font-size: 0.52rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
-
-        letter-spacing: 0.03em;
-
-        white-space: nowrap;
-    }
-
-
-    .hm-status.estado-abierta {
-        background: #e5fbe4;
-
-        border-color: #b7efc5;
-
-        color: #1f8939;
-    }
-
-
-    .hm-status.estado-cerrada,
-    .hm-status.estado-terminada {
-        background: #f5f5f7;
-
-        border-color: #d2d2d7;
-
-        color: #6e6e73;
-    }
-
-
-    .hm-status.estado-anulada {
-        background: #ffebe9;
-
-        border-color: #ffd6d6;
-
-        color: #c9342f;
-    }
-
-
-    .hm-status.estado-espera_rep {
-        background:
-            rgba(255, 149, 0, 0.10);
-
-        border-color:
-            rgba(255, 149, 0, 0.28);
-
-        color: #b26a00;
-    }
-
-
-    .hm-status.estado-trabajo_ext {
-        background:
-            rgba(0, 113, 227, 0.08);
-
-        border-color:
-            rgba(0, 113, 227, 0.20);
-
+    .hm-timeline-button:hover .hm-timeline-number {
+        border-color: #0071e3;
         color: #0071e3;
     }
 
-
-    .hm-migrada {
-        display: inline-flex;
-
-        padding: 3px 7px;
-
-        border-radius: 999px;
-
-        background:
-            rgba(255, 149, 0, 0.08);
-
-        border:
-            1px solid
-            rgba(255, 149, 0, 0.20);
-
-        color: #b26a00;
-
-        font-size: 0.49rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
+    .hm-timeline-item.active .hm-timeline-button:hover .hm-timeline-number {
+        color: #ffffff;
     }
 
+    .hm-timeline-warning {
+        margin-top: 1px;
+
+        color: #c9342f;
+
+        font-size: 0.43rem;
+        font-weight: 800;
+    }
 
     /* =========================================================
-       TÉCNICOS
+       PANEL
     ========================================================= */
 
-    .hm-tecnicos {
+    .hm-panel {
+        flex: 1 1 auto;
+        min-height: 0;
+
+        display: none;
+    }
+
+    .hm-panel.active {
         display: flex;
+        flex-direction: column;
 
-        align-items: center;
-        flex-wrap: wrap;
+        gap: 6px;
 
-        gap: 4px;
-
-        margin-top: 6px;
+        animation: hmFade 0.14s ease;
     }
 
+    @keyframes hmFade {
+        from {
+            opacity: 0;
+        }
 
-    .hm-tecnicos-label {
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 3px;
-
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.52rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
+        to {
+            opacity: 1;
+        }
     }
-
-
-    .hm-tecnico-chip {
-        display: inline-flex;
-
-        align-items: center;
-
-        min-height: 19px;
-
-        padding: 2px 6px;
-
-        border:
-            1px solid
-            rgba(0, 113, 227, 0.16);
-
-        border-radius: 999px;
-
-        background:
-            rgba(0, 113, 227, 0.055);
-
-        color: #0066cc;
-
-        font-size: 0.52rem;
-        font-weight: 700;
-    }
-
-
-    .hm-tecnico-vacio {
-        color: #8e8e93;
-
-        font-size: 0.52rem;
-        font-weight: 600;
-    }
-
 
     /* =========================================================
-       NAVEGACIÓN DEL CARRUSEL
+       RESUMEN SUPERIOR DE LA VISITA
     ========================================================= */
 
-    .hm-carousel-nav {
-        display: flex;
+    .hm-visit-strip {
+        flex: 0 0 auto;
 
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: minmax(260px, 1.3fr) minmax(0, 2fr) auto;
+
         align-items: center;
 
         gap: 8px;
 
-        margin-top: 7px;
+        min-height: 48px;
+
+        padding: 6px 8px;
+
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 9px;
+
+        background: #ffffff;
     }
 
+    .hm-visit-main {
+        min-width: 0;
+    }
 
-    .hm-carousel-button {
+    .hm-visit-title-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+
+        gap: 5px;
+    }
+
+    .hm-visit-number {
+        color: #111111;
+
+        font-size: 0.84rem;
+        font-weight: 850;
+    }
+
+    .hm-status,
+    .hm-migrada {
+        display: inline-flex;
+        align-items: center;
+
+        min-height: 18px;
+
+        padding: 2px 6px;
+
+        border-radius: 999px;
+
+        font-size: 0.44rem;
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        white-space: nowrap;
+    }
+
+    .hm-status {
+        border: 1px solid #d2d2d7;
+        background: #f5f5f7;
+        color: #6e6e73;
+    }
+
+    .hm-status.estado-abierta {
+        border-color: #b7efc5;
+        background: #e5fbe4;
+        color: #1f8939;
+    }
+
+    .hm-status.estado-anulada {
+        border-color: #ffd6d6;
+        background: #ffebe9;
+        color: #c9342f;
+    }
+
+    .hm-status.estado-espera_rep {
+        border-color: rgba(255, 149, 0, 0.28);
+        background: rgba(255, 149, 0, 0.10);
+        color: #b26a00;
+    }
+
+    .hm-status.estado-trabajo_ext {
+        border-color: rgba(0, 113, 227, 0.20);
+        background: rgba(0, 113, 227, 0.08);
+        color: #0071e3;
+    }
+
+    .hm-migrada {
+        border: 1px solid rgba(255, 149, 0, 0.20);
+        background: rgba(255, 149, 0, 0.08);
+        color: #b26a00;
+    }
+
+    .hm-visit-meta {
+        margin-top: 2px;
+
+        color: var(--muted, #6e6e73);
+
+        font-size: 0.53rem;
+        font-weight: 650;
+
+        line-height: 1.2;
+    }
+
+    .hm-visit-technicians {
+        margin-top: 3px;
+
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+
+        gap: 3px;
+    }
+
+    .hm-tech-label {
+        color: var(--muted, #6e6e73);
+
+        font-size: 0.46rem;
+        font-weight: 800;
+
+        text-transform: uppercase;
+    }
+
+    .hm-tech-chip {
+        padding: 1px 5px;
+
+        border: 1px solid rgba(0, 113, 227, 0.14);
+        border-radius: 999px;
+
+        background: rgba(0, 113, 227, 0.045);
+
+        color: #0066cc;
+
+        font-size: 0.46rem;
+        font-weight: 700;
+    }
+
+    .hm-metrics-inline {
+        min-width: 0;
+
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+
+        gap: 4px;
+    }
+
+    .hm-metric-inline {
+        min-width: 0;
+
+        padding: 4px 6px;
+
+        border-left: 1px solid #ececf0;
+    }
+
+    .hm-metric-inline:first-child {
+        border-left: 0;
+    }
+
+    .hm-metric-label {
+        color: var(--muted, #6e6e73);
+
+        font-size: 0.43rem;
+        font-weight: 800;
+
+        text-transform: uppercase;
+    }
+
+    .hm-metric-value {
+        margin-top: 1px;
+
+        color: #111111;
+
+        font-size: 0.62rem;
+        font-weight: 800;
+
+        line-height: 1.15;
+
+        white-space: nowrap;
+
+        font-variant-numeric: tabular-nums;
+    }
+
+    .hm-metric-value.green {
+        color: #248a3d;
+    }
+
+    .hm-metric-value.red {
+        color: #c9342f;
+    }
+
+    .hm-visit-nav {
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+    }
+
+    .hm-nav-btn {
+        width: 29px;
         height: 29px;
 
-        display: inline-flex;
+        padding: 0;
 
+        display: flex;
         align-items: center;
         justify-content: center;
 
-        gap: 4px;
-
-        padding:
-            0 9px;
-
-        border:
-            1px solid #e0e0e5;
-
-        border-radius: 8px;
+        border: 1px solid #e0e0e5;
+        border-radius: 7px;
 
         background: #ffffff;
 
         color: #4a4a4a;
-
-        font-size: 0.61rem;
-        font-weight: 700;
 
         cursor: pointer;
 
@@ -709,336 +478,290 @@
             color 0.15s ease;
     }
 
-
-    .hm-carousel-button:hover {
+    .hm-nav-btn:hover:not(:disabled) {
+        border-color: rgba(0, 113, 227, 0.25);
         background: #f5faff;
-
-        border-color:
-            rgba(0, 113, 227, 0.25);
-
         color: #0071e3;
     }
 
-
-    .hm-carousel-position {
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.59rem;
-        font-weight: 700;
+    .hm-nav-btn:disabled {
+        opacity: 0.35;
+        cursor: default;
     }
 
+    .hm-nav-count {
+        min-width: 42px;
+
+        color: var(--muted, #6e6e73);
+
+        font-size: 0.50rem;
+        font-weight: 800;
+
+        text-align: center;
+    }
 
     /* =========================================================
-       MÉTRICAS
+       REPORTE + TRABAJOS
     ========================================================= */
 
-    .hm-metricas {
-        display: grid;
+    .hm-intro-row {
+        flex: 0 0 auto;
 
-        grid-template-columns:
-            repeat(4, minmax(0, 1fr));
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
 
         gap: 6px;
-
-        margin-top: 8px;
     }
 
-
-    .hm-metrica {
+    .hm-intro-box {
         min-width: 0;
 
-        padding: 8px 9px;
+        max-height: 72px;
 
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
+        overflow-y: auto;
 
+        padding: 5px 7px;
+
+        border: 1px solid var(--border-soft, #efeff2);
         border-radius: 8px;
 
         background: #fbfbfd;
     }
 
+    .hm-intro-title {
+        position: sticky;
+        top: -5px;
 
-    .hm-metrica-label {
-        margin-bottom: 3px;
+        margin: 0 0 3px;
+        padding: 2px 0;
 
-        color:
-            var(--muted, #6e6e73);
+        background: #fbfbfd;
 
-        font-size: 0.51rem;
+        color: #111111;
+
+        font-size: 0.50rem;
         font-weight: 800;
 
         text-transform: uppercase;
-
-        letter-spacing: 0.03em;
     }
 
-
-    .hm-metrica-valor {
-        color: #111111;
-
-        font-size: 0.73rem;
-        font-weight: 800;
-
-        line-height: 1.25;
-
-        font-variant-numeric:
-            tabular-nums;
-    }
-
-
-    .hm-metrica-valor.verde {
-        color: #248a3d;
-    }
-
-
-    .hm-metrica-valor.rojo {
-        color: #c9342f;
-    }
-
-
-    /* =========================================================
-       REPORTE / TRABAJOS
-    ========================================================= */
-
-    .hm-intro-grid {
-        display: grid;
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 7px;
-
-        margin-top: 8px;
-    }
-
-
-    .hm-info-box {
-        min-width: 0;
-
-        padding: 9px 10px;
-
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 9px;
-
-        background: #ffffff;
-    }
-
-
-    .hm-info-title {
-        margin:
-            0 0 6px;
-
-        color: #111111;
-
-        font-size: 0.63rem;
-        font-weight: 800;
-    }
-
-
-    .hm-info-list {
+    .hm-intro-list {
         margin: 0;
 
-        padding-left: 16px;
+        padding-left: 14px;
 
-        color: #1d1d1f;
+        color: #303033;
     }
 
+    .hm-intro-list li {
+        margin-bottom: 1px;
 
-    .hm-info-list li {
-        margin-bottom: 3px;
-
-        font-size: 0.58rem;
-        font-weight: 550;
-
-        line-height: 1.35;
+        font-size: 0.51rem;
+        line-height: 1.22;
     }
 
-
-    .hm-info-list li:last-child {
-        margin-bottom: 0;
-    }
-
-
-    .hm-note {
+    .hm-intro-note {
         margin: 0;
 
-        color:
-            var(--muted, #6e6e73);
+        color: #5c5c61;
 
-        font-size: 0.58rem;
-
-        line-height: 1.4;
+        font-size: 0.51rem;
+        line-height: 1.24;
 
         white-space: pre-line;
     }
 
-
     /* =========================================================
-       SECCIONES
+       PESTAÑAS
     ========================================================= */
 
-    .hm-section {
-        margin-top: 8px;
+    .hm-tabs {
+        flex: 0 0 auto;
 
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 9px;
-
-        background: #ffffff;
-
-        overflow: hidden;
-    }
-
-
-    .hm-section-head {
         display: flex;
-
         align-items: center;
-        justify-content: space-between;
 
-        gap: 8px;
+        gap: 4px;
 
-        padding: 7px 9px;
+        padding: 3px;
 
-        border-bottom:
-            1px solid
-            var(--border-soft, #efeff2);
+        overflow-x: auto;
 
-        background: #fbfbfd;
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 8px;
+
+        background: #f5f5f7;
     }
 
+    .hm-tab-btn {
+        min-height: 27px;
 
-    .hm-section-title {
-        margin: 0;
+        padding: 0 9px;
 
-        color: #111111;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
 
-        font-size: 0.66rem;
+        gap: 4px;
+
+        border: 0;
+        border-radius: 6px;
+
+        background: transparent;
+
+        color: #5c5c61;
+
+        font-size: 0.52rem;
         font-weight: 800;
+
+        white-space: nowrap;
+
+        cursor: pointer;
+
+        transition:
+            background 0.15s ease,
+            color 0.15s ease,
+            box-shadow 0.15s ease;
     }
 
-
-    .hm-section-title i {
-        margin-right: 4px;
-
+    .hm-tab-btn:hover {
         color: #0071e3;
     }
 
+    .hm-tab-btn.active {
+        background: #ffffff;
+        color: #0071e3;
 
-    .hm-section-meta {
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.50rem;
-        font-weight: 700;
-
-        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
+    .hm-tab-count {
+        min-width: 17px;
+        height: 17px;
+
+        padding: 0 4px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 999px;
+
+        background: #e9e9ed;
+
+        color: #6e6e73;
+
+        font-size: 0.44rem;
+        font-weight: 800;
+    }
+
+    .hm-tab-btn.active .hm-tab-count {
+        background: rgba(0, 113, 227, 0.10);
+        color: #0071e3;
+    }
+
+    /* =========================================================
+       CONTENIDO CENTRAL: SOLO ESTA ZONA HACE SCROLL
+    ========================================================= */
+
+    .hm-tab-content {
+        flex: 1 1 auto;
+        min-height: 0;
+
+        position: relative;
+
+        overflow: hidden;
+
+        border: 1px solid var(--border-soft, #efeff2);
+        border-radius: 8px;
+
+        background: #ffffff;
+    }
+
+    .hm-tab-panel {
+        display: none;
+
+        width: 100%;
+        height: 100%;
+
+        min-height: 0;
+
+        overflow: auto;
+    }
+
+    .hm-tab-panel.active {
+        display: block;
+    }
 
     /* =========================================================
        TABLAS
     ========================================================= */
 
-    .hm-table-wrap {
-        width: 100%;
-
-        overflow-x: auto;
-    }
-
-
     .hm-table {
         width: 100%;
 
-        min-width: 610px;
+        min-width: 620px;
 
         border-collapse: collapse;
-
         table-layout: fixed;
     }
 
+    .hm-table thead {
+        position: sticky;
+        top: 0;
+
+        z-index: 2;
+    }
 
     .hm-table th {
-        padding: 5px 7px;
+        padding: 4px 6px;
 
-        border-bottom:
-            1px solid
-            var(--border-soft, #efeff2);
+        border-bottom: 1px solid #e5e5ea;
 
         background: #f7f7f9;
 
-        color:
-            var(--muted, #6e6e73);
+        color: #6e6e73;
 
-        font-size: 0.47rem;
+        font-size: 0.43rem;
         font-weight: 800;
 
         text-align: left;
 
         text-transform: uppercase;
-
         letter-spacing: 0.03em;
     }
 
-
     .hm-table td {
-        padding: 6px 7px;
+        padding: 4px 6px;
 
-        border-bottom:
-            1px solid
-            var(--border-soft, #efeff2);
+        border-bottom: 1px solid #efeff2;
 
         color: #1d1d1f;
 
-        font-size: 0.56rem;
-        font-weight: 560;
-
-        line-height: 1.3;
+        font-size: 0.52rem;
+        line-height: 1.20;
 
         vertical-align: top;
 
         overflow-wrap: anywhere;
     }
 
-
     .hm-table tbody tr:last-child td {
         border-bottom: 0;
     }
 
-
-    .hm-table tbody tr:not(.hm-empty-row) {
-        transition:
-            background-color 0.14s ease,
-            box-shadow 0.14s ease;
-    }
-
-
     .hm-table tbody tr:not(.hm-empty-row):hover {
-        background:
-            rgba(0, 113, 227, 0.065);
-
-        box-shadow:
-            inset 3px 0 0
-            #0071e3;
+        background: rgba(0, 113, 227, 0.055);
+        box-shadow: inset 2px 0 0 #0071e3;
     }
-
 
     .hm-col-ref {
-        width: 17%;
+        width: 16%;
     }
-
 
     .hm-col-desc {
-        width: 39%;
+        width: 46%;
     }
-
 
     .hm-col-money,
     .hm-col-qty {
@@ -1048,33 +771,24 @@
 
         white-space: nowrap;
 
-        font-variant-numeric:
-            tabular-nums;
+        font-variant-numeric: tabular-nums;
     }
-
 
     .hm-reference {
         display: inline-flex;
 
-        align-items: center;
+        padding: 1px 5px;
 
-        min-height: 21px;
-
-        padding: 2px 6px;
-
-        border:
-            1px solid #dedee3;
-
-        border-radius: 6px;
+        border: 1px solid #dedee3;
+        border-radius: 5px;
 
         background: #f7f7f9;
 
         color: #424245;
 
-        font-size: 0.49rem;
+        font-size: 0.45rem;
         font-weight: 750;
     }
-
 
     .hm-description {
         color: #111111;
@@ -1082,2699 +796,1546 @@
         font-weight: 700;
     }
 
-
     .hm-item-meta {
-        margin-top: 3px;
+        margin-top: 2px;
 
-        color:
-            var(--muted, #6e6e73);
+        color: #6e6e73;
 
-        font-size: 0.49rem;
-
-        line-height: 1.3;
+        font-size: 0.45rem;
     }
 
-
-    .hm-historico {
-        display: inline-flex;
-
-        margin-top: 4px;
-
-        padding: 2px 5px;
-
-        border-radius: 999px;
-
-        background:
-            rgba(255, 149, 0, 0.08);
-
-        color: #b26a00;
-
-        font-size: 0.44rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
-    }
-
-
-    /* =========================================================
-       PROCEDIMIENTOS
-       PADRE CELESTE / HIJA VERDE
-    ========================================================= */
-
-    .hm-procedures {
-        display: grid;
-
-        gap: 3px;
-
-        margin-top: 4px;
-    }
-
-
-    .hm-procedure {
-        padding: 3px 6px;
-
-        border:
-            1px solid #e7e7eb;
-
-        border-radius: 5px;
-
-        background: #fbfbfd;
-
-        color: #4f4f53;
-
-        font-size: 0.50rem;
-        font-weight: 520;
-
-        line-height: 1.25;
-
-        transition:
-            background-color 0.12s ease,
-            border-color 0.12s ease,
-            color 0.12s ease;
-    }
-
-
-    .hm-procedure:hover {
-        background:
-            rgba(52, 199, 89, 0.12);
-
-        border-color:
-            rgba(52, 199, 89, 0.38);
-
-        color: #176b38;
-    }
-
-
-    .hm-procedure::before {
-        content: "↳";
-
-        margin-right: 4px;
-
-        color: #34c759;
-
-        font-weight: 800;
-    }
-
-
+    .hm-historico,
     .hm-cortesia {
         display: inline-flex;
 
-        margin-top: 4px;
-
-        padding: 2px 5px;
+        margin-top: 2px;
+        padding: 1px 4px;
 
         border-radius: 999px;
 
-        background: #e5fbe4;
-
-        color: #1f8939;
-
-        font-size: 0.44rem;
+        font-size: 0.40rem;
         font-weight: 800;
 
         text-transform: uppercase;
     }
 
-
-    .hm-empty-row td {
-        padding: 11px 8px;
-
-        color:
-            var(--muted, #6e6e73);
-
-        text-align: center;
-
-        font-size: 0.55rem;
+    .hm-historico {
+        background: rgba(255, 149, 0, 0.08);
+        color: #b26a00;
     }
 
+    .hm-cortesia {
+        background: #e5fbe4;
+        color: #1f8939;
+    }
 
     /* =========================================================
-       SUBTOTALES
+       PROCEDIMIENTOS HIJOS
+       SIN FLECHAS
     ========================================================= */
 
-    .hm-subtotal {
-        display: flex;
+    .hm-procedures {
+        margin-top: 3px;
+        margin-left: 3px;
 
-        justify-content: flex-end;
+        padding-left: 7px;
 
-        padding: 6px 9px 7px;
+        display: grid;
 
-        border-top:
-            1px solid
-            var(--border-soft, #efeff2);
+        gap: 1px;
+
+        border-left: 2px solid rgba(52, 199, 89, 0.45);
     }
 
+    .hm-procedure {
+        padding: 1px 0;
 
-    .hm-subtotal-box {
-        min-width: 180px;
+        color: #55555a;
 
-        padding: 6px 9px;
+        font-size: 0.47rem;
+        font-weight: 520;
 
-        border:
-            1px solid #e5e5ea;
+        line-height: 1.18;
+    }
 
-        border-radius: 7px;
+    .hm-procedure:hover {
+        color: #176b38;
+    }
 
-        background: #ffffff;
+    /* =========================================================
+       SUBTOTAL DENTRO DE TAB
+    ========================================================= */
+
+    .hm-tab-subtotal {
+        position: sticky;
+        bottom: 0;
+
+        display: flex;
+        justify-content: flex-end;
+
+        padding: 4px 6px;
+
+        border-top: 1px solid #e5e5ea;
+
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(4px);
+    }
+
+    .hm-tab-subtotal strong {
+        padding: 3px 7px;
+
+        border-radius: 6px;
+
+        background: #f5f5f7;
 
         color: #1d1d1f;
 
-        font-size: 0.56rem;
-        font-weight: 800;
+        font-size: 0.50rem;
 
-        text-align: right;
-
-        font-variant-numeric:
-            tabular-nums;
+        font-variant-numeric: tabular-nums;
     }
-
 
     /* =========================================================
-       OBSERVACIONES
+       NOTAS / RECOMENDACIONES
     ========================================================= */
 
-    .hm-observaciones-grid {
+    .hm-notes-grid {
         display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
 
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        gap: 6px;
 
-        gap: 7px;
-
-        padding: 8px 9px;
+        padding: 7px;
     }
 
+    .hm-note-box {
+        min-width: 0;
 
-    .hm-observacion-box {
-        padding: 8px 9px;
+        padding: 6px 7px;
 
-        border:
-            1px solid #ededf0;
-
-        border-radius: 8px;
+        border: 1px solid #ededf0;
+        border-radius: 7px;
 
         background: #fbfbfd;
     }
 
-
-    .hm-observacion-label {
-        margin-bottom: 4px;
-
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.49rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
-    }
-
-
-    /* =========================================================
-       RESUMEN ECONÓMICO
-    ========================================================= */
-
-    .hm-economic-grid {
-        display: grid;
-
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-
-        gap: 6px;
-
-        padding: 8px 9px 9px;
-    }
-
-
-    .hm-economic-card {
-        min-width: 0;
-
-        padding: 8px 9px;
-
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 8px;
-
-        background: #ffffff;
-    }
-
-
-    .hm-economic-label {
+    .hm-note-title {
         margin-bottom: 3px;
 
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.47rem;
-        font-weight: 800;
-
-        text-transform: uppercase;
-    }
-
-
-    .hm-economic-value {
         color: #111111;
 
-        font-size: 0.84rem;
-        font-weight: 800;
-
-        font-variant-numeric:
-            tabular-nums;
-    }
-
-
-    .hm-economic-note {
-        margin-top: 3px;
-
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.46rem;
-
-        line-height: 1.3;
-    }
-
-
-    .hm-total-bar {
-        margin:
-            0 9px 9px;
-
-        padding: 8px 10px;
-
-        display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        gap: 10px;
-
-        border-radius: 8px;
-
-        background: #0071e3;
-
-        color: #ffffff;
-    }
-
-
-    .hm-total-label {
-        font-size: 0.52rem;
+        font-size: 0.48rem;
         font-weight: 800;
 
         text-transform: uppercase;
-
-        opacity: 0.9;
     }
 
+    .hm-note-text {
+        margin: 0;
 
-    .hm-total-value {
-        font-size: 0.96rem;
-        font-weight: 850;
+        color: #55555a;
 
-        white-space: nowrap;
+        font-size: 0.51rem;
+        line-height: 1.28;
 
-        font-variant-numeric:
-            tabular-nums;
+        white-space: pre-line;
     }
 
+    .hm-recomendaciones {
+        padding: 7px;
+    }
+
+    .hm-recomendacion {
+        padding: 5px 7px;
+
+        border-bottom: 1px solid #efeff2;
+    }
+
+    .hm-recomendacion:last-child {
+        border-bottom: 0;
+    }
+
+    .hm-recomendacion-titulo {
+        color: #111111;
+
+        font-size: 0.51rem;
+        font-weight: 800;
+    }
+
+    .hm-recomendacion-texto {
+        margin-top: 1px;
+
+        color: #55555a;
+
+        font-size: 0.49rem;
+        line-height: 1.25;
+    }
 
     /* =========================================================
        ABONOS
     ========================================================= */
 
-    .hm-abonos-details {
-        margin-top: 8px;
-
-        border:
-            1px solid
-            var(--border-soft, #efeff2);
-
-        border-radius: 9px;
-
-        background: #ffffff;
-
-        overflow: hidden;
-    }
-
-
-    .hm-abonos-summary {
-        padding: 8px 10px;
-
+    .hm-abonos-totals {
         display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        gap: 8px;
-
-        cursor: pointer;
-
-        background: #fbfbfd;
-
-        color: #111111;
-
-        font-size: 0.60rem;
-        font-weight: 800;
-
-        list-style: none;
-    }
-
-
-    .hm-abonos-summary::-webkit-details-marker {
-        display: none;
-    }
-
-
-    .hm-abonos-summary-meta {
-        color:
-            var(--muted, #6e6e73);
-
-        font-size: 0.50rem;
-        font-weight: 700;
-    }
-
-
-    .hm-abonos-totales {
-        display: grid;
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 6px;
-
-        padding: 8px 9px;
-    }
-
-
-    /* =========================================================
-       ACCIONES
-    ========================================================= */
-
-    .hm-actions {
-        display: flex;
-
         justify-content: flex-end;
-        align-items: center;
-
-        flex-wrap: wrap;
-
-        gap: 6px;
-
-        margin-top: 9px;
-
-        padding-top: 9px;
-
-        border-top:
-            1px solid
-            var(--border-soft, #efeff2);
-    }
-
-
-    .hm-action {
-        min-height: 31px;
-
-        padding:
-            0 10px;
-
-        display: inline-flex;
-
-        align-items: center;
-        justify-content: center;
 
         gap: 5px;
 
-        border:
-            1px solid #e0e0e5;
+        padding: 5px 6px;
 
+        border-top: 1px solid #e5e5ea;
+
+        background: #fbfbfd;
+    }
+
+    .hm-abono-total {
+        padding: 3px 6px;
+
+        border-radius: 6px;
+
+        background: #ffffff;
+        border: 1px solid #e5e5ea;
+
+        color: #4a4a4a;
+
+        font-size: 0.48rem;
+        font-weight: 700;
+    }
+
+    /* =========================================================
+       BARRA ECONÓMICA INFERIOR
+    ========================================================= */
+
+    .hm-bottom-bar {
+        flex: 0 0 auto;
+
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+
+        gap: 8px;
+
+        align-items: center;
+
+        min-height: 37px;
+
+        padding: 5px 7px;
+
+        border: 1px solid var(--border-soft, #efeff2);
         border-radius: 8px;
+
+        background: #fbfbfd;
+    }
+
+    .hm-economic-inline {
+        min-width: 0;
+
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+
+        gap: 3px 7px;
+    }
+
+    .hm-economic-item {
+        color: #5c5c61;
+
+        font-size: 0.48rem;
+        font-weight: 650;
+
+        white-space: nowrap;
+    }
+
+    .hm-economic-item strong {
+        margin-left: 2px;
+
+        color: #111111;
+
+        font-weight: 800;
+
+        font-variant-numeric: tabular-nums;
+    }
+
+    .hm-total-inline {
+        color: #0071e3;
+
+        font-size: 0.68rem;
+        font-weight: 850;
+
+        white-space: nowrap;
+
+        font-variant-numeric: tabular-nums;
+    }
+
+    .hm-actions {
+        display: flex;
+        align-items: center;
+
+        gap: 4px;
+    }
+
+    .hm-action {
+        height: 27px;
+
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 4px;
+
+        border: 1px solid #dedee3;
+        border-radius: 6px;
 
         background: #ffffff;
 
-        color: #1d1d1f;
+        color: #4a4a4a;
 
-        font-size: 0.59rem;
-        font-weight: 700;
+        font-size: 0.49rem;
+        font-weight: 750;
 
         text-decoration: none;
-
-        transition:
-            background 0.15s ease,
-            border-color 0.15s ease;
     }
-
 
     .hm-action:hover {
         background: #f5f5f7;
-
-        color: #1d1d1f;
-
+        color: #111111;
         text-decoration: none;
     }
 
-
     .hm-action.primary {
-        border-color:
-            rgba(0, 113, 227, 0.24);
-
+        border-color: rgba(0, 113, 227, 0.22);
         background: #f5faff;
-
         color: #0071e3;
     }
 
-
-    .hm-action.primary:hover {
-        background: #edf6ff;
-
-        color: #0066cc;
-    }
-
-
     /* =========================================================
-       SIN HISTORIAL
+       VACÍO
     ========================================================= */
 
     .hm-empty {
-        padding: 42px 20px;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        padding: 20px;
 
         text-align: center;
     }
 
-
     .hm-empty-icon {
-        width: 44px;
-        height: 44px;
-
-        margin:
-            0 auto 10px;
+        width: 40px;
+        height: 40px;
 
         display: flex;
-
         align-items: center;
         justify-content: center;
 
-        border-radius: 12px;
+        margin-bottom: 8px;
+
+        border-radius: 10px;
 
         background: #f5f5f7;
 
         color: #8e8e93;
 
-        font-size: 1.15rem;
+        font-size: 1rem;
     }
 
-
     .hm-empty-title {
-        margin:
-            0 0 4px;
+        margin: 0 0 3px;
 
         color: #1d1d1f;
 
-        font-size: 0.82rem;
+        font-size: 0.76rem;
         font-weight: 800;
     }
-
 
     .hm-empty-text {
         max-width: 420px;
 
-        margin: auto;
+        margin: 0;
 
-        color:
-            var(--muted, #6e6e73);
+        color: #6e6e73;
 
-        font-size: 0.68rem;
-
-        line-height: 1.45;
+        font-size: 0.61rem;
+        line-height: 1.35;
     }
-
 
     /* =========================================================
        RESPONSIVE
     ========================================================= */
 
-    @media (max-width: 760px) {
-
-        .hm-vehiculo {
-            align-items: flex-start;
-        }
-
-
-        .hm-metricas {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-        }
-
-
-        .hm-economic-grid {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-        }
-
-
-        .hm-observaciones-grid {
+    @media (max-width: 900px) {
+        .hm-topbar {
             grid-template-columns: 1fr;
         }
 
-
-        .hm-timeline-item {
-            width: 86px;
-            flex-basis: 86px;
+        .hm-vehicle-strip {
+            display: none;
         }
 
+        .hm-visit-strip {
+            grid-template-columns: 1fr auto;
+        }
+
+        .hm-metrics-inline {
+            grid-column: 1 / -1;
+
+            order: 3;
+        }
     }
 
-
-    @media (max-width: 520px) {
-
-        .hm-vehiculo {
-            flex-direction: column;
-        }
-
-
-        .hm-visitas-badge {
-            align-self: flex-start;
-        }
-
-
-        .hm-visita-header {
-            flex-direction: column;
-        }
-
-
-        .hm-visita-badges {
-            flex-direction: row;
-            align-items: center;
-        }
-
-
-        .hm-intro-grid {
+    @media (max-width: 650px) {
+        .hm-intro-row {
             grid-template-columns: 1fr;
         }
 
-
-        .hm-metricas {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
+        .hm-intro-box {
+            max-height: 58px;
         }
 
-
-        .hm-economic-grid {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
+        .hm-visit-strip {
+            grid-template-columns: 1fr auto;
         }
 
+        .hm-metrics-inline {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
 
-        .hm-abonos-totales {
+        .hm-bottom-bar {
             grid-template-columns: 1fr;
         }
-
-
-        .hm-subtotal {
-            justify-content: stretch;
-        }
-
-
-        .hm-subtotal-box {
-            width: 100%;
-            min-width: 0;
-        }
-
 
         .hm-actions {
-            justify-content: stretch;
+            justify-content: flex-end;
         }
 
-
-        .hm-action {
-            flex: 1;
+        .hm-economic-inline {
+            overflow-x: auto;
+            flex-wrap: nowrap;
         }
 
+        .hm-notes-grid {
+            grid-template-columns: 1fr;
+        }
     }
-
 </style>
-
 
 
 {% if not expediente %}
 
-    <!-- =====================================================
-         ORDEN SIN EXPEDIENTE
-    ====================================================== -->
-
     <div class="hm-empty">
 
         <div class="hm-empty-icon">
-
             <i class="bi bi-exclamation-circle"></i>
-
         </div>
 
         <h3 class="hm-empty-title">
-
             Esta orden no tiene expediente
-
         </h3>
 
         <p class="hm-empty-text">
-
-            No es posible consultar el historial porque esta
-            Orden de Trabajo no está vinculada a un expediente
-            de vehículo.
-
+            No es posible consultar el historial porque esta Orden de Trabajo
+            no está vinculada a un expediente de vehículo.
         </p>
 
     </div>
-
 
 {% elif not ordenes %}
 
-
-    <!-- =====================================================
-         SIN VISITAS ANTERIORES
-    ====================================================== -->
-
     <div class="hm-empty">
 
         <div class="hm-empty-icon">
-
             <i class="bi bi-clock-history"></i>
-
         </div>
 
         <h3 class="hm-empty-title">
-
             No existen visitas anteriores
-
         </h3>
 
         <p class="hm-empty-text">
-
-            Esta es la primera Orden de Trabajo registrada
-            anteriormente para este vehículo.
-
+            Esta es la primera Orden de Trabajo registrada anteriormente para
+            este vehículo.
         </p>
 
     </div>
 
-
 {% else %}
 
+    <div class="hm-shell">
 
-    <!-- =====================================================
-         CABECERA DEL VEHÍCULO
-    ====================================================== -->
+        <!-- =====================================================
+             VEHÍCULO + TIMELINE
+        ====================================================== -->
 
-    <div class="hm-vehiculo">
+        <div class="hm-topbar">
 
+            <div class="hm-vehicle-strip">
 
-        <div class="hm-vehiculo-main">
+                <div class="hm-vehicle-label">
+                    Vehículo
+                </div>
 
-            <div class="hm-vehiculo-label">
+                <div class="hm-vehicle-name">
+                    {{ expediente.descripcion_vehiculo_final|default:"SIN VEHÍCULO" }}
+                </div>
 
-                Vehículo consultado
+                <div class="hm-vehicle-meta">
 
-            </div>
-
-
-            <div class="hm-vehiculo-nombre">
-
-                {{ expediente.descripcion_vehiculo_final|default:"SIN VEHÍCULO" }}
-
-            </div>
-
-
-            <div class="hm-vehiculo-meta">
-
-
-                <span class="hm-placa">
-
-                    {{ expediente.placa|upper|default:"SIN PLACA" }}
-
-                </span>
-
-
-                {% if expediente.anio_vehiculo %}
-
-                    <span>
-
-                        Año {{ expediente.anio_vehiculo }}
-
+                    <span class="hm-plate">
+                        {{ expediente.placa|upper|default:"SIN PLACA" }}
                     </span>
 
-                {% endif %}
-
-
-                {% if expediente.marca_api %}
-
-                    <span>·</span>
+                    {% if expediente.anio_vehiculo %}
+                        <span>
+                            Año {{ expediente.anio_vehiculo }}
+                        </span>
+                    {% endif %}
 
                     <span>
-
-                        {{ expediente.marca_api }}
-
+                        · {{ total_ordenes }}
+                        visita{{ total_ordenes|pluralize:"s" }}
                     </span>
 
-                {% endif %}
-
-
-            </div>
-
-        </div>
-
-
-        <div class="hm-visitas-badge">
-
-            <i class="bi bi-clock-history"></i>
-
-            {{ total_ordenes }}
-            visita{{ total_ordenes|pluralize:"s" }}
-            anterior{{ total_ordenes|pluralize:"es" }}
-
-        </div>
-
-
-    </div>
-
-
-
-    <!-- =====================================================
-         LÍNEA DE TIEMPO
-    ====================================================== -->
-
-    <div class="hm-timeline-box">
-
-
-        <div class="hm-timeline-top">
-
-
-            <div class="hm-timeline-title">
-
-                Historial de mantenimientos
+                </div>
 
             </div>
 
 
-            <div class="hm-timeline-help">
+            <div class="hm-timeline-strip">
 
-                Selecciona una visita
+                <div
+                    class="hm-timeline-scroll"
+                    id="hmTimelineScroll"
+                >
+                    <div class="hm-timeline-list">
 
-            </div>
+                        {% if total_ordenes > 1 %}
+                            <div class="hm-timeline-line"></div>
+                        {% endif %}
 
+                        {% for orden in ordenes %}
 
-        </div>
+                            <div
+                                id="hm-timeline-item-{{ orden.id }}"
+                                class="
+                                    hm-timeline-item
+                                    {% if forloop.last %}active{% endif %}
+                                "
+                            >
 
+                                <button
+                                    type="button"
+                                    class="hm-timeline-button"
+                                    data-orden-id="{{ orden.id }}"
+                                    {% if forloop.last %}
+                                        data-historial-default="true"
+                                    {% endif %}
+                                    onclick="
+                                        seleccionarOrdenHistorialModal(
+                                            '{{ orden.id }}'
+                                        )
+                                    "
+                                >
 
-        <div
-            class="hm-timeline-scroll"
-            id="hmTimelineScroll"
-        >
+                                    <span class="hm-timeline-number">
+                                        {{ orden.posicion_historial }}
+                                    </span>
 
-            <div class="hm-timeline-list">
+                                    <div class="hm-timeline-fecha">
+                                        {{ orden.fecha_ingreso|date:"d/m/y" }}
+                                    </div>
 
+                                    {% if orden.kilometraje_inconsistente %}
+                                        <div class="hm-timeline-warning">
+                                            revisar km
+                                        </div>
+                                    {% endif %}
 
-                {% if total_ordenes > 1 %}
+                                </button>
 
-                    <div class="hm-timeline-line">
+                            </div>
+
+                        {% endfor %}
+
                     </div>
+                </div>
 
-                {% endif %}
+            </div>
 
-
-                {% for orden in ordenes %}
-
-
-                    <div
-
-                        id="hm-timeline-item-{{ orden.id }}"
-
-                        class="
-                            hm-timeline-item
-                            {% if forloop.last %}
-                                active
-                            {% endif %}
-                        "
-
-                    >
+        </div>
 
 
-                        <button
+        <!-- =====================================================
+             VISITAS
+        ====================================================== -->
 
-                            type="button"
+        {% for orden in ordenes %}
 
-                            class="hm-timeline-button"
+            <article
+                id="hm-panel-{{ orden.id }}"
+                class="
+                    hm-panel
+                    {% if forloop.last %}active{% endif %}
+                "
+                data-historial-panel-id="{{ orden.id }}"
+            >
 
-                            data-orden-id="{{ orden.id }}"
+                <!-- =============================================
+                     RESUMEN DE LA VISITA
+                ============================================== -->
 
-                            {% if forloop.last %}
-                                data-historial-default="true"
-                            {% endif %}
+                <div class="hm-visit-strip">
 
-                            onclick="
-                                seleccionarOrdenHistorialModal(
-                                    '{{ orden.id }}'
-                                )
-                            "
+                    <div class="hm-visit-main">
 
-                        >
+                        <div class="hm-visit-title-row">
 
+                            <span class="hm-visit-number">
 
-                            <span class="hm-timeline-number">
-
-                                {{ orden.posicion_historial }}
+                                {% if orden.es_migrada and orden.numero_orden_origen %}
+                                    {{ orden.numero_orden_origen }}
+                                {% else %}
+                                    {{ orden.numero_orden }}
+                                {% endif %}
 
                             </span>
 
+                            <span
+                                class="
+                                    hm-status
+                                    estado-{{ orden.estado|lower }}
+                                "
+                            >
+                                {{ orden.get_estado_display }}
+                            </span>
 
-                            <div class="hm-timeline-fecha">
-
-                                {{ orden.fecha_ingreso|date:"d/m/Y" }}
-
-                            </div>
-
-
-                            <div class="hm-timeline-km">
-
-                                {% if orden.kilometraje is not None %}
-
-                                    {{ orden.kilometraje|floatformat:"0"|intcomma }}
-                                    km
-
-                                {% else %}
-
-                                    Sin km
-
-                                {% endif %}
-
-                            </div>
-
-
-                            {% if orden.kilometraje_inconsistente %}
-
-                                <div class="hm-timeline-alerta">
-
-                                    Revisar km
-
-                                </div>
-
+                            {% if orden.es_migrada %}
+                                <span class="hm-migrada">
+                                    Migrada
+                                </span>
                             {% endif %}
 
+                        </div>
 
+                        <div class="hm-visit-meta">
+
+                            {{ orden.fecha_ingreso|date:"d/m/Y" }}
+
+                            {% if not orden.es_migrada %}
+                                · {{ orden.fecha_ingreso|time:"H:i" }}
+                            {% endif %}
+
+                            {% if orden.sucursal %}
+                                · {{ orden.sucursal.nombre }}
+                            {% endif %}
+
+                            · {{ orden.nombre_cliente_final|default:"Cliente no registrado" }}
+
+                        </div>
+
+                        <div class="hm-visit-technicians">
+
+                            <span class="hm-tech-label">
+                                Técnicos:
+                            </span>
+
+                            {% for tecnico in orden.tecnicos_consulta %}
+                                <span class="hm-tech-chip">
+                                    {{ tecnico.nombre }}
+                                </span>
+                            {% empty %}
+                                <span class="hm-tech-label">
+                                    no registrado
+                                </span>
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hm-metrics-inline">
+
+                        <div class="hm-metric-inline">
+                            <div class="hm-metric-label">
+                                Kilometraje
+                            </div>
+                            <div class="hm-metric-value">
+                                {% if orden.kilometraje is not None %}
+                                    {{ orden.kilometraje|floatformat:"0"|intcomma }} km
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="hm-metric-inline">
+                            <div class="hm-metric-label">
+                                Desde anterior
+                            </div>
+
+                            {% if orden.kilometraje_inconsistente %}
+                                <div class="hm-metric-value red">
+                                    Revisar
+                                </div>
+                            {% elif orden.diferencia_km is not None %}
+                                <div class="hm-metric-value green">
+                                    +{{ orden.diferencia_km|floatformat:"0"|intcomma }} km
+                                </div>
+                            {% else %}
+                                <div class="hm-metric-value">
+                                    —
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="hm-metric-inline">
+                            <div class="hm-metric-label">
+                                Próximo
+                            </div>
+                            <div class="hm-metric-value">
+                                {% if orden.proximo_mantenimiento_km is not None %}
+                                    {{ orden.proximo_mantenimiento_km|floatformat:"0"|intcomma }} km
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="hm-metric-inline">
+                            <div class="hm-metric-label">
+                                Total OT
+                            </div>
+                            <div class="hm-metric-value">
+                                ${{ orden.total_final|default:"0.00"|floatformat:"2" }}
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="hm-visit-nav">
+
+                        <button
+                            type="button"
+                            class="hm-nav-btn hm-btn-anterior"
+                            onclick="moverHistorialModal(-1)"
+                            title="Visita anterior"
+                        >
+                            <i class="bi bi-chevron-left"></i>
                         </button>
 
+                        <span class="hm-nav-count">
+                            {{ orden.posicion_historial }}/{{ total_ordenes }}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="hm-nav-btn hm-btn-siguiente"
+                            onclick="moverHistorialModal(1)"
+                            title="Visita siguiente"
+                        >
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
 
                     </div>
 
-
-                {% endfor %}
-
-
-            </div>
-
-        </div>
+                </div>
 
 
-    </div>
+                <!-- =============================================
+                     REPORTE / TRABAJOS
+                ============================================== -->
 
+                <div class="hm-intro-row">
 
+                    <div class="hm-intro-box">
 
-    <!-- =====================================================
-         PANELES DE LAS ÓRDENES
-    ====================================================== -->
+                        <h4 class="hm-intro-title">
+                            Reporte del cliente
+                        </h4>
 
-    {% for orden in ordenes %}
+                        {% if orden.sintomas_items.all %}
 
+                            <ol class="hm-intro-list">
+                                {% for sintoma in orden.sintomas_items.all %}
+                                    <li>{{ sintoma.descripcion }}</li>
+                                {% endfor %}
+                            </ol>
 
-        <article
+                        {% elif orden.sintomas_cliente %}
 
-            id="hm-panel-{{ orden.id }}"
-
-            class="
-                hm-panel
-                {% if forloop.last %}
-                    active
-                {% endif %}
-            "
-
-            data-historial-panel-id="{{ orden.id }}"
-
-        >
-
-
-            <!-- =================================================
-                 CABECERA
-            ================================================== -->
-
-            <div class="hm-visita-header">
-
-
-                <div class="hm-visita-main">
-
-
-                    <div class="hm-visita-position">
-
-                        Visita
-                        {{ orden.posicion_historial }}
-                        de
-                        {{ total_ordenes }}
-
-                    </div>
-
-
-                    <h3 class="hm-visita-numero">
-
-                        {% if orden.es_migrada and orden.numero_orden_origen %}
-
-                            {{ orden.numero_orden_origen }}
+                            <p class="hm-intro-note">
+                                {{ orden.sintomas_cliente }}
+                            </p>
 
                         {% else %}
 
-                            {{ orden.numero_orden }}
-
-                        {% endif %}
-
-                    </h3>
-
-
-                    <div class="hm-visita-meta">
-
-                        <i class="bi bi-calendar3"></i>
-
-                        {{ orden.fecha_ingreso|date:"d/m/Y" }}
-
-
-                        {% if not orden.es_migrada %}
-
-                            ·
-                            {{ orden.fecha_ingreso|time:"H:i" }}
-
-                        {% endif %}
-
-
-                        {% if orden.sucursal %}
-
-                            ·
-                            {{ orden.sucursal.nombre }}
+                            <p class="hm-intro-note">
+                                Sin reporte registrado.
+                            </p>
 
                         {% endif %}
 
                     </div>
 
 
-                    <div class="hm-visita-cliente">
+                    <div class="hm-intro-box">
 
-                        Cliente en esta visita:
+                        <h4 class="hm-intro-title">
+                            Trabajos solicitados
+                        </h4>
 
-                        <strong>
+                        {% if orden.trabajos_solicitados_items.all %}
 
-                            {{ orden.nombre_cliente_final|default:"NO REGISTRADO" }}
+                            <ol class="hm-intro-list">
+                                {% for trabajo in orden.trabajos_solicitados_items.all %}
+                                    <li>{{ trabajo }}</li>
+                                {% endfor %}
+                            </ol>
 
-                        </strong>
+                        {% else %}
+
+                            <p class="hm-intro-note">
+                                Sin trabajos solicitados.
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     PESTAÑAS
+                ============================================== -->
+
+                <div
+                    class="hm-tabs"
+                    data-hm-tabs-orden="{{ orden.id }}"
+                >
+
+                    <button
+                        type="button"
+                        class="hm-tab-btn active"
+                        data-hm-tab-btn="repuestos"
+                        onclick="
+                            seleccionarTabHistorialModal(
+                                '{{ orden.id }}',
+                                'repuestos'
+                            )
+                        "
+                    >
+                        Repuestos
+                        <span class="hm-tab-count">
+                            {{ orden.repuestos_consulta|length }}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="hm-tab-btn"
+                        data-hm-tab-btn="moi"
+                        onclick="
+                            seleccionarTabHistorialModal(
+                                '{{ orden.id }}',
+                                'moi'
+                            )
+                        "
+                    >
+                        MOI
+                        <span class="hm-tab-count">
+                            {{ orden.moi_consulta|length }}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="hm-tab-btn"
+                        data-hm-tab-btn="moe"
+                        onclick="
+                            seleccionarTabHistorialModal(
+                                '{{ orden.id }}',
+                                'moe'
+                            )
+                        "
+                    >
+                        MOE
+                        <span class="hm-tab-count">
+                            {{ orden.moe_consulta|length }}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="hm-tab-btn"
+                        data-hm-tab-btn="notas"
+                        onclick="
+                            seleccionarTabHistorialModal(
+                                '{{ orden.id }}',
+                                'notas'
+                            )
+                        "
+                    >
+                        Notas
+                        <span class="hm-tab-count">
+                            {{ orden.recomendaciones_items.all|length }}
+                        </span>
+                    </button>
+
+                    {% if orden.abonos_consulta %}
+
+                        <button
+                            type="button"
+                            class="hm-tab-btn"
+                            data-hm-tab-btn="abonos"
+                            onclick="
+                                seleccionarTabHistorialModal(
+                                    '{{ orden.id }}',
+                                    'abonos'
+                                )
+                            "
+                        >
+                            Abonos
+                            <span class="hm-tab-count">
+                                {{ orden.abonos_consulta|length }}
+                            </span>
+                        </button>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- =============================================
+                     CONTENIDO DE PESTAÑAS
+                ============================================== -->
+
+                <div class="hm-tab-content">
+
+
+                    <!-- =========================================
+                         REPUESTOS
+                    ========================================== -->
+
+                    <div
+                        class="hm-tab-panel active"
+                        data-hm-tab-panel="repuestos"
+                        data-hm-tab-orden="{{ orden.id }}"
+                    >
+
+                        <table class="hm-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="hm-col-ref">
+                                        Código / referencia
+                                    </th>
+                                    <th class="hm-col-desc">
+                                        Descripción
+                                    </th>
+                                    <th class="hm-col-qty">
+                                        Cant.
+                                    </th>
+                                    <th class="hm-col-money">
+                                        P.U.
+                                    </th>
+                                    <th class="hm-col-money">
+                                        Total
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for item in orden.repuestos_consulta %}
+
+                                    <tr>
+
+                                        <td>
+                                            <span class="hm-reference">
+                                                {{ item.referencia }}
+                                            </span>
+
+                                            {% if item.es_historico %}
+                                                <span class="hm-historico">
+                                                    Histórico
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            <div class="hm-description">
+                                                {{ item.descripcion }}
+                                            </div>
+                                        </td>
+
+                                        <td class="hm-col-qty">
+                                            {% if item.cantidad is not None %}
+                                                {{ item.cantidad|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="hm-col-money">
+                                            {% if item.precio_unitario is not None %}
+                                                ${{ item.precio_unitario|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="hm-col-money">
+                                            {% if item.subtotal is not None %}
+                                                ${{ item.subtotal|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr class="hm-empty-row">
+                                        <td colspan="5">
+                                            Sin repuestos registrados.
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                        <div class="hm-tab-subtotal">
+                            <strong>
+                                Repuestos:
+                                ${{ orden.subtotal_repuestos_consulta|floatformat:"2" }}
+                            </strong>
+                        </div>
 
                     </div>
 
 
                     <!-- =========================================
-                         TÉCNICOS
+                         MOI
                     ========================================== -->
 
-                    <div class="hm-tecnicos">
-
-
-                        <span class="hm-tecnicos-label">
-
-                            <i class="bi bi-person-gear"></i>
-
-                            Técnicos
-
-                        </span>
-
-
-                        {% for tecnico in orden.tecnicos_consulta %}
-
-                            <span class="hm-tecnico-chip">
-
-                                {{ tecnico.nombre }}
-
-                            </span>
-
-                        {% empty %}
-
-                            <span class="hm-tecnico-vacio">
-
-                                No registrado
-
-                            </span>
-
-                        {% endfor %}
-
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="hm-visita-badges">
-
-
-                    <span
-                        class="
-                            hm-status
-                            estado-{{ orden.estado|lower }}
-                        "
+                    <div
+                        class="hm-tab-panel"
+                        data-hm-tab-panel="moi"
+                        data-hm-tab-orden="{{ orden.id }}"
                     >
-
-                        {{ orden.get_estado_display }}
-
-                    </span>
-
-
-                    {% if orden.es_migrada %}
-
-                        <span class="hm-migrada">
-
-                            Histórico / migrado
-
-                        </span>
-
-                    {% endif %}
-
-
-                </div>
-
-
-            </div>
-
-
-
-            <!-- =================================================
-                 NAVEGACIÓN ANTERIOR / SIGUIENTE
-            ================================================== -->
-
-            <div class="hm-carousel-nav">
-
-
-                <button
-
-                    type="button"
-
-                    class="hm-carousel-button"
-
-                    onclick="
-                        moverHistorialModal(-1)
-                    "
-
-                >
-
-                    <i class="bi bi-chevron-left"></i>
-
-                    Anterior
-
-                </button>
-
-
-                <div class="hm-carousel-position">
-
-                    {{ orden.posicion_historial }}
-                    de
-                    {{ total_ordenes }}
-
-                </div>
-
-
-                <button
-
-                    type="button"
-
-                    class="hm-carousel-button"
-
-                    onclick="
-                        moverHistorialModal(1)
-                    "
-
-                >
-
-                    Siguiente
-
-                    <i class="bi bi-chevron-right"></i>
-
-                </button>
-
-
-            </div>
-
-
-
-            <!-- =================================================
-                 MÉTRICAS
-            ================================================== -->
-
-            <div class="hm-metricas">
-
-
-                <div class="hm-metrica">
-
-                    <div class="hm-metrica-label">
-
-                        Kilometraje
-
-                    </div>
-
-                    <div class="hm-metrica-valor">
-
-                        {% if orden.kilometraje is not None %}
-
-                            {{ orden.kilometraje|floatformat:"0"|intcomma }}
-                            km
-
-                        {% else %}
-
-                            No registrado
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-
-                <div class="hm-metrica">
-
-                    <div class="hm-metrica-label">
-
-                        Desde visita anterior
-
-                    </div>
-
-
-                    {% if orden.kilometraje_inconsistente %}
-
-                        <div class="hm-metrica-valor rojo">
-
-                            Revisar dato
-
-                        </div>
-
-                    {% elif orden.diferencia_km is not None %}
-
-                        <div class="hm-metrica-valor verde">
-
-                            +{{ orden.diferencia_km|floatformat:"0"|intcomma }}
-                            km
-
-                        </div>
-
-                    {% else %}
-
-                        <div class="hm-metrica-valor">
-
-                            No disponible
-
-                        </div>
-
-                    {% endif %}
-
-                </div>
-
-
-                <div class="hm-metrica">
-
-                    <div class="hm-metrica-label">
-
-                        Próximo mantenimiento
-
-                    </div>
-
-                    <div class="hm-metrica-valor">
-
-                        {% if orden.proximo_mantenimiento_km is not None %}
-
-                            {{ orden.proximo_mantenimiento_km|floatformat:"0"|intcomma }}
-                            km
-
-                        {% else %}
-
-                            No registrado
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-
-                <div class="hm-metrica">
-
-                    <div class="hm-metrica-label">
-
-                        Total OT
-
-                    </div>
-
-                    <div class="hm-metrica-valor">
-
-                        ${{ orden.total_final|default:"0.00"|floatformat:"2" }}
-
-                    </div>
-
-                </div>
-
-
-            </div>
-
-
-
-            <!-- =================================================
-                 RECEPCIÓN
-            ================================================== -->
-
-            <div class="hm-intro-grid">
-
-
-                <!-- REPORTE -->
-
-                <div class="hm-info-box">
-
-                    <h4 class="hm-info-title">
-
-                        Reporte del cliente
-
-                    </h4>
-
-
-                    {% if orden.sintomas_items.all %}
-
-                        <ol class="hm-info-list">
-
-                            {% for sintoma in orden.sintomas_items.all %}
-
-                                <li>
-
-                                    {{ sintoma.descripcion }}
-
-                                </li>
-
-                            {% endfor %}
-
-                        </ol>
-
-
-                    {% elif orden.sintomas_cliente %}
-
-                        <p class="hm-note">
-
-                            {{ orden.sintomas_cliente }}
-
-                        </p>
-
-
-                    {% else %}
-
-                        <p class="hm-note">
-
-                            Sin síntomas o reporte registrado.
-
-                        </p>
-
-                    {% endif %}
-
-
-                </div>
-
-
-
-                <!-- TRABAJOS SOLICITADOS -->
-
-                <div class="hm-info-box">
-
-                    <h4 class="hm-info-title">
-
-                        Trabajos solicitados
-
-                    </h4>
-
-
-                    {% if orden.trabajos_solicitados_items.all %}
-
-                        <ol class="hm-info-list">
-
-                            {% for trabajo in orden.trabajos_solicitados_items.all %}
-
-                                <li>
-
-                                    {{ trabajo }}
-
-                                </li>
-
-                            {% endfor %}
-
-                        </ol>
-
-
-                    {% else %}
-
-                        <p class="hm-note">
-
-                            Sin trabajos solicitados registrados.
-
-                        </p>
-
-                    {% endif %}
-
-
-                </div>
-
-
-            </div>
-
-
-
-            <!-- =================================================
-                 REPUESTOS
-            ================================================== -->
-
-            <section class="hm-section">
-
-
-                <div class="hm-section-head">
-
-
-                    <h4 class="hm-section-title">
-
-                        <i class="bi bi-box-seam"></i>
-
-                        Repuestos
-
-                    </h4>
-
-
-                    <div class="hm-section-meta">
-
-                        {{ orden.repuestos_consulta|length }}
-
-                        producto{{ orden.repuestos_consulta|length|pluralize:"s" }}
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="hm-table-wrap">
-
-
-                    <table class="hm-table">
-
-
-                        <thead>
-
-                            <tr>
-
-                                <th class="hm-col-ref">
-                                    Cód. / referencia
-                                </th>
-
-                                <th class="hm-col-desc">
-                                    Descripción
-                                </th>
-
-                                <th class="hm-col-money">
-                                    P.U.
-                                </th>
-
-                                <th class="hm-col-qty">
-                                    Cant.
-                                </th>
-
-                                <th class="hm-col-money">
-                                    Valor
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-
-                            {% for item in orden.repuestos_consulta %}
-
-
-                                <tr>
-
-
-                                    <td>
-
-                                        <span class="hm-reference">
-
-                                            {{ item.referencia }}
-
-                                        </span>
-
-
-                                        {% if item.es_historico %}
-
-                                            <br>
-
-                                            <span class="hm-historico">
-
-                                                Histórico
-
-                                            </span>
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <div class="hm-description">
-
-                                            {{ item.descripcion }}
-
-                                        </div>
-
-                                    </td>
-
-
-                                    <td class="hm-col-money">
-
-                                        {% if item.precio_unitario is not None %}
-
-                                            ${{ item.precio_unitario|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td class="hm-col-qty">
-
-                                        {% if item.cantidad is not None %}
-
-                                            {{ item.cantidad|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td class="hm-col-money">
-
-                                        {% if item.subtotal is not None %}
-
-                                            ${{ item.subtotal|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                </tr>
-
-
-                            {% empty %}
-
-
-                                <tr class="hm-empty-row">
-
-                                    <td colspan="5">
-
-                                        Sin repuestos registrados.
-
-                                    </td>
-
-                                </tr>
-
-
-                            {% endfor %}
-
-
-                        </tbody>
-
-
-                    </table>
-
-
-                </div>
-
-
-                <div class="hm-subtotal">
-
-                    <div class="hm-subtotal-box">
-
-                        Subtotal repuestos:
-
-                        ${{ orden.subtotal_repuestos_consulta|floatformat:"2" }}
-
-                    </div>
-
-                </div>
-
-
-            </section>
-
-
-
-            <!-- =================================================
-                 MANO DE OBRA INTERNA
-            ================================================== -->
-
-            <section class="hm-section">
-
-
-                <div class="hm-section-head">
-
-
-                    <h4 class="hm-section-title">
-
-                        <i class="bi bi-tools"></i>
-
-                        Mano de Obra Interna
-
-                    </h4>
-
-
-                    <div class="hm-section-meta">
-
-                        {{ orden.moi_consulta|length }}
-
-                        servicio{{ orden.moi_consulta|length|pluralize:"s" }}
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="hm-table-wrap">
-
-
-                    <table class="hm-table">
-
-
-                        <thead>
-
-                            <tr>
-
-                                <th class="hm-col-ref">
-                                    Cód. / referencia
-                                </th>
-
-                                <th class="hm-col-desc">
-                                    Descripción / procedimientos
-                                </th>
-
-                                <th class="hm-col-money">
-                                    P.U.
-                                </th>
-
-                                <th class="hm-col-qty">
-                                    Cant.
-                                </th>
-
-                                <th class="hm-col-money">
-                                    Valor
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-
-                            {% for item in orden.moi_consulta %}
-
-
-                                <tr>
-
-
-                                    <td>
-
-                                        <span class="hm-reference">
-
-                                            {{ item.referencia }}
-
-                                        </span>
-
-
-                                        {% if item.es_historico %}
-
-                                            <br>
-
-                                            <span class="hm-historico">
-
-                                                Histórico
-
-                                            </span>
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td>
-
-
-                                        <div class="hm-description">
-
-                                            {{ item.descripcion }}
-
-                                        </div>
-
-
-                                        {% if item.tecnico %}
-
-                                            <div class="hm-item-meta">
-
-                                                <i class="bi bi-person"></i>
-
-                                                Técnico:
-                                                {{ item.tecnico }}
-
-                                            </div>
-
-                                        {% endif %}
-
-
-                                        {% if item.procedimientos %}
-
-                                            <div class="hm-procedures">
-
-
-                                                {% for procedimiento in item.procedimientos %}
-
-                                                    <div class="hm-procedure">
-
-                                                        {{ procedimiento }}
-
-                                                    </div>
-
-                                                {% endfor %}
-
-
-                                            </div>
-
-                                        {% endif %}
-
-
-                                        {% if item.es_cortesia %}
-
-                                            <span class="hm-cortesia">
-
-                                                Cortesía
-
-                                            </span>
-
-                                        {% endif %}
-
-
-                                    </td>
-
-
-                                    <td class="hm-col-money">
-
-                                        {% if item.precio_unitario is not None %}
-
-                                            ${{ item.precio_unitario|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td class="hm-col-qty">
-
-                                        {% if item.cantidad is not None %}
-
-                                            {{ item.cantidad|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td class="hm-col-money">
-
-                                        {% if item.subtotal is not None %}
-
-                                            ${{ item.subtotal|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                </tr>
-
-
-                            {% empty %}
-
-
-                                <tr class="hm-empty-row">
-
-                                    <td colspan="5">
-
-                                        Sin mano de obra interna registrada.
-
-                                    </td>
-
-                                </tr>
-
-
-                            {% endfor %}
-
-
-                        </tbody>
-
-
-                    </table>
-
-
-                </div>
-
-
-                <div class="hm-subtotal">
-
-                    <div class="hm-subtotal-box">
-
-                        Subtotal M.O.I.:
-
-                        ${{ orden.subtotal_moi_consulta|floatformat:"2" }}
-
-                    </div>
-
-                </div>
-
-
-            </section>
-
-
-
-            <!-- =================================================
-                 MANO DE OBRA EXTERNA
-            ================================================== -->
-
-            <section class="hm-section">
-
-
-                <div class="hm-section-head">
-
-
-                    <h4 class="hm-section-title">
-
-                        <i class="bi bi-building-gear"></i>
-
-                        Mano de Obra Externa
-
-                    </h4>
-
-
-                    <div class="hm-section-meta">
-
-                        {{ orden.moe_consulta|length }}
-
-                        servicio{{ orden.moe_consulta|length|pluralize:"s" }}
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="hm-table-wrap">
-
-
-                    <table class="hm-table">
-
-
-                        <thead>
-
-                            <tr>
-
-                                <th class="hm-col-ref">
-                                    Cód. / referencia
-                                </th>
-
-                                <th class="hm-col-desc">
-                                    Descripción / procedimientos
-                                </th>
-
-                                <th class="hm-col-money">
-                                    P.U.
-                                </th>
-
-                                <th class="hm-col-qty">
-                                    Cant.
-                                </th>
-
-                                <th class="hm-col-money">
-                                    Valor
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-
-                            {% for item in orden.moe_consulta %}
-
-
-                                <tr>
-
-
-                                    <td>
-
-                                        <span class="hm-reference">
-
-                                            {{ item.referencia }}
-
-                                        </span>
-
-
-                                        {% if item.es_historico %}
-
-                                            <br>
-
-                                            <span class="hm-historico">
-
-                                                Histórico
-
-                                            </span>
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td>
-
-
-                                        <div class="hm-description">
-
-                                            {{ item.descripcion }}
-
-                                        </div>
-
-
-                                        {% if item.tecnico %}
-
-                                            <div class="hm-item-meta">
-
-                                                <i class="bi bi-person"></i>
-
-                                                Técnico:
-                                                {{ item.tecnico }}
-
-                                            </div>
-
-                                        {% endif %}
-
-
-                                        {% if item.procedimientos %}
-
-                                            <div class="hm-procedures">
-
-                                                {% for procedimiento in item.procedimientos %}
-
-                                                    <div class="hm-procedure">
-
-                                                        {{ procedimiento }}
-
-                                                    </div>
-
-                                                {% endfor %}
-
-                                            </div>
-
-                                        {% endif %}
-
-
-                                        {% if item.es_cortesia %}
-
-                                            <span class="hm-cortesia">
-
-                                                Cortesía
-
-                                            </span>
-
-                                        {% endif %}
-
-
-                                    </td>
-
-
-                                    <td class="hm-col-money">
-
-                                        {% if item.precio_unitario is not None %}
-
-                                            ${{ item.precio_unitario|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td class="hm-col-qty">
-
-                                        {% if item.cantidad is not None %}
-
-                                            {{ item.cantidad|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td class="hm-col-money">
-
-                                        {% if item.subtotal is not None %}
-
-                                            ${{ item.subtotal|floatformat:"2" }}
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                </tr>
-
-
-                            {% empty %}
-
-
-                                <tr class="hm-empty-row">
-
-                                    <td colspan="5">
-
-                                        Sin mano de obra externa registrada.
-
-                                    </td>
-
-                                </tr>
-
-
-                            {% endfor %}
-
-
-                        </tbody>
-
-
-                    </table>
-
-
-                </div>
-
-
-                <div class="hm-subtotal">
-
-                    <div class="hm-subtotal-box">
-
-                        Subtotal M.O.E.:
-
-                        ${{ orden.subtotal_moe_consulta|floatformat:"2" }}
-
-                    </div>
-
-                </div>
-
-
-            </section>
-
-
-
-            <!-- =================================================
-                 OBSERVACIONES
-            ================================================== -->
-
-            {% if orden.observaciones_recepcion or orden.observaciones_tecnicas %}
-
-
-                <section class="hm-section">
-
-
-                    <div class="hm-section-head">
-
-                        <h4 class="hm-section-title">
-
-                            <i class="bi bi-journal-text"></i>
-
-                            Observaciones
-
-                        </h4>
-
-                    </div>
-
-
-                    <div class="hm-observaciones-grid">
-
-
-                        {% if orden.observaciones_recepcion %}
-
-                            <div class="hm-observacion-box">
-
-                                <div class="hm-observacion-label">
-
-                                    Recepción
-
-                                </div>
-
-                                <p class="hm-note">
-
-                                    {{ orden.observaciones_recepcion }}
-
-                                </p>
-
-                            </div>
-
-                        {% endif %}
-
-
-                        {% if orden.observaciones_tecnicas %}
-
-                            <div class="hm-observacion-box">
-
-                                <div class="hm-observacion-label">
-
-                                    Técnicas
-
-                                </div>
-
-                                <p class="hm-note">
-
-                                    {{ orden.observaciones_tecnicas }}
-
-                                </p>
-
-                            </div>
-
-                        {% endif %}
-
-
-                    </div>
-
-
-                </section>
-
-
-            {% endif %}
-
-
-
-            <!-- =================================================
-                 RECOMENDACIONES
-            ================================================== -->
-
-            {% if orden.recomendaciones_items.all %}
-
-
-                <section class="hm-section">
-
-
-                    <div class="hm-section-head">
-
-
-                        <h4 class="hm-section-title">
-
-                            <i class="bi bi-lightbulb"></i>
-
-                            Recomendaciones técnicas
-
-                        </h4>
-
-
-                        <div class="hm-section-meta">
-
-                            {{ orden.recomendaciones_items.all|length }}
-
-                            recomendación{{ orden.recomendaciones_items.all|length|pluralize:"es" }}
-
-                        </div>
-
-
-                    </div>
-
-
-                    <div class="hm-table-wrap">
-
 
                         <table class="hm-table">
 
-
                             <thead>
-
                                 <tr>
-
-                                    <th style="width: 28%;">
-
-                                        Título
-
+                                    <th class="hm-col-ref">
+                                        Código
                                     </th>
-
-                                    <th>
-
-                                        Recomendación
-
+                                    <th class="hm-col-desc">
+                                        Trabajo / procedimientos
                                     </th>
-
+                                    <th class="hm-col-qty">
+                                        Cant.
+                                    </th>
+                                    <th class="hm-col-money">
+                                        P.U.
+                                    </th>
+                                    <th class="hm-col-money">
+                                        Total
+                                    </th>
                                 </tr>
-
                             </thead>
-
 
                             <tbody>
 
-
-                                {% for recomendacion in orden.recomendaciones_items.all %}
-
+                                {% for item in orden.moi_consulta %}
 
                                     <tr>
 
+                                        <td>
+                                            <span class="hm-reference">
+                                                {{ item.referencia }}
+                                            </span>
+
+                                            {% if item.es_historico %}
+                                                <span class="hm-historico">
+                                                    Histórico
+                                                </span>
+                                            {% endif %}
+                                        </td>
 
                                         <td>
 
                                             <div class="hm-description">
-
-                                                {{ recomendacion.titulo }}
-
+                                                {{ item.descripcion }}
                                             </div>
 
+                                            {% if item.tecnico %}
+                                                <div class="hm-item-meta">
+                                                    Técnico: {{ item.tecnico }}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if item.procedimientos %}
+
+                                                <div class="hm-procedures">
+
+                                                    {% for procedimiento in item.procedimientos %}
+                                                        <div class="hm-procedure">
+                                                            {{ procedimiento }}
+                                                        </div>
+                                                    {% endfor %}
+
+                                                </div>
+
+                                            {% endif %}
+
+                                            {% if item.es_cortesia %}
+                                                <span class="hm-cortesia">
+                                                    Cortesía
+                                                </span>
+                                            {% endif %}
+
                                         </td>
 
-
-                                        <td>
-
-                                            {{ recomendacion.texto }}
-
+                                        <td class="hm-col-qty">
+                                            {% if item.cantidad is not None %}
+                                                {{ item.cantidad|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
                                         </td>
 
+                                        <td class="hm-col-money">
+                                            {% if item.precio_unitario is not None %}
+                                                ${{ item.precio_unitario|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="hm-col-money">
+                                            {% if item.subtotal is not None %}
+                                                ${{ item.subtotal|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
 
                                     </tr>
 
+                                {% empty %}
+
+                                    <tr class="hm-empty-row">
+                                        <td colspan="5">
+                                            Sin mano de obra interna registrada.
+                                        </td>
+                                    </tr>
 
                                 {% endfor %}
 
-
                             </tbody>
-
 
                         </table>
 
-
-                    </div>
-
-
-                </section>
-
-
-            {% endif %}
-
-
-
-            <!-- =================================================
-                 RESUMEN ECONÓMICO
-            ================================================== -->
-
-            <section class="hm-section">
-
-
-                <div class="hm-section-head">
-
-
-                    <h4 class="hm-section-title">
-
-                        <i class="bi bi-receipt"></i>
-
-                        Resumen económico
-
-                    </h4>
-
-
-                    <div class="hm-section-meta">
-
-                        Solo consulta
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="hm-economic-grid">
-
-
-                    <div class="hm-economic-card">
-
-                        <div class="hm-economic-label">
-
-                            Repuestos
-
-                        </div>
-
-                        <div class="hm-economic-value">
-
-                            ${{ orden.subtotal_repuestos_consulta|floatformat:"2" }}
-
-                        </div>
-
-                        <div class="hm-economic-note">
-
-                            {{ orden.repuestos_consulta|length }}
-                            producto{{ orden.repuestos_consulta|length|pluralize:"s" }}
-
+                        <div class="hm-tab-subtotal">
+                            <strong>
+                                MOI:
+                                ${{ orden.subtotal_moi_consulta|floatformat:"2" }}
+                            </strong>
                         </div>
 
                     </div>
 
 
-                    <div class="hm-economic-card">
-
-                        <div class="hm-economic-label">
-
-                            M.O. interna
-
-                        </div>
-
-                        <div class="hm-economic-value">
-
-                            ${{ orden.subtotal_moi_consulta|floatformat:"2" }}
-
-                        </div>
-
-                        <div class="hm-economic-note">
-
-                            {{ orden.moi_consulta|length }}
-                            servicio{{ orden.moi_consulta|length|pluralize:"s" }}
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="hm-economic-card">
-
-                        <div class="hm-economic-label">
-
-                            M.O. externa
-
-                        </div>
-
-                        <div class="hm-economic-value">
-
-                            ${{ orden.subtotal_moe_consulta|floatformat:"2" }}
-
-                        </div>
-
-                        <div class="hm-economic-note">
-
-                            {{ orden.moe_consulta|length }}
-                            servicio{{ orden.moe_consulta|length|pluralize:"s" }}
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="hm-economic-card">
-
-                        <div class="hm-economic-label">
-
-                            Subtotal sin IVA
-
-                        </div>
-
-                        <div class="hm-economic-value">
-
-                            ${{ orden.subtotal_sin_iva|default:"0.00"|floatformat:"2" }}
-
-                        </div>
-
-                        <div class="hm-economic-note">
-
-                            Antes de descuento e IVA
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="hm-economic-card">
-
-                        <div class="hm-economic-label">
-
-                            Descuento
-
-                        </div>
-
-                        <div class="hm-economic-value">
-
-                            -${{ orden.valor_descuento|default:"0.00"|floatformat:"2" }}
-
-                        </div>
-
-                        <div class="hm-economic-note">
-
-                            {% if orden.tipo_descuento == "PORCENTAJE" %}
-
-                                {{ orden.descuento_porcentaje|default:"0.00"|floatformat:"2" }}%
-
-                            {% else %}
-
-                                Valor fijo
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="hm-economic-card">
-
-                        <div class="hm-economic-label">
-
-                            IVA
-
-                            {% if orden.porcentaje_iva is not None %}
-
-                                {{ orden.porcentaje_iva|floatformat:"2" }}%
-
-                            {% endif %}
-
-                        </div>
-
-                        <div class="hm-economic-value">
-
-                            ${{ orden.valor_iva|default:"0.00"|floatformat:"2" }}
-
-                        </div>
-
-                        <div class="hm-economic-note">
-
-                            {% if orden.sumar_iva_al_total %}
-
-                                Incluido en total
-
-                            {% else %}
-
-                                IVA informativo
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="hm-total-bar">
-
-
-                    <div class="hm-total-label">
-
-                        Total de la OT
-
-                    </div>
-
-
-                    <div class="hm-total-value">
-
-                        ${{ orden.total_final|default:"0.00"|floatformat:"2" }}
-
-                    </div>
-
-
-                </div>
-
-
-            </section>
-
-
-
-            <!-- =================================================
-                 ABONOS
-                 COLAPSADO PARA NO RECARGAR EL MODAL
-            ================================================== -->
-
-            {% if orden.abonos_consulta %}
-
-
-                <details class="hm-abonos-details">
-
-
-                    <summary class="hm-abonos-summary">
-
-
-                        <span>
-
-                            <i
-                                class="bi bi-cash-coin"
-                                style="color:#0071e3;"
-                            ></i>
-
-                            Abonos registrados
-
-                        </span>
-
-
-                        <span class="hm-abonos-summary-meta">
-
-                            {{ orden.abonos_consulta|length }}
-                            movimiento{{ orden.abonos_consulta|length|pluralize:"s" }}
-
-                        </span>
-
-
-                    </summary>
-
-
-                    <div class="hm-table-wrap">
-
+                    <!-- =========================================
+                         MOE
+                    ========================================== -->
+
+                    <div
+                        class="hm-tab-panel"
+                        data-hm-tab-panel="moe"
+                        data-hm-tab-orden="{{ orden.id }}"
+                    >
 
                         <table class="hm-table">
 
-
                             <thead>
-
                                 <tr>
-
-                                    <th>
-                                        Fecha
+                                    <th class="hm-col-ref">
+                                        Código
                                     </th>
-
-                                    <th>
-                                        Detalle
+                                    <th class="hm-col-desc">
+                                        Trabajo / procedimientos
                                     </th>
-
-                                    <th>
-                                        Estado
+                                    <th class="hm-col-qty">
+                                        Cant.
                                     </th>
-
                                     <th class="hm-col-money">
-                                        Monto
+                                        P.U.
                                     </th>
-
+                                    <th class="hm-col-money">
+                                        Total
+                                    </th>
                                 </tr>
-
                             </thead>
-
 
                             <tbody>
 
-
-                                {% for abono in orden.abonos_consulta %}
-
+                                {% for item in orden.moe_consulta %}
 
                                     <tr>
 
+                                        <td>
+                                            <span class="hm-reference">
+                                                {{ item.referencia }}
+                                            </span>
+
+                                            {% if item.es_historico %}
+                                                <span class="hm-historico">
+                                                    Histórico
+                                                </span>
+                                            {% endif %}
+                                        </td>
 
                                         <td>
 
-                                            {{ abono.fecha|date:"d/m/Y H:i" }}
+                                            <div class="hm-description">
+                                                {{ item.descripcion }}
+                                            </div>
+
+                                            {% if item.tecnico %}
+                                                <div class="hm-item-meta">
+                                                    Técnico: {{ item.tecnico }}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if item.procedimientos %}
+
+                                                <div class="hm-procedures">
+
+                                                    {% for procedimiento in item.procedimientos %}
+                                                        <div class="hm-procedure">
+                                                            {{ procedimiento }}
+                                                        </div>
+                                                    {% endfor %}
+
+                                                </div>
+
+                                            {% endif %}
+
+                                            {% if item.es_cortesia %}
+                                                <span class="hm-cortesia">
+                                                    Cortesía
+                                                </span>
+                                            {% endif %}
 
                                         </td>
 
-
-                                        <td>
-
-                                            {{ abono.observacion|default:"Sin observación" }}
-
+                                        <td class="hm-col-qty">
+                                            {% if item.cantidad is not None %}
+                                                {{ item.cantidad|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
                                         </td>
-
-
-                                        <td>
-
-                                            {{ abono.get_estado_display }}
-
-                                        </td>
-
 
                                         <td class="hm-col-money">
-
-                                            ${{ abono.monto|floatformat:"2" }}
-
+                                            {% if item.precio_unitario is not None %}
+                                                ${{ item.precio_unitario|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
                                         </td>
 
+                                        <td class="hm-col-money">
+                                            {% if item.subtotal is not None %}
+                                                ${{ item.subtotal|floatformat:"2" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
 
                                     </tr>
 
+                                {% empty %}
+
+                                    <tr class="hm-empty-row">
+                                        <td colspan="5">
+                                            Sin mano de obra externa registrada.
+                                        </td>
+                                    </tr>
 
                                 {% endfor %}
 
-
                             </tbody>
-
 
                         </table>
 
+                        <div class="hm-tab-subtotal">
+                            <strong>
+                                MOE:
+                                ${{ orden.subtotal_moe_consulta|floatformat:"2" }}
+                            </strong>
+                        </div>
 
                     </div>
 
 
-                    <div class="hm-abonos-totales">
+                    <!-- =========================================
+                         NOTAS / RECOMENDACIONES
+                    ========================================== -->
 
+                    <div
+                        class="hm-tab-panel"
+                        data-hm-tab-panel="notas"
+                        data-hm-tab-orden="{{ orden.id }}"
+                    >
 
-                        <div class="hm-economic-card">
+                        <div class="hm-notes-grid">
 
-                            <div class="hm-economic-label">
+                            <div class="hm-note-box">
 
-                                Total abonado
+                                <div class="hm-note-title">
+                                    Observaciones de recepción
+                                </div>
+
+                                <p class="hm-note-text">
+                                    {{ orden.observaciones_recepcion|default:"Sin observaciones de recepción." }}
+                                </p>
 
                             </div>
 
-                            <div class="hm-economic-value">
+                            <div class="hm-note-box">
 
-                                ${{ orden.total_abonado_consulta|floatformat:"2" }}
+                                <div class="hm-note-title">
+                                    Observaciones técnicas
+                                </div>
+
+                                <p class="hm-note-text">
+                                    {{ orden.observaciones_tecnicas|default:"Sin observaciones técnicas." }}
+                                </p>
 
                             </div>
 
                         </div>
 
+                        <div class="hm-recomendaciones">
 
-                        <div class="hm-economic-card">
+                            {% for recomendacion in orden.recomendaciones_items.all %}
 
-                            <div class="hm-economic-label">
+                                <div class="hm-recomendacion">
 
-                                Saldo pendiente
+                                    <div class="hm-recomendacion-titulo">
+                                        {{ recomendacion.titulo }}
+                                    </div>
 
-                            </div>
+                                    <div class="hm-recomendacion-texto">
+                                        {{ recomendacion.texto }}
+                                    </div>
 
-                            <div class="hm-economic-value">
+                                </div>
 
-                                ${{ orden.saldo_pendiente_consulta|floatformat:"2" }}
+                            {% empty %}
+
+                                <div class="hm-recomendacion">
+                                    <div class="hm-recomendacion-texto">
+                                        Sin recomendaciones técnicas registradas.
+                                    </div>
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         ABONOS
+                    ========================================== -->
+
+                    {% if orden.abonos_consulta %}
+
+                        <div
+                            class="hm-tab-panel"
+                            data-hm-tab-panel="abonos"
+                            data-hm-tab-orden="{{ orden.id }}"
+                        >
+
+                            <table class="hm-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Fecha
+                                        </th>
+                                        <th>
+                                            Detalle
+                                        </th>
+                                        <th>
+                                            Estado
+                                        </th>
+                                        <th class="hm-col-money">
+                                            Monto
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    {% for abono in orden.abonos_consulta %}
+
+                                        <tr>
+
+                                            <td>
+                                                {{ abono.fecha|date:"d/m/Y H:i" }}
+                                            </td>
+
+                                            <td>
+                                                {{ abono.observacion|default:"Sin observación" }}
+                                            </td>
+
+                                            <td>
+                                                {{ abono.get_estado_display }}
+                                            </td>
+
+                                            <td class="hm-col-money">
+                                                ${{ abono.monto|floatformat:"2" }}
+                                            </td>
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                            <div class="hm-abonos-totals">
+
+                                <span class="hm-abono-total">
+                                    Abonado:
+                                    ${{ orden.total_abonado_consulta|floatformat:"2" }}
+                                </span>
+
+                                <span class="hm-abono-total">
+                                    Saldo:
+                                    ${{ orden.saldo_pendiente_consulta|floatformat:"2" }}
+                                </span>
 
                             </div>
 
                         </div>
 
+                    {% endif %}
+
+
+                </div>
+
+
+                <!-- =============================================
+                     BARRA INFERIOR
+                ============================================== -->
+
+                <div class="hm-bottom-bar">
+
+                    <div class="hm-economic-inline">
+
+                        <span class="hm-economic-item">
+                            REP
+                            <strong>
+                                ${{ orden.subtotal_repuestos_consulta|floatformat:"2" }}
+                            </strong>
+                        </span>
+
+                        <span class="hm-economic-item">
+                            MOI
+                            <strong>
+                                ${{ orden.subtotal_moi_consulta|floatformat:"2" }}
+                            </strong>
+                        </span>
+
+                        <span class="hm-economic-item">
+                            MOE
+                            <strong>
+                                ${{ orden.subtotal_moe_consulta|floatformat:"2" }}
+                            </strong>
+                        </span>
+
+                        <span class="hm-economic-item">
+                            Subtotal
+                            <strong>
+                                ${{ orden.subtotal_sin_iva|default:"0.00"|floatformat:"2" }}
+                            </strong>
+                        </span>
+
+                        {% if orden.valor_descuento %}
+                            <span class="hm-economic-item">
+                                Desc.
+                                <strong>
+                                    -${{ orden.valor_descuento|floatformat:"2" }}
+                                </strong>
+                            </span>
+                        {% endif %}
+
+                        <span class="hm-economic-item">
+                            IVA
+                            <strong>
+                                ${{ orden.valor_iva|default:"0.00"|floatformat:"2" }}
+                            </strong>
+                        </span>
+
+                        <span class="hm-total-inline">
+                            TOTAL
+                            ${{ orden.total_final|default:"0.00"|floatformat:"2" }}
+                        </span>
 
                     </div>
 
 
-                </details>
+                    <div class="hm-actions">
 
+                        <a
+                            href="{% url 'imprimir_resumen' orden.id %}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="hm-action"
+                        >
+                            <i class="bi bi-printer"></i>
+                            Imprimir
+                        </a>
 
-            {% endif %}
+                        <a
+                            href="{% url 'detalle_orden' orden.id %}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="hm-action primary"
+                        >
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            Ver OT
+                        </a>
 
+                    </div>
 
+                </div>
 
-            <!-- =================================================
-                 ACCIONES
-            ================================================== -->
+            </article>
 
-            <div class="hm-actions">
+        {% endfor %}
 
-
-                <a
-
-                    href="{% url 'imprimir_resumen' orden.id %}"
-
-                    target="_blank"
-
-                    rel="noopener noreferrer"
-
-                    class="hm-action"
-
-                >
-
-                    <i class="bi bi-printer"></i>
-
-                    Imprimir resumen
-
-                </a>
-
-
-                <a
-
-                    href="{% url 'detalle_orden' orden.id %}"
-
-                    target="_blank"
-
-                    rel="noopener noreferrer"
-
-                    class="hm-action primary"
-
-                >
-
-                    <i class="bi bi-box-arrow-up-right"></i>
-
-                    Ver OT completa
-
-                </a>
-
-
-            </div>
-
-
-        </article>
-
-
-    {% endfor %}
-
+    </div>
 
 {% endif %}
