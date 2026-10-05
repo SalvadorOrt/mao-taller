@@ -55,7 +55,11 @@ urlpatterns = [
         ordenes.detalle_orden,
         name="detalle_orden",
     ),
-
+    path(
+        "orden/<int:pk>/historial/",
+        ordenes.historial_modal_orden,
+        name="historial_modal_orden",
+    ),
 
     # ==========================================================
     # ABONOS DE ORDEN DE TRABAJO
