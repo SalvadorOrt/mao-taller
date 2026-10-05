@@ -368,7 +368,8 @@ def dashboard_taller(request):
 
                 "cliente":
                     orden.nombre_cliente_final,
-
+                "clave_encendido":
+                    orden.clave_encendido,
                 # =========================================
                 # TÉCNICOS
                 # =========================================

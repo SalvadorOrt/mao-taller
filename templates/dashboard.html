@@ -375,7 +375,49 @@ Panel de Control | MAO
 
     }
 
+    /* ==========================================================
+   CLAVE DE ENCENDIDO
+   ========================================================== */
 
+.dashboard-clave {
+    margin-top: 5px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 5px;
+
+    line-height: 1;
+}
+
+.dashboard-clave-label {
+    font-size: 8px;
+
+    font-weight: 700;
+
+    color: #86868b;
+
+    letter-spacing: 0.3px;
+}
+
+.dashboard-clave-valor {
+    padding: 3px 6px;
+
+    border-radius: 5px;
+
+    background: #f2f2f7;
+
+    color: #1d1d1f;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.4px;
+}
 </style>
 
 
@@ -1237,7 +1279,21 @@ Panel de Control | MAO
 
                         </div>
 
+                        {% if vehiculo.clave_encendido %}
 
+                            <div class="dashboard-clave">
+
+                                <span class="dashboard-clave-label">
+                                    CLAVE
+                                </span>
+
+                                <span class="dashboard-clave-valor">
+                                    {{ vehiculo.clave_encendido }}
+                                </span>
+
+                            </div>
+
+                        {% endif %}
                     </div>
 
 
