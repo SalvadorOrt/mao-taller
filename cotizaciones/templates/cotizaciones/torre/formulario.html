@@ -1,0 +1,60 @@
+{% extends "cotizaciones/torre/base.html" %}
+
+{% block torre_content %}
+<a class="small" href="{{ volver_url }}">← Volver a la solicitud</a>
+<div class="tc-panel tc-formulario mt-3">
+  <h2>{{ titulo }}</h2>
+  <p class="tc-nota">OT {{ solicitud.orden.numero_orden }} · {{ solicitud.titulo }}</p>
+  {% if item %}<p><strong>{{ item.descripcion_solicitada }}</strong> · {{ item.cantidad }} {{ item.get_unidad_display }}{% if item.medida_solicitada %} · Medida {{ item.medida_solicitada }}{% endif %}</p>{% endif %}
+  {% if es_formulario_item and item.estado_abastecimiento == 'COMPRADO' %}<div class="alert alert-info">El repuesto está comprado. Puedes completar su observación y el orden de la lista.</div>{% endif %}
+  {% if es_oferta %}
+    <div class="alert alert-info small">
+      Registra el costo de una presentación y cómo cubre la unidad solicitada.
+      Si pides unidades y el proveedor ofrece un par, la equivalencia es 2.
+      Si pides pares y ofrece una unidad, la equivalencia es 0,5.
+      Con la misma unidad, escribe 1. Confirma también el IVA y la disponibilidad.
+    </div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% include 'cotizaciones/torre/_campos_formulario.html' %}
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a class="btn btn-outline-secondary" href="{{ volver_url }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block torre_js %}
+{% if es_formulario_item %}
+<script>
+(() => {
+  const producto = document.getElementById('id_producto_rel');
+  const codigo = document.getElementById('id_codigo_producto_rel');
+  if (!producto || !codigo || producto.disabled) return;
+  let peticion = 0;
+  producto.addEventListener('change', async () => {
+    const actual = ++peticion;
+    codigo.replaceChildren(new Option('---------', ''));
+    codigo.disabled = false;
+    if (!producto.value) return;
+    codigo.disabled = true;
+    try {
+      const url = new URL('{% url "cotizaciones:codigos_producto" %}', window.location.origin);
+      url.searchParams.set('producto_id', producto.value);
+      const respuesta = await fetch(url, {credentials: 'same-origin', headers: {'Accept': 'application/json'}});
+      if (!respuesta.ok) throw new Error('No fue posible cargar los códigos.');
+      const datos = await respuesta.json();
+      if (actual !== peticion) return;
+      datos.resultados.forEach(opcion => codigo.add(new Option(opcion.texto, opcion.id)));
+    } catch (error) {
+      if (actual === peticion) codigo.add(new Option('No se pudieron cargar; vuelve a elegir el producto', ''));
+    } finally {
+      if (actual === peticion) codigo.disabled = false;
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

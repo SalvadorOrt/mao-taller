@@ -11,39 +11,28 @@ def get_menu_lateral(user):
     if not user.is_authenticated:
         return menu
 
-
     # =====================================================
     # OPERACIÓN TALLER
     # =====================================================
 
-    if usuario_tiene_modulo(
-        user,
-        "operacion_taller",
-    ):
-
+    if usuario_tiene_modulo(user, "operacion_taller"):
         items_operacion = []
 
-        if user.has_perm(
-            "ordenes_de_trabajo.view_ordentrabajo"
-        ):
+        if user.has_perm("ordenes_de_trabajo.view_ordentrabajo"):
             items_operacion.append({
                 "label": "Dashboard Taller",
                 "url_name": "dashboard",
                 "icon": "bi-house-door",
             })
 
-        if user.has_perm(
-            "ordenes_de_trabajo.add_ordentrabajo"
-        ):
+        if user.has_perm("ordenes_de_trabajo.add_ordentrabajo"):
             items_operacion.append({
                 "label": "Nueva Orden",
                 "url_name": "crear_orden",
                 "icon": "bi-plus-circle",
             })
 
-        if user.has_perm(
-            "ordenes_de_trabajo.view_ordentrabajo"
-        ):
+        if user.has_perm("ordenes_de_trabajo.view_ordentrabajo"):
             items_operacion.append({
                 "label": "Órdenes de Trabajo",
                 "url_name": "lista_ordenes",
@@ -66,9 +55,7 @@ def get_menu_lateral(user):
                 "icon": "bi-car-front",
             })
 
-        if user.has_perm(
-            "ordenes_de_trabajo.view_cliente"
-        ):
+        if user.has_perm("ordenes_de_trabajo.view_cliente"):
             items_operacion.append({
                 "label": "Clientes",
                 "url_name": "lista_clientes",
@@ -81,30 +68,21 @@ def get_menu_lateral(user):
                 "items": items_operacion,
             })
 
-
     # =====================================================
     # COTIZACIONES / PROFORMAS
     # =====================================================
 
-    if usuario_tiene_modulo(
-        user,
-        "cotizaciones",
-    ):
-
+    if usuario_tiene_modulo(user, "cotizaciones"):
         items_cotizaciones = []
 
-        if user.has_perm(
-            "ordenes_de_trabajo.view_cotizacion"
-        ):
+        if user.has_perm("ordenes_de_trabajo.view_cotizacion"):
             items_cotizaciones.append({
                 "label": "Ver Proformas",
                 "url_name": "lista_cotizaciones",
                 "icon": "bi-file-earmark-text",
             })
 
-        if user.has_perm(
-            "ordenes_de_trabajo.add_cotizacion"
-        ):
+        if user.has_perm("ordenes_de_trabajo.add_cotizacion"):
             items_cotizaciones.append({
                 "label": "Nueva Proforma",
                 "url_name": "crear_cotizacion",
@@ -117,27 +95,42 @@ def get_menu_lateral(user):
                 "items": items_cotizaciones,
             })
 
+    # =====================================================
+    # TORRE DE CONTROL / ABASTECIMIENTO
+    # =====================================================
+
+    if (
+        usuario_tiene_modulo(
+            user,
+            "cotizaciones_proveedor",
+        )
+        and user.has_perm(
+            "cotizaciones.view_solicitudcotizacion"
+        )
+    ):
+        menu.append({
+            "titulo": "Abastecimiento",
+            "items": [
+                {
+                    "label": "Torre de control",
+                    "url_name": "cotizaciones:lista",
+                    "icon": "bi-ui-checks-grid",
+                },
+            ],
+        })
 
     # =====================================================
     # AVALÚOS
     # =====================================================
 
-    if usuario_tiene_modulo(
-        user,
-        "avaluos",
-    ):
-
+    if usuario_tiene_modulo(user, "avaluos"):
         items_avaluos = []
 
-        if user.has_perm(
-            "avaluos.view_avaluomecanico"
-        ):
+        if user.has_perm("avaluos.view_avaluomecanico"):
             items_avaluos.append({
                 "label": "Órdenes pendientes",
-                "url_name":
-                    "avaluos:ordenes_pendientes",
-                "icon":
-                    "bi-clipboard2-pulse",
+                "url_name": "avaluos:ordenes_pendientes",
+                "icon": "bi-clipboard2-pulse",
             })
 
         if items_avaluos:
@@ -146,70 +139,46 @@ def get_menu_lateral(user):
                 "items": items_avaluos,
             })
 
-
     # =====================================================
     # INVENTARIO
     # =====================================================
 
-    if usuario_tiene_modulo(
-        user,
-        "inventario",
-    ):
-
+    if usuario_tiene_modulo(user, "inventario"):
         items_inventario = []
 
-        if user.has_perm(
-            "inventario.view_stocksucursal"
-        ):
+        if user.has_perm("inventario.view_stocksucursal"):
             items_inventario.append({
-                "label":
-                    "Dashboard Inventario",
-                "url_name":
-                    "inventario_dashboard",
-                "icon":
-                    "bi-speedometer2",
+                "label": "Dashboard Inventario",
+                "url_name": "inventario_dashboard",
+                "icon": "bi-speedometer2",
             })
 
-        if user.has_perm(
-            "inventario.view_producto"
-        ):
+        if user.has_perm("inventario.view_producto"):
             items_inventario.append({
                 "label": "Catálogo",
-                "url_name":
-                    "inventario_catalogo",
+                "url_name": "inventario_catalogo",
                 "icon": "bi-box-seam",
             })
 
-        if user.has_perm(
-            "inventario.view_stocksucursal"
-        ):
+        if user.has_perm("inventario.view_stocksucursal"):
             items_inventario.append({
                 "label": "Stock",
-                "url_name":
-                    "inventario_stock",
+                "url_name": "inventario_stock",
                 "icon": "bi-stack",
             })
 
-        if user.has_perm(
-            "inventario.view_movimientostock"
-        ):
+        if user.has_perm("inventario.view_movimientostock"):
             items_inventario.append({
                 "label": "Movimientos",
-                "url_name":
-                    "inventario_movimientos",
-                "icon":
-                    "bi-arrow-left-right",
+                "url_name": "inventario_movimientos",
+                "icon": "bi-arrow-left-right",
             })
 
-        if user.has_perm(
-            "inventario.view_inventariofisico"
-        ):
+        if user.has_perm("inventario.view_inventariofisico"):
             items_inventario.append({
                 "label": "Inventario Físico",
-                "url_name":
-                    "inventario_fisico",
-                "icon":
-                    "bi-clipboard-check",
+                "url_name": "inventario_fisico",
+                "icon": "bi-clipboard-check",
             })
 
         if items_inventario:
@@ -218,40 +187,25 @@ def get_menu_lateral(user):
                 "items": items_inventario,
             })
 
-
     # =====================================================
     # FACTURACIÓN
     # =====================================================
 
-    if usuario_tiene_modulo(
-        user,
-        "facturacion",
-    ):
-
+    if usuario_tiene_modulo(user, "facturacion"):
         items_facturacion = []
 
-        if user.has_perm(
-            "facturacion.view_facturaventa"
-        ):
+        if user.has_perm("facturacion.view_facturaventa"):
             items_facturacion.append({
-                "label":
-                    "Dashboard Facturación",
-                "url_name":
-                    "facturacion:dashboard",
-                "icon":
-                    "bi-receipt",
+                "label": "Dashboard Facturación",
+                "url_name": "facturacion:dashboard",
+                "icon": "bi-receipt",
             })
 
-        if user.has_perm(
-            "facturacion.add_facturaventa"
-        ):
+        if user.has_perm("facturacion.add_facturaventa"):
             items_facturacion.append({
-                "label":
-                    "Factura manual",
-                "url_name":
-                    "facturacion:nueva_factura_manual",
-                "icon":
-                    "bi-file-earmark-plus",
+                "label": "Factura manual",
+                "url_name": "facturacion:nueva_factura_manual",
+                "icon": "bi-file-earmark-plus",
             })
 
         if items_facturacion:
@@ -260,40 +214,28 @@ def get_menu_lateral(user):
                 "items": items_facturacion,
             })
 
-
     # =====================================================
     # ADMINISTRACIÓN
     # =====================================================
 
-    if usuario_tiene_modulo(
-        user,
-        "administracion",
-    ) or user.is_staff:
-
+    if (
+        usuario_tiene_modulo(user, "administracion")
+        or user.is_staff
+    ):
         items_administracion = []
 
-        if user.has_perm(
-            "accesos.view_rol"
-        ):
+        if user.has_perm("accesos.view_rol"):
             items_administracion.append({
-                "label":
-                    "Roles y permisos",
-                "url_name":
-                    "accesos:roles_lista",
-                "icon":
-                    "bi-shield-lock",
+                "label": "Roles y permisos",
+                "url_name": "accesos:roles_lista",
+                "icon": "bi-shield-lock",
             })
 
-        if user.has_perm(
-            "inventario.view_usuario"
-        ):
+        if user.has_perm("inventario.view_usuario"):
             items_administracion.append({
-                "label":
-                    "Personal y Accesos",
-                "url_name":
-                    "lista_usuarios",
-                "icon":
-                    "bi-people-fill",
+                "label": "Personal y Accesos",
+                "url_name": "lista_usuarios",
+                "icon": "bi-people-fill",
             })
 
         if user.is_staff:
@@ -305,12 +247,9 @@ def get_menu_lateral(user):
 
         if items_administracion:
             menu.append({
-                "titulo":
-                    "Administración",
-                "items":
-                    items_administracion,
+                "titulo": "Administración",
+                "items": items_administracion,
             })
-
 
     # =====================================================
     # NOTA SOBRE ASISTENCIA
@@ -326,6 +265,5 @@ def get_menu_lateral(user):
     #
     # El terminal físico NO debe depender de permisos del ERP.
     # =====================================================
-
 
     return menu
