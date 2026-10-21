@@ -446,6 +446,13 @@
         ================================================== -->
 
         <div class="sticky-actions">
+            {% if perms.cotizaciones.view_solicitudcotizacion %}
+                <a href="{% url 'cotizaciones:lista' %}?q={{ orden.numero_orden|urlencode }}" class="btn-login">Torre de control</a>
+            {% endif %}
+            {% if perms.cotizaciones.add_solicitudcotizacion %}
+                <a href="{% url 'cotizaciones:nueva' %}?orden={{ orden.pk }}" class="btn-login">Solicitar repuestos</a>
+            {% endif %}
+
 
 
 

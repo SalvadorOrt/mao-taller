@@ -1,9 +1,10 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+import uuid
 
 
 # ==========================================
@@ -99,9 +100,16 @@ class SolicitudCotizacion(models.Model):
         ("ENVIADA", "Enviada"),
         ("RESPONDIDA", "Con respuestas"),
         ("DECIDIDA", "Decidida"),
-        ("COMPRADA", "Comprada"),
+        ("COMPRADA", "Comprada / pedida"),
+        ("PARCIAL", "Recibida parcialmente"),
+        ("RECIBIDA", "Recibida"),
         ("CANCELADA", "Cancelada"),
     ]
+
+    tipo_trabajo = models.CharField(max_length=20, default="MECANICA", choices=[
+        ("MECANICA", "Mecánica"), ("MOTOR", "Reparación de motor"),
+        ("CARROCERIA", "Carrocería / pintura"), ("OTRO", "Otro"),
+    ])
 
     orden = models.ForeignKey(
         "ordenes_de_trabajo.OrdenTrabajo",
@@ -242,6 +250,22 @@ class ItemSolicitudCotizacion(models.Model):
     )
 
     cantidad = models.PositiveIntegerField(default=1)
+    unidad = models.CharField(max_length=15, blank=True, default="", choices=[
+        ("", "Por confirmar"), ("UNIDAD", "Unidad"), ("PAR", "Par"),
+        ("JUEGO", "Juego"), ("KIT", "Kit"),
+    ])
+    medida_solicitada = models.CharField(max_length=100, blank=True, default="")
+    medida_confirmada = models.BooleanField(default=False)
+    cantidad_bodega = models.PositiveIntegerField(default=0)
+    estado_abastecimiento = models.CharField(max_length=20, default="PENDIENTE", choices=[
+        ("PENDIENTE", "Pendiente"), ("SELECCIONADO", "Proveedor elegido"),
+        ("PEDIDO", "Pedido"), ("PARCIAL", "Recibido parcialmente"),
+        ("RECIBIDO", "Recibido"),
+    ])
+    cantidad_pedida = models.PositiveIntegerField(null=True, blank=True)
+    costo_acordado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    pedido_en = models.DateTimeField(null=True, blank=True)
+    revision = models.PositiveIntegerField(default=1)
 
     stock_actual_sucursal = models.PositiveIntegerField(default=0)
 
@@ -287,6 +311,11 @@ class ItemSolicitudCotizacion(models.Model):
         if self.cantidad <= 0:
             raise ValidationError({"cantidad": "La cantidad debe ser mayor que 0."})
 
+        if self.cantidad_bodega > self.cantidad:
+            raise ValidationError({"cantidad_bodega": "La cantidad de bodega supera la requerida."})
+        if self.pk and self.cantidad < self.cantidad_bodega + self.total_recibido:
+            raise ValidationError({"cantidad": "No puede ser menor que lo abastecido y recibido."})
+
         if self.stock_actual_sucursal < 0:
             raise ValidationError({"stock_actual_sucursal": "El stock actual no puede ser negativo."})
 
@@ -320,14 +349,23 @@ class ItemSolicitudCotizacion(models.Model):
         return faltante if faltante > 0 else 0
 
     @property
+    def total_recibido(self):
+        if "recepciones" in getattr(self, "_prefetched_objects_cache", {}):
+            return sum(r.cantidad for r in self.recepciones.all() if not r.anulada_en)
+        return self.recepciones.filter(anulada_en__isnull=True).aggregate(total=models.Sum("cantidad"))["total"] or 0
+
+    @property
+    def pendiente_recepcion(self):
+        return max(self.cantidad - self.cantidad_bodega - self.total_recibido, 0)
+
+    @property
+    def cotizacion_elegida(self):
+        return self.cotizaciones_proveedor.filter(estado="GANADORA").first()
+
+    @property
     def mejor_cotizacion(self):
-        return (
-            self.cotizaciones_proveedor
-            .filter(disponible=True)
-            .exclude(precio__isnull=True)
-            .order_by("precio", "-calidad_referencial", "id")
-            .first()
-        )
+        opciones = [q for q in self.cotizaciones_proveedor.all() if q.costo_requerimiento is not None]
+        return min(opciones, key=lambda q: q.costo_requerimiento, default=None)
 
     def __str__(self):
         return self.descripcion_solicitada
@@ -398,7 +436,20 @@ class CotizacionProveedor(models.Model):
         blank=True,
     )
 
-    disponible = models.BooleanField(default=True)
+    disponible = models.BooleanField(null=True, blank=True, default=None)
+    numero_opcion = models.PositiveSmallIntegerField(default=1)
+    marca_ofertada = models.CharField(max_length=100, blank=True, default="")
+    medida_ofertada = models.CharField(max_length=100, blank=True, default="")
+    presentacion = models.CharField(max_length=15, blank=True, default="", choices=ItemSolicitudCotizacion._meta.get_field("unidad").choices)
+    unidades_por_presentacion = models.PositiveIntegerField(null=True, blank=True,
+        help_text="Cuántas unidades de la solicitud cubre una presentación cotizada.")
+    tratamiento_iva = models.CharField(max_length=15, blank=True, default="", choices=[
+        ("", "Por confirmar"), ("INCLUIDO", "Incluido en el costo"), ("ADICIONAL", "Se suma al costo"),
+    ])
+    porcentaje_iva = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    contenido = models.CharField(max_length=255, blank=True, default="",
+        help_text="Piezas incluidas, por ejemplo pistones con rines.")
+    revision = models.PositiveIntegerField(default=1)
 
     tiempo_entrega = models.CharField(
         max_length=100,
@@ -432,9 +483,14 @@ class CotizacionProveedor(models.Model):
         verbose_name_plural = "Cotizaciones de proveedores"
         constraints = [
             models.UniqueConstraint(
-                fields=["item", "proveedor"],
-                name="uq_cotizacion_item_proveedor",
-            )
+                fields=["item", "proveedor", "numero_opcion"],
+                name="uq_cotizacion_item_prov_opcion",
+            ),
+            models.UniqueConstraint(fields=["item"], condition=models.Q(estado="GANADORA"),
+                name="uq_cotizacion_ganadora_item"),
+            models.CheckConstraint(condition=models.Q(precio__isnull=True) | models.Q(precio__gte=0),
+                name="cotizacion_precio_no_negativo"),
+
         ]
         indexes = [
             models.Index(fields=["estado"]),
@@ -443,6 +499,14 @@ class CotizacionProveedor(models.Model):
         ]
 
     def clean(self):
+        if self.tratamiento_iva == "ADICIONAL" and self.porcentaje_iva is None:
+            raise ValidationError({"porcentaje_iva": "Confirma el porcentaje de IVA."})
+        if self.porcentaje_iva is not None and not Decimal("0") <= self.porcentaje_iva <= Decimal("100"):
+            raise ValidationError({"porcentaje_iva": "El porcentaje debe estar entre 0 y 100."})
+        if self.unidades_por_presentacion is not None and self.unidades_por_presentacion < 1:
+            raise ValidationError({"unidades_por_presentacion": "Debe ser mayor que cero."})
+        if self.numero_opcion < 1:
+            raise ValidationError({"numero_opcion": "Debe ser mayor que cero."})
         if self.whatsapp_destino:
             self.whatsapp_destino = self.whatsapp_destino.strip()
 
@@ -485,6 +549,27 @@ class CotizacionProveedor(models.Model):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def costo_requerimiento(self):
+        """Total with tax for whole quoted packs; unknown conditions stay unknown."""
+        item = self.item
+        cantidad = max(item.cantidad - item.cantidad_bodega, 0)
+        if (self.disponible is not True or self.precio is None or not item.unidad
+                or not self.presentacion or not self.unidades_por_presentacion
+                or not self.tratamiento_iva or self.estado == "DESCARTADA"):
+            return None
+        if item.medida_solicitada and (not item.medida_confirmada
+                or item.medida_solicitada.strip().upper() != self.medida_ofertada.strip().upper()):
+            return None
+        if item.marca_referencia and item.marca_referencia.strip().upper() != self.marca_ofertada.strip().upper():
+            return None
+        if self.tratamiento_iva == "ADICIONAL" and self.porcentaje_iva is None:
+            return None
+        paquetes = (Decimal(cantidad) / self.unidades_por_presentacion).to_integral_value(rounding=ROUND_CEILING)
+        subtotal = (self.precio * paquetes).quantize(Decimal(".01"), rounding=ROUND_HALF_UP)
+        iva = (subtotal * self.porcentaje_iva / 100).quantize(Decimal(".01"), rounding=ROUND_HALF_UP) if self.tratamiento_iva == "ADICIONAL" else Decimal("0")
+        return subtotal + iva
 
     @property
     def score_simple(self):
@@ -577,3 +662,37 @@ class DecisionCotizacion(models.Model):
     def __str__(self):
         base = self.proveedor_seleccionado.empresa or self.proveedor_seleccionado.nombre_contacto
         return f"{self.solicitud} -> {base}"
+
+class RecepcionRepuesto(models.Model):
+    item = models.ForeignKey(ItemSolicitudCotizacion, on_delete=models.PROTECT, related_name="recepciones")
+    cotizacion = models.ForeignKey(CotizacionProveedor, on_delete=models.PROTECT, related_name="recepciones")
+    cantidad = models.PositiveIntegerField()
+    recibida_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    recibida_en = models.DateTimeField(default=timezone.now)
+    anulada_en = models.DateTimeField(null=True, blank=True)
+    anulada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="recepciones_anuladas")
+    motivo_anulacion = models.TextField(blank=True, default="")
+    comprobante = models.CharField(max_length=100, blank=True, default="")
+    observacion = models.TextField(blank=True, default="")
+    clave_operacion = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+
+    class Meta:
+        ordering = ["-recibida_en", "-id"]
+        constraints = [models.CheckConstraint(condition=models.Q(cantidad__gt=0), name="recepcion_cantidad_positiva")]
+
+    def clean(self):
+        if self.cantidad is not None and self.cantidad <= 0:
+            raise ValidationError({"cantidad": "Debe ser mayor que cero."})
+        if self.cotizacion_id and self.item_id and self.cotizacion.item_id != self.item_id:
+            raise ValidationError("La cotización pertenece a otro repuesto.")
+
+
+class EventoAbastecimiento(models.Model):
+    solicitud = models.ForeignKey(SolicitudCotizacion, on_delete=models.PROTECT, related_name="eventos")
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    accion = models.CharField(max_length=100)
+    datos = models.JSONField(default=dict)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-creado_en", "-id"]

@@ -118,6 +118,11 @@ def get_menu_lateral(user):
             })
 
 
+    if usuario_tiene_modulo(user, "cotizaciones_proveedor") and user.has_perm("cotizaciones.view_solicitudcotizacion"):
+        menu.append({"titulo": "Compras y abastecimiento", "items": [{
+            "label": "Torre de control", "url_name": "cotizaciones:lista", "icon": "bi-ui-checks-grid",
+        }]})
+
     # =====================================================
     # AVALÚOS
     # =====================================================

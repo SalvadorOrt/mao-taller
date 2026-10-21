@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Torre de control · MAO{% endblock %}
+{% block page_subtitle %}Compras y abastecimiento{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'cotizaciones/control.css' %}">{% endblock %}
+{% block content %}<div class="tc">
+{% if messages %}{% for message in messages %}<div class="tc-alert" role="status">{{ message }}</div>{% endfor %}{% endif %}
+{% block torre_content %}{% endblock %}</div>{% endblock %}
