@@ -1,0 +1,15 @@
+{% extends 'cotizaciones/base.html' %}
+{% block torre_content %}
+<header class="tc-heading"><div><p class="tc-eyebrow">REPUESTOS Y PROVEEDORES</p><h1>Torre de control</h1><p>Solicitudes, costos y pendientes por vehículo.</p></div><div class="tc-actions">
+{% if perms.compras.add_proveedor %}<a class="tc-btn" href="{% url 'cotizaciones:nuevo_proveedor' %}">Nuevo proveedor</a>{% endif %}
+{% if perms.cotizaciones.add_solicitudcotizacion %}<a class="tc-btn tc-primary" href="{% url 'cotizaciones:nueva' %}">+ Nueva solicitud</a>{% endif %}
+</div></header>
+<form class="tc-filter" method="get"><label><span>Buscar</span><input name="q" value="{{ q }}" placeholder="Placa, OT, vehículo o repuesto" aria-label="Buscar solicitudes"></label>
+<label><span>Tipo de trabajo</span><select name="tipo"><option value="">Todos los trabajos</option>{% for valor,texto in tipos %}<option value="{{ valor }}" {% if tipo == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}</select></label>
+<label><span>Estado</span><select name="estado"><option value="">Todos los estados</option>{% for valor,texto in estados %}<option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}</select></label>
+<button class="tc-btn tc-primary">Buscar</button><a class="tc-btn" href="{% url 'cotizaciones:lista' %}">Limpiar</a></form>
+<div class="tc-panel tc-scroll"><table class="tc-table"><thead><tr><th>Vehículo / placa</th><th>Solicitud</th><th>Sucursal</th><th>Repuestos</th><th>Seguimiento</th><th></th></tr></thead><tbody>
+{% for s in pagina %}<tr><td><span class="tc-plate">{{ s.orden.placa|default:'Sin placa' }}</span><small>{{ s.orden.vehiculo|default:'Vehículo por completar' }}</small></td><td><a class="tc-title" href="{% url 'cotizaciones:detalle' s.pk %}">{{ s.titulo }}</a><small>{{ s.orden.numero_orden }} · {{ s.get_tipo_trabajo_display }} · {{ s.creada_en|date:'d/m/Y' }}</small>{% if s.urgente %}<span class="tc-badge">Urgente</span>{% endif %}</td><td>{{ s.sucursal.nombre }}</td><td>{{ s.numero_items }}</td><td><span class="tc-badge">{{ s.get_estado_display }}</span></td><td><a href="{% url 'cotizaciones:detalle' s.pk %}" class="tc-link">Abrir →</a></td></tr>
+{% empty %}<tr><td colspan="6" class="tc-empty">No hay solicitudes con estos filtros. Crea una solicitud vinculada a una OT para comenzar.</td></tr>{% endfor %}
+</tbody></table></div><div class="tc-pagination"><span>{{ pagina.paginator.count }} solicitudes</span><div>{% if pagina.has_previous %}<a href="?q={{ q|urlencode }}&tipo={{ tipo|urlencode }}&estado={{ estado|urlencode }}&page={{ pagina.previous_page_number }}">← Anterior</a>{% endif %}<span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>{% if pagina.has_next %}<a href="?q={{ q|urlencode }}&tipo={{ tipo|urlencode }}&estado={{ estado|urlencode }}&page={{ pagina.next_page_number }}">Siguiente →</a>{% endif %}</div></div>
+{% endblock %}

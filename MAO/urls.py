@@ -87,6 +87,9 @@ urlpatterns = [
     ),
 
     # =====================================================
+    # TORRE DE CONTROL DE REPUESTOS
+    path("cotizaciones-proveedores/", include("cotizaciones.urls")),
+
     # INVENTARIO
     # =====================================================
 
