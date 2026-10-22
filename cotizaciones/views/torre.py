@@ -337,19 +337,33 @@ def lista(request):
     ),
     raise_exception=True,
 )
+@login_required
+@permission_required(
+    LECTURA + (
+        "cotizaciones.add_solicitudcotizacion",
+    ),
+    raise_exception=True,
+)
 def solicitud_nueva(request):
     sucursal = _sucursal(request)
 
+    # Mismo criterio que utiliza el dashboard del taller.
     ordenes = (
         OrdenTrabajo.objects
-        .filter(sucursal_id=sucursal.pk)
-        .exclude(estado="ANULADA")
+        .filter(
+            sucursal_id=sucursal.pk,
+            estado="ABIERTA",
+            es_migrada=False,
+        )
+        .order_by(
+            "-fecha_ingreso",
+            "-pk",
+        )
     )
 
     orden_id = (
-        request.POST.get("orden")
-        if request.method == "POST"
-        else request.GET.get("orden")
+        request.GET.get("orden")
+        or request.POST.get("orden")
     )
 
     orden = None
@@ -369,7 +383,7 @@ def solicitud_nueva(request):
 
     if request.method == "POST" and orden is None:
         raise Http404(
-            "Selecciona una orden de trabajo."
+            "Selecciona una orden abierta del taller."
         )
 
     formulario = None
@@ -379,14 +393,20 @@ def solicitud_nueva(request):
             request.POST
             if request.method == "POST"
             else None,
-            initial={"orden": orden},
+            initial={
+                "orden": orden,
+            },
             **_argumentos_formulario(request),
         )
 
-        # La orden elegida queda fijada desde el servidor.
+        formulario.fields["orden"].queryset = (
+            ordenes.filter(pk=orden.pk)
+        )
+
         formulario.fields["orden"].widget = (
             forms.HiddenInput()
         )
+
         formulario.fields["orden"].disabled = True
 
         if request.method == "POST":
@@ -410,28 +430,42 @@ def solicitud_nueva(request):
         .strip()[:100]
     )
 
-    resultados = []
+    pagina_ordenes = None
 
-    if not orden and len(busqueda) >= 2:
-        resultados = (
-            ordenes.filter(
+    if orden is None:
+        resultados = ordenes
+
+        # Siempre mostramos las órdenes.
+        # El filtro se aplica solamente cuando escribes algo.
+        if busqueda:
+            resultados = resultados.filter(
                 Q(numero_orden__icontains=busqueda)
                 | Q(placa__icontains=busqueda)
                 | Q(vehiculo__icontains=busqueda)
             )
-            .order_by("-pk")[:20]
+
+        pagina_ordenes = Paginator(
+            resultados,
+            20,
+        ).get_page(
+            request.GET.get("page")
         )
+
+    parametros = request.GET.copy()
+    parametros.pop("page", None)
+    parametros.pop("orden", None)
 
     return render(
         request,
         "cotizaciones/torre/nueva_solicitud.html",
         _contexto(
             request,
-            titulo="Nueva solicitud",
+            titulo="Seleccionar OT del taller",
             orden_elegida=orden,
             formulario=formulario,
             busqueda=busqueda,
-            resultados=resultados,
+            pagina_ordenes=pagina_ordenes,
+            parametros_pagina=parametros.urlencode(),
             volver_url=reverse(
                 "cotizaciones:lista"
             ),
