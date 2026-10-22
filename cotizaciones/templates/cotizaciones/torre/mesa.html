@@ -1,0 +1,260 @@
+{% extends 'cotizaciones/torre/base.html' %}
+{% block torre_content %}
+<style>
+  .mesa-barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .mesa-barra a{margin-right:auto}.mesa-resumen{color:#6e6e73;font-size:12px}
+  .mesa-scroll{overflow:auto;background:#fff;border:1px solid #e5e5e7;border-radius:12px}
+  .mesa-tabla{width:100%;min-width:1250px;border-collapse:collapse;font-size:12px}
+  .mesa-tabla th{background:#f8f9fb;color:#6e6e73;font-size:10px;text-transform:uppercase;text-align:left}
+  .mesa-tabla th,.mesa-tabla>tbody>tr>td{padding:10px;vertical-align:top;border-bottom:1px solid #e5e5e7}
+  .mesa-tabla th:first-child{width:210px}.mesa-tabla th:nth-child(2){width:95px}.mesa-tabla th:last-child{width:100px}
+  .mesa-tabla input:not([type=checkbox]),.mesa-tabla select,.mesa-tabla textarea{box-sizing:border-box;width:100%;min-width:0;border:1px solid #d9dde3;border-radius:7px;background:#fff;padding:6px;font:inherit;color:#1d1d1f}
+  .mesa-tabla input:focus,.mesa-tabla select:focus,.mesa-tabla textarea:focus{outline:2px solid #c7e2ff;border-color:#0071e3}
+  .mesa-tabla :disabled{background:#f4f5f7!important;color:#6e6e73!important}
+  .mesa-cantidad input{margin-bottom:5px}.mesa-repuesto>input{font-weight:600}
+  .mesa-oferta{padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid #eff1f4}
+  .mesa-oferta:last-of-type{border-bottom:0}
+  .mesa-grid{display:grid;grid-template-columns:minmax(155px,1.6fr) minmax(90px,1fr) 100px 135px 110px 85px 35px;gap:7px;align-items:start}
+  .mesa-grid small{display:block;font-size:10px;color:#6e6e73;margin-top:4px}
+  .mesa-total{font-weight:600;padding-top:8px;white-space:nowrap}
+  .mesa-elegir{padding-top:8px;display:flex;justify-content:center}
+  .mesa-tabla details{margin-top:6px}.mesa-tabla summary{color:#0071e3;cursor:pointer;font-size:11px;width:fit-content}
+  .mesa-detalles{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px;margin-top:8px;padding:10px;background:#f8f9fb;border-radius:8px}
+  .mesa-detalles label{display:block;font-size:11px;color:#6e6e73}.mesa-detalles label>*{margin-top:4px}
+  .mesa-repuesto .mesa-detalles{grid-template-columns:1fr;min-width:185px}
+  .mesa-link{border:0;background:transparent;color:#0071e3;padding:3px 0;font:inherit;font-size:11px;cursor:pointer}
+  .mesa-quitar{color:#c53030;margin-left:12px}.mesa-comprado{display:flex;gap:5px;align-items:center;margin-top:12px;font-size:11px}
+  .mesa-estado{display:inline-block;padding:4px 7px;border-radius:6px;background:#f0f1f4;color:#626773;font-size:10px}
+  .mesa-estado.seleccionado{background:#eaf3ff;color:#0063c7}.mesa-estado.comprado{background:#e7f6ed;color:#257047}
+  #mesa-error{white-space:pre-wrap}#mesa-error[hidden]{display:none}
+  .mesa-nota{font-size:11px;color:#6e6e73;margin:8px 0}
+  .mesa-sin-datos{padding:24px;color:#6e6e73}
+</style>
+
+<form id="mesa-form">
+  {% csrf_token %}
+  <div class="mesa-barra">
+    <a href="{% url 'cotizaciones:lista' %}">← Vehículos en taller</a>
+    <span id="mesa-resumen" class="mesa-resumen"></span>
+    <button type="button" id="mesa-agregar" class="btn-login">+ Repuesto</button>
+    <button type="submit" id="mesa-guardar" class="btn-login primary">Guardar todo</button>
+  </div>
+  <div id="mesa-error" class="alert alert-danger" role="alert" hidden></div>
+  <div class="mesa-scroll">
+    <table class="mesa-tabla">
+      <thead><tr>
+        <th>Repuesto</th><th>Cantidad</th>
+        <th><div class="mesa-grid"><span>Proveedor</span><span>Marca</span><span>Costo</span><span>IVA</span><span>Disponible</span><span>Total</span><span>Elegir</span></div></th>
+        <th>Estado</th>
+      </tr></thead>
+      <tbody id="mesa-filas"></tbody>
+    </table>
+    <div id="mesa-vacia" class="mesa-sin-datos" hidden>No hay repuestos registrados.</div>
+  </div>
+  <p class="mesa-nota">El costo corresponde a una presentación. Por defecto coincide con la unidad solicitada; puedes ajustar presentación y equivalencia en «Más detalles». Los totales se actualizan al guardar.</p>
+</form>
+{{ mesa|json_script:'mesa-datos' }}
+{% endblock %}
+
+{% block torre_js %}
+<script>
+(() => {
+  'use strict';
+  const datos = JSON.parse(document.getElementById('mesa-datos').textContent);
+  const filas = datos.filas, permisos = datos.permisos;
+  const formulario = document.getElementById('mesa-form');
+  const cuerpo = document.getElementById('mesa-filas');
+  const aviso = document.getElementById('mesa-error');
+  const guardar = document.getElementById('mesa-guardar');
+  const agregar = document.getElementById('mesa-agregar');
+  const resumen = document.getElementById('mesa-resumen');
+  let pendiente = false, enviando = false;
+
+  function elemento(tag, clase, texto) {
+    const e = document.createElement(tag);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
+  function cambio() {
+    pendiente = true;
+    resumen.textContent = 'Cambios sin guardar';
+  }
+  function control(objeto, nombre, etiqueta, opciones, editable = true, tipo = 'text') {
+    const e = elemento(opciones ? 'select' : 'input');
+    if (opciones) {
+      for (const [valor, texto] of opciones) {
+        const op = elemento('option', '', texto); op.value = valor; e.append(op);
+      }
+    } else {
+      e.type = tipo;
+      if (tipo === 'number') { e.min = '0'; e.step = nombre === 'cantidad' ? '1' : '0.01'; }
+    }
+    e.value = objeto[nombre] ?? '';
+    e.disabled = !editable;
+    e.setAttribute('aria-label', etiqueta);
+    e.addEventListener('input', () => { objeto[nombre] = e.value; cambio(); });
+    return e;
+  }
+  function boton(texto, accion, clase = '') {
+    const b = elemento('button', 'mesa-link ' + clase, texto);
+    b.type = 'button'; b.addEventListener('click', accion); return b;
+  }
+  function detalles(titulo) {
+    const d = elemento('details'); d.append(elemento('summary', '', titulo));
+    const interior = elemento('div', 'mesa-detalles'); d.append(interior);
+    return [d, interior];
+  }
+  function campo(contenedor, texto, entrada) {
+    const label = elemento('label', '', texto); label.append(entrada); contenedor.append(label);
+  }
+  function nuevaOferta(fila) {
+    return {id:null, proveedor:'', precio:'', marca_ofertada:'', medida_ofertada:'',
+      presentacion:fila.unidad, unidades_por_presentacion:fila.unidad === 'POR_DEFINIR' ? '' : '1',
+      tratamiento_iva:'POR_DEFINIR', porcentaje_iva:'', disponible:'',
+      tiempo_entrega:'', observacion:'', elegida:false, total:null};
+  }
+  function nuevaFila() {
+    const fila = {id:null, revision:'', descripcion_solicitada:'', cantidad:1, unidad:'UNIDAD',
+      codigo_referencia:'', marca_referencia:'', medida_solicitada:'', lado:'NO_APLICA',
+      posicion:'NO_APLICA', observacion:'', comprado:false, ofertas:[]};
+    if (permisos.agregar_oferta) fila.ofertas.push(nuevaOferta(fila));
+    return fila;
+  }
+  function dibujarOferta(fila, oferta, contenedor, filaTr, bloqueada) {
+    const editable = !bloqueada && (oferta.id ? permisos.editar_oferta : permisos.agregar_oferta);
+    const tarjeta = elemento('div', 'mesa-oferta'), grid = elemento('div', 'mesa-grid');
+    tarjeta.append(grid); contenedor.append(tarjeta);
+    const proveedor = control(oferta, 'proveedor', 'Proveedor', [['','Proveedor…'], ...datos.proveedores], editable && !oferta.id);
+    grid.append(proveedor, control(oferta, 'marca_ofertada', 'Marca', null, editable));
+    const costo = elemento('div');
+    costo.append(control(oferta, 'precio', 'Costo por presentación', null, editable, 'number'));
+    const por = elemento('small'); costo.append(por); grid.append(costo);
+    const textoPresentacion = () => {
+      const unidad = datos.unidades.find(u => u[0] === oferta.presentacion);
+      por.textContent = 'por ' + (unidad ? unidad[1].toLowerCase() : 'definir');
+    };
+    textoPresentacion();
+    const iva = elemento('div');
+    const tratamiento = control(oferta, 'tratamiento_iva', 'IVA', [
+      ['POR_DEFINIR','Por confirmar'],['INCLUIDO','Incluido'],['ADICIONAL','Adicional'],['SIN_IVA','Sin IVA aplicable']
+    ], editable);
+    const tasa = control(oferta, 'porcentaje_iva', 'Porcentaje de IVA adicional', null, editable, 'number');
+    tasa.placeholder = '% IVA'; tasa.max = '100';
+    tasa.hidden = oferta.tratamiento_iva !== 'ADICIONAL';
+    tratamiento.addEventListener('change', () => { tasa.hidden = tratamiento.value !== 'ADICIONAL'; });
+    iva.append(tratamiento, tasa); grid.append(iva);
+    grid.append(control(oferta, 'disponible', 'Disponibilidad', [['','Por confirmar'],['SI','Sí'],['NO','No']], editable));
+    const total = elemento('div', 'mesa-total', oferta.total === null ? 'Pendiente' : '$ ' + oferta.total);
+    grid.append(total);
+    const eleccion = elemento('label', 'mesa-elegir');
+    const elegir = elemento('input'); elegir.type = 'checkbox'; elegir.checked = oferta.elegida;
+    elegir.disabled = bloqueada || !permisos.editar_oferta;
+    elegir.setAttribute('aria-label', 'Elegir esta oferta');
+    elegir.addEventListener('change', () => {
+      fila.ofertas.forEach(o => { o.elegida = false; }); oferta.elegida = elegir.checked;
+      filaTr.querySelectorAll('[data-eleccion]').forEach(e => { if (e !== elegir) e.checked = false; });
+      cambio();
+    });
+    elegir.dataset.eleccion = ''; eleccion.append(elegir); grid.append(eleccion);
+    const [detalle, interior] = detalles('Más detalles'); tarjeta.append(detalle);
+    const presentacion = control(oferta, 'presentacion', 'Presentación del costo', datos.unidades, editable);
+    const equivalencia = control(oferta, 'unidades_por_presentacion', 'Equivalencia', null, editable, 'number');
+    equivalencia.step = '0.0001'; equivalencia.min = '0.0001';
+    presentacion.addEventListener('change', () => {
+      oferta.unidades_por_presentacion = oferta.presentacion === fila.unidad && fila.unidad !== 'POR_DEFINIR' ? '1' : '';
+      equivalencia.value = oferta.unidades_por_presentacion; textoPresentacion();
+    });
+    campo(interior, 'Presentación del costo', presentacion);
+    campo(interior, 'Cada presentación cubre esta cantidad de la unidad solicitada', equivalencia);
+    campo(interior, 'Medida ofertada', control(oferta, 'medida_ofertada', 'Medida ofertada', null, editable));
+    campo(interior, 'Tiempo de entrega', control(oferta, 'tiempo_entrega', 'Tiempo de entrega', null, editable));
+    campo(interior, 'Observación', control(oferta, 'observacion', 'Observación de la oferta', null, editable));
+    if (!oferta.id && editable) interior.append(boton('Quitar alternativa', () => {
+      fila.ofertas.splice(fila.ofertas.indexOf(oferta), 1); tarjeta.remove(); cambio();
+    }, 'mesa-quitar'));
+    tarjeta.addEventListener('input', e => { if (e.target !== elegir) total.textContent = 'Sin guardar'; });
+  }
+  function dibujarFila(fila) {
+    const tr = elemento('tr'); cuerpo.append(tr);
+    const bloqueada = fila.comprado;
+    const editable = !bloqueada && (fila.id ? permisos.editar_item : permisos.agregar_item);
+    const repuesto = elemento('td', 'mesa-repuesto');
+    const descripcion = control(fila, 'descripcion_solicitada', 'Repuesto', null, editable);
+    descripcion.placeholder = 'Escribe el repuesto'; repuesto.append(descripcion);
+    const [detalle, interior] = detalles('Datos del repuesto'); repuesto.append(detalle);
+    for (const [nombre, etiqueta] of [['codigo_referencia','Código'],['marca_referencia','Marca solicitada'],['medida_solicitada','Medida solicitada']]) {
+      campo(interior, etiqueta, control(fila, nombre, etiqueta, null, editable));
+    }
+    campo(interior, 'Lado', control(fila, 'lado', 'Lado', datos.lados, editable));
+    campo(interior, 'Posición', control(fila, 'posicion', 'Posición', datos.posiciones, editable));
+    campo(interior, 'Observación', control(fila, 'observacion', 'Observación del repuesto', null, fila.id ? permisos.editar_item : editable));
+    if (!fila.id) repuesto.append(boton('Quitar fila', () => {
+      filas.splice(filas.indexOf(fila), 1); tr.remove(); cambio(); actualizarVacia();
+    }, 'mesa-quitar'));
+    const cantidad = elemento('td', 'mesa-cantidad');
+    const numero = control(fila, 'cantidad', 'Cantidad solicitada', null, editable, 'number'); numero.min = '1';
+    cantidad.append(numero);
+    const unidad = control(fila, 'unidad', 'Unidad solicitada', datos.unidades, editable && !fila.ofertas.some(o => o.id));
+    cantidad.append(unidad);
+    const ofertas = elemento('td'), lista = elemento('div'); ofertas.append(lista);
+    const dibujar = o => dibujarOferta(fila, o, lista, tr, bloqueada);
+    if (!fila.ofertas.length && permisos.agregar_oferta && !bloqueada) fila.ofertas.push(nuevaOferta(fila));
+    fila.ofertas.forEach(dibujar);
+    if (!bloqueada && permisos.agregar_oferta) ofertas.append(boton('+ Otro proveedor', () => {
+      const oferta = nuevaOferta(fila); fila.ofertas.push(oferta); dibujar(oferta); cambio();
+    }));
+    unidad.addEventListener('change', () => {
+      fila.ofertas.forEach(o => { if (!o.id) { o.presentacion = fila.unidad; o.unidades_por_presentacion = fila.unidad === 'POR_DEFINIR' ? '' : '1'; } });
+      lista.replaceChildren(); fila.ofertas.forEach(dibujar);
+    });
+    numero.addEventListener('input', () => lista.querySelectorAll('.mesa-total').forEach(e => { e.textContent = 'Sin guardar'; }));
+    const estado = elemento('td');
+    const clase = bloqueada ? 'comprado' : fila.ofertas.some(o => o.elegida) ? 'seleccionado' : '';
+    estado.append(elemento('span', 'mesa-estado ' + clase, fila.estado || 'Nuevo'));
+    const comprado = elemento('label', 'mesa-comprado');
+    const check = elemento('input'); check.type = 'checkbox'; check.checked = fila.comprado;
+    check.disabled = bloqueada || !permisos.editar_item;
+    check.addEventListener('change', () => { fila.comprado = check.checked; cambio(); });
+    comprado.append(check, document.createTextNode('Comprado')); estado.append(comprado);
+    tr.append(repuesto, cantidad, ofertas, estado);
+    return descripcion;
+  }
+  function actualizarVacia() { document.getElementById('mesa-vacia').hidden = filas.length > 0; }
+  function ofertaVacia(o) {
+    return !o.id && !o.proveedor && (o.precio === '' || o.precio === null) && !o.marca_ofertada &&
+      !o.medida_ofertada && !o.observacion && !o.tiempo_entrega && !o.disponible &&
+      o.tratamiento_iva === 'POR_DEFINIR' && !o.elegida;
+  }
+  agregar.hidden = !permisos.agregar_item;
+  guardar.hidden = !Object.values(permisos).some(Boolean);
+  agregar.addEventListener('click', () => {
+    const fila = nuevaFila(); filas.push(fila); dibujarFila(fila).focus(); actualizarVacia(); cambio();
+  });
+  if (!filas.length && permisos.agregar_item) filas.push(nuevaFila());
+  filas.forEach(dibujarFila); actualizarVacia();
+  resumen.textContent = filas.filter(f => f.id).length + ' repuestos';
+  window.addEventListener('beforeunload', e => { if (pendiente) { e.preventDefault(); e.returnValue = ''; } });
+  formulario.addEventListener('submit', async e => {
+    e.preventDefault(); if (enviando) return;
+    aviso.hidden = true; enviando = true; guardar.disabled = true; agregar.disabled = true; cuerpo.inert = true;
+    const payload = filas.map(f => ({...f, ofertas:f.ofertas.filter(o => !ofertaVacia(o))}))
+      .filter(f => f.id || f.descripcion_solicitada.trim() || f.ofertas.length || f.codigo_referencia || f.medida_solicitada || f.observacion || Number(f.cantidad) !== 1);
+    try {
+      const respuesta = await fetch(window.location.pathname, {
+        method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json',
+          'X-CSRFToken':formulario.querySelector('[name=csrfmiddlewaretoken]').value},
+        body:JSON.stringify({filas:payload})
+      });
+      const resultado = await respuesta.json().catch(() => ({}));
+      if (!respuesta.ok || !resultado.ok) throw new Error(resultado.error || 'No se pudo guardar. Revisa tu sesión y tus permisos.');
+      pendiente = false; window.location.reload();
+    } catch (error) {
+      aviso.textContent = error.message || 'No se pudo guardar. Verifica la conexión antes de volver a intentar.';
+      aviso.hidden = false; aviso.scrollIntoView({block:'center', behavior:'smooth'});
+      enviando = false; guardar.disabled = false; agregar.disabled = false; cuerpo.inert = false;
+    }
+  });
+})();
+</script>
+{% endblock %}

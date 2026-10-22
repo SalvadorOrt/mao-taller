@@ -1,7 +1,6 @@
 from .torre import (
     cambiar_sucursal,
     codigos_producto,
-    detalle,
     foto,
     foto_nueva,
     item_comprado,
@@ -12,10 +11,6 @@ from .torre import (
     oferta_seleccionar,
     solicitud_editar,
 )
-
 from .repuestos import repuestos_guardar
-
-from .panel import (
-    lista,
-    solicitud_nueva,
-)
+from .panel import lista, solicitud_nueva
+from .mesa import detalle
