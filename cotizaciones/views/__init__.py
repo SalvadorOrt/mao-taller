@@ -7,12 +7,15 @@ from .torre import (
     item_comprado,
     item_editar,
     item_nuevo,
-    lista,
     oferta_editar,
     oferta_nueva,
     oferta_seleccionar,
     solicitud_editar,
-    solicitud_nueva,
 )
 
 from .repuestos import repuestos_guardar
+
+from .panel import (
+    lista,
+    solicitud_nueva,
+)

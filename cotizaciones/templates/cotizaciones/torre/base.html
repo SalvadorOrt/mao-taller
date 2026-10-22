@@ -1,95 +1,99 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Torre de control · MAO{% endblock %}
-{% block page_subtitle %}Torre de control de repuestos{% endblock %}
+{% block title %}Torre de control | MAO{% endblock %}
+
+{% block page_subtitle %}
+    Control de repuestos y proveedores
+{% endblock %}
 
 {% block extra_css %}
-{{ block.super }}
-<style>
-  .torre { --torre-azul: #0071e3; color: #1d1d1f; }
-  .torre .tc-cabecera { display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; align-items:center; margin:1rem 0 1.5rem; }
-  .torre h1 { font-size:1.65rem; font-weight:700; margin:0; }
-  .torre h2 { font-size:1.1rem; font-weight:700; }
-  .torre .tc-subtitulo { color:#626873; margin:.4rem 0 0; }
-  .torre .tc-panel { background:#fff; border:1px solid #e3e7ed; border-radius:14px; padding:1.25rem; margin-bottom:1rem; }
-  .torre .tc-sucursal { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; }
-  .torre .tc-sucursal select { width:auto; min-width:140px; }
-  .torre .tc-pestanas { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
-  .torre .tc-pestanas a { padding:.5rem .85rem; border-radius:9px; text-decoration:none; color:#414a58; background:#f0f3f7; }
-  .torre .tc-pestanas a.active { background:var(--torre-azul); color:#fff; }
-  .torre .tc-placa { display:inline-block; font-weight:700; color:#182e4b; background:#eaf2fc; padding:.2rem .5rem; border-radius:5px; }
-  .torre .tc-metricas { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin-bottom:1rem; }
-  .torre .tc-metrica { padding:1rem; border:1px solid #e3e7ed; border-radius:12px; background:#fff; }
-  .torre .tc-metrica strong { display:block; font-size:1.5rem; }
-  .torre .tc-metrica span { color:#626873; font-size:.88rem; }
-  .torre .tc-matriz-contenedor { overflow:auto; border:1px solid #e3e7ed; border-radius:12px; background:#fff; }
-  .torre .tc-matriz { width:100%; border-collapse:separate; border-spacing:0; }
-  .torre .tc-matriz th, .torre .tc-matriz td { vertical-align:top; padding:1rem; border-bottom:1px solid #e3e7ed; border-right:1px solid #e3e7ed; }
-  .torre .tc-matriz thead th { background:#f2f5fa; min-width:290px; }
-  .torre .tc-matriz .tc-repuesto { position:sticky; left:0; width:310px; min-width:310px; max-width:360px; background:#fff; z-index:1; box-shadow:2px 0 4px #152b4010; }
-  .torre .tc-matriz thead .tc-repuesto { background:#f2f5fa; z-index:2; }
-  .torre .tc-oferta { min-width:250px; border:1px solid #dce2eb; border-radius:10px; padding:.85rem; margin-bottom:.75rem; }
-  .torre .tc-oferta:last-child { margin-bottom:0; }
-  .torre .tc-oferta-elegida { border:2px solid var(--torre-azul); background:#f4f8ff; }
-  .torre .tc-precio { font-size:1.3rem; font-weight:700; margin:.5rem 0 .15rem; }
-  .torre .tc-nota { color:#626873; font-size:.85rem; }
-  .torre .tc-datos { display:grid; grid-template-columns:auto 1fr; gap:.25rem .65rem; margin:.65rem 0; font-size:.88rem; }
-  .torre .tc-datos dt { color:#626873; font-weight:400; }
-  .torre .tc-datos dd { margin:0; overflow-wrap:anywhere; }
-  .torre .tc-acciones { display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.75rem; }
-  .torre .tc-acciones form { margin:0; }
-  .torre .tc-fotos { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.65rem; }
-  .torre .tc-fotos img { width:64px; height:64px; object-fit:cover; border-radius:6px; border:1px solid #dce2eb; }
-  .torre .tc-vacio { padding:2rem 1rem; text-align:center; color:#626873; }
-  .torre .tc-formulario { max-width:1000px; }
-  .torre .tc-formulario .errorlist { color:#b42318; padding-left:1.2rem; margin:.3rem 0 0; }
-  .torre .tc-formulario .helptext { display:block; font-size:.85rem; color:#626873; margin-top:.25rem; }
-  .torre .tc-texto { white-space:pre-wrap; overflow-wrap:anywhere; }
-  .torre .tc-estado { font-weight:600; border-radius:6px; padding:.35rem .55rem; }
-  .torre .tc-estado-BORRADOR { background:#e9edf2; color:#414a58; }
-  .torre .tc-estado-ENVIADA { background:#fff0bf; color:#664f00; }
-  .torre .tc-estado-RESPONDIDA { background:#d8f3fa; color:#075e71; }
-  .torre .tc-estado-DECIDIDA { background:#e3edff; color:#124d9a; }
-  .torre .tc-estado-COMPRADA { background:#d8f1e2; color:#18643b; }
-  .torre .tc-estado-CANCELADA { background:#fce2e1; color:#a22723; }
-  @media(max-width:767px) {
-    .torre .tc-metricas { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .torre .tc-matriz .tc-repuesto { position:static; min-width:245px; }
-    .torre .tc-panel { padding:1rem; }
-  }
-</style>
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+    <link rel="stylesheet" href="{% static 'css/torre_listado.css' %}">
+    <link rel="stylesheet" href="{% static 'css/torre_control.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
-<section class="torre">
-  <div class="tc-cabecera">
-    <div>
-      <h1>Torre de control</h1>
-      <p class="tc-subtitulo">Costos, proveedores y avance de los repuestos.</p>
+<div class="container lista-ot-wrapper">
+
+    <div class="ot-card ot-header">
+        <div>
+            <h1 class="ot-title">
+                {% block torre_heading %}
+                    {% if solicitud %}
+                        {{ solicitud.orden.placa|default:solicitud.orden.numero_orden|upper }}
+                    {% else %}
+                        Torre de control
+                    {% endif %}
+                {% endblock %}
+            </h1>
+
+            <p class="ot-subtitle">
+                {% block torre_subheading %}
+                    {% if solicitud %}
+                        OT {{ solicitud.orden.numero_orden }}
+                        · {{ solicitud.orden.vehiculo }}
+                        · {{ solicitud.get_tipo_trabajo_display }}
+                    {% else %}
+                        Vehículos actualmente en taller
+                    {% endif %}
+                {% endblock %}
+            </p>
+        </div>
+
+        {% if puede_cambiar_sucursal %}
+            <form
+                method="post"
+                action="{% url 'cotizaciones:cambiar_sucursal' %}"
+                class="torre-fila-acciones"
+            >
+                {% csrf_token %}
+
+                <label class="visually-hidden" for="torre-sucursal">
+                    Sucursal operativa
+                </label>
+
+                <select
+                    id="torre-sucursal"
+                    name="sucursal_id"
+                    class="lista-ot-input"
+                >
+                    {% for suc in sucursales_disponibles %}
+                        <option
+                            value="{{ suc.pk }}"
+                            {% if suc.pk == sucursal_operativa.pk %}selected{% endif %}
+                        >
+                            {{ suc.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button class="btn-login" type="submit">
+                    Cambiar
+                </button>
+            </form>
+        {% else %}
+            <span class="ot-badge">
+                {{ sucursal_operativa.nombre }}
+            </span>
+        {% endif %}
     </div>
-    {% if puede_cambiar_sucursal %}
-      <form class="tc-sucursal" method="post" action="{% url 'cotizaciones:cambiar_sucursal' %}">
-        {% csrf_token %}
-        <label for="tc-sucursal" class="small fw-semibold">Sucursal operativa</label>
-        <select class="form-select form-select-sm" id="tc-sucursal" name="sucursal_id" required>
-          {% for sucursal in sucursales_disponibles %}
-            <option value="{{ sucursal.pk }}" {% if sucursal.pk == sucursal_operativa.pk %}selected{% endif %}>{{ sucursal.nombre }}</option>
-          {% endfor %}
-        </select>
-        <button class="btn btn-outline-primary btn-sm" type="submit">Cambiar</button>
-      </form>
-    {% else %}
-      <span class="badge bg-light text-dark border p-2">Sucursal: {{ sucursal_operativa.nombre }}</span>
-    {% endif %}
-  </div>
-  {% for message in messages %}
-    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}" role="alert">{{ message }}</div>
-  {% endfor %}
-  {% block torre_content %}{% endblock %}
-</section>
+
+    {% for message in messages %}
+        <div
+            role="alert"
+            class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}"
+        >
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% block torre_content %}{% endblock %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
-{{ block.super }}
-{% block torre_js %}{% endblock %}
+    {{ block.super }}
+    {% block torre_js %}{% endblock %}
 {% endblock %}
