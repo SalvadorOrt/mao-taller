@@ -32,7 +32,7 @@ from ..models import (
     SolicitudCotizacion,
 )
 
-from .repuestos import contexto_filas
+
 
 
 LECTURA = (
@@ -794,7 +794,7 @@ def detalle(request, pk):
                 or elegidos_sin_total > 0
             ),
             elegidos_sin_total=elegidos_sin_total,
-            **contexto_filas(request, solicitud),
+            
         ),
     )
 

@@ -11,6 +11,6 @@ from .torre import (
     oferta_seleccionar,
     solicitud_editar,
 )
-from .repuestos import repuestos_guardar
+
 from .panel import lista, solicitud_nueva
 from .mesa import detalle

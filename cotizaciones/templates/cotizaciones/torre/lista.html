@@ -1,226 +1,93 @@
-{% extends "cotizaciones/torre/base.html" %}
-
+{% extends 'cotizaciones/torre/base.html' %}
 {% block torre_content %}
-
-<div class="ot-card">
-    <form
-        method="get"
-        action="{% url 'cotizaciones:lista' %}"
-        class="lista-ot-filter-form"
-    >
-        <div class="lista-ot-field search">
-            <label class="lista-ot-label" for="torre-q">
-                Buscar
-            </label>
-
-            <input
-                id="torre-q"
-                type="search"
-                name="q"
-                value="{{ q }}"
-                class="lista-ot-input"
-                placeholder="Placa, número de OT o vehículo"
-                maxlength="100"
-            >
-        </div>
-
-        <button class="btn-login primary" type="submit">
-            <i class="bi bi-search"></i>
-            Buscar
-        </button>
-
-        <a href="{% url 'cotizaciones:lista' %}" class="btn-login">
-            Limpiar
-        </a>
-    </form>
-</div>
-
-<div class="ot-card">
-    <div class="section-title">Órdenes abiertas</div>
-
-    <div class="lista-ot-summary">
-        <div>
-            <div class="lista-ot-summary-main">
-                {{ pagina.paginator.count }} OT en taller
+    <style>
+        .torre-accesos {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            min-width: 280px;
+        }
+        .torre-accesos form { display: contents; }
+        .torre-accesos .lista-ot-action-btn {
+            white-space: nowrap;
+            margin: 0;
+            font-size: 11px;
+        }
+        .torre-accesos [data-area="MECANICA"] { order: 1; }
+        .torre-accesos [data-area="MOTOR"] { order: 2; }
+        .torre-accesos [data-area="ENDEREZADO_PINTURA"] { order: 3; }
+    </style>
+    <div class="ot-card">
+        <form method="get" action="{% url 'cotizaciones:lista' %}" class="lista-ot-filter-form">
+            <div class="lista-ot-field search">
+                <label class="lista-ot-label" for="torre-q">Buscar</label>
+                <input id="torre-q" type="search" name="q" value="{{ q }}" class="lista-ot-input" placeholder="Placa, número de OT o vehículo" maxlength="100">
             </div>
-            <div class="lista-ot-summary-sub">
-                Selecciona el área en la fila y abre los repuestos del vehículo.
-            </div>
-        </div>
-
-        <span class="lista-ot-badge abierta">
-            Abiertas
-        </span>
+            <button class="btn-login primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
+            <a href="{% url 'cotizaciones:lista' %}" class="btn-login">Limpiar</a>
+        </form>
     </div>
-
-    <div class="lista-ot-table-wrap">
-        <table class="lista-ot-table">
-            <thead>
-                <tr>
-                    <th>N.º Orden</th>
-                    <th>Fecha</th>
-                    <th>Placa</th>
-                    <th>Cliente / Vehículo</th>
-                    <th>Repuestos</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-
-            <tbody>
+    <div class="ot-card">
+        <div class="section-title">Órdenes abiertas</div>
+        <div class="lista-ot-summary">
+            <div>
+                <div class="lista-ot-summary-main">{{ pagina.paginator.count }} OT en taller</div>
+                <div class="lista-ot-summary-sub">Abre el control del veh&iacute;culo con un clic en el &aacute;rea.</div>
+            </div>
+            <span class="lista-ot-badge abierta">Abiertas</span>
+        </div>
+        <div class="lista-ot-table-wrap">
+            <table class="lista-ot-table">
+                <thead><tr><th>N.º Orden</th><th>Fecha</th><th>Placa</th><th>Cliente / Vehículo</th><th>Repuestos</th><th>Acciones</th></tr></thead>
+                <tbody>
                 {% for orden in pagina %}
                     <tr>
-                        <td>
-                            <div class="lista-ot-numero">
-                                {{ orden.numero_orden }}
-                            </div>
-                            <div class="lista-ot-meta">
-                                {{ sucursal_operativa.nombre }}
-                            </div>
-                        </td>
-
-                        <td>
-                            <div class="lista-ot-meta">
-                                {{ orden.fecha_ingreso|date:"d/m/Y" }}
-                            </div>
-                            <div class="lista-ot-meta">
-                                {{ orden.fecha_ingreso|date:"H:i" }}
-                            </div>
-                        </td>
-
-                        <td>
-                            <span class="lista-ot-placa">
-                                {{ orden.placa|default:"S/P" }}
-                            </span>
-                        </td>
-
-                        <td>
-                            <div class="lista-ot-cliente">
-                                {{ orden.nombre_cliente_final|default:"Sin cliente"|truncatechars:38|upper }}
-                            </div>
-                            <div class="lista-ot-vehiculo">
-                                {{ orden.vehiculo|default:"-"|truncatechars:42 }}
-                            </div>
-                        </td>
-
-                        <td>
-                            <span class="lista-ot-numero">
-                                {{ orden.repuestos_torre }}
-                            </span>
-                        </td>
-
+                        <td><div class="lista-ot-numero">{{ orden.numero_orden }}</div><div class="lista-ot-meta">{{ sucursal_operativa.nombre }}</div></td>
+                        <td><div class="lista-ot-meta">{{ orden.fecha_ingreso|date:'d/m/Y' }}</div><div class="lista-ot-meta">{{ orden.fecha_ingreso|date:'H:i' }}</div></td>
+                        <td><span class="lista-ot-placa">{{ orden.placa|default:'S/P' }}</span></td>
+                        <td><div class="lista-ot-cliente">{{ orden.nombre_cliente_final|default:'Sin cliente'|truncatechars:38|upper }}</div><div class="lista-ot-vehiculo">{{ orden.vehiculo|default:'-'|truncatechars:42 }}</div></td>
+                        <td><span class="lista-ot-numero">{{ orden.repuestos_torre }}</span></td>
                         <td>
                             {% if puede_ver_detalle %}
-                                <div class="torre-fila-acciones">
+                                <div class="torre-accesos">
                                     {% for control in orden.controles_torre %}
-                                        <a
-                                            class="lista-ot-action-btn open"
-                                            href="{% url 'cotizaciones:detalle' control.pk %}"
-                                        >
-                                            <i class="bi bi-eye"></i>
-                                            {{ control.get_tipo_trabajo_display }}
+                                        <a class="lista-ot-action-btn open" data-area="{{ control.tipo_trabajo }}" href="{% url 'cotizaciones:detalle' control.pk %}">
+                                            {% if control.tipo_trabajo == 'MECANICA' %}Mec&aacute;nica{% elif control.tipo_trabajo == 'MOTOR' %}Motor{% elif control.tipo_trabajo == 'ENDEREZADO_PINTURA' %}Enderezado y pintura{% else %}Control{% endif %}
                                         </a>
                                     {% endfor %}
-                                </div>
-
-                                {% if orden.areas_disponibles and perms.cotizaciones.add_solicitudcotizacion %}
-                                    <form
-                                        method="post"
-                                        action="{% url 'cotizaciones:solicitud_nueva' %}"
-                                        class="torre-fila-acciones mt-1"
-                                    >
-                                        {% csrf_token %}
-
-                                        <input
-                                            type="hidden"
-                                            name="orden"
-                                            value="{{ orden.pk }}"
-                                        >
-
-                                        <select
-                                            name="tipo_trabajo"
-                                            class="lista-ot-input"
-                                            aria-label="Área de trabajo para {{ orden.placa|default:orden.numero_orden }}"
-                                            required
-                                        >
-                                            <option value="">Área...</option>
+                                    {% if orden.areas_disponibles and perms.cotizaciones.add_solicitudcotizacion %}
+                                        <form method="post" action="{% url 'cotizaciones:solicitud_nueva' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="orden" value="{{ orden.pk }}">
                                             {% for valor, etiqueta in orden.areas_disponibles %}
-                                                <option value="{{ valor }}">
-                                                    {{ etiqueta }}
-                                                </option>
+                                                <button class="lista-ot-action-btn open" type="submit" name="tipo_trabajo" value="{{ valor }}" data-area="{{ valor }}">
+                                                    {% if valor == 'MECANICA' %}Mec&aacute;nica{% elif valor == 'MOTOR' %}Motor{% elif valor == 'ENDEREZADO_PINTURA' %}Enderezado y pintura{% else %}Control{% endif %}
+                                                </button>
                                             {% endfor %}
-                                        </select>
-
-                                        <button
-                                            class="lista-ot-action-btn open"
-                                            type="submit"
-                                        >
-                                            Abrir
-                                        </button>
-                                    </form>
-                                {% elif not orden.controles_torre %}
-                                    <span class="lista-ot-meta">
-                                        Sin control registrado
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                                <span class="lista-ot-meta">
-                                    Sin permiso para abrir
-                                </span>
-                            {% endif %}
+                                        </form>
+                                    {% elif not orden.controles_torre %}
+                                        <span class="lista-ot-meta">Sin control registrado</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}<span class="lista-ot-meta">Sin permiso para abrir</span>{% endif %}
                         </td>
                     </tr>
                 {% empty %}
-                    <tr>
-                        <td colspan="6" class="lista-ot-empty">
-                            <div class="lista-ot-empty-title">
-                                No hay órdenes abiertas para mostrar
-                            </div>
-                            <p class="lista-ot-empty-text">
-                                Revisa la sucursal seleccionada
-                                o el filtro de búsqueda.
-                            </p>
-                        </td>
-                    </tr>
+                    <tr><td colspan="6" class="lista-ot-empty"><div class="lista-ot-empty-title">No hay órdenes abiertas para mostrar</div><p class="lista-ot-empty-text">Revisa la sucursal seleccionada o el filtro de búsqueda.</p></td></tr>
                 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+        {% if pagina.has_other_pages %}
+            <nav class="lista-ot-pagination" aria-label="Páginas de órdenes abiertas">
+                <span class="lista-ot-pagination-info">{{ pagina.start_index }}–{{ pagina.end_index }} de {{ pagina.paginator.count }}</span>
+                <div class="lista-ot-pagination-nav">
+                    {% if pagina.has_previous %}<a class="lista-ot-page-link" href="?q={{ q|urlencode }}&amp;page={{ pagina.previous_page_number }}">Anterior</a>{% endif %}
+                    <span class="lista-ot-page-current">{{ pagina.number }} / {{ pagina.paginator.num_pages }}</span>
+                    {% if pagina.has_next %}<a class="lista-ot-page-link" href="?q={{ q|urlencode }}&amp;page={{ pagina.next_page_number }}">Siguiente</a>{% endif %}
+                </div>
+            </nav>
+        {% endif %}
     </div>
-
-    {% if pagina.has_other_pages %}
-        <nav
-            class="lista-ot-pagination"
-            aria-label="Páginas de órdenes abiertas"
-        >
-            <span class="lista-ot-pagination-info">
-                {{ pagina.start_index }}–{{ pagina.end_index }}
-                de {{ pagina.paginator.count }}
-            </span>
-
-            <div class="lista-ot-pagination-nav">
-                {% if pagina.has_previous %}
-                    <a
-                        class="lista-ot-page-link"
-                        href="?q={{ q|urlencode }}&amp;page={{ pagina.previous_page_number }}"
-                    >
-                        Anterior
-                    </a>
-                {% endif %}
-
-                <span class="lista-ot-page-current">
-                    {{ pagina.number }} / {{ pagina.paginator.num_pages }}
-                </span>
-
-                {% if pagina.has_next %}
-                    <a
-                        class="lista-ot-page-link"
-                        href="?q={{ q|urlencode }}&amp;page={{ pagina.next_page_number }}"
-                    >
-                        Siguiente
-                    </a>
-                {% endif %}
-            </div>
-        </nav>
-    {% endif %}
-</div>
-
 {% endblock %}

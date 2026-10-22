@@ -1,17 +1,17 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Torre de control | MAO{% endblock %}
 
 {% block page_subtitle %}
-    Control de repuestos y proveedores
+Control de repuestos y proveedores
 {% endblock %}
 
 {% block extra_css %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
-    <link rel="stylesheet" href="{% static 'css/torre_listado.css' %}">
-    <link rel="stylesheet" href="{% static 'css/torre_control.css' %}?v=2">
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/detalle_orden.css' %}">
+<link rel="stylesheet" href="{% static 'css/torre_listado.css' %}">
+<link rel="stylesheet" href="{% static 'css/torre_control.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -42,42 +42,9 @@
             </p>
         </div>
 
-        {% if puede_cambiar_sucursal %}
-            <form
-                method="post"
-                action="{% url 'cotizaciones:cambiar_sucursal' %}"
-                class="torre-fila-acciones"
-            >
-                {% csrf_token %}
-
-                <label class="visually-hidden" for="torre-sucursal">
-                    Sucursal operativa
-                </label>
-
-                <select
-                    id="torre-sucursal"
-                    name="sucursal_id"
-                    class="lista-ot-input"
-                >
-                    {% for suc in sucursales_disponibles %}
-                        <option
-                            value="{{ suc.pk }}"
-                            {% if suc.pk == sucursal_operativa.pk %}selected{% endif %}
-                        >
-                            {{ suc.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-
-                <button class="btn-login" type="submit">
-                    Cambiar
-                </button>
-            </form>
-        {% else %}
-            <span class="ot-badge">
-                {{ sucursal_operativa.nombre }}
-            </span>
-        {% endif %}
+        <span class="ot-badge">
+            {{ sucursal_operativa.nombre }}
+        </span>
     </div>
 
     {% for message in messages %}
@@ -90,10 +57,11 @@
     {% endfor %}
 
     {% block torre_content %}{% endblock %}
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
-    {{ block.super }}
-    {% block torre_js %}{% endblock %}
+{{ block.super }}
+{% block torre_js %}{% endblock %}
 {% endblock %}

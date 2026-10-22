@@ -45,11 +45,7 @@ urlpatterns = [
         name="item_nuevo",
     ),
 
-    path(
-        "solicitudes/<int:solicitud_pk>/repuestos/guardar/",
-        views.repuestos_guardar,
-        name="repuestos_guardar",
-    ),
+   
 
     path(
         "repuestos/<int:pk>/editar/",
