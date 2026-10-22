@@ -24,24 +24,34 @@ from .models import (
 
 
 def obtener_sucursal_operativa(usuario, sucursal_activa_id=None):
-    """Resuelve y valida la sucursal elegida sin modificar la del usuario."""
+    """Valida la sucursal operativa sin cambiar la sucursal personal del usuario.
+
+    Los usuarios con acceso global pueden usar una sucursal de la sesión
+    aunque no tengan sucursal personal. Los demás quedan limitados a la suya.
+    """
     if not usuario or not usuario.is_authenticated or not usuario.is_active:
         raise PermissionDenied("Debes iniciar sesión con un usuario activo.")
-    if not usuario.sucursal_id:
+
+    puede_cambiar = usuario.is_superuser or usuario.has_perm(
+        "inventario.cambiar_sucursal_operativa"
+    )
+    sucursal_personal_id = usuario.sucursal_id
+
+    if not puede_cambiar and not sucursal_personal_id:
         raise PermissionDenied("Tu usuario necesita una sucursal asignada.")
 
     if sucursal_activa_id in (None, ""):
-        sucursal_id = usuario.sucursal_id
+        sucursal_id = sucursal_personal_id
     else:
         try:
             sucursal_id = int(sucursal_activa_id)
         except (TypeError, ValueError):
             raise PermissionDenied("La sucursal seleccionada no es válida.") from None
 
-    puede_cambiar = usuario.is_superuser or usuario.has_perm(
-        "inventario.cambiar_sucursal_operativa"
-    )
-    if sucursal_id != usuario.sucursal_id and not puede_cambiar:
+    if not sucursal_id:
+        raise PermissionDenied("Selecciona una sucursal operativa para continuar.")
+
+    if not puede_cambiar and sucursal_id != sucursal_personal_id:
         raise PermissionDenied("No tienes permiso para cambiar de sucursal.")
 
     try:

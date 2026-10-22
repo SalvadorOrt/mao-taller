@@ -122,6 +122,22 @@ def _pantalla_formulario(request, formulario, titulo, solicitud, **datos):
 @permission_required("cotizaciones.view_solicitudcotizacion", raise_exception=True)
 @require_GET
 def lista(request):
+    # Permite elegir una sucursal antes de consultar datos de la torre.
+    try:
+        _sucursal(request)
+    except PermissionDenied as error:
+        puede_cambiar = request.user.is_superuser or request.user.has_perm(
+            "inventario.cambiar_sucursal_operativa"
+        )
+        if not request.user.is_active or not puede_cambiar:
+            raise
+        return render(request, "cotizaciones/torre/elegir_sucursal.html", {
+            "sucursales_disponibles": Sucursal.objects.filter(
+                activa=True
+            ).order_by("nombre"),
+            "motivo_sucursal": str(error),
+        })
+
     formulario = FiltroTorreControlForm(request.GET)
     for campo in formulario.fields.values():
         campo.widget.attrs["class"] = (
