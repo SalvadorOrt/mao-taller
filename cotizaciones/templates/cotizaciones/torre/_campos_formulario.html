@@ -1,0 +1,19 @@
+{% if formulario.non_field_errors %}<div class="alert alert-danger">{{ formulario.non_field_errors }}</div>{% endif %}
+{% for campo in formulario.hidden_fields %}
+  {{ campo }}
+  {% for error in campo.errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+{% endfor %}
+<div class="row g-3">
+  {% for campo in formulario.visible_fields %}
+    <div class="{% if campo.name == 'observacion' or campo.name == 'descripcion_solicitada' or campo.name == 'contenido_presentacion' or campo.name == 'imagen' %}col-12{% else %}col-md-6{% endif %}">
+      {% if campo.field.widget.input_type == 'checkbox' %}
+        <div class="form-check mt-4">{{ campo }}<label class="form-check-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
+      {% else %}
+        <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %} <span class="text-danger" aria-label="obligatorio">*</span>{% endif %}</label>
+        {{ campo }}
+      {% endif %}
+      {% if campo.help_text %}<div class="helptext">{{ campo.help_text }}</div>{% endif %}
+      {{ campo.errors }}
+    </div>
+  {% endfor %}
+</div>

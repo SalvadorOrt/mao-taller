@@ -1,0 +1,57 @@
+{% extends "cotizaciones/torre/base.html" %}
+
+{% block torre_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div><h2 class="mb-1">Solicitudes de cotización</h2><span class="tc-nota">{{ pagina.paginator.count }} solicitud{{ pagina.paginator.count|pluralize:"es" }}</span></div>
+  {% if perms.cotizaciones.add_solicitudcotizacion and puede_ver_detalle %}
+    <a class="btn btn-primary" href="{% url 'cotizaciones:solicitud_nueva' %}">Nueva solicitud</a>
+  {% endif %}
+</div>
+<nav class="tc-pestanas" aria-label="Área de trabajo">
+  {% for pestana in pestanas %}
+    <a href="?{{ pestana.query }}" class="{% if pestana.activa %}active{% endif %}" {% if pestana.activa %}aria-current="page"{% endif %}>{{ pestana.etiqueta }}</a>
+  {% endfor %}
+</nav>
+<form class="tc-panel" method="get" action="{% url 'cotizaciones:lista' %}">
+  <div class="row g-3 align-items-end">
+    {% for campo in formulario %}
+      <div class="{% if campo.name == 'q' %}col-md-5{% else %}col-md-3{% endif %}">
+        <label class="form-label small" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="col-md-1"><button class="btn btn-primary w-100" type="submit">Filtrar</button></div>
+  </div>
+  <a class="small d-inline-block mt-2" href="{% url 'cotizaciones:lista' %}">Limpiar filtros</a>
+</form>
+<div class="tc-panel p-0 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light"><tr><th class="ps-3">OT / placa</th><th>Solicitud</th><th>Área</th><th>Repuestos</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+      <tbody>
+        {% for solicitud in pagina %}
+          <tr>
+            <td class="ps-3"><strong>{{ solicitud.orden.numero_orden }}</strong><br><span class="tc-placa mt-1">{{ solicitud.orden.placa|default:"Sin placa" }}</span></td>
+            <td>{{ solicitud.titulo }}{% if solicitud.urgente %}<span class="badge bg-danger ms-1">Urgente</span>{% endif %}<div class="tc-nota">{{ solicitud.orden.vehiculo|default:"" }}</div></td>
+            <td>{{ solicitud.get_tipo_trabajo_display }}</td>
+            <td>{{ solicitud.numero_items }}</td>
+            <td><span class="badge tc-estado tc-estado-{{ solicitud.estado }}">{{ solicitud.get_estado_display }}</span></td>
+            <td class="text-nowrap">{{ solicitud.creada_en|date:"d/m/Y" }}</td>
+            <td class="pe-3">{% if puede_ver_detalle %}<a class="btn btn-outline-primary btn-sm" href="{% url 'cotizaciones:detalle' solicitud.pk %}">Abrir</a>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="tc-vacio">No hay solicitudes para estos filtros en {{ sucursal_operativa.nombre }}.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if pagina.has_other_pages %}
+  <nav class="d-flex align-items-center justify-content-between" aria-label="Páginas de solicitudes">
+    <div>{% if pagina.has_previous %}<a class="btn btn-outline-secondary btn-sm" href="?{{ parametros_pagina }}&amp;page={{ pagina.previous_page_number }}">Anterior</a>{% endif %}</div>
+    <span class="tc-nota">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+    <div>{% if pagina.has_next %}<a class="btn btn-outline-secondary btn-sm" href="?{{ parametros_pagina }}&amp;page={{ pagina.next_page_number }}">Siguiente</a>{% endif %}</div>
+  </nav>
+{% endif %}
+{% endblock %}
