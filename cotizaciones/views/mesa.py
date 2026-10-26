@@ -1,3 +1,5 @@
+"""Captura de repuestos y costos en una sola tabla."""
+
 import json
 
 from django.contrib.auth.decorators import (
@@ -12,8 +14,6 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.crypto import constant_time_compare, salted_hmac
 from django.views.decorators.http import require_http_methods
-
-from compras.models import Proveedor
 
 from ..forms import CotizacionProveedorForm
 from ..forms_filas import FilaRepuestoForm
@@ -37,13 +37,6 @@ from .torre import (
 CAMPOS_ITEM = (
     "descripcion_solicitada",
     "cantidad",
-    "unidad",
-    "codigo_referencia",
-    "marca_referencia",
-    "medida_solicitada",
-    "lado",
-    "posicion",
-    "observacion",
     "resaltado",
 )
 
@@ -57,19 +50,10 @@ CAMPOS_OFERTA = tuple(
 # =========================================================
 
 def _datos(objeto, campos):
-    datos = model_to_dict(
+    return model_to_dict(
         objeto,
         fields=campos,
     )
-
-    if isinstance(objeto, CotizacionProveedor):
-        datos["disponible"] = {
-            True: "SI",
-            False: "NO",
-            None: "",
-        }[objeto.disponible]
-
-    return datos
 
 
 def _revision(item, cotizaciones=None):
@@ -119,7 +103,7 @@ def _permiso(request, accion, modelo):
 def _exigir_sin_cambios(originales, recibidos, campos):
     """
     Permite reenviar datos sin modificar cuando el usuario
-    no tiene permiso de edición sobre ese modelo.
+    no tiene permiso para editar ese modelo.
     """
 
     def texto(valor):
@@ -194,17 +178,25 @@ def _guardar(request, solicitud, filas):
         )
     }
 
-    ofertas = {
-        oferta.pk: oferta
-        for oferta in (
-            CotizacionProveedor.objects
-            .select_for_update()
-            .filter(item__solicitud=solicitud)
-            .order_by("pk")
-        )
-    }
+    ofertas = {}
+    ofertas_por_item = {}
 
-    siguientes = (
+    cotizaciones = (
+        CotizacionProveedor.objects
+        .select_for_update()
+        .filter(item__solicitud=solicitud)
+        .order_by("pk")
+    )
+
+    for oferta in cotizaciones:
+        ofertas[oferta.pk] = oferta
+
+        ofertas_por_item.setdefault(
+            oferta.item_id,
+            [],
+        ).append(oferta)
+
+    siguiente_orden = (
         solicitud.items.aggregate(
             n=Max("orden_item")
         )["n"]
@@ -214,7 +206,7 @@ def _guardar(request, solicitud, filas):
     vistos = set()
     ofertas_vistas = set()
 
-    # Valida todas las referencias antes de modificar datos.
+    # Valida referencias y revisiones antes de guardar.
     for fila in filas:
         if (
             not isinstance(fila, dict)
@@ -224,7 +216,9 @@ def _guardar(request, solicitud, filas):
                 "Formato de fila no válido."
             )
 
-        pk = _identificador(fila.get("id"))
+        pk = _identificador(
+            fila.get("id")
+        )
 
         if pk is not None:
             if pk in vistos or pk not in items:
@@ -234,9 +228,14 @@ def _guardar(request, solicitud, filas):
 
             vistos.add(pk)
 
+            revision_actual = _revision(
+                items[pk],
+                ofertas_por_item.get(pk, []),
+            )
+
             if not constant_time_compare(
                 str(fila.get("revision", "")),
-                _revision(items[pk]),
+                revision_actual,
             ):
                 raise ValidationError(
                     "Otra persona modificó la tabla. "
@@ -275,8 +274,7 @@ def _guardar(request, solicitud, filas):
 
         guardadas = {
             oferta.pk
-            for oferta in ofertas.values()
-            if oferta.item_id == pk
+            for oferta in ofertas_por_item.get(pk, [])
         }
 
         if existentes != guardadas:
@@ -285,62 +283,29 @@ def _guardar(request, solicitud, filas):
                 "Recarga la tabla."
             )
 
-    # Guarda los repuestos y sus ofertas en la misma transacción.
+    # El llamador mantiene una transacción para toda la tabla.
     for numero, fila in enumerate(filas, 1):
         referencia = f"Repuesto {numero}"
 
-        item = items.get(fila.get("id"))
+        item = items.get(
+            fila.get("id")
+        )
+
         nuevo = item is None
 
         if nuevo:
-            item = ItemSolicitudCotizacion(
-                solicitud=solicitud,
-                orden_item=siguientes,
-                unidad="UNIDAD",
-                lado="NO_APLICA",
-                posicion="NO_APLICA",
+            _permiso(
+                request,
+                "add",
+                "itemsolicitudcotizacion",
             )
 
-            siguientes += 1
+            item = ItemSolicitudCotizacion(
+                solicitud=solicitud,
+                orden_item=siguiente_orden,
+            )
 
-        comprado = (
-            item.estado_abastecimiento == "COMPRADO"
-        )
-
-        unidad_anterior = item.unidad
-
-        anteriores = (
-            [
-                oferta
-                for oferta in ofertas.values()
-                if oferta.item_id == item.pk
-            ]
-            if not nuevo
-            else []
-        )
-
-        ganadora_anterior = next(
-            (
-                oferta.pk
-                for oferta in anteriores
-                if oferta.estado == "GANADORA"
-            ),
-            None,
-        )
-
-        datos_item = _datos(
-            item,
-            FilaRepuestoForm._meta.fields,
-        )
-
-        datos_item.update({
-            campo: fila[campo]
-            for campo in CAMPOS_ITEM
-            if campo in fila
-        })
-
-        # La revisión completa ya fue validada arriba.
-        datos_item["revision"] = ""
+            siguiente_orden += 1
 
         puede_editar_item = request.user.has_perm(
             "cotizaciones.change_itemsolicitudcotizacion"
@@ -354,6 +319,20 @@ def _guardar(request, solicitud, filas):
             )
 
         else:
+            datos_item = _datos(
+                item,
+                FilaRepuestoForm._meta.fields,
+            )
+
+            datos_item.update({
+                campo: fila[campo]
+                for campo in CAMPOS_ITEM
+                if campo in fila
+            })
+
+            # La revisión completa se comprobó arriba.
+            datos_item["revision"] = ""
+
             formulario = FilaRepuestoForm(
                 datos_item,
                 instance=item,
@@ -375,72 +354,28 @@ def _guardar(request, solicitud, filas):
                     referencia,
                 )
 
-                if (
-                    anteriores
-                    and formulario.cleaned_data["unidad"]
-                    != unidad_anterior
-                ):
-                    raise ValidationError(
-                        f"{referencia}: conserva la unidad "
-                        "ya cotizada; cambia la presentación "
-                        "dentro de la oferta."
-                    )
-
                 item = formulario.save()
 
-        elegidas = [
-            dato
-            for dato in fila["ofertas"]
-            if dato.get("elegida") is True
-        ]
-
-        if len(elegidas) > 1:
-            raise ValidationError(
-                f"{referencia}: elige solamente una oferta."
+        for posicion, dato in enumerate(
+            fila["ofertas"],
+            1,
+        ):
+            oferta = ofertas.get(
+                dato.get("id")
             )
 
-        ganadora_pedida = (
-            elegidas[0].get("id")
-            if elegidas
-            else None
-        )
-
-        cambia_eleccion = (
-            bool(
-                elegidas
-                and ganadora_pedida is None
-            )
-            or ganadora_pedida != ganadora_anterior
-        )
-
-        if cambia_eleccion:
-            _permiso(
-                request,
-                "change",
-                "cotizacionproveedor",
-            )
-
-        elegida = None
-
-        for posicion, dato in enumerate(fila["ofertas"], 1):
-            oferta = ofertas.get(dato.get("id"))
             es_nueva = oferta is None
 
             if es_nueva:
+                _permiso(
+                    request,
+                    "add",
+                    "cotizacionproveedor",
+                )
+
                 oferta = CotizacionProveedor(
                     item=item,
                 )
-
-            datos_oferta = _datos(
-                oferta,
-                CAMPOS_OFERTA,
-            )
-
-            datos_oferta.update({
-                campo: dato[campo]
-                for campo in CAMPOS_OFERTA
-                if campo in dato
-            })
 
             puede_editar_oferta = request.user.has_perm(
                 "cotizaciones.change_cotizacionproveedor"
@@ -453,69 +388,42 @@ def _guardar(request, solicitud, filas):
                     CAMPOS_OFERTA,
                 )
 
-            else:
-                formulario_oferta = CotizacionProveedorForm(
-                    datos_oferta,
-                    instance=oferta,
-                    item=item,
-                    **_argumentos_formulario(request),
-                )
+                continue
 
-                if (
-                    es_nueva
-                    or formulario_oferta.has_changed()
-                ):
-                    if comprado:
-                        raise ValidationError(
-                            f"{referencia}: las ofertas "
-                            "del repuesto comprado están bloqueadas."
-                        )
-
-                    _permiso(
-                        request,
-                        "add" if es_nueva else "change",
-                        "cotizacionproveedor",
-                    )
-
-                    if oferta.estado == "GANADORA":
-                        oferta.estado = "RESPONDIO"
-
-                    _validar(
-                        formulario_oferta,
-                        f"{referencia}, oferta {posicion}",
-                    )
-
-                    oferta = formulario_oferta.save()
-
-            if dato.get("elegida") is True:
-                elegida = oferta
-
-        puede_elegir = request.user.has_perm(
-            "cotizaciones.change_cotizacionproveedor"
-        )
-
-        if not comprado and puede_elegir:
-            if elegida is not None:
-                elegida.seleccionar()
-
-            elif ganadora_anterior is not None:
-                (
-                    item.cotizaciones_proveedor
-                    .filter(estado="GANADORA")
-                    .update(estado="RESPONDIO")
-                )
-
-                item.actualizar_estado_abastecimiento()
-
-        if fila.get("comprado") is True and not comprado:
-            _permiso(
-                request,
-                "change",
-                "itemsolicitudcotizacion",
+            datos_oferta = _datos(
+                oferta,
+                CAMPOS_OFERTA,
             )
 
-            item.refresh_from_db()
-            item.marcar_comprado()
+            datos_oferta.update({
+                campo: dato[campo]
+                for campo in CAMPOS_OFERTA
+                if campo in dato
+            })
+
+            formulario_oferta = CotizacionProveedorForm(
+                datos_oferta,
+                instance=oferta,
+                item=item,
+                **_argumentos_formulario(request),
+            )
+
+            if (
+                es_nueva
+                or formulario_oferta.has_changed()
+            ):
+                _permiso(
+                    request,
+                    "add" if es_nueva else "change",
+                    "cotizacionproveedor",
+                )
+
+                _validar(
+                    formulario_oferta,
+                    f"{referencia}, oferta {posicion}",
+                )
+
+                formulario_oferta.save()
 
     solicitud.actualizar_estado()
 
@@ -560,9 +468,7 @@ def detalle(request, pk):
         ):
             return JsonResponse(
                 {
-                    "error": (
-                        "Los datos enviados no son válidos."
-                    ),
+                    "error": "Los datos enviados no son válidos.",
                 },
                 status=400,
             )
@@ -609,11 +515,11 @@ def detalle(request, pk):
     filas = []
 
     for item in items:
-        cotizaciones = []
-
         ofertas_item = list(
             item.cotizaciones_proveedor.all()
         )
+
+        cotizaciones = []
 
         for oferta in ofertas_item:
             oferta.item = item
@@ -621,18 +527,15 @@ def detalle(request, pk):
             cotizaciones.append({
                 **_datos(oferta, CAMPOS_OFERTA),
                 "id": oferta.pk,
-                "elegida": oferta.estado == "GANADORA",
                 "total": oferta.costo_requerimiento,
             })
 
         filas.append({
             **_datos(item, CAMPOS_ITEM),
             "id": item.pk,
-            "revision": _revision(item, ofertas_item),
-            "estado": item.get_estado_abastecimiento_display(),
-            "clase_estado": item.clase_estado,
-            "comprado": (
-                item.estado_abastecimiento == "COMPRADO"
+            "revision": _revision(
+                item,
+                ofertas_item,
             ),
             "ofertas": cotizaciones,
         })
@@ -659,20 +562,6 @@ def detalle(request, pk):
         for clave, permiso in permisos_modelo.items()
     }
 
-    usados = {
-        oferta["proveedor"]
-        for fila in filas
-        for oferta in fila["ofertas"]
-    }
-
-    proveedores = (
-        Proveedor.objects.filter(activo=True)
-        | Proveedor.objects.filter(pk__in=usados)
-    ).order_by(
-        "empresa",
-        "nombre_contacto",
-    )
-
     return render(
         request,
         "cotizaciones/torre/mesa.html",
@@ -682,21 +571,9 @@ def detalle(request, pk):
             mesa={
                 "filas": filas,
                 "permisos": permisos,
-                "proveedores": [
-                    [
-                        proveedor.pk,
-                        (
-                            proveedor.empresa
-                            or proveedor.nombre_contacto
-                            or str(proveedor.pk)
-                        ),
-                        proveedor.activo,
-                    ]
-                    for proveedor in proveedores
-                ],
-                "unidades": ItemSolicitudCotizacion.UNIDADES,
-                "lados": ItemSolicitudCotizacion.LADOS,
-                "posiciones": ItemSolicitudCotizacion.POSICIONES,
+                "resaltados": (
+                    ItemSolicitudCotizacion.RESALTADOS
+                ),
             },
         ),
     )

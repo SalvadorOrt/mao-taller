@@ -1,4 +1,4 @@
-"""Formularios de la torre de control de repuestos."""
+"""Formularios simplificados de la torre de control de repuestos."""
 
 from django import forms
 from django.core.exceptions import (
@@ -7,11 +7,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db import transaction
-from django.db.models import Max, Q
-from django.utils import timezone
 
-from compras.models import Proveedor
-from inventario.models import CodigoProducto, Producto
 from ordenes_de_trabajo.models import OrdenTrabajo, Sucursal
 
 from .models import (
@@ -28,13 +24,18 @@ from .models import (
 
 def obtener_sucursal_operativa(usuario, sucursal_activa_id=None):
     """
-    Usa la sucursal elegida desde el dashboard.
+    Recupera la sucursal elegida desde el dashboard.
 
-    Los usuarios globales pueden operar sin sucursal personal.
-    Los usuarios normales quedan limitados a su sucursal.
+    Los usuarios normales operan en su sucursal.
+    El superusuario y los usuarios con permiso especial
+    pueden utilizar otra sucursal activa.
     """
 
-    if not usuario or not usuario.is_authenticated or not usuario.is_active:
+    if (
+        not usuario
+        or not usuario.is_authenticated
+        or not usuario.is_active
+    ):
         raise PermissionDenied(
             "Debes iniciar sesión con un usuario activo."
         )
@@ -70,7 +71,10 @@ def obtener_sucursal_operativa(usuario, sucursal_activa_id=None):
             "Selecciona una sucursal desde el dashboard."
         )
 
-    if not puede_cambiar and sucursal_id != sucursal_personal_id:
+    if (
+        not puede_cambiar
+        and sucursal_id != sucursal_personal_id
+    ):
         raise PermissionDenied(
             "No tienes permiso para cambiar de sucursal."
         )
@@ -113,6 +117,33 @@ def _validar_solicitud_abierta(solicitud):
         raise ValidationError(
             "La solicitud o su orden de trabajo está cancelada."
         )
+
+
+def _item_en_sucursal(item_id, sucursal):
+    try:
+        return (
+            ItemSolicitudCotizacion.objects
+            .select_related(
+                "solicitud__orden",
+                "solicitud__sucursal",
+            )
+            .get(
+                pk=item_id,
+                solicitud__sucursal_id=sucursal.pk,
+                solicitud__orden__sucursal_id=sucursal.pk,
+            )
+        )
+
+    except ItemSolicitudCotizacion.DoesNotExist:
+        raise PermissionDenied(
+            "El repuesto no pertenece a tu sucursal operativa."
+        ) from None
+
+
+def _titulo_de_orden(orden):
+    return str(
+        orden.placa or orden.numero_orden
+    ).strip()
 
 
 # =========================================================
@@ -176,7 +207,10 @@ class FormularioTorreMixin:
                     else NON_FIELD_ERRORS
                 )
 
-                errores.setdefault(destino, []).extend(mensajes)
+                errores.setdefault(
+                    destino,
+                    [],
+                ).extend(mensajes)
 
             error = ValidationError(errores)
 
@@ -187,7 +221,7 @@ class FormularioTorreMixin:
 
 
 # =========================================================
-# SOLICITUD DE COTIZACIÓN
+# SOLICITUD
 # =========================================================
 
 class SolicitudCotizacionForm(
@@ -200,20 +234,11 @@ class SolicitudCotizacionForm(
         fields = [
             "orden",
             "tipo_trabajo",
-            "titulo",
-            "urgente",
-            "observacion",
         ]
 
         labels = {
             "orden": "Orden de trabajo",
             "tipo_trabajo": "Área de trabajo",
-        }
-
-        widgets = {
-            "observacion": forms.Textarea(
-                attrs={"rows": 3}
-            ),
         }
 
     def __init__(
@@ -256,10 +281,19 @@ class SolicitudCotizacionForm(
             self.fields["orden"].disabled = True
 
         else:
+            self.fields["orden"].queryset = (
+                self.fields["orden"].queryset.filter(
+                    estado="ABIERTA",
+                )
+            )
+
             self.instance.sucursal = self.sucursal_operativa
             self.instance.creada_por = usuario
 
-            self.initial.setdefault("tipo_trabajo", "")
+            self.initial.setdefault(
+                "tipo_trabajo",
+                "",
+            )
 
         self.aplicar_estilos()
 
@@ -290,6 +324,9 @@ class SolicitudCotizacionForm(
                 "La orden debe pertenecer a tu sucursal operativa.",
             )
 
+        if orden:
+            self.instance.titulo = _titulo_de_orden(orden)
+
         self.instance.sucursal = self.sucursal_operativa
 
         return datos
@@ -314,6 +351,7 @@ class SolicitudCotizacionForm(
             objeto.creada_por = self.usuario
 
         objeto.sucursal = sucursal
+        objeto.titulo = _titulo_de_orden(objeto.orden)
 
         if commit:
             objeto.save()
@@ -323,7 +361,7 @@ class SolicitudCotizacionForm(
 
 
 # =========================================================
-# REPUESTO SOLICITADO
+# REPUESTO
 # =========================================================
 
 class ItemSolicitudCotizacionForm(
@@ -334,35 +372,33 @@ class ItemSolicitudCotizacionForm(
         model = ItemSolicitudCotizacion
 
         fields = [
-            "producto_rel",
-            "codigo_producto_rel",
             "descripcion_solicitada",
-            "codigo_referencia",
-            "codigo_barras",
-            "marca_referencia",
-            "categoria_referencia",
             "cantidad",
-            "unidad",
-            "medida_solicitada",
-            "lado",
-            "posicion",
-            "observacion",
+            "resaltado",
             "orden_item",
         ]
 
         labels = {
-            "producto_rel": "Producto del catálogo (opcional)",
-            "codigo_producto_rel": "Código del producto (opcional)",
-            "descripcion_solicitada": "Repuesto solicitado",
-            "marca_referencia": "Marca de referencia",
-            "categoria_referencia": "Categoría de referencia",
-            "orden_item": "Orden en la lista",
+            "descripcion_solicitada": "Repuesto",
+            "cantidad": "Cantidad",
         }
 
         widgets = {
-            "observacion": forms.Textarea(
-                attrs={"rows": 3}
+            "descripcion_solicitada": forms.TextInput(
+                attrs={
+                    "placeholder": "Escribe el repuesto",
+                }
             ),
+
+            "cantidad": forms.NumberInput(
+                attrs={
+                    "min": 1,
+                    "step": 1,
+                }
+            ),
+
+            "resaltado": forms.HiddenInput(),
+            "orden_item": forms.HiddenInput(),
         }
 
     def __init__(
@@ -395,69 +431,6 @@ class ItemSolicitudCotizacionForm(
 
         self.instance.solicitud = self.solicitud
 
-        self.fields["producto_rel"].queryset = (
-            Producto.objects.all()
-        )
-
-        self.fields["codigo_producto_rel"].queryset = (
-            CodigoProducto.objects.none()
-        )
-
-        for nombre, opciones in [
-            ("unidad", ItemSolicitudCotizacion.UNIDADES),
-            ("lado", ItemSolicitudCotizacion.LADOS),
-            ("posicion", ItemSolicitudCotizacion.POSICIONES),
-        ]:
-            self.fields[nombre].choices = [
-                ("", "Selecciona una opción"),
-            ] + [
-                opcion
-                for opcion in opciones
-                if opcion[0] != "POR_DEFINIR"
-            ]
-
-            if not self.instance.pk:
-                self.initial.setdefault(nombre, "")
-
-        if self.instance.estado_abastecimiento == "COMPRADO":
-            producto_id = self.instance.producto_rel_id
-
-        else:
-            producto_id = (
-                self.data.get(
-                    self.add_prefix("producto_rel")
-                )
-                if self.is_bound
-                else self.initial.get(
-                    "producto_rel",
-                    self.instance.producto_rel_id,
-                )
-            )
-
-        if hasattr(producto_id, "pk"):
-            producto_id = producto_id.pk
-
-        try:
-            producto_id = int(producto_id)
-
-        except (TypeError, ValueError):
-            producto_id = None
-
-        if producto_id:
-            self.fields["codigo_producto_rel"].queryset = (
-                CodigoProducto.objects.filter(
-                    producto_id=producto_id,
-                )
-            )
-
-        if self.instance.estado_abastecimiento == "COMPRADO":
-            for nombre, campo in self.fields.items():
-                if nombre not in {
-                    "observacion",
-                    "orden_item",
-                }:
-                    campo.disabled = True
-
         self.aplicar_estilos()
 
     def clean(self):
@@ -468,24 +441,14 @@ class ItemSolicitudCotizacionForm(
             self.sucursal_activa_id,
         )
 
-        _validar_solicitud_abierta(
-            _solicitud_en_sucursal(
-                self.solicitud.pk,
-                sucursal,
-            )
+        self.solicitud = _solicitud_en_sucursal(
+            self.solicitud.pk,
+            sucursal,
         )
 
-        producto = datos.get("producto_rel")
-        codigo = datos.get("codigo_producto_rel")
+        _validar_solicitud_abierta(self.solicitud)
 
-        if codigo and (
-            not producto
-            or codigo.producto_id != producto.pk
-        ):
-            self.add_error(
-                "codigo_producto_rel",
-                "El código debe pertenecer al producto elegido.",
-            )
+        self.instance.solicitud = self.solicitud
 
         return datos
 
@@ -512,72 +475,48 @@ class ItemSolicitudCotizacionForm(
 
 
 # =========================================================
-# OFERTA DEL PROVEEDOR
+# COSTO DEL PROVEEDOR
 # =========================================================
 
 class CotizacionProveedorForm(
     FormularioTorreMixin,
     forms.ModelForm,
 ):
-    disponible = forms.TypedChoiceField(
-        label="Disponibilidad",
-        choices=[
-            ("", "Por confirmar"),
-            ("SI", "Disponible"),
-            ("NO", "No disponible"),
-        ],
-        coerce=lambda valor: {
-            "SI": True,
-            "NO": False,
-        }[valor],
-        empty_value=None,
-        required=False,
-    )
-
     class Meta:
         model = CotizacionProveedor
 
         fields = [
-            "proveedor",
             "nombre_proveedor",
-            "tipo_proveedor",
-            "precio",
             "marca_ofertada",
-            "medida_ofertada",
-            "presentacion",
-            "unidades_por_presentacion",
-            "contenido_presentacion",
-            "tratamiento_iva",
-            "porcentaje_iva",
-            "disponible",
-            "tiempo_entrega",
-            "calidad_referencial",
-            "observacion",
+            "precio",
         ]
 
         labels = {
             "nombre_proveedor": "Proveedor",
-            "precio": "Costo por presentación",
-            "unidades_por_presentacion": (
-                "Equivalencia con la unidad solicitada"
-            ),
-            "tratamiento_iva": "IVA del precio ofrecido",
-            "calidad_referencial": "Calidad referencial (1 a 5)",
+            "marca_ofertada": "Marca (opcional)",
+            "precio": "Costo unitario final",
         }
 
         widgets = {
-            "proveedor": forms.HiddenInput(),
-
             "nombre_proveedor": forms.TextInput(
                 attrs={
                     "placeholder": "Escribe el proveedor",
                     "autocomplete": "off",
-                    "maxlength": 200,
                 }
             ),
 
-            "observacion": forms.Textarea(
-                attrs={"rows": 3}
+            "marca_ofertada": forms.TextInput(
+                attrs={
+                    "placeholder": "Marca (opcional)",
+                }
+            ),
+
+            "precio": forms.NumberInput(
+                attrs={
+                    "min": 0,
+                    "step": "0.01",
+                    "placeholder": "0.00",
+                }
             ),
         }
 
@@ -596,20 +535,8 @@ class CotizacionProveedorForm(
             sucursal_activa_id,
         )
 
-        try:
-            self.item = (
-                ItemSolicitudCotizacion.objects
-                .select_related("solicitud")
-                .get(pk=item.pk)
-            )
-
-        except ItemSolicitudCotizacion.DoesNotExist:
-            raise PermissionDenied(
-                "El repuesto no existe."
-            ) from None
-
-        _solicitud_en_sucursal(
-            self.item.solicitud_id,
+        self.item = _item_en_sucursal(
+            item.pk,
             self.sucursal_operativa,
         )
 
@@ -623,32 +550,12 @@ class CotizacionProveedorForm(
 
         self.instance.item = self.item
 
-        proveedores = Q(activo=True)
-
-        if self.instance.pk:
-            proveedores |= Q(
-                pk=self.instance.proveedor_id,
-            )
-
-            self.fields["proveedor"].disabled = True
-            self.fields["nombre_proveedor"].disabled = True
-
-            self.initial["disponible"] = {
-                True: "SI",
-                False: "NO",
-                None: "",
-            }[self.instance.disponible]
-
-        self.fields["proveedor"].queryset = (
-            Proveedor.objects
-            .filter(proveedores)
-            .order_by(
-                "empresa",
-                "nombre_contacto",
-            )
-        )
-
         self.aplicar_estilos()
+
+    def clean_nombre_proveedor(self):
+        return " ".join(
+            self.cleaned_data["nombre_proveedor"].split()
+        )
 
     def clean(self):
         datos = super().clean()
@@ -658,41 +565,16 @@ class CotizacionProveedorForm(
             self.sucursal_activa_id,
         )
 
-        solicitud = _solicitud_en_sucursal(
-            self.item.solicitud_id,
+        self.item = _item_en_sucursal(
+            self.item.pk,
             sucursal,
         )
 
-        _validar_solicitud_abierta(solicitud)
-
-        actual = ItemSolicitudCotizacion.objects.get(
-            pk=self.item.pk,
+        _validar_solicitud_abierta(
+            self.item.solicitud,
         )
 
-        if actual.estado_abastecimiento == "COMPRADO":
-            raise ValidationError(
-                "Las ofertas de un repuesto comprado quedan bloqueadas."
-            )
-
-        hay_respuesta = (
-            datos.get("precio") is not None
-            or datos.get("disponible") is not None
-            or bool(datos.get("marca_ofertada"))
-            or bool(datos.get("medida_ofertada"))
-            or bool(datos.get("tiempo_entrega"))
-        )
-
-        if (
-            hay_respuesta
-            and self.instance.estado in {
-                "PENDIENTE",
-                "ENVIADA",
-            }
-        ):
-            self.instance.estado = "RESPONDIO"
-
-            if self.instance.fecha_respuesta is None:
-                self.instance.fecha_respuesta = timezone.now()
+        self.instance.item = self.item
 
         return datos
 
@@ -705,15 +587,15 @@ class CotizacionProveedorForm(
         )
 
         with transaction.atomic():
+            item = _item_en_sucursal(
+                self.item.pk,
+                sucursal,
+            )
+
             solicitud = (
                 SolicitudCotizacion.objects
                 .select_for_update()
-                .get(pk=self.item.solicitud_id)
-            )
-
-            _solicitud_en_sucursal(
-                solicitud.pk,
-                sucursal,
+                .get(pk=item.solicitud_id)
             )
 
             _validar_solicitud_abierta(solicitud)
@@ -721,28 +603,11 @@ class CotizacionProveedorForm(
             objeto.item = (
                 ItemSolicitudCotizacion.objects
                 .select_for_update()
-                .get(pk=self.item.pk)
+                .get(
+                    pk=item.pk,
+                    solicitud_id=solicitud.pk,
+                )
             )
-
-            if objeto.item.estado_abastecimiento == "COMPRADO":
-                raise ValidationError(
-                    "Las ofertas de un repuesto comprado quedan bloqueadas."
-                )
-
-            if not objeto.pk:
-                ultimo = (
-                    CotizacionProveedor.objects
-                    .filter(
-                        item_id=objeto.item_id,
-                        proveedor_id=objeto.proveedor_id,
-                    )
-                    .aggregate(
-                        numero=Max("numero_opcion")
-                    )["numero"]
-                    or 0
-                )
-
-                objeto.numero_opcion = ultimo + 1
 
             if commit:
                 objeto.save()
@@ -782,14 +647,8 @@ class FotoItemCotizacionForm(
             sucursal_activa_id,
         )
 
-        self.item = (
-            ItemSolicitudCotizacion.objects
-            .select_related("solicitud")
-            .get(pk=item.pk)
-        )
-
-        _solicitud_en_sucursal(
-            self.item.solicitud_id,
+        self.item = _item_en_sucursal(
+            item.pk,
             self.sucursal_operativa,
         )
 
@@ -813,12 +672,16 @@ class FotoItemCotizacionForm(
             self.sucursal_activa_id,
         )
 
-        _validar_solicitud_abierta(
-            _solicitud_en_sucursal(
-                self.item.solicitud_id,
-                sucursal,
-            )
+        self.item = _item_en_sucursal(
+            self.item.pk,
+            sucursal,
         )
+
+        _validar_solicitud_abierta(
+            self.item.solicitud,
+        )
+
+        self.instance.item = self.item
 
         return datos
 
@@ -830,14 +693,14 @@ class FotoItemCotizacionForm(
             self.sucursal_activa_id,
         )
 
-        _validar_solicitud_abierta(
-            _solicitud_en_sucursal(
-                self.item.solicitud_id,
-                sucursal,
-            )
+        objeto.item = _item_en_sucursal(
+            self.item.pk,
+            sucursal,
         )
 
-        objeto.item = self.item
+        _validar_solicitud_abierta(
+            objeto.item.solicitud,
+        )
 
         if commit:
             objeto.save()

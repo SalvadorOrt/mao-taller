@@ -7,7 +7,11 @@ app_name = "cotizaciones"
 
 
 urlpatterns = [
-    path("", views.lista, name="lista"),
+    path(
+        "",
+        views.lista,
+        name="lista",
+    ),
 
     path(
         "sucursal/",
@@ -45,18 +49,10 @@ urlpatterns = [
         name="item_nuevo",
     ),
 
-   
-
     path(
         "repuestos/<int:pk>/editar/",
         views.item_editar,
         name="item_editar",
-    ),
-
-    path(
-        "repuestos/<int:pk>/comprado/",
-        views.item_comprado,
-        name="item_comprado",
     ),
 
     path(
@@ -66,21 +62,15 @@ urlpatterns = [
     ),
 
     path(
-        "repuestos/<int:item_pk>/fotos/nueva/",
-        views.foto_nueva,
-        name="foto_nueva",
-    ),
-
-    path(
         "ofertas/<int:pk>/editar/",
         views.oferta_editar,
         name="oferta_editar",
     ),
 
     path(
-        "ofertas/<int:pk>/seleccionar/",
-        views.oferta_seleccionar,
-        name="oferta_seleccionar",
+        "repuestos/<int:item_pk>/fotos/nueva/",
+        views.foto_nueva,
+        name="foto_nueva",
     ),
 
     path(

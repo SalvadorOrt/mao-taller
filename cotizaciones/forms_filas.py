@@ -1,3 +1,5 @@
+"""Filas de repuestos adaptadas al modelo simplificado."""
+
 import json
 
 from django import forms
@@ -41,8 +43,10 @@ class FilaRepuestoForm(ItemSolicitudCotizacionForm):
 
     class Meta(ItemSolicitudCotizacionForm.Meta):
         fields = [
-            *ItemSolicitudCotizacionForm.Meta.fields,
+            "descripcion_solicitada",
+            "cantidad",
             "resaltado",
+            "orden_item",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -56,62 +60,6 @@ class FilaRepuestoForm(ItemSolicitudCotizacionForm):
 
         self.initial["revision"] = self.revision_actual
 
-        conservar = {
-            "descripcion_solicitada",
-            "codigo_referencia",
-            "marca_referencia",
-            "cantidad",
-            "unidad",
-            "medida_solicitada",
-            "lado",
-            "posicion",
-            "observacion",
-            "orden_item",
-            "resaltado",
-            "revision",
-        }
-
-        for nombre in list(self.fields):
-            if nombre not in conservar:
-                del self.fields[nombre]
-
-        self.fields["observacion"].widget = forms.Textarea(
-            attrs={
-                "rows": 2,
-            }
-        )
-
-        # El resaltado es una marca visual editable incluso
-        # cuando el repuesto ya está comprado.
-        if self.instance.estado_abastecimiento == "COMPRADO":
-            self.fields["resaltado"].disabled = False
-
-        self.aplicar_estilos()
-
-        self.fields["cantidad"].widget.attrs.update(
-            min=1,
-            step=1,
-        )
-
-        self.fields["orden_item"].widget.attrs.update(
-            min=1,
-            step=1,
-        )
-
-        # Permite mostrar los valores pendientes de los
-        # registros existentes sin cambiar sus datos.
-        for nombre in ("unidad", "lado", "posicion"):
-            campo = self.fields[nombre]
-
-            if (
-                self.instance.pk
-                and getattr(self.instance, nombre) == "POR_DEFINIR"
-            ):
-                campo.choices = [
-                    ("POR_DEFINIR", "Por definir"),
-                    *list(campo.choices),
-                ]
-
 
 # =========================================================
 # VALIDACIÓN DEL CONJUNTO DE FILAS
@@ -121,7 +69,13 @@ class BaseFilasRepuestos(BaseModelFormSet):
     def add_fields(self, form, index):
         super().add_fields(form, index)
 
-        form.fields["id"].queryset = self.queryset
+        # Solo admite identificadores de las filas mostradas
+        # que pertenecen a esta solicitud.
+        form.fields["id"].queryset = (
+            self.get_queryset().filter(
+                solicitud_id=form.solicitud.pk,
+            )
+        )
 
     def clean(self):
         super().clean()
@@ -139,6 +93,18 @@ class BaseFilasRepuestos(BaseModelFormSet):
 
             identificador = datos.get("id")
 
+            recibido_id = form.data.get(
+                form.add_prefix("id")
+            )
+
+            if (
+                recibido_id not in (None, "")
+                and identificador is None
+            ):
+                raise ValidationError(
+                    "Un repuesto no pertenece a estas filas."
+                )
+
             if (
                 identificador
                 and identificador.pk != item.pk
@@ -147,39 +113,36 @@ class BaseFilasRepuestos(BaseModelFormSet):
                     "Un repuesto no pertenece a estas filas."
                 )
 
-            if item.pk:
-                if item.pk in ids:
-                    raise ValidationError(
-                        "Hay un repuesto repetido en el formulario."
-                    )
+            if not item.pk:
+                continue
 
-                ids.add(item.pk)
-
-                recibido = form.data.get(
-                    form.add_prefix("revision"),
-                    "",
+            if item.pk in ids:
+                raise ValidationError(
+                    "Hay un repuesto repetido en el formulario."
                 )
 
-                if not constant_time_compare(
-                    str(recibido),
-                    form.revision_actual,
-                ):
-                    raise ValidationError(
-                        "Otro usuario modificó un repuesto. "
-                        "Recarga la pantalla antes de guardar."
-                    )
+            ids.add(item.pk)
 
-            if datos.get("DELETE") and item.pk:
+            recibido = form.data.get(
+                form.add_prefix("revision"),
+                "",
+            )
+
+            if not constant_time_compare(
+                str(recibido),
+                form.revision_actual,
+            ):
+                raise ValidationError(
+                    "Otro usuario modificó un repuesto. "
+                    "Recarga la pantalla antes de guardar."
+                )
+
+            if datos.get("DELETE"):
                 if not form.usuario.has_perm(
                     "cotizaciones.delete_itemsolicitudcotizacion"
                 ):
                     raise PermissionDenied(
                         "No tienes permiso para eliminar repuestos."
-                    )
-
-                if item.estado_abastecimiento == "COMPRADO":
-                    raise ValidationError(
-                        "No puedes eliminar un repuesto comprado."
                     )
 
                 if (

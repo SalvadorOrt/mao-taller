@@ -1,19 +1,17 @@
 {% extends "cotizaciones/torre/base.html" %}
 
 {% block torre_subheading %}
-    OT {{ solicitud.orden.numero_orden }} ·
-    {{ solicitud.orden.vehiculo }} ·
-    {% if solicitud.tipo_trabajo == "MECANICA" %}
-        Mecánica
-    {% elif solicitud.tipo_trabajo == "MOTOR" %}
-        Reparación de motor
-    {% else %}
-        Enderezado y pintura
-    {% endif %}
+OT {{ solicitud.orden.numero_orden }} ·
+{{ solicitud.orden.vehiculo }} ·
+{{ solicitud.get_tipo_trabajo_display }}
 {% endblock %}
 
 {% block torre_content %}
 <style>
+    #mx-form [hidden] {
+        display: none !important;
+    }
+
     .mx-barra {
         display: flex;
         align-items: center;
@@ -26,30 +24,30 @@
         margin-right: auto;
     }
 
-    .mx-aviso {
-        font-size: 12px;
+    .mx-aviso,
+    .mx-ayuda {
+        font-size: 11px;
         color: #6e6e73;
     }
 
     .mx-scroll {
         overflow: auto;
-        max-height: 72vh;
+        max-height: 70vh;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
         background: #fff;
-        border: 1px solid #e5e5e7;
-        border-radius: 12px;
     }
 
     .mx-tabla {
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        font-size: 12px;
+        font-size: 13px;
     }
 
     .mx-tabla th,
     .mx-tabla td {
-        box-sizing: border-box;
-        padding: 9px;
+        padding: 4px 6px;
         border-right: 1px solid #e9ebef;
         border-bottom: 1px solid #e9ebef;
         vertical-align: top;
@@ -60,8 +58,8 @@
         top: 0;
         z-index: 3;
         background: #f8f9fb;
-        color: #6e6e73;
         text-align: left;
+        color: #6e6e73;
         font-size: 11px;
     }
 
@@ -85,174 +83,166 @@
         position: sticky;
         left: 0;
         z-index: 2;
-        width: 230px;
-        min-width: 230px;
-        background: var(--fila);
+        min-width: 210px;
+        width: 210px;
     }
 
     .mx-tabla th.mx-repuesto {
         z-index: 5;
-        background: #f8f9fb;
     }
 
     .mx-cantidad {
-        width: 90px;
-        min-width: 90px;
+        min-width: 65px;
+        width: 65px;
     }
 
     .mx-proveedor {
-        width: 270px;
-        min-width: 270px;
+        min-width: 180px;
+        width: 180px;
     }
 
-    .mx-estado {
-        width: 115px;
-        min-width: 115px;
-    }
-
-    .mx-tabla input:not([type="checkbox"]),
-    .mx-tabla select {
+    .mx-tabla input {
         box-sizing: border-box;
         width: 100%;
         min-width: 0;
-        padding: 6px;
-        border: 1px solid #d9dde3;
-        border-radius: 7px;
-        background: #fff;
+        min-height: 28px;
+        padding: 4px 5px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: transparent;
         color: #1d1d1f;
         font: inherit;
     }
 
-    .mx-tabla input:focus,
-    .mx-tabla select:focus {
+    .mx-tabla input:hover {
+        border-color: #d9dde3;
+    }
+
+    .mx-tabla input:focus {
         outline: 2px solid #c7e2ff;
         border-color: #0071e3;
+        background: #fff;
     }
 
-    .mx-tabla :disabled {
-        background: #f4f5f7 !important;
-        color: #6e6e73 !important;
+    .mx-tabla input:disabled {
+        color: #6e6e73;
     }
 
-    .mx-repuesto > input {
+    .mx-cantidad input {
+        text-align: center;
+    }
+
+    .mx-tabla input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+
+    .mx-tabla input::-webkit-inner-spin-button,
+    .mx-tabla input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .mx-descripcion,
+    .mx-cab-proveedor {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mx-descripcion > input,
+    .mx-cab-proveedor > input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .mx-cab-proveedor > input {
         font-weight: 600;
+        border-color: #e1e5eb;
+        background: #fff;
     }
 
     .mx-celda {
         display: grid;
-        grid-template-columns:
-            minmax(85px, 1fr)
-            minmax(85px, 1fr)
-            42px;
-        gap: 6px;
-        align-items: start;
+        grid-template-columns: minmax(65px, 1fr) minmax(65px, 1fr);
+        gap: 4px;
+    }
+
+    .mx-celda input[type="number"] {
+        text-align: right;
     }
 
     .mx-etiquetas {
-        margin-top: 8px;
+        padding: 3px 5px 1px;
         font-size: 10px;
+        font-weight: normal;
     }
 
-    .mx-oferta {
-        margin-bottom: 5px;
-        padding: 3px 0 7px;
-    }
-
-    .mx-oferta.elegida {
-        padding-left: 6px;
-        box-shadow: inset 3px 0 #31a36a;
-    }
-
-    .mx-elegir {
-        display: flex;
-        justify-content: center;
-        padding-top: 8px;
-    }
-
-    .mx-total {
-        display: block;
+    .mx-oferta + .mx-oferta {
         margin-top: 4px;
-        color: #6e6e73;
-        font-size: 10px;
-    }
-
-    .mx-tabla details {
-        margin-top: 5px;
-    }
-
-    .mx-tabla summary {
-        width: fit-content;
-        color: #0071e3;
-        font-size: 10px;
-        cursor: pointer;
-    }
-
-    .mx-opciones {
-        display: grid;
-        gap: 6px;
-        margin-top: 6px;
-    }
-
-    .mx-opciones label {
-        color: #6e6e73;
-        font-size: 10px;
-    }
-
-    .mx-opciones label > * {
-        margin-top: 3px;
-    }
-
-    .mx-link {
-        padding: 4px 0;
-        border: 0;
-        background: transparent;
-        color: #0071e3;
-        font: inherit;
-        font-size: 10px;
-        cursor: pointer;
     }
 
     .mx-quitar {
-        color: #bc3030;
+        padding: 2px 4px;
+        border: 0;
+        background: transparent;
+        color: #b74646;
+        cursor: pointer;
+        font-size: 17px;
     }
 
-    .mx-badge {
-        display: block;
-        margin-bottom: 6px;
-        color: #6e6e73;
-        font-size: 10px;
+    .mx-color {
+        display: grid;
+        place-items: center;
+        flex: 0 0 22px;
+        width: 22px;
+        height: 26px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
     }
 
-    .mx-comprado {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        margin-top: 9px;
-        font-size: 10px;
+    .mx-color::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        border: 1px solid #b9c0ca;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .mx-color[data-color="ATENCION"]::before {
+        background: #ffe08a;
+        border-color: #bc8d20;
+    }
+
+    .mx-color[data-color="URGENTE"]::before {
+        background: #f39ea0;
+        border-color: #cc5558;
+    }
+
+    .mx-color:focus-visible,
+    .mx-quitar:focus-visible {
+        outline: 2px solid #0071e3;
     }
 
     .mx-pie-tabla {
         display: flex;
         justify-content: flex-start;
-        padding: 12px 0;
+        padding: 10px 0;
     }
 
     .mx-ayuda {
-        margin: 8px 0;
-        color: #6e6e73;
-        font-size: 11px;
+        margin: 4px 0;
     }
 
     .mx-error {
         white-space: pre-wrap;
     }
-
-    .mx-error[hidden] {
-        display: none;
-    }
 </style>
 
-<form id="mx-form">
+<form id="mx-form" method="post" autocomplete="off">
     {% csrf_token %}
 
     <div class="mx-barra">
@@ -260,7 +250,11 @@
             ← Vehículos en taller
         </a>
 
-        <span id="mx-aviso" class="mx-aviso"></span>
+        <span
+            id="mx-aviso"
+            class="mx-aviso"
+            aria-live="polite"
+        ></span>
 
         <button
             type="button"
@@ -287,7 +281,10 @@
     ></div>
 
     <div class="mx-scroll" id="mx-scroll">
-        <table class="mx-tabla">
+        <table
+            class="mx-tabla"
+            aria-label="Repuestos y costos por proveedor"
+        >
             <thead id="mx-cabecera"></thead>
             <tbody id="mx-filas"></tbody>
         </table>
@@ -304,11 +301,9 @@
     </div>
 
     <p class="mx-ayuda">
-        Escribe el proveedor en la cabecera.
-        Los costos nuevos se ingresan por unidad solicitada
-        y con IVA incluido.
-        «Elegir disponible» confirma la disponibilidad.
-        Tab avanza; Enter baja a la siguiente fila.
+        Costo unitario final con IVA incluido.
+        Tab avanza; Enter baja.
+        El punto cambia el resaltado: normal, atención o urgente.
     </p>
 </form>
 
@@ -326,38 +321,35 @@
 
     const filas = datos.filas;
     const permisos = datos.permisos;
+    const resaltados = datos.resaltados;
+
     const columnas = [];
     const celdas = new WeakMap();
 
     const form = document.getElementById("mx-form");
     const cabecera = document.getElementById("mx-cabecera");
     const cuerpo = document.getElementById("mx-filas");
+    const scroll = document.getElementById("mx-scroll");
     const aviso = document.getElementById("mx-aviso");
     const error = document.getElementById("mx-error");
     const guardar = document.getElementById("mx-guardar");
     const agregarFila = document.getElementById("mx-repuesto");
     const agregarProveedor = document.getElementById("mx-proveedor");
 
-    const impuestos = [
-        ["INCLUIDO", "IVA incluido"],
-        ["ADICIONAL", "Más IVA"],
-        ["SIN_IVA", "No aplica IVA"],
-        ["POR_DEFINIR", "IVA por confirmar"],
-    ];
-
     let secuencia = 0;
     let pendiente = false;
     let enviando = false;
 
     function el(tag, clase = "", texto) {
-        const elemento = document.createElement(tag);
-        elemento.className = clase;
+        const nodo = document.createElement(tag);
+
+        nodo.className = clase;
 
         if (texto !== undefined) {
-            elemento.textContent = texto;
+            nodo.textContent = texto;
         }
 
-        return elemento;
+        return nodo;
     }
 
     function cambio() {
@@ -365,345 +357,171 @@
         aviso.textContent = "Cambios sin guardar";
     }
 
-    function mensaje(texto) {
+    function mensaje(texto, control) {
         error.textContent = texto;
         error.hidden = false;
+        control?.focus();
     }
 
-    function boton(texto, accion, clase = "") {
-        const elemento = el(
-            "button",
-            "mx-link " + clase,
-            texto
-        );
-
-        elemento.type = "button";
-        elemento.onclick = accion;
-
-        return elemento;
-    }
-
-    function entrada(
-        objeto,
-        nombre,
-        etiqueta,
-        opciones = null,
-        editable = true,
-        tipo = "text",
-        accion = () => {}
-    ) {
-        const elemento = el(opciones ? "select" : "input");
-
-        if (opciones) {
-            for (const [valor, texto] of opciones) {
-                const opcion = el("option", "", texto);
-                opcion.value = valor;
-                elemento.append(opcion);
-            }
-        } else {
-            elemento.type = tipo;
-
-            if (tipo === "number") {
-                elemento.min = nombre === "cantidad" ? "1" : "0";
-                elemento.step = nombre === "cantidad" ? "1" : "0.01";
-            }
-        }
-
-        elemento.value = objeto[nombre] ?? "";
-        elemento.disabled = !editable;
-        elemento.setAttribute("aria-label", etiqueta);
-
-        elemento.addEventListener(
-            opciones ? "change" : "input",
-            () => {
-                objeto[nombre] = elemento.value;
-                cambio();
-                accion(elemento);
-            }
-        );
-
-        return elemento;
-    }
-
-    function campo(contenedor, texto, control) {
-        const etiqueta = el("label", "", texto);
-        etiqueta.append(control);
-        contenedor.append(etiqueta);
-    }
-
-    function detalles(texto, contenedor) {
-        const bloque = el("details");
-        const interior = el("div", "mx-opciones");
-
-        bloque.append(
-            el("summary", "", texto),
-            interior
-        );
-
-        contenedor.append(bloque);
-
-        return interior;
-    }
-
-    function puedeOferta(fila, oferta) {
-        return !fila._bloqueada && (
-            oferta.id
-                ? permisos.editar_oferta
-                : permisos.agregar_oferta
-        );
-    }
-
-    function normalizarNombre(nombre) {
-        return (nombre || "")
+    function normalizar(nombre) {
+        return String(nombre || "")
             .trim()
             .replace(/\s+/g, " ")
             .toLocaleLowerCase("es");
     }
 
-    function mismaColumna(oferta, columna) {
-        if (columna.proveedor) {
-            return (
-                String(oferta.proveedor || "") ===
-                columna.proveedor
-            );
-        }
-
-        return (
-            !oferta.proveedor &&
-            normalizarNombre(oferta.nombre_proveedor) ===
-            normalizarNombre(columna.nombre)
-        );
+    function puedeItem(fila) {
+        return fila.id
+            ? permisos.editar_item
+            : permisos.agregar_item;
     }
 
-    function nuevaColumna(proveedor = "", nombre = "") {
-        const id = proveedor ? String(proveedor) : "";
+    function puedeOferta(oferta) {
+        return oferta.id
+            ? permisos.editar_oferta
+            : permisos.agregar_oferta;
+    }
 
+    function entrada(
+        objeto,
+        campo,
+        etiqueta,
+        editable,
+        tipo = "text"
+    ) {
+        const input = el("input");
+
+        input.type = tipo;
+        input.value = objeto[campo] ?? "";
+        input.disabled = !editable;
+        input.setAttribute("aria-label", etiqueta);
+
+        if (tipo === "number") {
+            input.min = campo === "cantidad" ? "1" : "0";
+            input.step = campo === "cantidad" ? "1" : "0.01";
+            input.inputMode = campo === "cantidad"
+                ? "numeric"
+                : "decimal";
+        }
+
+        input.addEventListener("input", () => {
+            objeto[campo] = input.value;
+            cambio();
+        });
+
+        return input;
+    }
+
+    function foco(input, fila, columna, campo) {
+        input.dataset.fila = String(fila._uid);
+        input.dataset.col = columna
+            ? String(columna.clave)
+            : "item";
+        input.dataset.campo = campo;
+
+        return input;
+    }
+
+    function botonQuitar(accion, etiqueta) {
+        const boton = el("button", "mx-quitar", "×");
+
+        boton.type = "button";
+        boton.title = etiqueta;
+        boton.setAttribute("aria-label", etiqueta);
+        boton.addEventListener("click", accion);
+
+        return boton;
+    }
+
+    function nuevaColumna(nombre = "") {
         return {
             clave: ++secuencia,
-            proveedor: id,
-            nombre: nombre || datos.proveedores.find(
-                p => String(p[0]) === id
-            )?.[1] || "",
-            iva: "INCLUIDO",
-            porcentaje: "",
+            nombre,
             guardada: false,
         };
     }
 
     function nuevaFila() {
-        return {
+        const fila = {
             id: null,
             revision: "",
             _uid: ++secuencia,
-            _bloqueada: false,
             descripcion_solicitada: "",
             cantidad: 1,
-            unidad: "UNIDAD",
-            lado: "NO_APLICA",
-            posicion: "NO_APLICA",
-            codigo_referencia: "",
-            marca_referencia: "",
-            medida_solicitada: "",
-            observacion: "",
             resaltado: "NORMAL",
-            comprado: false,
             ofertas: [],
         };
+
+        celdas.set(fila, new Map());
+
+        return fila;
     }
 
     function ofertasDe(fila, columna) {
-        if (!columna.nombre.trim()) {
-            return [];
-        }
-
-        if (!celdas.has(fila)) {
-            celdas.set(fila, new Map());
-        }
-
         const mapa = celdas.get(fila);
 
         if (!mapa.has(columna.clave)) {
-            const existentes = fila.ofertas.filter(
-                oferta => mismaColumna(oferta, columna)
-            );
-
-            mapa.set(
-                columna.clave,
-                existentes.length ? existentes : [{
+            mapa.set(columna.clave, [
+                {
                     id: null,
-                    proveedor: columna.proveedor || null,
-                    nombre_proveedor: columna.proveedor
-                        ? ""
-                        : columna.nombre.trim(),
-                    precio: "",
+                    nombre_proveedor: columna.nombre,
                     marca_ofertada: "",
-                    medida_ofertada: "",
-                    presentacion: fila.unidad,
-                    unidades_por_presentacion:
-                        fila.unidad === "POR_DEFINIR" ? "" : "1",
-                    tratamiento_iva: "INCLUIDO",
-                    porcentaje_iva: "",
-                    disponible: "",
-                    tiempo_entrega: "",
-                    observacion: "",
-                    elegida: false,
-                    total: null,
-                }]
-            );
+                    precio: "",
+                },
+            ]);
         }
 
         return mapa.get(columna.clave);
     }
 
-    function todasOfertas(fila) {
-        return columnas.flatMap(
-            columna => ofertasDe(fila, columna)
-        );
-    }
-
-    function tieneDatos(oferta) {
-        return oferta.id ||
-            (
-                oferta.precio !== "" &&
-                oferta.precio !== null
-            ) ||
-            oferta.marca_ofertada ||
-            oferta.medida_ofertada ||
-            oferta.observacion ||
-            oferta.tiempo_entrega ||
-            oferta.disponible ||
-            oferta.elegida;
-    }
-
-    function fijo(valor, decimales) {
-        const texto = String(valor ?? "").trim();
-
-        if (
-            texto.length > 40 ||
-            !/^\d+(\.\d+)?$/.test(texto)
-        ) {
-            return null;
-        }
-
-        const [entero, fraccion = ""] = texto.split(".");
-
-        if (fraccion.length > decimales) {
-            return null;
-        }
-
+    function tieneCosto(oferta) {
         return (
-            BigInt(entero) * 10n ** BigInt(decimales) +
-            BigInt(fraccion.padEnd(decimales, "0") || "0")
+            String(oferta.precio ?? "").trim() !== "" ||
+            String(oferta.marca_ofertada || "").trim() !== ""
         );
     }
 
-    function costoTotal(fila, oferta) {
-        const precio = fijo(oferta.precio, 2);
-        const cantidad = fijo(fila.cantidad, 0);
-        const factor = fijo(
-            oferta.unidades_por_presentacion,
-            4
-        );
-
-        if (precio === null) return "—";
-        if (!cantidad) return "Cantidad pendiente";
-
-        if (
-            !factor ||
-            fila.unidad === "POR_DEFINIR" ||
-            oferta.presentacion === "POR_DEFINIR"
-        ) {
-            return "Unidad pendiente";
-        }
-
-        if (
-            fila.medida_solicitada &&
-            fila.medida_solicitada.trim().toUpperCase() !==
-                (oferta.medida_ofertada || "").trim().toUpperCase()
-        ) {
-            return "Revisar medida";
-        }
-
-        let iva = 0n;
-
-        if (oferta.tratamiento_iva === "ADICIONAL") {
-            iva = fijo(oferta.porcentaje_iva, 2);
-
-            if (iva === null || iva > 10000n) {
-                return "IVA pendiente";
-            }
-        } else if (
-            !["INCLUIDO", "SIN_IVA"].includes(
-                oferta.tratamiento_iva
+    function ofertasParaGuardar(fila) {
+        return columnas
+            .flatMap(columna => ofertasDe(fila, columna))
+            .filter(oferta =>
+                oferta.id ||
+                (
+                    permisos.agregar_oferta &&
+                    (
+                        normalizar(oferta.nombre_proveedor) ||
+                        tieneCosto(oferta)
+                    )
+                )
             )
-        ) {
-            return "IVA pendiente";
-        }
-
-        const paquetes = (
-            cantidad * 10000n + factor - 1n
-        ) / factor;
-
-        const centavos = (
-            precio * paquetes * (10000n + iva) + 5000n
-        ) / 10000n;
-
-        return "$ " +
-            (centavos / 100n).toString().replace(
-                /\B(?=(\d{3})+(?!\d))/g,
-                ","
-            ) +
-            "." +
-            (centavos % 100n).toString().padStart(2, "0");
+            .map(oferta => ({
+                id: oferta.id ?? null,
+                nombre_proveedor: oferta.nombre_proveedor,
+                marca_ofertada: oferta.marca_ofertada || "",
+                precio: oferta.precio ?? "",
+            }));
     }
 
-    function refrescarTotales() {
-        cuerpo.querySelectorAll(
-            "[data-total]"
-        ).forEach(elemento => {
-            elemento.textContent = "Total: " +
-                costoTotal(
-                    elemento._fila,
-                    elemento._oferta
-                );
-        });
+    function actualizarResaltado(fila, tr, boton) {
+        tr.className = fila.resaltado === "URGENTE"
+            ? "urgente"
+            : fila.resaltado === "ATENCION"
+                ? "atencion"
+                : "";
 
-        cuerpo.querySelectorAll(
-            "[data-stock]"
-        ).forEach(elemento => {
-            const disponible = elemento._oferta.disponible;
+        boton.dataset.color = fila.resaltado;
 
-            elemento.textContent = disponible === "SI"
-                ? "Disponible"
-                : disponible === "NO"
-                    ? "No disponible"
-                    : "Stock por confirmar";
-        });
+        const indice = resaltados.findIndex(
+            opcion => opcion[0] === fila.resaltado
+        );
 
-        cuerpo.querySelectorAll(
-            "[data-elegida]"
-        ).forEach(elemento => {
-            elemento.checked = !!elemento._oferta.elegida;
+        const actual = resaltados[indice]?.[1] || "Normal";
+        const siguiente = resaltados[
+            (indice + 1) % resaltados.length
+        ][1];
 
-            elemento.closest(
-                ".mx-oferta"
-            ).classList.toggle(
-                "elegida",
-                !!elemento._oferta.elegida
-            );
-        });
-    }
-
-    function foco(elemento, fila, columna, nombre) {
-        elemento.dataset.fila = String(fila._uid);
-
-        elemento.dataset.col = columna
-            ? String(columna.clave)
-            : "item";
-
-        elemento.dataset.campo = nombre;
-
-        return elemento;
+        boton.title = actual + ". Cambiar a " + siguiente;
+        boton.setAttribute("aria-label", boton.title);
     }
 
     function dibujarCabecera() {
@@ -713,47 +531,42 @@
 
         tr.append(
             el("th", "mx-repuesto", "Repuesto"),
-            el("th", "mx-cantidad", "Cantidad")
+            el("th", "mx-cantidad", "Cant.")
         );
 
         for (const columna of columnas) {
             const th = el("th", "mx-proveedor");
+            const linea = el("div", "mx-cab-proveedor");
+
+            const editable = columna.guardada
+                ? permisos.editar_oferta
+                : permisos.agregar_oferta;
 
             const nombre = entrada(
                 columna,
                 "nombre",
                 "Nombre del proveedor",
-                null,
-                !columna.guardada && permisos.agregar_oferta,
-                "text",
-                () => {
-                    for (const fila of filas) {
-                        const ofertas = celdas.get(fila)?.get(
-                            columna.clave
-                        ) || [];
-
-                        for (const oferta of ofertas) {
-                            if (!oferta.id) {
-                                oferta.nombre_proveedor =
-                                    columna.nombre.trim();
-                            }
-                        }
-                    }
-
-                    dibujarCuerpo();
-                }
+                editable
             );
 
             nombre.placeholder = "Escribe el proveedor";
             nombre.maxLength = 200;
-            nombre.autocomplete = "off";
 
-            th.append(nombre);
+            columna._input = nombre;
 
-            if (!columna.guardada) {
-                th.append(boton(
-                    "Quitar columna",
-                    () => {
+            nombre.addEventListener("input", () => {
+                for (const fila of filas) {
+                    for (const oferta of ofertasDe(fila, columna)) {
+                        oferta.nombre_proveedor = columna.nombre;
+                    }
+                }
+            });
+
+            linea.append(nombre);
+
+            if (!columna.guardada && permisos.agregar_oferta) {
+                linea.append(
+                    botonQuitar(() => {
                         columnas.splice(
                             columnas.indexOf(columna),
                             1
@@ -761,9 +574,8 @@
 
                         cambio();
                         dibujar();
-                    },
-                    "mx-quitar"
-                ));
+                    }, "Quitar columna nueva")
+                );
             }
 
             const etiquetas = el(
@@ -773,489 +585,140 @@
 
             etiquetas.append(
                 el("span", "", "Marca"),
-                el("span", "", "Costo"),
-                el("span", "", "Elegir disponible")
+                el("span", "", "Costo")
             );
 
-            th.append(etiquetas);
+            th.append(linea, etiquetas);
             tr.append(th);
         }
 
-        tr.append(
-            el("th", "mx-estado", "Estado / resaltado")
-        );
-
         cabecera.append(tr);
-    }
-
-    function dibujarOferta(fila, columna, oferta, td) {
-        const editable = puedeOferta(fila, oferta);
-        const caja = el("div", "mx-oferta");
-        const grid = el("div", "mx-celda");
-
-        caja.append(grid);
-        td.append(caja);
-
-        const marca = foco(
-            entrada(
-                oferta,
-                "marca_ofertada",
-                "Marca del repuesto",
-                null,
-                editable,
-                "text",
-                refrescarTotales
-            ),
-            fila,
-            columna,
-            "marca_ofertada"
-        );
-
-        const costo = el("div");
-
-        const precio = foco(
-            entrada(
-                oferta,
-                "precio",
-                "Costo del repuesto",
-                null,
-                editable,
-                "number",
-                refrescarTotales
-            ),
-            fila,
-            columna,
-            "precio"
-        );
-
-        costo.append(precio);
-
-        if (oferta.tratamiento_iva === "ADICIONAL") {
-            costo.append(el(
-                "small",
-                "mx-total",
-                "Base + " + oferta.porcentaje_iva + "% IVA"
-            ));
-        }
-
-        const total = el("small", "mx-total");
-
-        total.dataset.total = "";
-        total._fila = fila;
-        total._oferta = oferta;
-
-        costo.append(total);
-
-        if (
-            oferta.presentacion !== fila.unidad ||
-            Number(oferta.unidades_por_presentacion) !== 1
-        ) {
-            const unidad = datos.unidades.find(
-                u => u[0] === oferta.presentacion
-            )?.[1] || "definir";
-
-            costo.append(el(
-                "small",
-                "mx-total",
-                "Precio por " + unidad
-            ));
-        }
-
-        const elegir = el("label", "mx-elegir");
-        const check = el("input");
-
-        check.type = "checkbox";
-
-        check.disabled =
-            fila._bloqueada ||
-            !permisos.editar_oferta;
-
-        check.dataset.elegida = "";
-        check._oferta = oferta;
-
-        check.setAttribute(
-            "aria-label",
-            "Elegir oferta y confirmar disponibilidad"
-        );
-
-        check.addEventListener("change", () => {
-            if (check.checked) {
-                todasOfertas(fila).forEach(otra => {
-                    otra.elegida = false;
-                });
-
-                oferta.disponible = "SI";
-            }
-
-            oferta.elegida = check.checked;
-
-            cambio();
-            refrescarTotales();
-        });
-
-        elegir.append(check);
-        grid.append(marca, costo, elegir);
-
-        const stock = el("small", "mx-total");
-
-        stock.dataset.stock = "";
-        stock._oferta = oferta;
-
-        caja.append(stock);
-
-        const interior = detalles(
-            "Nota / opciones",
-            caja
-        );
-
-        campo(
-            interior,
-            "Nota",
-            entrada(
-                oferta,
-                "observacion",
-                "Nota",
-                null,
-                editable
-            )
-        );
-
-        campo(
-            interior,
-            "Disponibilidad",
-            entrada(
-                oferta,
-                "disponible",
-                "Disponibilidad",
-                [
-                    ["", "Por confirmar"],
-                    ["SI", "Disponible"],
-                    ["NO", "No disponible"],
-                ],
-                editable,
-                "text",
-                refrescarTotales
-            )
-        );
-
-        if (
-            fila.medida_solicitada ||
-            oferta.medida_ofertada
-        ) {
-            campo(
-                interior,
-                "Medida solicitada: " +
-                    (fila.medida_solicitada || "—"),
-                entrada(
-                    oferta,
-                    "medida_ofertada",
-                    "Medida ofertada",
-                    null,
-                    editable,
-                    "text",
-                    refrescarTotales
-                )
-            );
-        }
-
-        if (columna.iva === "MIXTO") {
-            campo(
-                interior,
-                "IVA de esta oferta",
-                entrada(
-                    oferta,
-                    "tratamiento_iva",
-                    "IVA",
-                    impuestos,
-                    editable,
-                    "text",
-                    refrescarTotales
-                )
-            );
-
-            campo(
-                interior,
-                "% IVA adicional",
-                entrada(
-                    oferta,
-                    "porcentaje_iva",
-                    "Porcentaje IVA",
-                    null,
-                    editable,
-                    "number",
-                    refrescarTotales
-                )
-            );
-        }
-
-        const presentacion = detalles(
-            "Precio por otra presentación",
-            interior
-        );
-
-        campo(
-            presentacion,
-            "Cotizado por",
-            entrada(
-                oferta,
-                "presentacion",
-                "Presentación del costo",
-                datos.unidades,
-                editable,
-                "text",
-                () => {
-                    oferta.unidades_por_presentacion =
-                        oferta.presentacion === fila.unidad
-                            ? "1"
-                            : "";
-
-                    dibujarCuerpo();
-                }
-            )
-        );
-
-        const equivalencia = entrada(
-            oferta,
-            "unidades_por_presentacion",
-            "Cantidad solicitada que cubre el precio",
-            null,
-            editable,
-            "number",
-            refrescarTotales
-        );
-
-        equivalencia.step = "0.0001";
-        equivalencia.min = "0.0001";
-
-        campo(
-            presentacion,
-            "Cantidad solicitada que cubre ese precio",
-            equivalencia
-        );
-
-        if (!oferta.id) {
-            interior.append(boton(
-                "Limpiar oferta",
-                () => {
-                    oferta.precio = "";
-                    oferta.marca_ofertada = "";
-                    oferta.observacion = "";
-                    oferta.medida_ofertada = "";
-                    oferta.disponible = "";
-                    oferta.elegida = false;
-
-                    cambio();
-                    dibujarCuerpo();
-                },
-                "mx-quitar"
-            ));
-        }
     }
 
     function dibujarCuerpo() {
         cuerpo.replaceChildren();
 
         for (const fila of filas) {
-            const tr = el(
-                "tr",
-                fila.resaltado === "URGENTE"
-                    ? "urgente"
-                    : fila.resaltado === "ATENCION"
-                        ? "atencion"
-                        : ""
-            );
-
-            cuerpo.append(tr);
-
-            const puedeItem = fila.id
-                ? permisos.editar_item
-                : permisos.agregar_item;
-
-            const editable = puedeItem && !fila._bloqueada;
+            const tr = el("tr");
             const descripcion = el("td", "mx-repuesto");
+            const linea = el("div", "mx-descripcion");
+            const color = el("button", "mx-color");
 
-            const texto = foco(
+            color.type = "button";
+            color.disabled = !puedeItem(fila);
+
+            color.addEventListener("click", () => {
+                const indice = resaltados.findIndex(
+                    opcion => opcion[0] === fila.resaltado
+                );
+
+                fila.resaltado = resaltados[
+                    (indice + 1) % resaltados.length
+                ][0];
+
+                actualizarResaltado(fila, tr, color);
+                cambio();
+            });
+
+            actualizarResaltado(fila, tr, color);
+
+            const nombre = foco(
                 entrada(
                     fila,
                     "descripcion_solicitada",
                     "Repuesto",
-                    null,
-                    editable
+                    puedeItem(fila)
                 ),
                 fila,
                 null,
                 "descripcion_solicitada"
             );
 
-            texto.placeholder = "Escribe el repuesto";
-            descripcion.append(texto);
+            nombre.placeholder = "Escribe el repuesto";
+            nombre.maxLength = 255;
 
-            const extras = detalles(
-                "Nota / código",
-                descripcion
-            );
+            linea.append(color, nombre);
 
-            campo(
-                extras,
-                "Código opcional",
-                entrada(
-                    fila,
-                    "codigo_referencia",
-                    "Código",
-                    null,
-                    editable
-                )
-            );
-
-            const medida = entrada(
-                fila,
-                "medida_solicitada",
-                "Medida solicitada",
-                null,
-                editable
-            );
-
-            medida.addEventListener(
-                "change",
-                dibujarCuerpo
-            );
-
-            campo(extras, "Medida, si aplica", medida);
-
-            campo(
-                extras,
-                "Nota",
-                entrada(
-                    fila,
-                    "observacion",
-                    "Nota del repuesto",
-                    null,
-                    puedeItem
-                )
-            );
-
-            if (!fila.id) {
-                descripcion.append(boton(
-                    "Quitar fila",
-                    () => {
-                        filas.splice(
-                            filas.indexOf(fila),
-                            1
-                        );
+            if (!fila.id && permisos.agregar_item) {
+                linea.append(
+                    botonQuitar(() => {
+                        filas.splice(filas.indexOf(fila), 1);
 
                         cambio();
                         dibujarCuerpo();
-                    },
-                    "mx-quitar"
-                ));
+                    }, "Quitar fila nueva")
+                );
             }
+
+            descripcion.append(linea);
 
             const cantidad = el("td", "mx-cantidad");
 
-            cantidad.append(foco(
-                entrada(
+            cantidad.append(
+                foco(
+                    entrada(
+                        fila,
+                        "cantidad",
+                        "Cantidad",
+                        puedeItem(fila),
+                        "number"
+                    ),
                     fila,
-                    "cantidad",
-                    "Cantidad solicitada",
                     null,
-                    editable,
-                    "number",
-                    refrescarTotales
-                ),
-                fila,
-                null,
-                "cantidad"
-            ));
-
-            if (fila.unidad !== "UNIDAD") {
-                cantidad.append(el(
-                    "small",
-                    "mx-total",
-                    datos.unidades.find(
-                        u => u[0] === fila.unidad
-                    )?.[1] || fila.unidad
-                ));
-            }
+                    "cantidad"
+                )
+            );
 
             tr.append(descripcion, cantidad);
 
             for (const columna of columnas) {
                 const td = el("td", "mx-proveedor");
 
-                if (columna.nombre.trim()) {
-                    ofertasDe(fila, columna).forEach(oferta => {
-                        dibujarOferta(
-                            fila,
-                            columna,
+                for (const oferta of ofertasDe(fila, columna)) {
+                    const celda = el(
+                        "div",
+                        "mx-celda mx-oferta"
+                    );
+
+                    const marca = foco(
+                        entrada(
                             oferta,
-                            td
-                        );
-                    });
-                } else {
-                    td.append(el(
-                        "small",
-                        "mx-total",
-                        "Escribe el proveedor arriba"
-                    ));
+                            "marca_ofertada",
+                            "Marca opcional",
+                            puedeOferta(oferta)
+                        ),
+                        fila,
+                        columna,
+                        "marca_ofertada"
+                    );
+
+                    marca.maxLength = 100;
+                    marca.placeholder = "Marca";
+
+                    const precio = foco(
+                        entrada(
+                            oferta,
+                            "precio",
+                            "Costo unitario final",
+                            puedeOferta(oferta),
+                            "number"
+                        ),
+                        fila,
+                        columna,
+                        "precio"
+                    );
+
+                    precio.placeholder = "0.00";
+
+                    celda.append(marca, precio);
+                    td.append(celda);
                 }
 
                 tr.append(td);
             }
 
-            const estado = el("td", "mx-estado");
-
-            estado.append(el(
-                "span",
-                "mx-badge",
-                fila.estado || "Nuevo"
-            ));
-
-            estado.append(entrada(
-                fila,
-                "resaltado",
-                "Resaltado de la fila",
-                [
-                    ["NORMAL", "Normal"],
-                    ["ATENCION", "Atención"],
-                    ["URGENTE", "Urgente"],
-                ],
-                puedeItem,
-                "text",
-                () => {
-                    tr.className =
-                        fila.resaltado === "URGENTE"
-                            ? "urgente"
-                            : fila.resaltado === "ATENCION"
-                                ? "atencion"
-                                : "";
-                }
-            ));
-
-            const comprado = el("label", "mx-comprado");
-            const check = el("input");
-
-            check.type = "checkbox";
-            check.checked = !!fila.comprado;
-
-            check.disabled =
-                fila._bloqueada ||
-                !permisos.editar_item;
-
-            check.onchange = () => {
-                fila.comprado = check.checked;
-                cambio();
-            };
-
-            comprado.append(
-                check,
-                document.createTextNode("Comprado")
-            );
-
-            estado.append(comprado);
-            tr.append(estado);
+            cuerpo.append(tr);
         }
-
-        refrescarTotales();
     }
 
     function dibujar() {
@@ -1265,44 +728,34 @@
 
     for (const fila of filas) {
         fila._uid = ++secuencia;
-        fila._bloqueada = !!fila.comprado;
         fila.resaltado = fila.resaltado || "NORMAL";
 
+        const mapa = new Map();
+
+        celdas.set(fila, mapa);
+
         for (const oferta of fila.ofertas) {
-            if (
-                !columnas.some(
-                    c => mismaColumna(oferta, c)
-                )
-            ) {
-                columnas.push(nuevaColumna(
-                    oferta.proveedor,
+            const clave = normalizar(oferta.nombre_proveedor);
+
+            let columna = columnas.find(
+                c => normalizar(c.nombre) === clave
+            );
+
+            if (!columna) {
+                columna = nuevaColumna(
                     oferta.nombre_proveedor
-                ));
+                );
+
+                columnas.push(columna);
             }
-        }
-    }
 
-    for (const columna of columnas) {
-        const ofertas = filas.flatMap(fila =>
-            fila.ofertas.filter(
-                o => mismaColumna(o, columna)
-            )
-        );
+            columna.guardada = true;
 
-        columna.guardada = ofertas.some(o => o.id);
+            if (!mapa.has(columna.clave)) {
+                mapa.set(columna.clave, []);
+            }
 
-        const valores = new Set(
-            ofertas.map(
-                o => o.tratamiento_iva + "|" +
-                    (o.porcentaje_iva ?? "")
-            )
-        );
-
-        if (valores.size === 1) {
-            columna.iva = ofertas[0].tratamiento_iva;
-            columna.porcentaje = ofertas[0].porcentaje_iva ?? "";
-        } else {
-            columna.iva = "MIXTO";
+            mapa.get(columna.clave).push(oferta);
         }
     }
 
@@ -1318,7 +771,7 @@
     agregarProveedor.hidden = !permisos.agregar_oferta;
     guardar.hidden = !Object.values(permisos).some(Boolean);
 
-    agregarFila.onclick = () => {
+    agregarFila.addEventListener("click", () => {
         if (filas.length >= 200) {
             return mensaje("Máximo 200 repuestos.");
         }
@@ -1326,6 +779,7 @@
         const fila = nuevaFila();
 
         filas.push(fila);
+
         cambio();
         dibujarCuerpo();
 
@@ -1333,34 +787,32 @@
             '[data-fila="' + fila._uid +
             '"][data-campo="descripcion_solicitada"]'
         )?.focus();
-    };
+    });
 
-    agregarProveedor.onclick = () => {
+    agregarProveedor.addEventListener("click", () => {
         if (columnas.length >= 20) {
             return mensaje(
                 "Máximo 20 proveedores en esta tabla."
             );
         }
 
-        columnas.push(nuevaColumna());
+        const columna = nuevaColumna();
+
+        columnas.push(columna);
 
         cambio();
         dibujar();
 
-        const entradas = cabecera.querySelectorAll(
-            "th.mx-proveedor > input"
-        );
-
-        entradas[entradas.length - 1]?.focus();
-    };
+        columna._input.focus();
+    });
 
     cuerpo.addEventListener("keydown", event => {
         const actual = event.target;
 
         if (
             event.key !== "Enter" ||
+            event.isComposing ||
             actual.tagName !== "INPUT" ||
-            actual.type === "checkbox" ||
             !actual.dataset.fila
         ) {
             return;
@@ -1382,6 +834,7 @@
             siguiente = nuevaFila();
 
             filas.push(siguiente);
+
             cambio();
             dibujarCuerpo();
         }
@@ -1411,55 +864,70 @@
 
         error.hidden = true;
 
-        const nombres = columnas.map(
-            c => normalizarNombre(c.nombre)
-        ).filter(Boolean);
-
-        if (new Set(nombres).size !== nombres.length) {
-            return mensaje(
-                "Hay proveedores repetidos. " +
-                "Usa una columna por proveedor."
-            );
-        }
+        const nombres = new Set();
 
         for (const columna of columnas) {
-            if (!columna.nombre.trim()) {
-                const conDatos = filas.some(fila =>
-                    (
-                        celdas.get(fila)?.get(
-                            columna.clave
-                        ) || []
-                    ).some(tieneDatos)
-                );
+            const nombre = normalizar(columna.nombre);
 
-                if (conDatos) {
-                    return mensaje(
-                        "Escribe el nombre del proveedor " +
-                        "antes de guardar sus costos."
-                    );
-                }
+            if (nombre && nombres.has(nombre)) {
+                return mensaje(
+                    "Ese proveedor ya tiene una columna.",
+                    columna._input
+                );
+            }
+
+            if (nombre) {
+                nombres.add(nombre);
+            }
+
+            const conDatos = filas.some(
+                fila => ofertasDe(fila, columna).some(
+                    oferta => oferta.id || tieneCosto(oferta)
+                )
+            );
+
+            if (!nombre && conDatos) {
+                return mensaje(
+                    "Escribe el nombre del proveedor.",
+                    columna._input
+                );
             }
         }
 
-        const payload = filas.map(fila => ({
-            ...fila,
-            ofertas: todasOfertas(fila).filter(tieneDatos),
-        })).filter(fila =>
-            fila.id ||
-            fila.descripcion_solicitada.trim() ||
-            fila.ofertas.length ||
-            fila.codigo_referencia ||
-            fila.medida_solicitada ||
-            fila.observacion ||
-            Number(fila.cantidad) !== 1
-        );
+        const payload = filas
+            .filter(fila =>
+                fila.id ||
+                fila.descripcion_solicitada.trim() ||
+                Number(fila.cantidad) !== 1 ||
+                fila.resaltado !== "NORMAL" ||
+                columnas.some(
+                    columna => ofertasDe(
+                        fila,
+                        columna
+                    ).some(tieneCosto)
+                )
+            )
+            .map(fila => ({
+                id: fila.id ?? null,
+                revision: fila.revision || "",
+                descripcion_solicitada: fila.descripcion_solicitada,
+                cantidad: fila.cantidad,
+                resaltado: fila.resaltado,
+                ofertas: ofertasParaGuardar(fila),
+            }));
+
+        if (!payload.length && nombres.size) {
+            return mensaje(
+                "Escribe al menos un repuesto."
+            );
+        }
 
         enviando = true;
+
         guardar.disabled = true;
         agregarFila.disabled = true;
         agregarProveedor.disabled = true;
-
-        document.getElementById("mx-scroll").inert = true;
+        scroll.inert = true;
 
         try {
             const respuesta = await fetch(
@@ -1470,7 +938,7 @@
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": form.querySelector(
-                            "[name=csrfmiddlewaretoken]"
+                            '[name="csrfmiddlewaretoken"]'
                         ).value,
                     },
                     body: JSON.stringify({
@@ -1479,38 +947,38 @@
                 }
             );
 
-            const resultado = await respuesta.json().catch(
-                () => ({})
-            );
+            const resultado = await respuesta
+                .json()
+                .catch(() => ({}));
 
             if (!respuesta.ok || !resultado.ok) {
-                throw Error(
+                throw new Error(
                     resultado.error ||
-                    "No se pudo guardar. " +
-                    "Revisa tu sesión y tus permisos."
+                    "No se pudo guardar. Revisa tu sesión y tus permisos."
                 );
             }
 
             pendiente = false;
+
             window.location.reload();
 
-        } catch (exception) {
-            mensaje(exception.message);
+        } catch (excepcion) {
+            mensaje(excepcion.message);
 
             enviando = false;
+
             guardar.disabled = false;
             agregarFila.disabled = false;
             agregarProveedor.disabled = false;
-
-            document.getElementById("mx-scroll").inert = false;
+            scroll.inert = false;
         }
     });
 
     dibujar();
 
-    aviso.textContent = filas.filter(
-        fila => fila.id
-    ).length + " repuestos";
+    aviso.textContent = (
+        filas.filter(fila => fila.id).length + " repuestos"
+    );
 })();
 </script>
 {% endblock %}
