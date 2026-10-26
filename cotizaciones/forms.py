@@ -33,6 +33,7 @@ def obtener_sucursal_operativa(usuario, sucursal_activa_id=None):
     Los usuarios globales pueden operar sin sucursal personal.
     Los usuarios normales quedan limitados a su sucursal.
     """
+
     if not usuario or not usuario.is_authenticated or not usuario.is_active:
         raise PermissionDenied(
             "Debes iniciar sesión con un usuario activo."
@@ -54,9 +55,11 @@ def obtener_sucursal_operativa(usuario, sucursal_activa_id=None):
 
     if sucursal_activa_id in (None, ""):
         sucursal_id = sucursal_personal_id
+
     else:
         try:
             sucursal_id = int(sucursal_activa_id)
+
         except (TypeError, ValueError):
             raise PermissionDenied(
                 "La sucursal seleccionada no es válida."
@@ -77,6 +80,7 @@ def obtener_sucursal_operativa(usuario, sucursal_activa_id=None):
             pk=sucursal_id,
             activa=True,
         )
+
     except Sucursal.DoesNotExist:
         raise PermissionDenied(
             "La sucursal seleccionada no existe o está inactiva."
@@ -94,6 +98,7 @@ def _solicitud_en_sucursal(solicitud_id, sucursal):
                 orden__sucursal_id=sucursal.pk,
             )
         )
+
     except SolicitudCotizacion.DoesNotExist:
         raise PermissionDenied(
             "La solicitud no pertenece a tu sucursal operativa."
@@ -126,7 +131,11 @@ class FormularioTorreMixin:
 
         accion = "change" if self.instance.pk else "add"
         modelo = self._meta.model._meta
-        permiso = f"{modelo.app_label}.{accion}_{modelo.model_name}"
+
+        permiso = (
+            f"{modelo.app_label}."
+            f"{accion}_{modelo.model_name}"
+        )
 
         if not usuario.has_perm(permiso):
             raise PermissionDenied(
@@ -142,8 +151,10 @@ class FormularioTorreMixin:
 
             if isinstance(widget, forms.CheckboxInput):
                 clase = "form-check-input"
+
             elif isinstance(widget, forms.Select):
                 clase = "form-select"
+
             else:
                 clase = "form-control"
 
@@ -164,6 +175,7 @@ class FormularioTorreMixin:
                     if nombre in self.fields
                     else NON_FIELD_ERRORS
                 )
+
                 errores.setdefault(destino, []).extend(mensajes)
 
             error = ValidationError(errores)
@@ -178,7 +190,10 @@ class FormularioTorreMixin:
 # SOLICITUD DE COTIZACIÓN
 # =========================================================
 
-class SolicitudCotizacionForm(FormularioTorreMixin, forms.ModelForm):
+class SolicitudCotizacionForm(
+    FormularioTorreMixin,
+    forms.ModelForm,
+):
     class Meta:
         model = SolicitudCotizacion
 
@@ -196,7 +211,9 @@ class SolicitudCotizacionForm(FormularioTorreMixin, forms.ModelForm):
         }
 
         widgets = {
-            "observacion": forms.Textarea(attrs={"rows": 3}),
+            "observacion": forms.Textarea(
+                attrs={"rows": 3}
+            ),
         }
 
     def __init__(
@@ -208,17 +225,22 @@ class SolicitudCotizacionForm(FormularioTorreMixin, forms.ModelForm):
     ):
         super().__init__(*args, **kwargs)
 
-        self.configurar_usuario(usuario, sucursal_activa_id)
+        self.configurar_usuario(
+            usuario,
+            sucursal_activa_id,
+        )
 
         self.fields["orden"].queryset = (
             OrdenTrabajo.objects
-            .filter(sucursal_id=self.sucursal_operativa.pk)
+            .filter(
+                sucursal_id=self.sucursal_operativa.pk,
+            )
             .exclude(estado="ANULADA")
             .order_by("-id")
         )
 
         self.fields["tipo_trabajo"].choices = [
-            ("", "Selecciona el área")
+            ("", "Selecciona el área"),
         ] + [
             opcion
             for opcion in SolicitudCotizacion.TIPOS_TRABAJO
@@ -230,11 +252,13 @@ class SolicitudCotizacionForm(FormularioTorreMixin, forms.ModelForm):
                 self.instance.pk,
                 self.sucursal_operativa,
             )
+
             self.fields["orden"].disabled = True
 
         else:
             self.instance.sucursal = self.sucursal_operativa
             self.instance.creada_por = usuario
+
             self.initial.setdefault("tipo_trabajo", "")
 
         self.aplicar_estilos()
@@ -252,17 +276,22 @@ class SolicitudCotizacionForm(FormularioTorreMixin, forms.ModelForm):
                 self.instance.pk,
                 self.sucursal_operativa,
             )
+
             _validar_solicitud_abierta(actual)
 
         orden = datos.get("orden")
 
-        if orden and orden.sucursal_id != self.sucursal_operativa.pk:
+        if (
+            orden
+            and orden.sucursal_id != self.sucursal_operativa.pk
+        ):
             self.add_error(
                 "orden",
                 "La orden debe pertenecer a tu sucursal operativa.",
             )
 
         self.instance.sucursal = self.sucursal_operativa
+
         return datos
 
     def save(self, commit=True):
@@ -275,8 +304,12 @@ class SolicitudCotizacionForm(FormularioTorreMixin, forms.ModelForm):
 
         if objeto.pk:
             _validar_solicitud_abierta(
-                _solicitud_en_sucursal(objeto.pk, sucursal)
+                _solicitud_en_sucursal(
+                    objeto.pk,
+                    sucursal,
+                )
             )
+
         else:
             objeto.creada_por = self.usuario
 
@@ -327,7 +360,9 @@ class ItemSolicitudCotizacionForm(
         }
 
         widgets = {
-            "observacion": forms.Textarea(attrs={"rows": 3}),
+            "observacion": forms.Textarea(
+                attrs={"rows": 3}
+            ),
         }
 
     def __init__(
@@ -340,7 +375,10 @@ class ItemSolicitudCotizacionForm(
     ):
         super().__init__(*args, **kwargs)
 
-        self.configurar_usuario(usuario, sucursal_activa_id)
+        self.configurar_usuario(
+            usuario,
+            sucursal_activa_id,
+        )
 
         self.solicitud = _solicitud_en_sucursal(
             solicitud.pk,
@@ -357,7 +395,10 @@ class ItemSolicitudCotizacionForm(
 
         self.instance.solicitud = self.solicitud
 
-        self.fields["producto_rel"].queryset = Producto.objects.all()
+        self.fields["producto_rel"].queryset = (
+            Producto.objects.all()
+        )
+
         self.fields["codigo_producto_rel"].queryset = (
             CodigoProducto.objects.none()
         )
@@ -368,7 +409,7 @@ class ItemSolicitudCotizacionForm(
             ("posicion", ItemSolicitudCotizacion.POSICIONES),
         ]:
             self.fields[nombre].choices = [
-                ("", "Selecciona una opción")
+                ("", "Selecciona una opción"),
             ] + [
                 opcion
                 for opcion in opciones
@@ -380,9 +421,12 @@ class ItemSolicitudCotizacionForm(
 
         if self.instance.estado_abastecimiento == "COMPRADO":
             producto_id = self.instance.producto_rel_id
+
         else:
             producto_id = (
-                self.data.get(self.add_prefix("producto_rel"))
+                self.data.get(
+                    self.add_prefix("producto_rel")
+                )
                 if self.is_bound
                 else self.initial.get(
                     "producto_rel",
@@ -395,6 +439,7 @@ class ItemSolicitudCotizacionForm(
 
         try:
             producto_id = int(producto_id)
+
         except (TypeError, ValueError):
             producto_id = None
 
@@ -407,7 +452,10 @@ class ItemSolicitudCotizacionForm(
 
         if self.instance.estado_abastecimiento == "COMPRADO":
             for nombre, campo in self.fields.items():
-                if nombre not in {"observacion", "orden_item"}:
+                if nombre not in {
+                    "observacion",
+                    "orden_item",
+                }:
                     campo.disabled = True
 
         self.aplicar_estilos()
@@ -491,6 +539,7 @@ class CotizacionProveedorForm(
 
         fields = [
             "proveedor",
+            "nombre_proveedor",
             "tipo_proveedor",
             "precio",
             "marca_ofertada",
@@ -507,6 +556,7 @@ class CotizacionProveedorForm(
         ]
 
         labels = {
+            "nombre_proveedor": "Proveedor",
             "precio": "Costo por presentación",
             "unidades_por_presentacion": (
                 "Equivalencia con la unidad solicitada"
@@ -516,7 +566,19 @@ class CotizacionProveedorForm(
         }
 
         widgets = {
-            "observacion": forms.Textarea(attrs={"rows": 3}),
+            "proveedor": forms.HiddenInput(),
+
+            "nombre_proveedor": forms.TextInput(
+                attrs={
+                    "placeholder": "Escribe el proveedor",
+                    "autocomplete": "off",
+                    "maxlength": 200,
+                }
+            ),
+
+            "observacion": forms.Textarea(
+                attrs={"rows": 3}
+            ),
         }
 
     def __init__(
@@ -529,7 +591,10 @@ class CotizacionProveedorForm(
     ):
         super().__init__(*args, **kwargs)
 
-        self.configurar_usuario(usuario, sucursal_activa_id)
+        self.configurar_usuario(
+            usuario,
+            sucursal_activa_id,
+        )
 
         try:
             self.item = (
@@ -537,6 +602,7 @@ class CotizacionProveedorForm(
                 .select_related("solicitud")
                 .get(pk=item.pk)
             )
+
         except ItemSolicitudCotizacion.DoesNotExist:
             raise PermissionDenied(
                 "El repuesto no existe."
@@ -560,8 +626,12 @@ class CotizacionProveedorForm(
         proveedores = Q(activo=True)
 
         if self.instance.pk:
-            proveedores |= Q(pk=self.instance.proveedor_id)
+            proveedores |= Q(
+                pk=self.instance.proveedor_id,
+            )
+
             self.fields["proveedor"].disabled = True
+            self.fields["nombre_proveedor"].disabled = True
 
             self.initial["disponible"] = {
                 True: "SI",
@@ -572,7 +642,10 @@ class CotizacionProveedorForm(
         self.fields["proveedor"].queryset = (
             Proveedor.objects
             .filter(proveedores)
-            .order_by("empresa", "nombre_contacto")
+            .order_by(
+                "empresa",
+                "nombre_contacto",
+            )
         )
 
         self.aplicar_estilos()
@@ -611,7 +684,10 @@ class CotizacionProveedorForm(
 
         if (
             hay_respuesta
-            and self.instance.estado in {"PENDIENTE", "ENVIADA"}
+            and self.instance.estado in {
+                "PENDIENTE",
+                "ENVIADA",
+            }
         ):
             self.instance.estado = "RESPONDIO"
 
@@ -635,7 +711,11 @@ class CotizacionProveedorForm(
                 .get(pk=self.item.solicitud_id)
             )
 
-            _solicitud_en_sucursal(solicitud.pk, sucursal)
+            _solicitud_en_sucursal(
+                solicitud.pk,
+                sucursal,
+            )
+
             _validar_solicitud_abierta(solicitud)
 
             objeto.item = (
@@ -681,7 +761,11 @@ class FotoItemCotizacionForm(
 ):
     class Meta:
         model = FotoItemCotizacion
-        fields = ["imagen", "descripcion"]
+
+        fields = [
+            "imagen",
+            "descripcion",
+        ]
 
     def __init__(
         self,
@@ -693,7 +777,10 @@ class FotoItemCotizacionForm(
     ):
         super().__init__(*args, **kwargs)
 
-        self.configurar_usuario(usuario, sucursal_activa_id)
+        self.configurar_usuario(
+            usuario,
+            sucursal_activa_id,
+        )
 
         self.item = (
             ItemSolicitudCotizacion.objects
@@ -715,6 +802,7 @@ class FotoItemCotizacionForm(
             )
 
         self.instance.item = self.item
+
         self.aplicar_estilos()
 
     def clean(self):

@@ -68,6 +68,7 @@ class ProveedorEspecialidad(models.Model):
             "proveedor__empresa",
             "proveedor__nombre_contacto",
         ]
+
         verbose_name = "Especialidad de proveedor"
         verbose_name_plural = "Especialidades de proveedores"
 
@@ -187,6 +188,7 @@ class SolicitudCotizacion(models.Model):
 
     class Meta:
         ordering = ["-creada_en"]
+
         verbose_name = "Solicitud de cotización"
         verbose_name_plural = "Solicitudes de cotización"
 
@@ -211,24 +213,20 @@ class SolicitudCotizacion(models.Model):
         )
 
         self._completar_sucursal()
+
         errores = {}
 
         if not self.orden_id:
-            errores["orden"] = (
-                "La orden de trabajo es obligatoria."
-            )
+            errores["orden"] = "La orden de trabajo es obligatoria."
 
         elif self.sucursal_id:
             try:
                 if self.orden.sucursal_id != self.sucursal_id:
                     errores["sucursal"] = (
-                        "La sucursal debe coincidir "
-                        "con la sucursal de la OT."
+                        "La sucursal debe coincidir con la sucursal de la OT."
                     )
             except ObjectDoesNotExist:
-                errores["orden"] = (
-                    "La orden de trabajo no existe."
-                )
+                errores["orden"] = "La orden de trabajo no existe."
 
         if not self.titulo:
             errores["titulo"] = "El título es obligatorio."
@@ -405,9 +403,7 @@ class ItemSolicitudCotizacion(models.Model):
         related_name="items_cotizacion",
     )
 
-    descripcion_solicitada = models.CharField(
-        max_length=255,
-    )
+    descripcion_solicitada = models.CharField(max_length=255)
 
     codigo_referencia = models.CharField(
         max_length=100,
@@ -474,9 +470,7 @@ class ItemSolicitudCotizacion(models.Model):
     )
 
     # Stock de referencia; no representa una reserva.
-    stock_actual_sucursal = models.PositiveIntegerField(
-        default=0,
-    )
+    stock_actual_sucursal = models.PositiveIntegerField(default=0)
 
     requiere_compra = models.BooleanField(default=True)
 
@@ -489,6 +483,7 @@ class ItemSolicitudCotizacion(models.Model):
 
     class Meta:
         ordering = ["orden_item", "id"]
+
         verbose_name = "Ítem de solicitud"
         verbose_name_plural = "Ítems de solicitud"
 
@@ -523,9 +518,7 @@ class ItemSolicitudCotizacion(models.Model):
             self.descripcion_solicitada or ""
         )
 
-        self.medida_solicitada = (
-            self.medida_solicitada or ""
-        )
+        self.medida_solicitada = self.medida_solicitada or ""
 
     def clean(self):
         super().clean()
@@ -539,17 +532,10 @@ class ItemSolicitudCotizacion(models.Model):
             )
 
         if self.cantidad is None:
-            errores["cantidad"] = (
-                "La cantidad es obligatoria."
-            )
+            errores["cantidad"] = "La cantidad es obligatoria."
 
-        elif (
-            isinstance(self.cantidad, int)
-            and self.cantidad <= 0
-        ):
-            errores["cantidad"] = (
-                "La cantidad debe ser mayor que 0."
-            )
+        elif isinstance(self.cantidad, int) and self.cantidad <= 0:
+            errores["cantidad"] = "La cantidad debe ser mayor que 0."
 
         if self.stock_actual_sucursal is None:
             errores["stock_actual_sucursal"] = (
@@ -585,18 +571,11 @@ class ItemSolicitudCotizacion(models.Model):
 
         if (
             update_fields is not None
-            and {
-                "cantidad",
-                "stock_actual_sucursal",
-            } & update_fields
+            and {"cantidad", "stock_actual_sucursal"} & update_fields
         ):
             update_fields.add("requiere_compra")
 
-        using = (
-            kwargs.get("using")
-            or self._state.db
-            or "default"
-        )
+        using = kwargs.get("using") or self._state.db or "default"
 
         with transaction.atomic(using=using):
             anterior = (
@@ -626,8 +605,7 @@ class ItemSolicitudCotizacion(models.Model):
                 or solicitud.orden.estado == "ANULADA"
             ):
                 raise ValidationError(
-                    "La solicitud o su orden de trabajo "
-                    "está cancelada."
+                    "La solicitud o su orden de trabajo está cancelada."
                 )
 
             if anterior is not None:
@@ -638,19 +616,13 @@ class ItemSolicitudCotizacion(models.Model):
                     .get(pk=self.pk)
                 )
 
-                if (
-                    anterior.solicitud_id
-                    != self.solicitud_id
-                ):
+                if anterior.solicitud_id != self.solicitud_id:
                     raise ValidationError(
                         "El repuesto debe permanecer "
                         "en su solicitud original."
                     )
 
-                if (
-                    anterior.estado_abastecimiento
-                    == "COMPRADO"
-                ):
+                if anterior.estado_abastecimiento == "COMPRADO":
                     permitidos = {
                         "id",
                         "observacion",
@@ -662,13 +634,8 @@ class ItemSolicitudCotizacion(models.Model):
                     for campo in self._meta.concrete_fields:
                         if (
                             campo.name not in permitidos
-                            and getattr(
-                                anterior,
-                                campo.attname,
-                            ) != getattr(
-                                self,
-                                campo.attname,
-                            )
+                            and getattr(anterior, campo.attname)
+                            != getattr(self, campo.attname)
                         ):
                             raise ValidationError(
                                 "El repuesto comprado solo permite "
@@ -718,9 +685,7 @@ class ItemSolicitudCotizacion(models.Model):
                         CotizacionProveedor.objects
                         .using(using)
                         .filter(item_id=self.pk)
-                        .update(
-                            unidades_por_presentacion=None,
-                        )
+                        .update(unidades_por_presentacion=None)
                     )
 
             if self.estado_abastecimiento == "COMPRADO":
@@ -753,8 +718,7 @@ class ItemSolicitudCotizacion(models.Model):
         """Diferencia respecto al stock de referencia."""
 
         return max(
-            (self.cantidad or 0)
-            - (self.stock_actual_sucursal or 0),
+            (self.cantidad or 0) - (self.stock_actual_sucursal or 0),
             0,
         )
 
@@ -762,20 +726,12 @@ class ItemSolicitudCotizacion(models.Model):
         if not self.pk:
             return []
 
-        cache = getattr(
-            self,
-            "_prefetched_objects_cache",
-            {},
-        )
+        cache = getattr(self, "_prefetched_objects_cache", {})
 
         if "cotizaciones_proveedor" in cache:
-            ofertas = list(
-                cache["cotizaciones_proveedor"]
-            )
+            ofertas = list(cache["cotizaciones_proveedor"])
         else:
-            ofertas = list(
-                self.cotizaciones_proveedor.all()
-            )
+            ofertas = list(self.cotizaciones_proveedor.all())
 
         for oferta in ofertas:
             oferta.item = self
@@ -834,9 +790,7 @@ class ItemSolicitudCotizacion(models.Model):
             self.estado_abastecimiento = "COMPRADO"
             return
 
-        ofertas = actual.cotizaciones_proveedor.using(
-            using,
-        )
+        ofertas = actual.cotizaciones_proveedor.using(using)
 
         if ofertas.filter(estado="GANADORA").exists():
             nuevo = "SELECCIONADO"
@@ -885,8 +839,7 @@ class ItemSolicitudCotizacion(models.Model):
                 or solicitud.orden.estado == "ANULADA"
             ):
                 raise ValidationError(
-                    "La solicitud o su orden de trabajo "
-                    "está cancelada."
+                    "La solicitud o su orden de trabajo está cancelada."
                 )
 
             actual = (
@@ -927,10 +880,7 @@ class ItemSolicitudCotizacion(models.Model):
         )
 
     def __str__(self):
-        return (
-            self.descripcion_solicitada
-            or "Repuesto sin descripción"
-        )
+        return self.descripcion_solicitada or "Repuesto sin descripción"
 
 
 # =========================================================
@@ -954,21 +904,16 @@ class FotoItemCotizacion(models.Model):
         blank=True,
     )
 
-    fecha_subida = models.DateTimeField(
-        auto_now_add=True,
-    )
+    fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["fecha_subida", "id"]
+
         verbose_name = "Foto de ítem a cotizar"
         verbose_name_plural = "Fotos de ítems a cotizar"
 
     def save(self, *args, **kwargs):
-        _normalizar_textos(
-            self,
-            ("descripcion",),
-        )
-
+        _normalizar_textos(self, ("descripcion",))
         return super().save(*args, **kwargs)
 
     def __str__(self):
@@ -1001,15 +946,24 @@ class CotizacionProveedor(models.Model):
         related_name="cotizaciones_proveedor",
     )
 
+    # Relación opcional para las ofertas vinculadas al catálogo.
     proveedor = models.ForeignKey(
         "compras.Proveedor",
         on_delete=models.PROTECT,
         related_name="cotizaciones_emitidas",
+        null=True,
+        blank=True,
     )
 
-    numero_opcion = models.PositiveIntegerField(
-        default=1,
+    # Permite escribir un proveedor nuevo directamente.
+    nombre_proveedor = models.CharField(
+        "Nombre del proveedor",
+        max_length=200,
+        blank=True,
+        default="",
     )
+
+    numero_opcion = models.PositiveIntegerField(default=1)
 
     tipo_proveedor = models.CharField(
         max_length=10,
@@ -1146,6 +1100,7 @@ class CotizacionProveedor(models.Model):
 
     class Meta:
         ordering = ["item", "estado", "precio", "id"]
+
         verbose_name = "Cotización de proveedor"
         verbose_name_plural = "Cotizaciones de proveedores"
 
@@ -1160,9 +1115,7 @@ class CotizacionProveedor(models.Model):
             ),
             models.UniqueConstraint(
                 fields=["item"],
-                condition=models.Q(
-                    estado="GANADORA",
-                ),
+                condition=models.Q(estado="GANADORA"),
                 name="uq_cotizacion_ganadora_item",
             ),
         ]
@@ -1191,14 +1144,8 @@ class CotizacionProveedor(models.Model):
             ),
         )
 
-        self.marca_ofertada = (
-            self.marca_ofertada or ""
-        )
-
-        self.medida_ofertada = (
-            self.medida_ofertada or ""
-        )
-
+        self.marca_ofertada = self.marca_ofertada or ""
+        self.medida_ofertada = self.medida_ofertada or ""
         self.contenido_presentacion = (
             self.contenido_presentacion or ""
         )
@@ -1208,6 +1155,15 @@ class CotizacionProveedor(models.Model):
         self._normalizar_textos()
 
         errores = {}
+
+        self.nombre_proveedor = " ".join(
+            (self.nombre_proveedor or "").split()
+        )
+
+        if not self.proveedor_id and not self.nombre_proveedor:
+            errores["nombre_proveedor"] = (
+                "Escribe el nombre del proveedor."
+            )
 
         if (
             isinstance(self.numero_opcion, int)
@@ -1233,10 +1189,7 @@ class CotizacionProveedor(models.Model):
                 .first()
             )
 
-            if (
-                anterior
-                and anterior["item_id"] != self.item_id
-            ):
+            if anterior and anterior["item_id"] != self.item_id:
                 errores["item"] = (
                     "La oferta debe permanecer "
                     "en su repuesto original."
@@ -1280,11 +1233,7 @@ class CotizacionProveedor(models.Model):
 
         self._normalizar_textos()
 
-        using = (
-            kwargs.get("using")
-            or self._state.db
-            or "default"
-        )
+        using = kwargs.get("using") or self._state.db or "default"
 
         with transaction.atomic(using=using):
             if self.item_id:
@@ -1325,8 +1274,8 @@ class CotizacionProveedor(models.Model):
 
                     if item.estado_abastecimiento == "COMPRADO":
                         raise ValidationError(
-                            "Las ofertas de un repuesto "
-                            "comprado quedan bloqueadas."
+                            "Las ofertas de un repuesto comprado "
+                            "quedan bloqueadas."
                         )
 
             self.full_clean()
@@ -1340,10 +1289,7 @@ class CotizacionProveedor(models.Model):
 
     @property
     def _factor_iva(self):
-        if self.tratamiento_iva in {
-            "INCLUIDO",
-            "SIN_IVA",
-        }:
+        if self.tratamiento_iva in {"INCLUIDO", "SIN_IVA"}:
             return Decimal("1")
 
         if (
@@ -1386,10 +1332,7 @@ class CotizacionProveedor(models.Model):
     def es_comparable(self):
         if (
             not self.item_id
-            or self.estado not in {
-                "RESPONDIO",
-                "GANADORA",
-            }
+            or self.estado not in {"RESPONDIO", "GANADORA"}
         ):
             return False
 
@@ -1442,9 +1385,7 @@ class CotizacionProveedor(models.Model):
         ):
             return None
 
-        return (
-            self.precio * factor
-        ).quantize(
+        return (self.precio * factor).quantize(
             CENTAVO,
             rounding=ROUND_HALF_UP,
         )
@@ -1506,10 +1447,7 @@ class CotizacionProveedor(models.Model):
         self.fecha_envio = timezone.now()
 
         self.save(
-            update_fields=[
-                "estado",
-                "fecha_envio",
-            ]
+            update_fields=["estado", "fecha_envio"],
         )
 
     def marcar_respondida(self):
@@ -1517,10 +1455,7 @@ class CotizacionProveedor(models.Model):
         self.fecha_respuesta = timezone.now()
 
         self.save(
-            update_fields=[
-                "estado",
-                "fecha_respuesta",
-            ]
+            update_fields=["estado", "fecha_respuesta"],
         )
 
     def seleccionar(self):
@@ -1551,8 +1486,7 @@ class CotizacionProveedor(models.Model):
                 or solicitud.orden.estado == "ANULADA"
             ):
                 raise ValidationError(
-                    "La solicitud o su orden de trabajo "
-                    "está cancelada."
+                    "La solicitud o su orden de trabajo está cancelada."
                 )
 
             if item.estado_abastecimiento == "COMPRADO":
@@ -1593,11 +1527,15 @@ class CotizacionProveedor(models.Model):
             self.estado = "GANADORA"
 
     def __str__(self):
-        nombre = (
-            self.proveedor.empresa
-            or self.proveedor.nombre_contacto
-            or f"Proveedor {self.proveedor_id}"
-        )
+        nombre = self.nombre_proveedor
+
+        if not nombre and self.proveedor_id:
+            nombre = (
+                self.proveedor.empresa
+                or self.proveedor.nombre_contacto
+            )
+
+        nombre = nombre or "Proveedor sin nombre"
 
         return (
             f"{nombre} - "
@@ -1650,29 +1588,20 @@ class DecisionCotizacion(models.Model):
         related_name="decisiones_cotizacion_tomadas",
     )
 
-    decidida_en = models.DateTimeField(
-        auto_now_add=True,
-    )
+    decidida_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-decidida_en"]
+
         verbose_name = "Decisión de cotización"
         verbose_name_plural = "Decisiones de cotización"
 
     def clean(self):
         super().clean()
-
-        _normalizar_textos(
-            self,
-            ("motivo",),
-        )
+        _normalizar_textos(self, ("motivo",))
 
     def save(self, *args, **kwargs):
-        _normalizar_textos(
-            self,
-            ("motivo",),
-        )
-
+        _normalizar_textos(self, ("motivo",))
         self.full_clean()
 
         return super().save(*args, **kwargs)
