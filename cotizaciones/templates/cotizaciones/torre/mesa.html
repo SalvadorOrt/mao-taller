@@ -1,260 +1,1409 @@
 {% extends 'cotizaciones/torre/base.html' %}
+
+{% block torre_subheading %}
+OT {{ solicitud.orden.numero_orden }} · {{ solicitud.orden.vehiculo }} ·
+{% if solicitud.tipo_trabajo == 'MECANICA' %}
+    Mecánica
+{% elif solicitud.tipo_trabajo == 'MOTOR' %}
+    Reparación de motor
+{% else %}
+    Enderezado y pintura
+{% endif %}
+{% endblock %}
+
 {% block torre_content %}
 <style>
-  .mesa-barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .mesa-barra a{margin-right:auto}.mesa-resumen{color:#6e6e73;font-size:12px}
-  .mesa-scroll{overflow:auto;background:#fff;border:1px solid #e5e5e7;border-radius:12px}
-  .mesa-tabla{width:100%;min-width:1250px;border-collapse:collapse;font-size:12px}
-  .mesa-tabla th{background:#f8f9fb;color:#6e6e73;font-size:10px;text-transform:uppercase;text-align:left}
-  .mesa-tabla th,.mesa-tabla>tbody>tr>td{padding:10px;vertical-align:top;border-bottom:1px solid #e5e5e7}
-  .mesa-tabla th:first-child{width:210px}.mesa-tabla th:nth-child(2){width:95px}.mesa-tabla th:last-child{width:100px}
-  .mesa-tabla input:not([type=checkbox]),.mesa-tabla select,.mesa-tabla textarea{box-sizing:border-box;width:100%;min-width:0;border:1px solid #d9dde3;border-radius:7px;background:#fff;padding:6px;font:inherit;color:#1d1d1f}
-  .mesa-tabla input:focus,.mesa-tabla select:focus,.mesa-tabla textarea:focus{outline:2px solid #c7e2ff;border-color:#0071e3}
-  .mesa-tabla :disabled{background:#f4f5f7!important;color:#6e6e73!important}
-  .mesa-cantidad input{margin-bottom:5px}.mesa-repuesto>input{font-weight:600}
-  .mesa-oferta{padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid #eff1f4}
-  .mesa-oferta:last-of-type{border-bottom:0}
-  .mesa-grid{display:grid;grid-template-columns:minmax(155px,1.6fr) minmax(90px,1fr) 100px 135px 110px 85px 35px;gap:7px;align-items:start}
-  .mesa-grid small{display:block;font-size:10px;color:#6e6e73;margin-top:4px}
-  .mesa-total{font-weight:600;padding-top:8px;white-space:nowrap}
-  .mesa-elegir{padding-top:8px;display:flex;justify-content:center}
-  .mesa-tabla details{margin-top:6px}.mesa-tabla summary{color:#0071e3;cursor:pointer;font-size:11px;width:fit-content}
-  .mesa-detalles{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px;margin-top:8px;padding:10px;background:#f8f9fb;border-radius:8px}
-  .mesa-detalles label{display:block;font-size:11px;color:#6e6e73}.mesa-detalles label>*{margin-top:4px}
-  .mesa-repuesto .mesa-detalles{grid-template-columns:1fr;min-width:185px}
-  .mesa-link{border:0;background:transparent;color:#0071e3;padding:3px 0;font:inherit;font-size:11px;cursor:pointer}
-  .mesa-quitar{color:#c53030;margin-left:12px}.mesa-comprado{display:flex;gap:5px;align-items:center;margin-top:12px;font-size:11px}
-  .mesa-estado{display:inline-block;padding:4px 7px;border-radius:6px;background:#f0f1f4;color:#626773;font-size:10px}
-  .mesa-estado.seleccionado{background:#eaf3ff;color:#0063c7}.mesa-estado.comprado{background:#e7f6ed;color:#257047}
-  #mesa-error{white-space:pre-wrap}#mesa-error[hidden]{display:none}
-  .mesa-nota{font-size:11px;color:#6e6e73;margin:8px 0}
-  .mesa-sin-datos{padding:24px;color:#6e6e73}
+.mx-barra {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.mx-barra a { margin-right: auto; }
+.mx-aviso { font-size: 12px; color: #6e6e73; }
+
+.mx-scroll {
+    overflow: auto;
+    border: 1px solid #e5e5e7;
+    border-radius: 12px;
+    background: white;
+    max-height: 72vh;
+}
+
+.mx-tabla {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 12px;
+}
+
+.mx-tabla th,
+.mx-tabla td {
+    padding: 9px;
+    box-sizing: border-box;
+    border-right: 1px solid #e9ebef;
+    border-bottom: 1px solid #e9ebef;
+    vertical-align: top;
+}
+
+.mx-tabla th {
+    background: #f8f9fb;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    text-align: left;
+    font-size: 11px;
+    color: #6e6e73;
+}
+
+.mx-tabla tr { --fila: #fff; }
+.mx-tabla tr.atencion { --fila: #fff8dc; }
+.mx-tabla tr.urgente { --fila: #fff0f0; }
+.mx-tabla td { background: var(--fila); }
+
+.mx-repuesto {
+    min-width: 230px;
+    width: 230px;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--fila);
+}
+
+.mx-tabla th.mx-repuesto {
+    background: #f8f9fb;
+    z-index: 5;
+}
+
+.mx-cantidad { min-width: 90px; width: 90px; }
+.mx-estado { min-width: 115px; width: 115px; }
+.mx-proveedor { min-width: 270px; width: 270px; }
+
+.mx-tabla input:not([type=checkbox]),
+.mx-tabla select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #d9dde3;
+    border-radius: 7px;
+    padding: 6px;
+    background: #fff;
+    font: inherit;
+    color: #1d1d1f;
+}
+
+.mx-tabla input:focus,
+.mx-tabla select:focus {
+    outline: 2px solid #c7e2ff;
+    border-color: #0071e3;
+}
+
+.mx-tabla :disabled {
+    background: #f4f5f7 !important;
+    color: #6e6e73 !important;
+}
+
+.mx-cantidad select { margin-top: 5px; }
+.mx-repuesto > input { font-weight: 600; }
+
+.mx-config {
+    display: flex;
+    gap: 5px;
+    margin: 6px 0;
+}
+
+.mx-config select { font-size: 10px; }
+.mx-config input { max-width: 75px; }
+
+.mx-celda {
+    display: grid;
+    grid-template-columns: minmax(85px, 1fr) minmax(85px, 1fr) 42px;
+    gap: 6px;
+    align-items: start;
+}
+
+.mx-etiquetas { font-size: 10px; margin-top: 8px; }
+.mx-oferta { padding: 3px 0 7px; margin-bottom: 5px; }
+
+.mx-oferta.elegida {
+    box-shadow: inset 3px 0 #31a36a;
+    padding-left: 6px;
+}
+
+.mx-elegir {
+    display: flex;
+    justify-content: center;
+    padding-top: 8px;
+}
+
+.mx-total {
+    display: block;
+    font-size: 10px;
+    margin-top: 4px;
+    color: #6e6e73;
+}
+
+.mx-tabla details { margin-top: 5px; }
+
+.mx-tabla summary {
+    cursor: pointer;
+    color: #0071e3;
+    font-size: 10px;
+    width: fit-content;
+}
+
+.mx-opciones { display: grid; gap: 6px; margin-top: 6px; }
+.mx-opciones label { font-size: 10px; color: #6e6e73; }
+.mx-opciones label > * { margin-top: 3px; }
+
+.mx-link {
+    border: 0;
+    background: transparent;
+    color: #0071e3;
+    font: inherit;
+    font-size: 10px;
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+.mx-quitar { color: #bc3030; }
+
+.mx-badge {
+    display: block;
+    font-size: 10px;
+    color: #6e6e73;
+    margin-bottom: 6px;
+}
+
+.mx-comprado {
+    display: flex;
+    gap: 4px;
+    margin-top: 9px;
+    align-items: center;
+    font-size: 10px;
+}
+
+.mx-ayuda { font-size: 11px; color: #6e6e73; margin: 8px 0; }
+.mx-error[hidden] { display: none; }
+.mx-error { white-space: pre-wrap; }
 </style>
 
-<form id="mesa-form">
-  {% csrf_token %}
-  <div class="mesa-barra">
-    <a href="{% url 'cotizaciones:lista' %}">← Vehículos en taller</a>
-    <span id="mesa-resumen" class="mesa-resumen"></span>
-    <button type="button" id="mesa-agregar" class="btn-login">+ Repuesto</button>
-    <button type="submit" id="mesa-guardar" class="btn-login primary">Guardar todo</button>
-  </div>
-  <div id="mesa-error" class="alert alert-danger" role="alert" hidden></div>
-  <div class="mesa-scroll">
-    <table class="mesa-tabla">
-      <thead><tr>
-        <th>Repuesto</th><th>Cantidad</th>
-        <th><div class="mesa-grid"><span>Proveedor</span><span>Marca</span><span>Costo</span><span>IVA</span><span>Disponible</span><span>Total</span><span>Elegir</span></div></th>
-        <th>Estado</th>
-      </tr></thead>
-      <tbody id="mesa-filas"></tbody>
-    </table>
-    <div id="mesa-vacia" class="mesa-sin-datos" hidden>No hay repuestos registrados.</div>
-  </div>
-  <p class="mesa-nota">El costo corresponde a una presentación. Por defecto coincide con la unidad solicitada; puedes ajustar presentación y equivalencia en «Más detalles». Los totales se actualizan al guardar.</p>
+<form id="mx-form">
+    {% csrf_token %}
+
+    <div class="mx-barra">
+        <a href="{% url 'cotizaciones:lista' %}">
+            ← Vehículos en taller
+        </a>
+
+        <span id="mx-aviso" class="mx-aviso"></span>
+
+        <button type="button" id="mx-repuesto" class="btn-login">
+            + Repuesto
+        </button>
+
+        <button type="button" id="mx-proveedor" class="btn-login">
+            + Proveedor
+        </button>
+
+        <button type="submit" id="mx-guardar" class="btn-login primary">
+            Guardar todo
+        </button>
+    </div>
+
+    <div
+        id="mx-error"
+        class="alert alert-danger mx-error"
+        role="alert"
+        hidden
+    ></div>
+
+    <div class="mx-scroll" id="mx-scroll">
+        <table class="mx-tabla">
+            <thead id="mx-cabecera"></thead>
+            <tbody id="mx-filas"></tbody>
+        </table>
+    </div>
+
+    <p class="mx-ayuda">
+        Selecciona cada proveedor una vez en la cabecera.
+        Los costos nuevos se ingresan con IVA incluido; cambia el IVA
+        de la columna si el proveedor cotiza aparte.
+        «Elegir disponible» confirma la disponibilidad.
+        Tab avanza; Enter baja a la siguiente fila.
+    </p>
 </form>
-{{ mesa|json_script:'mesa-datos' }}
+
+{{ mesa|json_script:'mx-datos' }}
 {% endblock %}
 
 {% block torre_js %}
 <script>
 (() => {
-  'use strict';
-  const datos = JSON.parse(document.getElementById('mesa-datos').textContent);
-  const filas = datos.filas, permisos = datos.permisos;
-  const formulario = document.getElementById('mesa-form');
-  const cuerpo = document.getElementById('mesa-filas');
-  const aviso = document.getElementById('mesa-error');
-  const guardar = document.getElementById('mesa-guardar');
-  const agregar = document.getElementById('mesa-agregar');
-  const resumen = document.getElementById('mesa-resumen');
-  let pendiente = false, enviando = false;
+    "use strict";
 
-  function elemento(tag, clase, texto) {
-    const e = document.createElement(tag);
-    if (clase) e.className = clase;
-    if (texto !== undefined) e.textContent = texto;
-    return e;
-  }
-  function cambio() {
-    pendiente = true;
-    resumen.textContent = 'Cambios sin guardar';
-  }
-  function control(objeto, nombre, etiqueta, opciones, editable = true, tipo = 'text') {
-    const e = elemento(opciones ? 'select' : 'input');
-    if (opciones) {
-      for (const [valor, texto] of opciones) {
-        const op = elemento('option', '', texto); op.value = valor; e.append(op);
-      }
-    } else {
-      e.type = tipo;
-      if (tipo === 'number') { e.min = '0'; e.step = nombre === 'cantidad' ? '1' : '0.01'; }
+    const datos = JSON.parse(
+        document.getElementById("mx-datos").textContent
+    );
+
+    const filas = datos.filas;
+    const permisos = datos.permisos;
+    const columnas = [];
+    const celdas = new WeakMap();
+
+    const form = document.getElementById("mx-form");
+    const cabecera = document.getElementById("mx-cabecera");
+    const cuerpo = document.getElementById("mx-filas");
+    const aviso = document.getElementById("mx-aviso");
+    const error = document.getElementById("mx-error");
+    const guardar = document.getElementById("mx-guardar");
+    const agregarFila = document.getElementById("mx-repuesto");
+    const agregarProveedor = document.getElementById("mx-proveedor");
+
+    const impuestos = [
+        ["INCLUIDO", "IVA incluido"],
+        ["ADICIONAL", "Más IVA"],
+        ["SIN_IVA", "No aplica IVA"],
+        ["POR_DEFINIR", "IVA por confirmar"],
+    ];
+
+    let secuencia = 0;
+    let pendiente = false;
+    let enviando = false;
+
+    function el(tag, clase = "", texto) {
+        const e = document.createElement(tag);
+        e.className = clase;
+        if (texto !== undefined) e.textContent = texto;
+        return e;
     }
-    e.value = objeto[nombre] ?? '';
-    e.disabled = !editable;
-    e.setAttribute('aria-label', etiqueta);
-    e.addEventListener('input', () => { objeto[nombre] = e.value; cambio(); });
-    return e;
-  }
-  function boton(texto, accion, clase = '') {
-    const b = elemento('button', 'mesa-link ' + clase, texto);
-    b.type = 'button'; b.addEventListener('click', accion); return b;
-  }
-  function detalles(titulo) {
-    const d = elemento('details'); d.append(elemento('summary', '', titulo));
-    const interior = elemento('div', 'mesa-detalles'); d.append(interior);
-    return [d, interior];
-  }
-  function campo(contenedor, texto, entrada) {
-    const label = elemento('label', '', texto); label.append(entrada); contenedor.append(label);
-  }
-  function nuevaOferta(fila) {
-    return {id:null, proveedor:'', precio:'', marca_ofertada:'', medida_ofertada:'',
-      presentacion:fila.unidad, unidades_por_presentacion:fila.unidad === 'POR_DEFINIR' ? '' : '1',
-      tratamiento_iva:'POR_DEFINIR', porcentaje_iva:'', disponible:'',
-      tiempo_entrega:'', observacion:'', elegida:false, total:null};
-  }
-  function nuevaFila() {
-    const fila = {id:null, revision:'', descripcion_solicitada:'', cantidad:1, unidad:'UNIDAD',
-      codigo_referencia:'', marca_referencia:'', medida_solicitada:'', lado:'NO_APLICA',
-      posicion:'NO_APLICA', observacion:'', comprado:false, ofertas:[]};
-    if (permisos.agregar_oferta) fila.ofertas.push(nuevaOferta(fila));
-    return fila;
-  }
-  function dibujarOferta(fila, oferta, contenedor, filaTr, bloqueada) {
-    const editable = !bloqueada && (oferta.id ? permisos.editar_oferta : permisos.agregar_oferta);
-    const tarjeta = elemento('div', 'mesa-oferta'), grid = elemento('div', 'mesa-grid');
-    tarjeta.append(grid); contenedor.append(tarjeta);
-    const proveedor = control(oferta, 'proveedor', 'Proveedor', [['','Proveedor…'], ...datos.proveedores], editable && !oferta.id);
-    grid.append(proveedor, control(oferta, 'marca_ofertada', 'Marca', null, editable));
-    const costo = elemento('div');
-    costo.append(control(oferta, 'precio', 'Costo por presentación', null, editable, 'number'));
-    const por = elemento('small'); costo.append(por); grid.append(costo);
-    const textoPresentacion = () => {
-      const unidad = datos.unidades.find(u => u[0] === oferta.presentacion);
-      por.textContent = 'por ' + (unidad ? unidad[1].toLowerCase() : 'definir');
+
+    function cambio() {
+        pendiente = true;
+        aviso.textContent = "Cambios sin guardar";
+    }
+
+    function mensaje(texto) {
+        error.textContent = texto;
+        error.hidden = false;
+    }
+
+    function boton(texto, accion, clase = "") {
+        const b = el("button", "mx-link " + clase, texto);
+        b.type = "button";
+        b.onclick = accion;
+        return b;
+    }
+
+    function entrada(
+        obj,
+        nombre,
+        etiqueta,
+        opciones = null,
+        editable = true,
+        tipo = "text",
+        accion = () => {}
+    ) {
+        const e = el(opciones ? "select" : "input");
+
+        if (opciones) {
+            for (const [valor, texto] of opciones) {
+                const o = el("option", "", texto);
+                o.value = valor;
+                e.append(o);
+            }
+        } else {
+            e.type = tipo;
+            if (tipo === "number") {
+                e.min = nombre === "cantidad" ? "1" : "0";
+                e.step = nombre === "cantidad" ? "1" : "0.01";
+            }
+        }
+
+        e.value = obj[nombre] ?? "";
+        e.disabled = !editable;
+        e.setAttribute("aria-label", etiqueta);
+
+        e.addEventListener(opciones ? "change" : "input", () => {
+            obj[nombre] = e.value;
+            cambio();
+            accion(e);
+        });
+
+        return e;
+    }
+
+    function campo(contenedor, texto, control) {
+        const label = el("label", "", texto);
+        label.append(control);
+        contenedor.append(label);
+    }
+
+    function detalles(texto, contenedor) {
+        const d = el("details");
+        d.append(el("summary", "", texto));
+
+        const interior = el("div", "mx-opciones");
+        d.append(interior);
+        contenedor.append(d);
+
+        return [d, interior];
+    }
+
+    function puedeOferta(fila, oferta) {
+        return !fila._bloqueada && (
+            oferta.id
+                ? permisos.editar_oferta
+                : permisos.agregar_oferta
+        );
+    }
+
+    function nombreProveedor(columna) {
+        return datos.proveedores.find(
+            p => String(p[0]) === String(columna.proveedor)
+        )?.[1] || "Proveedor";
+    }
+
+    function nuevaColumna(proveedor = "") {
+        return {
+            clave: ++secuencia,
+            proveedor: String(proveedor),
+            iva: "INCLUIDO",
+            porcentaje: "",
+            guardada: false,
+        };
+    }
+
+    function nuevaFila() {
+        return {
+            id: null,
+            revision: "",
+            _uid: ++secuencia,
+            _bloqueada: false,
+            descripcion_solicitada: "",
+            cantidad: 1,
+            unidad: "UNIDAD",
+            lado: "NO_APLICA",
+            posicion: "NO_APLICA",
+            codigo_referencia: "",
+            marca_referencia: "",
+            medida_solicitada: "",
+            observacion: "",
+            resaltado: "NORMAL",
+            comprado: false,
+            ofertas: [],
+        };
+    }
+
+    function ofertasDe(fila, columna) {
+        if (!columna.proveedor) return [];
+
+        if (!celdas.has(fila)) {
+            celdas.set(fila, new Map());
+        }
+
+        const mapa = celdas.get(fila);
+
+        if (!mapa.has(columna.clave)) {
+            const existentes = fila.ofertas.filter(
+                o => String(o.proveedor) === columna.proveedor
+            );
+
+            mapa.set(
+                columna.clave,
+                existentes.length ? existentes : [{
+                    id: null,
+                    proveedor: columna.proveedor,
+                    precio: "",
+                    marca_ofertada: "",
+                    medida_ofertada: "",
+                    presentacion: fila.unidad,
+                    unidades_por_presentacion:
+                        fila.unidad === "POR_DEFINIR" ? "" : "1",
+                    tratamiento_iva:
+                        columna.iva === "MIXTO"
+                            ? "POR_DEFINIR"
+                            : columna.iva,
+                    porcentaje_iva: columna.porcentaje,
+                    disponible: "",
+                    tiempo_entrega: "",
+                    observacion: "",
+                    elegida: false,
+                    total: null,
+                }]
+            );
+        }
+
+        return mapa.get(columna.clave);
+    }
+
+    function todasOfertas(fila) {
+        return columnas.flatMap(c => ofertasDe(fila, c));
+    }
+
+    function tieneDatos(oferta) {
+        return oferta.id ||
+            (oferta.precio !== "" && oferta.precio !== null) ||
+            oferta.marca_ofertada ||
+            oferta.medida_ofertada ||
+            oferta.observacion ||
+            oferta.tiempo_entrega ||
+            oferta.disponible ||
+            oferta.elegida;
+    }
+
+    function fijo(valor, decimales) {
+        const texto = String(valor ?? "").trim();
+
+        if (
+            texto.length > 40 ||
+            !/^\d+(\.\d+)?$/.test(texto)
+        ) return null;
+
+        const [entero, fraccion = ""] = texto.split(".");
+        if (fraccion.length > decimales) return null;
+
+        return (
+            BigInt(entero) * 10n ** BigInt(decimales) +
+            BigInt(fraccion.padEnd(decimales, "0") || "0")
+        );
+    }
+
+    function costoTotal(fila, oferta) {
+        const precio = fijo(oferta.precio, 2);
+        const cantidad = fijo(fila.cantidad, 0);
+        const factor = fijo(oferta.unidades_por_presentacion, 4);
+
+        if (precio === null) return "—";
+        if (!cantidad) return "Cantidad pendiente";
+
+        if (
+            !factor ||
+            fila.unidad === "POR_DEFINIR" ||
+            oferta.presentacion === "POR_DEFINIR"
+        ) return "Unidad pendiente";
+
+        if (
+            fila.medida_solicitada &&
+            fila.medida_solicitada.trim().toUpperCase() !==
+            (oferta.medida_ofertada || "").trim().toUpperCase()
+        ) return "Revisar medida";
+
+        let iva = 0n;
+
+        if (oferta.tratamiento_iva === "ADICIONAL") {
+            iva = fijo(oferta.porcentaje_iva, 2);
+            if (iva === null || iva > 10000n) {
+                return "IVA pendiente";
+            }
+        } else if (
+            !["INCLUIDO", "SIN_IVA"].includes(oferta.tratamiento_iva)
+        ) {
+            return "IVA pendiente";
+        }
+
+        const paquetes = (
+            cantidad * 10000n + factor - 1n
+        ) / factor;
+
+        const centavos = (
+            precio * paquetes * (10000n + iva) + 5000n
+        ) / 10000n;
+
+        return "$ " +
+            (centavos / 100n)
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            "." +
+            (centavos % 100n).toString().padStart(2, "0");
+    }
+
+    function refrescarTotales() {
+        cuerpo.querySelectorAll("[data-total]").forEach(e => {
+            e.textContent = "Total: " + costoTotal(
+                e._fila,
+                e._oferta
+            );
+        });
+
+        cuerpo.querySelectorAll("[data-stock]").forEach(e => {
+            e.textContent =
+                e._oferta.disponible === "SI"
+                    ? "Disponible"
+                    : e._oferta.disponible === "NO"
+                        ? "No disponible"
+                        : "Stock por confirmar";
+        });
+
+        cuerpo.querySelectorAll("[data-elegida]").forEach(e => {
+            e.checked = !!e._oferta.elegida;
+            e.closest(".mx-oferta").classList.toggle(
+                "elegida",
+                !!e._oferta.elegida
+            );
+        });
+    }
+
+    function foco(entrada, fila, columna, nombre) {
+        entrada.dataset.fila = String(fila._uid);
+        entrada.dataset.col = columna
+            ? String(columna.clave)
+            : "item";
+        entrada.dataset.campo = nombre;
+        return entrada;
+    }
+
+    function dibujarCabecera() {
+        cabecera.replaceChildren();
+
+        const tr = el("tr");
+
+        tr.append(
+            el("th", "mx-repuesto", "Repuesto"),
+            el("th", "mx-cantidad", "Cantidad")
+        );
+
+        for (const columna of columnas) {
+            const th = el("th", "mx-proveedor");
+
+            const opciones = datos.proveedores.filter(
+                p => p[2] !== false ||
+                    String(p[0]) === columna.proveedor
+            );
+
+            const proveedor = entrada(
+                columna,
+                "proveedor",
+                "Proveedor de la columna",
+                [["", "Selecciona proveedor…"], ...opciones],
+                !columna.guardada && permisos.agregar_oferta
+            );
+
+            proveedor.addEventListener("change", () => {
+                const repetido = columnas.some(
+                    otra =>
+                        otra !== columna &&
+                        otra.proveedor &&
+                        otra.proveedor === columna.proveedor
+                );
+
+                if (repetido) {
+                    columna.proveedor = "";
+                    proveedor.value = "";
+                    mensaje(
+                        "Ese proveedor ya tiene una columna. " +
+                        "Completa sus costos allí."
+                    );
+                    return;
+                }
+
+                for (const fila of filas) {
+                    const almacen = celdas
+                        .get(fila)
+                        ?.get(columna.clave);
+
+                    if (almacen) {
+                        almacen.forEach(o => {
+                            o.proveedor = columna.proveedor;
+                        });
+                    }
+                }
+
+                dibujarCuerpo();
+
+                cuerpo.querySelector(
+                    '[data-col="' + columna.clave +
+                    '"][data-campo="marca_ofertada"]'
+                )?.focus();
+            });
+
+            th.append(proveedor);
+
+            const config = el("div", "mx-config");
+
+            const opcionesIva = columna.iva === "MIXTO"
+                ? [["MIXTO", "IVA según oferta"], ...impuestos]
+                : impuestos;
+
+            const editable =
+                permisos.editar_oferta ||
+                permisos.agregar_oferta;
+
+            const aplicar = () => {
+                for (const fila of filas) {
+                    for (const oferta of ofertasDe(fila, columna)) {
+                        if (
+                            puedeOferta(fila, oferta) &&
+                            columna.iva !== "MIXTO"
+                        ) {
+                            oferta.tratamiento_iva = columna.iva;
+                            oferta.porcentaje_iva = columna.porcentaje;
+                        }
+                    }
+                }
+
+                dibujarCuerpo();
+            };
+
+            config.append(
+                entrada(
+                    columna,
+                    "iva",
+                    "IVA de la columna",
+                    opcionesIva,
+                    editable,
+                    "text",
+                    () => {
+                        tasa.hidden = columna.iva !== "ADICIONAL";
+                        aplicar();
+                    }
+                )
+            );
+
+            const tasa = entrada(
+                columna,
+                "porcentaje",
+                "Porcentaje IVA de la columna",
+                null,
+                editable,
+                "number",
+                aplicar
+            );
+
+            tasa.placeholder = "% IVA";
+            tasa.max = "100";
+            tasa.hidden = columna.iva !== "ADICIONAL";
+
+            config.append(tasa);
+            th.append(config);
+
+            if (!columna.guardada) {
+                th.append(
+                    boton(
+                        "Quitar columna",
+                        () => {
+                            columnas.splice(
+                                columnas.indexOf(columna),
+                                1
+                            );
+                            cambio();
+                            dibujar();
+                        },
+                        "mx-quitar"
+                    )
+                );
+            }
+
+            const etiquetas = el(
+                "div",
+                "mx-celda mx-etiquetas"
+            );
+
+            etiquetas.append(
+                el("span", "", "Marca"),
+                el("span", "", "Costo"),
+                el("span", "", "Elegir disponible")
+            );
+
+            th.append(etiquetas);
+            tr.append(th);
+        }
+
+        tr.append(
+            el("th", "mx-estado", "Estado / resaltado")
+        );
+
+        cabecera.append(tr);
+    }
+
+    function dibujarOferta(fila, columna, oferta, td) {
+        const editable = puedeOferta(fila, oferta);
+        const caja = el("div", "mx-oferta");
+        const grid = el("div", "mx-celda");
+
+        caja.append(grid);
+        td.append(caja);
+
+        const marca = foco(
+            entrada(
+                oferta,
+                "marca_ofertada",
+                "Marca de " + nombreProveedor(columna),
+                null,
+                editable,
+                "text",
+                refrescarTotales
+            ),
+            fila,
+            columna,
+            "marca_ofertada"
+        );
+
+        const costo = el("div");
+
+        const precio = foco(
+            entrada(
+                oferta,
+                "precio",
+                "Costo de " + nombreProveedor(columna),
+                null,
+                editable,
+                "number",
+                refrescarTotales
+            ),
+            fila,
+            columna,
+            "precio"
+        );
+
+        costo.append(precio);
+
+        const total = el("small", "mx-total");
+        total.dataset.total = "";
+        total._fila = fila;
+        total._oferta = oferta;
+
+        costo.append(total);
+
+        if (
+            oferta.presentacion !== fila.unidad ||
+            Number(oferta.unidades_por_presentacion) !== 1
+        ) {
+            const unidad = datos.unidades.find(
+                u => u[0] === oferta.presentacion
+            )?.[1] || "definir";
+
+            costo.append(
+                el("small", "mx-total", "Precio por " + unidad)
+            );
+        }
+
+        const elegir = el("label", "mx-elegir");
+        const check = el("input");
+
+        check.type = "checkbox";
+        check.disabled =
+            fila._bloqueada ||
+            !permisos.editar_oferta;
+
+        check.dataset.elegida = "";
+        check._oferta = oferta;
+
+        check.setAttribute(
+            "aria-label",
+            "Elegir oferta y confirmar disponibilidad"
+        );
+
+        check.addEventListener("change", () => {
+            if (check.checked) {
+                todasOfertas(fila).forEach(otra => {
+                    otra.elegida = false;
+                });
+
+                oferta.disponible = "SI";
+            }
+
+            oferta.elegida = check.checked;
+            cambio();
+            refrescarTotales();
+        });
+
+        elegir.append(check);
+        grid.append(marca, costo, elegir);
+
+        const stock = el("small", "mx-total");
+        stock.dataset.stock = "";
+        stock._oferta = oferta;
+
+        caja.append(stock);
+
+        const [, interior] = detalles("Nota / opciones", caja);
+
+        campo(
+            interior,
+            "Nota",
+            entrada(
+                oferta,
+                "observacion",
+                "Nota de la oferta",
+                null,
+                editable
+            )
+        );
+
+        campo(
+            interior,
+            "Disponibilidad",
+            entrada(
+                oferta,
+                "disponible",
+                "Disponibilidad de la oferta",
+                [
+                    ["", "Por confirmar"],
+                    ["SI", "Disponible"],
+                    ["NO", "No disponible"],
+                ],
+                editable,
+                "text",
+                refrescarTotales
+            )
+        );
+
+        if (
+            fila.medida_solicitada ||
+            oferta.medida_ofertada
+        ) {
+            campo(
+                interior,
+                "Medida solicitada: " +
+                    (fila.medida_solicitada || "—"),
+                entrada(
+                    oferta,
+                    "medida_ofertada",
+                    "Medida ofertada",
+                    null,
+                    editable,
+                    "text",
+                    refrescarTotales
+                )
+            );
+        }
+
+        if (columna.iva === "MIXTO") {
+            campo(
+                interior,
+                "IVA de esta oferta",
+                entrada(
+                    oferta,
+                    "tratamiento_iva",
+                    "IVA de la oferta",
+                    impuestos,
+                    editable,
+                    "text",
+                    refrescarTotales
+                )
+            );
+
+            campo(
+                interior,
+                "% IVA adicional",
+                entrada(
+                    oferta,
+                    "porcentaje_iva",
+                    "Porcentaje IVA de la oferta",
+                    null,
+                    editable,
+                    "number",
+                    refrescarTotales
+                )
+            );
+        }
+
+        const [, presentacion] = detalles(
+            "Precio por otra presentación",
+            interior
+        );
+
+        campo(
+            presentacion,
+            "Cotizado por",
+            entrada(
+                oferta,
+                "presentacion",
+                "Presentación del costo",
+                datos.unidades,
+                editable,
+                "text",
+                () => {
+                    oferta.unidades_por_presentacion =
+                        oferta.presentacion === fila.unidad
+                            ? "1"
+                            : "";
+
+                    dibujarCuerpo();
+                }
+            )
+        );
+
+        campo(
+            presentacion,
+            "Cantidad solicitada que cubre ese precio",
+            entrada(
+                oferta,
+                "unidades_por_presentacion",
+                "Equivalencia",
+                null,
+                editable,
+                "number",
+                refrescarTotales
+            )
+        );
+
+        const equivalencia = presentacion.querySelector("input");
+        equivalencia.step = "0.0001";
+        equivalencia.min = "0.0001";
+
+        if (!oferta.id) {
+            interior.append(
+                boton(
+                    "Limpiar oferta",
+                    () => {
+                        oferta.precio = "";
+                        oferta.marca_ofertada = "";
+                        oferta.observacion = "";
+                        oferta.medida_ofertada = "";
+                        oferta.disponible = "";
+                        oferta.elegida = false;
+
+                        cambio();
+                        dibujarCuerpo();
+                    },
+                    "mx-quitar"
+                )
+            );
+        }
+    }
+
+    function dibujarCuerpo() {
+        cuerpo.replaceChildren();
+
+        for (const fila of filas) {
+            const tr = el(
+                "tr",
+                fila.resaltado === "URGENTE"
+                    ? "urgente"
+                    : fila.resaltado === "ATENCION"
+                        ? "atencion"
+                        : ""
+            );
+
+            cuerpo.append(tr);
+
+            const puedeItem = fila.id
+                ? permisos.editar_item
+                : permisos.agregar_item;
+
+            const editable = puedeItem && !fila._bloqueada;
+
+            const descripcion = el("td", "mx-repuesto");
+
+            const texto = foco(
+                entrada(
+                    fila,
+                    "descripcion_solicitada",
+                    "Repuesto",
+                    null,
+                    editable
+                ),
+                fila,
+                null,
+                "descripcion_solicitada"
+            );
+
+            texto.placeholder = "Escribe el repuesto";
+            descripcion.append(texto);
+
+            const [, extras] = detalles(
+                "Nota / código",
+                descripcion
+            );
+
+            campo(
+                extras,
+                "Código opcional",
+                entrada(
+                    fila,
+                    "codigo_referencia",
+                    "Código del repuesto",
+                    null,
+                    editable
+                )
+            );
+
+            const medida = entrada(
+                fila,
+                "medida_solicitada",
+                "Medida solicitada",
+                null,
+                editable
+            );
+
+            medida.addEventListener(
+                "change",
+                () => dibujarCuerpo()
+            );
+
+            campo(extras, "Medida, si aplica", medida);
+
+            campo(
+                extras,
+                "Nota",
+                entrada(
+                    fila,
+                    "observacion",
+                    "Nota del repuesto",
+                    null,
+                    puedeItem
+                )
+            );
+
+            if (!fila.id) {
+                descripcion.append(
+                    boton(
+                        "Quitar fila",
+                        () => {
+                            filas.splice(filas.indexOf(fila), 1);
+                            cambio();
+                            dibujarCuerpo();
+                        },
+                        "mx-quitar"
+                    )
+                );
+            }
+
+            const cantidad = el("td", "mx-cantidad");
+
+            cantidad.append(
+                foco(
+                    entrada(
+                        fila,
+                        "cantidad",
+                        "Cantidad solicitada",
+                        null,
+                        editable,
+                        "number",
+                        refrescarTotales
+                    ),
+                    fila,
+                    null,
+                    "cantidad"
+                )
+            );
+
+            const unidad = entrada(
+                fila,
+                "unidad",
+                "Unidad solicitada",
+                datos.unidades,
+                editable && !fila.ofertas.some(o => o.id)
+            );
+
+            let anterior = fila.unidad;
+
+            unidad.addEventListener("change", () => {
+                for (const oferta of todasOfertas(fila)) {
+                    if (!oferta.id) {
+                        if (
+                            oferta.presentacion === anterior &&
+                            Number(
+                                oferta.unidades_por_presentacion
+                            ) === 1
+                        ) {
+                            oferta.presentacion = fila.unidad;
+                            oferta.unidades_por_presentacion = "1";
+                        } else {
+                            oferta.unidades_por_presentacion = "";
+                        }
+                    }
+                }
+
+                anterior = fila.unidad;
+                dibujarCuerpo();
+            });
+
+            cantidad.append(unidad);
+            tr.append(descripcion, cantidad);
+
+            for (const columna of columnas) {
+                const td = el("td", "mx-proveedor");
+
+                if (columna.proveedor) {
+                    ofertasDe(fila, columna).forEach(oferta => {
+                        dibujarOferta(fila, columna, oferta, td);
+                    });
+                } else {
+                    td.append(
+                        el(
+                            "small",
+                            "mx-total",
+                            "Selecciona el proveedor arriba"
+                        )
+                    );
+                }
+
+                tr.append(td);
+            }
+
+            const estado = el("td", "mx-estado");
+
+            estado.append(
+                el("span", "mx-badge", fila.estado || "Nuevo")
+            );
+
+            estado.append(
+                entrada(
+                    fila,
+                    "resaltado",
+                    "Resaltado de la fila",
+                    [
+                        ["NORMAL", "Normal"],
+                        ["ATENCION", "Atención"],
+                        ["URGENTE", "Urgente"],
+                    ],
+                    puedeItem,
+                    "text",
+                    () => {
+                        tr.className =
+                            fila.resaltado === "URGENTE"
+                                ? "urgente"
+                                : fila.resaltado === "ATENCION"
+                                    ? "atencion"
+                                    : "";
+                    }
+                )
+            );
+
+            const comprado = el("label", "mx-comprado");
+            const check = el("input");
+
+            check.type = "checkbox";
+            check.checked = !!fila.comprado;
+            check.disabled =
+                fila._bloqueada ||
+                !permisos.editar_item;
+
+            check.onchange = () => {
+                fila.comprado = check.checked;
+                cambio();
+            };
+
+            comprado.append(
+                check,
+                document.createTextNode("Comprado")
+            );
+
+            estado.append(comprado);
+            tr.append(estado);
+        }
+
+        refrescarTotales();
+    }
+
+    function dibujar() {
+        dibujarCabecera();
+        dibujarCuerpo();
+    }
+
+    for (const fila of filas) {
+        fila._uid = ++secuencia;
+        fila._bloqueada = !!fila.comprado;
+        fila.resaltado = fila.resaltado || "NORMAL";
+
+        for (const oferta of fila.ofertas) {
+            if (
+                !columnas.some(
+                    c => c.proveedor === String(oferta.proveedor)
+                )
+            ) {
+                columnas.push(nuevaColumna(oferta.proveedor));
+            }
+        }
+    }
+
+    for (const columna of columnas) {
+        const ofertas = filas.flatMap(
+            fila => fila.ofertas.filter(
+                o => String(o.proveedor) === columna.proveedor
+            )
+        );
+
+        columna.guardada = ofertas.some(o => o.id);
+
+        const valores = new Set(
+            ofertas.map(
+                o => o.tratamiento_iva + "|" +
+                    (o.porcentaje_iva ?? "")
+            )
+        );
+
+        if (valores.size === 1) {
+            columna.iva = ofertas[0].tratamiento_iva;
+            columna.porcentaje = ofertas[0].porcentaje_iva ?? "";
+        } else {
+            columna.iva = "MIXTO";
+        }
+    }
+
+    if (!columnas.length && permisos.agregar_oferta) {
+        columnas.push(nuevaColumna());
+    }
+
+    if (!filas.length && permisos.agregar_item) {
+        filas.push(nuevaFila());
+    }
+
+    agregarFila.hidden = !permisos.agregar_item;
+    agregarProveedor.hidden = !permisos.agregar_oferta;
+    guardar.hidden = !Object.values(permisos).some(Boolean);
+
+    agregarFila.onclick = () => {
+        if (filas.length >= 200) {
+            return mensaje("Máximo 200 repuestos.");
+        }
+
+        const fila = nuevaFila();
+        filas.push(fila);
+
+        cambio();
+        dibujarCuerpo();
+
+        cuerpo.querySelector(
+            '[data-fila="' + fila._uid +
+            '"][data-campo="descripcion_solicitada"]'
+        )?.focus();
     };
-    textoPresentacion();
-    const iva = elemento('div');
-    const tratamiento = control(oferta, 'tratamiento_iva', 'IVA', [
-      ['POR_DEFINIR','Por confirmar'],['INCLUIDO','Incluido'],['ADICIONAL','Adicional'],['SIN_IVA','Sin IVA aplicable']
-    ], editable);
-    const tasa = control(oferta, 'porcentaje_iva', 'Porcentaje de IVA adicional', null, editable, 'number');
-    tasa.placeholder = '% IVA'; tasa.max = '100';
-    tasa.hidden = oferta.tratamiento_iva !== 'ADICIONAL';
-    tratamiento.addEventListener('change', () => { tasa.hidden = tratamiento.value !== 'ADICIONAL'; });
-    iva.append(tratamiento, tasa); grid.append(iva);
-    grid.append(control(oferta, 'disponible', 'Disponibilidad', [['','Por confirmar'],['SI','Sí'],['NO','No']], editable));
-    const total = elemento('div', 'mesa-total', oferta.total === null ? 'Pendiente' : '$ ' + oferta.total);
-    grid.append(total);
-    const eleccion = elemento('label', 'mesa-elegir');
-    const elegir = elemento('input'); elegir.type = 'checkbox'; elegir.checked = oferta.elegida;
-    elegir.disabled = bloqueada || !permisos.editar_oferta;
-    elegir.setAttribute('aria-label', 'Elegir esta oferta');
-    elegir.addEventListener('change', () => {
-      fila.ofertas.forEach(o => { o.elegida = false; }); oferta.elegida = elegir.checked;
-      filaTr.querySelectorAll('[data-eleccion]').forEach(e => { if (e !== elegir) e.checked = false; });
-      cambio();
+
+    agregarProveedor.onclick = () => {
+        if (columnas.length >= 20) {
+            return mensaje(
+                "Máximo 20 proveedores en esta tabla."
+            );
+        }
+
+        columnas.push(nuevaColumna());
+        cambio();
+        dibujar();
+
+        const selectores = cabecera.querySelectorAll(
+            "th.mx-proveedor > select"
+        );
+
+        selectores[selectores.length - 1]?.focus();
+    };
+
+    cuerpo.addEventListener("keydown", event => {
+        const actual = event.target;
+
+        if (
+            event.key !== "Enter" ||
+            actual.tagName !== "INPUT" ||
+            actual.type === "checkbox" ||
+            !actual.dataset.fila
+        ) return;
+
+        event.preventDefault();
+
+        const indice = filas.findIndex(
+            fila => String(fila._uid) === actual.dataset.fila
+        );
+
+        let siguiente = filas[indice + 1];
+
+        if (
+            !siguiente &&
+            permisos.agregar_item &&
+            filas.length < 200
+        ) {
+            siguiente = nuevaFila();
+            filas.push(siguiente);
+
+            cambio();
+            dibujarCuerpo();
+        }
+
+        if (siguiente) {
+            cuerpo.querySelector(
+                '[data-fila="' + siguiente._uid +
+                '"][data-col="' + actual.dataset.col +
+                '"][data-campo="' + actual.dataset.campo + '"]'
+            )?.focus();
+        }
     });
-    elegir.dataset.eleccion = ''; eleccion.append(elegir); grid.append(eleccion);
-    const [detalle, interior] = detalles('Más detalles'); tarjeta.append(detalle);
-    const presentacion = control(oferta, 'presentacion', 'Presentación del costo', datos.unidades, editable);
-    const equivalencia = control(oferta, 'unidades_por_presentacion', 'Equivalencia', null, editable, 'number');
-    equivalencia.step = '0.0001'; equivalencia.min = '0.0001';
-    presentacion.addEventListener('change', () => {
-      oferta.unidades_por_presentacion = oferta.presentacion === fila.unidad && fila.unidad !== 'POR_DEFINIR' ? '1' : '';
-      equivalencia.value = oferta.unidades_por_presentacion; textoPresentacion();
+
+    window.addEventListener("beforeunload", event => {
+        if (pendiente) {
+            event.preventDefault();
+            event.returnValue = "";
+        }
     });
-    campo(interior, 'Presentación del costo', presentacion);
-    campo(interior, 'Cada presentación cubre esta cantidad de la unidad solicitada', equivalencia);
-    campo(interior, 'Medida ofertada', control(oferta, 'medida_ofertada', 'Medida ofertada', null, editable));
-    campo(interior, 'Tiempo de entrega', control(oferta, 'tiempo_entrega', 'Tiempo de entrega', null, editable));
-    campo(interior, 'Observación', control(oferta, 'observacion', 'Observación de la oferta', null, editable));
-    if (!oferta.id && editable) interior.append(boton('Quitar alternativa', () => {
-      fila.ofertas.splice(fila.ofertas.indexOf(oferta), 1); tarjeta.remove(); cambio();
-    }, 'mesa-quitar'));
-    tarjeta.addEventListener('input', e => { if (e.target !== elegir) total.textContent = 'Sin guardar'; });
-  }
-  function dibujarFila(fila) {
-    const tr = elemento('tr'); cuerpo.append(tr);
-    const bloqueada = fila.comprado;
-    const editable = !bloqueada && (fila.id ? permisos.editar_item : permisos.agregar_item);
-    const repuesto = elemento('td', 'mesa-repuesto');
-    const descripcion = control(fila, 'descripcion_solicitada', 'Repuesto', null, editable);
-    descripcion.placeholder = 'Escribe el repuesto'; repuesto.append(descripcion);
-    const [detalle, interior] = detalles('Datos del repuesto'); repuesto.append(detalle);
-    for (const [nombre, etiqueta] of [['codigo_referencia','Código'],['marca_referencia','Marca solicitada'],['medida_solicitada','Medida solicitada']]) {
-      campo(interior, etiqueta, control(fila, nombre, etiqueta, null, editable));
-    }
-    campo(interior, 'Lado', control(fila, 'lado', 'Lado', datos.lados, editable));
-    campo(interior, 'Posición', control(fila, 'posicion', 'Posición', datos.posiciones, editable));
-    campo(interior, 'Observación', control(fila, 'observacion', 'Observación del repuesto', null, fila.id ? permisos.editar_item : editable));
-    if (!fila.id) repuesto.append(boton('Quitar fila', () => {
-      filas.splice(filas.indexOf(fila), 1); tr.remove(); cambio(); actualizarVacia();
-    }, 'mesa-quitar'));
-    const cantidad = elemento('td', 'mesa-cantidad');
-    const numero = control(fila, 'cantidad', 'Cantidad solicitada', null, editable, 'number'); numero.min = '1';
-    cantidad.append(numero);
-    const unidad = control(fila, 'unidad', 'Unidad solicitada', datos.unidades, editable && !fila.ofertas.some(o => o.id));
-    cantidad.append(unidad);
-    const ofertas = elemento('td'), lista = elemento('div'); ofertas.append(lista);
-    const dibujar = o => dibujarOferta(fila, o, lista, tr, bloqueada);
-    if (!fila.ofertas.length && permisos.agregar_oferta && !bloqueada) fila.ofertas.push(nuevaOferta(fila));
-    fila.ofertas.forEach(dibujar);
-    if (!bloqueada && permisos.agregar_oferta) ofertas.append(boton('+ Otro proveedor', () => {
-      const oferta = nuevaOferta(fila); fila.ofertas.push(oferta); dibujar(oferta); cambio();
-    }));
-    unidad.addEventListener('change', () => {
-      fila.ofertas.forEach(o => { if (!o.id) { o.presentacion = fila.unidad; o.unidades_por_presentacion = fila.unidad === 'POR_DEFINIR' ? '' : '1'; } });
-      lista.replaceChildren(); fila.ofertas.forEach(dibujar);
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        if (enviando) return;
+
+        error.hidden = true;
+
+        const payload = filas.map(fila => ({
+            ...fila,
+            ofertas: todasOfertas(fila).filter(tieneDatos),
+        })).filter(fila =>
+            fila.id ||
+            fila.descripcion_solicitada.trim() ||
+            fila.ofertas.length ||
+            fila.codigo_referencia ||
+            fila.medida_solicitada ||
+            fila.observacion ||
+            Number(fila.cantidad) !== 1
+        );
+
+        enviando = true;
+        guardar.disabled = true;
+        agregarFila.disabled = true;
+        agregarProveedor.disabled = true;
+
+        document.getElementById("mx-scroll").inert = true;
+
+        try {
+            const respuesta = await fetch(
+                window.location.pathname,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": form.querySelector(
+                            "[name=csrfmiddlewaretoken]"
+                        ).value,
+                    },
+                    body: JSON.stringify({filas: payload}),
+                }
+            );
+
+            const resultado = await respuesta.json().catch(
+                () => ({})
+            );
+
+            if (!respuesta.ok || !resultado.ok) {
+                throw Error(
+                    resultado.error ||
+                    "No se pudo guardar. " +
+                    "Revisa tu sesión y tus permisos."
+                );
+            }
+
+            pendiente = false;
+            window.location.reload();
+
+        } catch (exception) {
+            mensaje(exception.message);
+
+            enviando = false;
+            guardar.disabled = false;
+            agregarFila.disabled = false;
+            agregarProveedor.disabled = false;
+
+            document.getElementById("mx-scroll").inert = false;
+        }
     });
-    numero.addEventListener('input', () => lista.querySelectorAll('.mesa-total').forEach(e => { e.textContent = 'Sin guardar'; }));
-    const estado = elemento('td');
-    const clase = bloqueada ? 'comprado' : fila.ofertas.some(o => o.elegida) ? 'seleccionado' : '';
-    estado.append(elemento('span', 'mesa-estado ' + clase, fila.estado || 'Nuevo'));
-    const comprado = elemento('label', 'mesa-comprado');
-    const check = elemento('input'); check.type = 'checkbox'; check.checked = fila.comprado;
-    check.disabled = bloqueada || !permisos.editar_item;
-    check.addEventListener('change', () => { fila.comprado = check.checked; cambio(); });
-    comprado.append(check, document.createTextNode('Comprado')); estado.append(comprado);
-    tr.append(repuesto, cantidad, ofertas, estado);
-    return descripcion;
-  }
-  function actualizarVacia() { document.getElementById('mesa-vacia').hidden = filas.length > 0; }
-  function ofertaVacia(o) {
-    return !o.id && !o.proveedor && (o.precio === '' || o.precio === null) && !o.marca_ofertada &&
-      !o.medida_ofertada && !o.observacion && !o.tiempo_entrega && !o.disponible &&
-      o.tratamiento_iva === 'POR_DEFINIR' && !o.elegida;
-  }
-  agregar.hidden = !permisos.agregar_item;
-  guardar.hidden = !Object.values(permisos).some(Boolean);
-  agregar.addEventListener('click', () => {
-    const fila = nuevaFila(); filas.push(fila); dibujarFila(fila).focus(); actualizarVacia(); cambio();
-  });
-  if (!filas.length && permisos.agregar_item) filas.push(nuevaFila());
-  filas.forEach(dibujarFila); actualizarVacia();
-  resumen.textContent = filas.filter(f => f.id).length + ' repuestos';
-  window.addEventListener('beforeunload', e => { if (pendiente) { e.preventDefault(); e.returnValue = ''; } });
-  formulario.addEventListener('submit', async e => {
-    e.preventDefault(); if (enviando) return;
-    aviso.hidden = true; enviando = true; guardar.disabled = true; agregar.disabled = true; cuerpo.inert = true;
-    const payload = filas.map(f => ({...f, ofertas:f.ofertas.filter(o => !ofertaVacia(o))}))
-      .filter(f => f.id || f.descripcion_solicitada.trim() || f.ofertas.length || f.codigo_referencia || f.medida_solicitada || f.observacion || Number(f.cantidad) !== 1);
-    try {
-      const respuesta = await fetch(window.location.pathname, {
-        method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json',
-          'X-CSRFToken':formulario.querySelector('[name=csrfmiddlewaretoken]').value},
-        body:JSON.stringify({filas:payload})
-      });
-      const resultado = await respuesta.json().catch(() => ({}));
-      if (!respuesta.ok || !resultado.ok) throw new Error(resultado.error || 'No se pudo guardar. Revisa tu sesión y tus permisos.');
-      pendiente = false; window.location.reload();
-    } catch (error) {
-      aviso.textContent = error.message || 'No se pudo guardar. Verifica la conexión antes de volver a intentar.';
-      aviso.hidden = false; aviso.scrollIntoView({block:'center', behavior:'smooth'});
-      enviando = false; guardar.disabled = false; agregar.disabled = false; cuerpo.inert = false;
-    }
-  });
+
+    dibujar();
+
+    aviso.textContent = filas.filter(
+        fila => fila.id
+    ).length + " repuestos";
 })();
 </script>
 {% endblock %}

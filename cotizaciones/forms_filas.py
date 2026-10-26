@@ -9,6 +9,10 @@ from .forms import ItemSolicitudCotizacionForm
 from .models import ItemSolicitudCotizacion
 
 
+# =========================================================
+# REVISIÓN DEL REPUESTO
+# =========================================================
+
 def revision_item(item):
     datos = {
         campo.attname: getattr(item, campo.attname)
@@ -17,15 +21,29 @@ def revision_item(item):
 
     return salted_hmac(
         "torre.fila",
-        json.dumps(datos, sort_keys=True, default=str),
+        json.dumps(
+            datos,
+            sort_keys=True,
+            default=str,
+        ),
     ).hexdigest()
 
+
+# =========================================================
+# FORMULARIO DE UNA FILA
+# =========================================================
 
 class FilaRepuestoForm(ItemSolicitudCotizacionForm):
     revision = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
     )
+
+    class Meta(ItemSolicitudCotizacionForm.Meta):
+        fields = [
+            *ItemSolicitudCotizacionForm.Meta.fields,
+            "resaltado",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,6 +67,7 @@ class FilaRepuestoForm(ItemSolicitudCotizacionForm):
             "posicion",
             "observacion",
             "orden_item",
+            "resaltado",
             "revision",
         }
 
@@ -57,8 +76,15 @@ class FilaRepuestoForm(ItemSolicitudCotizacionForm):
                 del self.fields[nombre]
 
         self.fields["observacion"].widget = forms.Textarea(
-            attrs={"rows": 2}
+            attrs={
+                "rows": 2,
+            }
         )
+
+        # El resaltado es una marca visual editable incluso
+        # cuando el repuesto ya está comprado.
+        if self.instance.estado_abastecimiento == "COMPRADO":
+            self.fields["resaltado"].disabled = False
 
         self.aplicar_estilos()
 
@@ -72,6 +98,8 @@ class FilaRepuestoForm(ItemSolicitudCotizacionForm):
             step=1,
         )
 
+        # Permite mostrar los valores pendientes de los
+        # registros existentes sin cambiar sus datos.
         for nombre in ("unidad", "lado", "posicion"):
             campo = self.fields[nombre]
 
@@ -80,15 +108,19 @@ class FilaRepuestoForm(ItemSolicitudCotizacionForm):
                 and getattr(self.instance, nombre) == "POR_DEFINIR"
             ):
                 campo.choices = [
-                    ("POR_DEFINIR", "Por definir")
-                ] + list(campo.choices)
+                    ("POR_DEFINIR", "Por definir"),
+                    *list(campo.choices),
+                ]
 
+
+# =========================================================
+# VALIDACIÓN DEL CONJUNTO DE FILAS
+# =========================================================
 
 class BaseFilasRepuestos(BaseModelFormSet):
     def add_fields(self, form, index):
         super().add_fields(form, index)
 
-        # El identificador solo puede pertenecer a las filas mostradas.
         form.fields["id"].queryset = self.queryset
 
     def clean(self):
@@ -98,10 +130,19 @@ class BaseFilasRepuestos(BaseModelFormSet):
 
         for form in self.forms:
             item = form.instance
-            datos = getattr(form, "cleaned_data", {})
+
+            datos = getattr(
+                form,
+                "cleaned_data",
+                {},
+            )
+
             identificador = datos.get("id")
 
-            if identificador and identificador.pk != item.pk:
+            if (
+                identificador
+                and identificador.pk != item.pk
+            ):
                 raise ValidationError(
                     "Un repuesto no pertenece a estas filas."
                 )
@@ -132,7 +173,9 @@ class BaseFilasRepuestos(BaseModelFormSet):
                 if not form.usuario.has_perm(
                     "cotizaciones.delete_itemsolicitudcotizacion"
                 ):
-                    raise PermissionDenied
+                    raise PermissionDenied(
+                        "No tienes permiso para eliminar repuestos."
+                    )
 
                 if item.estado_abastecimiento == "COMPRADO":
                     raise ValidationError(
@@ -148,6 +191,10 @@ class BaseFilasRepuestos(BaseModelFormSet):
                         "tiene ofertas o fotografías."
                     )
 
+
+# =========================================================
+# CONJUNTO DE FORMULARIOS
+# =========================================================
 
 FilasRepuestos = modelformset_factory(
     ItemSolicitudCotizacion,
