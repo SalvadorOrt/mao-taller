@@ -1,4 +1,4 @@
-"""Captura de repuestos y costos con confirmación de guardado."""
+"""Captura libre de repuestos y costos con guardado automático."""
 
 import json
 
@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Max, Prefetch
+from django.db.models.deletion import ProtectedError
 from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -42,10 +43,7 @@ class ConflictoGuardado(ValidationError):
 
 
 def _datos(objeto, campos):
-    return model_to_dict(
-        objeto,
-        fields=campos,
-    )
+    return model_to_dict(objeto, fields=campos)
 
 
 def _revision(item, cotizaciones=None):
@@ -56,20 +54,14 @@ def _revision(item, cotizaciones=None):
         }
 
     if cotizaciones is None:
-        cotizaciones = (
-            item.cotizaciones_proveedor
-            .order_by("pk")
-        )
+        cotizaciones = item.cotizaciones_proveedor.order_by("pk")
 
     return salted_hmac(
         "torre.mesa",
         json.dumps(
             [
                 valores(item),
-                [
-                    valores(oferta)
-                    for oferta in cotizaciones
-                ],
+                [valores(oferta) for oferta in cotizaciones],
             ],
             sort_keys=True,
             default=str,
@@ -139,10 +131,18 @@ def _identificador(valor):
     return valor
 
 
-def _guardar(request, solicitud, filas):
+def _guardar(request, solicitud, filas, eliminadas=None):
     if not isinstance(filas, list) or len(filas) > 200:
         raise ValidationError(
             "Envía como máximo 200 repuestos por guardado."
+        )
+
+    if eliminadas is None:
+        eliminadas = []
+
+    if not isinstance(eliminadas, list) or len(eliminadas) > 200:
+        raise ValidationError(
+            "Formato de eliminación no válido."
         )
 
     items = {
@@ -183,8 +183,68 @@ def _guardar(request, solicitud, filas):
     ofertas_vistas = set()
     clientes = set()
     clientes_oferta = set()
+    ids_eliminar = set()
 
-    # Validar toda la petición antes de escribir.
+    # Validar eliminaciones.
+    for dato in eliminadas:
+        if not isinstance(dato, dict):
+            raise ValidationError(
+                "Formato de eliminación no válido."
+            )
+
+        identificador = _identificador(
+            dato.get("id")
+        )
+
+        _identificador(
+            dato.get("cliente")
+        )
+
+        if (
+            identificador in ids_eliminar
+            or identificador not in items
+        ):
+            raise PermissionDenied(
+                "El repuesto no pertenece a esta tabla."
+            )
+
+        ids_eliminar.add(identificador)
+
+        item = items[identificador]
+
+        _permiso(
+            request,
+            "delete",
+            "itemsolicitudcotizacion",
+        )
+
+        if ofertas_por_item.get(identificador):
+            _permiso(
+                request,
+                "delete",
+                "cotizacionproveedor",
+            )
+
+        if item.fotos.exists():
+            _permiso(
+                request,
+                "delete",
+                "fotoitemcotizacion",
+            )
+
+        if not constant_time_compare(
+            str(dato.get("revision", "")),
+            _revision(
+                item,
+                ofertas_por_item.get(identificador, []),
+            ),
+        ):
+            raise ConflictoGuardado(
+                "El repuesto cambió en otra sesión. "
+                "Recarga para revisarlo."
+            )
+
+    # Validar referencias antes de escribir.
     for fila in filas:
         if (
             not isinstance(fila, dict)
@@ -197,6 +257,12 @@ def _guardar(request, solicitud, filas):
         pk = _identificador(
             fila.get("id")
         )
+
+        if pk in ids_eliminar:
+            raise ValidationError(
+                "No puedes guardar y eliminar "
+                "el mismo repuesto a la vez."
+            )
 
         cliente = _identificador(
             fila.get("cliente")
@@ -218,14 +284,12 @@ def _guardar(request, solicitud, filas):
 
             vistos.add(pk)
 
-            revision_actual = _revision(
-                items[pk],
-                ofertas_por_item.get(pk, []),
-            )
-
             if not constant_time_compare(
                 str(fila.get("revision", "")),
-                revision_actual,
+                _revision(
+                    items[pk],
+                    ofertas_por_item.get(pk, []),
+                ),
             ):
                 raise ConflictoGuardado(
                     "Hay cambios de otra sesión. "
@@ -285,6 +349,18 @@ def _guardar(request, solicitud, filas):
                 "Hay nuevas ofertas en otra sesión. "
                 "Recarga para revisarlas."
             )
+
+    confirmacion_eliminadas = []
+
+    for dato in eliminadas:
+        identificador = dato["id"]
+
+        items[identificador].delete()
+
+        confirmacion_eliminadas.append({
+            "id": identificador,
+            "cliente": dato.get("cliente"),
+        })
 
     confirmaciones = []
 
@@ -361,10 +437,7 @@ def _guardar(request, solicitud, filas):
 
         confirmacion_ofertas = []
 
-        for posicion, dato in enumerate(
-            fila["ofertas"],
-            1,
-        ):
+        for posicion, dato in enumerate(fila["ofertas"], 1):
             oferta = ofertas.get(
                 dato.get("id")
             )
@@ -456,7 +529,10 @@ def _guardar(request, solicitud, filas):
 
     solicitud.actualizar_estado()
 
-    return confirmaciones
+    return (
+        confirmaciones,
+        confirmacion_eliminadas,
+    )
 
 
 @login_required
@@ -484,10 +560,11 @@ def detalle(request, pk):
 
                 _exigir_abierta(solicitud)
 
-                confirmaciones = _guardar(
+                confirmaciones, eliminadas = _guardar(
                     request,
                     solicitud,
-                    carga.get("filas"),
+                    carga.get("filas", []),
+                    carga.get("eliminadas"),
                 )
 
         except (
@@ -495,39 +572,43 @@ def detalle(request, pk):
             UnicodeDecodeError,
         ):
             return JsonResponse(
-                {
-                    "error": "Los datos enviados no son válidos.",
-                },
+                {"error": "Los datos enviados no son válidos."},
                 status=400,
             )
 
         except PermissionDenied as error:
             return JsonResponse(
-                {
-                    "error": str(error),
-                },
+                {"error": str(error)},
                 status=403,
             )
 
         except ConflictoGuardado as error:
             return JsonResponse(
-                {
-                    "error": " ".join(error.messages),
-                },
+                {"error": " ".join(error.messages)},
                 status=409,
+            )
+
+        except ProtectedError:
+            return JsonResponse(
+                {
+                    "error": (
+                        "El repuesto tiene registros vinculados "
+                        "que impiden eliminarlo."
+                    ),
+                },
+                status=400,
             )
 
         except ValidationError as error:
             return JsonResponse(
-                {
-                    "error": " ".join(error.messages),
-                },
+                {"error": " ".join(error.messages)},
                 status=400,
             )
 
         return JsonResponse({
             "ok": True,
             "filas": confirmaciones,
+            "eliminadas": eliminadas,
         })
 
     solicitud = get_object_or_404(
@@ -587,6 +668,7 @@ def detalle(request, pk):
         "editar_item": "change_itemsolicitudcotizacion",
         "agregar_oferta": "add_cotizacionproveedor",
         "editar_oferta": "change_cotizacionproveedor",
+        "eliminar_item": "delete_itemsolicitudcotizacion",
     }
 
     permisos = {
