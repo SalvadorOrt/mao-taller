@@ -8,245 +8,55 @@ OT {{ solicitud.orden.numero_orden }} ·
 
 {% block torre_content %}
 <style>
-    #mx-form [hidden] {
-        display: none !important;
-    }
-
-    .mx-barra {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-
-    .mx-barra a {
-        margin-right: auto;
-    }
-
-    .mx-aviso,
-    .mx-ayuda {
-        font-size: 11px;
-        color: #6e6e73;
-    }
-
-    .mx-scroll {
-        overflow: auto;
-        max-height: 70vh;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        background: #fff;
-    }
-
-    .mx-tabla {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: 13px;
-    }
-
-    .mx-tabla th,
-    .mx-tabla td {
-        padding: 4px 6px;
-        border-right: 1px solid #e9ebef;
-        border-bottom: 1px solid #e9ebef;
-        vertical-align: top;
-    }
-
-    .mx-tabla th {
-        position: sticky;
-        top: 0;
-        z-index: 3;
-        background: #f8f9fb;
-        text-align: left;
-        color: #6e6e73;
-        font-size: 11px;
-    }
-
-    .mx-tabla tr {
-        --fila: #fff;
-    }
-
-    .mx-tabla tr.atencion {
-        --fila: #fff8dc;
-    }
-
-    .mx-tabla tr.urgente {
-        --fila: #fff0f0;
-    }
-
-    .mx-tabla td {
-        background: var(--fila);
-    }
-
-    .mx-repuesto {
-        position: sticky;
-        left: 0;
-        z-index: 2;
-        min-width: 210px;
-        width: 210px;
-    }
-
-    .mx-tabla th.mx-repuesto {
-        z-index: 5;
-    }
-
-    .mx-cantidad {
-        min-width: 65px;
-        width: 65px;
-    }
-
-    .mx-proveedor {
-        min-width: 180px;
-        width: 180px;
-    }
-
-    .mx-tabla input {
-        box-sizing: border-box;
-        width: 100%;
-        min-width: 0;
-        min-height: 28px;
-        padding: 4px 5px;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        background: transparent;
-        color: #1d1d1f;
-        font: inherit;
-    }
-
-    .mx-tabla input:hover {
-        border-color: #d9dde3;
-    }
-
-    .mx-tabla input:focus {
-        outline: 2px solid #c7e2ff;
-        border-color: #0071e3;
-        background: #fff;
-    }
-
-    .mx-tabla input:disabled {
-        color: #6e6e73;
-    }
-
-    .mx-cantidad input {
-        text-align: center;
-    }
-
-    .mx-tabla input[type="number"] {
-        appearance: textfield;
-        -moz-appearance: textfield;
-    }
-
-    .mx-tabla input::-webkit-inner-spin-button,
-    .mx-tabla input::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .mx-descripcion,
-    .mx-cab-proveedor {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .mx-descripcion > input,
-    .mx-cab-proveedor > input {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .mx-cab-proveedor > input {
-        font-weight: 600;
-        border-color: #e1e5eb;
-        background: #fff;
-    }
-
-    .mx-celda {
-        display: grid;
-        grid-template-columns: minmax(65px, 1fr) minmax(65px, 1fr);
-        gap: 4px;
-    }
-
-    .mx-celda input[type="number"] {
-        text-align: right;
-    }
-
-    .mx-etiquetas {
-        padding: 3px 5px 1px;
-        font-size: 10px;
-        font-weight: normal;
-    }
-
-    .mx-oferta + .mx-oferta {
-        margin-top: 4px;
-    }
-
-    .mx-quitar {
-        padding: 2px 4px;
-        border: 0;
-        background: transparent;
-        color: #b74646;
-        cursor: pointer;
-        font-size: 17px;
-    }
-
-    .mx-color {
-        display: grid;
-        place-items: center;
-        flex: 0 0 22px;
-        width: 22px;
-        height: 26px;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        cursor: pointer;
-    }
-
-    .mx-color::before {
-        content: "";
-        width: 12px;
-        height: 12px;
-        border: 1px solid #b9c0ca;
-        border-radius: 50%;
-        background: #fff;
-    }
-
-    .mx-color[data-color="ATENCION"]::before {
-        background: #ffe08a;
-        border-color: #bc8d20;
-    }
-
-    .mx-color[data-color="URGENTE"]::before {
-        background: #f39ea0;
-        border-color: #cc5558;
-    }
-
-    .mx-color:focus-visible,
-    .mx-quitar:focus-visible {
-        outline: 2px solid #0071e3;
-    }
-
-    .mx-pie-tabla {
-        display: flex;
-        justify-content: flex-start;
-        padding: 10px 0;
-    }
-
-    .mx-ayuda {
-        margin: 4px 0;
-    }
-
-    .mx-error {
-        white-space: pre-wrap;
-    }
+    #mx-form [hidden] { display: none !important; }
+    .mx-barra { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .mx-barra a { margin-right: auto; }
+    .mx-aviso, .mx-ayuda { font-size: 11px; color: #6e6e73; }
+    .mx-scroll { overflow: auto; max-height: 70vh; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+    .mx-tabla { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    .mx-tabla th, .mx-tabla td { padding: 4px 6px; border-right: 1px solid #e9ebef; border-bottom: 1px solid #e9ebef; vertical-align: top; }
+    .mx-tabla th { position: sticky; top: 0; z-index: 3; background: #f8f9fb; text-align: left; color: #6e6e73; font-size: 11px; }
+    .mx-tabla tr { --fila: #fff; }
+    .mx-tabla tr.atencion { --fila: #fff8dc; }
+    .mx-tabla tr.urgente { --fila: #fff0f0; }
+    .mx-tabla td { background: var(--fila); }
+    .mx-repuesto { position: sticky; left: 0; z-index: 2; min-width: 210px; width: 210px; }
+    .mx-tabla th.mx-repuesto { z-index: 5; }
+    .mx-cantidad { min-width: 65px; width: 65px; }
+    .mx-proveedor { min-width: 180px; width: 180px; }
+    .mx-tabla input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 28px; padding: 4px 5px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: #1d1d1f; font: inherit; }
+    .mx-tabla input:hover { border-color: #d9dde3; }
+    .mx-tabla input:focus { outline: 2px solid #c7e2ff; border-color: #0071e3; background: #fff; }
+    .mx-tabla input:disabled { color: #6e6e73; }
+    .mx-cantidad input { text-align: center; }
+    .mx-tabla input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+    .mx-tabla input::-webkit-inner-spin-button, .mx-tabla input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .mx-descripcion, .mx-cab-proveedor { display: flex; align-items: center; gap: 4px; }
+    .mx-descripcion > input, .mx-cab-proveedor > input { flex: 1; min-width: 0; }
+    .mx-cab-proveedor > input { font-weight: 600; border-color: #e1e5eb; background: #fff; }
+    .mx-celda { display: grid; grid-template-columns: minmax(65px, 1fr) minmax(65px, 1fr); gap: 4px; }
+    .mx-celda input[type="number"] { text-align: right; }
+    .mx-etiquetas { padding: 3px 5px 1px; font-size: 10px; font-weight: normal; }
+    .mx-oferta + .mx-oferta { margin-top: 4px; }
+    .mx-quitar { padding: 2px 4px; border: 0; background: transparent; color: #b74646; cursor: pointer; font-size: 17px; }
+    .mx-color { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 26px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    .mx-color::before { content: ""; width: 12px; height: 12px; border: 1px solid #b9c0ca; border-radius: 50%; background: #fff; }
+    .mx-color[data-color="ATENCION"]::before { background: #ffe08a; border-color: #bc8d20; }
+    .mx-color[data-color="URGENTE"]::before { background: #f39ea0; border-color: #cc5558; }
+    .mx-color:focus-visible, .mx-quitar:focus-visible { outline: 2px solid #0071e3; }
+    .mx-pie-tabla { display: flex; justify-content: flex-start; padding: 10px 0; }
+    .mx-ayuda { margin: 4px 0; }
+    #mx-aviso[data-estado="guardando"] { color: #0071e3; }
+    #mx-aviso[data-estado="guardado"] { color: #287645; }
+    #mx-aviso[data-estado="pendiente"] { color: #8a6d18; }
+    #mx-aviso[data-estado="error"] { color: #b42318; }
 </style>
 
-<form id="mx-form" method="post" autocomplete="off">
+<form id="mx-form" method="post" autocomplete="off" novalidate>
     {% csrf_token %}
 
     <div class="mx-barra">
-        <a href="{% url 'cotizaciones:lista' %}">
+        <a id="mx-volver" href="{% url 'cotizaciones:lista' %}">
             ← Vehículos en taller
         </a>
 
@@ -263,22 +73,7 @@ OT {{ solicitud.orden.numero_orden }} ·
         >
             + Proveedor
         </button>
-
-        <button
-            type="submit"
-            id="mx-guardar"
-            class="btn-login primary"
-        >
-            Guardar todo
-        </button>
     </div>
-
-    <div
-        id="mx-error"
-        class="alert alert-danger mx-error"
-        role="alert"
-        hidden
-    ></div>
 
     <div class="mx-scroll" id="mx-scroll">
         <table
@@ -301,7 +96,7 @@ OT {{ solicitud.orden.numero_orden }} ·
     </div>
 
     <p class="mx-ayuda">
-        Costo unitario final con IVA incluido.
+        Guardado automático. Costo unitario final con IVA incluido.
         Tab avanza; Enter baja.
         El punto cambia el resaltado: normal, atención o urgente.
     </p>
@@ -315,52 +110,39 @@ OT {{ solicitud.orden.numero_orden }} ·
 (() => {
     "use strict";
 
-    const datos = JSON.parse(
-        document.getElementById("mx-datos").textContent
-    );
-
+    const datos = JSON.parse(document.getElementById("mx-datos").textContent);
     const filas = datos.filas;
     const permisos = datos.permisos;
     const resaltados = datos.resaltados;
-
     const columnas = [];
     const celdas = new WeakMap();
 
     const form = document.getElementById("mx-form");
     const cabecera = document.getElementById("mx-cabecera");
     const cuerpo = document.getElementById("mx-filas");
-    const scroll = document.getElementById("mx-scroll");
     const aviso = document.getElementById("mx-aviso");
-    const error = document.getElementById("mx-error");
-    const guardar = document.getElementById("mx-guardar");
     const agregarFila = document.getElementById("mx-repuesto");
     const agregarProveedor = document.getElementById("mx-proveedor");
+    const volver = document.getElementById("mx-volver");
+
+    const editable = Object.values(permisos).some(Boolean);
 
     let secuencia = 0;
-    let pendiente = false;
-    let enviando = false;
+    let temporizador;
+    let enCurso = null;
+    let bloqueado = false;
+    let componiendo = false;
 
     function el(tag, clase = "", texto) {
         const nodo = document.createElement(tag);
-
         nodo.className = clase;
-
-        if (texto !== undefined) {
-            nodo.textContent = texto;
-        }
-
+        if (texto !== undefined) nodo.textContent = texto;
         return nodo;
     }
 
-    function cambio() {
-        pendiente = true;
-        aviso.textContent = "Cambios sin guardar";
-    }
-
-    function mensaje(texto, control) {
-        error.textContent = texto;
-        error.hidden = false;
-        control?.focus();
+    function estado(texto, tipo = "listo") {
+        aviso.textContent = texto;
+        aviso.dataset.estado = tipo;
     }
 
     function normalizar(nombre) {
@@ -382,23 +164,44 @@ OT {{ solicitud.orden.numero_orden }} ·
             : permisos.agregar_oferta;
     }
 
-    function entrada(
-        objeto,
-        campo,
-        etiqueta,
-        editable,
-        tipo = "text"
-    ) {
+    function registrar(objeto) {
+        objeto._uid = ++secuencia;
+        objeto._invalidos = new Set();
+        return objeto;
+    }
+
+    function cambio() {
+        if (!editable || bloqueado) return;
+
+        clearTimeout(temporizador);
+
+        estado(
+            enCurso ? "Guardando…" : "Pendiente…",
+            "pendiente"
+        );
+
+        if (!componiendo) {
+            temporizador = setTimeout(guardarCambios, 700);
+        }
+    }
+
+    function entrada(objeto, campo, etiqueta, tipo, claseObjeto) {
         const input = el("input");
 
-        input.type = tipo;
+        input.type = tipo || "text";
         input.value = objeto[campo] ?? "";
-        input.disabled = !editable;
+        input._objeto = objeto;
+        input._campo = campo;
+        input._claseObjeto = claseObjeto;
+
         input.setAttribute("aria-label", etiqueta);
 
-        if (tipo === "number") {
+        if (input.type === "number") {
             input.min = campo === "cantidad" ? "1" : "0";
             input.step = campo === "cantidad" ? "1" : "0.01";
+            input.max = campo === "cantidad"
+                ? "2147483647"
+                : "99999999.99";
             input.inputMode = campo === "cantidad"
                 ? "numeric"
                 : "decimal";
@@ -406,6 +209,17 @@ OT {{ solicitud.orden.numero_orden }} ·
 
         input.addEventListener("input", () => {
             objeto[campo] = input.value;
+
+            if (input.validity.valid) {
+                objeto._invalidos.delete(campo);
+            } else {
+                objeto._invalidos.add(campo);
+            }
+
+            if (claseObjeto === "oferta") {
+                objeto._activa = true;
+            }
+
             cambio();
         });
 
@@ -422,35 +236,51 @@ OT {{ solicitud.orden.numero_orden }} ·
         return input;
     }
 
-    function botonQuitar(accion, etiqueta) {
+    function quitar(accion, objeto, claseObjeto, etiqueta) {
         const boton = el("button", "mx-quitar", "×");
 
         boton.type = "button";
         boton.title = etiqueta;
         boton.setAttribute("aria-label", etiqueta);
-        boton.addEventListener("click", accion);
+
+        boton._objeto = objeto;
+        boton._claseObjeto = claseObjeto;
+
+        boton.addEventListener("click", () => {
+            if (
+                objeto._enviando ||
+                objeto.id ||
+                objeto.guardada
+            ) {
+                return;
+            }
+
+            accion();
+            cambio();
+        });
 
         return boton;
     }
 
     function nuevaColumna(nombre = "") {
-        return {
+        return registrar({
             clave: ++secuencia,
             nombre,
             guardada: false,
-        };
+            _registrar: false,
+        });
     }
 
     function nuevaFila() {
-        const fila = {
+        const fila = registrar({
             id: null,
             revision: "",
-            _uid: ++secuencia,
             descripcion_solicitada: "",
             cantidad: 1,
             resaltado: "NORMAL",
             ofertas: [],
-        };
+            _guardado: null,
+        });
 
         celdas.set(fila, new Map());
 
@@ -462,44 +292,457 @@ OT {{ solicitud.orden.numero_orden }} ·
 
         if (!mapa.has(columna.clave)) {
             mapa.set(columna.clave, [
-                {
+                registrar({
                     id: null,
                     nombre_proveedor: columna.nombre,
                     marca_ofertada: "",
                     precio: "",
-                },
+                    _activa: columna._registrar,
+                }),
             ]);
         }
 
         return mapa.get(columna.clave);
     }
 
-    function tieneCosto(oferta) {
+    function tieneDatos(oferta) {
         return (
             String(oferta.precio ?? "").trim() !== "" ||
             String(oferta.marca_ofertada || "").trim() !== ""
         );
     }
 
-    function ofertasParaGuardar(fila) {
-        return columnas
-            .flatMap(columna => ofertasDe(fila, columna))
-            .filter(oferta =>
-                oferta.id ||
-                (
-                    permisos.agregar_oferta &&
+    function dtoOferta(oferta) {
+        return {
+            cliente: oferta._uid,
+            id: oferta.id ?? null,
+            nombre_proveedor: oferta.nombre_proveedor,
+            marca_ofertada: oferta.marca_ofertada || "",
+            precio: oferta.precio ?? "",
+        };
+    }
+
+    function firma(fila) {
+        return JSON.stringify([
+            String(fila.descripcion_solicitada),
+            String(fila.cantidad),
+            fila.resaltado,
+            fila.ofertas.map(oferta => [
+                oferta.cliente,
+                oferta.nombre_proveedor,
+                oferta.marca_ofertada || "",
+                String(oferta.precio ?? ""),
+            ]),
+        ]);
+    }
+
+    function preparar() {
+        const nombres = new Set();
+
+        for (const columna of columnas) {
+            const nombre = normalizar(columna.nombre);
+
+            if (nombre && nombres.has(nombre)) {
+                return {
+                    lote: [],
+                    pendiente: "Hay dos columnas con el mismo proveedor.",
+                };
+            }
+
+            if (nombre) nombres.add(nombre);
+        }
+
+        const lote = [];
+
+        let pendiente = columnas.some(columna =>
+            !columna.guardada &&
+            columna._registrar &&
+            normalizar(columna.nombre)
+        )
+            ? "Agrega un repuesto para guardar el proveedor."
+            : "";
+
+        for (const fila of filas) {
+            const todas = columnas.flatMap(
+                columna => ofertasDe(fila, columna)
+            );
+
+            const vacia = (
+                !fila.id &&
+                !fila.descripcion_solicitada.trim() &&
+                String(fila.cantidad) === "1" &&
+                fila.resaltado === "NORMAL" &&
+                !todas.some(tieneDatos) &&
+                !fila._invalidos.size
+            );
+
+            if (vacia) continue;
+
+            if (
+                !fila.descripcion_solicitada.trim() ||
+                !Number.isInteger(Number(fila.cantidad)) ||
+                Number(fila.cantidad) < 1 ||
+                fila._invalidos.size
+            ) {
+                pendiente = "Completa el repuesto y su cantidad.";
+                continue;
+            }
+
+            const ofertas = [];
+            let filaInvalida = false;
+
+            for (const oferta of todas) {
+                if (
+                    !oferta.id &&
                     (
-                        normalizar(oferta.nombre_proveedor) ||
-                        tieneCosto(oferta)
+                        !permisos.agregar_oferta ||
+                        (!oferta._activa && !tieneDatos(oferta))
+                    )
+                ) {
+                    continue;
+                }
+
+                if (
+                    !normalizar(oferta.nombre_proveedor) ||
+                    oferta._invalidos.size
+                ) {
+                    pendiente = "Completa el proveedor y revisa el costo.";
+
+                    if (oferta.id) {
+                        filaInvalida = true;
+                    }
+
+                    continue;
+                }
+
+                ofertas.push(oferta);
+            }
+
+            if (filaInvalida) continue;
+
+            if (ofertas.length > 20) {
+                pendiente = "Máximo 20 alternativas por repuesto.";
+                continue;
+            }
+
+            const dto = {
+                cliente: fila._uid,
+                id: fila.id ?? null,
+                revision: fila.revision || "",
+                descripcion_solicitada: fila.descripcion_solicitada,
+                cantidad: fila.cantidad,
+                resaltado: fila.resaltado,
+                ofertas: ofertas.map(dtoOferta),
+            };
+
+            if (firma(dto) !== fila._guardado) {
+                lote.push({
+                    fila,
+                    dto,
+                    ofertas,
+                });
+            }
+        }
+
+        return {
+            lote,
+            pendiente,
+        };
+    }
+
+    function actualizarControles() {
+        for (const input of form.querySelectorAll("input")) {
+            const objeto = input._objeto;
+
+            if (!objeto) continue;
+
+            input.disabled = input._claseObjeto === "item"
+                ? !puedeItem(objeto)
+                : input._claseObjeto === "oferta"
+                    ? !puedeOferta(objeto)
+                    : !(
+                        objeto.guardada
+                            ? permisos.editar_oferta
+                            : permisos.agregar_oferta
+                    );
+
+            if (
+                document.activeElement !== input &&
+                !objeto._invalidos.has(input._campo)
+            ) {
+                const valor = String(objeto[input._campo] ?? "");
+
+                if (input.value !== valor) {
+                    input.value = valor;
+                }
+            }
+        }
+
+        for (const boton of form.querySelectorAll(".mx-quitar")) {
+            boton.hidden = Boolean(
+                boton._objeto.id ||
+                boton._objeto.guardada
+            );
+
+            boton.disabled = Boolean(
+                boton._objeto._enviando
+            );
+        }
+
+        for (const boton of cuerpo.querySelectorAll(".mx-color")) {
+            boton.disabled = !puedeItem(boton._objeto);
+        }
+    }
+
+    function aceptar(lote, respuesta) {
+        if (
+            !Array.isArray(respuesta.filas) ||
+            respuesta.filas.length !== lote.length
+        ) {
+            throw new Error(
+                "No se confirmó el guardado. Recarga para comprobarlo."
+            );
+        }
+
+        const confirmadas = new Map(
+            respuesta.filas.map(fila => [
+                fila.cliente,
+                fila,
+            ])
+        );
+
+        for (const entrada of lote) {
+            const ack = confirmadas.get(
+                entrada.dto.cliente
+            );
+
+            if (
+                !ack?.id ||
+                !ack.revision ||
+                !Array.isArray(ack.ofertas) ||
+                ack.ofertas.length !== entrada.ofertas.length ||
+                entrada.ofertas.some(oferta =>
+                    !ack.ofertas.some(o =>
+                        o.cliente === oferta._uid && o.id
                     )
                 )
-            )
-            .map(oferta => ({
-                id: oferta.id ?? null,
-                nombre_proveedor: oferta.nombre_proveedor,
-                marca_ofertada: oferta.marca_ofertada || "",
-                precio: oferta.precio ?? "",
-            }));
+            ) {
+                throw new Error(
+                    "No se confirmó el guardado. Recarga para comprobarlo."
+                );
+            }
+        }
+
+        function combinar(objeto, enviado, ack, campos) {
+            for (const campo of campos) {
+                if (
+                    !objeto._invalidos.has(campo) &&
+                    String(objeto[campo] ?? "") ===
+                    String(enviado[campo] ?? "")
+                ) {
+                    objeto[campo] = ack[campo] ?? "";
+                }
+            }
+
+            objeto.id = ack.id;
+        }
+
+        for (const entrada of lote) {
+            const ack = confirmadas.get(
+                entrada.dto.cliente
+            );
+
+            combinar(
+                entrada.fila,
+                entrada.dto,
+                ack,
+                [
+                    "descripcion_solicitada",
+                    "cantidad",
+                    "resaltado",
+                ]
+            );
+
+            entrada.fila.revision = ack.revision;
+            entrada.fila._guardado = firma(ack);
+
+            for (const oferta of entrada.ofertas) {
+                combinar(
+                    oferta,
+                    entrada.dto.ofertas.find(
+                        o => o.cliente === oferta._uid
+                    ),
+                    ack.ofertas.find(
+                        o => o.cliente === oferta._uid
+                    ),
+                    [
+                        "nombre_proveedor",
+                        "marca_ofertada",
+                        "precio",
+                    ]
+                );
+            }
+        }
+
+        for (const columna of columnas) {
+            columna.guardada = filas.some(fila =>
+                ofertasDe(fila, columna).some(
+                    oferta => oferta.id
+                )
+            );
+        }
+    }
+
+    async function ejecutarGuardado(lote) {
+        for (const entrada of lote) {
+            entrada.fila._enviando = true;
+        }
+
+        for (const columna of columnas) {
+            columna._enviando = lote.some(entrada =>
+                ofertasDe(entrada.fila, columna).some(
+                    oferta => entrada.ofertas.includes(oferta)
+                )
+            );
+        }
+
+        actualizarControles();
+        estado("Guardando…", "guardando");
+
+        const controlador = new AbortController();
+        const limite = setTimeout(
+            () => controlador.abort(),
+            20000
+        );
+
+        let reintentar = true;
+
+        try {
+            const body = JSON.stringify({
+                filas: lote.map(entrada => entrada.dto),
+            });
+
+            const respuesta = await fetch(
+                window.location.pathname,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    signal: controlador.signal,
+                    keepalive: (
+                        new TextEncoder().encode(body).length < 60000
+                    ),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": form.querySelector(
+                            '[name="csrfmiddlewaretoken"]'
+                        ).value,
+                    },
+                    body,
+                }
+            );
+
+            const resultado = await respuesta
+                .json()
+                .catch(() => null);
+
+            if (
+                !respuesta.ok ||
+                !resultado?.ok ||
+                respuesta.redirected
+            ) {
+                // Un 400 no guardó nada: permite corregir los campos.
+                bloqueado = respuesta.status !== 400;
+                reintentar = false;
+
+                estado(
+                    resultado?.error ||
+                    "No se confirmó el guardado. Recarga para comprobarlo.",
+                    "error"
+                );
+
+                return;
+            }
+
+            aceptar(lote, resultado);
+
+        } catch (error) {
+            // Sin confirmación, no repetir altas que podrían estar guardadas.
+            bloqueado = true;
+            reintentar = false;
+
+            estado(
+                "Guardado sin confirmar. Conserva esta pantalla y revisa la conexión antes de recargar.",
+                "error"
+            );
+
+        } finally {
+            clearTimeout(limite);
+
+            for (const entrada of lote) {
+                entrada.fila._enviando = false;
+            }
+
+            for (const columna of columnas) {
+                columna._enviando = false;
+            }
+
+            enCurso = null;
+
+            actualizarControles();
+        }
+
+        if (!reintentar || bloqueado) return;
+
+        const siguiente = preparar();
+
+        if (siguiente.lote.length) {
+            estado("Pendiente…", "pendiente");
+
+            if (!temporizador && !componiendo) {
+                temporizador = setTimeout(
+                    guardarCambios,
+                    700
+                );
+            }
+
+        } else {
+            estado(
+                siguiente.pendiente || "Guardado",
+                siguiente.pendiente
+                    ? "pendiente"
+                    : "guardado"
+            );
+        }
+    }
+
+    function guardarCambios() {
+        clearTimeout(temporizador);
+        temporizador = null;
+
+        if (enCurso) return enCurso;
+
+        if (!editable || bloqueado || componiendo) {
+            return Promise.resolve();
+        }
+
+        const preparado = preparar();
+
+        if (!preparado.lote.length) {
+            estado(
+                preparado.pendiente || "Guardado",
+                preparado.pendiente
+                    ? "pendiente"
+                    : "guardado"
+            );
+
+            return Promise.resolve();
+        }
+
+        enCurso = ejecutarGuardado(
+            preparado.lote
+        );
+
+        return enCurso;
     }
 
     function actualizarResaltado(fila, tr, boton) {
@@ -515,13 +758,16 @@ OT {{ solicitud.orden.numero_orden }} ·
             opcion => opcion[0] === fila.resaltado
         );
 
-        const actual = resaltados[indice]?.[1] || "Normal";
-        const siguiente = resaltados[
-            (indice + 1) % resaltados.length
-        ][1];
+        boton.title = (
+            (resaltados[indice]?.[1] || "Normal") +
+            ". Cambiar a " +
+            resaltados[(indice + 1) % resaltados.length][1]
+        );
 
-        boton.title = actual + ". Cambiar a " + siguiente;
-        boton.setAttribute("aria-label", boton.title);
+        boton.setAttribute(
+            "aria-label",
+            boton.title
+        );
     }
 
     function dibujarCabecera() {
@@ -538,26 +784,24 @@ OT {{ solicitud.orden.numero_orden }} ·
             const th = el("th", "mx-proveedor");
             const linea = el("div", "mx-cab-proveedor");
 
-            const editable = columna.guardada
-                ? permisos.editar_oferta
-                : permisos.agregar_oferta;
-
             const nombre = entrada(
                 columna,
                 "nombre",
                 "Nombre del proveedor",
-                editable
+                "text",
+                "columna"
             );
 
             nombre.placeholder = "Escribe el proveedor";
             nombre.maxLength = 200;
 
-            columna._input = nombre;
-
             nombre.addEventListener("input", () => {
+                columna._registrar = true;
+
                 for (const fila of filas) {
                     for (const oferta of ofertasDe(fila, columna)) {
                         oferta.nombre_proveedor = columna.nombre;
+                        oferta._activa = true;
                     }
                 }
             });
@@ -566,15 +810,19 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             if (!columna.guardada && permisos.agregar_oferta) {
                 linea.append(
-                    botonQuitar(() => {
-                        columnas.splice(
-                            columnas.indexOf(columna),
-                            1
-                        );
+                    quitar(
+                        () => {
+                            columnas.splice(
+                                columnas.indexOf(columna),
+                                1
+                            );
 
-                        cambio();
-                        dibujar();
-                    }, "Quitar columna nueva")
+                            dibujar();
+                        },
+                        columna,
+                        "columna",
+                        "Quitar columna nueva"
+                    )
                 );
             }
 
@@ -590,6 +838,8 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             th.append(linea, etiquetas);
             tr.append(th);
+
+            columna._input = nombre;
         }
 
         cabecera.append(tr);
@@ -605,7 +855,7 @@ OT {{ solicitud.orden.numero_orden }} ·
             const color = el("button", "mx-color");
 
             color.type = "button";
-            color.disabled = !puedeItem(fila);
+            color._objeto = fila;
 
             color.addEventListener("click", () => {
                 const indice = resaltados.findIndex(
@@ -616,18 +866,28 @@ OT {{ solicitud.orden.numero_orden }} ·
                     (indice + 1) % resaltados.length
                 ][0];
 
-                actualizarResaltado(fila, tr, color);
+                actualizarResaltado(
+                    fila,
+                    tr,
+                    color
+                );
+
                 cambio();
             });
 
-            actualizarResaltado(fila, tr, color);
+            actualizarResaltado(
+                fila,
+                tr,
+                color
+            );
 
             const nombre = foco(
                 entrada(
                     fila,
                     "descripcion_solicitada",
                     "Repuesto",
-                    puedeItem(fila)
+                    "text",
+                    "item"
                 ),
                 fila,
                 null,
@@ -641,18 +901,28 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             if (!fila.id && permisos.agregar_item) {
                 linea.append(
-                    botonQuitar(() => {
-                        filas.splice(filas.indexOf(fila), 1);
+                    quitar(
+                        () => {
+                            filas.splice(
+                                filas.indexOf(fila),
+                                1
+                            );
 
-                        cambio();
-                        dibujarCuerpo();
-                    }, "Quitar fila nueva")
+                            dibujarCuerpo();
+                        },
+                        fila,
+                        "item",
+                        "Quitar fila nueva"
+                    )
                 );
             }
 
             descripcion.append(linea);
 
-            const cantidad = el("td", "mx-cantidad");
+            const cantidad = el(
+                "td",
+                "mx-cantidad"
+            );
 
             cantidad.append(
                 foco(
@@ -660,8 +930,8 @@ OT {{ solicitud.orden.numero_orden }} ·
                         fila,
                         "cantidad",
                         "Cantidad",
-                        puedeItem(fila),
-                        "number"
+                        "number",
+                        "item"
                     ),
                     fila,
                     null,
@@ -685,7 +955,8 @@ OT {{ solicitud.orden.numero_orden }} ·
                             oferta,
                             "marca_ofertada",
                             "Marca opcional",
-                            puedeOferta(oferta)
+                            "text",
+                            "oferta"
                         ),
                         fila,
                         columna,
@@ -700,8 +971,8 @@ OT {{ solicitud.orden.numero_orden }} ·
                             oferta,
                             "precio",
                             "Costo unitario final",
-                            puedeOferta(oferta),
-                            "number"
+                            "number",
+                            "oferta"
                         ),
                         fila,
                         columna,
@@ -719,6 +990,8 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             cuerpo.append(tr);
         }
+
+        actualizarControles();
     }
 
     function dibujar() {
@@ -727,7 +1000,8 @@ OT {{ solicitud.orden.numero_orden }} ·
     }
 
     for (const fila of filas) {
-        fila._uid = ++secuencia;
+        registrar(fila);
+
         fila.resaltado = fila.resaltado || "NORMAL";
 
         const mapa = new Map();
@@ -735,10 +1009,11 @@ OT {{ solicitud.orden.numero_orden }} ·
         celdas.set(fila, mapa);
 
         for (const oferta of fila.ofertas) {
-            const clave = normalizar(oferta.nombre_proveedor);
+            registrar(oferta);
 
             let columna = columnas.find(
-                c => normalizar(c.nombre) === clave
+                c => normalizar(c.nombre) ===
+                    normalizar(oferta.nombre_proveedor)
             );
 
             if (!columna) {
@@ -757,6 +1032,13 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             mapa.get(columna.clave).push(oferta);
         }
+
+        fila._guardado = firma({
+            ...fila,
+            ofertas: columnas.flatMap(
+                columna => mapa.get(columna.clave) || []
+            ).map(dtoOferta),
+        });
     }
 
     if (!columnas.length && permisos.agregar_oferta) {
@@ -769,18 +1051,19 @@ OT {{ solicitud.orden.numero_orden }} ·
 
     agregarFila.hidden = !permisos.agregar_item;
     agregarProveedor.hidden = !permisos.agregar_oferta;
-    guardar.hidden = !Object.values(permisos).some(Boolean);
 
     agregarFila.addEventListener("click", () => {
         if (filas.length >= 200) {
-            return mensaje("Máximo 200 repuestos.");
+            return estado(
+                "Máximo 200 repuestos.",
+                "pendiente"
+            );
         }
 
         const fila = nuevaFila();
 
         filas.push(fila);
 
-        cambio();
         dibujarCuerpo();
 
         cuerpo.querySelector(
@@ -791,8 +1074,9 @@ OT {{ solicitud.orden.numero_orden }} ·
 
     agregarProveedor.addEventListener("click", () => {
         if (columnas.length >= 20) {
-            return mensaje(
-                "Máximo 20 proveedores en esta tabla."
+            return estado(
+                "Máximo 20 proveedores.",
+                "pendiente"
             );
         }
 
@@ -800,7 +1084,6 @@ OT {{ solicitud.orden.numero_orden }} ·
 
         columnas.push(columna);
 
-        cambio();
         dibujar();
 
         columna._input.focus();
@@ -835,7 +1118,6 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             filas.push(siguiente);
 
-            cambio();
             dibujarCuerpo();
         }
 
@@ -848,136 +1130,69 @@ OT {{ solicitud.orden.numero_orden }} ·
         }
     });
 
-    window.addEventListener("beforeunload", event => {
-        if (pendiente) {
-            event.preventDefault();
-            event.returnValue = "";
+    form.addEventListener("compositionstart", () => {
+        componiendo = true;
+        clearTimeout(temporizador);
+    });
+
+    form.addEventListener("compositionend", () => {
+        componiendo = false;
+        cambio();
+    });
+
+    form.addEventListener("focusout", () => {
+        if (!componiendo) guardarCambios();
+    });
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+        guardarCambios();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+            guardarCambios();
         }
     });
 
-    form.addEventListener("submit", async event => {
-        event.preventDefault();
-
-        if (enviando) {
+    volver.addEventListener("click", async event => {
+        if (
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey ||
+            event.altKey ||
+            event.button
+        ) {
             return;
         }
 
-        error.hidden = true;
+        event.preventDefault();
 
-        const nombres = new Set();
-
-        for (const columna of columnas) {
-            const nombre = normalizar(columna.nombre);
-
-            if (nombre && nombres.has(nombre)) {
-                return mensaje(
-                    "Ese proveedor ya tiene una columna.",
-                    columna._input
-                );
-            }
-
-            if (nombre) {
-                nombres.add(nombre);
-            }
-
-            const conDatos = filas.some(
-                fila => ofertasDe(fila, columna).some(
-                    oferta => oferta.id || tieneCosto(oferta)
-                )
-            );
-
-            if (!nombre && conDatos) {
-                return mensaje(
-                    "Escribe el nombre del proveedor.",
-                    columna._input
-                );
-            }
+        if (enCurso) {
+            await enCurso;
         }
 
-        const payload = filas
-            .filter(fila =>
-                fila.id ||
-                fila.descripcion_solicitada.trim() ||
-                Number(fila.cantidad) !== 1 ||
-                fila.resaltado !== "NORMAL" ||
-                columnas.some(
-                    columna => ofertasDe(
-                        fila,
-                        columna
-                    ).some(tieneCosto)
-                )
-            )
-            .map(fila => ({
-                id: fila.id ?? null,
-                revision: fila.revision || "",
-                descripcion_solicitada: fila.descripcion_solicitada,
-                cantidad: fila.cantidad,
-                resaltado: fila.resaltado,
-                ofertas: ofertasParaGuardar(fila),
-            }));
-
-        if (!payload.length && nombres.size) {
-            return mensaje(
-                "Escribe al menos un repuesto."
-            );
+        if (!bloqueado) {
+            await guardarCambios();
         }
 
-        enviando = true;
+        const pendiente = preparar();
 
-        guardar.disabled = true;
-        agregarFila.disabled = true;
-        agregarProveedor.disabled = true;
-        scroll.inert = true;
-
-        try {
-            const respuesta = await fetch(
-                window.location.pathname,
-                {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": form.querySelector(
-                            '[name="csrfmiddlewaretoken"]'
-                        ).value,
-                    },
-                    body: JSON.stringify({
-                        filas: payload,
-                    }),
-                }
-            );
-
-            const resultado = await respuesta
-                .json()
-                .catch(() => ({}));
-
-            if (!respuesta.ok || !resultado.ok) {
-                throw new Error(
-                    resultado.error ||
-                    "No se pudo guardar. Revisa tu sesión y tus permisos."
-                );
-            }
-
-            pendiente = false;
-
-            window.location.reload();
-
-        } catch (excepcion) {
-            mensaje(excepcion.message);
-
-            enviando = false;
-
-            guardar.disabled = false;
-            agregarFila.disabled = false;
-            agregarProveedor.disabled = false;
-            scroll.inert = false;
+        if (
+            !bloqueado &&
+            !pendiente.lote.length &&
+            !pendiente.pendiente
+        ) {
+            window.location.assign(volver.href);
         }
     });
 
     dibujar();
 
-    aviso.textContent = (
-        filas.filter(fila => fila.id).length + " repuestos"
+    estado(
+        editable
+            ? "Guardado automático"
+            : "Solo lectura"
     );
 })();
 </script>

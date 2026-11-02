@@ -1,11 +1,8 @@
-"""Captura de repuestos y costos en una sola tabla."""
+"""Captura de repuestos y costos con confirmación de guardado."""
 
 import json
 
-from django.contrib.auth.decorators import (
-    login_required,
-    permission_required,
-)
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Max, Prefetch
@@ -13,14 +10,13 @@ from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.crypto import constant_time_compare, salted_hmac
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from ..forms import CotizacionProveedorForm
 from ..forms_filas import FilaRepuestoForm
-from ..models import (
-    CotizacionProveedor,
-    ItemSolicitudCotizacion,
-)
+from ..models import CotizacionProveedor, ItemSolicitudCotizacion
+
 from .torre import (
     LECTURA,
     _argumentos_formulario,
@@ -29,10 +25,6 @@ from .torre import (
     _solicitudes,
 )
 
-
-# =========================================================
-# CAMPOS EDITABLES
-# =========================================================
 
 CAMPOS_ITEM = (
     "descripcion_solicitada",
@@ -45,9 +37,9 @@ CAMPOS_OFERTA = tuple(
 )
 
 
-# =========================================================
-# DATOS Y CONTROL DE VERSIONES
-# =========================================================
+class ConflictoGuardado(ValidationError):
+    pass
+
 
 def _datos(objeto, campos):
     return model_to_dict(
@@ -69,27 +61,21 @@ def _revision(item, cotizaciones=None):
             .order_by("pk")
         )
 
-    datos = [
-        valores(item),
-        [
-            valores(oferta)
-            for oferta in cotizaciones
-        ],
-    ]
-
     return salted_hmac(
         "torre.mesa",
         json.dumps(
-            datos,
+            [
+                valores(item),
+                [
+                    valores(oferta)
+                    for oferta in cotizaciones
+                ],
+            ],
             sort_keys=True,
             default=str,
         ),
     ).hexdigest()
 
-
-# =========================================================
-# PERMISOS Y VALIDACIONES
-# =========================================================
 
 def _permiso(request, accion, modelo):
     permiso = f"cotizaciones.{accion}_{modelo}"
@@ -101,11 +87,6 @@ def _permiso(request, accion, modelo):
 
 
 def _exigir_sin_cambios(originales, recibidos, campos):
-    """
-    Permite reenviar datos sin modificar cuando el usuario
-    no tiene permiso para editar ese modelo.
-    """
-
     def texto(valor):
         return "" if valor is None else str(valor)
 
@@ -152,16 +133,11 @@ def _identificador(valor):
         or valor < 1
     ):
         raise ValidationError(
-            "Identificador de fila no válido. "
-            "Recarga la pantalla."
+            "Identificador no válido. Recarga la pantalla."
         )
 
     return valor
 
-
-# =========================================================
-# GUARDADO DE TODA LA TABLA
-# =========================================================
 
 def _guardar(request, solicitud, filas):
     if not isinstance(filas, list) or len(filas) > 200:
@@ -205,8 +181,10 @@ def _guardar(request, solicitud, filas):
 
     vistos = set()
     ofertas_vistas = set()
+    clientes = set()
+    clientes_oferta = set()
 
-    # Valida referencias y revisiones antes de guardar.
+    # Validar toda la petición antes de escribir.
     for fila in filas:
         if (
             not isinstance(fila, dict)
@@ -219,6 +197,18 @@ def _guardar(request, solicitud, filas):
         pk = _identificador(
             fila.get("id")
         )
+
+        cliente = _identificador(
+            fila.get("cliente")
+        )
+
+        if cliente is not None:
+            if cliente in clientes:
+                raise ValidationError(
+                    "Hay una referencia de fila repetida."
+                )
+
+            clientes.add(cliente)
 
         if pk is not None:
             if pk in vistos or pk not in items:
@@ -237,9 +227,10 @@ def _guardar(request, solicitud, filas):
                 str(fila.get("revision", "")),
                 revision_actual,
             ):
-                raise ValidationError(
-                    "Otra persona modificó la tabla. "
-                    "Recarga antes de guardar."
+                raise ConflictoGuardado(
+                    "Hay cambios de otra sesión. "
+                    "Recarga para revisarlos; "
+                    "tu edición sigue en esta pantalla."
                 )
 
         if len(fila["ofertas"]) > 20:
@@ -258,6 +249,18 @@ def _guardar(request, solicitud, filas):
             oferta_id = _identificador(
                 dato.get("id")
             )
+
+            cliente_oferta = _identificador(
+                dato.get("cliente")
+            )
+
+            if cliente_oferta is not None:
+                if cliente_oferta in clientes_oferta:
+                    raise ValidationError(
+                        "Hay una referencia de oferta repetida."
+                    )
+
+                clientes_oferta.add(cliente_oferta)
 
             if oferta_id is not None:
                 if (
@@ -278,12 +281,13 @@ def _guardar(request, solicitud, filas):
         }
 
         if existentes != guardadas:
-            raise ValidationError(
-                "Faltan ofertas guardadas. "
-                "Recarga la tabla."
+            raise ConflictoGuardado(
+                "Hay nuevas ofertas en otra sesión. "
+                "Recarga para revisarlas."
             )
 
-    # El llamador mantiene una transacción para toda la tabla.
+    confirmaciones = []
+
     for numero, fila in enumerate(filas, 1):
         referencia = f"Repuesto {numero}"
 
@@ -330,7 +334,6 @@ def _guardar(request, solicitud, filas):
                 if campo in fila
             })
 
-            # La revisión completa se comprobó arriba.
             datos_item["revision"] = ""
 
             formulario = FilaRepuestoForm(
@@ -355,6 +358,8 @@ def _guardar(request, solicitud, filas):
                 )
 
                 item = formulario.save()
+
+        confirmacion_ofertas = []
 
         for posicion, dato in enumerate(
             fila["ofertas"],
@@ -388,49 +393,71 @@ def _guardar(request, solicitud, filas):
                     CAMPOS_OFERTA,
                 )
 
-                continue
+            else:
+                datos_oferta = _datos(
+                    oferta,
+                    CAMPOS_OFERTA,
+                )
 
-            datos_oferta = _datos(
-                oferta,
-                CAMPOS_OFERTA,
-            )
+                datos_oferta.update({
+                    campo: dato[campo]
+                    for campo in CAMPOS_OFERTA
+                    if campo in dato
+                })
 
-            datos_oferta.update({
-                campo: dato[campo]
-                for campo in CAMPOS_OFERTA
-                if campo in dato
+                formulario = CotizacionProveedorForm(
+                    datos_oferta,
+                    instance=oferta,
+                    item=item,
+                    **_argumentos_formulario(request),
+                )
+
+                if es_nueva or formulario.has_changed():
+                    _permiso(
+                        request,
+                        "add" if es_nueva else "change",
+                        "cotizacionproveedor",
+                    )
+
+                    _validar(
+                        formulario,
+                        f"{referencia}, oferta {posicion}",
+                    )
+
+                    oferta = formulario.save()
+
+            if es_nueva:
+                ofertas_por_item.setdefault(
+                    item.pk,
+                    [],
+                ).append(oferta)
+
+            ofertas[oferta.pk] = oferta
+
+            confirmacion_ofertas.append({
+                **_datos(oferta, CAMPOS_OFERTA),
+                "id": oferta.pk,
+                "cliente": dato.get("cliente"),
             })
 
-            formulario_oferta = CotizacionProveedorForm(
-                datos_oferta,
-                instance=oferta,
-                item=item,
-                **_argumentos_formulario(request),
-            )
-
-            if (
-                es_nueva
-                or formulario_oferta.has_changed()
-            ):
-                _permiso(
-                    request,
-                    "add" if es_nueva else "change",
-                    "cotizacionproveedor",
-                )
-
-                _validar(
-                    formulario_oferta,
-                    f"{referencia}, oferta {posicion}",
-                )
-
-                formulario_oferta.save()
+        confirmaciones.append({
+            **_datos(item, CAMPOS_ITEM),
+            "id": item.pk,
+            "cliente": fila.get("cliente"),
+            "revision": _revision(
+                item,
+                sorted(
+                    ofertas_por_item.get(item.pk, []),
+                    key=lambda oferta: oferta.pk,
+                ),
+            ),
+            "ofertas": confirmacion_ofertas,
+        })
 
     solicitud.actualizar_estado()
 
+    return confirmaciones
 
-# =========================================================
-# PANTALLA DE LA TORRE
-# =========================================================
 
 @login_required
 @permission_required(
@@ -438,6 +465,7 @@ def _guardar(request, solicitud, filas):
     raise_exception=True,
 )
 @require_http_methods(["GET", "POST"])
+@never_cache
 def detalle(request, pk):
     if request.method == "POST":
         try:
@@ -456,7 +484,7 @@ def detalle(request, pk):
 
                 _exigir_abierta(solicitud)
 
-                _guardar(
+                confirmaciones = _guardar(
                     request,
                     solicitud,
                     carga.get("filas"),
@@ -481,6 +509,14 @@ def detalle(request, pk):
                 status=403,
             )
 
+        except ConflictoGuardado as error:
+            return JsonResponse(
+                {
+                    "error": " ".join(error.messages),
+                },
+                status=409,
+            )
+
         except ValidationError as error:
             return JsonResponse(
                 {
@@ -491,6 +527,7 @@ def detalle(request, pk):
 
         return JsonResponse({
             "ok": True,
+            "filas": confirmaciones,
         })
 
     solicitud = get_object_or_404(
