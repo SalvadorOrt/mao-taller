@@ -1,3 +1,110 @@
+{% extends "cotizaciones/torre/base.html" %}
+
+{% block torre_subheading %}
+OT {{ solicitud.orden.numero_orden }} ·
+{{ solicitud.orden.vehiculo }} ·
+{{ solicitud.get_tipo_trabajo_display }}
+{% endblock %}
+
+{% block torre_content %}
+<style>
+    #mx-form [hidden] { display: none !important; }
+    .mx-barra { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .mx-barra a { margin-right: auto; }
+    .mx-aviso, .mx-ayuda { font-size: 11px; color: #6e6e73; }
+    .mx-scroll { overflow: auto; max-height: 70vh; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+    .mx-tabla { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    .mx-tabla th, .mx-tabla td { padding: 4px 6px; border-right: 1px solid #e9ebef; border-bottom: 1px solid #e9ebef; vertical-align: top; }
+    .mx-tabla th { position: sticky; top: 0; z-index: 3; background: #f8f9fb; text-align: left; color: #6e6e73; font-size: 11px; }
+    .mx-tabla tr { --fila: #fff; }
+    .mx-tabla tr.atencion { --fila: #fff8dc; }
+    .mx-tabla tr.urgente { --fila: #fff0f0; }
+    .mx-tabla td { background: var(--fila); }
+    .mx-repuesto { position: sticky; left: 0; z-index: 2; min-width: 210px; width: 210px; }
+    .mx-tabla th.mx-repuesto { z-index: 5; }
+    .mx-cantidad { min-width: 65px; width: 65px; }
+    .mx-proveedor { min-width: 180px; width: 180px; }
+    .mx-tabla input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 28px; padding: 4px 5px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: #1d1d1f; font: inherit; }
+    .mx-tabla input:hover { border-color: #d9dde3; }
+    .mx-tabla input:focus { outline: 2px solid #c7e2ff; border-color: #0071e3; background: #fff; }
+    .mx-tabla input:disabled { color: #6e6e73; }
+    .mx-cantidad input { text-align: center; }
+    .mx-tabla input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+    .mx-tabla input::-webkit-inner-spin-button, .mx-tabla input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .mx-descripcion, .mx-cab-proveedor { display: flex; align-items: center; gap: 4px; }
+    .mx-descripcion > input, .mx-cab-proveedor > input { flex: 1; min-width: 0; }
+    .mx-cab-proveedor > input { font-weight: 600; border-color: #e1e5eb; background: #fff; }
+    .mx-celda { display: grid; grid-template-columns: minmax(65px, 1fr) minmax(65px, 1fr); gap: 4px; }
+    .mx-celda input[type="number"] { text-align: right; }
+    .mx-etiquetas { padding: 3px 5px 1px; font-size: 10px; font-weight: normal; }
+    .mx-oferta + .mx-oferta { margin-top: 4px; }
+    .mx-quitar { padding: 2px 4px; border: 0; background: transparent; color: #b74646; cursor: pointer; font-size: 17px; }
+    .mx-color { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 26px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    .mx-color::before { content: ""; width: 12px; height: 12px; border: 1px solid #b9c0ca; border-radius: 50%; background: #fff; }
+    .mx-color[data-color="ATENCION"]::before { background: #ffe08a; border-color: #bc8d20; }
+    .mx-color[data-color="URGENTE"]::before { background: #f39ea0; border-color: #cc5558; }
+    .mx-color:focus-visible, .mx-quitar:focus-visible { outline: 2px solid #0071e3; }
+    .mx-pie-tabla { display: flex; justify-content: flex-start; padding: 10px 0; }
+    .mx-ayuda { margin: 4px 0; }
+    #mx-aviso[data-estado="guardando"] { color: #0071e3; }
+    #mx-aviso[data-estado="guardado"] { color: #287645; }
+    #mx-aviso[data-estado="pendiente"] { color: #8a6d18; }
+    #mx-aviso[data-estado="error"] { color: #b42318; }
+</style>
+
+<form id="mx-form" method="post" autocomplete="off" novalidate>
+    {% csrf_token %}
+
+    <div class="mx-barra">
+        <a id="mx-volver" href="{% url 'cotizaciones:lista' %}">
+            ← Vehículos en taller
+        </a>
+
+        <span
+            id="mx-aviso"
+            class="mx-aviso"
+            aria-live="polite"
+        ></span>
+
+        <button
+            type="button"
+            id="mx-proveedor"
+            class="btn-login"
+        >
+            + Proveedor
+        </button>
+    </div>
+
+    <div class="mx-scroll" id="mx-scroll">
+        <table
+            class="mx-tabla"
+            aria-label="Repuestos y costos por proveedor"
+        >
+            <thead id="mx-cabecera"></thead>
+            <tbody id="mx-filas"></tbody>
+        </table>
+    </div>
+
+    <div class="mx-pie-tabla">
+        <button
+            type="button"
+            id="mx-repuesto"
+            class="btn-login"
+        >
+            + Repuesto
+        </button>
+    </div>
+
+    <p class="mx-ayuda">
+        Escribe primero los repuestos.
+        Agrega proveedores y costos cuando los tengas.
+        Guardado automático. Tab avanza; Enter baja.
+    </p>
+</form>
+
+{{ mesa|json_script:"mx-datos" }}
+{% endblock %}
+
 {% block torre_js %}
 <script>
 (() => {
