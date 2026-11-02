@@ -238,12 +238,6 @@ def get_menu_lateral(user):
                 "icon": "bi-people-fill",
             })
 
-        if user.is_staff:
-            items_administracion.append({
-                "label": "Panel Admin",
-                "url": "/admin/",
-                "icon": "bi-sliders",
-            })
 
         if items_administracion:
             menu.append({
