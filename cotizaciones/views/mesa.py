@@ -131,6 +131,67 @@ def _identificador(valor):
     return valor
 
 
+def _eliminar_ofertas(request, solicitud, filas):
+    """Borra ofertas explícitas, con permiso y revisión vigentes."""
+    for fila in filas:
+        if not isinstance(fila, dict):
+            raise ValidationError("Formato de fila no válido.")
+
+        eliminadas = fila.get("ofertas_eliminadas", [])
+
+        if not isinstance(eliminadas, list) or len(eliminadas) > 20:
+            raise ValidationError("Formato de ofertas eliminadas no válido.")
+
+        if not eliminadas:
+            continue
+
+        ids = [_identificador(valor) for valor in eliminadas]
+
+        if None in ids or len(ids) != len(set(ids)):
+            raise ValidationError("Hay ofertas eliminadas no válidas o repetidas.")
+
+        _permiso(request, "delete", "cotizacionproveedor")
+
+        item = (
+            solicitud.items.select_for_update()
+            .filter(pk=_identificador(fila.get("id")))
+            .first()
+        )
+
+        if item is None:
+            raise PermissionDenied("El repuesto no pertenece a esta tabla.")
+
+        ofertas = list(
+            item.cotizaciones_proveedor.select_for_update().order_by("pk")
+        )
+
+        if not set(ids).issubset({oferta.pk for oferta in ofertas}):
+            raise PermissionDenied("La oferta no pertenece a este repuesto.")
+
+        conservadas = fila.get("ofertas")
+
+        if not isinstance(conservadas, list) or any(
+            not isinstance(oferta, dict) for oferta in conservadas
+        ):
+            raise ValidationError("Formato de oferta no válido.")
+
+        if set(ids).intersection(
+            _identificador(oferta.get("id")) for oferta in conservadas
+        ):
+            raise ValidationError("No puedes guardar y eliminar la misma oferta.")
+
+        if not constant_time_compare(
+            str(fila.get("revision", "")), _revision(item, ofertas)
+        ):
+            raise ConflictoGuardado(
+                "El repuesto cambió en otra sesión. Recarga para revisarlo."
+            )
+
+        item.cotizaciones_proveedor.filter(pk__in=ids).delete()
+        item.refresh_from_db()
+        fila["revision"] = _revision(item)
+
+
 def _guardar(request, solicitud, filas, eliminadas=None):
     if not isinstance(filas, list) or len(filas) > 200:
         raise ValidationError(
@@ -144,6 +205,8 @@ def _guardar(request, solicitud, filas, eliminadas=None):
         raise ValidationError(
             "Formato de eliminación no válido."
         )
+
+    _eliminar_ofertas(request, solicitud, filas)
 
     items = {
         item.pk: item
@@ -592,7 +655,7 @@ def detalle(request, pk):
             return JsonResponse(
                 {
                     "error": (
-                        "El repuesto tiene registros vinculados "
+                        "La oferta o el repuesto tiene registros vinculados "
                         "que impiden eliminarlo."
                     ),
                 },
@@ -669,6 +732,7 @@ def detalle(request, pk):
         "agregar_oferta": "add_cotizacionproveedor",
         "editar_oferta": "change_cotizacionproveedor",
         "eliminar_item": "delete_itemsolicitudcotizacion",
+        "eliminar_oferta": "delete_cotizacionproveedor",
     }
 
     permisos = {

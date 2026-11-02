@@ -115,6 +115,7 @@ OT {{ solicitud.orden.numero_orden }} ·
     const permisos = datos.permisos;
     const resaltados = datos.resaltados;
     const columnas = [];
+    const columnasQuitadas = [];
     const celdas = new WeakMap();
 
     const form = document.getElementById("mx-form");
@@ -253,7 +254,10 @@ OT {{ solicitud.orden.numero_orden }} ·
                 ) {
                     return;
                 }
-            } else if (objeto._enviando || objeto.guardada) {
+            } else if (
+                (objeto._enviando || objeto.guardada) &&
+                !permisos.eliminar_oferta
+            ) {
                 return;
             }
 
@@ -305,6 +309,83 @@ OT {{ solicitud.orden.numero_orden }} ·
         }
 
         return mapa.get(columna.clave);
+    }
+
+    function quitarColumna(columna) {
+        const indice = columnas.indexOf(columna);
+        if (indice < 0) return;
+
+        const afectadas = filas.map(fila => ({
+            fila,
+            ofertas: ofertasDe(fila, columna),
+        }));
+
+        if (
+            columna._enviando ||
+            afectadas.some(entrada => entrada.ofertas.some(oferta => oferta.id))
+        ) {
+            for (const entrada of afectadas) {
+                entrada.fila._ofertasEliminar ??= [];
+                entrada.fila._ofertasEliminar.push(...entrada.ofertas);
+            }
+
+            columnasQuitadas.push({
+                columna,
+                indice,
+                referencias: afectadas.flatMap(entrada => entrada.ofertas),
+            });
+        } else {
+            for (const fila of filas) {
+                celdas.get(fila).delete(columna.clave);
+            }
+        }
+
+        columnas.splice(indice, 1);
+        dibujar();
+    }
+
+    function confirmarColumnas(lote) {
+        const borradas = new Set(lote.flatMap(
+            entrada => entrada.dto.ofertas_eliminadas || []
+        ));
+
+        for (const fila of filas) {
+            fila._ofertasEliminar = (fila._ofertasEliminar || []).filter(
+                oferta => oferta.id && !borradas.has(oferta.id)
+            );
+        }
+
+        for (let i = columnasQuitadas.length - 1; i >= 0; i--) {
+            const quitada = columnasQuitadas[i];
+            const pendiente = filas.some(fila =>
+                (fila._ofertasEliminar || []).some(
+                    oferta => quitada.referencias.includes(oferta)
+                )
+            );
+
+            if (!pendiente) {
+                for (const fila of filas) {
+                    celdas.get(fila).delete(quitada.columna.clave);
+                }
+
+                columnasQuitadas.splice(i, 1);
+            }
+        }
+    }
+
+    function restaurarColumnas() {
+        for (const quitada of [...columnasQuitadas].reverse()) {
+            columnas.splice(quitada.indice, 0, quitada.columna);
+
+            for (const fila of filas) {
+                fila._ofertasEliminar = (fila._ofertasEliminar || []).filter(
+                    oferta => !quitada.referencias.includes(oferta)
+                );
+            }
+        }
+
+        columnasQuitadas.length = 0;
+        dibujar();
     }
 
     function tieneDatos(oferta) {
@@ -472,9 +553,15 @@ OT {{ solicitud.orden.numero_orden }} ·
                 cantidad,
                 resaltado: fila.resaltado,
                 ofertas: ofertas.map(dtoOferta),
+                ofertas_eliminadas: (fila._ofertasEliminar || [])
+                    .filter(oferta => oferta.id)
+                    .map(oferta => oferta.id),
             };
 
-            if (firma(dto) !== fila._guardado) {
+            if (
+                firma(dto) !== fila._guardado ||
+                dto.ofertas_eliminadas.length
+            ) {
                 lote.push({
                     fila,
                     dto,
@@ -534,11 +621,11 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             } else {
                 boton.hidden = Boolean(
-                    boton._objeto.guardada
+                    boton._objeto.guardada && !permisos.eliminar_oferta
                 );
 
                 boton.disabled = Boolean(
-                    boton._objeto._enviando
+                    boton._objeto._enviando && !permisos.eliminar_oferta
                 );
             }
         }
@@ -671,6 +758,8 @@ OT {{ solicitud.orden.numero_orden }} ·
                 1
             );
         }
+
+        confirmarColumnas(lote);
     }
 
     async function ejecutarGuardado(lote, eliminadas) {
@@ -790,6 +879,10 @@ OT {{ solicitud.orden.numero_orden }} ·
                 columna._enviando = false;
             }
 
+            if (!reintentar && columnasQuitadas.length) {
+                restaurarColumnas();
+            }
+
             enCurso = null;
 
             actualizarControles();
@@ -888,7 +981,7 @@ OT {{ solicitud.orden.numero_orden }} ·
 
         tr.append(
             el("th", "mx-repuesto", "Repuesto"),
-            el("th", "mx-cantidad", "Cant.")
+            el("th", "mx-cantidad", "Cantidad")
         );
 
         for (const columna of columnas) {
@@ -920,20 +1013,16 @@ OT {{ solicitud.orden.numero_orden }} ·
 
             linea.append(nombre);
 
-            if (!columna.guardada && permisos.agregar_oferta) {
+            if (
+                permisos.eliminar_oferta ||
+                (!columna.guardada && permisos.agregar_oferta)
+            ) {
                 linea.append(
                     quitar(
-                        () => {
-                            columnas.splice(
-                                columnas.indexOf(columna),
-                                1
-                            );
-
-                            dibujar();
-                        },
+                        () => quitarColumna(columna),
                         columna,
                         "columna",
-                        "Quitar columna nueva"
+                        "Eliminar proveedor de esta mesa y sus ofertas"
                     )
                 );
             }
