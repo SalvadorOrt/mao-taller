@@ -1,93 +1,794 @@
-{% extends 'cotizaciones/torre/base.html' %}
+{% extends "cotizaciones/torre/base.html" %}
+
 {% block torre_content %}
-    <style>
-        .torre-accesos {
-            display: flex;
-            flex-wrap: wrap;
+<style>
+    .tc-panel {
+        padding: 16px;
+    }
+
+    .tc-areas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .tc-area {
+        padding: 9px 15px;
+        border: 1px solid #e2e7ef;
+        border-radius: 8px;
+        color: #435168;
+        background: #f6f8fb;
+        text-decoration: none;
+        font-size: 13px;
+    }
+
+    .tc-area:hover {
+        background: #eef4fc;
+        text-decoration: none;
+    }
+
+    .tc-area[aria-current="page"] {
+        background: #0071e3;
+        border-color: #0071e3;
+        color: #fff;
+    }
+
+    .tc-filtros {
+        display: flex;
+        align-items: end;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .tc-campo {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .tc-campo-busqueda {
+        flex: 3 1 260px;
+    }
+
+    .tc-campo label {
+        display: block;
+        margin-bottom: 5px;
+        color: #657185;
+        font-size: 11px;
+    }
+
+    .tc-campo .lista-ot-input {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 38px;
+    }
+
+    .tc-resumen {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 0 10px;
+        color: #657185;
+        font-size: 12px;
+    }
+
+    .tc-estado {
+        min-height: 18px;
+        color: #0071e3;
+    }
+
+    #tc-resultados[aria-busy="true"] {
+        opacity: .55;
+    }
+
+    .tc-panel .lista-ot-table-wrap {
+        max-height: none;
+    }
+
+    .tc-tabla {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+    }
+
+    .tc-tabla th,
+    .tc-tabla td {
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
+    }
+
+    .tc-tabla td {
+        vertical-align: middle;
+    }
+
+    .tc-col-cliente {
+        width: 25%;
+    }
+
+    .tc-col-orden {
+        width: 20%;
+    }
+
+    .tc-col-repuestos {
+        width: 105px;
+    }
+
+    .tc-placa {
+        font-size: 16px;
+        font-weight: 600;
+        color: #182335;
+        letter-spacing: .3px;
+    }
+
+    .tc-vehiculo {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #657185;
+        overflow-wrap: anywhere;
+    }
+
+    .tc-cliente {
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .tc-ot {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .tc-fecha {
+        margin-top: 3px;
+        font-size: 11px;
+        color: #657185;
+    }
+
+    .tc-cantidad {
+        font-weight: 600;
+    }
+
+    .tc-nota {
+        margin-top: 3px;
+        font-size: 11px;
+        color: #657185;
+    }
+
+    .tc-pendiente {
+        color: #8a6d18;
+    }
+
+    .tc-con-costos {
+        color: #287645;
+    }
+
+    .tc-accion {
+        width: 85px;
+    }
+
+    .tc-accion form {
+        margin: 0;
+    }
+
+    .tc-accion .lista-ot-action-btn {
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .tc-mobile {
+        display: none;
+    }
+
+    @media (max-width: 700px) {
+        .tc-tabla .tc-col-cliente,
+        .tc-tabla .tc-col-orden {
+            display: none;
+        }
+
+        .tc-mobile {
+            display: block;
+        }
+
+        .tc-accion {
+            width: 75px;
+        }
+
+        .tc-col-repuestos {
+            width: 90px;
+        }
+
+        .tc-tabla th,
+        .tc-tabla td {
+            padding: 10px 7px;
+        }
+
+        .tc-panel {
+            padding: 12px;
+        }
+
+        .tc-campo {
+            flex-basis: 130px;
+        }
+
+        .tc-campo-busqueda {
+            flex-basis: 100%;
+        }
+    }
+
+    @media (pointer: coarse) {
+        .tc-area,
+        .tc-accion .lista-ot-action-btn {
+            min-height: 44px;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            min-width: 280px;
         }
-        .torre-accesos form { display: contents; }
-        .torre-accesos .lista-ot-action-btn {
-            white-space: nowrap;
-            margin: 0;
-            font-size: 11px;
+
+        .tc-campo .lista-ot-input {
+            min-height: 44px;
+            font-size: 16px;
         }
-        .torre-accesos [data-area="MECANICA"] { order: 1; }
-        .torre-accesos [data-area="MOTOR"] { order: 2; }
-        .torre-accesos [data-area="ENDEREZADO_PINTURA"] { order: 3; }
-    </style>
-    <div class="ot-card">
-        <form method="get" action="{% url 'cotizaciones:lista' %}" class="lista-ot-filter-form">
-            <div class="lista-ot-field search">
-                <label class="lista-ot-label" for="torre-q">Buscar</label>
-                <input id="torre-q" type="search" name="q" value="{{ q }}" class="lista-ot-input" placeholder="Placa, número de OT o vehículo" maxlength="100">
-            </div>
-            <button class="btn-login primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
-            <a href="{% url 'cotizaciones:lista' %}" class="btn-login">Limpiar</a>
-        </form>
-    </div>
-    <div class="ot-card">
-        <div class="section-title">Órdenes abiertas</div>
-        <div class="lista-ot-summary">
-            <div>
-                <div class="lista-ot-summary-main">{{ pagina.paginator.count }} OT en taller</div>
-                <div class="lista-ot-summary-sub">Abre el control del veh&iacute;culo con un clic en el &aacute;rea.</div>
-            </div>
-            <span class="lista-ot-badge abierta">Abiertas</span>
+    }
+</style>
+
+<div
+    class="ot-card tc-panel"
+    id="tc-panel"
+    data-sucursal="{{ sucursal_operativa.pk }}"
+>
+    <nav class="tc-areas" aria-label="Área de trabajo">
+        {% for pestana in pestanas %}
+            <a
+                class="tc-area"
+                href="{{ pestana.url }}"
+                data-area="{{ pestana.valor }}"
+                {% if pestana.activa %}aria-current="page"{% endif %}
+            >
+                {{ pestana.etiqueta }}
+            </a>
+        {% endfor %}
+    </nav>
+
+    <form
+        id="tc-filtros"
+        class="tc-filtros"
+        method="get"
+        action="{% url 'cotizaciones:lista' %}"
+    >
+        <input
+            type="hidden"
+            name="area"
+            value="{{ area }}"
+        >
+
+        <div class="tc-campo tc-campo-busqueda">
+            <label for="tc-q">Buscar vehículo</label>
+
+            <input
+                id="tc-q"
+                type="search"
+                name="q"
+                class="lista-ot-input"
+                value="{{ q }}"
+                placeholder="Placa, número de OT o vehículo"
+                maxlength="100"
+                autocomplete="off"
+            >
         </div>
-        <div class="lista-ot-table-wrap">
-            <table class="lista-ot-table">
-                <thead><tr><th>N.º Orden</th><th>Fecha</th><th>Placa</th><th>Cliente / Vehículo</th><th>Repuestos</th><th>Acciones</th></tr></thead>
-                <tbody>
-                {% for orden in pagina %}
-                    <tr>
-                        <td><div class="lista-ot-numero">{{ orden.numero_orden }}</div><div class="lista-ot-meta">{{ sucursal_operativa.nombre }}</div></td>
-                        <td><div class="lista-ot-meta">{{ orden.fecha_ingreso|date:'d/m/Y' }}</div><div class="lista-ot-meta">{{ orden.fecha_ingreso|date:'H:i' }}</div></td>
-                        <td><span class="lista-ot-placa">{{ orden.placa|default:'S/P' }}</span></td>
-                        <td><div class="lista-ot-cliente">{{ orden.nombre_cliente_final|default:'Sin cliente'|truncatechars:38|upper }}</div><div class="lista-ot-vehiculo">{{ orden.vehiculo|default:'-'|truncatechars:42 }}</div></td>
-                        <td><span class="lista-ot-numero">{{ orden.repuestos_torre }}</span></td>
-                        <td>
-                            {% if puede_ver_detalle %}
-                                <div class="torre-accesos">
-                                    {% for control in orden.controles_torre %}
-                                        <a class="lista-ot-action-btn open" data-area="{{ control.tipo_trabajo }}" href="{% url 'cotizaciones:detalle' control.pk %}">
-                                            {% if control.tipo_trabajo == 'MECANICA' %}Mec&aacute;nica{% elif control.tipo_trabajo == 'MOTOR' %}Motor{% elif control.tipo_trabajo == 'ENDEREZADO_PINTURA' %}Enderezado y pintura{% else %}Control{% endif %}
-                                        </a>
-                                    {% endfor %}
-                                    {% if orden.areas_disponibles and perms.cotizaciones.add_solicitudcotizacion %}
-                                        <form method="post" action="{% url 'cotizaciones:solicitud_nueva' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="orden" value="{{ orden.pk }}">
-                                            {% for valor, etiqueta in orden.areas_disponibles %}
-                                                <button class="lista-ot-action-btn open" type="submit" name="tipo_trabajo" value="{{ valor }}" data-area="{{ valor }}">
-                                                    {% if valor == 'MECANICA' %}Mec&aacute;nica{% elif valor == 'MOTOR' %}Motor{% elif valor == 'ENDEREZADO_PINTURA' %}Enderezado y pintura{% else %}Control{% endif %}
-                                                </button>
-                                            {% endfor %}
-                                        </form>
-                                    {% elif not orden.controles_torre %}
-                                        <span class="lista-ot-meta">Sin control registrado</span>
-                                    {% endif %}
-                                </div>
-                            {% else %}<span class="lista-ot-meta">Sin permiso para abrir</span>{% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="6" class="lista-ot-empty"><div class="lista-ot-empty-title">No hay órdenes abiertas para mostrar</div><p class="lista-ot-empty-text">Revisa la sucursal seleccionada o el filtro de búsqueda.</p></td></tr>
+
+        <div class="tc-campo">
+            <label for="tc-avance">Avance</label>
+
+            <select
+                id="tc-avance"
+                name="avance"
+                class="lista-ot-input"
+            >
+                {% for valor, etiqueta in avances %}
+                    <option
+                        value="{{ valor }}"
+                        {% if avance == valor %}selected{% endif %}
+                    >
+                        {{ etiqueta }}
+                    </option>
                 {% endfor %}
+            </select>
+        </div>
+
+        <div class="tc-campo">
+            <label for="tc-orden">Ordenar por ingreso</label>
+
+            <select
+                id="tc-orden"
+                name="orden"
+                class="lista-ot-input"
+            >
+                {% for valor, etiqueta in opciones_orden %}
+                    <option
+                        value="{{ valor }}"
+                        {% if orden_seleccionado == valor %}selected{% endif %}
+                    >
+                        {{ etiqueta }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <noscript>
+            <button
+                class="btn-login primary"
+                type="submit"
+            >
+                Aplicar filtros
+            </button>
+        </noscript>
+    </form>
+
+    <div class="tc-resumen">
+        <span>Vehículos en taller</span>
+
+        <span
+            class="tc-estado"
+            id="tc-estado"
+            aria-live="polite"
+        ></span>
+    </div>
+
+    <div
+        id="tc-resultados"
+        aria-busy="false"
+    >
+        <div
+            class="lista-ot-meta"
+            style="margin-bottom: 10px;"
+        >
+            {{ pagina.paginator.count }}
+            resultado{{ pagina.paginator.count|pluralize }}
+            · {{ area_etiqueta }}
+        </div>
+
+        <div class="lista-ot-table-wrap">
+            <table class="lista-ot-table tc-tabla">
+                <thead>
+                    <tr>
+                        <th scope="col">Vehículo</th>
+
+                        <th
+                            scope="col"
+                            class="tc-col-cliente"
+                        >
+                            Cliente
+                        </th>
+
+                        <th
+                            scope="col"
+                            class="tc-col-orden"
+                        >
+                            OT / Ingreso
+                        </th>
+
+                        <th
+                            scope="col"
+                            class="tc-col-repuestos"
+                        >
+                            Repuestos
+                        </th>
+
+                        <th
+                            scope="col"
+                            class="tc-accion"
+                        >
+                            Acceso
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for orden in pagina %}
+                        <tr>
+                            <td>
+                                <div class="tc-placa">
+                                    {{ orden.placa|default:"S/P"|upper }}
+                                </div>
+
+                                <div class="tc-vehiculo">
+                                    {{ orden.vehiculo|default:"—" }}
+                                </div>
+
+                                <div class="tc-nota tc-mobile">
+                                    {{ orden.nombre_cliente_final|default:"Sin cliente" }}
+                                </div>
+
+                                <div class="tc-nota tc-mobile">
+                                    {{ orden.numero_orden }}
+                                    · {{ orden.fecha_ingreso|date:"d/m/Y" }}
+                                </div>
+                            </td>
+
+                            <td class="tc-col-cliente">
+                                <div class="tc-cliente">
+                                    {{ orden.nombre_cliente_final|default:"Sin cliente" }}
+                                </div>
+                            </td>
+
+                            <td class="tc-col-orden">
+                                <div class="tc-ot">
+                                    {{ orden.numero_orden }}
+                                </div>
+
+                                <div class="tc-fecha">
+                                    {{ orden.fecha_ingreso|date:"d/m/Y H:i" }}
+                                </div>
+                            </td>
+
+                            <td class="tc-col-repuestos">
+                                {% if orden.repuestos_torre %}
+                                    <div class="tc-cantidad">
+                                        {{ orden.repuestos_torre }}
+                                    </div>
+
+                                    {% if orden.costos_pendientes %}
+                                        <div class="tc-nota tc-pendiente">
+                                            {{ orden.costos_pendientes }}
+                                            sin costo
+                                        </div>
+                                    {% else %}
+                                        <div class="tc-nota tc-con-costos">
+                                            Con costos
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="lista-ot-meta">
+                                        Sin repuestos
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="tc-accion">
+                                {% if puede_ver_detalle %}
+                                    {% if orden.control_torre_id %}
+                                        <a
+                                            class="lista-ot-action-btn open"
+                                            href="{% url 'cotizaciones:detalle' orden.control_torre_id %}"
+                                            aria-label="Abrir {{ orden.placa }} en {{ area_etiqueta }}"
+                                        >
+                                            Abrir
+                                        </a>
+
+                                    {% elif puede_crear_control %}
+                                        <form
+                                            method="post"
+                                            action="{% url 'cotizaciones:solicitud_nueva' %}"
+                                        >
+                                            {% csrf_token %}
+
+                                            <input
+                                                type="hidden"
+                                                name="orden"
+                                                value="{{ orden.pk }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="tipo_trabajo"
+                                                value="{{ area }}"
+                                            >
+
+                                            <button
+                                                class="lista-ot-action-btn open"
+                                                type="submit"
+                                                aria-label="Abrir {{ orden.placa }} en {{ area_etiqueta }}"
+                                            >
+                                                Abrir
+                                            </button>
+                                        </form>
+
+                                    {% else %}
+                                        <span class="lista-ot-meta">
+                                            Sin control
+                                        </span>
+                                    {% endif %}
+
+                                {% else %}
+                                    <span class="lista-ot-meta">
+                                        Sin permiso
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="5"
+                                class="lista-ot-empty"
+                            >
+                                No hay vehículos que coincidan
+                                con los filtros.
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
+
         {% if pagina.has_other_pages %}
-            <nav class="lista-ot-pagination" aria-label="Páginas de órdenes abiertas">
-                <span class="lista-ot-pagination-info">{{ pagina.start_index }}–{{ pagina.end_index }} de {{ pagina.paginator.count }}</span>
+            <nav
+                class="lista-ot-pagination"
+                aria-label="Páginas de vehículos"
+            >
+                <span class="lista-ot-pagination-info">
+                    {{ pagina.start_index }}–{{ pagina.end_index }}
+                    de {{ pagina.paginator.count }}
+                </span>
+
                 <div class="lista-ot-pagination-nav">
-                    {% if pagina.has_previous %}<a class="lista-ot-page-link" href="?q={{ q|urlencode }}&amp;page={{ pagina.previous_page_number }}">Anterior</a>{% endif %}
-                    <span class="lista-ot-page-current">{{ pagina.number }} / {{ pagina.paginator.num_pages }}</span>
-                    {% if pagina.has_next %}<a class="lista-ot-page-link" href="?q={{ q|urlencode }}&amp;page={{ pagina.next_page_number }}">Siguiente</a>{% endif %}
+                    {% if pagina.has_previous %}
+                        <a
+                            class="lista-ot-page-link"
+                            data-pagina
+                            href="?{{ query_filtros }}&amp;page={{ pagina.previous_page_number }}"
+                        >
+                            Anterior
+                        </a>
+                    {% endif %}
+
+                    <span class="lista-ot-page-current">
+                        {{ pagina.number }}
+                        / {{ pagina.paginator.num_pages }}
+                    </span>
+
+                    {% if pagina.has_next %}
+                        <a
+                            class="lista-ot-page-link"
+                            data-pagina
+                            href="?{{ query_filtros }}&amp;page={{ pagina.next_page_number }}"
+                        >
+                            Siguiente
+                        </a>
+                    {% endif %}
                 </div>
             </nav>
         {% endif %}
     </div>
+</div>
+{% endblock %}
+
+{% block torre_js %}
+<script>
+(() => {
+    "use strict";
+
+    const panel = document.getElementById("tc-panel");
+    const form = document.getElementById("tc-filtros");
+    const resultados = document.getElementById("tc-resultados");
+    const estado = document.getElementById("tc-estado");
+
+    const area = form.elements.namedItem("area");
+    const buscador = form.elements.namedItem("q");
+    const pestanas = panel.querySelectorAll(".tc-area");
+
+    let espera;
+    let peticion;
+    let secuencia = 0;
+    let componiendo = false;
+
+    function parametros(pagina) {
+        const params = new URLSearchParams(
+            new FormData(form)
+        );
+
+        if (pagina) {
+            params.set("page", pagina);
+        }
+
+        return params;
+    }
+
+    function actualizarPestanas() {
+        for (const pestana of pestanas) {
+            if (pestana.dataset.area === area.value) {
+                pestana.setAttribute(
+                    "aria-current",
+                    "page"
+                );
+            } else {
+                pestana.removeAttribute(
+                    "aria-current"
+                );
+            }
+
+            const params = parametros();
+
+            params.set(
+                "area",
+                pestana.dataset.area
+            );
+
+            const url = new URL(form.action);
+
+            url.search = params.toString();
+            pestana.href = url.href;
+        }
+    }
+
+    async function actualizar(pagina) {
+        clearTimeout(espera);
+
+        peticion?.abort();
+        peticion = new AbortController();
+
+        const actual = ++secuencia;
+
+        const url = new URL(form.action);
+        url.search = parametros(pagina).toString();
+
+        actualizarPestanas();
+
+        estado.textContent = "Actualizando…";
+        resultados.inert = true;
+        resultados.setAttribute("aria-busy", "true");
+
+        try {
+            const respuesta = await fetch(url, {
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                signal: peticion.signal,
+            });
+
+            if (actual !== secuencia) return;
+
+            if (respuesta.redirected) {
+                window.location.assign(
+                    respuesta.url
+                );
+                return;
+            }
+
+            if (!respuesta.ok) {
+                throw new Error(
+                    "No se pudo actualizar"
+                );
+            }
+
+            const documento = new DOMParser().parseFromString(
+                await respuesta.text(),
+                "text/html"
+            );
+
+            if (actual !== secuencia) return;
+
+            const nuevoPanel = documento.getElementById(
+                "tc-panel"
+            );
+
+            const nuevos = documento.getElementById(
+                "tc-resultados"
+            );
+
+            if (
+                !nuevos ||
+                !nuevoPanel ||
+                nuevoPanel.dataset.sucursal !== panel.dataset.sucursal
+            ) {
+                window.location.assign(
+                    url.href
+                );
+                return;
+            }
+
+            resultados.replaceChildren(
+                ...nuevos.childNodes
+            );
+
+            window.history.replaceState(
+                null,
+                "",
+                url.href
+            );
+
+        } catch (error) {
+            if (
+                error.name !== "AbortError" &&
+                actual === secuencia
+            ) {
+                window.location.assign(
+                    url.href
+                );
+            }
+
+        } finally {
+            if (actual === secuencia) {
+                resultados.inert = false;
+                resultados.setAttribute(
+                    "aria-busy",
+                    "false"
+                );
+                estado.textContent = "";
+            }
+        }
+    }
+
+    function programar() {
+        actualizarPestanas();
+
+        clearTimeout(espera);
+
+        if (!componiendo) {
+            espera = setTimeout(
+                () => actualizar(),
+                400
+            );
+        }
+    }
+
+    buscador.addEventListener(
+        "input",
+        programar
+    );
+
+    buscador.addEventListener("compositionstart", () => {
+        componiendo = true;
+        clearTimeout(espera);
+    });
+
+    buscador.addEventListener("compositionend", () => {
+        componiendo = false;
+        programar();
+    });
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+        actualizar();
+    });
+
+    form.querySelectorAll("select").forEach(select => {
+        select.addEventListener(
+            "change",
+            () => actualizar()
+        );
+    });
+
+    function clicSimple(event) {
+        return (
+            event.button === 0 &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.shiftKey &&
+            !event.altKey
+        );
+    }
+
+    pestanas.forEach(pestana => {
+        pestana.addEventListener("click", event => {
+            if (!clicSimple(event)) return;
+
+            event.preventDefault();
+
+            area.value = pestana.dataset.area;
+
+            actualizar();
+        });
+    });
+
+    resultados.addEventListener("click", event => {
+        const enlace = event.target.closest(
+            "a[data-pagina]"
+        );
+
+        if (!enlace || !clicSimple(event)) {
+            return;
+        }
+
+        event.preventDefault();
+
+        actualizar(
+            new URL(enlace.href).searchParams.get("page")
+        );
+    });
+})();
+</script>
 {% endblock %}
