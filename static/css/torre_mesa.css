@@ -1,0 +1,179 @@
+/* =====================================================
+   MESA: ESTILO DE ÓRDENES DE TRABAJO
+   ===================================================== */
+
+#mx-form .mx-scroll {
+    overflow: auto;
+    max-height: 70vh;
+    border: 0;
+    border-radius: 10px;
+    background: #fff;
+}
+
+#mx-form .mx-tabla {
+    width: 100%;
+    min-width: 1080px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    font-size: inherit;
+}
+
+/* Encabezados */
+
+#mx-form .mx-tabla thead th {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: var(--head);
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#mx-form .mx-tabla thead th:last-child {
+    border-right: none;
+}
+
+/* Filas */
+
+#mx-form .mx-tabla tbody td {
+    padding: 5px 6px;
+    border-bottom: 1px solid var(--border-soft);
+    border-right: 1px solid var(--border-soft);
+    background: var(--fila, #fff);
+    vertical-align: middle;
+    transition:
+        background-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+#mx-form .mx-tabla tbody td:last-child {
+    border-right: none;
+}
+
+#mx-form .mx-tabla .mx-repuesto {
+    min-width: 280px;
+    width: auto;
+}
+
+/* Campos editables */
+
+#mx-form .mx-tabla input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 30px;
+    min-height: 30px;
+    min-width: 0;
+    padding: 0 8px;
+    border: 1px solid #dcdce1;
+    border-radius: 8px;
+    background-color: #fff;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.77rem;
+    font-weight: 400;
+    outline: none;
+    box-shadow: none;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+#mx-form .mx-tabla input:focus {
+    border-color: var(--accent);
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+}
+
+#mx-form .mx-tabla input:disabled {
+    color: var(--muted);
+}
+
+/* Proveedores */
+
+#mx-form .mx-cab-proveedor > input {
+    font-weight: 400;
+    text-transform: none;
+}
+
+#mx-form .mx-etiquetas {
+    padding: 5px 8px 0;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Botones para eliminar */
+
+#mx-form .mx-quitar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border: 1px solid #ffd6d6;
+    border-radius: 8px;
+    background: #fff2f2;
+    color: #d70015;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+#mx-form .mx-quitar:hover {
+    border-color: var(--accent);
+}
+
+/* Resaltado y mensajes */
+
+#mx-form .mx-color {
+    height: 30px;
+}
+
+#mx-form .mx-aviso,
+#mx-form .mx-ayuda {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+/* Efecto al pasar el cursor */
+
+@media (hover: hover) {
+    #mx-form .mx-tabla tbody tr:not(.atencion):not(.urgente):hover > td {
+        background-color: rgba(0, 113, 227, 0.11);
+    }
+
+    #mx-form .mx-tabla tbody tr:not(.atencion):not(.urgente):hover > td:first-child {
+        background-color: #e3effc;
+    }
+
+    #mx-form .mx-tabla tbody tr:hover > td:first-child {
+        box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    #mx-form .mx-tabla tbody tr:hover input:not(:focus):not(:disabled) {
+        border-color: rgba(0, 113, 227, 0.48);
+    }
+}
+
+/* Respetar los controles ocultos por permisos o estado */
+
+#mx-form [hidden] {
+    display: none !important;
+}
