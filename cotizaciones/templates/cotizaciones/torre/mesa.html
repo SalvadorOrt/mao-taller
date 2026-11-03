@@ -7,6 +7,7 @@ OT {{ solicitud.orden.numero_orden }} ·
 {% endblock %}
 
 {% block torre_content %}
+{% include "cotizaciones/torre/_comparacion.html" %}
 <style>
     #mx-form [hidden] { display: none !important; }
     .mx-barra { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
@@ -56,7 +57,12 @@ OT {{ solicitud.orden.numero_orden }} ·
     {% csrf_token %}
 
     <div class="mx-barra">
-        <a id="mx-volver" href="{% url 'cotizaciones:lista' %}">
+        <a
+            id="mx-volver"
+            href="{% url 'cotizaciones:lista' %}"
+            class="btn-login"
+            style="text-decoration: none;"
+        >
             ← Vehículos en taller
         </a>
 

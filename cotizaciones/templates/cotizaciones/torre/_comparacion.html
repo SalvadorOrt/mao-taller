@@ -1,0 +1,449 @@
+<section
+    id="mx-comparacion"
+    class="mp-panel"
+    aria-labelledby="mp-titulo"
+    hidden
+>
+    <h2 id="mp-titulo">Comparación de ofertas</h2>
+
+    <p class="mp-ayuda">
+        Compara cada marca entre proveedores y revisa la diferencia entre marcas.
+        Los importes se calculan con los valores escritos en la mesa.
+    </p>
+
+    <div id="mp-resultados" class="mp-resultados"></div>
+</section>
+
+<style>
+    #mx-comparacion[hidden] {
+        display: none !important;
+    }
+
+    .mp-panel {
+        margin-bottom: 12px;
+        padding: 12px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .mp-panel h2 {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .mp-ayuda {
+        margin: 0 0 10px;
+        color: var(--muted, #6e6e73);
+        font-size: .73rem;
+    }
+
+    .mp-resultados {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .mp-item {
+        padding: 10px 0;
+        border-top: 1px solid var(--border-soft, #eff1f4);
+    }
+
+    .mp-item h3 {
+        margin: 0 0 4px;
+        font-size: .83rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .mp-resumen {
+        margin: 0 0 8px;
+        color: var(--muted, #6e6e73);
+        font-size: .72rem;
+    }
+
+    .mp-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+        gap: 8px;
+    }
+
+    .mp-card {
+        box-sizing: border-box;
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 8px;
+        background: var(--head, #f7f8fa);
+        overflow-wrap: anywhere;
+    }
+
+    .mp-marca {
+        margin: 0 0 6px;
+        font-size: .77rem;
+        font-weight: 700;
+    }
+
+    .mp-dato {
+        margin: 3px 0;
+        font-size: .75rem;
+    }
+
+    .mp-precio {
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .mp-nota {
+        margin: 5px 0 0;
+        color: var(--muted, #6e6e73);
+        font-size: .71rem;
+    }
+
+    .mp-minimo {
+        color: var(--accent, #0071e3);
+    }
+</style>
+
+<script>
+(() => {
+    function iniciar() {
+        const form = document.getElementById("mx-form");
+        const panel = document.getElementById("mx-comparacion");
+
+        if (!form || !panel || panel.dataset.iniciado) return;
+
+        panel.dataset.iniciado = "1";
+
+        const cabecera = document.getElementById("mx-cabecera");
+        const cuerpo = document.getElementById("mx-filas");
+        const aviso = document.getElementById("mx-aviso");
+        const resultado = document.getElementById("mp-resultados");
+
+        const enteros = new Intl.NumberFormat("es-EC", {
+            maximumFractionDigits: 0,
+        });
+
+        const decimal = new Intl.NumberFormat("es-EC")
+            .formatToParts(1.1)
+            .find(parte => parte.type === "decimal").value;
+
+        let temporizador;
+
+        function nodo(tag, clase, texto) {
+            const elemento = document.createElement(tag);
+            elemento.className = clase;
+            elemento.textContent = texto;
+            return elemento;
+        }
+
+        function normalizar(texto) {
+            return texto
+                .normalize("NFKC")
+                .trim()
+                .replace(/\s+/g, " ")
+                .toLocaleUpperCase("es");
+        }
+
+        function dinero(centavos) {
+            return (
+                "$" +
+                enteros.format(centavos / 100n) +
+                decimal +
+                String(centavos % 100n).padStart(2, "0")
+            );
+        }
+
+        function precioDe(input) {
+            if (
+                !input ||
+                !input.value.trim() ||
+                !input.validity.valid
+            ) {
+                return null;
+            }
+
+            const valor = Number(input.value);
+
+            if (!Number.isFinite(valor) || valor < 0) {
+                return null;
+            }
+
+            const centavos = Math.round(valor * 100);
+
+            return Number.isSafeInteger(centavos)
+                ? BigInt(centavos)
+                : null;
+        }
+
+        function actualizar() {
+            const proveedores = [
+                ...cabecera.querySelectorAll(".mx-proveedor input"),
+            ].map(input => input.value.trim());
+
+            const contenido = document.createDocumentFragment();
+
+            let repuestos = 0;
+
+            for (const fila of cuerpo.rows) {
+                const nombre = fila.querySelector(
+                    '[data-campo="descripcion_solicitada"]'
+                )?.value.trim();
+
+                if (!nombre) continue;
+
+                repuestos++;
+
+                const inputCantidad = fila.querySelector(
+                    '[data-campo="cantidad"]'
+                );
+
+                const valorCantidad = Number(inputCantidad?.value);
+
+                const cantidad = (
+                    inputCantidad?.validity.valid &&
+                    Number.isSafeInteger(valorCantidad) &&
+                    valorCantidad > 0
+                )
+                    ? BigInt(valorCantidad)
+                    : null;
+
+                const ofertas = [];
+
+                [
+                    ...fila.querySelectorAll("td.mx-proveedor"),
+                ].forEach((celda, indice) => {
+                    for (
+                        const bloque of
+                        celda.querySelectorAll(".mx-oferta")
+                    ) {
+                        const precio = precioDe(
+                            bloque.querySelector(
+                                '[data-campo="precio"]'
+                            )
+                        );
+
+                        if (precio === null) continue;
+
+                        ofertas.push({
+                            precio,
+                            proveedor:
+                                proveedores[indice] ||
+                                "Proveedor sin indicar",
+                            marca:
+                                bloque.querySelector(
+                                    '[data-campo="marca_ofertada"]'
+                                )?.value.trim() || "",
+                        });
+                    }
+                });
+
+                const articulo = nodo("article", "mp-item", "");
+
+                articulo.append(nodo("h3", "", nombre));
+                contenido.append(articulo);
+
+                if (!ofertas.length) {
+                    articulo.append(
+                        nodo(
+                            "p",
+                            "mp-resumen",
+                            "Sin precios ingresados."
+                        )
+                    );
+
+                    continue;
+                }
+
+                const minimo = ofertas.reduce(
+                    (menor, oferta) =>
+                        oferta.precio < menor
+                            ? oferta.precio
+                            : menor,
+                    ofertas[0].precio
+                );
+
+                articulo.append(
+                    nodo(
+                        "p",
+                        "mp-resumen",
+                        "Cantidad: " +
+                        (
+                            cantidad === null
+                                ? "pendiente"
+                                : cantidad.toString()
+                        ) +
+                        " · Menor precio registrado: " +
+                        dinero(minimo) +
+                        " / unidad"
+                    )
+                );
+
+                const marcas = new Map();
+
+                ofertas.forEach(oferta => {
+                    // Las ofertas sin marca permanecen separadas.
+                    const clave = oferta.marca
+                        ? normalizar(oferta.marca)
+                        : Symbol();
+
+                    if (!marcas.has(clave)) {
+                        marcas.set(clave, []);
+                    }
+
+                    marcas.get(clave).push(oferta);
+                });
+
+                const grid = nodo("div", "mp-grid", "");
+                articulo.append(grid);
+
+                for (const grupo of marcas.values()) {
+                    grupo.sort((a, b) =>
+                        a.precio < b.precio
+                            ? -1
+                            : a.precio > b.precio
+                                ? 1
+                                : 0
+                    );
+
+                    const menor = grupo[0].precio;
+                    const mayor = grupo[grupo.length - 1].precio;
+
+                    const empatadas = grupo.filter(
+                        oferta => oferta.precio === menor
+                    );
+
+                    const nombres = new Map(
+                        empatadas.map(oferta => [
+                            normalizar(oferta.proveedor),
+                            oferta.proveedor,
+                        ])
+                    );
+
+                    const tarjeta = nodo("div", "mp-card", "");
+
+                    tarjeta.append(
+                        nodo(
+                            "h4",
+                            "mp-marca",
+                            "Marca: " +
+                            (grupo[0].marca || "Sin indicar")
+                        ),
+
+                        nodo(
+                            "p",
+                            "mp-dato",
+                            (
+                                grupo[0].marca
+                                    ? "Proveedor de menor precio: "
+                                    : "Proveedor: "
+                            ) +
+                            [...nombres.values()].join(" / ")
+                        ),
+
+                        nodo(
+                            "p",
+                            "mp-dato mp-precio",
+                            dinero(menor) + " / unidad"
+                        ),
+
+                        nodo(
+                            "p",
+                            "mp-dato",
+                            cantidad === null
+                                ? "Total pendiente de cantidad"
+                                : "Total: " +
+                                  dinero(menor * cantidad)
+                        ),
+
+                        nodo(
+                            "p",
+                            "mp-nota " +
+                            (menor === minimo ? "mp-minimo" : ""),
+                            menor === minimo
+                                ? "Menor precio registrado"
+                                : "+" +
+                                  dinero(menor - minimo) +
+                                  " / unidad frente al mínimo del repuesto"
+                        )
+                    );
+
+                    if (grupo.length > 1) {
+                        tarjeta.append(
+                            nodo(
+                                "p",
+                                "mp-nota",
+                                "Diferencia dentro de esta marca: " +
+                                dinero(mayor - menor) +
+                                " / unidad · " +
+                                grupo.length +
+                                " ofertas"
+                            )
+                        );
+                    }
+
+                    if (empatadas.length > 1) {
+                        tarjeta.append(
+                            nodo(
+                                "p",
+                                "mp-nota",
+                                "Empate al menor precio de esta marca."
+                            )
+                        );
+                    }
+
+                    grid.append(tarjeta);
+                }
+            }
+
+            if (!repuestos) {
+                contenido.append(
+                    nodo(
+                        "p",
+                        "mp-resumen",
+                        "Agrega repuestos y precios para ver las comparaciones."
+                    )
+                );
+            }
+
+            const desplazamiento = resultado.scrollTop;
+
+            resultado.replaceChildren(contenido);
+            resultado.scrollTop = desplazamiento;
+
+            panel.hidden = false;
+        }
+
+        function programar() {
+            clearTimeout(temporizador);
+            temporizador = setTimeout(actualizar, 120);
+        }
+
+        form.addEventListener("input", programar);
+
+        const observador = new MutationObserver(programar);
+
+        for (const elemento of [cabecera, cuerpo, aviso]) {
+            if (elemento) {
+                observador.observe(elemento, {
+                    childList: true,
+                    subtree: true,
+                });
+            }
+        }
+
+        actualizar();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            iniciar,
+            {once: true}
+        );
+    } else {
+        iniciar();
+    }
+})();
+</script>
