@@ -329,6 +329,85 @@
             max-height: none;
         }
     }
+    /* Ancho del espacio de trabajo */
+
+body.md-con-mesa .main-wrapper > .container-fluid {
+    max-width: calc(
+        var(--md-ancho-total, 1480px) + 48px
+    ) !important;
+}
+
+.lista-ot-wrapper.md-ancha {
+    max-width: var(--md-ancho-total, 1480px);
+}
+
+.md-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 12px;
+}
+
+.md-layout > #mx-form,
+#mx-form .mx-scroll {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Evitar que la descripción absorba el espacio */
+
+#mx-form:not(.md-ajustada) .mx-tabla {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    table-layout: fixed;
+}
+
+#mx-form .mx-tabla th,
+#mx-form .mx-tabla td {
+    box-sizing: border-box;
+}
+
+#mx-form:not(.md-ajustada) .mx-tabla .mx-repuesto {
+    width: 320px;
+    min-width: 0;
+    max-width: 320px;
+}
+
+#mx-form:not(.md-ajustada) .mx-tabla .mx-cantidad {
+    width: 64px;
+    min-width: 0;
+    max-width: 64px;
+}
+
+#mx-form:not(.md-ajustada) .mx-tabla .mx-proveedor {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+}
+
+/* Captura inicial sin proveedores */
+
+#mx-form.md-sin-proveedores:not(.md-ajustada) .mx-tabla .mx-repuesto {
+    width: auto;
+    max-width: none;
+}
+
+/* Pantallas pequeñas */
+
+@media (max-width: 980px) {
+    body.md-con-mesa .main-wrapper > .container-fluid {
+        max-width: calc(
+            var(--md-ancho-mesa, 100%) + 48px
+        ) !important;
+    }
+
+    .lista-ot-wrapper.md-ancha {
+        max-width: var(--md-ancho-mesa, 100%);
+    }
+
+    .md-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
 </style>
 
 <script>
@@ -442,7 +521,24 @@
                     ".mx-proveedor input"
                 ),
             ].map(n => n.value.trim());
+            const anchoMesa = proveedores.length
+    ? 384 + proveedores.length * 200
+    : 560;
 
+document.body.style.setProperty(
+    "--md-ancho-mesa",
+    anchoMesa + "px"
+);
+
+document.body.style.setProperty(
+    "--md-ancho-total",
+    Math.min(1480, anchoMesa + 312) + "px"
+);
+
+form.classList.toggle(
+    "md-sin-proveedores",
+    proveedores.length === 0
+);
             const ancho = espacio.clientWidth;
 
             if (ancho) {
