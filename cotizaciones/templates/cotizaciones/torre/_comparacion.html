@@ -1,108 +1,333 @@
-<section
+<aside
     id="mx-comparacion"
-    class="mp-panel"
-    aria-labelledby="mp-titulo"
+    class="md-panel"
+    aria-labelledby="md-titulo"
     hidden
 >
-    <h2 id="mp-titulo">Comparación de ofertas</h2>
+    <h2 id="md-titulo">Comparar opciones</h2>
 
-    <p class="mp-ayuda">
-        Compara cada marca entre proveedores y revisa la diferencia entre marcas.
-        Los importes se calculan con los valores escritos en la mesa.
+    <p class="md-ayuda">
+        Trabaja en una fila para comparar sus marcas y proveedores.
     </p>
 
-    <div id="mp-resultados" class="mp-resultados"></div>
-</section>
+    <h3 id="md-repuesto"></h3>
+    <p id="md-datos" class="md-ayuda"></p>
+
+    <p id="md-guardado" class="md-pendiente" hidden></p>
+
+    <p id="md-referencia" class="md-referencia"></p>
+
+    <div
+        class="md-filtros"
+        role="group"
+        aria-label="Filtrar ofertas"
+    >
+        <button type="button" data-modo="todas">
+            Todas
+        </button>
+
+        <button type="button" data-modo="marca">
+            Misma marca
+        </button>
+
+        <button type="button" data-modo="proveedor">
+            Mismo proveedor
+        </button>
+    </div>
+
+    <p id="md-marca" class="md-ayuda"></p>
+    <p id="md-cobertura" class="md-ayuda"></p>
+
+    <div id="md-ofertas" class="md-ofertas"></div>
+
+    <p class="md-ayuda md-pie">
+        La referencia sólo sirve para comparar importes.
+        Marca, compatibilidad y confianza en el proveedor
+        forman parte de tu elección.
+    </p>
+</aside>
 
 <style>
-    #mx-comparacion[hidden] {
+    #mx-comparacion[hidden],
+    #mx-comparacion [hidden] {
         display: none !important;
     }
 
-    .mp-panel {
-        margin-bottom: 12px;
+    body.md-con-mesa .main-wrapper > .container-fluid {
+        max-width: none !important;
+    }
+
+    .lista-ot-wrapper.md-ancha {
+        width: 100%;
+        max-width: none;
+        padding-inline: 0;
+    }
+
+    .md-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 330px;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .md-layout > #mx-form {
+        min-width: 0;
+    }
+
+    .md-panel {
+        position: sticky;
+        top: 12px;
+        box-sizing: border-box;
+        min-width: 0;
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
         padding: 12px;
         border: 1px solid var(--border, #e5e5e7);
         border-radius: 12px;
         background: #fff;
     }
 
-    .mp-panel h2 {
-        margin: 0 0 4px;
-        font-size: 1rem;
-        font-weight: 600;
+    .md-panel h2 {
+        margin: 0 0 5px;
+        font-size: .95rem;
+        font-weight: 700;
     }
 
-    .mp-ayuda {
-        margin: 0 0 10px;
-        color: var(--muted, #6e6e73);
-        font-size: .73rem;
-    }
-
-    .mp-resultados {
-        max-height: 320px;
-        overflow-y: auto;
-    }
-
-    .mp-item {
-        padding: 10px 0;
-        border-top: 1px solid var(--border-soft, #eff1f4);
-    }
-
-    .mp-item h3 {
-        margin: 0 0 4px;
-        font-size: .83rem;
-        font-weight: 600;
+    .md-panel h3 {
+        margin: 12px 0 5px;
+        font-size: .85rem;
+        font-weight: 700;
         overflow-wrap: anywhere;
     }
 
-    .mp-resumen {
-        margin: 0 0 8px;
+    .md-ayuda {
+        margin: 5px 0;
         color: var(--muted, #6e6e73);
+        font-size: .72rem;
+        overflow-wrap: anywhere;
+    }
+
+    .md-referencia {
+        margin: 10px 0;
+        padding: 8px;
+        border-radius: 8px;
+        background: #f0f6ff;
+        font-size: .74rem;
+        overflow-wrap: anywhere;
+    }
+
+    .md-pendiente {
+        padding: 8px;
+        border-radius: 8px;
+        background: #fff5df;
+        color: #805d11;
         font-size: .72rem;
     }
 
-    .mp-grid {
-        display: grid;
-        grid-template-columns:
-            repeat(auto-fit, minmax(min(100%, 230px), 1fr));
-        gap: 8px;
+    .md-filtros {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 8px;
     }
 
-    .mp-card {
-        box-sizing: border-box;
-        min-width: 0;
-        padding: 10px;
+    .md-filtros button,
+    .md-ofertas button {
+        padding: 5px 8px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--text, #1d1d1f);
+        font: inherit;
+        font-size: .71rem;
+        cursor: pointer;
+    }
+
+    .md-panel button[aria-pressed="true"] {
+        border-color: var(--accent, #0071e3);
+        background: #edf5ff;
+        color: #0061c2;
+    }
+
+    .md-panel button:disabled {
+        opacity: .5;
+        cursor: default;
+    }
+
+    .md-panel button:focus-visible {
+        outline: 2px solid var(--accent, #0071e3);
+        outline-offset: 2px;
+    }
+
+    .md-card {
+        margin-top: 8px;
+        padding: 9px;
         border: 1px solid var(--border, #e5e5e7);
         border-radius: 8px;
         background: var(--head, #f7f8fa);
         overflow-wrap: anywhere;
     }
 
-    .mp-marca {
-        margin: 0 0 6px;
-        font-size: .77rem;
-        font-weight: 700;
+    .md-card[data-referencia="true"] {
+        border-color: var(--accent, #0071e3);
     }
 
-    .mp-dato {
+    .md-card p {
         margin: 3px 0;
         font-size: .75rem;
     }
 
-    .mp-precio {
-        font-size: .88rem;
+    .md-card .md-precio {
+        margin-top: 7px;
         font-weight: 700;
+        font-size: .86rem;
     }
 
-    .mp-nota {
-        margin: 5px 0 0;
+    .md-card .md-diferencia {
+        margin: 7px 0;
+        padding-top: 6px;
+        border-top: 1px solid var(--border, #e5e5e7);
+        font-size: .72rem;
+    }
+
+    .md-pie {
+        margin-top: 12px;
+    }
+
+    #mx-form .mx-oferta.md-ref-celda {
+        outline: 2px solid var(--accent, #0071e3);
+        outline-offset: 1px;
+        border-radius: 5px;
+    }
+
+    #mx-form tr[data-md-activa="true"] > td:first-child {
+        box-shadow: inset 3px 0 0 var(--accent, #0071e3);
+    }
+
+    /* Acomodar las columnas junto al panel */
+
+    #mx-form .mx-scroll {
+        container: md-mesa / inline-size;
+        max-height: none;
+        overflow: visible;
+        min-width: 0;
+    }
+
+    #mx-form .mx-tabla {
+        min-width: 0;
+    }
+
+    #mx-form.md-ajustada .mx-tabla,
+    #mx-form.md-ajustada .mx-tabla thead,
+    #mx-form.md-ajustada .mx-tabla tbody {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: transparent;
+    }
+
+    #mx-form.md-ajustada .mx-tabla tr {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid var(--border, #e5e5e7);
+        border-radius: 10px;
+    }
+
+    #mx-form.md-ajustada .mx-tabla thead tr {
+        background: var(--head, #f7f8fa);
+    }
+
+    #mx-form.md-ajustada .mx-tabla tbody tr {
+        margin-top: 9px;
+        background: var(--fila, #fff);
+    }
+
+    #mx-form.md-ajustada .mx-tabla th,
+    #mx-form.md-ajustada .mx-tabla td {
+        position: static;
+        box-sizing: border-box;
+        width: auto;
+        min-width: 0;
+        padding: 6px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+    }
+
+    #mx-form.md-ajustada .mx-tabla thead .mx-repuesto,
+    #mx-form.md-ajustada .mx-tabla thead .mx-cantidad {
+        display: none;
+    }
+
+    #mx-form.md-ajustada .mx-tabla tbody .mx-repuesto {
+        grid-column: span 10;
+        align-content: end;
+    }
+
+    #mx-form.md-ajustada .mx-tabla tbody .mx-cantidad {
+        grid-column: span 2;
+    }
+
+    #mx-form.md-ajustada .mx-tabla .mx-proveedor {
+        grid-column: span 12;
+    }
+
+    #mx-form.md-ajustada .mx-tabla tbody .mx-proveedor {
+        border: 1px solid var(--border, #e5e5e7);
+        background: #fff;
+    }
+
+    #mx-form.md-ajustada .mx-tabla tbody .mx-proveedor::before {
+        content: attr(data-md-proveedor);
+        display: block;
+        margin-bottom: 5px;
+        font-size: .72rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    #mx-form.md-ajustada .mx-tabla tbody .mx-cantidad::before {
+        content: "Cant.";
+        display: block;
+        margin-bottom: 5px;
+        font-size: .66rem;
         color: var(--muted, #6e6e73);
-        font-size: .71rem;
     }
 
-    .mp-minimo {
-        color: var(--accent, #0071e3);
+    #mx-form.md-ajustada .mx-tabla .mx-celda {
+        grid-template-columns:
+            minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    @container md-mesa (min-width: 520px) {
+        #mx-form.md-ajustada .mx-tabla .mx-proveedor {
+            grid-column: span 6;
+        }
+    }
+
+    @container md-mesa (min-width: 850px) {
+        #mx-form.md-ajustada .mx-tabla .mx-proveedor {
+            grid-column: span 4;
+        }
+    }
+
+    @container md-mesa (min-width: 1100px) {
+        #mx-form.md-ajustada .mx-tabla .mx-proveedor {
+            grid-column: span 3;
+        }
+    }
+
+    @media (max-width: 980px) {
+        .md-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .md-panel {
+            position: static;
+            max-height: none;
+        }
     }
 </style>
 
@@ -116,26 +341,57 @@
 
         panel.dataset.iniciado = "1";
 
-        const cabecera = document.getElementById("mx-cabecera");
         const cuerpo = document.getElementById("mx-filas");
+        const cabecera = document.getElementById("mx-cabecera");
+        const espacio = document.getElementById("mx-scroll");
         const aviso = document.getElementById("mx-aviso");
-        const resultado = document.getElementById("mp-resultados");
 
-        const enteros = new Intl.NumberFormat("es-EC", {
-            maximumFractionDigits: 0,
-        });
+        const porId = id => document.getElementById(id);
+        const resultado = porId("md-ofertas");
+
+        const referencias = new Map();
+
+        const filtros = [
+            ...panel.querySelectorAll("[data-modo]"),
+        ];
+
+        const formatoEntero = new Intl.NumberFormat(
+            "es-EC",
+            {maximumFractionDigits: 0}
+        );
+
+        const formatoPorcentaje = new Intl.NumberFormat(
+            "es-EC",
+            {
+                style: "percent",
+                maximumFractionDigits: 1,
+            }
+        );
 
         const decimal = new Intl.NumberFormat("es-EC")
             .formatToParts(1.1)
-            .find(parte => parte.type === "decimal").value;
+            .find(p => p.type === "decimal").value;
 
+        let activa = null;
+        let modo = "todas";
         let temporizador;
 
+        document.body.classList.add("md-con-mesa");
+
+        form.closest(".lista-ot-wrapper")
+            ?.classList.add("md-ancha");
+
+        const layout = document.createElement("div");
+        layout.className = "md-layout";
+
+        form.before(layout);
+        layout.append(form, panel);
+
         function nodo(tag, clase, texto) {
-            const elemento = document.createElement(tag);
-            elemento.className = clase;
-            elemento.textContent = texto;
-            return elemento;
+            const n = document.createElement(tag);
+            n.className = clase;
+            n.textContent = texto;
+            return n;
         }
 
         function normalizar(texto) {
@@ -146,285 +402,547 @@
                 .toLocaleUpperCase("es");
         }
 
-        function dinero(centavos) {
+        function dinero(c) {
+            const signo = c < 0n ? "−" : "";
+            const n = c < 0n ? -c : c;
+
             return (
+                signo +
                 "$" +
-                enteros.format(centavos / 100n) +
+                formatoEntero.format(n / 100n) +
                 decimal +
-                String(centavos % 100n).padStart(2, "0")
+                String(n % 100n).padStart(2, "0")
             );
         }
 
         function precioDe(input) {
             if (
-                !input ||
-                !input.value.trim() ||
+                !input?.value.trim() ||
                 !input.validity.valid
             ) {
                 return null;
             }
 
-            const valor = Number(input.value);
+            const n = Number(input.value);
 
-            if (!Number.isFinite(valor) || valor < 0) {
+            if (!Number.isFinite(n) || n < 0) {
                 return null;
             }
 
-            const centavos = Math.round(valor * 100);
+            const c = Math.round(n * 100);
 
-            return Number.isSafeInteger(centavos)
-                ? BigInt(centavos)
+            return Number.isSafeInteger(c)
+                ? BigInt(c)
                 : null;
         }
 
-        function actualizar() {
+        function leer() {
             const proveedores = [
-                ...cabecera.querySelectorAll(".mx-proveedor input"),
-            ].map(input => input.value.trim());
+                ...cabecera.querySelectorAll(
+                    ".mx-proveedor input"
+                ),
+            ].map(n => n.value.trim());
 
-            const contenido = document.createDocumentFragment();
+            const ancho = espacio.clientWidth;
 
-            let repuestos = 0;
+            if (ancho) {
+                form.classList.toggle(
+                    "md-ajustada",
+                    ancho < 360 + proveedores.length * 200
+                );
+            }
 
-            for (const fila of cuerpo.rows) {
-                const nombre = fila.querySelector(
+            return [...cuerpo.rows].map((tr, indiceFila) => {
+                const descripcion = tr.querySelector(
                     '[data-campo="descripcion_solicitada"]'
-                )?.value.trim();
+                );
 
-                if (!nombre) continue;
+                const uid =
+                    descripcion?.dataset.fila ||
+                    String(indiceFila);
 
-                repuestos++;
-
-                const inputCantidad = fila.querySelector(
+                const inputCantidad = tr.querySelector(
                     '[data-campo="cantidad"]'
                 );
 
-                const valorCantidad = Number(inputCantidad?.value);
+                const n = Number(inputCantidad?.value);
 
                 const cantidad = (
                     inputCantidad?.validity.valid &&
-                    Number.isSafeInteger(valorCantidad) &&
-                    valorCantidad > 0
+                    Number.isSafeInteger(n) &&
+                    n > 0
                 )
-                    ? BigInt(valorCantidad)
+                    ? BigInt(n)
                     : null;
 
                 const ofertas = [];
 
                 [
-                    ...fila.querySelectorAll("td.mx-proveedor"),
-                ].forEach((celda, indice) => {
-                    for (
-                        const bloque of
-                        celda.querySelectorAll(".mx-oferta")
-                    ) {
-                        const precio = precioDe(
-                            bloque.querySelector(
-                                '[data-campo="precio"]'
-                            )
+                    ...tr.querySelectorAll("td.mx-proveedor"),
+                ].forEach((celda, columna) => {
+                    celda.dataset.mdProveedor =
+                        proveedores[columna] ||
+                        "Proveedor sin indicar";
+
+                    [
+                        ...celda.querySelectorAll(".mx-oferta"),
+                    ].forEach((bloque, indiceOferta) => {
+                        const input = bloque.querySelector(
+                            '[data-campo="precio"]'
                         );
 
-                        if (precio === null) continue;
+                        const precio = precioDe(input);
+
+                        const marca = bloque.querySelector(
+                            '[data-campo="marca_ofertada"]'
+                        )?.value.trim() || "";
+
+                        const proveedor =
+                            proveedores[columna] || "";
+
+                        if (!marca && precio === null) return;
 
                         ofertas.push({
+                            clave:
+                                uid + "/" +
+                                (input?.dataset.col || columna) +
+                                "/" + indiceOferta,
+                            proveedor,
+                            marca,
                             precio,
-                            proveedor:
-                                proveedores[indice] ||
-                                "Proveedor sin indicar",
-                            marca:
-                                bloque.querySelector(
-                                    '[data-campo="marca_ofertada"]'
-                                )?.value.trim() || "",
+                            bloque,
                         });
-                    }
+                    });
                 });
 
-                const articulo = nodo("article", "mp-item", "");
+                return {
+                    uid,
+                    tr,
+                    nombre: descripcion?.value.trim() || "",
+                    cantidad,
+                    ofertas,
+                };
+            });
+        }
 
-                articulo.append(nodo("h3", "", nombre));
-                contenido.append(articulo);
+        function actualizar() {
+            const filas = leer();
 
-                if (!ofertas.length) {
-                    articulo.append(
-                        nodo(
-                            "p",
-                            "mp-resumen",
-                            "Sin precios ingresados."
-                        )
-                    );
+            const fila =
+                filas.find(f => f.uid === activa) ||
+                filas[0];
 
-                    continue;
+            const contenido =
+                document.createDocumentFragment();
+
+            const foco = panel.contains(
+                document.activeElement
+            )
+                ? document.activeElement?.dataset.ref
+                : null;
+
+            const scroll = panel.scrollTop;
+
+            if (!fila) {
+                activa = null;
+                modo = "todas";
+
+                porId("md-repuesto").textContent =
+                    "Agrega un repuesto";
+
+                for (const id of [
+                    "md-datos",
+                    "md-referencia",
+                    "md-marca",
+                    "md-cobertura",
+                    "md-guardado",
+                ]) {
+                    porId(id).textContent = "";
                 }
 
-                const minimo = ofertas.reduce(
-                    (menor, oferta) =>
-                        oferta.precio < menor
-                            ? oferta.precio
-                            : menor,
-                    ofertas[0].precio
+                porId("md-guardado").hidden = true;
+
+                for (const boton of filtros) {
+                    boton.disabled =
+                        boton.dataset.modo !== "todas";
+
+                    boton.setAttribute(
+                        "aria-pressed",
+                        String(boton.dataset.modo === "todas")
+                    );
+                }
+
+                resultado.replaceChildren();
+                panel.hidden = false;
+                return;
+            }
+
+            activa = fila.uid;
+
+            const referencia = fila.ofertas.find(o =>
+                o.clave === referencias.get(activa) &&
+                o.precio !== null
+            );
+
+            if (!referencia) {
+                referencias.delete(activa);
+                modo = "todas";
+            }
+
+            if (
+                (modo === "marca" && !referencia?.marca) ||
+                (
+                    modo === "proveedor" &&
+                    !referencia?.proveedor
+                )
+            ) {
+                modo = "todas";
+            }
+
+            for (const f of filas) {
+                f.tr.dataset.mdActiva =
+                    String(f.uid === activa);
+
+                for (const o of f.ofertas) {
+                    o.bloque.classList.toggle(
+                        "md-ref-celda",
+                        f.uid === activa &&
+                        o.clave === referencia?.clave
+                    );
+                }
+            }
+
+            porId("md-repuesto").textContent =
+                fila.nombre || "Nuevo repuesto";
+
+            porId("md-datos").textContent =
+                "Cantidad: " +
+                (fila.cantidad?.toString() || "pendiente") +
+                " · " +
+                fila.ofertas.filter(
+                    o => o.precio !== null
+                ).length +
+                " precios ingresados";
+
+            const sinConfirmar =
+                aviso?.dataset.estado === "error";
+
+            porId("md-guardado").hidden = !sinConfirmar;
+
+            porId("md-guardado").textContent =
+                sinConfirmar
+                    ? "Cambios sin confirmar. La comparación usa los valores que ves escritos."
+                    : "";
+
+            porId("md-referencia").textContent = referencia
+                ? "Referencia: " +
+                  (
+                      referencia.proveedor ||
+                      "Proveedor sin indicar"
+                  ) +
+                  " · Marca: " +
+                  (referencia.marca || "Sin indicar") +
+                  " · " +
+                  dinero(referencia.precio) +
+                  " / unidad"
+                : "Elige una oferta como referencia para comparar las diferencias de costo.";
+
+            for (const boton of filtros) {
+                boton.disabled =
+                    boton.dataset.modo === "marca"
+                        ? !referencia?.marca
+                        : boton.dataset.modo === "proveedor"
+                            ? !referencia?.proveedor
+                            : false;
+
+                boton.setAttribute(
+                    "aria-pressed",
+                    String(boton.dataset.modo === modo)
+                );
+            }
+
+            let datoMarca = "";
+            let cobertura = "";
+
+            if (referencia?.marca) {
+                const iguales = fila.ofertas.filter(o =>
+                    o.precio !== null &&
+                    normalizar(o.marca) ===
+                    normalizar(referencia.marca)
                 );
 
-                articulo.append(
+                const minimo = iguales.reduce(
+                    (m, o) => o.precio < m ? o.precio : m,
+                    referencia.precio
+                );
+
+                const proveedores = [
+                    ...new Set(
+                        iguales
+                            .filter(o => o.precio === minimo)
+                            .map(o =>
+                                o.proveedor ||
+                                "Proveedor sin indicar"
+                            )
+                    ),
+                ];
+
+                datoMarca =
+                    "Para la marca " +
+                    referencia.marca +
+                    ": " +
+                    dinero(minimo) +
+                    " / unidad en " +
+                    proveedores.join(" / ") +
+                    ".";
+
+                if (minimo < referencia.precio) {
+                    datoMarca +=
+                        " Son " +
+                        dinero(referencia.precio - minimo) +
+                        " menos que la referencia.";
+                }
+            }
+
+            if (referencia?.proveedor) {
+                const nombradas = filas.filter(f => f.nombre);
+
+                const cotizadas = nombradas.filter(f =>
+                    f.ofertas.some(o =>
+                        o.precio !== null &&
+                        normalizar(o.proveedor) ===
+                        normalizar(referencia.proveedor)
+                    )
+                ).length;
+
+                if (nombradas.length) {
+                    cobertura =
+                        "Este proveedor tiene precio en " +
+                        cotizadas +
+                        " de " +
+                        nombradas.length +
+                        " repuestos de la mesa.";
+                }
+            }
+
+            porId("md-marca").textContent = datoMarca;
+            porId("md-cobertura").textContent = cobertura;
+
+            const visibles = fila.ofertas.filter(o =>
+                modo === "marca"
+                    ? normalizar(o.marca) ===
+                      normalizar(referencia.marca)
+                    : modo === "proveedor"
+                        ? normalizar(o.proveedor) ===
+                          normalizar(referencia.proveedor)
+                        : true
+            );
+
+            for (const oferta of visibles) {
+                const tarjeta = nodo(
+                    "div",
+                    "md-card",
+                    ""
+                );
+
+                tarjeta.dataset.referencia = String(
+                    oferta.clave === referencia?.clave
+                );
+
+                tarjeta.append(
                     nodo(
                         "p",
-                        "mp-resumen",
-                        "Cantidad: " +
+                        "",
+                        "Proveedor: " +
+                        (oferta.proveedor || "Sin indicar")
+                    ),
+
+                    nodo(
+                        "p",
+                        "",
+                        "Marca: " +
+                        (oferta.marca || "Sin indicar")
+                    ),
+
+                    nodo(
+                        "p",
+                        "md-precio",
+                        oferta.precio === null
+                            ? "Precio pendiente"
+                            : dinero(oferta.precio) +
+                              " / unidad"
+                    ),
+
+                    nodo(
+                        "p",
+                        "",
                         (
-                            cantidad === null
-                                ? "pendiente"
-                                : cantidad.toString()
-                        ) +
-                        " · Menor precio registrado: " +
-                        dinero(minimo) +
-                        " / unidad"
+                            oferta.precio === null ||
+                            fila.cantidad === null
+                        )
+                            ? "Total pendiente"
+                            : "Total: " +
+                              dinero(
+                                  oferta.precio *
+                                  fila.cantidad
+                              )
                     )
                 );
 
-                const marcas = new Map();
+                if (
+                    referencia &&
+                    oferta.precio !== null
+                ) {
+                    const d =
+                        oferta.precio -
+                        referencia.precio;
 
-                ofertas.forEach(oferta => {
-                    // Las ofertas sin marca permanecen separadas.
-                    const clave = oferta.marca
-                        ? normalizar(oferta.marca)
-                        : Symbol();
+                    const abs = d < 0n ? -d : d;
 
-                    if (!marcas.has(clave)) {
-                        marcas.set(clave, []);
+                    let texto =
+                        oferta.clave === referencia.clave
+                            ? "Referencia para comparar"
+                            : d === 0n
+                                ? "Mismo precio que la referencia"
+                                : dinero(abs) +
+                                  (d < 0n ? " menos" : " más") +
+                                  " / unidad";
+
+                    if (
+                        d !== 0n &&
+                        referencia.precio > 0n
+                    ) {
+                        texto +=
+                            " (" +
+                            formatoPorcentaje.format(
+                                Number(d) /
+                                Number(referencia.precio)
+                            ) +
+                            ")";
                     }
 
-                    marcas.get(clave).push(oferta);
-                });
-
-                const grid = nodo("div", "mp-grid", "");
-                articulo.append(grid);
-
-                for (const grupo of marcas.values()) {
-                    grupo.sort((a, b) =>
-                        a.precio < b.precio
-                            ? -1
-                            : a.precio > b.precio
-                                ? 1
-                                : 0
-                    );
-
-                    const menor = grupo[0].precio;
-                    const mayor = grupo[grupo.length - 1].precio;
-
-                    const empatadas = grupo.filter(
-                        oferta => oferta.precio === menor
-                    );
-
-                    const nombres = new Map(
-                        empatadas.map(oferta => [
-                            normalizar(oferta.proveedor),
-                            oferta.proveedor,
-                        ])
-                    );
-
-                    const tarjeta = nodo("div", "mp-card", "");
+                    if (
+                        d !== 0n &&
+                        fila.cantidad !== null
+                    ) {
+                        texto +=
+                            ". Diferencia total: " +
+                            dinero(abs * fila.cantidad) +
+                            (
+                                d < 0n
+                                    ? " menos."
+                                    : " más."
+                            );
+                    }
 
                     tarjeta.append(
                         nodo(
-                            "h4",
-                            "mp-marca",
-                            "Marca: " +
-                            (grupo[0].marca || "Sin indicar")
-                        ),
-
-                        nodo(
                             "p",
-                            "mp-dato",
-                            (
-                                grupo[0].marca
-                                    ? "Proveedor de menor precio: "
-                                    : "Proveedor: "
-                            ) +
-                            [...nombres.values()].join(" / ")
-                        ),
-
-                        nodo(
-                            "p",
-                            "mp-dato mp-precio",
-                            dinero(menor) + " / unidad"
-                        ),
-
-                        nodo(
-                            "p",
-                            "mp-dato",
-                            cantidad === null
-                                ? "Total pendiente de cantidad"
-                                : "Total: " +
-                                  dinero(menor * cantidad)
-                        ),
-
-                        nodo(
-                            "p",
-                            "mp-nota " +
-                            (menor === minimo ? "mp-minimo" : ""),
-                            menor === minimo
-                                ? "Menor precio registrado"
-                                : "+" +
-                                  dinero(menor - minimo) +
-                                  " / unidad frente al mínimo del repuesto"
+                            "md-diferencia",
+                            texto
                         )
                     );
-
-                    if (grupo.length > 1) {
-                        tarjeta.append(
-                            nodo(
-                                "p",
-                                "mp-nota",
-                                "Diferencia dentro de esta marca: " +
-                                dinero(mayor - menor) +
-                                " / unidad · " +
-                                grupo.length +
-                                " ofertas"
-                            )
-                        );
-                    }
-
-                    if (empatadas.length > 1) {
-                        tarjeta.append(
-                            nodo(
-                                "p",
-                                "mp-nota",
-                                "Empate al menor precio de esta marca."
-                            )
-                        );
-                    }
-
-                    grid.append(tarjeta);
                 }
+
+                const boton = nodo(
+                    "button",
+                    "",
+                    oferta.clave === referencia?.clave
+                        ? "Referencia"
+                        : "Usar como referencia"
+                );
+
+                boton.type = "button";
+                boton.dataset.ref = oferta.clave;
+                boton.disabled = oferta.precio === null;
+
+                boton.setAttribute(
+                    "aria-pressed",
+                    String(
+                        oferta.clave === referencia?.clave
+                    )
+                );
+
+                tarjeta.append(boton);
+                contenido.append(tarjeta);
             }
 
-            if (!repuestos) {
+            if (!visibles.length) {
                 contenido.append(
                     nodo(
                         "p",
-                        "mp-resumen",
-                        "Agrega repuestos y precios para ver las comparaciones."
+                        "md-ayuda",
+                        "Las marcas y precios aparecerán aquí al registrarlos en esta fila."
                     )
                 );
             }
 
-            const desplazamiento = resultado.scrollTop;
-
             resultado.replaceChildren(contenido);
-            resultado.scrollTop = desplazamiento;
 
+            if (foco) {
+                [
+                    ...resultado.querySelectorAll(
+                        "[data-ref]"
+                    ),
+                ]
+                    .find(b => b.dataset.ref === foco)
+                    ?.focus({preventScroll: true});
+            }
+
+            panel.scrollTop = scroll;
             panel.hidden = false;
         }
 
         function programar() {
             clearTimeout(temporizador);
-            temporizador = setTimeout(actualizar, 120);
+            temporizador = setTimeout(actualizar, 100);
+        }
+
+        function activar(evento) {
+            const tr = evento.target.closest("tr");
+
+            if (tr?.parentElement !== cuerpo) return;
+
+            const uid = tr.querySelector(
+                '[data-campo="descripcion_solicitada"]'
+            )?.dataset.fila;
+
+            if (uid !== activa) {
+                activa = uid;
+                modo = "todas";
+            }
+
+            programar();
         }
 
         form.addEventListener("input", programar);
+        form.addEventListener("focusin", activar);
+        form.addEventListener("click", activar);
 
-        const observador = new MutationObserver(programar);
+        panel.addEventListener("click", evento => {
+            const boton = evento.target.closest("button");
 
-        for (const elemento of [cabecera, cuerpo, aviso]) {
+            if (!boton || boton.disabled) return;
+
+            if (boton.dataset.ref) {
+                referencias.set(activa, boton.dataset.ref);
+            }
+
+            if (boton.dataset.modo) {
+                modo = boton.dataset.modo;
+            }
+
+            actualizar();
+        });
+
+        const observador =
+            new MutationObserver(programar);
+
+        for (const elemento of [
+            cabecera,
+            cuerpo,
+            aviso,
+        ]) {
             if (elemento) {
                 observador.observe(elemento, {
                     childList: true,
@@ -432,6 +950,12 @@
                 });
             }
         }
+
+        if (window.ResizeObserver) {
+            new ResizeObserver(programar).observe(espacio);
+        }
+
+        window.addEventListener("resize", programar);
 
         actualizar();
     }
