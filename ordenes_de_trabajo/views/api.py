@@ -3,8 +3,6 @@ import json
 import requests
 import xml.etree.ElementTree as ET
 
-from datetime import timedelta
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -31,7 +29,7 @@ from ..models import (
 # =========================================================
 
 PLACA_API_USERNAME = settings.PLACA_API_USERNAME
-CEDULA_API_TOKEN = settings.CEDULA_API_TOKEN
+CEDULA_API_TOKEN = getattr(settings, "CEDULA_API_TOKEN", "")
 
 
 
@@ -328,6 +326,7 @@ def serializar_cliente(cliente):
     condicion_cedulado = (
         getattr(cliente, "condicion_cedulado", "")
         or persona_raw.get("condicionCedulado")
+        or raw.get("condicionCedulado")
         or ""
     )
     fecha_defuncion = (
@@ -337,6 +336,7 @@ def serializar_cliente(cliente):
     fecha_inscripcion_defuncion = (
         getattr(cliente, "fecha_inscripcion_defuncion", None)
         or fechas_raw.get("inscripcionDefuncion")
+        or raw.get("fechaInscripcionDefuncion")
     )
     licencia_infracciones = (
         getattr(cliente, "licencia_infracciones", "")
@@ -421,6 +421,9 @@ def serializar_cliente(cliente):
         # Control
         "datos_full_consultados": cliente.datos_full_consultados,
         "fecha_ultima_consulta_api": _iso(cliente.fecha_ultima_consulta_api),
+        # Datos registrales que pueden no existir como columnas en Cliente.
+        "fecha_inscripcion_genero": texto_limpio(raw.get("fechaInscripcionGenero")),
+        "lugar_inscripcion_genero": texto_limpio(raw.get("lugarInscripcionGenero")),
     }
 
 
@@ -429,46 +432,46 @@ def serializar_cliente(cliente):
 # =========================================================
 
 def extraer_datos_cliente_api(data, es_ruc=False):
-    """
-    Extrae los campos editables que interesa comparar MAO vs API.
-    NO modifica la base de datos.
-    """
+    """Mapea información externa al formato ya utilizado por MAO."""
     if es_ruc:
         establecimientos = data.get("establecimientos") or []
         matriz = next(
             (
-                item
-                for item in establecimientos
-                if str(item.get("matriz", "")).strip().upper() == "SI"
+                item for item in establecimientos
+                if isinstance(item, dict)
+                and str(item.get("matriz", "")).strip().upper() in ("SI", "SÍ", "TRUE", "1")
             ),
             None,
         )
-
         return {
-            "nombre_completo": data.get("razonSocial") or "",
+            "nombre_completo": texto_limpio(data.get("razonSocial")),
             "telefono": "",
             "telefono_secundario": "",
             "telefono_trabajo": "",
             "email": "",
-            "direccion": matriz.get("direccionCompleta", "") if matriz else "",
+            "direccion": texto_limpio(matriz.get("direccionCompleta")) if matriz else "",
         }
 
-    persona = data.get("persona") or data or {}
+    # La respuesta 2026 de cédula es plana. Se tolera el formato histórico
+    # para compatibilidad con los registros que ya existen en MAO.
+    persona = data.get("persona") or data
+    if not isinstance(persona, dict):
+        persona = data
     direccion = persona.get("direccion") or {}
-
+    if not isinstance(direccion, dict):
+        direccion = {}
     partes = [
-        texto_limpio(direccion.get("domicilio")),
-        texto_limpio(direccion.get("calle")),
-        texto_limpio(direccion.get("numeroCasa")),
+        texto_limpio(direccion.get("domicilio") or data.get("lugarDomicilio")),
+        texto_limpio(direccion.get("calle") or data.get("calleDomicilio")),
+        texto_limpio(direccion.get("numeroCasa") or data.get("numeracionDomicilio")),
     ]
-
     return {
-        "nombre_completo": persona.get("nombre") or data.get("nombre") or "",
-        "telefono": persona.get("celular") or "",
-        # No están documentados en la respuesta FULL de ZampiSoft.
+        "nombre_completo": texto_limpio(persona.get("nombre") or data.get("nombre")),
+        # La consulta básica documentada NO devuelve teléfono ni correo.
+        "telefono": texto_limpio(persona.get("celular")),
         "telefono_secundario": "",
         "telefono_trabajo": "",
-        "email": persona.get("email") or "",
+        "email": texto_limpio(persona.get("email")),
         "direccion": " / ".join(parte for parte in partes if parte),
     }
 
@@ -521,149 +524,221 @@ def comparar_cliente_con_api(cliente, datos_api):
 # API: CONSULTAR CLIENTE POR CÉDULA / RUC
 # =========================================================
 
+APICONSULT_URL = "https://apiconsult.zampisoft.com/api/consultar"
+
+
+class ApiConsultError(Exception):
+    """Error controlado que nunca incluye el token ni datos personales."""
+
+    def __init__(self, mensaje, http_status=502, codigo_api=None, retry_after=None):
+        super().__init__(mensaje)
+        self.http_status = http_status
+        self.codigo_api = codigo_api
+        self.retry_after = retry_after
+
+
+def validar_identificacion_api(identificacion):
+    """Valida formato y, para cédula ecuatoriana, dígito verificador."""
+    if not isinstance(identificacion, str):
+        return False
+    if not identificacion.isascii() or not identificacion.isdigit():
+        return False
+    if len(identificacion) == 13:
+        # Para RUC hay distintos algoritmos según el tipo de contribuyente.
+        # La comprobación definitiva la realiza ApiConsult.
+        return True
+    if len(identificacion) != 10:
+        return False
+    provincia = int(identificacion[:2])
+    if provincia not in range(1, 25) and provincia != 30:
+        return False
+    if int(identificacion[2]) > 5:
+        return False
+    total = 0
+    for posicion, digito in enumerate(identificacion[:9]):
+        valor = int(digito) * (2 if posicion % 2 == 0 else 1)
+        total += valor - 9 if valor > 9 else valor
+    return (10 - total % 10) % 10 == int(identificacion[9])
+
+
+def consultar_zampisoft(identificacion):
+    """
+    Única salida hacia ZampiSoft para las vistas de MAO.
+    No hace reintentos: cada nueva consulta puede generar un cobro.
+    """
+    identificacion = str(identificacion or "").strip()
+    if not validar_identificacion_api(identificacion):
+        raise ApiConsultError(
+            "Identificación inválida. Verifica cédula o RUC.",
+            http_status=400,
+        )
+
+    token = str(getattr(settings, "CEDULA_API_TOKEN", "") or "").strip()
+    if not token:
+        raise ApiConsultError("Falta configurar CEDULA_API_TOKEN en Django.", 503)
+
+    try:
+        respuesta = requests.post(
+            APICONSULT_URL,
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json={"identificacion": identificacion},
+            timeout=(5, 20),
+        )
+    except requests.Timeout as exc:
+        raise ApiConsultError(
+            "Se agotó el tiempo de espera. Revisa antes de repetir la consulta.", 504
+        ) from exc
+    except requests.RequestException as exc:
+        raise ApiConsultError(
+            "No fue posible conectar con ApiConsult. No se efectuará otro intento automático.",
+            502,
+        ) from exc
+
+    errores = {
+        400: "Identificación ausente o inválida.",
+        401: "Token de ApiConsult ausente o incorrecto.",
+        402: "Saldo insuficiente en ApiConsult.",
+        403: "La clave no tiene permiso de Identificaciones o la cuenta está inactiva.",
+        404: "No se encontró la identificación en la fuente.",
+        408: "La fuente agotó el tiempo de espera.",
+        429: "Límite de consultas. Respeta Retry-After antes de volver a consultar.",
+        500: "Error temporal de ApiConsult.",
+        502: "Error temporal de la fuente de datos.",
+        503: "La fuente de identificación no está disponible temporalmente.",
+    }
+    if respuesta.status_code != 200:
+        raise ApiConsultError(
+            errores.get(respuesta.status_code, "No se pudo completar la consulta."),
+            http_status=(
+                respuesta.status_code
+                if respuesta.status_code in (400, 402, 403, 404, 429, 503)
+                else 502
+            ),
+            codigo_api=respuesta.status_code,
+            retry_after=respuesta.headers.get("Retry-After"),
+        )
+
+    try:
+        data = respuesta.json()
+    except ValueError as exc:
+        raise ApiConsultError("La API devolvió una respuesta que no es JSON.") from exc
+
+    if not isinstance(data, dict):
+        raise ApiConsultError("La API devolvió un formato de respuesta inesperado.")
+    if data.get("success") is False or data.get("error"):
+        # No se reintenta: el proveedor ya procesó la solicitud.
+        raise ApiConsultError(
+            texto_limpio(data.get("error") or data.get("message"))
+            or "La API rechazó la identificación.",
+            http_status=422,
+        )
+
+    # La nueva documentación incluye la respuesta de cédula. La de RUC
+    # se mantiene con el contrato ya usado en este proyecto.
+    es_ruc = len(identificacion) == 13
+    campo_nombre = "razonSocial" if es_ruc else "nombre"
+    if not texto_limpio(data.get(campo_nombre)):
+        raise ApiConsultError(
+            "La API no devolvió los datos mínimos esperados para "
+            + ("RUC" if es_ruc else "cédula")
+            + ". No se guardó información incompleta.",
+            http_status=502,
+        )
+
+    identificacion_recibida = data.get("numeroRuc" if es_ruc else "cedula")
+    if identificacion_recibida and str(identificacion_recibida) != identificacion:
+        raise ApiConsultError("La API devolvió una identificación diferente.")
+
+    return data
+
+
+def aplicar_datos_zampisoft(cliente, data, es_ruc=False):
+    """Usa los métodos del modelo actual: llena vacíos sin pisar datos manuales."""
+    if es_ruc:
+        cliente.cargar_desde_api_ruc(data, sobrescribir=False)
+    else:
+        # La respuesta plana 2026 es básica; NO marcar full=True.
+        # El modelo Cliente existente acepta directamente los campos planos.
+        cliente.cargar_desde_api_persona(data, full=False, sobrescribir=False)
+    cliente.fecha_ultima_consulta_api = timezone.now()
+    return cliente
+
+
+def _cache_identificacion_disponible(cliente, es_ruc):
+    """Sólo conserva caché de una consulta anterior realmente válida."""
+    if not cliente:
+        return False
+    raw = cliente.datos_api_originales or {}
+    if not isinstance(raw, dict):
+        return False
+    if es_ruc:
+        return bool(texto_limpio(raw.get("razonSocial")))
+    persona = raw.get("persona") or {}
+    if not isinstance(persona, dict):
+        persona = {}
+    return bool(texto_limpio(raw.get("nombre") or persona.get("nombre")))
+
+
 @login_required
 def consultar_cedula_api(request):
+    """Mantiene los mismos parámetros y JSON usados por los formularios MAO."""
     identificacion = request.GET.get("cedula", "").strip()
     forzar_refresh = parametro_booleano(request, "refresh", False)
+    es_ruc = len(identificacion) == 13
 
-    if (
-        not identificacion
-        or not identificacion.isdigit()
-        or len(identificacion) not in (10, 13)
-    ):
+    if not validar_identificacion_api(identificacion):
         return JsonResponse(
-            {
-                "exito": False,
-                "error": (
-                    "Identificación inválida. Debe tener 10 dígitos "
-                    "para cédula o 13 para RUC."
-                ),
-            },
+            {"exito": False, "error": "Cédula/RUC inválido. Revisa sus dígitos."},
             status=400,
         )
 
-    es_ruc = len(identificacion) == 13
     cliente = Cliente.objects.filter(identificacion=identificacion).first()
 
-    # Cache: personas FULL ya consultadas no vuelven a consumir saldo.
-    if cliente and not forzar_refresh:
-        if not es_ruc and cliente.datos_full_consultados:
-            return JsonResponse({
-                "exito": True,
-                "origen": "bd",
-                "cliente": serializar_cliente(cliente),
-                "datos_api": {},
-                "cambios_sugeridos": [],
-            })
-
-        # RUC: conservar cache de 30 días.
-        if (
-            es_ruc
-            and cliente.fecha_ultima_consulta_api
-            and timezone.now() - cliente.fecha_ultima_consulta_api < timedelta(days=30)
-        ):
-            return JsonResponse({
-                "exito": True,
-                "origen": "bd_fresca",
-                "cliente": serializar_cliente(cliente),
-                "datos_api": {},
-                "cambios_sugeridos": [],
-            })
-
-    url = "https://apiconsult.zampisoft.com/api/consultar"
-    params = {
-        "identificacion": identificacion,
-        "token": CEDULA_API_TOKEN,
-    }
-
-    # Persona natural: FULL SIEMPRE.
-    if not es_ruc:
-        params["full"] = "true"
+    # Una consulta válida ya guardada se reutiliza sin costo; para forzar una
+    # consulta NUEVA el usuario debe solicitar expresamente refresh=true.
+    if cliente and not forzar_refresh and _cache_identificacion_disponible(cliente, es_ruc):
+        return JsonResponse({
+            "exito": True,
+            "origen": "bd",
+            "cliente": serializar_cliente(cliente),
+            "datos_api": {},
+            "cambios_sugeridos": [],
+        })
 
     try:
-        respuesta = requests.get(
-            url,
-            params=params,
-            headers={"Accept": "application/json"},
-            timeout=20,
-        )
-
-        errores_api = {
-            400: "Solicitud inválida para la API de identificación.",
-            401: "Token de la API de identificación incorrecto.",
-            402: "Saldo insuficiente en la API de identificación.",
-            404: "La identificación no fue encontrada.",
-            408: "La API de identificación agotó el tiempo de espera.",
-            429: "La API está limitando temporalmente las consultas.",
-            500: "La API de identificación tuvo un error interno.",
-            503: "El servicio de identificación no está disponible temporalmente.",
+        data = consultar_zampisoft(identificacion)
+    except ApiConsultError as exc:
+        respuesta_error = {
+            "exito": False,
+            "error": str(exc),
+            "codigo_api": exc.codigo_api,
         }
+        if exc.retry_after:
+            respuesta_error["retry_after"] = exc.retry_after
+        return JsonResponse(respuesta_error, status=exc.http_status)
 
-        if respuesta.status_code != 200:
-            return JsonResponse(
-                {
-                    "exito": False,
-                    "error": errores_api.get(
-                        respuesta.status_code,
-                        f"Error de API: HTTP {respuesta.status_code}.",
-                    ),
-                    "codigo_api": respuesta.status_code,
-                },
-                status=404 if respuesta.status_code == 404 else 502,
-            )
+    datos_detectados = extraer_datos_cliente_api(data, es_ruc=es_ruc)
+    cliente_era_nuevo = cliente is None
 
-        data = respuesta.json()
-
-        # Documentación FULL usa success=true/false.
-        # Se conserva compatibilidad con respuestas que usen error.
-        if (not es_ruc and data.get("success") is False) or data.get("error"):
-            return JsonResponse(
-                {
-                    "exito": False,
-                    "error": (
-                        data.get("message")
-                        or data.get("error")
-                        or "La API no pudo consultar la identificación."
-                    ),
-                },
-                status=404,
-            )
-
-        datos_detectados = extraer_datos_cliente_api(data, es_ruc=es_ruc)
-        cliente_era_nuevo = cliente is None
-
+    try:
         with transaction.atomic():
             if cliente:
-                cliente = (
-                    Cliente.objects
-                    .select_for_update()
-                    .get(pk=cliente.pk)
-                )
+                cliente = Cliente.objects.select_for_update().get(pk=cliente.pk)
             else:
                 cliente = Cliente(identificacion=identificacion)
 
-            # La API llena vacíos, pero no pisa datos manuales existentes.
-            if es_ruc:
-                cliente.cargar_desde_api_ruc(data, sobrescribir=False)
-            else:
-                cliente.cargar_desde_api_persona(
-                    data,
-                    full=True,
-                    sobrescribir=False,
-                )
-
-            cliente.fecha_ultima_consulta_api = timezone.now()
+            # Respetar cualquier dato que el usuario haya escrito manualmente.
+            aplicar_datos_zampisoft(cliente, data, es_ruc=es_ruc)
             cliente.save()
 
         cambios_sugeridos = comparar_cliente_con_api(cliente, datos_detectados)
-
-        if cliente_era_nuevo:
-            origen = "api_nuevo"
-        elif forzar_refresh:
-            origen = "api_refrescada"
-        else:
-            origen = "api"
-
+        origen = "api_nuevo" if cliente_era_nuevo else (
+            "api_refrescada" if forzar_refresh else "api"
+        )
         return JsonResponse({
             "exito": True,
             "origen": origen,
@@ -671,26 +746,10 @@ def consultar_cedula_api(request):
             "datos_api": datos_detectados,
             "cambios_sugeridos": cambios_sugeridos,
         })
-
-    except requests.RequestException as e:
+    except Exception:
+        # No mostrar excepciones con datos internos al navegador.
         return JsonResponse(
-            {
-                "exito": False,
-                "error": f"No se pudo conectar con la API de identificación: {e}",
-            },
-            status=502,
-        )
-    except ValueError as e:
-        return JsonResponse(
-            {
-                "exito": False,
-                "error": f"La API externa devolvió una respuesta inválida: {e}",
-            },
-            status=502,
-        )
-    except Exception as e:
-        return JsonResponse(
-            {"exito": False, "error": str(e)},
+            {"exito": False, "error": "No se pudieron guardar los datos recibidos."},
             status=500,
         )
 

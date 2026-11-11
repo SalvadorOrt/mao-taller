@@ -261,9 +261,11 @@
                         </div>
 
                         <div class="switch-box">
-                            <input type="checkbox" id="check_full">
-                            <label for="check_full">Consultar Datos Full ($0.05)</label>
-                        </div>
+                        <small>
+                            Consulta de identificación mediante ApiConsult.
+                            Puede generar un cobro.
+                        </small>
+                    </div>
                     </div>
                 </div>
 
@@ -431,7 +433,7 @@ document.getElementById('btn_buscar_api').addEventListener('click', function() {
     this.disabled = true;
     this.innerText = "Buscando...";
 
-    fetch(`/api/consultar_cedula/?cedula=${cedula}&full=${isFull}`)
+    fetch(`/api/consultar_cedula/?cedula=${encodeURIComponent(cedula)}`)
         .then(res => res.json())
         .then(data => {
             if (data.exito) {
